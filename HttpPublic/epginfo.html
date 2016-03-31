@@ -1,0 +1,151 @@
+﻿dofile(mg.document_root..'\\util.lua')
+path='Setting\\HttpPublic.ini'
+DEF_CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path)
+
+onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
+tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
+sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
+eid=0+(mg.get_var(mg.request_info.query_string,'eid') or 0)
+presetID=0+(mg.get_var(mg.request_info.query_string,'presetID') or 65535)
+tab=0+(mg.get_var(mg.request_info.query_string,'tab') or 0)
+page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+date=0+(mg.get_var(mg.request_info.query_string,'date') or 0)
+hour=0+(mg.get_var(mg.request_info.query_string,'hour') or 0)
+interval=0+(mg.get_var(mg.request_info.query_string,'interval') or 25)
+dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+autopage=0+(mg.get_var(mg.request_info.query_string,'autopage') or 0)
+week=0+(mg.get_var(mg.request_info.query_string,'week') and 1 or 0)~=0
+pageIndex=0+(mg.get_var(mg.request_info.query_string,'chpage') or 0)
+CH_COUNT=0+(mg.get_var(mg.request_info.query_string,'chcount') or DEF_CH_COUNT)
+
+post=nil
+if mg.request_info.request_method=='POST' then
+  post=''
+  repeat
+    s=mg.read()
+    post=post..(s or '')
+  until not s
+  if #post~=mg.request_info.content_length then
+    post=nil
+  end
+end
+
+if post then
+  for i=0,10000 do
+    v=mg.get_var(post, 'network', i)
+    if not v then break end
+    network=network and network+v or v
+  end
+
+  hidden='<form id="search" class="hidden" method="POST" action="search.html'..(page~=0 and '?page='..page or '')..(autopage~=0 and (page~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
+    ..(mg.get_var(post, 'id') and '<input type="hidden" name="id" value="'..mg.get_var(post, 'id')..'">\n' or '')
+    ..(mg.get_var(post, 'advanced') and '<input type="hidden" name="advanced" checked="checked">\n' or '')
+    ..'<input type="hidden" name="andKey" value="'..(mg.get_var(post, 'andKey') and mg.get_var(post, 'andKey' or ''))..'">\n'
+    ..'<input type="hidden" name="notKey" value="'..(mg.get_var(post, 'notKey') and mg.get_var(post, 'notKey') or '')..'">\n'
+    ..(mg.get_var(post, 'regExpFlag') and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
+    ..(mg.get_var(post, 'titleOnlyFlag') and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
+    ..(mg.get_var(post, 'aimaiFlag') and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
+    ..(mg.get_var(post, 'notContetFlag') and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
+    ..(mg.get_var(post, 'notDateFlag') and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
+    ..(mg.get_var(post, 'freeCAFlag') and '<input type="hidden" name="freeCAFlag" value="'..mg.get_var(post, 'freeCAFlag')..'">\n' or '')
+    ..(mg.get_var(post, 'network') and '<input type="hidden" name="network" value="'..network..'">\n' or '')
+    ..(mg.get_var(post, 'days') and '<input type="hidden" name="days" value="'..mg.get_var(post, 'days')..'">\n' or '')
+    ..(tkntrec and (mg.get_var(post, 'chkRecNoService') and '<input type="hidden" name="chkRecNoService" value="'..mg.get_var(post, 'chkRecNoService')..'">\n' or '')..(mg.get_var(post, 'chkDurationMax') and '<input type="hidden" name="chkDurationMax" value="'..mg.get_var(post, 'chkDurationMax')..'">\n' or '') or '')
+    ..(mg.get_var(post, 'chkRecEnd') and '<input type="hidden" name="chkRecEnd" checked="checked">\n' or '')
+    ..(mg.get_var(post, 'chkRecDay') and '<input type="hidden" name="chkRecDay" value="'..mg.get_var(post, 'chkRecDay')..'">\n' or '')
+    ..(mg.get_var(post, 'disableFlag') and '<input type="hidden" name="disableFlag" checked="checked">\n' or '')
+    ..(mg.get_var(post, 'dateList') and '<input type="hidden" name="dateList" value="'..mg.get_var(post, 'dateList')..'">\n' or '')
+
+  if mg.get_var(post, 'contentList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'contentList', i)
+      if not v then break end
+      hidden=hidden..'<input type="hidden" name="contentList" value="'..v..'">\n'
+    end
+  end
+
+  if mg.get_var(post, 'serviceList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'serviceList', i)
+      if not v then break end
+      hidden=hidden..'<input type="hidden" name="serviceList" value="'..v..'">\n'
+    end
+  end
+  hidden=hidden..'</form>\n'
+end
+
+r=nil
+edcb.htmlEscape=15
+for i,v in ipairs(edcb.GetReserveData()) do
+  if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
+    r=v
+    recording=edcb.GetRecFilePath(r.reserveID)
+    break
+  end
+end
+if not r and presetID==65535 then
+  presetID=0
+end
+
+ct={title='番組情報'}
+
+ct.main='<main class="mdl-layout__content">\n'
+  ..'<div class="mdl-grid">\n'
+  .._ConvertEpgInfoText2(onid, tsid, sid, eid)
+
+if beforeEnd then
+  redirect=mg.get_var(post, 'andKey') and 'submit="#search' or 'redirect="'..(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid or 'epg.html?tab='..tab..'&date='..date..(pageIndex~=0 and '&chpage='..pageIndex or ''))..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
+
+  ct.js='<script>\n$(function(){getpreset(\'/api/EnumReserveInfo\');});\n</script>\n'
+
+  ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
+
+    ..'<form id="set" data-'..redirect..'" method="POST" action="'..(r and '/api/ReserveChg?id='..r.reserveID or '/api/ReserveAdd')..'">\n'
+    ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reseveid="'..r.reserveID..'"' or '')..'>\n'
+  preset=false
+  rs=r and r.recSetting or nil
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==presetID then
+      preset=true
+      rs=v.recSetting
+      ct.main=ct.main..'<option value="'..v.id..'" selected>'..v.name..'\n'
+    else
+      ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
+    end
+  end
+  if r then
+    ct.main=ct.main..'<option value="65535"'..(preset and '' or ' selected')..'>予約時'
+  end
+  ct.main=ct.main..'</select></div></div>\n'
+
+    ..'<input type="hidden" name="onid" value="'..onid..'">\n'
+    ..'<input type="hidden" name="tsid" value="'..tsid..'">\n'
+    ..'<input type="hidden" name="sid" value="'..sid..'">\n'
+    ..'<input type="hidden" name="eid" value="'..eid..'">\n'
+
+    ..RecSettingTemplate(rs)..'</div></form>\n'
+    ..'</section>\n'
+
+    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
+    ..'<video src="/api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
+    ..'</div></div>\n</section>\n' or '')
+    ..'</div>\n'
+
+    ..'<div class="mdl-dialog__actions">\n'
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
+    ..(r and '<form id="del" data-'..redirect..'" method="POST" action="/api/ReserveDel?id='..r.reserveID..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..'</div>\n'
+
+  ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'
+       ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
+       ..(recording and '<a href="#movie" class="play mdl-layout__tab">再生</a>\n' or '')
+
+end
+
+ct.main=ct.main..'</div>\n</div>\n'..(hidden and hidden or '')
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

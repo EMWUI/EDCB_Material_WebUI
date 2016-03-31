@@ -1,0 +1,24 @@
+﻿.multiple {
+  padding: 4px 0;
+  position: relative;
+  display: inline-block;
+  box-sizing: border-box; }
+  .multiple:before {
+    top: 16px;
+    right: 10px;
+    border: 5px solid transparent;
+    border-top-color: #9E9E9E;
+    pointer-events: none;
+    position: absolute;
+    content: ''; }
+  .multiple select {
+    border: none;
+    border-bottom: 1px solid rgba(0,0,0 ,0.12);
+    padding: 4px 24px 4px 0; }
+
+@media (max-width: 479px) {
+  #subheader .pulldown {
+    min-width: 0px; } }
+
+#dateList .multiple {
+  display: none; }

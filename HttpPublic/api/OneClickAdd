@@ -1,0 +1,51 @@
+added=false
+onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
+tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
+sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
+eid=0+(mg.get_var(mg.request_info.query_string,'eid') or 0)
+
+edcb.htmlEscape=15
+  r={}
+  r.onid=onid
+  r.tsid=tsid
+  r.sid=sid
+  r.eid=eid
+for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+  if v.id==0 then
+    r.recSetting=v.recSetting
+  end
+end
+  eventInfo=edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid)
+  if eventInfo and eventInfo.startTime and eventInfo.durationSecond then
+    r.title=eventInfo.shortInfo and eventInfo.shortInfo.event_name or ''
+    r.startTime=eventInfo.startTime
+    r.startTimeEpg=eventInfo.startTime
+    r.durationSecond=eventInfo.durationSecond
+    r.stationName=''
+    for i,v in ipairs(edcb.GetServiceList() or {}) do
+      if v.onid==r.onid and v.tsid==r.tsid and v.sid==r.sid then
+        r.stationName=v.service_name
+        break
+      end
+    end
+    added=edcb.AddReserveData(r)
+  end
+
+if added then
+  for i,v in ipairs(edcb.GetReserveData()) do
+    if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
+      id=v.reserveID
+      r=edcb.GetReserveData(id)
+      break
+    end
+  end
+  recMode=r.recSetting.recMode
+  overlapMode=r.overlapMode
+  state=r.recSetting.recMode==5 and 'disablerec' or r.overlapMode==1 and 'partially' or r.overlapMode==2 and 'shortage' or ''
+  start=os.time(r.startTime)<os.time() and 1 or 0
+end
+
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+  ..(added and '<success><reserveid>'..id..'</reserveid><startTime>'..os.time(r.startTime)..'</startTime><recmode>'..recMode..'</recmode><overlapmode>'..overlapMode..'</overlapmode><state>'..state..'</state><start>'..start..'</start></success></entry>' or '<err>予約を追加できませんでした</err></entry>')
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

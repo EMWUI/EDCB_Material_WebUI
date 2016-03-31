@@ -1,0 +1,75 @@
+dofile(mg.document_root..'\\util.lua')
+
+PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+path='Setting\\HttpPublic.ini'
+disable=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
+
+ct={title='EPG予約'}
+
+edcb.htmlEscape=15
+a=edcb.EnumAutoAdd()
+pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+
+if PAGE_COUNT==0 then
+  PAGE_COUNT=#a
+end
+
+if math.ceil((#a/PAGE_COUNT)-1)>0 then
+  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
+
+  first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  for i=first, first+4 do
+    pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="autoaddepg.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
+  end
+
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"autoaddepg.html?page='..(pageIndex+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"autoaddepg.html?page='..math.ceil((#a/PAGE_COUNT)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+
+  pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
+end
+
+ct.main='<main class="mdl-layout__content">\n'
+  ..(pg or '')..'<div class="list mdl-grid">'
+
+  ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+
+  ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
+  ..' <th class="keyword mdl-data-table__cell--non-numeric">キーワード\n'
+  ..' <th class="notkeyword mdl-data-table__cell--non-numeric">NOTキーワード\n'
+  ..' <th class="namber">登録数\n'
+  ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
+  ..' <th class="category mdl-data-table__cell--non-numeric">ジャンル\n'
+  ..' <th class="mode mdl-data-table__cell--non-numeric">録画モード\n'
+  ..'<tbody>\n'
+
+ctt={}
+for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+  v=a[i].searchInfo
+  serviceName='なし'
+  if #v.serviceList>0 then
+    for j,w in ipairs(edcb.GetChDataList()) do
+      if w.onid==v.serviceList[1].onid and w.tsid==v.serviceList[1].tsid and w.sid==v.serviceList[1].sid then
+        serviceName=w.serviceName
+        break
+      end
+    end
+  end
+  disableFlag=string.match(v.andKey, '^%^%!{999}(.*)')
+  ct.main=ct.main..'<tr class="mdl-grid--no-spacing" data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&page='..pageIndex or '')..'"'..(disableFlag and ' class="disabled"' or '')..'>'
+    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(disableFlag and disableFlag or v.andKey)
+    ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..v.notKey
+    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="/search.html?id='..a[i].dataID..(pageIndex~=0 and '&autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
+    ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
+    ..'\n <td class="category mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(#v.contentList>0 and (v.notContetFlag and '<span class=header>否:</span>' or '')..edcb.GetGenreName(v.contentList[1].content_nibble)..(#v.contentList>1 and '<small>.他'..(#v.contentList-1)..'</small>' or '') or '全ジャンル')
+    ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(({'全サービス','指定サービスのみ','全サービス（デコード処理なし）','指定サービスのみ（デコード処理なし）','視聴','無効'})[a[i].recSetting.recMode+1] or '')
+    ..'\n'
+end
+
+ct.main=ct.main..'</table>\n</div>\n'..(pg or '')
+     ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..'"><i class="material-icons">add</i></a>'
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

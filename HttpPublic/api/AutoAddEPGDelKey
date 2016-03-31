@@ -1,0 +1,10 @@
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+
+if mg.request_info.request_method=='POST' then
+  edcb.DelAutoAdd(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
+  ct=ct..'<success>EPG自動予約を削除しました</success></entry>'
+else
+  ct=ct..'<err>EPG自動予約を削除できませんでした</err></entry>'
+end
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

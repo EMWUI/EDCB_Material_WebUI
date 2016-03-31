@@ -1,0 +1,91 @@
+post=nil
+if mg.request_info.request_method=='POST' then
+  post=''
+  repeat
+    s=mg.read()
+    post=post..(s or '')
+  until not s
+  if #post~=mg.request_info.content_length then
+    post=nil
+  end
+end
+changed=false
+r=edcb.GetReserveData(0+(mg.get_var(mg.request_info.query_string, 'id') or 0))
+if post and r then
+  presetID=mg.get_var(post, 'presetID')
+  recMode=mg.get_var(post, 'recMode')
+  tuijyuuFlag=mg.get_var(post, 'tuijyuuFlag')
+  priority=mg.get_var(post, 'priority')
+  pittariFlag=mg.get_var(post, 'pittariFlag')
+  suspendMode=mg.get_var(post, 'suspendMode')
+  rebootFlag=mg.get_var(post, 'rebootFlag')
+  useDefMarginFlag=mg.get_var(post, 'useDefMarginFlag')
+  startMargin=mg.get_var(post, 'startMargin')
+  endMargin=mg.get_var(post, 'endMargin')
+  serviceMode=mg.get_var(post, 'serviceMode')
+  serviceMode_1=mg.get_var(post, 'serviceMode_1')
+  serviceMode_2=mg.get_var(post, 'serviceMode_2')
+  continueRecFlag=mg.get_var(post, 'continueRecFlag')
+  tunerID=mg.get_var(post, 'tunerID')
+  partialRecFlag=mg.get_var(post, 'partialRecFlag')
+  if presetID and
+     recMode and
+     priority and
+     suspendMode and
+     (useDefMarginFlag or startMargin and endMargin) and tunerID
+  then
+    rs=r.recSetting
+    if 0+presetID~=0xFFFF then
+      rs.batFilePath=''
+--      rs.recFolderList={}
+--      rs.partialRecFolder={}
+      for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+        if v.id==0+presetID then
+          rs.batFilePath=v.recSetting.batFilePath
+--          rs.recFolderList=v.recSetting.recFolderList
+--          rs.partialRecFolder=v.recSetting.partialRecFolder
+          break
+        end
+      end
+    end
+    rs.recFolderList={}
+    for i=0,10000 do
+     if not mg.get_var(post, 'recFolder', i) then break end
+      table.insert(rs.recFolderList, {
+        recFolder=mg.get_var(post, 'recFolder', i),
+        writePlugIn=mg.get_var(post, 'writePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
+      } )
+    end
+    rs.partialRecFolder={}
+    for i=0,10000 do
+     if not mg.get_var(post, 'partialrecFolder', i) then break end
+      table.insert(rs.partialRecFolder, {
+        recFolder=mg.get_var(post, 'partialrecFolder', i),
+        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
+      } )
+    end
+    rs.recMode=0+recMode
+    rs.tuijyuuFlag=0+(tuijyuuFlag or 0)~=0
+    rs.priority=0+priority
+    rs.pittariFlag=0+(pittariFlag or 0)~=0
+    rs.suspendMode=0+suspendMode
+    rs.rebootFlag=rebootFlag~=nil
+    rs.startMargin=nil
+    rs.endMargin=nil
+    if not useDefMarginFlag then
+      rs.startMargin=0+startMargin
+      rs.endMargin=0+endMargin
+    end
+    rs.serviceMode=serviceMode and 0 or 1+(serviceMode_1 and 16 or 0)+(serviceMode_2 and 32 or 0)
+    rs.continueRecFlag=continueRecFlag~=nil
+    rs.tunerID=0+tunerID
+    rs.partialRecFlag=partialRecFlag and 1 or 0
+    changed=edcb.ChgReserveData(r)
+  end
+end
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+  ..(changed and '<success>予約を変更しました</success></entry>' or '<err>予約を変更できませんでした</err></entry>')
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

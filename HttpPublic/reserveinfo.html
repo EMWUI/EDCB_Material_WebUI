@@ -1,0 +1,65 @@
+dofile(mg.document_root..'\\util.lua')
+
+page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+
+edcb.htmlEscape=15
+r=edcb.GetReserveData(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
+
+ct={title='予約情報'}
+
+if r then
+  recording=edcb.GetRecFilePath(r.reserveID)
+  redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
+
+  ct.js='<script>\n$(function(){getpreset(\'/api/EnumReserveInfo\');});\n</script>\n'
+
+  ct.main='<main class="mdl-layout__content">\n'
+    ..'<div class="mdl-grid">\n'
+    .._ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
+    ..'<section class="mdl-layout__tab-panel" id="recset">\n'
+    ..'<form id="set" class="api" method="POST" action="api/reservechg?id='..r.reserveID..'" data-redirect="'..redirect..'">\n'
+    ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
+
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-reseveid="'..r.reserveID..'">\n'
+  presetID=0+(mg.get_var(mg.request_info.query_string,'presetID') or 65535)
+  preset=false
+  rs=r.recSetting
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==presetID then
+      preset=true
+      rs=v.recSetting
+      ct.main=ct.main..'<option value="'..v.id..'" selected>'..v.name..'\n'
+    else
+      ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
+    end
+  end
+  ct.main=ct.main..'<option value="65535"'..(preset and '' or ' selected')..'>予約時\n'
+    ..'</select></div></div>\n'
+    ..'<input type="hidden" name="id" value="'..r.reserveID..'">\n'
+
+    ..RecSettingTemplate(rs)..'</div></form>\n'
+    ..'</section>\n'
+
+    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
+    ..'<video src="api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
+    ..'</div></div>\n</section>\n' or '')
+    ..'</div>\n'
+
+    ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
+    ..'<form id="del" class="api" method="POST" action="/api/reservedel?id='..r.reserveID..'" data-redirect="'..redirect..'"></form>\n'
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'</div>\n'
+
+    ..'</div>\n</div>\n'
+
+  ct.tab=(edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid) and '<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n' or '')
+       ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
+       ..(recording and '<a href="#movie" class="play mdl-layout__tab">再生</a>\n' or '')
+
+end
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

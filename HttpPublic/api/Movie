@@ -1,0 +1,87 @@
+path='Setting\\HttpPublic.ini'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','ffmpeg',path)
+ffmpegoption=edcb.GetPrivateProfile('SET','ffmpegoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+readex=edcb.GetPrivateProfile('SET','readex','readex',path)
+
+-- トランスコードするかどうか
+XCODE=0+(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
+-- 変換コマンド
+XCMD=ffmpeg..' -i pipe:0 '..ffmpegoption
+-- 変換後の拡張子
+XEXT='.webm'
+-- 転送開始前に変換しておく量(bytes)
+XPREPARE=0+edcb.GetPrivateProfile('SET','xprepare',48128,path)
+
+fname=mg.get_var(mg.request_info.query_string,'fname') or nil
+
+-- ts以外を除外
+if fname and not string.find(fname, '.ts$') then
+   fname=nil
+end
+
+r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
+v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))
+
+if r then
+  fname=r
+  if XCODE then
+    -- トランスコード中のファイルがあればそっち使う
+    f=io.open(edcb.Convert('cp932', 'utf-8', fname..XEXT), 'rb')
+    if f then
+      f:close()
+      fname=fname..XEXT
+      XCODE=false
+    end
+  end
+elseif v then
+  fname=v.recFilePath
+end
+
+-- 転送開始位置(99分率)(容量確保録画には未対応)
+offset=0+(mg.get_var(mg.request_info.query_string,'offset') or 0)
+
+f=nil
+if fname then
+  fpath=edcb.Convert('cp932', 'utf-8', fname)
+  f=io.open(fpath, 'rb')
+  if f then
+    offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
+    if XCODE then
+      f:close()
+      f=io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
+      fname=string.match(fname, '([^\\]+)%.[^%.]+$')..XEXT
+    else
+      f:seek('set', offset)
+      fname=string.match(fname, '[^\\]+$')
+      XPREPARE=nil
+    end
+  end
+end
+
+if not f then
+  mg.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
+else
+  mg.write('HTTP/1.1 200 OK\r\nContent-Type: '..mg.get_mime_type(fname)..'\r\nContent-Disposition: filename='..mg.url_encode(fname)..'\r\nConnection: close\r\n\r\n')
+  retry=0
+  while true do
+    buf=f:read(XPREPARE or 48128)
+    XPREPARE=nil
+    if buf and #buf ~= 0 then
+      retry=0
+      if not mg.write(buf) then
+        -- キャンセルされた
+        mg.cry('canceled')
+        break
+      end
+    else
+      -- 終端に達した。4秒間この状態が続けば対象ファイルへの追記が終息したとみなす
+      retry=retry+1
+      if XCODE or retry > 20 then
+        mg.cry('end')
+        break
+      end
+      edcb.Sleep(200)
+    end
+  end
+  f:close()
+end

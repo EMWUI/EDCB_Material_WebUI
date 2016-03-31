@@ -1,0 +1,56 @@
+﻿function ConvertTitle(title)
+  local MARK='mark mdl-color--accent mdl-color-text--accent-contrast'
+  local title=title:gsub('%[(新)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(終)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(再)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(交)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(映)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(手)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(声)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(多)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(字)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(二)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｓ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｂ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(SS)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(無)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｃ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(S1)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(S2)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(S3)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(MV)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(双)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(デ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｄ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｎ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｗ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(Ｐ)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(HV)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(SD)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(天)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(解)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(料)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(前)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(後)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(初)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(生)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(販)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(吹)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(PPV)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(演)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(移)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(他)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('%[(収)%]', '<span class="'..MARK..'">%1</span>')
+    :gsub('　', ' ')
+  return title
+end
+
+
+function ConvertSearch(title)
+  local title=title:gsub ('＜.-＞', ''):gsub ('【.-】', ''):gsub ('%[.-%]', ''):gsub ('（.-版）', '')
+  title=mg.url_encode(title)
+  local search='<a class="mdl-button mdl-js-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="/img/google.png" alt="Google検索"></a>'
+  --  ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="http://www.google.co.jp/search?q='..title..'&btnI=Im+Feeling+Lucky" target="_blank">◎</a>'
+  return search
+end

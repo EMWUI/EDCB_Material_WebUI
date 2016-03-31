@@ -1,0 +1,362 @@
+dofile(mg.document_root..'\\util.lua')
+path='Setting\\HttpPublic.ini'
+
+
+tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
+option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
+Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
+subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
+PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+
+oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
+hover=0+edcb.GetPrivateProfile('GUIDE','hover',false,path)~=0
+ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
+MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
+MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
+w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
+w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
+w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
+w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
+CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path)
+
+background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
+
+news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',path)
+sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',path)
+information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',path)
+drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',path)
+music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',path)
+variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',path)
+movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',path)
+anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',path)
+documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',path)
+theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',path)
+education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',path)
+welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',path)
+extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',path)
+other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',path)
+none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',path)
+nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',path)
+
+paint=0+edcb.GetPrivateProfile('BACKGROUND','paint',false,path)~=0
+reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',path)
+disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
+partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
+partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',path)
+shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
+shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',path)
+
+CATEGORY={
+  'news',
+  'sports',
+  'information',
+  'drama',
+  'music',
+  'variety',
+  'movie',
+  'anime',
+  'documentary',
+  'theater',
+  'education',
+  'welfare',
+}
+
+ct={title='設定'}
+
+ct.css='<style>\n'
+  ..'.news{background:'..news
+  ..';}.sports{background:'..sports
+  ..';}.information{background:'..information
+  ..';}.drama{background:'..drama
+  ..';}.music{background:'..music
+  ..';}.variety{background:'..variety
+  ..';}.movie{background:'..movie
+  ..';}.anime{background:'..anime
+  ..';}.documentary{background:'..documentary
+  ..';}.theater{background:'..theater
+  ..';}.education{background:'..education
+  ..';}.welfare{background:'..welfare
+  ..';}.extension{background:'..extension
+  ..';}.other{background:'..other
+  ..';}.none{background:'..none
+  ..';}.nothing{background:'..nothing
+  ..';}\n'
+
+  ..'.reserve{border: 3px dotted '..(paint and 'transparent' or reserve)..';}\n'
+  ..'.disabled{border-color:'..(paint and 'transparent' or disabled)..';}\n'
+  ..'.partially{background:'..partially..';border-color:'..partially_border..';}\n'
+  ..'.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
+
+  ..'.background{background:'..background..';}\n'
+
+  ..'#set .background>div{margin: 4px 8px;}\n'
+  ..'</style>\n'
+
+ct.js='<script src="/js/jquery-ui.min.js"></script>\n'
+  ..'<script src="/js/jquery.ui.touch-punch.min.js"></script>\n'
+  ..'<script src="/js/setting.js"></script>\n'
+
+ct.tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
+  ..'<a href="#guide" class="mdl-layout__tab" data-val="tvguide">番組表</a>\n'
+  ..'<a href="#sort" class="mdl-layout__tab" data-val="sort">並び替え</a>\n'
+
+ct.dialog={button='<button class="submit close mdl-button mdl-button--primary" data-form="#reset">初期化</button>\n'}
+
+edcb.htmlEscape=15
+a=edcb.GetServiceList()
+sort={}
+count=0+edcb.GetPrivateProfile('SORT','count',0,path)
+if count>0 then
+  for i=0,count do
+    v=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+    if #m==3 then
+    onid=0+m[1]
+    tsid=0+m[2]
+    sid=0+m[3]
+    end
+    for i,v in ipairs(a or {}) do
+      if onid==v.onid and tsid==v.tsid and sid==v.sid then
+        table.insert(sort, v)
+        break
+      end
+    end
+  end
+  for i,v in ipairs(a or {}) do
+    have=true
+    for j,w in ipairs(sort) do
+      if v.onid==w.onid and v.tsid==w.tsid and v.sid==w.sid then
+        have=nil
+        break
+      end
+    end
+    if have then table.insert(sort, v) end
+  end
+else
+  sort=a
+  table.sort(sort, function(a,b) 
+    if a.remote_control_key_id==b.remote_control_key_id then
+    	return a.sid<b.sid
+    else
+    	return a.remote_control_key_id<b.remote_control_key_id
+    end
+  end)
+end
+
+hidelist={}
+count=0+edcb.GetPrivateProfile('HIDE','count',0,path)
+if count>0 then
+  for i=0,count do
+    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
+    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+    if #m==3 then
+    b={
+    onid=0+m[1],
+    tsid=0+m[2],
+    sid=0+m[3]
+    }
+    table.insert(hidelist,b)
+    end
+  end
+end
+
+ct.main='<main class="mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
+  ..'<form id="set" method="POST" action="/api/SaveSettings">\n'
+
+  ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-tkntrec">tkntrec氏版</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="tkntrec" class="mdl-switch mdl-js-switch"><input id="tkntrec" type="checkbox" class="mdl-switch__input" name="tkntrec" value="1"'..(tkntrec and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-tkntrec">オフで使用するとオリジナル設定がデフォルトに変更されます</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn オプション</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="option" class="mdl-switch mdl-js-switch"><input id="option" type="checkbox" class="mdl-switch__input" name="option" value="1"'..(option and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Roboto</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(Roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-Roboto">ウェブからフォント"Roboto"を読み込む</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-count">一覧表示数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="number"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="PAGE_COUNT" value="'..PAGE_COUNT..'" min="0" id="PAGE_COUNT"><label class="mdl-textfield__label" for="PAGE_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-count">0で無制限</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">サブジャンル表示</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop l mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreoption"><input type="radio" id="subGenreoption" class="mdl-radio__button" name="subGenreoption" value="ALL"'..(subGenreoption=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示する</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreEPG"><input type="radio" id="subGenreEPG" class="mdl-radio__button" name="subGenreoption" value="EPG"'..(subGenreoption=='EPG' and ' checked="checked"' or '')..'><span class="mdl-radio__label">EPG予約のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreNever"><input type="radio" id="subGenreNever" class="mdl-radio__button" name="subGenreoption" value="Never"'..(subGenreoption=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示しない</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'</div></div>\n</section>\n'
+
+  ..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-hover">番組表の詳細をマウスホバーで表示</span></div>\n'
+
+  ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-chc">0で無制限</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">1分の高さ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="ONE_MIN_PX" value="'..ONE_MIN_PX..'" min="1" id="ONE_MIN_PX"><label class="mdl-textfield__label" for="ONE_MIN_PX"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>px</div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">基準時間</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="MARGIN_HOUR" value="'..MARGIN_HOUR..'" min="0" max="23" id="MARGIN_HOUR"><label class="mdl-textfield__label" for="MARGIN_HOUR"></label><span class="mdl-textfield__error">0～23の間で入力してください</span></div>時間前</div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-MARGIN">現在時刻の位置</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="MARGIN_MIN" value="'..MARGIN_MIN..'" min="0" id="MARGIN_MIN"><label class="mdl-textfield__label" for="MARGIN_MIN"></label><span class="mdl-textfield__error">0以上で入力してください</span></div>分</div>\n'
+  ..'<span class="mdl-tooltip" for="tt-MARGIN">スクロールする位置をずらします</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">チャンネルの幅</div>\n<div class="number mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_service" value="'..w_service..'" min="10" id="w_service"><label class="mdl-textfield__label" for="w_service">PC</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div>\n'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_service_sp" value="'..w_service_sp..'" min="10" id="w_service_sp"><label class="mdl-textfield__label" for="w_service_sp">スマホ</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">時間帯の幅</div>\n<div class="number mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid mdl-grid--no-spacing">'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour" value="'..w_hour..'" min="10" id="w_hour"><label class="mdl-textfield__label" for="w_hour">PC</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div>\n'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour_sp" value="'..w_hour_sp..'" min="10" id="w_hour_sp"><label class="mdl-textfield__label" for="w_hour_sp">スマホ</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ジャンル別背景色</div>\n<div class="background mdl-cell mdl-cell--9-col mdl-grid">\n'
+  ..'<div class="news mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ニュース/報道</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="news" value="'..news..'" for=".news"></div></div>\n'
+
+  ..'<div class="sports mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">スポーツ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="sports" value="'..sports..'" for=".sports"></div></div>\n'
+
+  ..'<div class="information mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">情報/ワイドショー</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="information" value="'..information..'" for=".information"></div></div>\n'
+
+  ..'<div class="drama mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドラマ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="drama" value="'..drama..'" for=".drama"></div></div>\n'
+
+  ..'<div class="music mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">音楽</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="music" value="'..music..'" for=".music"></div></div>\n'
+
+  ..'<div class="variety mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">バラエティ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="variety" value="'..variety..'" for=".variety"></div></div>\n'
+
+  ..'<div class="movie mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">映画</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="movie" value="'..movie..'" for=".movie"></div></div>\n'
+
+  ..'<div class="anime mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">アニメ/特撮</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="anime" value="'..anime..'" for=".anime"></div></div>\n'
+
+  ..'<div class="documentary mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドキュメンタリー/教養</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="documentary" value="'..documentary..'" for=".documentary"></div></div>\n'
+
+  ..'<div class="theater mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">劇場/公演</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="theater" value="'..theater..'" for=".theater"></div></div>\n'
+
+  ..'<div class="education mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">趣味/教育</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="education" value="'..education..'" for=".education"></div></div>\n'
+
+  ..'<div class="welfare mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">福祉</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="welfare" value="'..welfare..'" for=".welfare"></div></div>\n'
+
+  ..'<div class="extension mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">拡張</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="extension" value="'..extension..'" for=".extension"></div></div>\n'
+
+  ..'<div class="other mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">その他</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="other" value="'..other..'" for=".other"></div></div>\n'
+
+  ..'<div class="none mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">無指定</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="none" value="'..none..'" for=".none"></div></div>\n'
+
+  ..'<div class="nothing mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">EPGなし</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="nothing" value="'..nothing..'" for=".nothing"></div></div>\n'
+  ..'</div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画予約済</div>\n<div class="mdl-cell mdl-cell--9-col mdl-grid background">\n'
+
+  ..'<div class="'..(paint and 'paint ' or '')..'mdl-cell mdl-cell--12-col mdl-grid" style="margin: 0; padding: 0; width: 100%;">\n'
+  ..'<div id="reserve" class="reserve '..CATEGORY[math.random(1,12)]..' mdl-cell mdl-cell--4-col mdl-grid" style="margin: 4px 8px;"><div class="mdl-cell--middle">予約済み</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="reserved" value="'..reserve..'" for="#reserve"></div></div>\n'
+
+  ..'<div id="disabled" class="'..(paint and 'paint ' or '')..'reserve disabled '..CATEGORY[math.random(1,12)]..' mdl-cell mdl-cell--4-col mdl-grid" style="margin: 4px 8px;"><div class="mdl-cell--middle">予約無効</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="disable" value="'..disabled..'" for="#disabled"></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--4-col mdl-grid mdl-cell--middle" style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="paint"><input id="paint" class="mdl-checkbox__input" type="checkbox" name="paint" value="1"'..(paint and ' checked' or '')..'><span class="mdl-checkbox__label">塗りつぶし</span></label></div>\n'
+  ..'</div>\n'
+
+  ..'<div id="partially" class="reserve partially mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">一部録画</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="bgset" type="color" name="partially" value="'..partially..'" for=".partially"> 枠 <input class="border" id="partially_border" type="color" name="partially_border" value="'..partially_border..'" for="#partially"></div></div>\n'
+
+  ..'<div id="shortage" class="reserve shortage mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">チューナー不足</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="bgset" type="color" name="shortage" value="'..shortage..'" for=".shortage"> 枠 <input class="border" id="shortage_border" type="color" name="shortage_border" value="'..shortage_border..'" for="#shortage"></div></div>\n'
+  ..'</div></div>\n'
+  ..'</section>\n'
+
+  ..'<section class="mdl-layout__tab-panel" id="sort">\n'
+  ..'<div class="mdl-tabs mdl-js-tabs mdl-grid--no-spacing">\n'
+  ..'<div class="mdl-tabs__tab-bar">\n'
+  ..'<a href="#dtv" class="mdl-tabs__tab is-active">地デジ</a>\n'
+  ..'<a href="#oneseg" class="mdl-tabs__tab">ワンセグ</a>\n'
+  ..'<a href="#bs" class="mdl-tabs__tab">BS</a>\n'
+  ..'<a href="#cs" class="mdl-tabs__tab">CS</a>\n'
+  ..'<a href="#sonota" class="mdl-tabs__tab">その他</a>\n'
+  ..'</div>\n'
+
+dtv='<div class="mdl-tabs__panel is-active mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="dtv"><ul class="mdl-list">\n'
+oneseg='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="oneseg"><ul class="mdl-list">\n'
+bs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="bs"><ul class="mdl-list">\n'
+cs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="cs"><ul class="mdl-list">\n'
+other='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="sonota"><ul class="mdl-list">\n'
+for i,v in ipairs(sort or {}) do
+  hide=nil
+  for j,w in ipairs(hidelist) do
+    if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
+      hide=true
+      break
+    end
+  end
+  if (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
+    sort='<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">\n'
+      ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>\n'
+      ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(hide and ' checked' or '')..'>'
+      ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'..v.service_name..'</label></span>'
+      ..'<span class="mdl-list__item-sub-title">'..v.sid..'</span></span>\n'
+      ..'<span class="mdl-list__item-secondary-action">'
+      ..'<label class="mdl-switch mdl-js-switch" for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
+      ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(hide and '' or ' checked')..'>'
+      ..'</label></span>\n'
+      ..'<input type="hidden" name="sort" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
+      ..'</li>\n'
+
+    if 0x7880<=v.onid and v.onid<=0x7FE8 and v.service_type==0x01 then
+      dtv=dtv..sort
+    elseif v.partialReceptionFlag then
+      oneseg=oneseg..sort
+    elseif v.onid==4 then
+      bs=bs..sort
+    elseif v.onid==6 or v.onid==7 then
+      cs=cs..sort
+    else
+      other=other..sort
+    end
+  end
+end
+
+ct.main=ct.main..dtv..'</ul></div>\n'
+  ..oneseg..'</ul></div>\n'
+  ..bs..'</ul></div>\n'
+  ..cs..'</ul></div>\n'
+  ..other..'</ul></div>\n'
+  ..'</div></section></form></div>\n'
+
+..[=[
+<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">
+<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">保存</button>
+<button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
+<div class="mdl-layout-spacer"></div>
+<button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
+</div>
+<form id="reset" class="reload" method="GET" action="/api/SaveSettings"><input type="hidden" name="reset"></form>
+</div>
+</div>
+]=]
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

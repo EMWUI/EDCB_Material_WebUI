@@ -1,0 +1,16 @@
+if mg.request_info.request_method=='POST' then
+  post=''
+  repeat
+    s=mg.read()
+    post=post..(s or '')
+  until not s
+  if #post~=mg.request_info.content_length then
+    post=nil
+  end
+
+  edcb.DelReserveData(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
+  del=true
+end
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+  ..(del and '<success>予約を削除しました</success></entry>' or '<err>予約を削除できませんでした</err></entry>')
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

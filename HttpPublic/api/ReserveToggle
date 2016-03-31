@@ -1,0 +1,26 @@
+﻿id=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+
+changed=false
+
+edcb.htmlEscape=15
+for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+  if v.id==0 then
+    recMode=(v.recSetting.recMode==5 and 0 or v.recSetting.recMode)
+  end
+end
+
+edcb.htmlEscape=15
+r=edcb.GetReserveData(id)
+if r then
+  r.recSetting.recMode=(r.recSetting.recMode==5 and recMode or 5)
+  changed=edcb.ChgReserveData(r)
+
+  r=edcb.GetReserveData(id)
+  recMode=r.recSetting.recMode
+  overlapMode=r.overlapMode
+  start=os.time(r.startTime)<os.time() and 1 or 0
+end
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+  ..(changed and '<success><reserveid>'..id..'</reserveid><recmode>'..recMode..'</recmode><overlapmode>'..overlapMode..'</overlapmode><start>'..start..'</start></success></entry>' or '<err>予約を変更できませんでした</err></entry>')
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

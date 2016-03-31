@@ -1,0 +1,65 @@
+dofile(mg.document_root..'\\string.lua')
+dofile(mg.document_root..'\\util.lua')
+PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+
+ct={title='録画結果'}
+
+edcb.htmlEscape=15
+a=edcb.GetRecFileInfo()
+table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
+pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+
+if PAGE_COUNT==0 then
+  PAGE_COUNT=#a
+end
+
+if math.ceil((#a/PAGE_COUNT)-1)>0 then
+  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href=\"recinfo.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href=\"recinfo.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
+
+  first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  for i=first, first+4 do
+    pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
+  end
+
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"recinfo.html?page='..(pageIndex+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"recinfo.html?page='..math.ceil((#a/PAGE_COUNT)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+
+  pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
+end
+
+ct.main='<main class="mdl-layout__content">\n'
+  ..(pg or '')..'<div class="list mdl-grid">'
+
+  ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+  ..'<caption class="mdl-cell--hide-phone">'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+
+  ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
+  ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
+  ..' <th class="title mdl-data-table__cell--non-numeric ">タイトル\n'
+  ..' <th class="service mdl-data-table__cell--non-numeric ">サービス\n'
+  ..' <th class="comment mdl-data-table__cell--non-numeric ">結果\n'
+  ..' <th class="drop">D\n'
+  ..' <th class="scramble">S\n'
+  ..'<tbody>\n'
+
+ctt={}
+for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+  v=a[i]
+  bg=v.drops>0 and ' drops'
+     or v.scrambles>0 and ' scrambles' or ''
+  ct.main=ct.main..'<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-href="recinfodesc.html?id='..v.id ..'&page='..pageIndex..'">\n'
+    ..' <td class="date mdl-data-table__cell--non-numeric">'..os.date('%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(v.startTime))+1]..') %H:%M-', os.time(v.startTime))..os.date('%H:%M', os.time(v.startTime)+v.durationSecond)
+    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
+    ..'\n <td class="service mdl-data-table__cell--non-numeric">'..v.serviceName
+    ..'\n <td class="comment mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..v.comment
+    ..'\n <td class="drop mdl-cell--2-col-phone"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drop:</span>'..v.drops
+    ..'\n <td class="scramble mdl-cell--2-col-phone"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>'..v.scrambles
+    ..'\n'
+end
+
+ct.main=ct.main..'</table>\n</div>\n'..(pg or '')
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

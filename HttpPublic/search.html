@@ -1,0 +1,318 @@
+dofile(mg.document_root..'\\string.lua')
+dofile(mg.document_root..'\\util.lua')
+
+path='Setting\\HttpPublic.ini'
+tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
+subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
+
+PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+
+edcb.htmlEscape=15
+
+post=nil
+if mg.request_info.request_method=='POST' then
+  post=''
+  repeat
+    s=mg.read()
+    post=post..(s or '')
+  until not s
+  if #post~=mg.request_info.content_length then
+    post=nil
+  end
+end
+
+dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+if dataID~=0 then
+  for i,v in ipairs(edcb.EnumAutoAdd()) do
+    if v.dataID==dataID then
+      key=v.searchInfo
+      key.days=0
+      key.network=0
+      disableFlag=string.match(key.andKey, '^%^%!{999}(.*)')
+      key.andKey=string.gsub(key.andKey, '^%^%!{999}(.+)', '%1')
+      break
+    end
+  end
+end
+
+
+if not key then
+  key={
+    andKey=mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or '',
+    notKey=mg.get_var(post, 'notKey') or mg.get_var(mg.request_info.query_string, 'notKey') or '',
+    regExpFlag=mg.get_var(post, 'regExpFlag') or mg.get_var(mg.request_info.query_string, 'regExpFlag') or false,
+    titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag') or mg.get_var(mg.request_info.query_string, 'titleOnlyFlag') or false,
+    aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag') or false,
+    notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
+    notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
+    freeCAFlag=0+(mg.get_var(post, 'freeCAFlag') or mg.get_var(mg.request_info.query_string, 'freeCAFlag') or 0),
+    chkDurationMin=0+(mg.get_var(post, 'chkDurationMin') or mg.get_var(mg.request_info.query_string, 'chkDurationMin') or 0),
+    chkDurationMax=0+(mg.get_var(post, 'chkDurationMax') or mg.get_var(mg.request_info.query_string, 'chkDurationMax') or 0),
+    network=0,
+    days=mg.get_var(post, 'days') or mg.get_var(mg.request_info.query_string, 'days') or 0,
+    days29=mg.get_var(post, 'days29') or mg.get_var(mg.request_info.query_string, 'days29') or 0,
+    contentList={},
+    serviceList={},
+    dateList={},
+  }
+
+  if mg.get_var(post, 'network') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'network', i)
+      if not v then break end
+      key.network=key.network+v
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'network') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'network', i)
+      if not v then break end
+      key.network=key.network+v
+    end
+  end
+
+  if mg.get_var(post, 'contentList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'contentList', i)
+      if not v then break end
+      table.insert(key.contentList, {content_nibble=0+v})
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'contentList') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'contentList', i)
+      if not v then break end
+      table.insert(key.contentList, {content_nibble=0+v})
+    end
+  end
+
+  if mg.get_var(post, 'serviceList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'serviceList', i)
+      if not v then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'serviceList') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'serviceList', i)
+      if not v then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+  else
+    for j,w in ipairs(edcb.GetChDataList()) do
+      if w.searchFlag then
+        table.insert(key.serviceList, w)
+      end
+    end
+  end
+
+  if mg.get_var(post, 'dateList') then
+    for v in string.gmatch(mg.get_var(post, 'dateList') or '', '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      dateList=v
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'dateList') then
+    for v in string.gmatch(mg.get_var(mg.request_info.query_string, 'dateList') or '', '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      dateList=v
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+  end
+  disableFlag=mg.get_var(post, 'disableFlag') or mg.get_var(mg.request_info.query_string, 'disableFlag') or false
+  key.search=true
+end
+
+pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+autopage=0+(mg.get_var(mg.request_info.query_string,'autopage') or 0)
+
+ct={title='検索'}
+
+ct.js='<script>$(function(){saerchbar()});setInterval("rec()",1000);</script>\n'
+
+ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-600"><div class="mdl-navigation">\n'
+  ..'<label class="mdl-button mdl-js-button mdl-button--icon" for="search-bar"><i class="material-icons">search</i></label><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search"><label class="mdl-textfield__label"></label></div>\n'
+  ..'</div></div>\n'
+
+ct.main='<main class="mdl-layout__content">\n'
+  ..'<div class="mdl-grid">\n<form id="search" method="POST" action="search.html">\n'
+  ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
+  ..'<div class="form-container"><div class="mdl-grid mdl-grid--no-spacing form">\n'
+
+  ..(key.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input" type="checkbox"'..(mg.get_var(post, 'advanced') and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n' or '')
+
+  ..SerchTemplate(key)
+
+  ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
+
+hide=(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
+  ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
+  ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+ 
+ct.main=ct.main..hide..'</div></div>\n'
+    ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">'
+    ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" type="submit">検索</button></div>\n'
+    ..'</div></form>\n</div>\n'
+
+
+b=edcb.SearchEpg(key)
+table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
+
+a={}
+
+for i,v in ipairs(b or {}) do
+  if v.startTime then
+    startTime=os.time(v.startTime)
+    endTime=v.durationSecond and startTime+v.durationSecond or startTime
+    if os.time()<=endTime then
+      table.insert(a, v)
+    end
+  end
+end
+
+if PAGE_COUNT==0 then
+  PAGE_COUNT=#a
+end
+
+if #a>0 then
+
+  if math.ceil((#a/PAGE_COUNT)-1)>0 then
+    pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'data-search="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
+      ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'data-search="search.html?page='..(pageIndex-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
+
+    first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+    for i=first, first+4 do
+      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" data-search="search.html?page='..i..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or ''))..'">'..(i+1)..'</a>\n' or '')
+    end
+
+    pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'data-search=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
+      ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'data-search=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+
+    pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
+  end
+
+  ct.main=ct.main..(pg or '')..'<div class="list mdl-grid">'
+    ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+    ..'<caption>'..#a..' 件中 '..math.min(#a,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+
+    ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
+    ..' <th class="flag mdl-data-table__cell--non-numeric">録画\n'
+    ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
+    ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
+    ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
+    ..' <th class="info mdl-data-table__cell--non-numeric">番組内容\n'
+    ..'<tbody>\n'
+
+  ctt={}
+  for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+    v=a[i]
+    for j,w in ipairs(edcb.GetServiceList() or {}) do
+      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
+        service_name=w.service_name
+        break
+      end
+    end
+    r=nil
+    for j,w in ipairs(edcb.GetReserveData()) do
+      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid and w.eid==v.eid then
+        id=w.reserveID
+        r=edcb.GetReserveData(id)
+        rs=r.recSetting
+        break
+      end
+    end
+
+
+    ct.main=ct.main..'<tr class="mdl-grid--no-spacing" data-search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or '')..'"'..(r and '  data-start="'..(r.durationSecond and (os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'"' or '')..' data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)..'">\n'
+      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid)..'"><span'
+    ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
+                                       or ' class="add search '..(r and 'recmark">' or 'mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
+
+      ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..os.date('%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(v.startTime))+1]..') %H:%M', os.time(v.startTime))--..os.date('%H:%M', os.time(v.startTime)+v.durationSecond)
+      ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
+      ..'\n <td class="service mdl-data-table__cell--non-numeric">'..service_name
+      ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')
+      ..'\n'
+  end
+
+  ct.main=ct.main..'</table>\n</div>\n'..(pg or '')
+end
+
+
+  ct.main=ct.main..'<form id="hidden" method="POST" action="search.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(autopage and (pageIndex~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
+    ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
+    ..'<input type="hidden" name="andKey" value="'..key.andKey..'">\n'
+    ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
+    ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
+    ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
+    ..(key.aimaiFlag and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
+    ..(key.notContetFlag and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
+    ..(key.notDateFlag and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
+    ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
+    ..(key.network and '<input type="hidden" name="network" value="'..key.network..'">\n' or '')
+    ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
+    ..(tkntrec and (key.chkDurationMin and '<input type="hidden" name="chkRecNoService" value="'..key.chkDurationMin..'">\n' or '')..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '') or '')
+    ..hide
+
+  if key.contentList then
+    for i,v in ipairs(key.contentList) do
+      ct.main=ct.main..'<input type="hidden" name="contentList" value="'..v.content_nibble..'">\n'
+    end
+  end
+
+  if key.serviceList then
+    for i,v in ipairs(key.serviceList) do
+      ct.main=ct.main..'<input type="hidden" name="serviceList" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
+    end
+  end
+
+  if key.dateList then
+    ct.main=ct.main..'<input type="hidden" name="dateList" value="'
+    for i,v in ipairs(key.dateList) do
+      ct.main=ct.main..(i==1 and '' or ',')
+        ..({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
+        ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
+    end
+    ct.main=ct.main..'">\n'
+  end
+  ct.main=ct.main..'</form>\n'
+
+if (dataID>0 or mg.get_var(post, 'id')) then
+  ct.main=ct.main..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"  data-search="autoaddepginfo.html?id='..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit</i></a>\n'
+else
+  ct.main=ct.main..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" '..((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'data-search="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add</i></a>\n'
+end
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

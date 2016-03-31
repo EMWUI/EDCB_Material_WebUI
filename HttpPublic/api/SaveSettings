@@ -1,0 +1,158 @@
+path='Setting\\HttpPublic.ini'
+
+post=nil
+if mg.request_info.request_method=='POST' then
+  post=''
+  repeat
+    s=mg.read()
+    post=post..(s or '')
+  until not s
+  if #post~=mg.request_info.content_length then
+    post=nil
+  end
+end
+messege=false
+
+reset=mg.get_var(mg.request_info.query_string,'reset') or nil
+
+if reset then
+
+  if reset=='tvguide' then
+
+    edcb.WritePrivateProfile('GUIDE',nil,'',path)
+    edcb.WritePrivateProfile('BACKGROUND',nil,'',path)
+    
+    messege='番組表設定'
+
+  elseif reset=='sort' then
+
+    edcb.WritePrivateProfile('SORT',nil,'',path)
+    edcb.WritePrivateProfile('HIDE',nil,'',path)
+    
+    messege='並び替え設定'
+
+  end
+
+  if messege then
+    messege=messege..'を初期化しました'
+  end
+
+elseif post then
+--  =(mg.get_var(post, '') or '')
+
+  tkntrec=0+(mg.get_var(post, 'tkntrec') or 0)~=0
+  option=0+(mg.get_var(post, 'option') or 0)~=0
+  Roboto=0+(mg.get_var(post, 'Roboto') or 0)~=0
+  subGenreoption=(mg.get_var(post, 'subGenreoption') or '')
+  PAGE_COUNT=(mg.get_var(post, 'PAGE_COUNT') or '')
+
+  oneseg=0+(mg.get_var(post, 'oneseg') or 0)~=0
+  hover=0+(mg.get_var(post, 'hover') or 0)~=0
+  ONE_MIN_PX=(mg.get_var(post, 'ONE_MIN_PX') or '')
+  MARGIN_HOUR=(mg.get_var(post, 'MARGIN_HOUR') or '')
+  MARGIN_MIN=(mg.get_var(post, 'MARGIN_MIN') or '')
+  CH_COUNT=(mg.get_var(post, 'CH_COUNT') or '')
+
+  background=(mg.get_var(post, 'background') or '')
+
+  w_service=(mg.get_var(post, 'w_service') or '')
+  w_service_sp=(mg.get_var(post, 'w_service_sp') or '')
+  w_hour=(mg.get_var(post, 'w_hour') or '')
+  w_hour_sp=(mg.get_var(post, 'w_hour_sp') or '')
+
+  news=(mg.get_var(post, 'news') or '')
+  sports=(mg.get_var(post, 'sports') or '')
+  information=(mg.get_var(post, 'information') or '')
+  drama=(mg.get_var(post, 'drama') or '')
+  music=(mg.get_var(post, 'music') or '')
+  variety=(mg.get_var(post, 'variety') or '')
+  movie=(mg.get_var(post, 'movie') or '')
+  anime=(mg.get_var(post, 'anime') or '')
+  documentary=(mg.get_var(post, 'documentary') or '')
+  theater=(mg.get_var(post, 'theater') or '')
+  education=(mg.get_var(post, 'education') or '')
+  welfare=(mg.get_var(post, 'welfare') or '')
+  extension=(mg.get_var(post, 'extension') or '')
+  other=(mg.get_var(post, 'other') or '')
+  none=(mg.get_var(post, 'none') or '')
+  nothing=(mg.get_var(post, 'nothing') or '')
+
+  paint=0+(mg.get_var(post, 'paint') or 0)~=0
+  reserved=(mg.get_var(post, 'reserved') or '')
+  disable=(mg.get_var(post, 'disable') or '')
+  partially=(mg.get_var(post, 'partially') or '')
+  partially_border=(mg.get_var(post, 'partially_border') or '')
+  shortage=(mg.get_var(post, 'shortage') or '')
+  shortage_border=(mg.get_var(post, 'shortage_border') or '')
+
+--  edcb.WritePrivateProfile('','',,path)
+
+  edcb.WritePrivateProfile('SET','tkntrec',tkntrec,path)
+  edcb.WritePrivateProfile('SET','option',option,path)
+  edcb.WritePrivateProfile('SET','Roboto',Roboto,path)
+  edcb.WritePrivateProfile('SET','subGenreoption',subGenreoption,path)
+  edcb.WritePrivateProfile('SET','PAGE_COUNT',PAGE_COUNT,path)
+
+  edcb.WritePrivateProfile('GUIDE','oneseg',oneseg,path)
+  edcb.WritePrivateProfile('GUIDE','hover',hover,path)
+  edcb.WritePrivateProfile('GUIDE','ONE_MIN_PX',ONE_MIN_PX,path)
+  edcb.WritePrivateProfile('GUIDE','MARGIN_HOUR',MARGIN_HOUR,path)
+  edcb.WritePrivateProfile('GUIDE','MARGIN_MIN',MARGIN_MIN,path)
+  edcb.WritePrivateProfile('GUIDE','service',w_service,path)
+  edcb.WritePrivateProfile('GUIDE','service_sp',w_service_sp,path)
+  edcb.WritePrivateProfile('GUIDE','hour',w_hour,path)
+  edcb.WritePrivateProfile('GUIDE','hour_sp',w_hour_sp,path)
+  edcb.WritePrivateProfile('GUIDE','CH_COUNT',CH_COUNT,path)
+
+  edcb.WritePrivateProfile('BACKGROUND','background',background,path)
+
+  edcb.WritePrivateProfile('BACKGROUND','news',news,path)
+  edcb.WritePrivateProfile('BACKGROUND','sports',sports,path)
+  edcb.WritePrivateProfile('BACKGROUND','information',information,path)
+  edcb.WritePrivateProfile('BACKGROUND','drama',drama,path)
+  edcb.WritePrivateProfile('BACKGROUND','music',music,path)
+  edcb.WritePrivateProfile('BACKGROUND','variety',variety,path)
+  edcb.WritePrivateProfile('BACKGROUND','movie',movie,path)
+  edcb.WritePrivateProfile('BACKGROUND','anime',anime,path)
+  edcb.WritePrivateProfile('BACKGROUND','documentary',documentary,path)
+  edcb.WritePrivateProfile('BACKGROUND','theater',theater,path)
+  edcb.WritePrivateProfile('BACKGROUND','education',education,path)
+  edcb.WritePrivateProfile('BACKGROUND','welfare',welfare,path)
+  edcb.WritePrivateProfile('BACKGROUND','extension',extension,path)
+  edcb.WritePrivateProfile('BACKGROUND','other',other,path)
+  edcb.WritePrivateProfile('BACKGROUND','none',none,path)
+  edcb.WritePrivateProfile('BACKGROUND','nothing',nothing,path)
+
+  edcb.WritePrivateProfile('BACKGROUND','paint',paint,path)
+  edcb.WritePrivateProfile('BACKGROUND','reserved',reserved,path)
+  edcb.WritePrivateProfile('BACKGROUND','disable',disable,path)
+  edcb.WritePrivateProfile('BACKGROUND','partially',partially,path)
+  edcb.WritePrivateProfile('BACKGROUND','partially_border',partially_border,path)
+  edcb.WritePrivateProfile('BACKGROUND','shortage',shortage,path)
+  edcb.WritePrivateProfile('BACKGROUND','shortage_border',shortage_border,path)
+
+  for i=0,10000 do
+    v=mg.get_var(post, 'sort', i)
+    if not v then break end
+    edcb.WritePrivateProfile('SORT','count',i,path)
+    edcb.WritePrivateProfile('SORT','sort'..i,v,path)
+  end
+
+  if mg.get_var(post, 'hide') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'hide', i)
+      if not v then break end
+      edcb.WritePrivateProfile('HIDE','count',i,path)
+      edcb.WritePrivateProfile('HIDE','hide'..i,v,path)
+    end
+  else
+    edcb.WritePrivateProfile('HIDE',nil,'',path)
+  end
+
+  messege='保存しました'
+
+end
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
+  ..(messege and '<success>'..messege..'</success></entry>' or '<err>'..(reset and '初期化' or '保存')..'できませんでした</err></entry>')
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

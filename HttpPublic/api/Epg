@@ -1,0 +1,13 @@
+﻿edcb.htmlEscape=15
+
+epg=mg.get_var(mg.request_info.query_string,'epg')
+
+if epg=='reload' then
+  messege=edcb.ReloadEpg() and 'EPG再読み込みを開始しました' or 'EPG再読み込みを開始できませんでした'
+elseif epg=='epgcap' then
+  messege=edcb.EpgCapNow() and 'EPG取得開始しました' or 'EPG取得開始できませんでした'
+end
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><info>'
+  ..(messege or '不正値入力')..'</info></entry>'
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
