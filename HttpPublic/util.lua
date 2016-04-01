@@ -110,7 +110,7 @@ function template(temp)
   <div class="drawer-swipe"></div>
 ]=]
 ..(temp.video and [=[
-  <div id="popupmovie" class="mdl-layout__obfuscator">
+  <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <video id="video" controls></video>
       <span class="close mdl-badge" data-badge="&#xE5CD">

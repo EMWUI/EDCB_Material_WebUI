@@ -6,9 +6,9 @@
     background: #B3B3B3; }
   ::-webkit-scrollbar-corner { 
     background: #EDEDED; }
-  .tv::-webkit-scrollbar,
   #tv-guide::-webkit-scrollbar,
-  #tv-guide-header::-webkit-scrollbar {
+  #tv-guide-header::-webkit-scrollbar,
+  #tv-guide-container::-webkit-scrollbar {
     display: none; }
 
 .touch {

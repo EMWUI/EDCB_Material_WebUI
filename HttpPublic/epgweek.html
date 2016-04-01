@@ -273,9 +273,9 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
 
-ct.main='<main class="tv mdl-layout__content">\n'
-  ..'<div id="tv-guide-container">\n'
+ct.main='<main id="tv-guide-container" class="tv mdl-layout__content">\n'
   ..'<div id="line"></div>\n'
+
   ..'<div id="hour-container" class="mdl-color-text--white">\n'
 
 for i=baseHour,baseHour+interval-1 do
@@ -330,7 +330,7 @@ for i=0,7 do
         ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised"'								--終了前
           ..(r and ' data-reserve="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised addepg" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
+        ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'
 
         ..string.gsub(string.gsub((w.extInfo and '<p class="mdl-typography--caption-color-contrast"><tt>'..w.extInfo.text_char..'</tt></p>' or ''), 'https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>'), '\r?\n', '<br>')
@@ -347,20 +347,13 @@ for i=0,7 do
   ct.main=ct.main..'</div>\n'
 end
 
-ct.main=ct.main..'</div>\n</div>\n'
+ct.main=ct.main..'</div>\n'
 
-  ..'<form class="hidden" method="POST" action="autoaddepginfo.html?epg=">\n'
-  ..[=[
-<input type="hidden" name="andKey" value="">
-<input type="hidden" name="notKey" value="">
-<input type="hidden" name="freeCAFlag" value="0">
-<input type="hidden" name="network" value="0">
-<input type="hidden" name="days" value="0">
-<select name="contentList" multiple size="0"></select>
-<input type="hidden" name="serviceList" value="">
-<input type="hidden" name="dateList" value="">
-</form>
-]=]
+  ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
+  ..'<input type="hidden" name="andKey">\n'
+  ..'<input type="hidden" name="notKey">\n'
+  ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
+  ..'</form>\n'
 
 
 ct=template(ct)

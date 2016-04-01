@@ -115,7 +115,9 @@ dialog {
 
 /*spinner*/
 #spinner {
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   justify-content: center;
   align-items: center;
   position: absolute;
@@ -364,7 +366,9 @@ main {
 #tv-guide-header {
   height: 24px;
   padding-left: 22px;
-  display: flex; }
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex; }
   #tv-guide-header a {
     border-right: solid 1px #FFF;
     border-left: solid 1px #FFF;
@@ -394,7 +398,9 @@ main {
   left: 0;
   z-index: 5; }
   .hour {
-    display: flex;
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
     justify-content: center;
     border: solid 1px #fff;
     box-sizing: border-box;
@@ -471,7 +477,9 @@ main {
     word-break: break-all; }
 
 .content {
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   width: 100%;
   height: 100%;
   color:rgba(0,0,0 ,0.87);
@@ -502,7 +510,9 @@ main {
     display:block; }
 
 .tool {
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   flex-direction: column;
   align-items: center; }
   .tool .mdl-button {
@@ -666,7 +676,9 @@ main {
   cursor: auto; }
 
 .textfield-container {
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   align-items: center; }
 
 .has-button {
@@ -705,7 +717,9 @@ main {
 
 /* 時間絞り込み */
 #dateList_main {
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   flex-wrap: nowrap;
   position: relative; }
   #dateList_touch {
@@ -840,7 +854,6 @@ main {
   .list tbody {
     display: block; }
   .list .mdl-data-table tbody tr {
-    display: flex;
     padding: 16px;
     margin: 8px;
     height: auto;
@@ -938,13 +951,15 @@ main {
 
 
 /* ポップアップ */
-#popupmovie {
-  display: flex;
+#popup {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.1);
   z-index: 99; }
-  #popupmovie > .mdl-card {
+  #popup > .mdl-card {
     margin-right: 0;
     padding:24px;
     overflow: visible;
@@ -952,14 +967,14 @@ main {
     min-width: 280px;
     max-width: 90vw;
     max-height; 90vh; }
-  #popupmovie .mdl-badge {
+  #popup .mdl-badge {
     position: absolute;
     top: 0;
     right: -11px; }
     #popupmovie .mdl-badge[data-badge]:after {
       font-family: 'Material Icons';
       cursor: pointer; }
-  #popupmovie video {
+  #popup video {
     max-width: 100%;
     max-height: calc(90vh - 68px);
     min-width: 232px; }

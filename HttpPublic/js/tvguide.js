@@ -30,7 +30,7 @@ function jump(){
 
 $(function(){
 	//チャンネル名連動
-	$('#tv-guide').on('scroll', function(){
+	$('#tv-guide').scroll(function(){
 		$('#tv-guide-header').offset({left:-$('#tv-guide').scrollLeft()});
 	});
 
@@ -51,27 +51,26 @@ $(function(){
         	}
 	    }
 	});
+	var target = $('#tv-guide');
 	$(document).on({
 	    'touchmove mousemove': function(e){
-	        if (!$('#tv-guide').data('touched')){
+	        if (!target.data('touched')){
 	            return;
 	        }
 	        e.preventDefault();
 
-			var target = $('#tv-guide');
 	        $('body').addClass('drag');
 
 	        target.scrollLeft( target.data('left') + (target.data('X') - (isTouch ? event.changedTouches[0].clientX : e.clientX) ) * (isTouch ? 1 : 1.6) );
-	        $('main').scrollTop( target.data('top') + (target.data('Y') - (isTouch ? event.changedTouches[0].clientY : e.clientY) )* (isTouch ? 1 : 1.6) );
-	        $('#tv-guide-header').offset({left:-$('#tv-guide').scrollLeft()});
+	        $('#tv-guide-container').scrollTop( target.data('top') + (target.data('Y') - (isTouch ? event.changedTouches[0].clientY : e.clientY) ) * (isTouch ? 1 : 1.6) );
  	    },
 	    'touchend mouseup': function(){
-	        if (!$('#tv-guide').data('touched')){
+	        if (!target.data('touched')){
 	            return;
 	        }
 	         
 	        $('body').removeClass('drag');
-	        $('#tv-guide').data('touched', false);
+	        target.data('touched', false);
 	    }
 	});
 
@@ -185,7 +184,10 @@ $(function(){
 	//EPG予約
 	$('.autoepg').click(function(){
 		$('#autoepg [name=andKey]').val( $(this).data('andkey') );
-		$('#autoepg [name=serviceList]').val( $(this).parents('.station').data('service') );
+		var service = $(this).parents('.station').data('service');
+		if (service){
+			$('#autoepg [name=serviceList]').val(service);
+		}
 		$('#autoepg').submit();
 	});
 
