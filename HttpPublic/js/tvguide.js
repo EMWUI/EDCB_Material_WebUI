@@ -75,7 +75,7 @@ $(function(){
 	});
 
 	/*禁断の果実
-	$('main').on('scroll', function(){
+	$('#tv-guide-container').on('scroll', function(){
 		var header = $('header').height();
 		$.each($('.cell'), function(){
 			base=$(this).offset().top-header;
@@ -244,7 +244,7 @@ $(function(){
 							mark = '録';
 						}
 					}
-					target.data('reserve', id).text(button).parents('.content').not('.reserve').find('.startTime').append('<span class="mark reserve"></span>');
+					target.data('reserve', id).text(button).parents('.content').not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 					target.parents('.content').removeClass('disabled partially shortage view').addClass('reserve ' + recmode).find('.mark.reserve').text(mark);
 				}else{
 					message = xml.find('err').text();
