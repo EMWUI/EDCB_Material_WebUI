@@ -252,20 +252,19 @@ if #a>0 then
       end
     end
 
-
-    ct.main=ct.main..'<tr class="mdl-grid--no-spacing" data-search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or '')..'"'..(r and '  data-start="'..(r.durationSecond and (os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'"' or '')..' data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)..'">\n'
+    table.insert(ctt, '<tr class="mdl-grid--no-spacing" data-search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or '')..'"'..(r and '  data-start="'..(r.durationSecond and (os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'"' or '')..' data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)..'">\n'
       ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid)..'"><span'
-    ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
-                                       or ' class="add search '..(r and 'recmark">' or 'mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
+      ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
+                                               or ' class="add search '..(r and 'recmark">' or 'mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 
       ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..os.date('%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(v.startTime))+1]..') %H:%M', os.time(v.startTime))--..os.date('%H:%M', os.time(v.startTime)+v.durationSecond)
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
       ..'\n <td class="service mdl-data-table__cell--non-numeric">'..service_name
       ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')
-      ..'\n'
+      ..'\n')
   end
 
-  ct.main=ct.main..'</table>\n</div>\n'..(pg or '')
+  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')
 end
 
 

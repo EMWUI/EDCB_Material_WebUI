@@ -378,11 +378,10 @@ end
 ct.main=ct.main..'</div>\n'
 
 
-  ..'<div id="tv-guide">\n'
-
+ctt={'<div id="tv-guide">\n'}
 for i=pagemin,pagemax do
   v=st[i]
-  ct.main=ct.main..'<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
+  table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n')
   lastPx=0
   total=0
   for j,w in ipairs(v.et) do
@@ -391,7 +390,7 @@ for i=pagemin,pagemax do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      ct.main=ct.main..'<div class="cell'..(NOW and date==0 and startTime>now and ' end_'..math.floor(startTime/10) or '')..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n'
+      table.insert(ctt, '<div class="cell'..(NOW and date==0 and startTime>now and ' end_'..math.floor(startTime/10) or '')..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -411,7 +410,7 @@ for i=pagemin,pagemax do
       mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-      ct.main=ct.main..'<div class="cell'..(NOW and date==0 and endTime~=startTime and ' end_'..math.floor(endTime/10) or '')..'" style="height:'..(endPx-lastPx)..'px">\n'
+      table.insert(ctt, '<div class="cell'..(NOW and date==0 and endTime~=startTime and ' end_'..math.floor(endTime/10) or '')..'" style="height:'..(endPx-lastPx)..'px">\n'
         ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
         ..'<div><div class="startTime">'..os.date('%M', startTime)..'</div>'..mark..'</div>'
@@ -428,19 +427,19 @@ for i=pagemin,pagemax do
 
         ..string.gsub(string.gsub((w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..w.extInfo.text_char..'</p>' or ''), 'https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>'), '\r?\n', '<br>')
 
-        ..'</div></div></div></div>\n'
+        ..'</div></div></div></div>\n')
 
       total=total+endPx-lastPx
       lastPx=endPx
     end
   end
   if total<interval*60*ONE_MIN_PX then
-    ct.main=ct.main..'<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n'
+    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n')
   end
-  ct.main=ct.main..'</div>\n'
+  table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..'</div>\n'
+ct.main=ct.main..table.concat(ctt)..'</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="andKey">\n'

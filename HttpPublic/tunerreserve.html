@@ -35,13 +35,12 @@ ct.main='<main class="mdl-layout__content">\n'
 ct.tab=''
 ct.Scrollable=true
 
+ctt={}
 for i,v in ipairs(edcb.GetTunerReserveAll()) do
 
   ct.tab=ct.tab..'<a href="#dll_'..i..'" class="mdl-layout__tab'..(i==tab and ' is-active' or '')..'">'..i..':'..v.tunerName:gsub( "BonDriver_(.*).dll", "%1")..' ('..#v.reserveList..')</a>\n'
 
-  ct.main=ct.main
-
-    ..'<tbody class="mdl-layout__tab-panel'..(i==tab and ' is-active' or '')..'" id="dll_'..i..'">\n'
+  table.insert(ctt, '<tbody class="mdl-layout__tab-panel'..(i==tab and ' is-active' or '')..'" id="dll_'..i..'">\n')
 
   b={}
   for j,w in ipairs(v.reserveList) do
@@ -58,7 +57,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     bg=w.recSetting.recMode==5 and ' disabled'
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
-  ct.main=ct.main..'<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&page='..pageIndex..'">\n'
+  table.insert(ctt, '<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&page='..pageIndex..'">\n'
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
@@ -67,14 +66,14 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     ..'\n <td class="service mdl-data-table__cell--non-numeric">'..w.stationName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..w.comment
     ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">priority_high</i></span>'..w.recSetting.priority
-    ..'\n'
+    ..'\n')
   end
   
-  ct.main=ct.main..'</tbody>\n'
+  table.insert(ctt, '</tbody>\n')
 
 end
 
-ct.main=ct.main..'</table>\n</div>\n'
+ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'
 
 ct=template(ct)
 
