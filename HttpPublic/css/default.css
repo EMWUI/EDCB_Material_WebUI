@@ -505,6 +505,9 @@ main {
     opacity: 0.54; }
     .clicked .end {
       opacity: 1; }
+  /*iOS対策*/
+  .content > div:nth-child(2) {
+    width: 18px; }
 
 .startTime {
   width: 18px;
