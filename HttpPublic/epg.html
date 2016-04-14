@@ -209,19 +209,13 @@ for i,v in ipairs(sort or {}) do
      tab==3 and (v.onid==6 or v.onid==7) or
      tab==4 and v.onid~=4 and v.onid~=6 and v.onid~=7 and (v.onid<0x7880 or 0x7FE8<v.onid)) then
     table.insert(st, v)
-    st[#st].et={}
-    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}})
-    for j,w in ipairs(b or {}) do
-      if w.startTime then
-        startTime=os.time(w.startTime)
-        endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime)
-        minTime=minTime and startTime>minTime and minTime or startTime
-        maxTime=maxTime and startTime<maxTime and maxTime or startTime
-        if baseTime<=endTime and startTime<baseTime+interval*3600 then
-          table.insert(st[#st].et, w)
-        end
-      end
+    mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
+    if mmt then
+      minTime=minTime and os.time(mmt.minTime)>minTime and minTime or os.time(mmt.minTime)
+      maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
+    --表示範囲の番組だけ取得する
+    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}
     table.sort(st[#st].et, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   end
 end
@@ -450,4 +444,6 @@ ct.main=ct.main..table.concat(ctt)..'</div>\n'
 
 ct=template(ct)
 
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)
+zl=Deflate(ct)
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n'..(zl and 'Content-Encoding: deflate\r\n' or '')
+  ..'Content-Length: '..(zl and #zl or #ct)..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', zl or ct)

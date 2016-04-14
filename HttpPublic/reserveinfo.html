@@ -8,7 +8,7 @@ r=edcb.GetReserveData(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
 ct={title='予約情報'}
 
 if r then
-  recording=edcb.GetRecFilePath(r.reserveID)
+  recording=edcb.GetRecFilePath and edcb.GetRecFilePath(r.reserveID) or nil
   redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
   ct.js='<script>\n$(function(){getpreset(\'/api/EnumReserveInfo\');});\n</script>\n'

@@ -191,12 +191,6 @@ if not st then
   st=sort[1]
 end
 
-b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}})
-if b then
- st.event=b
- table.sort(st.event, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
-end
-
 ct.title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>'
 
 rt={}
@@ -292,7 +286,9 @@ for i=0,7 do
   table.insert(ctt, '<div class="station">\n')
   lastPx=0
   total=0
-  for j,w in ipairs(st.event) do
+  b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('*t',baseTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}
+  table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
+  for j,w in ipairs(b) do
     startTime=os.time(w.startTime)
     startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
@@ -358,9 +354,6 @@ ct.main=ct.main..table.concat(ctt)..'</div>\n'
 
 ct=template(ct)
 
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)
-
-cl=0
-for i,v in ipairs(ctt) do cl=cl+#v end
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..cl..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n')
-for i,v in ipairs(ctt) do mg.write(v) end
+zl=Deflate(ct)
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n'..(zl and 'Content-Encoding: deflate\r\n' or '')
+  ..'Content-Length: '..(zl and #zl or #ct)..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', zl or ct)

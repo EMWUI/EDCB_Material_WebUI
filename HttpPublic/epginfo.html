@@ -79,7 +79,7 @@ edcb.htmlEscape=15
 for i,v in ipairs(edcb.GetReserveData()) do
   if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
     r=v
-    recording=edcb.GetRecFilePath(r.reserveID)
+    recording=edcb.GetRecFilePath and edcb.GetRecFilePath(r.reserveID) or nil
     break
   end
 end

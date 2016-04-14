@@ -5,7 +5,7 @@ PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
 ct={title='録画結果'}
 
 edcb.htmlEscape=15
-a=edcb.GetRecFileInfo()
+a=edcb.GetRecFileInfoBasic and edcb.GetRecFileInfoBasic() or edcb.GetRecFileInfo()
 table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
 pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
 
