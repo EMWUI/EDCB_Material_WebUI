@@ -68,7 +68,7 @@ $(function(){
 	        if (!target.data('touched')){
 	            return;
 	        }
-	         
+
 	        $('body').removeClass('drag');
 	        target.data('touched', false);
 	    }
@@ -175,7 +175,7 @@ $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
 	//EPG取得
 	$('.epg').click(function(){
-		$.get('/api/Epg', {epg: $(this).data('epg')}, function(result, textStatus, xhr){
+		$.get('api/Epg', {epg: $(this).data('epg')}, function(result, textStatus, xhr){
 			var xml = $(xhr.responseXML);
 			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
 		});
@@ -199,11 +199,11 @@ $(function(){
 
 		if (target.data('reserve')){
 			message = '予約を有効にしました';
-			url = '/api/reservetoggle';
+			url = 'api/reservetoggle';
 			data = {'id': target.data('reserve')};
 		}else if (target.data('eid')){
 			message = '予約を追加しました';
-			url = '/api/oneclickadd';
+			url = 'api/oneclickadd';
 			data = {
 				'onid': target.data('onid'),
 				'tsid': target.data('tsid'),

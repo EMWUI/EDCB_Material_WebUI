@@ -50,7 +50,7 @@ function ConvertSearch(title)
   local title=title:gsub ('＜.-＞', ''):gsub ('【.-】', ''):gsub ('%[.-%]', ''):gsub ('（.-版）', '')
   title=mg.url_encode(title)
   local search='<a class="mdl-button mdl-js-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="/img/google.png" alt="Google検索"></a>'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
   --  ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="http://www.google.co.jp/search?q='..title..'&btnI=Im+Feeling+Lucky" target="_blank">◎</a>'
   return search
 end

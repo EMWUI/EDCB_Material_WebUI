@@ -1,8 +1,8 @@
 ﻿isTouch = ('ontouchstart' in window);
 if (isTouch){
-	document.write('<link href="/css/touch.css" rel="stylesheet" type="text/css">');
+	document.write('<link href="css/touch.css" rel="stylesheet" type="text/css">');
 }else{
-	document.write('<link href="/css/pc.css" rel="stylesheet" type="text/css">');
+	document.write('<link href="css/pc.css" rel="stylesheet" type="text/css">');
 }
 
 //予約一覧

@@ -2,9 +2,10 @@
 path='Setting\\HttpPublic.ini'
 option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
 Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
-css=edcb.GetPrivateProfile('SET','css','<link rel="stylesheet" href="/css/material.min.css">',path)
+css=edcb.GetPrivateProfile('SET','css',false,path)
 
 function template(temp)
+  local path = temp.path or ''
   local s=[=[
 <!doctype html>
 <html lang="ja">
@@ -12,13 +13,13 @@ function template(temp)
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <title>EpgTimer</title>
-<link rel="icon" href="/img/EpgTimer.ico">
-<link rel="apple-touch-icon" sizes="256x256" href="/img/apple-touch-icon.png">
+<link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
+<link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
 ]=]
-..css..'\n'
-..(temp.dialog and '<link rel="stylesheet" href="/css/dialog-polyfill.css">\n' or '')..[=[
-<link rel="stylesheet" href="/css/default.css">
-<link rel="stylesheet" href="/css/user.css">
+..(not css==0 and css or '<link rel="stylesheet" href="'..path..'css/material.min.css">')..'\n'
+..(temp.dialog and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
+<link rel="stylesheet" href="]=]..path..[=[css/default.css">
+<link rel="stylesheet" href="]=]..path..[=[css/user.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 ]=]
 ..(Roboto and '<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">' or '')
@@ -27,13 +28,13 @@ function template(temp)
 ..(temp.css or '')
 
 ..[=[
-<script src="/js/jquery.min.js"></script>
-<script src="/js/material.min.js"></script>
-<script src="/js/hammer.min.js"></script>
-<script src="/js/jquery.hammer.js"></script>
+<script src="]=]..path..[=[js/jquery.min.js"></script>
+<script src="]=]..path..[=[js/material.min.js"></script>
+<script src="]=]..path..[=[js/hammer.min.js"></script>
+<script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
-..(temp.dialog and '<script src="/js/dialog-polyfill.js"></script>\n' or '')
-..'<script src="/js/common.js"></script>\n'
+..(temp.dialog and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
+..'<script src="'..path..'js/common.js"></script>\n'
 
 -- javascript
 ..(temp.js or '')
@@ -67,10 +68,10 @@ function template(temp)
       </div>
       <div class="navigation-container mdl-cell--order-1">
         <nav class="navigation mdl-navigation">
-          <a class="mdl-navigation__link" href="/epg.html">番組表</a>
-          <a class="mdl-navigation__link" href="/reserve.html">予約一覧</a>
-          <a class="mdl-navigation__link" href="/autoaddepg.html">EPG予約</a>
-          <a class="mdl-navigation__link" href="/recinfo.html">録画結果</a>
+          <a class="mdl-navigation__link" href="]=]..path..[=[epg.html">番組表</a>
+          <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html">予約一覧</a>
+          <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html">EPG予約</a>
+          <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html">録画結果</a>
         </nav>
       </div>
 ]=]
@@ -97,14 +98,14 @@ function template(temp)
 ..(temp.side or '')
 
 ..[=[
-      <a class="mdl-navigation__link" href="/epg.html">番組表</a>
-      <a class="mdl-navigation__link" href="/epgweek.html">週間番組表</a>
-      <a class="mdl-navigation__link" href="/reserve.html">予約一覧</a>
-      <a class="mdl-navigation__link" href="/tunerreserve.html">チューナー別</a>
-      <a class="mdl-navigation__link" href="/autoaddepg.html">EPG予約</a>
-      <a class="mdl-navigation__link" href="/recinfo.html">録画結果</a>
-      <a class="mdl-navigation__link" href="/search.html">検索</a>
-      <a class="mdl-navigation__link" href="/setting.html">設定</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[epg.html">番組表</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html">週間番組表</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html">予約一覧</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html">チューナー別</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html">EPG予約</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html">録画結果</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[search.html">検索</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[setting.html">設定</a>
     </nav>
   </div>
   <div class="drawer-swipe"></div>

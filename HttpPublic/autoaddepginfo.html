@@ -122,11 +122,11 @@ if aa.searchInfo then
 
   redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '') or 'autoaddepg.html'..(page~=0 and '?page='..page or ''))..(interval~=25 and '&interval='..interval or '')
 
-  ct.js='<script>\n$(function(){getpreset(\'/api/EnumAutoAdd\');});\n</script>\n'
+  ct.js='<script>\n$(function(){getpreset(\'api/EnumAutoAdd\');});\n</script>\n'
 
   ct.main='<main class="mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
-    ..'<form id="autoaddepg" method="POST" action="/api/AutoAddEPGAddChgKey?id='..aa.dataID..'" data-redirect="'..redirect..'">\n'
+    ..'<form id="autoaddepg" method="POST" action="api/AutoAddEPGAddChgKey?id='..aa.dataID..'" data-redirect="'..redirect..'">\n'
     ..'<section class="mdl-layout__tab-panel is-active" id="search">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
@@ -169,7 +169,7 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="/api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"></form>\n'
   end
 
   ct.main=ct.main..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'

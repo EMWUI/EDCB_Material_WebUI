@@ -11,7 +11,7 @@ if r then
   recording=edcb.GetRecFilePath and edcb.GetRecFilePath(r.reserveID) or nil
   redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
-  ct.js='<script>\n$(function(){getpreset(\'/api/EnumReserveInfo\');});\n</script>\n'
+  ct.js='<script>\n$(function(){getpreset(\'api/EnumReserveInfo\');});\n</script>\n'
 
   ct.main='<main class="mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n'
@@ -48,7 +48,7 @@ if r then
 
     ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
-    ..'<form id="del" class="api" method="POST" action="/api/reservedel?id='..r.reserveID..'" data-redirect="'..redirect..'"></form>\n'
+    ..'<form id="del" class="api" method="POST" action="api/reservedel?id='..r.reserveID..'" data-redirect="'..redirect..'"></form>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'</div>\n'
 

@@ -55,7 +55,7 @@ if v then
     ..'</div>\n'
 
     ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
-    ..'<form id="del" method="POST" action="/api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"></form>\n'
+    ..'<form id="del" method="POST" action="api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"></form>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'</div>\n'
 
