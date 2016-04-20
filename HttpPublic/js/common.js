@@ -34,7 +34,7 @@ function saerchbar(){
 //プリセット取得
 function getpreset(url){
 	$.ajax({
-		url: '/api/EnumRecPreset',
+		url: 'api/EnumRecPreset',
 		success: function(result, textStatus, xhr){
 			$('html').data('preset', xhr.responseXML);
 		}
@@ -545,9 +545,9 @@ $(function(){
 		var data = obj.parents('td').data();
 
 		if (data.id){
-			url = '/api/reservetoggle';
+			url = 'api/reservetoggle';
 		}else{
-			url = '/api/oneclickadd';
+			url = 'api/oneclickadd';
 		}
 		$.ajax({
 			url: url,

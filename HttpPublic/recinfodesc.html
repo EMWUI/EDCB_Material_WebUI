@@ -48,7 +48,7 @@ if v then
     ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..info:gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</section>\n'
 
     ..(f and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
-           ..'<video'..(ori and ' preload="none"' or '')..' controls>\n<source src="'..fname..'mp4" type="video/mp4">\n<source src="'..fname..'webm" type="video/webm">\n<source src="/api/Movie?id='..v.id..'" type="video/webm" data-load="'..(ori and 'false' or 'true')..'">\n</video>\n'
+           ..'<video'..(ori and ' preload="none"' or '')..' controls>\n<source src="'..fname..'mp4" type="video/mp4">\n<source src="'..fname..'webm" type="video/webm">\n<source src="api/Movie?id='..v.id..'" type="video/webm" data-load="'..(ori and 'false' or 'true')..'">\n</video>\n'
            ..'</div></div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
