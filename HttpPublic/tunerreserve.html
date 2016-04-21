@@ -1,5 +1,5 @@
-dofile(mg.document_root..'\\string.lua')
-dofile(mg.document_root..'\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
 partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
@@ -57,7 +57,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     bg=w.recSetting.recMode==5 and ' disabled'
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&page='..pageIndex..'">\n'
+  table.insert(ctt, '<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex..'">\n'
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')

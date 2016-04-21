@@ -1,8 +1,8 @@
 ﻿isTouch = ('ontouchstart' in window);
 if (isTouch){
-	document.write('<link href="css/touch.css" rel="stylesheet" type="text/css">');
+	document.write('<link href="' + path + 'css/touch.css" rel="stylesheet" type="text/css">');
 }else{
-	document.write('<link href="css/pc.css" rel="stylesheet" type="text/css">');
+	document.write('<link href="' + path + 'css/pc.css" rel="stylesheet" type="text/css">');
 }
 
 //予約一覧
@@ -34,7 +34,7 @@ function saerchbar(){
 //プリセット取得
 function getpreset(url){
 	$.ajax({
-		url: 'api/EnumRecPreset',
+		url: root + 'api/EnumRecPreset',
 		success: function(result, textStatus, xhr){
 			$('html').data('preset', xhr.responseXML);
 		}
@@ -545,9 +545,9 @@ $(function(){
 		var data = obj.parents('td').data();
 
 		if (data.id){
-			url = 'api/reservetoggle';
+			url = root + 'api/reservetoggle';
 		}else{
-			url = 'api/oneclickadd';
+			url = root + 'api/oneclickadd';
 		}
 		$.ajax({
 			url: url,

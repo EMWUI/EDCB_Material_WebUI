@@ -1,5 +1,5 @@
-dofile(mg.document_root..'\\string.lua')
-dofile(mg.document_root..'\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
 oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
@@ -322,7 +322,7 @@ for i=0,7 do
         ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)..search
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..'&eid='..w.eid..hrefGene..'">番組詳細</a>'
+        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..'&eid='..w.eid..'&week='..hrefGene..'">番組詳細</a>'
         ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised"'								--終了前
           ..(r and ' data-reserve="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加

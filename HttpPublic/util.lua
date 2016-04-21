@@ -1,5 +1,4 @@
-﻿dofile(mg.document_root..'\\string.lua')
-path='Setting\\HttpPublic.ini'
+﻿path='Setting\\HttpPublic.ini'
 option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
 Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
 css=edcb.GetPrivateProfile('SET','css',false,path)
@@ -34,6 +33,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..(temp.dialog and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
+..'<script>\npath=\''..path..'\';\nroot=\''..mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')..'\';\n</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
 -- javascript
