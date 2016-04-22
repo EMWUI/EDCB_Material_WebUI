@@ -1,3 +1,4 @@
+dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
@@ -23,17 +24,8 @@ pageIndex=0+(mg.get_var(mg.request_info.query_string,'chpage') or 0)
 CH_COUNT=0+(mg.get_var(mg.request_info.query_string,'chcount') or DEF_CH_COUNT)
 
 edcb.htmlEscape=15
-post=nil
-if mg.request_info.request_method=='POST' then
-  post=''
-  repeat
-    s=mg.read()
-    post=post..(s or '')
-  until not s
-  if #post~=mg.request_info.content_length then
-    post=nil
-  end
-end
+
+post=ReadPost()
 
 aa={}
 aa.dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
@@ -75,6 +67,8 @@ end
 if aa.searchInfo then
   si=aa.searchInfo
   if post then
+    AssertCsrf(post)
+
     si.andKey=mg.get_var(post, 'andKey')
     si.notKey=mg.get_var(post, 'notKey')
     si.regExpFlag=mg.get_var(post, 'regExpFlag')
@@ -172,7 +166,7 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..root..'api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..root..'api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
   end
 
   ct.main=ct.main..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'

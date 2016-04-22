@@ -1,3 +1,4 @@
+dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
@@ -58,7 +59,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
   table.insert(ctt, '<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex..'">\n'
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'"><span'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..os.date('%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(w.startTime))+1]..') %H:%M-', os.time(w.startTime))..(w.durationSecond and os.date('%H:%M', os.time(w.startTime)+w.durationSecond) or '終了時間未定')

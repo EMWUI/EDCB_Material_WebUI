@@ -1,21 +1,15 @@
+dofile(mg.document_root..'\\api\\util.lua')
+
 path='Setting\\HttpPublic.ini'
 
-post=nil
-if mg.request_info.request_method=='POST' then
-  post=''
-  repeat
-    s=mg.read()
-    post=post..(s or '')
-  until not s
-  if #post~=mg.request_info.content_length then
-    post=nil
-  end
-end
+post=ReadPost()
+
 messege=false
 
 reset=mg.get_var(mg.request_info.query_string,'reset') or nil
 
 if reset then
+  AssertCsrf(mg.request_info.query_string)
 
   if reset=='tvguide' then
 
@@ -39,6 +33,8 @@ if reset then
 
 elseif post then
 --  =(mg.get_var(post, '') or '')
+
+  AssertCsrf(post)
 
   tkntrec=0+(mg.get_var(post, 'tkntrec') or 0)~=0
   option=0+(mg.get_var(post, 'option') or 0)~=0

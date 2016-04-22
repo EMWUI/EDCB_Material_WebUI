@@ -1,4 +1,6 @@
-﻿id=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+﻿dofile(mg.document_root..'\\api\\util.lua')
+
+id=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
 
 changed=false
 
@@ -12,6 +14,8 @@ end
 edcb.htmlEscape=15
 r=edcb.GetReserveData(id)
 if r then
+  AssertCsrf(mg.request_info.query_string)
+
   r.recSetting.recMode=(r.recSetting.recMode==5 and recMode or 5)
   changed=edcb.ChgReserveData(r)
 

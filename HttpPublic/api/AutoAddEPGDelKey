@@ -1,6 +1,12 @@
+dofile(mg.document_root..'\\api\\util.lua')
+
 ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
 
-if mg.request_info.request_method=='POST' then
+post=ReadPost()
+
+AssertCsrf(post)
+
+if post then
   edcb.DelAutoAdd(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
   ct=ct..'<success>EPG自動予約を削除しました</success></entry>'
 else

@@ -1,13 +1,10 @@
-if mg.request_info.request_method=='POST' then
-  post=''
-  repeat
-    s=mg.read()
-    post=post..(s or '')
-  until not s
-  if #post~=mg.request_info.content_length then
-    post=nil
-  end
+dofile(mg.document_root..'\\api\\util.lua')
 
+post=ReadPost()
+
+AssertCsrf(post)
+
+if post then
   edcb.DelReserveData(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
   del=true
 end

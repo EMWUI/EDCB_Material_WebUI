@@ -1,3 +1,4 @@
+dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
@@ -164,6 +165,7 @@ end
 
 ct.main='<main class="mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
   ..'<form id="set" method="POST" action="'..root..'api/SaveSettings">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
 
   ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-tkntrec">tkntrec氏版</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -354,7 +356,7 @@ ct.main=ct.main..dtv..'</ul></div>\n'
 <div class="mdl-layout-spacer"></div>
 <button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
 </div>
-<form id="reset" class="reload" method="GET" action="'..root..'api/SaveSettings"><input type="hidden" name="reset"></form>
+<form id="reset" class="reload" method="GET" action="]=]..root..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
 </div>
 </div>
 ]=]

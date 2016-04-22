@@ -1,4 +1,5 @@
-﻿dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+﻿dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 DEF_CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path)
@@ -21,19 +22,11 @@ week=0+(mg.get_var(mg.request_info.query_string,'week') and 1 or 0)~=0
 pageIndex=0+(mg.get_var(mg.request_info.query_string,'chpage') or 0)
 CH_COUNT=0+(mg.get_var(mg.request_info.query_string,'chcount') or DEF_CH_COUNT)
 
-post=nil
-if mg.request_info.request_method=='POST' then
-  post=''
-  repeat
-    s=mg.read()
-    post=post..(s or '')
-  until not s
-  if #post~=mg.request_info.content_length then
-    post=nil
-  end
-end
+post=ReadPost()
 
 if post then
+  AssertCsrf(post)
+
   for i=0,10000 do
     v=mg.get_var(post, 'network', i)
     if not v then break end
@@ -41,6 +34,7 @@ if post then
   end
 
   hidden='<form id="search" class="hidden" method="POST" action="search.html'..(page~=0 and '?page='..page or '')..(autopage~=0 and (page~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..(mg.get_var(post, 'id') and '<input type="hidden" name="id" value="'..mg.get_var(post, 'id')..'">\n' or '')
     ..(mg.get_var(post, 'advanced') and '<input type="hidden" name="advanced" checked="checked">\n' or '')
     ..'<input type="hidden" name="andKey" value="'..(mg.get_var(post, 'andKey') and mg.get_var(post, 'andKey' or ''))..'">\n'
@@ -138,7 +132,7 @@ if beforeEnd then
 
     ..'<div class="mdl-dialog__actions">\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
-    ..(r and '<form id="del" data-'..redirect..'" method="POST" action="'..root..'api/ReserveDel?id='..r.reserveID..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..(r and '<form id="del" data-'..redirect..'" method="POST" action="'..root..'api/ReserveDel?id='..r.reserveID..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
     ..'</div>\n'
 
   ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'

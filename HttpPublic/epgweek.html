@@ -1,3 +1,4 @@
+dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
@@ -236,8 +237,8 @@ ct.subheader=ct.subheader
 
 ct.menu=menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
-  ..'<li class="epg mdl-menu__item" data-epg="epgcap">EPG取得</li>\n'
-  ..'<li class="epg mdl-menu__item" data-epg="reload">EPG再読み込み</li>\n'
+  ..'<li class="epg mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
+  ..'<li class="epg mdl-menu__item" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'
   ..'</ul>\n'
 
 
@@ -323,8 +324,8 @@ for i=0,7 do
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
         ..'<a class="mdl-button mdl-js-button mdl-button--raised" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..'&eid='..w.eid..'&week='..hrefGene..'">番組詳細</a>'
-        ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised"'								--終了前
-          ..(r and ' data-reserve="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+        ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
+          ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'

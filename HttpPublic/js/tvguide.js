@@ -175,7 +175,7 @@ $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
 	//EPG取得
 	$('.epg').click(function(){
-		$.get(root + 'api/Epg', {epg: $(this).data('epg')}, function(result, textStatus, xhr){
+		$.get(root + 'api/Epg', {epg: $(this).data('epg'), ctok: $(this).data('ctok')}, function(result, textStatus, xhr){
 			var xml = $(xhr.responseXML);
 			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
 		});
@@ -195,21 +195,15 @@ $(function(){
 	$('.addreserve').click(function(){
 		$('#spinner').addClass('is-visible').children().addClass('is-active');
 		var target = $(this);
-		var message, url , data;
+		var data = target.data();
+		var message, url;
 
-		if (target.data('reserve')){
+		if (data.id){
 			message = '予約を有効にしました';
 			url = root + 'api/reservetoggle';
-			data = {'id': target.data('reserve')};
-		}else if (target.data('eid')){
+		}else if (data.eid){
 			message = '予約を追加しました';
 			url = root + 'api/oneclickadd';
-			data = {
-				'onid': target.data('onid'),
-				'tsid': target.data('tsid'),
-				'sid': target.data('sid'),
-				'eid': target.data('eid')
-			};
 		}
 
 		$.ajax({
@@ -245,7 +239,7 @@ $(function(){
 							mark = '録';
 						}
 					}
-					target.data('reserve', id).text(button).parents('.content').not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
+					target.data('id', id).text(button).parents('.content').not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 					target.parents('.content').removeClass('disabled partially shortage view').addClass('reserve ' + recmode).find('.mark.reserve').text(mark);
 				}else{
 					message = xml.find('err').text();

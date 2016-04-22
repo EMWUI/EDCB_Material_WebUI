@@ -209,7 +209,8 @@ end
 
 --録画設定フォームのテンプレート
 function RecSettingTemplate(rs)
-  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
+  local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">\n'
     ..'<option value="0"'..(rs.recMode==0 and ' selected' or '')..'>全サービス\n'
     ..'<option value="1"'..(rs.recMode==1 and ' selected' or '')..'>指定サービスのみ\n'
@@ -313,7 +314,8 @@ end
 
 --検索フォームのテンプレート
 function SerchTemplate(si)
-  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
+  local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.disableFlag and si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'

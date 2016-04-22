@@ -1,4 +1,8 @@
-﻿edcb.htmlEscape=15
+﻿dofile(mg.document_root..'\\api\\util.lua')
+
+AssertCsrf(mg.request_info.query_string)
+
+edcb.htmlEscape=15
 
 epg=mg.get_var(mg.request_info.query_string,'epg')
 

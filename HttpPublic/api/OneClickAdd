@@ -1,3 +1,5 @@
+dofile(mg.document_root..'\\api\\util.lua')
+
 added=false
 onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
 tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
@@ -17,6 +19,8 @@ for i,v in ipairs(edcb.EnumRecPresetInfo()) do
 end
   eventInfo=edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid)
   if eventInfo and eventInfo.startTime and eventInfo.durationSecond then
+    AssertCsrf(mg.request_info.query_string)
+
     r.title=eventInfo.shortInfo and eventInfo.shortInfo.event_name or ''
     r.startTime=eventInfo.startTime
     r.startTimeEpg=eventInfo.startTime
