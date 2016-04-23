@@ -5,8 +5,9 @@ EDCB Material WebUI
 [xtne6f氏](https://github.com/xtne6f/EDCB)の[9bdd0a0](https://github.com/xtne6f/EDCB/commit/9bdd0a0f0c72a24eb680b1f890bf54c46bd2e939)以降が必要になります
 
 ###使い方
-EDCBのReadme_Mod.txtの[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L407-L481)をよく読み
-HttpPublicの中身を[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L429-L432)に入れてください  
+EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L474)*をよく読み  
+HttpPublicの中身を***[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L432-L435)***に基本入れてください  
+※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください
 
 ###テーマカラー
 テーマカラーを変えることが出来ます  
