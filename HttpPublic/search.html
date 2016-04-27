@@ -41,6 +41,9 @@ if not key then
     notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
     notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
     freeCAFlag=0+(mg.get_var(post, 'freeCAFlag') or mg.get_var(mg.request_info.query_string, 'freeCAFlag') or 0),
+    chkRecEnd=mg.get_var(post, 'chkRecEnd') or mg.get_var(mg.request_info.query_string, 'chkRecEnd') or false,
+    chkRecDay=mg.get_var(post, 'chkRecDay') or mg.get_var(mg.request_info.query_string, 'chkRecDay') or 0,
+    chkRecNoService=mg.get_var(post, 'chkRecNoService') or mg.get_var(mg.request_info.query_string, 'chkRecNoService') or false,
     chkDurationMin=0+(mg.get_var(post, 'chkDurationMin') or mg.get_var(mg.request_info.query_string, 'chkDurationMin') or 0),
     chkDurationMax=0+(mg.get_var(post, 'chkDurationMax') or mg.get_var(mg.request_info.query_string, 'chkDurationMax') or 0),
     network=0,
@@ -143,7 +146,7 @@ if not key then
     end
   end
   disableFlag=mg.get_var(post, 'disableFlag') or mg.get_var(mg.request_info.query_string, 'disableFlag') or false
-  key.search=true
+  key.search=not (dataID>0 or mg.get_var(post, 'id'))
 end
 
 pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
@@ -170,11 +173,9 @@ ct.main='<main class="mdl-layout__content">\n'
 
   ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
 
-hide=(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
-  ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
   ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
  
-ct.main=ct.main..hide..'</div></div>\n'
+ct.main=ct.main..'</div></div>\n'
     ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">'
     ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" type="submit">検索</button></div>\n'
     ..'</div></form>\n</div>\n'
@@ -276,8 +277,12 @@ end
     ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
     ..(key.network and '<input type="hidden" name="network" value="'..key.network..'">\n' or '')
     ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
-    ..(tkntrec and (key.chkDurationMin and '<input type="hidden" name="chkRecNoService" value="'..key.chkDurationMin..'">\n' or '')..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '') or '')
-    ..hide
+    ..(key.chkRecNoService and '<input type="hidden" name="chkRecNoService" value="'..key.chkRecNoService..'">\n' or '')
+    ..(key.chkDurationMin and '<input type="hidden" name="chkDurationMin" value="'..key.chkDurationMin..'">\n' or '')
+    ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
+    ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
+    ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
+    ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
 
   if key.contentList then
     for i,v in ipairs(key.contentList) do
