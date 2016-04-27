@@ -523,7 +523,9 @@ function SerchTemplate(si)
       ..'<span class="mdl-tooltip" for="tt-days">0で無期限</span></div>\n'
   else
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">無効対象</div>\n'
-      ..'<div class="checkbox-textfield mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing mdl-cell--middle"><div><label for="chkRecEnd" class="mdl-checkbox mdl-js-checkbox"><input id="chkRecEnd" class="mdl-checkbox__input" type="checkbox" name="chkRecEnd" value="1"'..(si.chkRecEnd and ' checked' or '')..'><span class="textfield-container mdl-checkbox__label"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="chkRecDay" value="'..si.chkRecDay..'" min="0" id="chkRecDay"><label class="mdl-textfield__label" for="chkRecDay"></label><span class="mdl-textfield__error">Input is not a number!</span></div>日前までの録画結果</span></label></div></div></div>\n'
+      ..'<div class="checkbox-textfield mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing mdl-cell--middle"><div><label for="chkRecEnd" class="mdl-checkbox mdl-js-checkbox"><input id="chkRecEnd" class="mdl-checkbox__input" type="checkbox" name="chkRecEnd" value="1"'..(si.chkRecEnd and ' checked' or '')..'><span class="textfield-container mdl-checkbox__label"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="chkRecDay" value="'..si.chkRecDay..'" min="0" id="chkRecDay"><label class="mdl-textfield__label" for="chkRecDay"></label><span class="mdl-textfield__error">Input is not a number!</span></div>日前までの録画結果</span></label></div>\n'
+      ..(tkntrec and '<div class="mdl-layout-spacer"></div><div><label class="mdl-checkbox mdl-js-checkbox" for="chkRecNoService"><input id="chkRecNoService" class="mdl-checkbox__input" type="checkbox" name="chkRecNoService" value="1"'..(si.chkRecNoService and ' checked' or '')..'><span class="mdl-checkbox__label">全てのサービスで無効</span></label></div><div class="mdl-layout-spacer"></div>\n' or '')
+      ..'</div></div>\n'
   end
 
   return s
