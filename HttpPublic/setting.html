@@ -11,6 +11,7 @@ Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
 
+Light_Mode=0+edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path)~=0
 oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
 hover=0+edcb.GetPrivateProfile('GUIDE','hover',false,path)~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
@@ -190,6 +191,10 @@ ct.main='<main class="mdl-layout__content">\n<div class="mdl-grid">\n<div class=
   ..'</div></div>\n</section>\n'
 
   ..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Light_Mode">軽量化</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="Light_Mode-flag" class="mdl-switch mdl-js-switch"><input id="Light_Mode-flag" type="checkbox" class="mdl-switch__input" name="Light_Mode" value="1"'..(Light_Mode and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-Light_Mode">スマホ等でヘッダーの調整を無効に</span></div>\n'
+
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
@@ -219,7 +224,7 @@ ct.main='<main class="mdl-layout__content">\n<div class="mdl-grid">\n<div class=
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour" value="'..w_hour..'" min="10" id="w_hour"><label class="mdl-textfield__label" for="w_hour">PC</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour_sp" value="'..w_hour_sp..'" min="10" id="w_hour_sp"><label class="mdl-textfield__label" for="w_hour_sp">スマホ</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div></div></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ジャンル別背景色</div>\n<div class="background mdl-cell mdl-cell--9-col mdl-grid">\n'

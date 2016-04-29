@@ -29,50 +29,85 @@ function jump(){
 }
 
 $(function(){
-	//チャンネル名連動
-	$('#tv-guide').scroll(function(){
-		$('#tv-guide-header').offset({left:-$('#tv-guide').scrollLeft()});
-	});
+	var target = $('#tv-guide-container');
 
-	$('#tv-guide').on({
-	    'touchstart mousedown': function(e){
-	        if (!isTouch && e.which != 1){
-	            return;
-	        }
-	    	var data = new Object();
-        	data.touched = true;
-	        data.X = (isTouch ? event.changedTouches[0].clientX : e.clientX);
-	        data.Y = (isTouch ? event.changedTouches[0].clientY : e.clientY);
-	        data.left = this.scrollLeft;
-	        data.top = $('main').scrollTop();
-	        $(this).data(data);
-	        if (!isTouch){
-        		return false;
-        	}
-	    }
-	});
-	var target = $('#tv-guide');
-	$(document).on({
-	    'touchmove mousemove': function(e){
-	        if (!target.data('touched')){
-	            return;
-	        }
-	        e.preventDefault();
+	var FRICTION  = 0.95;
+	var LIMIT_TO_STOP = 1;
 
-	        $('body').addClass('drag');
+	function moment(){
+		if (target.data('touched') || (Math.abs(speedX)<LIMIT_TO_STOP && Math.abs(speedY)<LIMIT_TO_STOP)) {
+			clearInterval(intervalID);
+			return;
+		}
 
-	        target.scrollLeft( target.data('left') + (target.data('X') - (isTouch ? event.changedTouches[0].clientX : e.clientX) ) * (isTouch ? 1 : 1.6) );
-	        $('#tv-guide-container').scrollTop( target.data('top') + (target.data('Y') - (isTouch ? event.changedTouches[0].clientY : e.clientY) ) * (isTouch ? 1 : 1.6) );
- 	    },
-	    'touchend mouseup': function(){
-	        if (!target.data('touched')){
-	            return;
-	        }
+		speedX *= FRICTION;
+		speedY *= FRICTION;
 
-	        $('body').removeClass('drag');
-	        target.data('touched', false);
-	    }
-	});
+		target.scrollLeft( target.scrollLeft() + speedX );
+		target.scrollTop( target.scrollTop() + speedY );
+	}
+
+	if (!isTouch || !Light_Mode){
+		//チャンネル名連動
+		$('#tv-guide-container').scroll(function(){
+			$('#tv-guide-header').css('top', target.scrollTop());
+			$('#hour-container').css('left', target.scrollLeft());
+		});
+
+		$('#tv-guide-main').on({
+		    'touchstart mousedown': function(e){
+				if (!isTouch && e.which != 1){
+					return;
+				}
+
+				var data = new Object();
+				data.touched = true;
+		        data.X = X = XX = (isTouch ? event.changedTouches[0].clientX : e.clientX);
+		        data.Y = Y = YY = (isTouch ? event.changedTouches[0].clientY : e.clientY);
+				data.left = target.scrollLeft();
+				data.top = target.scrollTop();
+				target.data(data);
+	        	if (!isTouch){
+					return false;
+				}
+			}
+		});
+		$(document).on({
+		    'touchmove mousemove': function(e){
+				if (!target.data('touched')){
+					return;
+				}
+				e.preventDefault();
+
+				$('body').addClass('drag');
+		        
+		        XX = X;
+		        YY = Y;
+
+				X = (isTouch ? event.changedTouches[0].clientX : e.clientX);
+				Y = (isTouch ? event.changedTouches[0].clientY : e.clientY);
+
+		        target.scrollLeft( target.data('left') + target.data('X') - X );
+		        target.scrollTop( target.data('top') + target.data('Y') - Y );
+			},
+		    'touchend mouseup': function(e){
+				if (!target.data('touched')){
+					return;
+				}
+
+				$('body').removeClass('drag');
+				target.data('touched', false);
+
+		        speedX = XX - X;
+		        speedY = YY - Y;
+
+				//慣性スクロール？
+				intervalID = setInterval(moment, 16);
+			}
+		});
+	}else{
+		$('#line').width($('#tv-guide').width() - 4);
+	}
 
 	/*禁断の果実
 	$('#tv-guide-container').on('scroll', function(){

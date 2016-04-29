@@ -363,12 +363,25 @@ main {
 
 
 /* 番組表 */
+#tv-guide-container{
+  overflow-x: auto; }
+
+#tv-guide {
+  min-width: 100%;
+  overflow: auto;
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex;
+  flex-direction: column; }
+
 #tv-guide-header {
   height: 24px;
   padding-left: 22px;
-  display: -webkit-flex;
-  display:     -ms-flexbox;
-  display:         flex; }
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex;
+  position: relative;
+  z-index: 15; }
   #tv-guide-header a {
     border-right: solid 1px #FFF;
     border-left: solid 1px #FFF;
@@ -380,20 +393,14 @@ main {
     #tv-guide-header {
       padding-left: 16px; } }
 
-
-#tv-guide {
-  padding-left: 22px;
-  overflow-x: scroll;
-  display: -webkit-flex;
-  display:     -ms-flexbox;
-  display:         flex; }
-  @media (max-width: 479px) {
-    #tv-guide {
-      padding-left: 16px; } }
+#tv-guide-main{
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex; }
 
 
 #hour-container {
-  position:absolute;
+  position:relative;
   width: 22px;
   left: 0;
   z-index: 5; }
@@ -427,7 +434,7 @@ main {
   padding: 5px 2px 0;
   left: 0;
   height: 0px;
-  width: 100%;
+  width: 100vw;
   color: #FF3D00;
   text-shadow: 0 4px 6px rgba(0,0,0,0.8);
   font-size: large;

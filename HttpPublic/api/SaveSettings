@@ -42,6 +42,7 @@ elseif post then
   subGenreoption=(mg.get_var(post, 'subGenreoption') or '')
   PAGE_COUNT=(mg.get_var(post, 'PAGE_COUNT') or '')
 
+  Light_Mode=0+(mg.get_var(post, 'Light_Mode') or 0)~=0
   oneseg=0+(mg.get_var(post, 'oneseg') or 0)~=0
   hover=0+(mg.get_var(post, 'hover') or 0)~=0
   ONE_MIN_PX=(mg.get_var(post, 'ONE_MIN_PX') or '')
@@ -89,6 +90,7 @@ elseif post then
   edcb.WritePrivateProfile('SET','subGenreoption',subGenreoption,path)
   edcb.WritePrivateProfile('SET','PAGE_COUNT',PAGE_COUNT,path)
 
+  edcb.WritePrivateProfile('GUIDE','Light_Mode',Light_Mode,path)
   edcb.WritePrivateProfile('GUIDE','oneseg',oneseg,path)
   edcb.WritePrivateProfile('GUIDE','hover',hover,path)
   edcb.WritePrivateProfile('GUIDE','ONE_MIN_PX',ONE_MIN_PX,path)

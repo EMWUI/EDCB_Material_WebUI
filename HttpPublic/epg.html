@@ -3,6 +3,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
+Light_Mode=0+edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path)~=0
 oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
 hover=0+edcb.GetPrivateProfile('GUIDE','hover',false,path)~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
@@ -103,7 +104,7 @@ ct={title='番組表'}
 ct.css='<style>\n'
   ..'main{background:'..background
   ..';}\n.station{width:'..w_service
-  ..'px;}#tv-guide-header,#tv-guide{padding-left:'..w_hour
+  ..'px;}#tv-guide-header{padding-left:'..w_hour
   ..'px;}#hour-container{width:'..w_hour
   ..'px;}.hour{height:'..(ONE_MIN_PX*60)
   ..'px;}\n'
@@ -132,13 +133,13 @@ ct.css='<style>\n'
   ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
 
   ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
-  ..'px;}#tv-guide-header,#tv-guide{padding-left:'..w_hour_sp
+  ..'px;}#tv-guide-header{padding-left:'..w_hour_sp
   ..'px;}#hour-container{width:'..w_hour_sp
   ..'px;}}\n'
   ..'</style>\n'
 
-ct.js='<script src="js/tvguide.js"></script>\n'
-  ..'<script>\n'
+ct.js='<script>\n'
+  ..'Light_Mode='..(Light_Mode and 'true' or 'false')..';\n'
   ..'oneminpx='..ONE_MIN_PX..';\n'
   ..'basehour='..baseHour..';\n'
   ..'marginmin='..MARGIN_MIN..';\n'
@@ -147,7 +148,7 @@ ct.js='<script src="js/tvguide.js"></script>\n'
                        or 'setInterval("line()", 1000);\n')
           or '')
   ..'</script>\n'
-
+  ..'<script src="js/tvguide.js"></script>\n'
 
 
 
@@ -322,14 +323,6 @@ pagemin=math.max(1,pageIndex*CH_COUNT+1)
 pagemax=CH_COUNT==0 and #st or math.min(#st,(pageIndex+1)*CH_COUNT)
 
 
-ct.subheader=ct.subheader..'<div id="tv-guide-header">\n'
-for i=pagemin,pagemax do
-  v=st[i]
-  ct.subheader=ct.subheader..'<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'">'..v.service_name..'</a>\n'
-end
-ct.subheader=ct.subheader..'</div>\n'
-
-
 
 
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
@@ -361,19 +354,30 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 ct.main='<main id="tv-guide-container" class="mdl-layout__content">\n'
 
-  ..(NOW and '<div id="line"></div>\n' or '')
+ctt={'<div id="tv-guide">'
+
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
+for i=pagemin,pagemax do
+  v=st[i]
+  table.insert(ctt, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
+end
+table.insert(ctt, '</div>\n'
+
+  ..'<div id="tv-guide-main">\n'
 
   ..'<div id="hour-container" class="mdl-color-text--white">\n'
 
+  ..(NOW and '<div id="line"></div>\n' or '')
+)
+
 for i=baseHour,baseHour+interval-1 do
      j=i-24*math.floor(i/24)
-  ct.main=ct.main..'<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n'
+  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
 
-ct.main=ct.main..'</div>\n'
+table.insert(ctt, '</div>\n')
 
 
-ctt={'<div id="tv-guide">\n'}
 for i=pagemin,pagemax do
   v=st[i]
   table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n')
@@ -434,7 +438,7 @@ for i=pagemin,pagemax do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</div>\n'
+ct.main=ct.main..table.concat(ctt)..'</div>\n</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'

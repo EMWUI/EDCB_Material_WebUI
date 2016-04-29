@@ -3,6 +3,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
+Light_Mode=0+edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path)~=0
 oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
 hover=0+edcb.GetPrivateProfile('GUIDE','hover',false,path)~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
@@ -81,6 +82,8 @@ baseDate=math.floor((now+timezone-baseHour*3600)/(24*3600))
 date=interval~=25 and 3<now and now<hour and 1 or 0
 baseTime=baseDate*24*3600+baseHour*3600-timezone+date*24*3600
 
+NOW=baseTime<now and now<baseTime+interval*3600 or nil
+
 hour=hour<0 and hour+24 or hour
 
 hrefGene=(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')
@@ -90,7 +93,7 @@ ct={}
 ct.css='<style>\n'
   ..'main{background:'..background
   ..';}\n.station{width:'..w_service
-  ..'px;}#tv-guide-header,#tv-guide{padding-left:'..w_hour
+  ..'px;}#tv-guide-header{padding-left:'..w_hour
   ..'px;}#hour-container{width:'..w_hour
   ..'px;}.hour{height:'..(ONE_MIN_PX*60)
   ..'px;}\n'
@@ -119,20 +122,20 @@ ct.css='<style>\n'
   ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
 
   ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
-  ..'px;}#tv-guide-header,#tv-guide{padding-left:'..w_hour_sp
+  ..'px;}#tv-guide-header{padding-left:'..w_hour_sp
   ..'px;}#hour-container{width:'..w_hour_sp
   ..'px;}}\n'
   ..'</style>\n'
 
-ct.js='<script src="js/tvguide.js"></script>\n'
-  ..'<script>\n'
+ct.js='<script>\n'
+  ..'Light_Mode='..(Light_Mode and 'true' or 'false')..';\n'
   ..'oneminpx='..ONE_MIN_PX..';\n'
   ..'basehour='..baseHour..';\n'
   ..'marginmin='..MARGIN_MIN..';\n'
   ..'hover='..(hover and 'true' or 'false')..';\n'
   ..'setInterval("line()", 1000);\n'
   ..'</script>\n'
-
+  ..'<script src="js/tvguide.js"></script>\n'
 
 
 
@@ -203,7 +206,9 @@ ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
-  ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" id="now"><i class="material-icons">radio_button_checked</i></a></div>\n'
+  ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
+  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..nowHour..'&interval='..interval..'"')
+  ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div id="service" class="pulldown dividers navigation__item mdl-color-text--primary">'..(st and st.service_name or '')..'</div>\n'
 
@@ -225,7 +230,7 @@ if st then
     if interval==25 or baseHour<=j and j<baseHour+interval then
       menu=menu..'<li class="scroller mdl-menu__item'..(interval~=25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..((i*60-30)*ONE_MIN_PX)..'">'..(j<4 and j+24 or j>=28 and j-24 or j)..'時</li>\n'
     else
-      menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&hour='..j..(interval~=25 and '&interval='..interval or '')'..">'..j..'時</a></li>\n'
+      menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..j..(interval~=25 and '&interval='..interval or '')..'">'..j..'時</a></li>\n'
     end
   end
   menu=menu..'</ul>\n'
@@ -244,15 +249,6 @@ ct.menu=menu
 
 
 
-ct.subheader=ct.subheader..'<div id="tv-guide-header">\n'
-for i=0,7 do
-  d=os.date('*t', ((date+i+baseDate)*24)*3600-timezone)
-  d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
-  ct.subheader=ct.subheader..'<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n'
-end
-ct.subheader=ct.subheader..'</div>\n'
-
-
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
   ..'<label class="drop-down mdl-navigation__link" for="a">ジャンル</label>\n'
   ..'<ul>\n<li><label class="mdl-radio mdl-js-radio" for="g-all"><input type="radio" id="g-all" class="genreToggle mdl-radio__button" name="genreToggle" value="all" checked><span class="mdl-radio__label">すべて</span></label></li>\n'
@@ -269,19 +265,30 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
 ct.main='<main id="tv-guide-container" class="tv mdl-layout__content">\n'
-  ..'<div id="line"></div>\n'
+
+ctt={'<div id="tv-guide">\n'
+
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
+for i=0,7 do
+  d=os.date('*t', ((date+i+baseDate)*24)*3600-timezone)
+  d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
+  table.insert(ctt, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')
+end
+table.insert(ctt, '</div>\n'
+
+  ..'<div id="tv-guide-main">\n'
 
   ..'<div id="hour-container" class="mdl-color-text--white">\n'
 
+  ..(NOW and '<div id="line"></div>\n' or '')
+)
+
 for i=baseHour,baseHour+interval-1 do
      j=i-24*math.floor(i/24)
-  ct.main=ct.main..'<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n'
+  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
 
-ct.main=ct.main..'</div>\n'
-
-
-ctt={'<div id="tv-guide">\n'}
+table.insert(ctt, '</div>\n')
 
 for i=0,7 do
   table.insert(ctt, '<div class="station">\n')
@@ -344,7 +351,7 @@ for i=0,7 do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</div>\n'
+ct.main=ct.main..table.concat(ctt)..'</div>\n</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
   ..'<input type="hidden" name="andKey">\n'
