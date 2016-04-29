@@ -698,13 +698,13 @@ main {
 #service option.hide { 
   display:none; }
 
-.checkbox-textfield {
-  margin-bottom: 2px; }
-
 .number .mdl-textfield {
   width: 70px; }
 .number .text-right {
   margin-right: 8px; }
+
+[for="chkRecEnd"]{
+  height: auto; }
 
 .text-right .mdl-textfield__input {
   text-align: right; }
