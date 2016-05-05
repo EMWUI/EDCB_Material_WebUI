@@ -5,8 +5,8 @@ EDCB Material WebUI
 [xtne6f氏](https://github.com/xtne6f/EDCB)の[9bdd0a0](https://github.com/xtne6f/EDCB/commit/9bdd0a0f0c72a24eb680b1f890bf54c46bd2e939)以降が必要になります
 
 ###使い方
-EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L474)*をよく読み  
-HttpPublicの中身を***[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L432-L435)***に基本入れてください  
+EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L475)*をよく読み  
+HttpPublicの中身を***[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L433-L436)***に基本入れてください  
 ※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください
 
 ###テーマカラー
@@ -26,7 +26,7 @@ ffmpeg.exeのパス
 
 `readex[=readex]`  
 readex.exeのパス  
-\# ダウンロードはEDCBのソース[ここ](https://github.com/xtne6f/EDCB/blob/work-plus-s/ini/HttpPublic/video/readtool.zip)から
+\# ダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
 
 以下は必要に応じて追加してください  
 `ffmpegoption[=-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -]`  
