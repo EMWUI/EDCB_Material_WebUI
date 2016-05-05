@@ -445,13 +445,14 @@ h4 .mdl-button--icon {
   padding: 5px 2px 0;
   left: 0;
   height: 0px;
-  width: 100vw;
+  width: 100%;
   color: #FF3D00;
   text-shadow: 0 4px 6px rgba(0,0,0,0.8);
   font-size: large;
   z-index: 10;
   position: absolute;
   pointer-events: none;
+  box-sizing: border-box;
   content: ''; }
   #line:before {
     top: 0;
