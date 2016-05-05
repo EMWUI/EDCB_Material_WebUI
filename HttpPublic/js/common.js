@@ -275,6 +275,12 @@ $(function(){
 
 
 
+	//検索バーのアイコンクリックで検索
+	$('[for=header-andKey]').click(function(){
+		if ($(this).parent().hasClass('is-dirty')){
+			$('#search-bar').submit();
+		}
+	});
 	//検索バー連動
 	$('#search-bar').val($('#andKey').val());
 	$('.andKey').change(function(){

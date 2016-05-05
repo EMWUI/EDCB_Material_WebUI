@@ -310,7 +310,7 @@ for i=0,7 do
       category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
       title=(w.shortInfo and ConvertTitle(w.shortInfo.event_name) or '')									--番組タイトル
       info=string.gsub((w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast"><tt>'..w.shortInfo.text_char..'</tt></div>' or ''), '\r?\n', '<br>')						--番組詳細
-      search=(w.shortInfo and ConvertSearch(w.shortInfo.event_name) or '')									--検索
+      search=(w.shortInfo and ConvertSearch(w, st.service_name) or '')									--検索
 
       r=nil
       id=rt[string.format('%04X%04X%04X%04X', w.onid, w.tsid, w.sid, w.eid)]

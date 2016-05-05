@@ -3,6 +3,9 @@ option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
 Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
 css=edcb.GetPrivateProfile('SET','css',false,path)
 
+authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',path)
+details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',path)
+
 function template(temp)
   local path = temp.path or ''
   local s=[=[
@@ -61,7 +64,7 @@ function template(temp)
           <i class="material-icons">search</i>
         </label>
         <div class="mdl-textfield__expandable-holder">
-          <form method="GET" action="search.html">
+          <form id="search-bar" method="GET" action="search.html">
             <input class="mdl-textfield__input" type="text" name="andKey" id="header-andKey">
           </form>
         </div>
@@ -145,17 +148,18 @@ function _ConvertEpgInfoText2(onid, tsid, sid, eid)
       if v.durationSecond then beforeEnd=os.time(v.startTime)+v.durationSecond>os.time() end
       s=s..'<div>\n<h4 class="mdl-typography--title">'
     if v.shortInfo then
-      s=s..ConvertTitle(v.shortInfo.event_name)..'\n'
+      s=s..ConvertTitle(v.shortInfo.event_name)
     end
     s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..(v.startTime and os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(v.startTime))+1]..') %H:%M-', os.time(v.startTime))
       ..(v.durationSecond and os.date('%H:%M', os.time(v.startTime)+v.durationSecond) or '未定') or '未定')..'</span>'
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
-        s=s..'<span class="service">'..w.service_name..'</span>'
+        service_name=w.service_name
+        s=s..'<span class="service">'..service_name..'</span>'
         break
       end
     end
-    s=s..'</span></h4>\n'
+    s=s..'</span>\n'..ConvertSearch(v, service_name)..'</h4>\n'
     if v.shortInfo then
       s=s..'<p>'..v.shortInfo.text_char:gsub('\r?\n', '<br>\n'):gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</p>\n'
     end

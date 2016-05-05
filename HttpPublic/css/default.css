@@ -281,6 +281,17 @@ main {
     .main-content>div:not(.mdl-dialog__actions) {
       padding: 16px 16px 0; } }
 
+h4 .mdl-button--icon {
+  height: 24px;
+  min-width: 24px;
+  width: 24px; }
+  h4 .material-icons {
+    font-size: 18px; }
+  h4 .mdl-button--icon img.material-icons {
+    width: 20px;
+    -webkit-transform: translate(-10px,-10px);
+            transform: translate(-10px,-10px); }
+
 #detail>div {
   padding: 0 0 16px; }
 #detail>ul {
