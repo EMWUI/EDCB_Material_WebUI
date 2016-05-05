@@ -5,7 +5,7 @@
 	if (min < 10){min = '0' + min;}
 	if (hour < basehour){hour = hour + 24;}
 	//現時刻の位置
-	var line = ((hour - basehour) * 60 + MIN) * oneminpx;
+	var line = ((hour - basehour) * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
 	return {line:line, min:min};
 }
 
