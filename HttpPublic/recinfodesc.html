@@ -13,7 +13,7 @@ v=edcb.GetRecFileInfo(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
 if v then
   -- トランスコード済みのファイルがvideoフォルダにあればそっち使う
   ori=nil
-  fname=string.match(v.recFilePath, '([^\\]+%.)[^%.]+$')
+  fname=string.match(v.recFilePath, '([^\\]+%.)[^%.]+$') or ''
   f=io.open(edcb.Convert('cp932', 'utf-8', mg.script_name:gsub('[^\\/]*$','')..'video\\'..fname..'webm'), 'rb') or
     io.open(edcb.Convert('cp932', 'utf-8', mg.script_name:gsub('[^\\/]*$','')..'video\\'..fname..'mp4'), 'rb')
   fname='video/'..mg.url_encode(fname)

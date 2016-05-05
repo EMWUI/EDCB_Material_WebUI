@@ -363,7 +363,7 @@ main {
 
 
 /* 番組表 */
-#tv-guide-container{
+#tv-guide-container {
   overflow-x: auto; }
 
 #tv-guide {
@@ -393,7 +393,7 @@ main {
     #tv-guide-header {
       padding-left: 16px; } }
 
-#tv-guide-main{
+#tv-guide-main {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex; }
@@ -994,3 +994,7 @@ main {
     max-width: 100%;
     max-height: calc(90vh - 68px);
     min-width: 232px; }
+
+.mdl-badge.material-icons:after{
+  font-family: 'Material Icons';
+}

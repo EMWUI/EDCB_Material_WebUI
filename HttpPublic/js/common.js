@@ -285,7 +285,7 @@ $(function(){
 
 	//ポップアップ閉じ
 	$('.close.mdl-badge').click(function(){
-		$('#popupmovie').removeClass('is-visible');
+		$('#popup').removeClass('is-visible');
 		$('#video').get(0).pause();
 	});
 
