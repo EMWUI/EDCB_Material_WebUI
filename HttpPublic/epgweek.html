@@ -354,6 +354,7 @@ end
 ct.main=ct.main..table.concat(ctt)..'</div>\n</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="notKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
