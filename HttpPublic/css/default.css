@@ -1010,3 +1010,55 @@ h4 .mdl-button--icon {
 .mdl-badge.material-icons:after{
   font-family: 'Material Icons';
 }
+
+/*movie*/
+.mdl-card {
+  background: #fff center / cover; }
+  @media (max-width: 700px) {
+    .mdl-card {
+      min-height: 160px; } }
+
+.mdl-card > .mdl-card__title {
+  justify-content: center; }
+
+.mdl-card__title > .material-icons {
+  color: #757575;
+  font-size: 100px; }
+  @media (max-width: 700px) {
+    .mdl-card__title > .material-icons {
+      font-size: 75px; } }
+
+.mdl-card > .mdl-card__actions {
+  height: 52px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2); }
+.filename {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; }
+
+.folder,
+.item,
+.path span,
+.close.mdl-badge.material-icons {
+  cursor: pointer; }
+
+.path .mdl-layout__tab {
+  padding: 0 6px; }
+.path .mdl-layout__tab.material-icons {
+  line-height: 48px;
+  padding: 0; }
+
+.mdl-list__item-avatar.material-icons {
+  font-size: 24px;
+  padding: 8px; }
+
+.mdl-menu__item .material-icons {
+  vertical-align: middle;
+  margin-right: 8px; }
+
+ul.main-content {
+  padding: 16px 0; }

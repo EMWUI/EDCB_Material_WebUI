@@ -107,6 +107,7 @@ function template(temp)
       <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html">チューナー別</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html">EPG予約</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html">録画結果</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[movie.html">ファイル再生</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[search.html">検索</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html">設定</a>
     </nav>
@@ -117,7 +118,7 @@ function template(temp)
   <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <video id="video" controls></video>
-      <span class="close mdl-badge" data-badge="&#xE5CD">
+      <span class="close mdl-badge material-icons" data-badge="&#xE5CD;">
     </div>
   </div>
 ]=] or '')
@@ -536,18 +537,30 @@ function SerchTemplate(si)
   return s
 end
 
+--ドキュメントルートへの相対パスを取得する
+function PathToRoot()
+  return ('../'):rep(#mg.script_name:gsub('[^\\/]*[\\/]+[^\\/]*','N')-#(mg.document_root..'/'):gsub('[^\\/]*[\\/]+','N'))
+end
+
+--OSの絶対パスをドキュメントルートからの相対パスに変換する
+function NativeToDocumentPath(path)
+  local root=(mg.document_root..'/'):gsub('[\\/]+','/')
+  if path:gsub('[\\/]+','/'):sub(1,#root):lower()==root:lower() then
+    return path:gsub('[\\/]+','/'):sub(#root+1)
+  end
+end
 
 --可能ならコンテンツをzlib圧縮する(lua-zlib(zlib.dll)が必要)
 function Deflate(ct)
   local zl
   local trim
   for k,v in pairs(mg.request_info.http_headers) do
-    if not zl and k:match('^[Aa]ccept%-[Ee]ncoding$') and v:find('deflate') then
+    if not zl and k:lower()=='accept-encoding' and v:lower():find('deflate') then
       local status, zlib = pcall(require, 'zlib')
       if status then
         zl=zlib.deflate()(ct, 'finish')
       end
-    elseif k:match('^[Uu]ser%-[Aa]gent$') and (v:find(' MSIE ') or v:find(' Trident/7%.') or v:find(' Edge/')) then
+    elseif k:lower()=='user-agent' and (v:find(' MSIE ') or v:find(' Trident/7%.') or v:find(' Edge/')) then
       --RFC2616非準拠のブラウザはzlibヘッダを取り除く
       trim=true
     end
