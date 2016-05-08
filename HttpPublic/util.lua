@@ -101,15 +101,15 @@ function template(temp)
 ..(temp.side or '')
 
 ..[=[
-      <a class="mdl-navigation__link" href="]=]..path..[=[epg.html">番組表</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html">週間番組表</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html">予約一覧</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html">チューナー別</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html">EPG予約</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html">録画結果</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[movie.html">ファイル再生</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[search.html">検索</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[setting.html">設定</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html"><i class="material-icons">schedule</i>予約一覧</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html"><i class="material-icons">tune</i>チューナー別</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html"><i class="material-icons">update</i>EPG予約</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">assignment</i>録画結果</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[movie.html"><i class="material-icons">video_library</i>ファイル再生</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[search.html"><i class="material-icons">search</i>検索</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
     </nav>
   </div>
   <div class="drawer-swipe"></div>
