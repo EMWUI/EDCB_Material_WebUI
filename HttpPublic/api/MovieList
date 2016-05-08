@@ -29,7 +29,7 @@ function attrdir(path)
             ..'</file>')
         end
       else
-        table.insert(ct, '<err>'..edcb.Convert('utf-8', 'cp932', f)..'</err>')
+        table.insert(ct, '<err>'..edcb.Convert('utf-8', 'cp932', f):gsub('&', '&amp;')..'</err>')
       end
     end
   end
