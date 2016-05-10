@@ -27,3 +27,16 @@ function AssertCsrf(qs)
     error('failed')
   end
 end
+
+--ドキュメントルートへの相対パスを取得する
+function PathToRoot()
+  return ('../'):rep(#mg.script_name:gsub('[^\\/]*[\\/]+[^\\/]*','N')-#(mg.document_root..'/'):gsub('[^\\/]*[\\/]+','N'))
+end
+
+--OSの絶対パスをドキュメントルートからの相対パスに変換する
+function NativeToDocumentPath(path)
+  local root=(mg.document_root..'/'):gsub('[\\/]+','/')
+  if path:gsub('[\\/]+','/'):sub(1,#root):lower()==root:lower() then
+    return path:gsub('[\\/]+','/'):sub(#root+1)
+  end
+end

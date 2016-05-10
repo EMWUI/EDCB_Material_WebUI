@@ -15,7 +15,7 @@ XPREPARE=0+edcb.GetPrivateProfile('SET','xprepare',48128,path)
 fname=mg.get_var(mg.request_info.query_string,'fname') or nil
 
 -- ts以外を除外
-if fname and not (string.find(fname, '.ts$') or string.find(fname, '.mp4$') or string.find(fname, '.webm$')) then
+if fname and not (string.find(fname, '%.ts$') or string.find(fname, '%.mp4$') or string.find(fname, '%.webm$')) then
    fname=nil
 end
 

@@ -3,8 +3,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 
-root=mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')
-
 tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
 option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
 Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
@@ -164,8 +162,8 @@ if count>0 then
   end
 end
 
-ct.main='<main class="mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
-  ..'<form id="set" method="POST" action="'..root..'api/SaveSettings">\n'
+ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
+  ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SaveSettings">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
 
   ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
@@ -361,7 +359,7 @@ ct.main=ct.main..dtv..'</ul></div>\n'
 <div class="mdl-layout-spacer"></div>
 <button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
 </div>
-<form id="reset" class="reload" method="GET" action="]=]..root..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
+<form id="reset" class="reload" method="GET" action="]=]..PathToRoot()..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
 </div>
 </div>
 ]=]

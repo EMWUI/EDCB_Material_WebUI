@@ -155,6 +155,10 @@ header {
   .is-dirty + .navigation-container {
     opacity: 0;
     width: 100px; }
+  .mdl-layout__header .mdl-layout-title {
+    max-width: calc(100% - 160px);
+    overflow: hidden;
+    text-overflow: ellipsis; }
   @media screen and (max-width: 1024px) {
     .navigation.mdl-navigation {
       width: 350px; } }
@@ -256,6 +260,10 @@ header {
   @media (max-width: 479px) {
     .widemenu {
       width: 230px; } }
+
+.mdl-menu__item .material-icons {
+  vertical-align: middle;
+  margin-right: 8px; }
 
 
 
@@ -1015,27 +1023,38 @@ h4 .mdl-button--icon {
   font-family: 'Material Icons';
 }
 
+
+
 /*movie*/
-.mdl-card {
+#movielist .mdl-list__item {   
+  transition-duration: .28s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1);
+  transition-property: background-color; }
+  #movielist .mdl-list__item:hover {
+    background-color: #eee;  }
+
+#movielist .mdl-card {
   background: #fff center / cover; }
   @media (max-width: 700px) {
-    .mdl-card {
+    #movielist .mdl-card {
       min-height: 160px; } }
+  #movielist .mdl-card > .mdl-card__title {
+    justify-content: center; }
+    #movielist .mdl-card__title > .material-icons {
+      color: #757575;
+      font-size: 100px; }
+      @media (max-width: 700px) {
+        #movielist .mdl-card__title > .material-icons {
+          font-size: 75px; } }
+  #movielist .mdl-card > .mdl-card__actions {
+    height: 52px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2); }
 
-.mdl-card > .mdl-card__title {
-  justify-content: center; }
+  #movielist .mdl-list__item-avatar.material-icons {
+    font-size: 24px;
+    padding: 8px; }
 
-.mdl-card__title > .material-icons {
-  color: #757575;
-  font-size: 100px; }
-  @media (max-width: 700px) {
-    .mdl-card__title > .material-icons {
-      font-size: 75px; } }
-
-.mdl-card > .mdl-card__actions {
-  height: 52px;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.2); }
 .filename {
   color: #fff;
   font-size: 14px;
@@ -1044,25 +1063,19 @@ h4 .mdl-button--icon {
   text-overflow: ellipsis;
   white-space: nowrap; }
 
-.folder,
 .item,
+.folder,
 .path span,
 .close.mdl-badge.material-icons {
   cursor: pointer; }
 
 .path .mdl-layout__tab {
-  padding: 0 6px; }
-.path .mdl-layout__tab.material-icons {
-  line-height: 48px;
-  padding: 0; }
-
-.mdl-list__item-avatar.material-icons {
-  font-size: 24px;
-  padding: 8px; }
-
-.mdl-menu__item .material-icons {
-  vertical-align: middle;
-  margin-right: 8px; }
+  padding: 0 6px;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(255,255,255,0); }
+  .path .mdl-layout__tab.material-icons {
+    line-height: 48px;
+    padding: 0; }
 
 ul.main-content {
   padding: 16px 0; }

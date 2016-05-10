@@ -1,6 +1,8 @@
 ﻿require('lfs')
+dofile(mg.document_root..'\\api\\util.lua')
+
 path='Setting\\HttpPublic.ini'
-RecFolder=0+edcb.GetPrivateProfile('SET','RecFolder',0,path)~=0 and path or 'Common.ini'
+MoviePath=0+edcb.GetPrivateProfile('SET','MoviePath',0,path)~=0 and path or 'Common.ini'
 
 id=0
 
@@ -18,13 +20,15 @@ function attrdir(path)
             attrdir(f)
             table.insert(ct, '</dir>')
           end
-        elseif string.find(file, '.ts$') or string.find(file, '.mp4$') or string.find(file, '.webm$') then
+        elseif string.find(file, '%.ts$') or string.find(file, '%.mp4$') or string.find(file, '%.webm$') then
+          XEXT=Public and string.find(file, '%.mp4$') or string.find(file, '%.webm$')
           thumbs=io.open(edcb.Convert('cp932', 'utf-8', mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg'), 'rb')
           if thumbs then
             thumbs:close()
           end
           table.insert(filelist, '<file><name>'..file:gsub('&', '&amp;')..'</name>'
-            ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', f))..'</path>'
+            ..'<path>'..(XEXT and Public_Path or '')..mg.url_encode(XEXT and file or edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
+            ..(XEXT and  '<public>1</public>' or '')
             ..'<thumbs>'..(thumbs and mg.url_encode(file:gsub('.[^.]*$', '')..'.jpg') or 0)..'</thumbs>'
             ..'</file>')
         end
@@ -39,11 +43,13 @@ end
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><dir><name>ホーム</name><id>home</id>'}
 
-count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,RecFolder)-1
+count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,MoviePath)-1
 for i=0,count do
-  dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',RecFolder)
-  if dir ~= '' then
-    table.insert(ct, '<dir><name>'..dir..'</name><id>'..dir..'</id>')
+  dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',MoviePath)
+  Public=NativeToDocumentPath(dir)
+  Public_Path=Public and PathToRoot()..Public..'/' or ''
+  if #dir>0 then
+    table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir)..'</id>')
     attrdir(edcb.Convert('cp932', 'utf-8', dir))
     table.insert(ct, '</dir>')
   end

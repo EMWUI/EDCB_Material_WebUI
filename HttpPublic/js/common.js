@@ -5,6 +5,14 @@ if (isTouch){
 	document.write('<link href="' + path + 'css/pc.css" rel="stylesheet" type="text/css">');
 }
 
+function showSpinner(visible){
+	if (visible){
+		$('#spinner').addClass('is-visible').children().addClass('is-active');
+	}else{
+		$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+	}
+}
+
 //予約一覧
 function rec(){
 	var date = new Date().getTime();
@@ -62,118 +70,156 @@ function tab(tab){
 	}
 }
 
-function getmovielist(draw){
+loadingMovieList = false;
+//動画一覧取得
+function getMovieList(draw){
+	loadingMovieList = true;
 	$.ajax({
 		url: root + 'api/MovieList',
 		success: function(result, textStatus, xhr){
 			var xml = new XMLSerializer().serializeToString(xhr.responseXML);
 			sessionStorage.setItem('movie', xml);
 			if (draw){
+				loadingMovieList = false;
 				folder('home');
-				document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '読み込みました。'});
+				document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '取得しました。'});
 			}
+		},
+		complete: function(){
+			loadingMovieList = false;
 		}
 	});
 }
 
-function checkmovielist(){
+//動画一覧再取得
+function refreshMovieList(){
+	showSpinner(true);
+	getMovieList(true);
+}
+
+//動画一覧有無確認
+function checkMovieList(){
 	if (!sessionStorage.getItem('movie')){
-		getmovielist();
+		getMovieList();
 	}
 }
 
-
-function folder(id){
-	$('.mdl-grid').empty();
-	if (list){
-		$('.mdl-grid').removeClass('list');
+//表示切替
+function toggleView(view){
+	ViewMode=view;
+	if (ViewMode){
+		$('.view-list').show();
+		$('.view-grid').hide();
 	}else{
-		$('.mdl-grid').addClass('list');
+		$('.view-grid').show();
+		$('.view-list').hide();
 	}
-	var find;
+	folder($('.mdl-layout__tab.is-active').data('id'));
+}
+
+//動画一覧
+function folder(id){
 	var notification = document.querySelector('.mdl-js-snackbar');
-	var xml = sessionStorage.getItem('movie');
-	var movie = new DOMParser().parseFromString(xml, 'text/xml');
-	$(movie).find('dir').each(function(){
-		if ($(this).children('id').text() == id){
-			find=true;
-			$(this).children('dir,file').each(function(){
-				var name = $(this).children('name').text();
-				var obj = $('<' + (list ? 'li' : 'div') + '>');
-				if ($(this).context.tagName == 'dir'){
-					obj.addClass('folder').data('id', $(this).children('id').text());
-		 			$(obj).click(function(){
+	if (!loadingMovieList){
+		showSpinner(true);
+		$('#movielist').empty();
+		if (ViewMode){
+			$('#movielist').addClass('list');
+		}else{
+			$('#movielist').removeClass('list');
+		}
+		var found;
+		var xml = sessionStorage.getItem('movie');
+		var movie = new DOMParser().parseFromString(xml, 'text/xml');
+		$(movie).find('dir').each(function(){
+			if ($(this).children('id').text() == id){
+				found=true;
+				$(this).children('dir,file').each(function(){
+					var name = $(this).children('name').text();
+					var obj = $('<' + (ViewMode ? 'div' : 'li') + '>');
+					if ($(this).context.tagName == 'dir'){
+						obj.addClass('folder').data('id', $(this).children('id').text());
+			 			$(obj).click(function(){
+							folder($(this).data('id'));
+						});
+
+						if (ViewMode){
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append('<div class="mdl-card__title mdl-card--expand"><i class="material-icons">folder').append('<div class="mdl-card__actions"><span class="filename">' + name);
+						}else{
+							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">folder').append('<span>' + name));
+						}
+					}else{
+						obj.addClass('item').data('path', $(this).children('path').text()).data('public', $(this).children('public').length > 0 ? true : false);
+						$(obj).click(function(){
+							playMovie($(this));
+						});
+
+						if (ViewMode){
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
+							var thumbs = $(this).children('thumbs').text();
+	            			if (thumbs != 0){
+	            				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
+	                      	}else{
+	                       		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
+	                       	}
+	                       	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
+						}else{
+							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
+						}
+					}
+					$('#movielist').append(obj);
+				});
+				$('#movielist li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+
+				var obj = $(this);
+				var name = $(this).children('name').text()
+				var i = $(this).children('id').text();
+
+				$('.path').html($('<span>').addClass('mdl-layout__tab is-active').text(name).data('id', i));
+				$('.mdl-layout__header-row .mdl-layout-title').text(name);
+				while (i.match(/\d+/g)){
+					i = obj.siblings('id').text();
+					var add = $('<span>').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
+		 			$(add).click(function(){
 						folder($(this).data('id'));
 					});
-
-					if (list){
-						obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">folder').append('<span>' + name));
-					}else{
-						obj.addClass('mdl-card mdl-cell mdl-cell--2-col mdl-shadow--2dp').append('<div class="mdl-card__title mdl-card--expand"><i class="material-icons">folder').append('<div class="mdl-card__actions"><span class="filename">' + name);
-					}
-				}else{
-					obj.addClass('item').data('path', $(this).children('path').text());
- 					$(obj).click(function(){
-						item($(this));
-					});
-
-					if (list){
-						obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
-					}else{
-						obj.addClass('mdl-card mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-						var thumbs = $(this).children('thumbs').text();
-            			if (thumbs != 0){
-            				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
-                      	}else{
-                       		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
-                       	}
-                       	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
-					}
+					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+					obj = obj.parent();
 				}
-				$('.mdl-grid').append(obj);
-			});
-			$('.mdl-grid li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
-
-			var obj = $(this);
-			var name = $(this).children('name').text()
-			var i = $(this).children('id').text();
-
-			$('.path').html($('<span>').addClass('mdl-layout__tab is-active').text(name).data('id', i));
-			$('.mdl-layout__header-row .mdl-layout-title').text(name);
-			while (i > 0){
-				i = obj.siblings('id').text();
-				var add = $('<span>').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
-	 			$(add).click(function(){
-					folder($(this).data('id'));
-				});
-				$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
-				obj = obj.parent();
+				if (i != 'home'){
+					var add = $('<span>').addClass('mdl-layout__tab').data('id', 'home').text('ホーム');
+		 			$(add).click(function(){
+						folder($(this).data('id'));
+					});
+					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+				}
 			}
-			if (name != 'ホーム'){
-				var add = $('<span>').addClass('mdl-layout__tab').data('id', 'home').text('ホーム');
-	 			$(add).click(function(){
-					folder($(this).data('id'));
-				});
-				$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
-			}
+		});
+		componentHandler.upgradeDom();
+		showSpinner(false);
+		if (!found){
+			notification.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
+			var data = {
+				message: 'リストを再取得しますか？',
+				actionHandler: function(event) {
+					showSpinner(true);
+					getMovieList(true);
+				},
+				actionText: '再取得'
+			};
+			notification.MaterialSnackbar.showSnackbar(data);
 		}
-	});
-	if (!find){
-		notification.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
-		var data = {
-			message: 'リストを再読み込みしますか？',
-			timeout: 2000,
-			actionHandler: function(event) {getmovielist(true)},
-			actionText: '再読み込み'
-		};
-		notification.MaterialSnackbar.showSnackbar(data);
+	}else{
+		notification.MaterialSnackbar.showSnackbar({message: 'リスト取得中です。', timeout: 1000});
 	}
 }
 
-function item(obj){
+//動画再生
+function playMovie(obj){
 	$('#popup').addClass('is-visible');
 	if (!obj.hasClass('clicked')){
-		$('#video').attr('src', root + 'api/Movie?fname='+obj.data('path') + (obj.data('path').match(/.ts$/i) ? '' : '&xcode='));
+		var path=obj.data('public') ? obj.data('path') : root + 'api/Movie?fname='+obj.data('path') + (obj.data('path').match(/.ts$/i) ? '' : '&xcode=')
+		$('#video').attr('src', path);
 	}
 	$('#video').get(0).play();
 	$('.item').removeClass('clicked');
@@ -192,10 +238,10 @@ $(function(){
 		});
 		
 		//タブ移動
-		$('main').hammer().on('swiperight', function(){
+		$('.tab-swipe').hammer().on('swiperight', function(){
 			tab( $('.mdl-layout__tab.is-active').prev() );
 		});
-		$('main').hammer().on('swipeleft', function(){
+		$('.tab-swipe').hammer().on('swipeleft', function(){
 			tab( $('.mdl-layout__tab.is-active').next() );
 		});
 	}
@@ -418,7 +464,7 @@ $(function(){
 
 	/*movie*/
 	$('.item').click(function(){
-		item($(this));
+		playMovie($(this));
 	});
 	$('.folder').click(function(){
 		folder($(this).data('id'));
@@ -675,7 +721,7 @@ $(function(){
 
 	//予約処理
 	function reserve(obj){
-		$('#spinner').addClass('is-visible').children().addClass('is-active');
+		showSpinner(true);
 		var url;
 		var data = obj.parents('td').data();
 
@@ -756,7 +802,7 @@ $(function(){
 					}
 					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
 				}
-				$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+				showSpinner(false);
 			}
 		});
 	}
@@ -783,7 +829,7 @@ $(function(){
 
 	//サブミット
 	$('.submit').click(function(){
-		$('#spinner').addClass('is-visible').children().addClass('is-active');
+		showSpinner(true);
 		var form = $( $(this).data('form') );
 		$.ajax({
 			url: form.attr('action'),
@@ -805,7 +851,7 @@ $(function(){
 				}else{
 					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
 				}
-				$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+				showSpinner(false);
 			}
 		});
 	});
