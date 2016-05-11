@@ -1,0 +1,31 @@
+require('lfs')
+dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+MoviePath=0+edcb.GetPrivateProfile('SET','MoviePath',0,path)~=0 and path or 'Common.ini'
+
+ct={title='ホーム', video=true, Scrollable=true}
+
+ct.js='<script>\n$(function(){checkMovieList();});\n</script>\n'
+
+ct.subheader=[=[
+<div class="path mdl-layout__tab-bar">
+<span class="mdl-layout__tab is-active" data-id="home">ホーム</span>
+</div>
+]=]
+
+ct.menu=[=[
+<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">
+<li class="view-grid mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="toggleView('grid');"><i class="material-icons">view_module</i>グリッド表示</li>
+<li class="view-list mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="toggleView('list');"><i class="material-icons">view_list</i>リスト表示</li>
+<li class="mdl-menu__item" onclick="refreshMovieList();"><i class="material-icons">refresh</i>再読み込み</li>
+<li class="mdl-menu__item" disabled><i class="material-icons">photo</i>サムネ作成</li>
+</ul>
+]=]
+
+ct.main='<main class="mdl-layout__content">\n<div id="library" class="mdl-grid"></div>\n'
+
+ct=template(ct)
+
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)

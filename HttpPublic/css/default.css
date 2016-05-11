@@ -980,12 +980,13 @@ h4 .mdl-button--icon {
 
 
 
-#movie>div {
+#video {
+  max-width: 100%; }
+
+#movie > div {
   margin: 8px 0 16px;
   justify-content: center; }
-  #movie>div>div,
-  #movie video {
-    max-width: 100%;
+  #movie #video {
     max-height: calc(100vh - 130px); }
 
 
@@ -1006,7 +1007,7 @@ h4 .mdl-button--icon {
     width: auto;
     min-width: 280px;
     max-width: 90vw;
-    max-height; 90vh; }
+    max-height: 90vh; }
   #popup .mdl-badge {
     position: absolute;
     top: 0;
@@ -1014,10 +1015,14 @@ h4 .mdl-button--icon {
     #popupmovie .mdl-badge[data-badge]:after {
       font-family: 'Material Icons';
       cursor: pointer; }
-  #popup video {
-    max-width: 100%;
+  #popup #video {
     max-height: calc(90vh - 68px);
     min-width: 232px; }
+  @media (max-width: 479px) {
+    #popup > .mdl-card {
+      padding:12px;
+      max-width: 94vw;
+      max-height: 94vh; } }
 
 .mdl-badge.material-icons:after{
   font-family: 'Material Icons';
@@ -1025,33 +1030,33 @@ h4 .mdl-button--icon {
 
 
 
-/*movie*/
-#movielist .mdl-list__item {   
+/*ライブラリ*/
+#library .mdl-list__item {   
   transition-duration: .28s;
   transition-timing-function: cubic-bezier(.4,0,.2,1);
   transition-property: background-color; }
-  #movielist .mdl-list__item:hover {
+  #library .mdl-list__item:hover {
     background-color: #eee;  }
 
-#movielist .mdl-card {
+#library .mdl-card {
   background: #fff center / cover; }
   @media (max-width: 700px) {
-    #movielist .mdl-card {
+    #library .mdl-card {
       min-height: 160px; } }
-  #movielist .mdl-card > .mdl-card__title {
+  #library .mdl-card > .mdl-card__title {
     justify-content: center; }
-    #movielist .mdl-card__title > .material-icons {
+    #library .mdl-card__title > .material-icons {
       color: #757575;
       font-size: 100px; }
       @media (max-width: 700px) {
-        #movielist .mdl-card__title > .material-icons {
+        #library .mdl-card__title > .material-icons {
           font-size: 75px; } }
-  #movielist .mdl-card > .mdl-card__actions {
+  #library .mdl-card > .mdl-card__actions {
     height: 52px;
     padding: 16px;
     background: rgba(0, 0, 0, 0.2); }
 
-  #movielist .mdl-list__item-avatar.material-icons {
+  #library .mdl-list__item-avatar.material-icons {
     font-size: 24px;
     padding: 8px; }
 

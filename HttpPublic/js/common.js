@@ -71,17 +71,18 @@ function tab(tab){
 }
 
 loadingMovieList = false;
-//動画一覧取得
-function getMovieList(draw){
+//ライブラリ一覧取得
+function getMovieList(Snack){
 	loadingMovieList = true;
+	showSpinner(true);
 	$.ajax({
 		url: root + 'api/MovieList',
 		success: function(result, textStatus, xhr){
 			var xml = new XMLSerializer().serializeToString(xhr.responseXML);
 			sessionStorage.setItem('movie', xml);
-			if (draw){
-				loadingMovieList = false;
-				folder('home');
+			loadingMovieList = false;
+			folder('home');
+			if (Snack){
 				document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '取得しました。'});
 			}
 		},
@@ -91,23 +92,31 @@ function getMovieList(draw){
 	});
 }
 
-//動画一覧再取得
+//ライブラリ一覧再取得
 function refreshMovieList(){
-	showSpinner(true);
 	getMovieList(true);
 }
 
-//動画一覧有無確認
+//ライブラリ一覧有無確認
 function checkMovieList(){
+	ViewMode = localStorage.getItem('ViewMode') ? localStorage.getItem('ViewMode') : 'grid';
 	if (!sessionStorage.getItem('movie')){
 		getMovieList();
+	}else{
+		folder('home');
+	}
+	if (ViewMode == 'grid'){
+		$('.view-grid').hide();
+	}else{
+		$('.view-list').hide();
 	}
 }
 
 //表示切替
 function toggleView(view){
 	ViewMode=view;
-	if (ViewMode){
+	localStorage.setItem('ViewMode', view)
+	if (ViewMode == 'grid'){
 		$('.view-list').show();
 		$('.view-grid').hide();
 	}else{
@@ -117,16 +126,16 @@ function toggleView(view){
 	folder($('.mdl-layout__tab.is-active').data('id'));
 }
 
-//動画一覧
+//ライブラリ表示
 function folder(id){
 	var notification = document.querySelector('.mdl-js-snackbar');
 	if (!loadingMovieList){
 		showSpinner(true);
-		$('#movielist').empty();
-		if (ViewMode){
-			$('#movielist').addClass('list');
+		$('#library').empty();
+		if (ViewMode == 'grid'){
+			$('#library').addClass('list');
 		}else{
-			$('#movielist').removeClass('list');
+			$('#library').removeClass('list');
 		}
 		var found;
 		var xml = sessionStorage.getItem('movie');
@@ -136,25 +145,29 @@ function folder(id){
 				found=true;
 				$(this).children('dir,file').each(function(){
 					var name = $(this).children('name').text();
-					var obj = $('<' + (ViewMode ? 'div' : 'li') + '>');
+					var obj = $('<' + (ViewMode == 'grid' ? 'div' : 'li') + '>');
 					if ($(this).context.tagName == 'dir'){
 						obj.addClass('folder').data('id', $(this).children('id').text());
 			 			$(obj).click(function(){
 							folder($(this).data('id'));
 						});
 
-						if (ViewMode){
+						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append('<div class="mdl-card__title mdl-card--expand"><i class="material-icons">folder').append('<div class="mdl-card__actions"><span class="filename">' + name);
 						}else{
 							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">folder').append('<span>' + name));
 						}
 					}else{
-						obj.addClass('item').data('path', $(this).children('path').text()).data('public', $(this).children('public').length > 0 ? true : false);
+						var data = {
+							path : $(this).children('path').text(),
+							public : $(this).children('public').length > 0 ? 'video/' + $(this).children('public').text() : false
+						}
+						obj.addClass('item').data(data);
 						$(obj).click(function(){
 							playMovie($(this));
 						});
 
-						if (ViewMode){
+						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
 							var thumbs = $(this).children('thumbs').text();
 	            			if (thumbs != 0){
@@ -167,9 +180,9 @@ function folder(id){
 							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
 						}
 					}
-					$('#movielist').append(obj);
+					$('#library').append(obj);
 				});
-				$('#movielist li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+				$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 
 				var obj = $(this);
 				var name = $(this).children('name').text()
@@ -202,7 +215,6 @@ function folder(id){
 			var data = {
 				message: 'リストを再取得しますか？',
 				actionHandler: function(event) {
-					showSpinner(true);
 					getMovieList(true);
 				},
 				actionText: '再取得'
@@ -218,8 +230,10 @@ function folder(id){
 function playMovie(obj){
 	$('#popup').addClass('is-visible');
 	if (!obj.hasClass('clicked')){
-		var path=obj.data('public') ? obj.data('path') : root + 'api/Movie?fname='+obj.data('path') + (obj.data('path').match(/.ts$/i) ? '' : '&xcode=')
-		$('#video').attr('src', path);
+		var path = obj.data('public') ? obj.data('public') : root + 'api/Movie?fname='+obj.data('path');
+		var MIME = $('#video').get(0).canPlayType('video/' + path.match(/[^\.]*$/));
+		var xcode = !obj.data('public') && MIME.length > 0 ? '&xcode=' : '';
+		$('#video').attr('src', path + xcode);
 	}
 	$('#video').get(0).play();
 	$('.item').removeClass('clicked');
@@ -824,7 +838,7 @@ $(function(){
 
 	//通信エラー
 	$(document).ajaxError(function(e,xhr, textStatus, errorThrown){
-		notification.MaterialSnackbar.showSnackbar({message: xhr.status+" Error : "+xhr.statusText});
+		notification.MaterialSnackbar.showSnackbar({message: xhr.status+"Error : "+xhr.statusText});
 	});
 
 	//サブミット

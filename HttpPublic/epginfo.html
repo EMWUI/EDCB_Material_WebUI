@@ -125,8 +125,8 @@ if beforeEnd then
     ..RecSettingTemplate(rs)..'</div></form>\n'
     ..'</section>\n'
 
-    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
-    ..'<video src="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
+    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div id="player">\n'
+    ..'<video id="video" src="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
     ..'</div></div>\n</section>\n' or '')
     ..'</div>\n'
 

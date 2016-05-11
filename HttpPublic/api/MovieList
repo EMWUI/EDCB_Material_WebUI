@@ -27,8 +27,8 @@ function attrdir(path)
             thumbs:close()
           end
           table.insert(filelist, '<file><name>'..file:gsub('&', '&amp;')..'</name>'
-            ..'<path>'..(XEXT and Public_Path or '')..mg.url_encode(XEXT and file or edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
-            ..(XEXT and  '<public>1</public>' or '')
+            ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
+            ..(XEXT and  '<public>'..mg.url_encode(file)..'</public>' or '')
             ..'<thumbs>'..(thumbs and mg.url_encode(file:gsub('.[^.]*$', '')..'.jpg') or 0)..'</thumbs>'
             ..'</file>')
         end
