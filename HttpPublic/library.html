@@ -3,8 +3,6 @@ dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-MoviePath=0+edcb.GetPrivateProfile('SET','MoviePath',0,path)~=0 and path or 'Common.ini'
-
 ct={title='ホーム', video=true, Scrollable=true}
 
 ct.js='<script>\n$(function(){checkMovieList();});\n</script>\n'

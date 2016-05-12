@@ -76,7 +76,7 @@ function getMovieList(Snack){
 	loadingMovieList = true;
 	showSpinner(true);
 	$.ajax({
-		url: root + 'api/MovieList',
+		url: root + 'api/Library',
 		success: function(result, textStatus, xhr){
 			var xml = new XMLSerializer().serializeToString(xhr.responseXML);
 			sessionStorage.setItem('movie', xml);
@@ -230,10 +230,15 @@ function folder(id){
 function playMovie(obj){
 	$('#popup').addClass('is-visible');
 	if (!obj.hasClass('clicked')){
-		var path = obj.data('public') ? obj.data('public') : root + 'api/Movie?fname='+obj.data('path');
-		var MIME = $('#video').get(0).canPlayType('video/' + path.match(/[^\.]*$/));
-		var xcode = !obj.data('public') && MIME.length > 0 ? '&xcode=' : '';
-		$('#video').attr('src', path + xcode);
+		var path = obj.data('path');
+		var MIME = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
+
+		if (obj.data('public') && MIME){
+			path = obj.data('public');
+		}else{
+			path = root + 'api/Movie?fname=' + path + (MIME ? '&xcode=' : '');
+		}
+		$('#video').attr('src', path);
 	}
 	$('#video').get(0).play();
 	$('.item').removeClass('clicked');
@@ -472,16 +477,6 @@ $(function(){
 	$('.close.mdl-badge').click(function(){
 		$('#popup').removeClass('is-visible');
 		$('#video').get(0).pause();
-	});
-
-
-
-	/*movie*/
-	$('.item').click(function(){
-		playMovie($(this));
-	});
-	$('.folder').click(function(){
-		folder($(this).data('id'));
 	});
 
 

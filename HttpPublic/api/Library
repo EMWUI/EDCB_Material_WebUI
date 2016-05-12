@@ -2,7 +2,7 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
-MoviePath=0+edcb.GetPrivateProfile('SET','MoviePath',0,path)~=0 and path or 'Common.ini'
+LibraryPath=0+edcb.GetPrivateProfile('SET','LibraryPath',0,path)~=0 and path or 'Common.ini'
 
 id=0
 
@@ -21,14 +21,13 @@ function attrdir(path)
             table.insert(ct, '</dir>')
           end
         elseif string.find(file, '%.ts$') or string.find(file, '%.mp4$') or string.find(file, '%.webm$') then
-          XEXT=Public and string.find(file, '%.mp4$') or string.find(file, '%.webm$')
           thumbs=io.open(edcb.Convert('cp932', 'utf-8', mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg'), 'rb')
           if thumbs then
             thumbs:close()
           end
           table.insert(filelist, '<file><name>'..file:gsub('&', '&amp;')..'</name>'
             ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
-            ..(XEXT and  '<public>'..mg.url_encode(file)..'</public>' or '')
+            ..(Public and  '<public>'..mg.url_encode(file)..'</public>' or '')
             ..'<thumbs>'..(thumbs and mg.url_encode(file:gsub('.[^.]*$', '')..'.jpg') or 0)..'</thumbs>'
             ..'</file>')
         end
@@ -43,11 +42,10 @@ end
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><dir><name>ホーム</name><id>home</id>'}
 
-count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,MoviePath)-1
+count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath)-1
 for i=0,count do
-  dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',MoviePath)
+  dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
   Public=NativeToDocumentPath(dir)
-  Public_Path=Public and PathToRoot()..Public..'/' or ''
   if #dir>0 then
     table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir)..'</id>')
     attrdir(edcb.Convert('cp932', 'utf-8', dir))
