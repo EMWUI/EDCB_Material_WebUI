@@ -106,6 +106,7 @@ function template(temp)
       <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html"><i class="material-icons">schedule</i>予約一覧</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html"><i class="material-icons">tune</i>チューナー別</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html"><i class="material-icons">update</i>EPG予約</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[library.html"><i class="material-icons">video_library</i>ライブラリ</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">assignment</i>録画結果</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[search.html"><i class="material-icons">search</i>検索</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
@@ -116,8 +117,10 @@ function template(temp)
 ..(temp.video and [=[
   <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
-      <video id="video" controls></video>
-      <span class="close mdl-badge" data-badge="&#xE5CD">
+      <div id="player">
+        <video id="video" controls></video>
+      </div>
+      <span class="close mdl-badge material-icons" data-badge="&#xE5CD;">
     </div>
   </div>
 ]=] or '')
@@ -536,18 +539,17 @@ function SerchTemplate(si)
   return s
 end
 
-
 --可能ならコンテンツをzlib圧縮する(lua-zlib(zlib.dll)が必要)
 function Deflate(ct)
   local zl
   local trim
   for k,v in pairs(mg.request_info.http_headers) do
-    if not zl and k:match('^[Aa]ccept%-[Ee]ncoding$') and v:find('deflate') then
+    if not zl and k:lower()=='accept-encoding' and v:lower():find('deflate') then
       local status, zlib = pcall(require, 'zlib')
       if status then
         zl=zlib.deflate()(ct, 'finish')
       end
-    elseif k:match('^[Uu]ser%-[Aa]gent$') and (v:find(' MSIE ') or v:find(' Trident/7%.') or v:find(' Edge/')) then
+    elseif k:lower()=='user-agent' and (v:find(' MSIE ') or v:find(' Trident/7%.') or v:find(' Edge/')) then
       --RFC2616非準拠のブラウザはzlibヘッダを取り除く
       trim=true
     end

@@ -1,0 +1,61 @@
+﻿require('lfs')
+dofile(mg.document_root..'\\api\\util.lua')
+
+path='Setting\\HttpPublic.ini'
+LibraryPath=0+edcb.GetPrivateProfile('SET','LibraryPath',0,path)~=0 and path or 'Common.ini'
+
+id=0
+
+function attrdir(path)
+  local filelist={}
+  for file in lfs.dir(path) do
+    if file ~= '.' and file ~= '..' then
+      f=path..'\\'..file
+      file=edcb.Convert('utf-8', 'cp932', file)
+      if lfs.attributes(f) then
+        if lfs.attributes(f).mode == "directory" then
+          if file ~= 'chapters' then
+            id=id+1
+            table.insert(ct, '<dir><name>'..file:gsub('&', '&amp;')..'</name><id>'..id..'</id>')
+            attrdir(f)
+            table.insert(ct, '</dir>')
+          end
+        elseif string.find(file, '%.ts$') or string.find(file, '%.mp4$') or string.find(file, '%.webm$') then
+          thumbs=io.open(edcb.Convert('cp932', 'utf-8', mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg'), 'rb')
+          if thumbs then
+            thumbs:close()
+          end
+          table.insert(filelist, '<file><name>'..file:gsub('&', '&amp;')..'</name>'
+            ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
+            ..(Public and  '<public>'..mg.url_encode(file)..'</public>' or '')
+            ..'<thumbs>'..(thumbs and mg.url_encode(file:gsub('.[^.]*$', '')..'.jpg') or 0)..'</thumbs>'
+            ..'</file>')
+        end
+      else
+        table.insert(ct, '<err>'..edcb.Convert('utf-8', 'cp932', f):gsub('&', '&amp;')..'</err>')
+      end
+    end
+  end
+  table.insert(ct, table.concat(filelist))
+end
+
+
+ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><dir><name>ホーム</name><id>home</id>'}
+
+count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath)-1
+for i=0,count do
+  dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
+  Public=NativeToDocumentPath(dir)
+  if #dir>0 then
+    table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir)..'</id>')
+    attrdir(edcb.Convert('cp932', 'utf-8', dir))
+    table.insert(ct, '</dir>')
+  end
+end
+
+table.insert(ct, '</dir></entry>')
+
+cl=0
+for i,v in ipairs(ct) do cl=cl+#v end
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+for i,v in ipairs(ct) do mg.write(v) end

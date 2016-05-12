@@ -2,8 +2,6 @@ dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-root=mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')
-
 ct={title='録画結果'}
 
 page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
@@ -44,21 +42,21 @@ if v then
 
   info=(#info>0 and '<p>'..info..'</li></ul></li>\n' or '</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n<ul><li>結果<ul><li>'..v.comment..'</li></ul></li>')..'</ul>'
 
-  ct.main='<main class="mdl-layout__content">\n'
+  ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
     ..'<div>\n<h4 class="mdl-typography--title">'..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..(v.startTime and os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[w+1]..') %H:%M-', os.time(v.startTime))
     ..(v.durationSecond and os.date('%H:%M', os.time(v.startTime)+v.durationSecond) or '未定') or '未定')..'</span>'
     ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..info:gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</section>\n'
 
-    ..(f and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
-           ..'<video'..(ori and ' preload="none"' or '')..' controls>\n<source src="'..fname..'mp4" type="video/mp4">\n<source src="'..fname..'webm" type="video/webm">\n<source src="'..root..'api/Movie?id='..v.id..'" type="video/webm" data-load="'..(ori and 'false' or 'true')..'">\n</video>\n'
+    ..(f and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div id="player">\n'
+           ..'<video id="video"'..(ori and ' preload="none"' or '')..' controls>\n<source src="'..fname..'mp4" type="video/mp4">\n<source src="'..fname..'webm" type="video/webm">\n<source src="'..PathToRoot()..'api/Movie?id='..v.id..'" type="video/webm" data-load="'..(ori and 'false' or 'true')..'">\n</video>\n'
            ..'</div></div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
     ..'</div>\n'
 
     ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
-    ..'<form id="del" method="POST" action="'..root..'api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'</div>\n'
 

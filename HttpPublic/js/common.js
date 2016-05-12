@@ -5,6 +5,14 @@ if (isTouch){
 	document.write('<link href="' + path + 'css/pc.css" rel="stylesheet" type="text/css">');
 }
 
+function showSpinner(visible){
+	if (visible){
+		$('#spinner').addClass('is-visible').children().addClass('is-active');
+	}else{
+		$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+	}
+}
+
 //予約一覧
 function rec(){
 	var date = new Date().getTime();
@@ -61,6 +69,182 @@ function tab(tab){
 		}
 	}
 }
+
+loadingMovieList = false;
+//ライブラリ一覧取得
+function getMovieList(Snack){
+	loadingMovieList = true;
+	showSpinner(true);
+	$.ajax({
+		url: root + 'api/Library',
+		success: function(result, textStatus, xhr){
+			var xml = new XMLSerializer().serializeToString(xhr.responseXML);
+			sessionStorage.setItem('movie', xml);
+			loadingMovieList = false;
+			folder('home');
+			if (Snack){
+				document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '取得しました。'});
+			}
+		},
+		complete: function(){
+			loadingMovieList = false;
+		}
+	});
+}
+
+//ライブラリ一覧再取得
+function refreshMovieList(){
+	getMovieList(true);
+}
+
+//ライブラリ一覧有無確認
+function checkMovieList(){
+	ViewMode = localStorage.getItem('ViewMode') ? localStorage.getItem('ViewMode') : 'grid';
+	if (!sessionStorage.getItem('movie')){
+		getMovieList();
+	}else{
+		folder('home');
+	}
+	if (ViewMode == 'grid'){
+		$('.view-grid').hide();
+	}else{
+		$('.view-list').hide();
+	}
+}
+
+//表示切替
+function toggleView(view){
+	ViewMode=view;
+	localStorage.setItem('ViewMode', view)
+	if (ViewMode == 'grid'){
+		$('.view-list').show();
+		$('.view-grid').hide();
+	}else{
+		$('.view-grid').show();
+		$('.view-list').hide();
+	}
+	folder($('.mdl-layout__tab.is-active').data('id'));
+}
+
+//ライブラリ表示
+function folder(id){
+	var notification = document.querySelector('.mdl-js-snackbar');
+	if (!loadingMovieList){
+		showSpinner(true);
+		$('#library').empty();
+		if (ViewMode == 'grid'){
+			$('#library').addClass('list');
+		}else{
+			$('#library').removeClass('list');
+		}
+		var found;
+		var xml = sessionStorage.getItem('movie');
+		var movie = new DOMParser().parseFromString(xml, 'text/xml');
+		$(movie).find('dir').each(function(){
+			if ($(this).children('id').text() == id){
+				found=true;
+				$(this).children('dir,file').each(function(){
+					var name = $(this).children('name').text();
+					var obj = $('<' + (ViewMode == 'grid' ? 'div' : 'li') + '>');
+					if ($(this).context.tagName == 'dir'){
+						obj.addClass('folder').data('id', $(this).children('id').text());
+			 			$(obj).click(function(){
+							folder($(this).data('id'));
+						});
+
+						if (ViewMode == 'grid'){
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append('<div class="mdl-card__title mdl-card--expand"><i class="material-icons">folder').append('<div class="mdl-card__actions"><span class="filename">' + name);
+						}else{
+							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">folder').append('<span>' + name));
+						}
+					}else{
+						var data = {
+							path : $(this).children('path').text(),
+							public : $(this).children('public').length > 0 ? 'video/' + $(this).children('public').text() : false
+						}
+						obj.addClass('item').data(data);
+						$(obj).click(function(){
+							playMovie($(this));
+						});
+
+						if (ViewMode == 'grid'){
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
+							var thumbs = $(this).children('thumbs').text();
+	            			if (thumbs != 0){
+	            				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
+	                      	}else{
+	                       		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
+	                       	}
+	                       	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
+						}else{
+							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
+						}
+					}
+					$('#library').append(obj);
+				});
+				$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+
+				var obj = $(this);
+				var name = $(this).children('name').text()
+				var i = $(this).children('id').text();
+
+				$('.path').html($('<span>').addClass('mdl-layout__tab is-active').text(name).data('id', i));
+				$('.mdl-layout__header-row .mdl-layout-title').text(name);
+				while (i.match(/\d+/g)){
+					i = obj.siblings('id').text();
+					var add = $('<span>').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
+		 			$(add).click(function(){
+						folder($(this).data('id'));
+					});
+					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+					obj = obj.parent();
+				}
+				if (i != 'home'){
+					var add = $('<span>').addClass('mdl-layout__tab').data('id', 'home').text('ホーム');
+		 			$(add).click(function(){
+						folder($(this).data('id'));
+					});
+					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+				}
+			}
+		});
+		componentHandler.upgradeDom();
+		showSpinner(false);
+		if (!found){
+			notification.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
+			var data = {
+				message: 'リストを再取得しますか？',
+				actionHandler: function(event) {
+					getMovieList(true);
+				},
+				actionText: '再取得'
+			};
+			notification.MaterialSnackbar.showSnackbar(data);
+		}
+	}else{
+		notification.MaterialSnackbar.showSnackbar({message: 'リスト取得中です。', timeout: 1000});
+	}
+}
+
+//動画再生
+function playMovie(obj){
+	$('#popup').addClass('is-visible');
+	if (!obj.hasClass('clicked')){
+		var path = obj.data('path');
+		var MIME = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
+
+		if (obj.data('public') && MIME){
+			path = obj.data('public');
+		}else{
+			path = root + 'api/Movie?fname=' + path + (MIME ? '&xcode=' : '');
+		}
+		$('#video').attr('src', path);
+	}
+	$('#video').get(0).play();
+	$('.item').removeClass('clicked');
+	obj.addClass('clicked');
+}
+
 $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
 
@@ -73,10 +257,10 @@ $(function(){
 		});
 		
 		//タブ移動
-		$('main').hammer().on('swiperight', function(){
+		$('.tab-swipe').hammer().on('swiperight', function(){
 			tab( $('.mdl-layout__tab.is-active').prev() );
 		});
-		$('main').hammer().on('swipeleft', function(){
+		$('.tab-swipe').hammer().on('swipeleft', function(){
 			tab( $('.mdl-layout__tab.is-active').next() );
 		});
 	}
@@ -546,7 +730,7 @@ $(function(){
 
 	//予約処理
 	function reserve(obj){
-		$('#spinner').addClass('is-visible').children().addClass('is-active');
+		showSpinner(true);
 		var url;
 		var data = obj.parents('td').data();
 
@@ -627,7 +811,7 @@ $(function(){
 					}
 					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
 				}
-				$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+				showSpinner(false);
 			}
 		});
 	}
@@ -649,12 +833,12 @@ $(function(){
 
 	//通信エラー
 	$(document).ajaxError(function(e,xhr, textStatus, errorThrown){
-		notification.MaterialSnackbar.showSnackbar({message: xhr.status+" Error : "+xhr.statusText});
+		notification.MaterialSnackbar.showSnackbar({message: xhr.status+"Error : "+xhr.statusText});
 	});
 
 	//サブミット
 	$('.submit').click(function(){
-		$('#spinner').addClass('is-visible').children().addClass('is-active');
+		showSpinner(true);
 		var form = $( $(this).data('form') );
 		$.ajax({
 			url: form.attr('action'),
@@ -676,7 +860,7 @@ $(function(){
 				}else{
 					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
 				}
-				$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+				showSpinner(false);
 			}
 		});
 	});

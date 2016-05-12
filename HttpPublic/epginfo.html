@@ -4,8 +4,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 DEF_CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path)
 
-root=mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')
-
 onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
 tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
 sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
@@ -88,18 +86,18 @@ end
 
 ct={title='番組情報'}
 
-ct.main='<main class="mdl-layout__content">\n'
+ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
   .._ConvertEpgInfoText2(onid, tsid, sid, eid)
 
 if beforeEnd then
   redirect=mg.get_var(post, 'andKey') and 'submit="#search' or 'redirect="'..(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid or 'epg.html?tab='..tab..'&date='..date..(pageIndex~=0 and '&chpage='..pageIndex or ''))..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
 
-  ct.js='<script>\n$(function(){getpreset(\''..root..'api/EnumReserveInfo\');});\n</script>\n'
+  ct.js='<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
-    ..'<form id="set" data-'..redirect..'" method="POST" action="'..root..'api/'..(r and 'ReserveChg?id='..r.reserveID or 'ReserveAdd')..'">\n'
+    ..'<form id="set" data-'..redirect..'" method="POST" action="'..PathToRoot()..'api/'..(r and 'ReserveChg?id='..r.reserveID or 'ReserveAdd')..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reseveid="'..r.reserveID..'"' or '')..'>\n'
@@ -127,14 +125,14 @@ if beforeEnd then
     ..RecSettingTemplate(rs)..'</div></form>\n'
     ..'</section>\n'
 
-    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div>\n'
-    ..'<video src="'..root..'api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
+    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div id="player">\n'
+    ..'<video id="video" src="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
     ..'</div></div>\n</section>\n' or '')
     ..'</div>\n'
 
     ..'<div class="mdl-dialog__actions">\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
-    ..(r and '<form id="del" data-'..redirect..'" method="POST" action="'..root..'api/ReserveDel?id='..r.reserveID..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..(r and '<form id="del" data-'..redirect..'" method="POST" action="'..PathToRoot()..'api/ReserveDel?id='..r.reserveID..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
     ..'</div>\n'
 
   ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'
