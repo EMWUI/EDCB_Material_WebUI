@@ -19,16 +19,34 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)から選択することをお勧めします  
 .markのborderはA700を指定しています
 
-###ファイル再生について
-Setting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
-`ffmpeg[=ffmpeg]`  
+###ライブラリについて
+**LuaFileSystem(lfs.dll)が必要です**  
+xtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしてEpgTimerSrv.exeと同じ場所に入れ  
+**ffmpeg.exeとreadex.exeをToolsフォルダ**に入れてください  
+readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
+
+ファイルを表示するフォルダは録画保存フォルダ(Common.ini)から読み込みます  
+HttpPublic.iniのSETに`LibraryPath=1`を追加するとHttpPublic.iniから読み込みます  
+Common.iniと同じ形式で指定してください  
+例
+
+    [SET]
+    RecFolderNum=2
+    RecFolderPath0=C:\DTV
+    RecFolderPath1=C:\hoge
+
+#サムネ
+HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッド表示の時にサムネを表示します  
+サムネの作成はToolsフォルダにバッチ例を同梱してます
+
+必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
+**※ffmpegとreadexのデフォルト値がToolsフォルダに変更になりました※**  
+`ffmpeg[=Tools\ffmpeg]`  
 ffmpeg.exeのパス
 
-`readex[=readex]`  
+`readex[=Tools\readex]`  
 readex.exeのパス  
-\# ダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
 
-以下は必要に応じて追加してください  
 `ffmpegoption[=-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -]`  
 ffmpegのオプション  
 \# -iは指定する必要ありません  
@@ -94,3 +112,4 @@ tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**�
 * [jQuery UI Touch Punch](http://touchpunch.furf.com)
 * [Hammer.JS](http://hammerjs.github.io)
 * [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
+* [LuaFileSystem](https://keplerproject.github.io/luafilesystem/) ([GitHub](https://github.com/keplerproject/luafilesystem))
