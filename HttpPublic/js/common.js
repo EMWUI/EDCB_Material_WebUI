@@ -159,8 +159,8 @@ function folder(id){
 						}
 					}else{
 						var data = {
-							path : $(this).children('path').text(),
-							public : $(this).children('public').length > 0 ? 'video/' + $(this).children('public').text() : false
+							path: $(this).children('path').text(),
+							public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
 						}
 						obj.addClass('item').data(data);
 						$(obj).click(function(){
