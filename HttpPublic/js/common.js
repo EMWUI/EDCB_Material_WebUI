@@ -78,12 +78,18 @@ function getMovieList(Snack){
 	$.ajax({
 		url: root + 'api/Library',
 		success: function(result, textStatus, xhr){
-			var xml = new XMLSerializer().serializeToString(xhr.responseXML);
-			sessionStorage.setItem('movie', xml);
-			loadingMovieList = false;
-			folder('home');
-			if (Snack){
-				document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '取得しました。'});
+			if (xhr.responseXML){
+				var xml = new XMLSerializer().serializeToString(xhr.responseXML);
+				sessionStorage.setItem('movie', xml);
+				loadingMovieList = false;
+				folder('home');
+				if (Snack){
+					$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '取得しました。'});
+				}
+			}else{
+				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '取得に失敗しました', timeout: 1000});
+				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '"lfs.dll"を確認してください', timeout: 3000});
+				showSpinner(false);
 			}
 		},
 		complete: function(){
