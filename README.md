@@ -7,7 +7,8 @@ EDCB Material WebUI
 ###使い方
 EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L475)*をよく読み  
 HttpPublicの中身を***[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L433-L436)***に基本入れてください  
-※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください
+※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください  
+ファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要です詳しくはライブラリ項目を
 
 ###テーマカラー
 テーマカラーを変えることが出来ます  
@@ -19,7 +20,8 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)から選択することをお勧めします  
 .markのborderはA700を指定しています
 
-###ライブラリについて
+###ライブラリ
+録画保存フォルダのファイルを表示・再生します  
 **LuaFileSystem(lfs.dll)が必要です**  
 xtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしてEpgTimerSrv.exeと同じ場所に入れ  
 **ffmpeg.exeとreadex.exeをToolsフォルダ**に入れてください  
@@ -35,7 +37,7 @@ Common.iniと同じ形式で指定してください
     RecFolderPath0=C:\DTV
     RecFolderPath1=C:\hoge
 
-#サムネ
+#####サムネ
 HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッド表示の時にサムネを表示します  
 サムネの作成はToolsフォルダにバッチ例を同梱してます
 
