@@ -4,4 +4,4 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 ct=template({main='  <main class="mdl-layout__content">\n'})
 
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: '..#ct..(mg.keep_alive(true) and '' or '\r\nConnection: close')..'\r\n\r\n', ct)
+mg.write(Response(200, 'text/html', 'utf-8', #ct)..'\r\n', ct)
