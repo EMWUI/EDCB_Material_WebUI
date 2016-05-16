@@ -47,7 +47,7 @@ for i=0,count do
   dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
   Public=NativeToDocumentPath(dir)
   if #dir>0 then
-    table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir)..'</id>')
+    table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir):gsub(':', ''):gsub('/', '\\')..'</id>')
     attrdir(edcb.Convert('cp932', 'utf-8', dir))
     table.insert(ct, '</dir>')
   end

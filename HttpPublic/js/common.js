@@ -82,7 +82,12 @@ function getMovieList(Snack){
 				var xml = new XMLSerializer().serializeToString(xhr.responseXML);
 				sessionStorage.setItem('movie', xml);
 				loadingMovieList = false;
-				folder('home');
+				refreshPath = true;
+				if (location.hash == ''){
+					folder();
+				}else{
+					location.hash = '';
+				}
 				if (Snack){
 					$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '取得しました。'});
 				}
@@ -105,11 +110,15 @@ function refreshMovieList(){
 
 //ライブラリ一覧有無確認
 function checkMovieList(){
+	$(window).on('hashchange', function(){
+		folder();
+	});
 	ViewMode = localStorage.getItem('ViewMode') ? localStorage.getItem('ViewMode') : 'grid';
 	if (!sessionStorage.getItem('movie')){
 		getMovieList();
 	}else{
-		folder('home');
+		refreshPath = true;
+		folder();
 	}
 	if (ViewMode == 'grid'){
 		$('.view-grid').hide();
@@ -129,11 +138,17 @@ function toggleView(view){
 		$('.view-grid').show();
 		$('.view-list').hide();
 	}
-	folder($('.mdl-layout__tab.is-active').data('id'));
+	folder();
 }
 
 //ライブラリ表示
-function folder(id){
+function folder(){
+	id = location.hash == '' ? 'home' : location.hash.replace('#', '');
+	if (!$('#' + id).length > 0){
+		refreshPath = true;
+	}
+	$('.mdl-layout__tab').removeClass('is-active');
+	$('#' + id).addClass('is-active');
 	var notification = document.querySelector('.mdl-js-snackbar');
 	if (!loadingMovieList){
 		showSpinner(true);
@@ -155,7 +170,8 @@ function folder(id){
 					if ($(this).context.tagName == 'dir'){
 						obj.addClass('folder').data('id', $(this).children('id').text());
 			 			$(obj).click(function(){
-							folder($(this).data('id'));
+							refreshPath = true;
+			 				location.hash = '#'+$(this).data('id');
 						});
 
 						if (ViewMode == 'grid'){
@@ -176,12 +192,12 @@ function folder(id){
 						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
 							var thumbs = $(this).children('thumbs').text();
-	            			if (thumbs != 0){
-	            				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
-	                      	}else{
-	                       		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
-	                       	}
-	                       	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
+			          			if (thumbs != 0){
+			          				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
+			                   	}else{
+			                   		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
+			                   	}
+			                      	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
 						}else{
 							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
 						}
@@ -190,27 +206,34 @@ function folder(id){
 				});
 				$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 
-				var obj = $(this);
 				var name = $(this).children('name').text()
-				var i = $(this).children('id').text();
-
-				$('.path').html($('<span>').addClass('mdl-layout__tab is-active').text(name).data('id', i));
 				$('.mdl-layout__header-row .mdl-layout-title').text(name);
-				while (i.match(/\d+/g)){
-					i = obj.siblings('id').text();
-					var add = $('<span>').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
-		 			$(add).click(function(){
-						folder($(this).data('id'));
+				if (refreshPath){
+					var obj = $(this);
+					var i = $(this).children('id').text();
+
+					var add = $('<span id="' + i + '">').addClass('mdl-layout__tab is-active').text(name).data('id', i);
+			 		$(add).click(function(){
+			 			location.hash = '#'+$(this).data('id');
 					});
-					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
-					obj = obj.parent();
-				}
-				if (i != 'home'){
-					var add = $('<span>').addClass('mdl-layout__tab').data('id', 'home').text('ホーム');
-		 			$(add).click(function(){
-						folder($(this).data('id'));
-					});
-					$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+					$('.path').html(add);
+					while (i.match(/\d+/g)){
+						i = obj.siblings('id').text();
+						var add = $('<span id="' + i + '">').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
+			 			$(add).click(function(){
+			 				location.hash = '#'+$(this).data('id');
+						});
+						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+						obj = obj.parent();
+					}
+					if (i != 'home'){
+						var add = $('<span id="home">').data('id', 'home').addClass('mdl-layout__tab').text('ホーム');
+			 			$(add).click(function(){
+			 				location.hash = '#home';
+						});
+						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+					}
+					refreshPath = false;
 				}
 			}
 		});
@@ -229,6 +252,12 @@ function folder(id){
 		}
 	}else{
 		notification.MaterialSnackbar.showSnackbar({message: 'リスト取得中です。', timeout: 1000});
+	}
+}
+
+function librarySwipe(obj){
+	if (obj.length > 0){
+		location.hash = '#' + obj.data('id');
 	}
 }
 
@@ -268,6 +297,14 @@ $(function(){
 		});
 		$('.tab-swipe').hammer().on('swipeleft', function(){
 			tab( $('.mdl-layout__tab.is-active').next() );
+		});
+		
+		//ライブラリ
+		$('.lib-swipe').hammer().on('swiperight', function(){
+			librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') );
+		});
+		$('.lib-swipe').hammer().on('swipeleft', function(){
+			librarySwipe( $('.mdl-layout__tab.is-active').nextAll('span:first') );
 		});
 	}
 
