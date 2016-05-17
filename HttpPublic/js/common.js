@@ -78,23 +78,32 @@ function getMovieList(Snack){
 	$.ajax({
 		url: root + 'api/Library',
 		success: function(result, textStatus, xhr){
+			var message;
 			if (xhr.responseXML){
-				var xml = new XMLSerializer().serializeToString(xhr.responseXML);
-				sessionStorage.setItem('movie', xml);
-				loadingMovieList = false;
-				refreshPath = true;
-				if (location.hash == ''){
-					folder();
+				var xml = xhr.responseXML;
+				if ($(xml).find('error').length > 0){
+					message = $(xml).find('error').text();
+					showSpinner(false);
 				}else{
-					location.hash = '';
-				}
-				if (Snack){
-					$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '取得しました。'});
+					var xml = new XMLSerializer().serializeToString(xml);
+					sessionStorage.setItem('movie', xml);
+					loadingMovieList = false;
+					refreshPath = true;
+					if (location.hash == ''){
+						folder();
+					}else{
+						location.hash = '';
+					}
+					if (Snack){
+						message = '取得しました。';
+					}
 				}
 			}else{
-				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '取得に失敗しました', timeout: 1000});
-				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '"lfs.dll"を確認してください', timeout: 3000});
+				message = '取得に失敗しました';
 				showSpinner(false);
+			}
+			if (message){
+				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: message});
 			}
 		},
 		complete: function(){
