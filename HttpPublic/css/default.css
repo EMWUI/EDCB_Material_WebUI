@@ -547,7 +547,7 @@ h4 .mdl-button--icon {
 .popup {
   display: none; }
   .clicked .popup {
-    display:block; }
+    display: block; }
 
 .tool {
   display: -webkit-flex;
@@ -723,8 +723,8 @@ h4 .mdl-button--icon {
 
 .has-button {
   display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex; }
+  display:     -ms-flexbox;
+  display:         flex; }
 
 #service option.hide { 
   display:none; }
@@ -745,14 +745,35 @@ h4 .mdl-button--icon {
 
 .mdl-grid.form .preset {
   padding-bottom: 0; }
-  .preset>div>div:first-child {
-    padding-left: 24px; }
 .mdl-grid.form .partial {
   padding: 0 0 4px; }
+  .preset {
+    position: relative;
+    line-height: 20px!important; }
+  .preset:not(:last-child) {
+    margin-bottom: 8px!important; }
+  @media (min-width: 480px) {
+    .preset>div>div:first-child {
+      padding-left: 24px; } }
   @media (max-width: 479px) {
-    .preset>.mdl-grid.mdl-grid--no-spacing>.mdl-cell {
-      margin-left: 15px;
-      padding-left: 0!important; } }
+    .preset.mdl-grid.mdl-grid--no-spacing>.mdl-cell {
+      margin-left: 15px; } }
+.addPreset {
+  color: rgba(0, 0, 0, 0.54);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; }
+  .addPreset:hover {
+    background: rgba(158,158,158,.2);}
+.delPreset {
+  color: rgba(0, 0, 0, 0.54);
+  position: absolute;
+  right: 4px; }
+  .delPreset .material-icons {
+    font-size: 20px;
+    -webkit-transform: translate(0,0);
+    transform: translate(0,0); }
+
 
 
 /* 時間絞り込み */
@@ -898,8 +919,8 @@ h4 .mdl-button--icon {
     margin: 8px;
     height: auto;
     display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
+    display:     -ms-flexbox;
+    display:         flex;
     flex-wrap: wrap;
     font-weight: 400;
     white-space: normal;
@@ -970,7 +991,7 @@ h4 .mdl-button--icon {
   .ui-sortable-helper .handle {
     cursor: -webkit-grabbing; }
 
-#sort  .mdl-list__item-primary-content label {
+#sort .mdl-list__item-primary-content label {
     cursor: pointer; }
     [name="hide"]:checked + label {
       color: rgba(0,0,0,.54); }

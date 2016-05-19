@@ -10,11 +10,7 @@ aa.dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
 if aa.dataID~=0 then
   for i,v in ipairs(edcb.EnumAutoAdd()) do
     if v.dataID==aa.dataID then
-      lastRecSetting={
-        batFilePath=v.recSetting.batFilePath,
---        recFolderList=v.recSetting.recFolderList,
---        partialRecFolder=v.recSetting.partialRecFolder
-      }
+      lastRecSetting={}
       break
     end
   end
@@ -45,19 +41,6 @@ if post and (aa.dataID==0 or lastRecSetting) then
   then
     aa.recSetting=lastRecSetting or {}
     rs=aa.recSetting
-    if 0+presetID~=0xFFFF then
-      rs.batFilePath=''
-      rs.recFolderList={}
-      rs.partialRecFolder={}
-      for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-        if v.id==0+presetID then
-          rs.batFilePath=v.recSetting.batFilePath
-          rs.recFolderList=v.recSetting.recFolderList
-          rs.partialRecFolder=v.recSetting.partialRecFolder
-          break
-        end
-      end
-    end
     rs.recMode=0+recMode
     rs.tuijyuuFlag=0+(tuijyuuFlag or 0)~=0
     rs.priority=0+priority
@@ -74,13 +57,14 @@ if post and (aa.dataID==0 or lastRecSetting) then
     rs.continueRecFlag=continueRecFlag~=nil
     rs.tunerID=0+tunerID
     rs.partialRecFlag=partialRecFlag and 1 or 0
+    rs.batFilePath=mg.get_var(post, 'batFilePath')
     rs.recFolderList={}
     for i=0,10000 do
      if not mg.get_var(post, 'recFolder', i) then break end
       table.insert(rs.recFolderList, {
         recFolder=mg.get_var(post, 'recFolder', i),
         writePlugIn=mg.get_var(post, 'writePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
       } )
     end
     rs.partialRecFolder={}
@@ -89,7 +73,7 @@ if post and (aa.dataID==0 or lastRecSetting) then
       table.insert(rs.partialRecFolder, {
         recFolder=mg.get_var(post, 'partialrecFolder', i),
         writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
       } )
     end
 

@@ -30,26 +30,14 @@ if post and r then
      (useDefMarginFlag or startMargin and endMargin) and tunerID
   then
     rs=r.recSetting
-    if 0+presetID~=0xFFFF then
-      rs.batFilePath=''
---      rs.recFolderList={}
---      rs.partialRecFolder={}
-      for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-        if v.id==0+presetID then
-          rs.batFilePath=v.recSetting.batFilePath
---          rs.recFolderList=v.recSetting.recFolderList
---          rs.partialRecFolder=v.recSetting.partialRecFolder
-          break
-        end
-      end
-    end
+    rs.batFilePath=mg.get_var(post, 'batFilePath')
     rs.recFolderList={}
     for i=0,10000 do
      if not mg.get_var(post, 'recFolder', i) then break end
       table.insert(rs.recFolderList, {
         recFolder=mg.get_var(post, 'recFolder', i),
         writePlugIn=mg.get_var(post, 'writePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
       } )
     end
     rs.partialRecFolder={}
@@ -58,7 +46,7 @@ if post and r then
       table.insert(rs.partialRecFolder, {
         recFolder=mg.get_var(post, 'partialrecFolder', i),
         writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
       } )
     end
     rs.recMode=0+recMode

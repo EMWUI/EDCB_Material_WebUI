@@ -299,44 +299,171 @@ function RecSettingTemplate(rs)
     s=s..'<option value="'..a[i].tunerID..'"'..(a[i].tunerID==rs.tunerID and ' selected' or '')..string.format('>ID:%08X(', a[i].tunerID)..a[i].tunerName..')\n'
   end
   s=s..'</select></div></div>\n'
-  
-    ..'<div id="preset" class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div>※プリセットによる変更のみ</div>\n'
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画後実行bat</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(rs.batFilePath=='' and '－' or rs.batFilePath )..'</div></div>\n'
 
-  local b=''
-  for i,v in ipairs(rs.recFolderList) do
-    recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    b=b..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.writePlugIn..'</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(option and recName or v.recNamePlugIn=='' and '－' or v.recNamePlugIn)..'</div></div>\n'
-      ..(option and v.recNamePlugIn~='' and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
-                                          ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="recName" value="'..(recName3 or '')..'" id="recName'..i..'"><label class="mdl-textfield__label" for="recName'..i..'">ファイル名オプション</label></div></div>\n' or '')
-      ..'<input class="recFolderList" type=hidden name="recFolder" value="'..v.recFolder..'"><input class="recFolderList" type=hidden name="writePlugIn" value="'..v.writePlugIn..'"><input class="recFolderList" type=hidden name="recNamePlugIn" value="'..(option and recName or v.recNamePlugIn)..'">'
-  end
-  s=s..(#b>0 and b or '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
-                    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
-                    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>')
-    ..'</div>'
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">部分受信サービス</div>\n'
-    ..'<div class="mdl-cell--middle"><label for="partial" class="mdl-checkbox mdl-js-checkbox"><input id="partial" class="mdl-checkbox__input" type="checkbox" name="partialRecFlag" value="1"'..(rs.partialRecFlag~=0 and ' checked' or '')..'><span class="mdl-checkbox__label">別ファイルに同時出力する</span></label></div></div>\n'
+  local status, lfs=pcall(require, 'lfs')
 
-  b=''
-  for i,v in ipairs(rs.partialRecFolder) do
-    recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    b=b..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.writePlugIn..'</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(option and recName or v.recNamePlugIn=='' and '－' or v.recNamePlugIn)..'</div></div>\n'
-      ..(option and v.recNamePlugIn~='' and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
-                                          ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="partialrecName" value="'..(recName3 or '')..'" id="partialrecName'..i..'"><label class="mdl-textfield__label" for="partialrecName'..i..'">ファイル名オプション</label></div></div>\n' or '')
-      ..'<input class="recFolderList" type=hidden name="partialrecFolder" value="'..v.recFolder..'"><input class="recFolderList" type=hidden name="partialwritePlugIn" value="'..v.writePlugIn..'"><input class="recFolderList" type=hidden name="partialrecNamePlugIn" value="'..(option and recName or v.recNamePlugIn)..'">'
+  if status then
+
+	local CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+    local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)
+    local WritePath=CurrentDir..'\\Write'
+    local RecNamePath=CurrentDir..'\\RecName'
+    s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
+      ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(rs.batFilePath=='' and ' selected' or '')..'>なし\n'
+      
+    if rs.batFilePath:gsub('\\[^\\/]*$','')~=batPath and rs.batFilePath~='' then
+      s=s..'<option value="'..rs.batFilePath..'" selected>'..rs.batFilePath..'\n'
+    end
+    for file in lfs.dir(batPath) do
+      if file ~= '.' and file ~= '..' and string.find(file, '%.bat$') then
+        s=s..'<option value="'..batPath..'\\'..file..'"'..(rs.batFilePath==batPath..'\\'..file and ' selected' or '')..'>'..file..'\n'
+      end
+    end
+    s=s..'</select></div></div>\n'
+
+      ..'<div id="preset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" data-lfs="true" data-option="'..(option and 'true' or 'false')..'">\n'
+
+    if #rs.recFolderList>0 then
+      for i,v in ipairs(rs.recFolderList) do
+        recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+
+        s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
+          ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">出力PlugIn</div>\n'
+          ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="writePlugIn">\n'
+        for file in lfs.dir(WritePath) do
+          if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+            s=s..'<option value="'..file..'"'..(v.writePlugIn==file and ' selected' or '')..'>'..file..'\n'
+          end
+        end
+        s=s..'</select></div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn</div>\n'
+          ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recNamePlugIn">\n<option value=""'..((recName or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
+        for file in lfs.dir(RecNamePath) do
+          if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+            s=s..'<option value="'..file..'"'..((recName or v.recNamePlugIn)==file and ' selected' or '')..'>'..file..'\n'
+          end
+        end
+        s=s..'</select></div></div>\n'
+          ..(option and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
+                       ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="recName" value="'..(recName3 or '')..'" id="recName'..i..'"><label class="mdl-textfield__label" for="recName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+          ..'<input class="recFolderList" type=hidden name="recFolder" value="'..v.recFolder..'">'
+          ..'</div>\n'
+      end
+    end
+    s=s..'<div class="addPreset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><i class="material-icons">add_circle_outline</i></div>\n'
+      ..'</div>'
+
+      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">部分受信サービス</div>\n'
+      ..'<div class="mdl-cell--middle"><label for="partial" class="mdl-checkbox mdl-js-checkbox"><input id="partial" class="mdl-checkbox__input" type="checkbox" name="partialRecFlag" value="1"'..(rs.partialRecFlag~=0 and ' checked' or '')..'><span class="mdl-checkbox__label">別ファイルに同時出力する</span></label></div></div>\n'
+
+      ..'<div id="partialpreset" class="partial mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"'..(rs.partialRecFlag==0 and ' style="display: none;"' or '')..'>\n'
+
+    if #rs.partialRecFolder>0 then
+      for i,v in ipairs(rs.partialRecFolder) do
+        recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+
+        s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
+          ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">出力PlugIn</div>\n'
+          ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="partialwritePlugIn">\n'
+        for file in lfs.dir(WritePath) do
+          if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+            s=s..'<option value="'..file..'"'..(v.writePlugIn==file and ' selected' or '')..'>'..file..'\n'
+          end
+        end
+        s=s..'</select></div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn</div>\n'
+          ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="partialrecNamePlugIn">\n<option value=""'..(recName=='' and ' selected' or '')..'>なし\n'
+        for file in lfs.dir(RecNamePath) do
+          if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+            s=s..'<option value="'..file..'"'..((recName or v.recNamePlugIn)==file and ' selected' or '')..'>'..file..'\n'
+          end
+        end
+        s=s..'</select></div></div>\n'
+          ..(option and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
+                                              ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="partialrecName" value="'..(recName3 or '')..'" id="partialrecName'..i..'"><label class="mdl-textfield__label" for="partialrecName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+          ..'<input class="recFolder" type=hidden name="partialrecFolder" value="'..v.recFolder..'">'
+          ..'</div>\n'
+      end
+    end
+    s=s..'<div class="addPreset partial mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><i class="material-icons">add_circle_outline</i></div>\n'
+      ..'</div>'
+
+      ..'<select id="Write" class="hidden">\n'
+    for file in lfs.dir(WritePath) do
+      if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+        s=s..'<option value="'..file..'">'..file..'\n'
+      end
+    end
+    s=s..'</select>\n<select id="RecName" class="hidden">\n<option value="">なし\n'
+    for file in lfs.dir(RecNamePath) do
+      if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
+        s=s..'<option value="'..file..'">'..file..'\n'
+      end
+    end
+    s=s..'</select>\n'
+
+  else
+
+    s=s..'<div id="preset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" data-option="'..(option and 'true' or 'false')..'">\n'
+      ..'<div>※プリセットによる変更のみ</div>\n'
+      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
+      ..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画後実行bat</div>\n'
+      ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(rs.batFilePath=='' and '－' or rs.batFilePath )..'</div><input type=hidden name="batFilePath" value="'..rs.batFilePath..'"></div>\n'
+      ..'</div>'
+
+    if #rs.recFolderList>0 then
+      for i,v in ipairs(rs.recFolderList) do
+        recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+        s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.writePlugIn..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(option and recName or v.recNamePlugIn=='' and '－' or v.recNamePlugIn)..'</div></div>\n'
+          ..(option and v.recNamePlugIn~='' and'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
+                                             ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="recName" value="'..(recName3 or '')..'" id="recName'..i..'"><label class="mdl-textfield__label" for="recName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+          ..'<input class="recFolderList" type=hidden name="recFolder" value="'..v.recFolder..'"><input class="recFolderList" type=hidden name="writePlugIn" value="'..v.writePlugIn..'"><input class="recFolderList" type=hidden name="recNamePlugIn" value="'..(option and recName or v.recNamePlugIn)..'">'
+          ..'</div>'
+      end
+    else
+      s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>'
+        ..'</div>'
+    end
+
+    s=s..'</div>'
+      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">部分受信サービス</div>\n'
+      ..'<div class="mdl-cell--middle"><label for="partial" class="mdl-checkbox mdl-js-checkbox"><input id="partial" class="mdl-checkbox__input" type="checkbox" name="partialRecFlag" value="1"'..(rs.partialRecFlag~=0 and ' checked' or '')..'><span class="mdl-checkbox__label">別ファイルに同時出力する</span></label></div></div>\n'
+
+      ..'<div id="partialpreset" class="partial mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"'..(rs.partialRecFlag==0 and ' style="display: none;"' or '')..'>\n'
+      ..'<div>※プリセットによる変更のみ</div>\n'
+
+    if #rs.partialRecFolder>0 then
+      for i,v in ipairs(rs.partialRecFolder) do
+        recName,recName2,recName3=string.match(v.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+        s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.writePlugIn..'</div></div>\n'
+          ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..(option and recName or v.recNamePlugIn=='' and '－' or v.recNamePlugIn)..'</div></div>\n'
+          ..(option and v.recNamePlugIn~='' and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
+                                              ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="partialrecName" value="'..(recName3 or '')..'" id="partialrecName'..i..'"><label class="mdl-textfield__label" for="partialrecName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+          ..'<input class="recFolderList" type=hidden name="partialrecFolder" value="'..v.recFolder..'"><input class="recFolderList" type=hidden name="partialwritePlugIn" value="'..v.writePlugIn..'"><input class="recFolderList" type=hidden name="partialrecNamePlugIn" value="'..(option and recName or v.recNamePlugIn)..'">'
+          ..'</div>'
+      end
+    else
+      s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
+        ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
+        ..'</div>'
+    end
+    s=s..'</div>\n'
+
   end
-  s=s..'<div id="partialpreset" class="preset partial mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"'..(rs.partialRecFlag==0 and ' style="display: none;"' or '')..'>\n'
-    ..'<div>※プリセットによる変更のみ</div>\n'
-    ..(#b>0 and b or '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">出力PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>\n'
-      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル名PlugIn</div><div class="mdl-cell mdl-cell--6-col">－</div></div>')..'</div>\n'
   return s
 end
 

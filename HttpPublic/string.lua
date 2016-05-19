@@ -50,9 +50,10 @@ function ConvertSearch(v, service_name)
   local title=mg.url_encode(v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or '')
   local startTime=os.time(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
+  local text_char=v.shortInfo.text_char:gsub('%%', '%%%%')
   local search='<a class="mdl-button mdl-js-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
     ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
     ..'<a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&text='..title..'&location='..mg.url_encode(service_name)..'&dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&details='..mg.url_encode(details:gsub('%%text_char%%', v.shortInfo.text_char:gsub('%%', '%%%%')):gsub('%%br%%', '\n') or '')..'&authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&text='..title..'&location='..mg.url_encode(service_name)..'&dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&details='..mg.url_encode(details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
   return search
 end
