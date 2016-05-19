@@ -1,12 +1,19 @@
 path='Setting\\HttpPublic.ini'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
-ffmpegoption=edcb.GetPrivateProfile('SET','ffmpegoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+ffmpegoption=edcb.GetPrivateProfile('SET','fmgoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -r 30000/1001 -acodec libvorbis -ab 128k -f webm',path)
 readex=edcb.GetPrivateProfile('SET','readex','Tools\\readex',path)
 
 -- トランスコードするかどうか
 XCODE=0+(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
 -- 変換コマンド
-XCMD=ffmpeg..' -i pipe:0 '..ffmpegoption
+quality=mg.get_var(mg.request_info.query_string, 'quality') or nil
+
+if quality then
+  quality=edcb.GetPrivateProfile('MOVIE',quality,'-b 1800k -cpu-used 2 -s 960x540',path)
+else
+  quality=edcb.GetPrivateProfile('MOVIE','normal','-b 896k -s 512x288',path)
+end
+XCMD=ffmpeg..' -i pipe:0 '..ffmpegoption..' '..quality..' -'
 -- 変換後の拡張子
 XEXT='.webm'
 -- 転送開始前に変換しておく量(bytes)

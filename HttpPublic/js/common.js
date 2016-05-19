@@ -89,11 +89,7 @@ function getMovieList(Snack){
 					sessionStorage.setItem('movie', xml);
 					loadingMovieList = false;
 					refreshPath = true;
-					if (location.hash == ''){
-						folder();
-					}else{
-						location.hash = '';
-					}
+					folder();
 					if (Snack){
 						message = '取得しました。';
 					}
@@ -114,6 +110,7 @@ function getMovieList(Snack){
 
 //ライブラリ一覧再取得
 function refreshMovieList(){
+	location.hash = '';
 	getMovieList(true);
 }
 
@@ -158,7 +155,7 @@ function folder(){
 	}
 	$('.mdl-layout__tab').removeClass('is-active');
 	$('#' + id).addClass('is-active');
-	var notification = document.querySelector('.mdl-js-snackbar');
+	var notification = $('.mdl-js-snackbar').get(0);
 	if (!loadingMovieList){
 		showSpinner(true);
 		$('#library').empty();
@@ -175,7 +172,7 @@ function folder(){
 				found=true;
 				$(this).children('dir,file').each(function(){
 					var name = $(this).children('name').text();
-					var obj = $('<' + (ViewMode == 'grid' ? 'div' : 'li') + '>');
+					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'));
 					if ($(this).context.tagName == 'dir'){
 						obj.addClass('folder').data('id', $(this).children('id').text());
 			 			$(obj).click(function(){
@@ -184,17 +181,27 @@ function folder(){
 						});
 
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append('<div class="mdl-card__title mdl-card--expand"><i class="material-icons">folder').append('<div class="mdl-card__actions"><span class="filename">' + name);
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+								$('<div>', {class: 'mdl-card__title mdl-card--expand'}).append(
+									$('<i>', {class: 'material-icons', text: 'folder'}) ) ).append(
+								$('<div>', {class: 'mdl-card__actions'}).append(
+									$('<span>', {class: 'filename', text: name}) ) );
 						}else{
-							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">folder').append('<span>' + name));
+							obj.addClass('mdl-list__item').append(
+								$('<span>', {class: 'mdl-list__item-primary-content'}).append(
+									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}) ).append(
+									$('<span>', {text: name}) ) );
 						}
 					}else{
 						var data = {
+							name: name,
 							path: $(this).children('path').text(),
 							public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
 						}
 						obj.addClass('item').data(data);
 						$(obj).click(function(){
+							$('#popup').addClass('is-visible');
+							$('.bar').addClass('is-visible');
 							playMovie($(this));
 						});
 
@@ -202,13 +209,16 @@ function folder(){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
 							var thumbs = $(this).children('thumbs').text();
 			          			if (thumbs != 0){
-			          				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>').addClass('mdl-card__title mdl-card--expand'));
+			          				obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 			                   	}else{
-			                   		obj.append('<div class="mdl-card__title mdl-card--expand icon"><i class="material-icons">movie_creation');
+			                   		obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}).append($('<i>', {class: 'material-icons', text: 'movie_creation'}) ) );
 			                   	}
-			                      	obj.append('<div class="mdl-card__actions"><span class="filename">' + name);
+			                      	obj.append($('<div>', {class: 'mdl-card__actions'}).append($('<span>', {class: 'filename', text: name}) ) );
 						}else{
-							obj.addClass('mdl-list__item').append($('<span class="mdl-list__item-primary-content">').append('<i class="material-icons mdl-list__item-avatar mdl-color--primary">movie_creation').append('<span>' + name));
+							obj.addClass('mdl-list__item').append(
+								$('<span>', {class: 'mdl-list__item-primary-content'}).append(
+									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}) ).append(
+									$('<span>', {text: name}) ) );
 						}
 					}
 					$('#library').append(obj);
@@ -221,14 +231,14 @@ function folder(){
 					var obj = $(this);
 					var i = $(this).children('id').text();
 
-					var add = $('<span id="' + i + '">').addClass('mdl-layout__tab is-active').text(name).data('id', i);
+					var add = $('<span>', {id: i, class: 'mdl-layout__tab is-active', text: name, data: {id: i} });
 			 		$(add).click(function(){
 			 			location.hash = '#'+$(this).data('id');
 					});
 					$('.path').html(add);
 					while (i.match(/\d+/g)){
 						i = obj.siblings('id').text();
-						var add = $('<span id="' + i + '">').addClass('mdl-layout__tab').data('id', i).text(obj.siblings('name').text());
+						var add = $('<span>', {id: i, class: 'mdl-layout__tab', text: obj.siblings('name').text(), data: {id: i} });
 			 			$(add).click(function(){
 			 				location.hash = '#'+$(this).data('id');
 						});
@@ -236,7 +246,7 @@ function folder(){
 						obj = obj.parent();
 					}
 					if (i != 'home'){
-						var add = $('<span id="home">').data('id', 'home').addClass('mdl-layout__tab').text('ホーム');
+						var add = $('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'} });
 			 			$(add).click(function(){
 			 				location.hash = '#home';
 						});
@@ -268,25 +278,6 @@ function librarySwipe(obj){
 	if (obj.length > 0){
 		location.hash = '#' + obj.data('id');
 	}
-}
-
-//動画再生
-function playMovie(obj){
-	$('#popup').addClass('is-visible');
-	if (!obj.hasClass('clicked')){
-		var path = obj.data('path');
-		var MIME = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
-
-		if (obj.data('public') && MIME){
-			path = obj.data('public');
-		}else{
-			path = root + 'api/Movie?fname=' + path + (MIME ? '&xcode=' : '');
-		}
-		$('#video').attr('src', path);
-	}
-	$('#video').get(0).play();
-	$('.item').removeClass('clicked');
-	obj.addClass('clicked');
 }
 
 $(function(){
@@ -347,7 +338,9 @@ $(function(){
 	$('.mdl-layout__tab').click(function(){
 		$('main').scrollTop(0);
 		if ($(this).hasClass('play') && !$('video').data('load')){
-			$('video').load().data('load', true);
+			loadMovie($('#video'));
+			$('#video').load().data('load', true);
+			$('#volume').get(0).MaterialSlider.change(localStorage.getItem('volume'));
 		}
 	});
 
@@ -529,6 +522,7 @@ $(function(){
 	$('.close.mdl-badge').click(function(){
 		$('#popup').removeClass('is-visible');
 		$('#video').get(0).pause();
+		video.playbackRate = 1;
 	});
 
 

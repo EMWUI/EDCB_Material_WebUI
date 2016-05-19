@@ -118,9 +118,30 @@ function template(temp)
   <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <div id="player">
-        <video id="video" controls></video>
+        <video id="video"></video>
+        <div id="titlebar" class="bar"></div>
+        <div id="control" class="bar">
+      	  <i id="playprev" class="ctl-button material-icons">skip_previous</i>
+          <i id="play" class="ctl-button material-icons">play_arrow</i>
+      	  <i id="playnext" class="ctl-button material-icons">skip_next</i>
+      	  <div id="seek-container" class="mdl-layout-spacer">
+            <span class="currentTime videoTime">0:00</span>
+      	    <p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
+            <span class="duration videoTime">0:00</span>
+          </div>
+          <p class="mdl-layout-spacer mdl-layout--small-screen-only"></p>
+          <i id="volume-icon" class="ctl-button material-icons">volume_up</i>
+          <p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
+      	  <i id="settings" class="ctl-button material-icons">settings</i>
+          <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
+            <li class="mdl-menu__item"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+            <li class="mdl-menu__item"><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"><label for="HD"><i class="material-icons">hd</i></label></span></li>
+            <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
+          </ul>
+      	  <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+        </div>
       </div>
-      <span class="close mdl-badge material-icons" data-badge="&#xE5CD;">
+      <span class="close mdl-badge material-icons" data-badge="&#xE5CD;"></span>
     </div>
   </div>
 ]=] or '')
@@ -537,6 +558,31 @@ function SerchTemplate(si)
   end
 
   return s
+end
+
+--プレイヤー
+function player(video, ori)
+  return '<div id="player">\n'
+..video..[=[
+<div id="control" class="bar is-visible">
+<i id="play" class="ctl-button material-icons">play_arrow</i>
+<div id="seek-container" class="mdl-layout-spacer">
+<span class="currentTime videoTime">0:00</span>
+<p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
+<span class="duration videoTime">0:00</span>
+</div>
+<i id="volume-icon" class="ctl-button material-icons">volume_up</i>
+<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
+<p class="mdl-layout-spacer mdl-layout--small-screen-only"></p>
+<i id="settings" class="ctl-button material-icons">settings</i>
+<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
+<li class="mdl-menu__item"]=]..(ori and ' disabled' or '')..'><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"'..(ori and ' disabled' or '')..[=[><label for="HD"><i class="material-icons">hd</i></label></span></li>
+<li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
+</ul>
+<i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+</div>
+</div>
+]=]
 end
 
 --レスポンスを生成する

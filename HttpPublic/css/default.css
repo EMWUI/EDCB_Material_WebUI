@@ -980,15 +980,156 @@ h4 .mdl-button--icon {
 
 
 
+/*動画*/
 #video {
-  max-width: 100%; }
+  max-width: 100%;
+  min-width: 300px;
+  min-height: 168px;
+  background: url('../img/noise.gif') center / cover; }
+  @media (min-width: 700px) {
+    #video {
+      min-width: 480px;
+      min-height: 270px; } }
 
 #movie > div {
   margin: 8px 0 16px;
   justify-content: center; }
   #movie #video {
-    max-height: calc(100vh - 130px); }
+    max-height: calc(90vh - 130px); }
 
+
+
+/*プレイヤー*/
+#player {
+  position: relative;
+  overflow: hidden; }
+  #player:-webkit-full-screen,
+  #player:-webkit-full-screen #video {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    max-height: none; }
+  #player:-moz-full-screen,
+  #player:-moz-full-screen #video {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    max-height: none; }
+
+  #player:-ms-fullscreen,
+  #player:-ms-fullscreen #video {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    max-height: none; }
+  #player:fullscreen,
+  #player:fullscreen #video {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    max-height: none; }
+
+.bar {
+  width: 100%;
+  position: absolute;
+  background: rgba(255,255,255,0.7);
+  color: #424242;
+  box-sizing: border-box;
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition-duration: .2s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1);
+  transition-property: transform;
+  transition-property: transform,-webkit-transform; }
+.bar.is-visible {
+  -webkit-transform: translateX(0) !important;
+  transform: translateX(0) !important; }
+#titlebar {
+  top: 0;
+  padding: 8px 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-transform: translateY(-36px);
+  transform: translateY(-36px); }
+#control {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  bottom: 0;
+  align-items: center;
+  -webkit-transform: translateY(40px);
+  transform: translateY(40px); }
+  #control > *:first-child {
+    margin-left: 8px; }
+  #control > *:last-child {
+    margin-right: 8px; }
+  #control p {
+    margin: 0; }
+  #control .mdl-menu__item {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    align-items: center;
+    color: #424242;
+    padding: 0px;
+    height: 33px;
+    line-height: 33px; }
+    #control .mdl-menu__item:hover {
+      background-color: rgba(0,0,0,0.1); }
+    #control .mdl-menu__item[disabled] {
+      color: rgba(0,0,0,.26); }
+    #control .mdl-menu__item > * {
+      padding: 0 16px; }
+    #control .mdl-menu__item[disabled] #HD+label {
+      color: rgba(0,0,0,.26); }
+    #control .mdl-menu__item label {
+      cursor: pointer; }
+    #control .mdl-menu__item[disabled] label {
+      cursor: auto; }
+    #control #rate {
+      padding: 0;
+      text-align: center; }
+    #control .mdl-menu__item .material-icons {
+      margin-right: 0; }
+    #control .mdl-menu__outline {
+      background: rgba(255,255,255,0.7); }
+    #control .mdl-menu__item .mdl-switch.is-upgraded {
+      padding-left: 28px;
+      padding-right: 8px; }
+    #control .mdl-switch:not(.is-checked) .mdl-switch__thumb {
+      background: #E1E1E1; }
+    #HD {
+      display: none; }
+    #HD:not(:checked)+label {
+      color:rgba(0,0,0,.38); }
+  #seek-container {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    padding: 0 8px; }
+  #volume-container {
+    width: 140px; }
+  .videoTime.is-disabled {
+    color: rgba(0,0,0,.26); }
+  .ctl-button.material-icons {
+    padding:4px;
+    font-size: 32px;
+    cursor: pointer; }
+  .ctl-button.is-disabled {
+    color: rgba(0,0,0,.26);
+    cursor: default; }
+  .is-small-screen	#control {
+	 flex-wrap: wrap;
+     -webkit-transform: translateY(60px);
+     transform: translateY(60px); }
+  .is-small-screen #seek-container {
+      width: 100%;
+      order: -1; }
+  @media (max-width: 479px) {
+    #volume-container {
+      width: 110px; } }
 
 
 /* ポップアップ */
@@ -1016,17 +1157,15 @@ h4 .mdl-button--icon {
       font-family: 'Material Icons';
       cursor: pointer; }
   #popup #video {
-    max-height: calc(90vh - 68px);
-    min-width: 232px; }
+    max-height: calc(90vh - 68px); }
   @media (max-width: 479px) {
     #popup > .mdl-card {
       padding:12px;
       max-width: 94vw;
       max-height: 94vh; } }
 
-.mdl-badge.material-icons:after{
-  font-family: 'Material Icons';
-}
+.mdl-badge.material-icons:after {
+  font-family: 'Material Icons'; }
 
 
 
@@ -1036,29 +1175,44 @@ h4 .mdl-button--icon {
   transition-timing-function: cubic-bezier(.4,0,.2,1);
   transition-property: background-color; }
   #library .mdl-list__item:hover {
-    background-color: #eee;  }
+    background-color: #eee; }
 
 #library .mdl-card {
+  min-height: 150px;
   background: #fff center / cover; }
-  @media (max-width: 700px) {
-    #library .mdl-card {
-      min-height: 160px; } }
-  #library .mdl-card > .mdl-card__title {
+  #library .mdl-card__title {
+    padding: 8px;
     justify-content: center; }
-    #library .mdl-card__title > .material-icons {
-      color: #757575;
-      font-size: 100px; }
-      @media (max-width: 700px) {
-        #library .mdl-card__title > .material-icons {
-          font-size: 75px; } }
+  #library .mdl-card__title > .material-icons {
+    color: #757575;
+    font-size: 75px; }
   #library .mdl-card > .mdl-card__actions {
     height: 52px;
     padding: 16px;
     background: rgba(0, 0, 0, 0.2); }
-
   #library .mdl-list__item-avatar.material-icons {
     font-size: 24px;
     padding: 8px; }
+  .is-small-screen #library .mdl-card {
+    min-height: 130px; }
+  .is-small-screen #library .mdl-card > .mdl-card__actions {
+    height: 38px;
+    padding: 8px; }
+  @media (min-width: 1300px) {
+    #library .mdl-card {
+      min-height: 200px; }
+    #library .mdl-card__title {
+      padding: 16px }
+    #library .mdl-card__title > .material-icons {
+      font-size: 100px; } }
+  @media (max-width: 700px) {
+    #library .mdl-card > .mdl-card__actions {
+      height: 38px;
+      padding: 8px; }
+    .is-small-screen #library .mdl-card {
+      min-height: 100px; }
+      #library .mdl-card__title > .material-icons {
+        font-size: 50px; } }
 
 .filename {
   color: #fff;
@@ -1076,6 +1230,10 @@ h4 .mdl-button--icon {
 
 .path .mdl-layout__tab {
   padding: 0 6px;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-tap-highlight-color: rgba(255,255,255,0); }
   .path .mdl-layout__tab.material-icons {

@@ -2,6 +2,8 @@ dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
+KeepDisk=0+edcb.GetPrivateProfile('SET','KeepDisk','1','EpgTimerSrv.ini')~=0
+
 page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
 
 edcb.htmlEscape=15
@@ -13,7 +15,8 @@ if r then
   recording=edcb.GetRecFilePath and edcb.GetRecFilePath(r.reserveID) or nil
   redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
-  ct.js='<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
+  ct.js=(recording and '<script src="js/player.js"></script>\n'or '')
+    ..'<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n'
@@ -43,9 +46,9 @@ if r then
     ..RecSettingTemplate(rs)..'</div></form>\n'
     ..'</section>\n'
 
-    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing"><div id="player">\n'
-    ..'<video id="video" src="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" preload="none" controls></video>\n'
-    ..'</div></div>\n</section>\n' or '')
+    ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
+      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-keepdisk="'..(KeepDisk and 'true' or 'false')..'"></video>\n')
+      ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
     ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
