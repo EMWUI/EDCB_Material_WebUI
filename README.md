@@ -2,13 +2,16 @@ EDCB Material WebUI
 ===================
 
 **EDCBのWebUIをMaterial Design Liteでマテリアルデザインっぽくします**  
-[xtne6f氏](https://github.com/xtne6f/EDCB)の[9bdd0a0](https://github.com/xtne6f/EDCB/commit/9bdd0a0f0c72a24eb680b1f890bf54c46bd2e939)以降が必要になります
+[xtne6f氏](https://github.com/xtne6f/EDCB)の[9bdd0a0](https://github.com/xtne6f/EDCB/commit/9bdd0a0f0c72a24eb680b1f890bf54c46bd2e939)以降で動作します  
+またファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要にです  
+ffmpeg.exe,readex.exeを別途ダウロードしてください  
+readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
 
 ###使い方
 EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L475)*をよく読み  
-HttpPublicの中身を***[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L433-L436)***に基本入れてください  
+README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L433-L436)を設定している場合はHttpPublicの中身をそこに  
 ※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください  
-ファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要です詳しくはライブラリ項目を
 
 ###テーマカラー
 テーマカラーを変えることが出来ます  
@@ -23,25 +26,31 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 ###ライブラリ
 録画保存フォルダのファイルを表示・再生します  
 **LuaFileSystem(lfs.dll)が必要です**  
-xtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしてEpgTimerSrv.exeと同じ場所に入れ  
-**ffmpeg.exeとreadex.exeをToolsフォルダ**に入れてください  
-readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
+lfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
 
-ファイルを表示するフォルダは録画保存フォルダ(Common.ini)から読み込みます  
-HttpPublic.iniのSETに`LibraryPath=1`を追加するとHttpPublic.iniから読み込みます  
-Common.iniと同じ形式で指定してください  
-例
+必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
+***サービスで動作している場合相対パスが通らないので必ずCurrentDir,ffmpeg,readexをフルパスで設定してください***  
+`CurrentDir`  
+EDCBのフォルダ、サービスで動作している場合に必ず設定  
+\# 通常はlfs.currentdir()で取得します
+
+`batPath[=CurrentDirのbatフォルダ]`  
+録画設定でこのフォルダの.batが選択可能になります  
+\# 変更する場合必ずフルパスで設定
+
+`LibraryPath=1`  
+ライブラリに表示するフォルダの読み込み設定を録画保存フォルダ(Common.ini)からHttpPublic.iniに変更します  
+\# Common.iniと同じ形式で指定してください  
+\# 例
 
     [SET]
     RecFolderNum=2
     RecFolderPath0=C:\DTV
     RecFolderPath1=C:\hoge
 
-#####サムネ
-HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッド表示の時にサムネを表示します  
-サムネの作成はToolsフォルダにバッチ例を同梱してます
+`xprepare[=48128]`  
+転送開始前に変換しておく量(bytes)
 
-必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
 **※ffmpegとreadexのデフォルト値がToolsフォルダに変更になりました※**  
 `ffmpeg[=Tools\ffmpeg]`  
 ffmpeg.exeのパス
@@ -54,10 +63,23 @@ ffmpegのオプション
 \# -iは指定する必要ありません  
 \# リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する
 
-`xprepare[=48128]`  
-転送開始前に変換しておく量(bytes)
+次は**[MOVIE]**で指定  
+`HD[=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -]`  
+ffmpegのオプションのHD用設定  
+\# HDと言いつつデフォルトでは960x540なのでバランスを見つつHDに調整してください
 
-※録画結果からファイルパスを取得してます  
+#####サムネ
+HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッド表示の時にサムネを表示します  
+サムネの作成はToolsフォルダにバッチ例を同梱してます
+
+#####ファイル再生
+* トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(99分率))を指定して再読み込み)  
+また総再生時間が得られないためシークバーは動かしてません  
+* スマホではtsの場合再生終了のフラグが得られないのか自動再生が動きません  
+* 番組・予約詳細ページ  
+容量確保録画の場合シークっぽい動作はできません
+* 録画結果ページ  
+録画結果(GetRecFileInfo())からファイルパスを取得してます  
 リネームや移動していると再生することが出来ません
 
 #####番組表の隠しコマンド
@@ -96,9 +118,6 @@ tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**�
   - Opera
 
 ※IEでも基本的に動作すると思いますがおすすめしません  
-~~※**iPhoneなどの一部ブラウザで番組表でflexが効かずなのか表示が崩れてるようです**  
-該当機種を所持しておらず確認できず対応できておりません  
-対応できる方がいましたら協力お願いします~~
 
 ###その他
 このプログラムの使用し不利益が生じても一切の責任を負いません  
@@ -114,4 +133,4 @@ tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**�
 * [jQuery UI Touch Punch](http://touchpunch.furf.com)
 * [Hammer.JS](http://hammerjs.github.io)
 * [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
-* [LuaFileSystem](https://keplerproject.github.io/luafilesystem/) ([GitHub](https://github.com/keplerproject/luafilesystem))
+* [LuaFileSystem](https://keplerproject.github.io/luafilesystem/) ([ソース](https://github.com/keplerproject/luafilesystem/releases))
