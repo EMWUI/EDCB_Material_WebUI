@@ -1064,12 +1064,12 @@ $(function(){
 					$(div, {class: content, text: '!Default'}) ).append(
 					$('<input>', {class: 'recFolderList', type: 'hidden', name: partial+'recFolder', value: ''}) ) ).append(
 				$(div, {class: container}).append(
-				$(div, {class: head + middle, text: '出力PlugIn'}) ).append(
-				$(div, {class: select}).append(
+					$(div, {class: head + middle, text: '出力PlugIn'}) ).append(
+					$(div, {class: select}).append(
 						$('<select>', {name: partial+'writePlugIn'}).append(
 							$('#Write').html() ).val('Write_Default.dll') ) ) ).append(
 				$(div, {class: container}).append(
-				$(div, {class: head + middle, text: 'ファイル名PlugIn'}) ).append(
+					$(div, {class: head + middle, text: 'ファイル名PlugIn'}) ).append(
 					$(div, {class: select}).append(
 						$('<select>', {name: partial+'recNamePlugIn'}).append(
 							$('#RecName').html() ) ) ) ).append(

@@ -745,8 +745,6 @@ h4 .mdl-button--icon {
 
 .mdl-grid.form .preset {
   padding-bottom: 0; }
-.mdl-grid.form .partial {
-  padding: 0 0 4px; }
   .preset {
     position: relative;
     line-height: 20px!important; }
