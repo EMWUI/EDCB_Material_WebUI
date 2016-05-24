@@ -38,7 +38,7 @@ function loadMovie(obj){
 		$('#HD').prop('disabled', false).parents('.mdl-menu__item').attr('disabled', false);
 	}
 
-	$('#video').attr('src', path).data(obj.data());
+	$('#video').addClass('is-loadding').attr('src', path).data(obj.data());
 	$('#titlebar').text(obj.data('name'));
 
 	$('.ctl-button').removeClass('is-disabled');
@@ -64,6 +64,14 @@ function playMovie(obj){
 	obj.addClass('playing');
 }
 
+function playerResize() {
+	if ($('#video').width() < 800){
+		$('#player').addClass('is-small');
+	}else{
+		$('#player').removeClass('is-small');
+	}
+};
+
 $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
 
@@ -74,6 +82,21 @@ $(function(){
 	if (autoplay){
 		$('#autoplay').prop('checked', true);
 	}
+
+
+	//閉じる
+	$('.close.mdl-badge').click(function(){
+		$('#popup').removeClass('is-visible');
+		video.pause();
+		video.playbackRate = 1;
+	});
+
+	$('#video').on('resize', function(){
+		playerResize();
+	});
+	$(window).on('resize', function(){
+		playerResize();
+	});
 
 	$('#video').on('pause', function(){
 		$('#play').text('play_arrow');
@@ -137,9 +160,10 @@ $(function(){
 	$('#video').on('canplay', function(){
 		var duration = video.duration;
 		hideBar(2000);
+		$('#video').removeClass('is-loadding')
 		$('#seek').prop('disabled', false);
 		if (duration == 'Infinity' || duration == 0){
-			hoge = true;
+			xcode = true;
 			$(this).off('timeupdate');
 			$('#seek').attr('max', 99).attr('step', 1);
 			$('.videoTime').addClass('is-disabled');
@@ -149,7 +173,7 @@ $(function(){
 				$('#seek').prop('disabled', true);
 			}
 		}else{
-			hoge = false;
+			xcode = false;
 			$(this).on('timeupdate', function(){
 				var currentTime = video.currentTime;
 				$('.currentTime').text(getVideoTime(currentTime));
@@ -175,7 +199,7 @@ $(function(){
 	});
 
 	$('#seek').change(function(){
-		if (hoge){
+		if (xcode){
 			loadMovie($('#video'));
 			video.play();
 		}else{

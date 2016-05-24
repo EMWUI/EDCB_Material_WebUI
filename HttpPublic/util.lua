@@ -117,28 +117,30 @@ function template(temp)
 ..(temp.video and [=[
   <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
-      <div id="player">
-        <video id="video"></video>
-        <div id="titlebar" class="bar"></div>
-        <div id="control" class="bar">
-      	  <i id="playprev" class="ctl-button material-icons">skip_previous</i>
-          <i id="play" class="ctl-button material-icons">play_arrow</i>
-      	  <i id="playnext" class="ctl-button material-icons">skip_next</i>
-      	  <div id="seek-container" class="mdl-layout-spacer">
-            <span class="currentTime videoTime">0:00</span>
-      	    <p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
-            <span class="duration videoTime">0:00</span>
+      <div id="player" class="is-small">
+        <div class="player-container">
+          <video id="video"></video>
+          <div id="titlebar" class="bar"></div>
+          <div id="control" class="bar">
+            <i id="playprev" class="ctl-button material-icons">skip_previous</i>
+            <i id="play" class="ctl-button material-icons">play_arrow</i>
+              <i id="playnext" class="ctl-button material-icons">skip_next</i>
+              <div id="seek-container" class="mdl-layout-spacer">
+              <span class="currentTime videoTime">0:00</span>
+              <p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
+              <span class="duration videoTime">0:00</span>
+            </div>
+            <p class="mdl-layout-spacer small-only"></p>
+            <i id="volume-icon" class="ctl-button material-icons">volume_up</i>
+            <p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
+            <i id="settings" class="ctl-button material-icons">settings</i>
+            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
+              <li class="mdl-menu__item"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+              <li class="mdl-menu__item"><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"><label for="HD"><i class="material-icons">hd</i></label></span></li>
+              <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
+            </ul>
+            <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
           </div>
-          <p class="mdl-layout-spacer mdl-layout--small-screen-only"></p>
-          <i id="volume-icon" class="ctl-button material-icons">volume_up</i>
-          <p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
-      	  <i id="settings" class="ctl-button material-icons">settings</i>
-          <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
-            <li class="mdl-menu__item"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
-            <li class="mdl-menu__item"><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"><label for="HD"><i class="material-icons">hd</i></label></span></li>
-            <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
-          </ul>
-      	  <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
         </div>
       </div>
       <span class="close mdl-badge material-icons" data-badge="&#xE5CD;"></span>
@@ -190,7 +192,7 @@ function _ConvertEpgInfoText2(onid, tsid, sid, eid)
 
     s=s..'</div>\n'
 
-     ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'	
+     ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
 
     if v.extInfo then
       s=s..'<div class="mdl-typography--body-1">\n'..v.extInfo.text_char:gsub('\r?\n', '<br>\n'):gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</div>\n'
@@ -304,7 +306,7 @@ function RecSettingTemplate(rs)
 
   if status then
 
-	local CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+    local CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
     local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)
     local WritePath=CurrentDir..'\\Write'
     local RecNamePath=CurrentDir..'\\RecName'
@@ -689,7 +691,7 @@ end
 
 --プレイヤー
 function player(video, ori)
-  return '<div id="player">\n'
+  return '<div id="player" class="is-small">\n'
 ..video..[=[
 <div id="control" class="bar is-visible">
 <i id="play" class="ctl-button material-icons">play_arrow</i>
@@ -700,7 +702,7 @@ function player(video, ori)
 </div>
 <i id="volume-icon" class="ctl-button material-icons">volume_up</i>
 <p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
-<p class="mdl-layout-spacer mdl-layout--small-screen-only"></p>
+<p class="mdl-layout-spacer small-only"></p>
 <i id="settings" class="ctl-button material-icons">settings</i>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="mdl-menu__item"]=]..(ori and ' disabled' or '')..'><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"'..(ori and ' disabled' or '')..[=[><label for="HD"><i class="material-icons">hd</i></label></span></li>

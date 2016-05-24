@@ -317,15 +317,6 @@ $(function(){
 
 
 
-	//ポップアップ閉じ
-	$('.close.mdl-badge').click(function(){
-		$('#popup').removeClass('is-visible');
-		$('#video').get(0).pause();
-		video.playbackRate = 1;
-	});
-
-
-
 	//録画設定
 	//プリセット読み込み
 	$('[name=presetID]').change(function(){
