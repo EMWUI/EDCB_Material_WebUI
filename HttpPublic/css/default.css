@@ -1006,10 +1006,7 @@ h4 .mdl-button--icon {
   min-width: 300px;
   min-height: 176px; }
   #video.is-loadding {
-    background-image: url('../img/noise.gif');
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat; }
+    background: #000 center / cover no-repeat url('../img/noise.gif'); }
   @media (min-width: 700px) {
     #video {
       min-width: 480px;
@@ -1026,6 +1023,8 @@ h4 .mdl-button--icon {
 /*プレイヤー*/
 #player {
   position: relative; }
+  #movie #player {
+   overflow: hidden; }
   #popup #player {
     padding: 24px; }
   .player-container {
@@ -1168,8 +1167,6 @@ h4 .mdl-button--icon {
   #player:not(.is-small) .small-only {
     display: none; }
   @media (max-width: 479px) {
-    #player {
-      padding:12px; }
     #volume-container {
       width: 110px; } }
 

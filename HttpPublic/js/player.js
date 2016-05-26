@@ -22,7 +22,8 @@ function loadMovie(obj){
 	var path = obj.data('path');
 	var MIME = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
 	var quality = localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '';
-	var offset = $('#seek').val() > 0 ? '&offset=' + $('#seek').val() : '';
+	seek = $('#seek').val();
+	var offset = seek > 0 ? '&offset=' + seek : '';
 
 	if (obj.data('public') && MIME){
 		path = obj.data('public');
@@ -158,9 +159,14 @@ $(function(){
 	});
 
 	$('#video').on('canplay', function(){
-		var duration = video.duration;
+		var duration;
+		if ($(this).data('duration')){
+			duration = $('#video').data('duration');
+		}else{
+			duration = video.duration;
+		}
 		hideBar(2000);
-		$('#video').removeClass('is-loadding')
+		$(this).removeClass('is-loadding')
 		$('#seek').prop('disabled', false);
 		if (duration == 'Infinity' || duration == 0){
 			xcode = true;
@@ -173,16 +179,17 @@ $(function(){
 				$('#seek').prop('disabled', true);
 			}
 		}else{
-			xcode = false;
+			xcode = $(this).data('duration') ? true : false;
+			var adjust = seek * (duration / 99);
 			$(this).on('timeupdate', function(){
-				var currentTime = video.currentTime;
+				var currentTime = video.currentTime + adjust;
 				$('.currentTime').text(getVideoTime(currentTime));
 				$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
 			});
 			$('#seek').attr('max', 100).attr('step', 0.01);
 			$('.videoTime').removeClass('is-disabled');
 			$('.duration').text(getVideoTime(duration));
-			if (!$(this).data('public')){
+			if (!$(this).data('public') && !$(this).data('duration')){
 				$('#seek').prop('disabled', true);
 			}
 		}
