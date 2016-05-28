@@ -278,7 +278,7 @@ $(function(){
 					target.data('id', id).text(button).parents('.content').not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 					target.parents('.content').removeClass('disabled partially shortage view').addClass('reserve ' + recmode).find('.mark.reserve').text(mark);
 				}else{
-					message = xml.find('err').text();
+					message = 'Error : ' + xml.find('err').text();
 				}
 				notification.MaterialSnackbar.showSnackbar({message: message});
 				target.parents('.cell').removeClass('clicked');

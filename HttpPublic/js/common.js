@@ -766,7 +766,7 @@ $(function(){
 
 	//通信エラー
 	$(document).ajaxError(function(e,xhr, textStatus, errorThrown){
-		notification.MaterialSnackbar.showSnackbar({message: xhr.status+"Error : "+xhr.statusText});
+		notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
 	});
 
 	//サブミット
@@ -791,7 +791,7 @@ $(function(){
 						setTimeout('location.reload()',2500);
 					}
 				}else{
-					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
+					notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
 				}
 				showSpinner(false);
 			}
