@@ -29,10 +29,10 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 lfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
 
 必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
-***サービスで動作している場合相対パスが通らないので必ずCurrentDir,ffmpeg,readexをフルパスで設定してください***  
+***サービスで動作している場合相対パスが使用できるよう必ず`CurrentDir`を設定してください***  
 `CurrentDir`  
 EDCBのフォルダ、サービスで動作している場合に必ず設定  
-\# 通常はlfs.currentdir()で取得します
+\# 通常はEDCBのフォルダがカレントディレクトリになってるので設定の必要はありません
 
 `batPath[=CurrentDirのbatフォルダ]`  
 録画設定でこのフォルダの.batが選択可能になります  

@@ -307,9 +307,8 @@ function RecSettingTemplate(rs)
   if status then
 
     local CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+    lfs.chdir (CurrentDir)
     local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)
-    local WritePath=CurrentDir..'\\Write'
-    local RecNamePath=CurrentDir..'\\RecName'
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
       ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(rs.batFilePath=='' and ' selected' or '')..'>なし\n'
       
@@ -334,7 +333,7 @@ function RecSettingTemplate(rs)
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">出力PlugIn</div>\n'
           ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="writePlugIn">\n'
-        for file in lfs.dir(WritePath) do
+        for file in lfs.dir('Write') do
           if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
             s=s..'<option value="'..file..'"'..(v.writePlugIn==file and ' selected' or '')..'>'..file..'\n'
           end
@@ -342,7 +341,7 @@ function RecSettingTemplate(rs)
         s=s..'</select></div></div>\n'
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn</div>\n'
           ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recNamePlugIn">\n<option value=""'..((recName or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
-        for file in lfs.dir(RecNamePath) do
+        for file in lfs.dir('RecName') do
           if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
             s=s..'<option value="'..file..'"'..((recName or v.recNamePlugIn)==file and ' selected' or '')..'>'..file..'\n'
           end
@@ -371,7 +370,7 @@ function RecSettingTemplate(rs)
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">フォルダ</div><div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">'..v.recFolder..'</div></div>\n'
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">出力PlugIn</div>\n'
           ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="partialwritePlugIn">\n'
-        for file in lfs.dir(WritePath) do
+        for file in lfs.dir('Write') do
           if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
             s=s..'<option value="'..file..'"'..(v.writePlugIn==file and ' selected' or '')..'>'..file..'\n'
           end
@@ -379,7 +378,7 @@ function RecSettingTemplate(rs)
         s=s..'</select></div></div>\n'
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn</div>\n'
           ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="partialrecNamePlugIn">\n<option value=""'..(recName=='' and ' selected' or '')..'>なし\n'
-        for file in lfs.dir(RecNamePath) do
+        for file in lfs.dir('RecName') do
           if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
             s=s..'<option value="'..file..'"'..((recName or v.recNamePlugIn)==file and ' selected' or '')..'>'..file..'\n'
           end
@@ -395,13 +394,13 @@ function RecSettingTemplate(rs)
       ..'</div>'
 
       ..'<select id="Write" class="hidden">\n'
-    for file in lfs.dir(WritePath) do
+    for file in lfs.dir('Write') do
       if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
         s=s..'<option value="'..file..'">'..file..'\n'
       end
     end
     s=s..'</select>\n<select id="RecName" class="hidden">\n<option value="">なし\n'
-    for file in lfs.dir(RecNamePath) do
+    for file in lfs.dir('RecName') do
       if file ~= '.' and file ~= '..' and string.find(file, '%.dll$') then
         s=s..'<option value="'..file..'">'..file..'\n'
       end

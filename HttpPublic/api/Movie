@@ -1,3 +1,9 @@
+status, lfs=pcall(require, 'lfs')
+if status then
+  CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+  lfs.chdir (CurrentDir)
+end
+
 path='Setting\\HttpPublic.ini'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
 readex=edcb.GetPrivateProfile('SET','readex','Tools\\readex',path)
@@ -8,11 +14,11 @@ XCODE=0+(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
 quality=mg.get_var(mg.request_info.query_string, 'quality') or nil
 
 if quality then
-  ffmpegoption=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
 else
-  ffmpegoption=edcb.GetPrivateProfile('SET','ffmpegoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+  XOPT=edcb.GetPrivateProfile('SET','ffmpegoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
 end
-XCMD=ffmpeg..' -i pipe:0 '..ffmpegoption
+XCMD=ffmpeg..' -i pipe:0 '..XOPT
 -- 変換後の拡張子
 XEXT='.webm'
 -- 転送開始前に変換しておく量(bytes)
