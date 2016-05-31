@@ -306,7 +306,7 @@ function RecSettingTemplate(rs)
 
   if status then
 
-    local CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+    local CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
     lfs.chdir (CurrentDir)
     local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'

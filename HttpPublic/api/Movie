@@ -1,6 +1,6 @@
 status, lfs=pcall(require, 'lfs')
 if status then
-  CurrentDir=edcb.GetPrivateProfile('SET','CurrentDir',lfs.currentdir(),path)
+  CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
   lfs.chdir (CurrentDir)
 end
 
