@@ -1,6 +1,6 @@
 ﻿path='Setting\\HttpPublic.ini'
-option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
-Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
+option=tonumber(edcb.GetPrivateProfile('SET','option',false,path))~=0
+Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
 css=edcb.GetPrivateProfile('SET','css',false,path)
 
 authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',path)

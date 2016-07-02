@@ -36,15 +36,15 @@ elseif post then
 
   AssertCsrf(post)
 
-  tkntrec=0+(mg.get_var(post, 'tkntrec') or 0)~=0
-  option=0+(mg.get_var(post, 'option') or 0)~=0
-  Roboto=0+(mg.get_var(post, 'Roboto') or 0)~=0
+  tkntrec=tonumber(mg.get_var(post, 'tkntrec')) or 0~=0
+  option=tonumber(mg.get_var(post, 'option')) or 0~=0
+  Roboto=tonumber(mg.get_var(post, 'Roboto')) or 0~=0
   subGenreoption=(mg.get_var(post, 'subGenreoption') or '')
   PAGE_COUNT=(mg.get_var(post, 'PAGE_COUNT') or '')
 
-  Light_Mode=0+(mg.get_var(post, 'Light_Mode') or 0)~=0
-  oneseg=0+(mg.get_var(post, 'oneseg') or 0)~=0
-  hover=0+(mg.get_var(post, 'hover') or 0)~=0
+  Light_Mode=tonumber(mg.get_var(post, 'Light_Mode')) or 0~=0
+  oneseg=tonumber(mg.get_var(post, 'oneseg')) or 0~=0
+  hover=tonumber(mg.get_var(post, 'hover')) or 0~=0
   ONE_MIN_PX=(mg.get_var(post, 'ONE_MIN_PX') or '')
   MARGIN_HOUR=(mg.get_var(post, 'MARGIN_HOUR') or '')
   MARGIN_MIN=(mg.get_var(post, 'MARGIN_MIN') or '')
@@ -74,7 +74,7 @@ elseif post then
   none=(mg.get_var(post, 'none') or '')
   nothing=(mg.get_var(post, 'nothing') or '')
 
-  paint=0+(mg.get_var(post, 'paint') or 0)~=0
+  paint=tonumber(mg.get_var(post, 'paint')) or 0~=0
   reserved=(mg.get_var(post, 'reserved') or '')
   disable=(mg.get_var(post, 'disable') or '')
   partially=(mg.get_var(post, 'partially') or '')

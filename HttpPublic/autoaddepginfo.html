@@ -3,30 +3,30 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
+tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
-DEF_CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path)
+DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path))
 
 epg=mg.get_var(mg.request_info.query_string,'epg') or nil
 week=mg.get_var(mg.request_info.query_string,'week') or nil
-onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
-tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
-sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
-eid=0+(mg.get_var(mg.request_info.query_string,'eid') or 0)
-tab=0+(mg.get_var(mg.request_info.query_string,'tab') or 0)
-page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
-date=0+(mg.get_var(mg.request_info.query_string,'date') or 0)
-hour=0+(mg.get_var(mg.request_info.query_string,'hour') or week and 4 or 0)
-interval=0+(mg.get_var(mg.request_info.query_string,'interval') or 25)
-pageIndex=0+(mg.get_var(mg.request_info.query_string,'chpage') or 0)
-CH_COUNT=0+(mg.get_var(mg.request_info.query_string,'chcount') or DEF_CH_COUNT)
+onid=tonumber(mg.get_var(mg.request_info.query_string,'onid')) or 0
+tsid=tonumber(mg.get_var(mg.request_info.query_string,'tsid')) or 0
+sid=tonumber(mg.get_var(mg.request_info.query_string,'sid')) or 0
+eid=tonumber(mg.get_var(mg.request_info.query_string,'eid')) or 0
+tab=tonumber(mg.get_var(mg.request_info.query_string,'tab')) or 0
+page=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+date=tonumber(mg.get_var(mg.request_info.query_string,'date')) or 0
+hour=tonumber(mg.get_var(mg.request_info.query_string,'hour') or week and 4 or 0)
+interval=tonumber(mg.get_var(mg.request_info.query_string,'interval')) or 25
+pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'chpage')) or 0
+CH_COUNT=tonumber(mg.get_var(mg.request_info.query_string,'chcount')) or DEF_CH_COUNT
 
 edcb.htmlEscape=15
 
 post=ReadPost()
 
 aa={}
-aa.dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+aa.dataID=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
 
 if aa.dataID==0 then
   ct={title='EPG予約 新規追加'}
@@ -74,17 +74,17 @@ if aa.searchInfo then
     si.aimaiFlag=mg.get_var(post, 'aimaiFlag')
     si.notContetFlag=mg.get_var(post, 'notContetFlag')
     si.notDateFlag=mg.get_var(post, 'notDateFlag')
-    si.freeCAFlag=0+(mg.get_var(post, 'freeCAFlag') or 0)
+    si.freeCAFlag=tonumber(mg.get_var(post, 'freeCAFlag')) or 0
     si.chkRecEnd=mg.get_var(post, 'chkRecEnd')
     si.chkRecDay=mg.get_var(post, 'chkRecDay') or 0
-    si.chkRecNoService=0+(mg.get_var(post, 'chkRecNoService') or 0)~=0
-    si.chkDurationMin=0+(mg.get_var(post, 'chkDurationMin') or 0)
-    si.chkDurationMax=0+(mg.get_var(post, 'chkDurationMax') or 0)
+    si.chkRecNoService=(tonumber(mg.get_var(post, 'chkRecNoService')) or 0)~=0
+    si.chkDurationMin=tonumber(mg.get_var(post, 'chkDurationMin')) or 0
+    si.chkDurationMax=tonumber(mg.get_var(post, 'chkDurationMax')) or 0
     si.contentList={}
     for i=0,10000 do
       v=mg.get_var(post, 'contentList', i)
       if not v then break end
-      table.insert(si.contentList, {content_nibble=0+v})
+      table.insert(si.contentList, {content_nibble=tonumber(v) or 0})
     end
     si.serviceList={}
     for i=0,10000 do
@@ -135,7 +135,7 @@ if aa.searchInfo then
     ..'<section class="mdl-layout__tab-panel" id="recset">\n<div class="form mdl-grid mdl-grid--no-spacing">'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">プリセット</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-autoaddid="'..aa.dataID..'">\n'
-  presetID=0+(mg.get_var(mg.request_info.query_string,'presetID') or mg.get_var(post, 'presetID') or 65535)
+  presetID=tonumber(mg.get_var(mg.request_info.query_string,'presetID') or mg.get_var(post, 'presetID')) or 65535
   if aa.dataID==0 and presetID==65535 then
     presetID=0
   end

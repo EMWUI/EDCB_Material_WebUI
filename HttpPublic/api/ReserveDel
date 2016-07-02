@@ -5,7 +5,7 @@ post=ReadPost()
 AssertCsrf(post)
 
 if post then
-  edcb.DelReserveData(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
+  edcb.DelReserveData(tonumber(mg.get_var(mg.request_info.query_string,'id')) or 0)
   del=true
 end
 ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'

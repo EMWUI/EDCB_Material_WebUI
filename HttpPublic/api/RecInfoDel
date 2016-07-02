@@ -7,7 +7,7 @@ post=ReadPost()
 AssertCsrf(post)
 
 if post then
-  edcb.DelRecFileInfo(0+(mg.get_var(mg.request_info.query_string,'id') or 0))
+  edcb.DelRecFileInfo(tonumber(mg.get_var(mg.request_info.query_string,'id')) or 0)
   ct=ct..'<success>録画情報を削除しました</success></entry>'
 else
   ct=ct..'<err>録画情報を削除できませんでした</err></entry>'

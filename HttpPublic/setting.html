@@ -3,15 +3,15 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 
-tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
-option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
-Roboto=0+edcb.GetPrivateProfile('SET','Roboto',false,path)~=0
+tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
+option=tonumber(edcb.GetPrivateProfile('SET','option',false,path))~=0
+Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
-PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
-Light_Mode=0+edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path)~=0
-oneseg=0+edcb.GetPrivateProfile('GUIDE','oneseg',false,path)~=0
-hover=0+edcb.GetPrivateProfile('GUIDE','hover',false,path)~=0
+Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path))~=0
+oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
+hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
@@ -19,7 +19,7 @@ w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
 w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
-CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path)
+CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -40,7 +40,7 @@ other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',path)
 none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',path)
 nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',path)
 
-paint=0+edcb.GetPrivateProfile('BACKGROUND','paint',false,path)~=0
+paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,path))~=0
 reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',path)
 disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
 partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
@@ -107,7 +107,7 @@ ct.dialog={button='<button class="submit close mdl-button mdl-button--primary" d
 edcb.htmlEscape=15
 a=edcb.GetServiceList()
 sort={}
-count=0+edcb.GetPrivateProfile('SORT','count',0,path)
+count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
 if count>0 then
   for i=0,count do
     v=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
@@ -146,7 +146,7 @@ else
 end
 
 hidelist={}
-count=0+edcb.GetPrivateProfile('HIDE','count',0,path)
+count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
 if count>0 then
   for i=0,count do
     v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)

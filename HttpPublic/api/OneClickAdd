@@ -1,10 +1,10 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
 added=false
-onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
-tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
-sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
-eid=0+(mg.get_var(mg.request_info.query_string,'eid') or 0)
+onid=tonumber(mg.get_var(mg.request_info.query_string,'onid')) or 0
+tsid=tonumber(mg.get_var(mg.request_info.query_string,'tsid')) or 0
+sid=tonumber(mg.get_var(mg.request_info.query_string,'sid')) or 0
+eid=tonumber(mg.get_var(mg.request_info.query_string,'eid')) or 0
 
 edcb.htmlEscape=15
   r={}

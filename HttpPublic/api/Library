@@ -2,7 +2,7 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
-LibraryPath=0+edcb.GetPrivateProfile('SET','LibraryPath',0,path)~=0 and path or 'Common.ini'
+LibraryPath=tonumber(edcb.GetPrivateProfile('SET','LibraryPath',0,path))~=0 and path or 'Common.ini'
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'}
 
@@ -43,7 +43,7 @@ if status then
 
   table.insert(ct, '<dir><name>ホーム</name><id>home</id>')
 
-  count=0+edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath)-1
+  count=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath))-1
   for i=0,count do
     dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
     Public=NativeToDocumentPath(dir)

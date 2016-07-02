@@ -9,7 +9,7 @@ ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
 readex=edcb.GetPrivateProfile('SET','readex','Tools\\readex',path)
 
 -- トランスコードするかどうか
-XCODE=0+(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
+XCODE=tonumber(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
 -- 変換コマンド
 quality=mg.get_var(mg.request_info.query_string, 'quality') or nil
 
@@ -22,7 +22,7 @@ XCMD=ffmpeg..' -i pipe:0 '..XOPT
 -- 変換後の拡張子
 XEXT='.webm'
 -- 転送開始前に変換しておく量(bytes)
-XPREPARE=0+edcb.GetPrivateProfile('SET','xprepare',48128,path)
+XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
 
 fname=mg.get_var(mg.request_info.query_string,'fname') or nil
 
@@ -50,7 +50,7 @@ elseif v then
 end
 
 -- 転送開始位置(99分率)(容量確保録画には未対応)
-offset=0+(mg.get_var(mg.request_info.query_string,'offset') or 0)
+offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
 
 f=nil
 if fname then

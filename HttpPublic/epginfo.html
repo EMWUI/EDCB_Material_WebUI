@@ -2,25 +2,25 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
-DEF_CH_COUNT=0+edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path)
+DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path))
 
-KeepDisk=0+edcb.GetPrivateProfile('SET','KeepDisk','1','EpgTimerSrv.ini')~=0
+KeepDisk=tonumber(edcb.GetPrivateProfile('SET','KeepDisk','1','EpgTimerSrv.ini'))~=0
 
-onid=0+(mg.get_var(mg.request_info.query_string,'onid') or 0)
-tsid=0+(mg.get_var(mg.request_info.query_string,'tsid') or 0)
-sid=0+(mg.get_var(mg.request_info.query_string,'sid') or 0)
-eid=0+(mg.get_var(mg.request_info.query_string,'eid') or 0)
-presetID=0+(mg.get_var(mg.request_info.query_string,'presetID') or 65535)
-tab=0+(mg.get_var(mg.request_info.query_string,'tab') or 0)
-page=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
-date=0+(mg.get_var(mg.request_info.query_string,'date') or 0)
-hour=0+(mg.get_var(mg.request_info.query_string,'hour') or 0)
-interval=0+(mg.get_var(mg.request_info.query_string,'interval') or 25)
-dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
-autopage=0+(mg.get_var(mg.request_info.query_string,'autopage') or 0)
-week=0+(mg.get_var(mg.request_info.query_string,'week') and 1 or 0)~=0
-pageIndex=0+(mg.get_var(mg.request_info.query_string,'chpage') or 0)
-CH_COUNT=0+(mg.get_var(mg.request_info.query_string,'chcount') or DEF_CH_COUNT)
+onid=tonumber(mg.get_var(mg.request_info.query_string,'onid')) or 0
+tsid=tonumber(mg.get_var(mg.request_info.query_string,'tsid')) or 0
+sid=tonumber(mg.get_var(mg.request_info.query_string,'sid')) or 0
+eid=tonumber(mg.get_var(mg.request_info.query_string,'eid')) or 0
+presetID=tonumber(mg.get_var(mg.request_info.query_string,'presetID')) or 65535
+tab=tonumber(mg.get_var(mg.request_info.query_string,'tab')) or 0
+page=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+date=tonumber(mg.get_var(mg.request_info.query_string,'date')) or 0
+hour=tonumber(mg.get_var(mg.request_info.query_string,'hour')) or 0
+interval=tonumber(mg.get_var(mg.request_info.query_string,'interval')) or 25
+dataID=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
+autopage=tonumber(mg.get_var(mg.request_info.query_string,'autopage')) or 0
+week=tonumber(mg.get_var(mg.request_info.query_string,'week') and 1 or 0)~=0
+pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'chpage')) or 0
+CH_COUNT=tonumber(mg.get_var(mg.request_info.query_string,'chcount')) or DEF_CH_COUNT
 
 post=ReadPost()
 

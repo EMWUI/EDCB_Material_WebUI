@@ -3,10 +3,10 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-tkntrec=0+edcb.GetPrivateProfile('SET','tkntrec',false,path)~=0
+tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 
-PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
 edcb.htmlEscape=15
 
@@ -16,7 +16,7 @@ if post then
   AssertCsrf(post)
 end
 
-dataID=0+(mg.get_var(mg.request_info.query_string, 'id') or 0)
+dataID=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
 if dataID~=0 then
   for i,v in ipairs(edcb.EnumAutoAdd()) do
     if v.dataID==dataID then
@@ -40,12 +40,12 @@ if not key then
     aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag') or false,
     notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
     notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
-    freeCAFlag=0+(mg.get_var(post, 'freeCAFlag') or mg.get_var(mg.request_info.query_string, 'freeCAFlag') or 0),
+    freeCAFlag=tonumber(mg.get_var(post, 'freeCAFlag') or mg.get_var(mg.request_info.query_string, 'freeCAFlag')) or 0,
     chkRecEnd=mg.get_var(post, 'chkRecEnd') or mg.get_var(mg.request_info.query_string, 'chkRecEnd') or false,
     chkRecDay=mg.get_var(post, 'chkRecDay') or mg.get_var(mg.request_info.query_string, 'chkRecDay') or 0,
     chkRecNoService=mg.get_var(post, 'chkRecNoService') or mg.get_var(mg.request_info.query_string, 'chkRecNoService') or false,
-    chkDurationMin=0+(mg.get_var(post, 'chkDurationMin') or mg.get_var(mg.request_info.query_string, 'chkDurationMin') or 0),
-    chkDurationMax=0+(mg.get_var(post, 'chkDurationMax') or mg.get_var(mg.request_info.query_string, 'chkDurationMax') or 0),
+    chkDurationMin=tonumber(mg.get_var(post, 'chkDurationMin') or mg.get_var(mg.request_info.query_string, 'chkDurationMin')) or 0,
+    chkDurationMax=tonumber(mg.get_var(post, 'chkDurationMax') or mg.get_var(mg.request_info.query_string, 'chkDurationMax')) or 0,
     network=0,
     days=mg.get_var(post, 'days') or mg.get_var(mg.request_info.query_string, 'days') or 0,
     days29=mg.get_var(post, 'days29') or mg.get_var(mg.request_info.query_string, 'days29') or 0,
@@ -72,13 +72,13 @@ if not key then
     for i=0,10000 do
       v=mg.get_var(post, 'contentList', i)
       if not v then break end
-      table.insert(key.contentList, {content_nibble=0+v})
+      table.insert(key.contentList, {content_nibble=tonumber(v)})
     end
   elseif mg.get_var(mg.request_info.query_string, 'contentList') then
     for i=0,10000 do
       v=mg.get_var(mg.request_info.query_string, 'contentList', i)
       if not v then break end
-      table.insert(key.contentList, {content_nibble=0+v})
+      table.insert(key.contentList, {content_nibble=tonumber(v)})
     end
   end
 
@@ -149,8 +149,8 @@ if not key then
   key.search=not (dataID>0 or mg.get_var(post, 'id'))
 end
 
-pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
-autopage=0+(mg.get_var(mg.request_info.query_string,'autopage') or 0)
+pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+autopage=tonumber(mg.get_var(mg.request_info.query_string,'autopage')) or 0
 
 ct={title='検索'}
 

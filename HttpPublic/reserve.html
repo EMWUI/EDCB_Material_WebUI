@@ -6,7 +6,7 @@ path='Setting\\HttpPublic.ini'
 partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
 shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
 
-PAGE_COUNT=0+edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
 ct={title='予約一覧'}
 
@@ -16,7 +16,7 @@ ct.js='<script>setInterval("rec()",1000);</script>\n'
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
-pageIndex=0+(mg.get_var(mg.request_info.query_string,'page') or 0)
+pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
 
 if PAGE_COUNT==0 then
   PAGE_COUNT=#a

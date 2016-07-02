@@ -1,5 +1,5 @@
 path='Setting\\HttpPublic.ini'
-option=0+edcb.GetPrivateProfile('SET','option',false,path)~=0
+option=tonumber(edcb.GetPrivateProfile('SET','option',false,path))~=0
 
 edcb.htmlEscape=15
 a=edcb.EnumRecPresetInfo()
