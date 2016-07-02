@@ -15,6 +15,7 @@ function getMovieList(Snack){
 				}else{
 					var xml = new XMLSerializer().serializeToString(xml);
 					sessionStorage.setItem('movie', xml);
+					sessionStorage.setItem('movie_expires', new Date().getTime() + 24*60*60*1000);
 					loadingMovieList = false;
 					refreshPath = true;
 					folder();
@@ -197,7 +198,7 @@ $(function(){
 
 	//ライブラリ一覧有無確認
 	ViewMode = localStorage.getItem('ViewMode') ? localStorage.getItem('ViewMode') : 'grid';
-	if (!sessionStorage.getItem('movie')){
+	if (!sessionStorage.getItem('movie') || sessionStorage.getItem('movie_expires') - new Date().getTime() < 0){
 		getMovieList();
 	}else{
 		refreshPath = true;
