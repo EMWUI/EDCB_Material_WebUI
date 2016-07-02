@@ -726,6 +726,10 @@ h4 .mdl-button--icon {
   display:     -ms-flexbox;
   display:         flex; }
 
+.has-icon {
+  padding: 4px 24px 4px 0;
+  box-sizing: border-box; }
+
 #service option.hide { 
   display:none; }
 
@@ -771,6 +775,13 @@ h4 .mdl-button--icon {
     font-size: 20px;
     -webkit-transform: translate(0,0);
     transform: translate(0,0); }
+.addmacro.material-icons {
+  color: rgba(0, 0, 0, 0.54);
+  position: absolute;
+  right: 7px;
+  top: 10px;
+  font-size: 16px;
+  cursor: pointer; }
 
 
 
@@ -1200,6 +1211,79 @@ h4 .mdl-button--icon {
     #popup > .mdl-card {
       max-width: 94vw;
       max-height: 94vh; } }
+
+.macro-list{ 
+  overflow-y: auto;
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 10; }
+  .macro-list-container{
+    flex-grow: 1;
+    min-width: 200px; }
+  .macro-list-container2 {
+    display: flex;
+    flex-grow: 1; }
+  .macro-list label {
+    width: 100%;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-decoration: none;
+    cursor: pointer;
+    height: 32px;
+    line-height: 32px;
+    padding: 0 16px;
+    box-sizing: border-box; }
+  .macro-list ul {
+    padding: 0;
+    margin: 0;
+    list-style: none; }
+  .macro-list .drop-down+ul {
+    margin-left:16px }
+  .macro-list .drop-down:after {
+    top: 0;
+    right: 0; }
+  .macro-item{
+    padding: 0 16px;
+    display: flex;
+    border: none;
+    color: rgba(0,0,0,.87);
+    background-color: transparent;
+    text-align: left;
+    margin: 0;
+    outline-color: #bdbdbd;
+    position: relative;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-decoration: none;
+    cursor: pointer;
+    height: 36px;
+    line-height: 36px;
+    white-space: nowrap;
+    transition: opacity .2s cubic-bezier(.4,0,.2,1);
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none; }
+    .macro-list label:hover,
+    .macro-item:hover {
+      background-color: #eee; }
+    .macro-item span {
+      min-width: 16px; }
+  @media (min-width: 701px) {
+    .macro-list,
+    .macro-list-container2 { 
+      overflow-y: auto;
+      flex-wrap: wrap; } }
+  @media (max-width: 700px) {
+    .macro-list,
+    .macro-list-container2 {
+      flex-direction: column; } }
 
 .mdl-badge.material-icons:after {
   font-family: 'Material Icons'; }

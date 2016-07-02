@@ -98,6 +98,8 @@ if beforeEnd then
   ct.js=(recording and '<script src="js/player.js"></script>\n' or '')
     ..'<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
 
+  ct.macro=true
+
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
     ..'<form id="set" data-'..redirect..'" method="POST" action="'..PathToRoot()..'api/'..(r and 'ReserveChg?id='..r.reserveID or 'ReserveAdd')..'">\n'

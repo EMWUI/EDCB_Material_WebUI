@@ -119,6 +119,8 @@ if aa.searchInfo then
 
   ct.js='<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumAutoAdd\');});\n</script>\n'
 
+  ct.macro=true
+
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
     ..'<form id="autoaddepg" method="POST" action="'..PathToRoot()..'api/AutoAddEPGAddChgKey?id='..aa.dataID..'" data-redirect="'..redirect..'">\n'

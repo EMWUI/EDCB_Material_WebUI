@@ -114,9 +114,139 @@ function template(temp)
   </div>
   <div class="drawer-swipe"></div>
 ]=]
-..(temp.video and [=[
+
+..((temp.macro or temp.video) and [=[
   <div id="popup" class="mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
+]=]..(temp.macro and [=[
+      <div class="mdl-card__title">
+        <h2 class="mdl-card__title-text">マクロ一覧</h2>
+      </div>
+      <div class="macro-list">
+        <div class="macro-list-container">
+          <input type="checkbox" class="check-shrink-phone hidden" id="macro-start">
+          <label class="drop-down " for="macro-start">開始時間</label>
+          <ul class="shrink-phone">
+            <li>
+              <input type="checkbox" class="hidden" id="macro-start28">
+              <label class="drop-down " for="macro-start28">28時間表記</label>
+              <ul>
+                <li class="macro-item" data-macro="$SDYYYY28$"><span>年 4桁</span><span class="mdl-layout-spacer"></span><span>$SDYYYY28$</span></li>
+                <li class="macro-item" data-macro="$SDYY28$"><span>年 2桁</span><span class="mdl-layout-spacer"></span><span>$SDYY28$</span></li>
+                <li class="macro-item" data-macro="$SDM28$"><span>月</span><span class="mdl-layout-spacer"></span><span>$SDM28$</span></li>
+                <li class="macro-item" data-macro="$SDMM28$"><span>月 2桁</span><span class="mdl-layout-spacer"></span><span>$SDMM28$</span></li>
+                <li class="macro-item" data-macro="$SDD28$"><span>日</span><span class="mdl-layout-spacer"></span><span>$SDD28$</span></li>
+                <li class="macro-item" data-macro="$SDDD28$"><span>日 2桁</span><span class="mdl-layout-spacer"></span><span>$SDDD28$</span></li>
+                <li class="macro-item" data-macro="$SDW28$"><span>曜日</span><span class="mdl-layout-spacer"></span><span>$SDW28$</span></li>
+                <li class="macro-item" data-macro="$STH28$"><span>時</span><span class="mdl-layout-spacer"></span><span>$STH28$</span></li>
+                <li class="macro-item" data-macro="$STHH28$"><span>時 2桁</span><span class="mdl-layout-spacer"></span><span>$STHH28$</span></li>
+              </ul>
+              <div class="drawer-separator"></div>
+            </li>
+            <li class="macro-item" data-macro="$SDYYYY$"><span>年 4桁</span><span class="mdl-layout-spacer"></span><span>$SDYYYY$</span></li>
+            <li class="macro-item" data-macro="$SDYY$"><span>年 2桁</span><span class="mdl-layout-spacer"></span><span>$SDYY$</span></li>
+            <li class="macro-item" data-macro="$SDM$"><span>月</span><span class="mdl-layout-spacer"></span><span>$SDM$</span></li>
+            <li class="macro-item" data-macro="$SDMM$"><span>月 2桁</span><span class="mdl-layout-spacer"></span><span>$SDMM$</span></li>
+            <li class="macro-item" data-macro="$SDD$"><span>日</span><span class="mdl-layout-spacer"></span><span>$SDD$</span></li>
+            <li class="macro-item" data-macro="$SDDD$"><span>日 2桁</span><span class="mdl-layout-spacer"></span><span>$SDDD$</span></li>
+            <li class="macro-item" data-macro="$SDW$"><span>曜日</span><span class="mdl-layout-spacer"></span><span>$SDW$</span></li>
+            <li class="macro-item" data-macro="$STH$"><span>時</span><span class="mdl-layout-spacer"></span><span>$STH$</span></li>
+            <li class="macro-item" data-macro="$STHH$"><span>時 2桁</span><span class="mdl-layout-spacer"></span><span>$STHH$</span></li>
+            <li class="macro-item" data-macro="$STM$"><span>分</span><span class="mdl-layout-spacer"></span><span>$STM$</span></li>
+            <li class="macro-item" data-macro="$STMM$"><span>分 2桁</span><span class="mdl-layout-spacer"></span><span>$STMM$</span></li>
+            <li class="macro-item" data-macro="$STS$"><span>秒</span><span class="mdl-layout-spacer"></span><span>$STS$</span></li>
+            <li class="macro-item" data-macro="$STSS$"><span>秒 2桁</span><span class="mdl-layout-spacer"></span><span>$STSS$</span></li>
+          </ul>
+        </div>
+        <div class="macro-list-container">
+          <input type="checkbox" class="check-shrink-phone hidden" id="macro-end">
+          <label class="drop-down" for="macro-end">終了時間</label>
+          <ul class="shrink-phone">
+            <li>
+              <input type="checkbox" class="hidden" id="macro-end24">
+              <label class="drop-down" for="macro-end24">28時間表記</label>
+              <ul>
+                <li class="macro-item" data-macro="$EDYYYY28$"><span>年 4桁</span><span class="mdl-layout-spacer"></span><span>$EDYYYY28$</span></li>
+                <li class="macro-item" data-macro="$EDYY28$"><span>年 2桁</span><span class="mdl-layout-spacer"></span><span>$EDYY28$</span></li>
+                <li class="macro-item" data-macro="$EDM28$"><span>月</span><span class="mdl-layout-spacer"></span><span>$EDM28$</span></li>
+                <li class="macro-item" data-macro="$EDMM28$"><span>月 2桁</span><span class="mdl-layout-spacer"></span><span>$EDMM28$</span></li>
+                <li class="macro-item" data-macro="$EDD28$"><span>日</span><span class="mdl-layout-spacer"></span><span>$EDD28$</span></li>
+                <li class="macro-item" data-macro="$EDDD28$"><span>日 2桁</span><span class="mdl-layout-spacer"></span><span>$EDDD28$</span></li>
+                <li class="macro-item" data-macro="$EDW28$"><span>曜日</span><span class="mdl-layout-spacer"></span><span>$EDW28$</span></li>
+                <li class="macro-item" data-macro="$ETH28$"><span>時</span><span class="mdl-layout-spacer"></span><span>$ETH28$</span></li>
+                <li class="macro-item" data-macro="$ETHH28$"><span>時 2桁</span><span class="mdl-layout-spacer"></span><span>$ETHH28$</span></li>
+              </ul>
+              <div class="drawer-separator"></div>
+            </li>
+            <li class="macro-item" data-macro="$EDYYYY$"><span>年 4桁</span><span class="mdl-layout-spacer"></span><span>$EDYYYY$</span></li>
+            <li class="macro-item" data-macro="$EDYY$"><span>年 2桁</span><span class="mdl-layout-spacer"></span><span>$EDYY$</span></li>
+            <li class="macro-item" data-macro="$EDM$"><span>月</span><span class="mdl-layout-spacer"></span><span>$EDM$</span></li>
+            <li class="macro-item" data-macro="$EDMM$"><span>月 2桁</span><span class="mdl-layout-spacer"></span><span>$EDMM$</span></li>
+            <li class="macro-item" data-macro="$EDD$"><span>日</span><span class="mdl-layout-spacer"></span><span>$EDD$</span></li>
+            <li class="macro-item" data-macro="$EDDD$"><span>日 2桁</span><span class="mdl-layout-spacer"></span><span>$EDDD$</span></li>
+            <li class="macro-item" data-macro="$EDW$"><span>曜日</span><span class="mdl-layout-spacer"></span><span>$EDW$</span></li>
+            <li class="macro-item" data-macro="$ETH$"><span>時</span><span class="mdl-layout-spacer"></span><span>$ETH$</span></li>
+            <li class="macro-item" data-macro="$ETHH$"><span>時 2桁</span><span class="mdl-layout-spacer"></span><span>$ETHH$</span></li>
+            <li class="macro-item" data-macro="$ETM$"><span>分</span><span class="mdl-layout-spacer"></span><span>$ETM$</span></li>
+            <li class="macro-item" data-macro="$ETMM$"><span>分 2桁</span><span class="mdl-layout-spacer"></span><span>$ETMM$</span></li>
+            <li class="macro-item" data-macro="$ETS$"><span>秒</span><span class="mdl-layout-spacer"></span><span>$ETS$</span></li>
+            <li class="macro-item" data-macro="$ETSS$"><span>秒 2桁</span><span class="mdl-layout-spacer"></span><span>$ETSS$</span></li>
+          </ul>
+        </div>
+        <div class="macro-list-container">
+          <input type="checkbox" class="check-shrink-phone hidden"  id="macro-duration">
+          <label class="drop-down" for="macro-duration">番組総時間</label>
+          <ul class="shrink-phone">
+            <li class="macro-item" data-macro="$DUH$"><span>時</span><span class="mdl-layout-spacer"></span><span>$DUH$</span></li>
+            <li class="macro-item" data-macro="$DUHH$"><span>時 2桁</span><span class="mdl-layout-spacer"></span><span>$DUHH$</span></li>
+            <li class="macro-item" data-macro="$DUM$"><span>分</span><span class="mdl-layout-spacer"></span><span>$DUM$</span></li>
+            <li class="macro-item" data-macro="$DUMM$"><span>分 2桁</span><span class="mdl-layout-spacer"></span><span>$DUMM$</span></li>
+            <li class="macro-item" data-macro="$DUS$"><span>秒</span><span class="mdl-layout-spacer"></span><span>$DUS$</li>
+            <li class="macro-item" data-macro="$DUSS$"><span>秒 2桁</span><span class="mdl-layout-spacer"></span><span>$DUSS$</span></li>
+          </ul>
+        </div>
+        <div class="macro-list-container2">
+          <div class="mdl-layout-spacer"></div>
+	      <div class="macro-list-container">
+	        <div class="drawer-separator mdl-cell--hide-desktop"></div>
+	        <ul>
+	          <li class="macro-item" data-macro="$Title$"><span>番組名</span><span class="mdl-layout-spacer"></span><span>$Title$</span></li>
+	          <li class="macro-item" data-macro="$Title2$"><span>番組名（[]削除）</span><span class="mdl-layout-spacer"></span><span>$Title2$</span></li>
+	          <li class="macro-item" data-macro="$SubTitle$"><span>サブタイトル（番組内容）</span><span class="mdl-layout-spacer"></span><span>$SubTitle$</span></li>
+	          <li class="macro-item" data-macro="$SubTitle2$"><span>話数が含まれるサブタイトル</span><span class="mdl-layout-spacer"></span><span>$SubTitle2$</span></li>
+	          <li class="macro-item" data-macro="$Genre$"><span>番組のジャンル</span><span class="mdl-layout-spacer"></span><span>$Genre$</span></li>
+	          <li class="macro-item" data-macro="$Genre2$"><span>番組の詳細ジャンル</span><span class="mdl-layout-spacer"></span><span>$Genre2$</span></li>
+	          <li class="macro-item" data-macro="$ServiceName$"><span>サービス名</span><span class="mdl-layout-spacer"></span><span>$ServiceName$</span></li>
+	          <li class="macro-item" data-macro="$SID10$"><span>サービスID</span><span class="mdl-layout-spacer"></span><span>$SID10$</span></li>
+	          <li class="macro-item" data-macro="$ONID10$"><span>ネットワークID</span><span class="mdl-layout-spacer"></span><span>$ONID10$</span></li>
+	          <li class="macro-item" data-macro="$TSID10$"><span>ストリームID</span><span class="mdl-layout-spacer"></span><span>$TSID10$</span></li>
+	          <li class="macro-item" data-macro="$EID10$"><span>イベントID</span><span class="mdl-layout-spacer"></span><span>$EID10$</span></li>
+	          <li class="macro-item" data-macro="$SID16$"><span>サービスID 16進数</span><span class="mdl-layout-spacer"></span><span>$SID16$</span></li>
+	          <li class="macro-item" data-macro="$ONID16$"><span>ネットワークID 16進数</span><span class="mdl-layout-spacer"></span><span>$ONID16$</span></li>
+	          <li class="macro-item" data-macro="$TSID16$"><span>ストリームID 16進数</span><span class="mdl-layout-spacer"></span><span>$TSID16$</span></li>
+	          <li class="macro-item" data-macro="$EID16$"><span>イベントID 16進数</span><span class="mdl-layout-spacer"></span><span>$EID16$</span></li>
+	        <ul>
+	      </div>
+	      <div class="macro-list-container">
+	        <div class="drawer-separator mdl-cell--hide-desktop"></div>
+	        </ul>
+	          <li class="macro-item" data-macro="HtoZ()"><span>半角⇒全角</span><span class="mdl-layout-spacer"></span><span>HtoZ()</span></li>
+	          <li class="macro-item" data-macro="ZtoH()"><span>全角⇒半角</span><span class="mdl-layout-spacer"></span><span>ZtoH()</span></li>
+	          <li class="macro-item" data-macro="HtoZ&lt;alnum&gt;()"><span>英数半角⇒全角</span><span class="mdl-layout-spacer"></span><span>HtoZ&lt;alnum&gt;()</span></li>
+	          <li class="macro-item" data-macro="ZtoH&lt;alnum&gt;()"><span>英数全角⇒半角</span><span class="mdl-layout-spacer"></span><span>ZtoH&lt;alnum&gt;()</span></li>
+	          <li class="macro-item" data-macro="Tr///()"><span>文字置換</span><span class="mdl-layout-spacer"></span><span>Tr/置換文字リスト/置換後/()</span></li>
+	          <li class="macro-item" data-macro="S///()"><span>文字列置換</span><span class="mdl-layout-spacer"></span><span>S/置換文字列/置換後/()</span></li>
+	          <li class="macro-item" data-macro="Rm//()"><span>文字削除</span><span class="mdl-layout-spacer"></span><span>Rm/削除文字リスト/()</span></li>
+	          <li class="macro-item" data-macro="Head()"><span>足切り</span><span class="mdl-layout-spacer"></span><span>Head文字数[省略記号]</span></li>
+	        </ul>
+	      </div>
+          <div class="mdl-layout-spacer"></div>
+        </div>
+      </div>
+      <div class="mdl-dialog__actions mdl-card__actions mdl-card--border">
+        <button class="macro close mdl-button">キャンセル</button>
+      </div>
+]=] or [=[
       <div id="player" class="is-small">
         <div class="player-container">
           <video id="video"></video>
@@ -144,6 +274,7 @@ function template(temp)
         </div>
       </div>
       <span class="close mdl-badge material-icons" data-badge="&#xE5CD;"></span>
+]=])..[=[
     </div>
   </div>
 ]=] or '')
@@ -348,7 +479,7 @@ function RecSettingTemplate(rs)
         end
         s=s..'</select></div></div>\n'
           ..(option and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
-                       ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="recName" value="'..(recName3 or '')..'" id="recName'..i..'"><label class="mdl-textfield__label" for="recName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+                       ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="has-icon mdl-textfield__input" type="text" name="recName" value="'..(recName3 or '')..'" id="recName'..i..'"><label class="mdl-textfield__label" for="recName'..i..'">ファイル名オプション</label><i class="addmacro material-icons">add</i></div></div>\n' or '')
           ..'<input class="recFolderList" type=hidden name="recFolder" value="'..v.recFolder..'">'
           ..'</div>\n'
       end
@@ -385,7 +516,7 @@ function RecSettingTemplate(rs)
         end
         s=s..'</select></div></div>\n'
           ..(option and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">オプション</div>\n'
-                                              ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="partialrecName" value="'..(recName3 or '')..'" id="partialrecName'..i..'"><label class="mdl-textfield__label" for="partialrecName'..i..'">ファイル名オプション</label></div></div>\n' or '')
+                                              ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="has-icon mdl-textfield__input" type="text" name="partialrecName" value="'..(recName3 or '')..'" id="partialrecName'..i..'"><label class="mdl-textfield__label" for="partialrecName'..i..'">ファイル名オプション</label><i class="addmacro material-icons">add</i></div></div>\n' or '')
           ..'<input class="recFolder" type=hidden name="partialrecFolder" value="'..v.recFolder..'">'
           ..'</div>\n'
       end

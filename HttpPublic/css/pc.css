@@ -2,6 +2,8 @@
   width: 7px;
   height: 7px;
   background: #E1E1E1; }
+  .macro-list::-webkit-scrollbar {
+    width: 4px; }
   ::-webkit-scrollbar-thumb {
     background: #B3B3B3; }
   ::-webkit-scrollbar-corner { 

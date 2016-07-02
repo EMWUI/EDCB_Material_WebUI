@@ -301,6 +301,39 @@ $(function(){
 		}
 	});
 
+	//マクロ補助
+	$(window).on('load resize', function(){
+		if ($(window).width() > 700){
+			$('.shrink-phone').show();
+			$('.check-shrink-phone').prop('checked', true);
+			$('.drawer-separator.mdl-cell--hide-desktop').hide();
+		}else{
+			$('.shrink-phone').hide();
+			$('.check-shrink-phone').prop('checked', false);
+			$('.drawer-separator.mdl-cell--hide-desktop').show();
+		}
+	});
+	function macro(obj){
+		$(obj).prevAll('input').addClass('is-active');
+		$('#popup').addClass('is-visible');
+	}
+	$('.addmacro').click(function(){
+		macro(this);
+	});
+	$('.close.macro').click(function(){
+		$('input.is-active').removeClass('is-active');
+		$('#popup').removeClass('is-visible');
+	});
+	$('.macro-item').click(function(){
+		var elem = $('input.is-active').get(0);
+		var start = elem.selectionStart;
+		var end = elem.selectionEnd;
+		var def = $('input.is-active').val();
+		var val = def.substr(0, start) + $(this).data('macro') + def.substr(end, def.length);
+		$('input.is-active').val(val).removeClass('is-active').parent().addClass('is-dirty');
+		$('#popup').removeClass('is-visible');
+	});
+
 
 
 	//検索バーのアイコンクリックで検索
@@ -441,8 +474,9 @@ $(function(){
 									recNamePlugInoption = $(div, {class: container}).append(
 											$(div, {class: head + middle, text: 'オプション'}) ).append(
 											$(div, {class: textfield}).append(
-												$('<input>', {class: 'mdl-textfield__input', type: 'text', name: 'recName', value: recNamePlugInoption, id: 'recName'+i}) ).append(
-												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ) );
+												$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: 'recName', value: recNamePlugInoption, id: 'recName'+i}) ).append(
+												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ).append(
+												$('<i>', {class: 'addmacro material-icons', text: 'add', on: {click: function(){macro(this)} } }) ) );
 								}
 
 								$('#preset .addPreset').before(
@@ -482,8 +516,9 @@ $(function(){
 									recNamePlugInoption = $(div, {class: container}).append(
 											$(div, {class: head + middle, text: 'オプション'}) ).append(
 											$(div, {class: textfield}).append(
-												$('<input>', {class: 'mdl-textfield__input', type: 'text', name: 'partialrecName', value: recNamePlugInoption, id: 'partialrecName'+i}) ).append(
-												$('<label>', {class: 'mdl-textfield__label', for: 'partialrecName'+i, text: 'ファイル名PlugIn'}) ) );
+												$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: 'partialrecName', value: recNamePlugInoption, id: 'partialrecName'+i}) ).append(
+												$('<label>', {class: 'mdl-textfield__label', for: 'partialrecName'+i, text: 'ファイル名PlugIn'}) ).append(
+												$('<i>', {class: 'addmacro material-icons', text: 'add', on: {click: function(){macro(this)} } }) ) );
 								}
 
 								$('#partialpreset .addPreset').before(
@@ -531,7 +566,8 @@ $(function(){
 											$(div, {class: head + middle, text: 'オプション'}) ).append(
 											$(div, {class: textfield}).append(
 												$('<input>', {class: 'mdl-textfield__input', type: 'text', name: 'recName', value: recNamePlugInoption, id: 'recName'+i}) ).append(
-												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ) );
+												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ).append(
+												$('<i>', {class: 'addmacro material-icons', text: 'add', on: {click: function(){macro(this)} } }) ) );
 								}
 
 								$('#preset').append(
@@ -581,7 +617,8 @@ $(function(){
 											$(div, {class: head + middle, text: 'オプション'}) ).append(
 											$(div, {class: textfield}).append(
 												$('<input>', {class: 'mdl-textfield__input', type: 'text', name: 'partialrecName', value: recNamePlugInoption, id: 'recName'+i}) ).append(
-												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ) );
+												$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}) ).append(
+												$('<i>', {class: 'addmacro material-icons', text: 'add', on: {click: function(){macro(this)} } }) ) );
 								}
 
 								$('#partialpreset').append(
@@ -824,8 +861,9 @@ $(function(){
 			recNamePlugInoption = $(div, {class: container}).append(
 				$(div, {class: head + middle, text: 'オプション'}) ).append(
 				$(div, {class: textfield}).append(
-					$('<input>', {class: 'mdl-textfield__input', type: 'text', name: partial+'recName', value: recNamePlugInoption, id: 'recName'}) ).append(
-					$('<label>', {class: 'mdl-textfield__label', for: 'recName', text: 'ファイル名PlugIn'}) ) );
+					$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: partial+'recName', value: recNamePlugInoption, id: 'recName'}) ).append(
+					$('<label>', {class: 'mdl-textfield__label', for: 'recName', text: 'ファイル名PlugIn'}) ).append(
+					$('<i>', {class: 'addmacro material-icons', text: 'add', on: {click: function(){macro(this)} } }) ) );
 		}
 
 		$(this).before(
