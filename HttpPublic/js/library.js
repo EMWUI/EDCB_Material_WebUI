@@ -181,7 +181,11 @@ function toggleView(view){
 		$('.view-grid').show();
 		$('.view-list').hide();
 	}
-	folder();
+	if (location.hash.slice(0,8) != '#search@'){
+		folder();
+	}else{
+		librarySearch(location.hash.slice(8));
+	}
 }
 
 //スワイプ処理
@@ -191,9 +195,72 @@ function librarySwipe(obj){
 	}
 }
 
+function librarySearch(key){
+		if (key.length > 0){ 
+			$('#library').empty();
+			var found;
+			var xml = sessionStorage.getItem('movie');
+			var movie = new DOMParser().parseFromString(xml, 'text/xml');
+			var library = $('<div>', {id: 'library', class: 'mdl-grid'});
+			if (ViewMode == 'grid'){
+				library.addClass('list');
+			}
+			$(movie).find('file').each(function(){
+				var name = $(this).children('name').text();
+				if (name.match(key)){
+					var data = {
+						name: name,
+						path: $(this).children('path').text(),
+						public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
+					};
+					var event = function(){
+						$('#popup').addClass('is-visible');
+						$('.bar').addClass('is-visible');
+						playMovie($(this));
+					};
+					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, on: {click: event} });
+
+					if (ViewMode == 'grid'){
+						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
+						var thumbs = $(this).children('thumbs').text();
+						if (thumbs != 0){
+							obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
+						}else{
+							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}).append($('<i>', {class: 'material-icons', text: 'movie_creation'}) ) );
+						}
+						obj.append($('<div>', {class: 'mdl-card__actions'}).append($('<span>', {class: 'filename', text: name}) ) );
+					}else{
+						obj.addClass('mdl-list__item').append(
+							$('<span>', {class: 'mdl-list__item-primary-content'}).append(
+								$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}) ).append(
+								$('<span>', {text: name}) ) );
+					}
+					library.append(obj);
+				}
+			});
+			$('main').html(library);
+			$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+			$('.mdl-layout__header-row .mdl-layout-title').text('検索 (' + key + ')');
+			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, on: {click: function(){location.hash = '#home';} } }) ).append(
+				'<i class="mdl-layout__tab material-icons">chevron_right').append(
+				$('<span>', {id: 'search_', class: 'mdl-layout__tab is-active', text: '検索', data: {id: 'search'}, on: {click: function(){location.hash = '#search@'+ key;} } }) );
+			showSpinner(false);
+		}
+}
+
 $(function(){
 	$(window).on('hashchange', function(){
-		folder();
+		if (location.hash.slice(0,8) != '#search@'){
+			folder();
+		}else{
+			librarySearch(location.hash.slice(8));
+		}
+	});
+	$(window).on('load', function(){
+		if ($(window).width() < 479){
+			$('#subheader').hide().addClass('scroll');
+			setInterval("$('#subheader').show()",1000)
+		}
 	});
 
 	//ライブラリ一覧有無確認
@@ -202,7 +269,11 @@ $(function(){
 		getMovieList();
 	}else{
 		refreshPath = true;
-		folder();
+		if (location.hash.slice(0,8) != '#search@'){
+			folder();
+		}else{
+			librarySearch(location.hash.slice(8));
+		}
 	}
 	if (ViewMode == 'grid'){
 		$('.view-grid').hide();
@@ -221,4 +292,9 @@ $(function(){
 			librarySwipe( $('.mdl-layout__tab.is-active').nextAll('span:first') );
 		});
 	}
+
+	$('#library-search').submit(function(){
+		location.hash = '#search@' + $('#Key').val();
+		return false;
+	});
 });

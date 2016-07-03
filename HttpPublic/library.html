@@ -11,12 +11,17 @@ ct.subheader=[=[
 <div class="path mdl-layout__tab-bar">
 <span class="mdl-layout__tab is-active" data-id="home">ホーム</span>
 </div>
+<div id="subheader" class="serch-bar mdl-color-text--grey-600"><div class="mdl-navigation">
+<button class="mdl-button mdl-js-button mdl-button--icon" form="library-search"><i class="material-icons">search</i></button>
+<div class="mdl-textfield mdl-js-textfield"><form id="library-search" action="#"><input class="mdl-textfield__input" type="text" id="Key"><label class="mdl-textfield__label"></label></form></div>
+</div></div>
 ]=]
 
 ct.menu=[=[
 <ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">
-<li class="view-grid mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="toggleView('grid');"><i class="material-icons">view_module</i>グリッド表示</li>
-<li class="view-list mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="toggleView('list');"><i class="material-icons">view_list</i>リスト表示</li>
+<li class="view-grid mdl-menu__item" onclick="toggleView('grid');"><i class="material-icons">view_module</i>グリッド表示</li>
+<li class="view-list mdl-menu__item" onclick="toggleView('list');"><i class="material-icons">view_list</i>リスト表示</li>
+<li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="$('#subheader').toggleClass('scroll');"><i class="material-icons">search</i>検索</li>
 <li class="mdl-menu__item" onclick="refreshMovieList();"><i class="material-icons">refresh</i>再読み込み</li>
 <li class="mdl-menu__item" disabled><i class="material-icons">photo</i>サムネ作成</li>
 </ul>
