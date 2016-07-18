@@ -7,7 +7,7 @@ post=ReadPost()
 AssertCsrf(post)
 
 if post then
-  edcb.DelAutoAdd(tonumber(mg.get_var(mg.request_info.query_string,'id')) or 0))
+  edcb.DelAutoAdd(tonumber(mg.get_var(mg.request_info.query_string,'id')) or 0)
   ct=ct..'<success>EPG自動予約を削除しました</success></entry>'
 else
   ct=ct..'<err>EPG自動予約を削除できませんでした</err></entry>'
