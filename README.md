@@ -24,7 +24,9 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 .markのborderはA700を指定しています
 
 ###ライブラリ
-録画保存フォルダのファイルを表示・再生します  
+録画保存フォルダのファイル(ts,mp4,webm)を表示・再生します  
+Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合があるようです  
+また公開フォルダ外のファイルはapiを経由するためシークできないようになっています  
 **LuaFileSystem(lfs.dll)が必要です**  
 lfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
 
