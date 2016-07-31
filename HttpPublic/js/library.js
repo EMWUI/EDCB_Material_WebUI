@@ -77,7 +77,7 @@ function folder(){
 						});
 
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name).append(
 								$('<div>', {class: 'mdl-card__title mdl-card--expand'}).append(
 									$('<i>', {class: 'material-icons', text: 'folder'}) ) ).append(
 								$('<div>', {class: 'mdl-card__actions'}).append(
@@ -102,7 +102,7 @@ function folder(){
 						});
 
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name);
 							var thumbs = $(this).children('thumbs').text();
 							if (thumbs != 0){
 								obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
