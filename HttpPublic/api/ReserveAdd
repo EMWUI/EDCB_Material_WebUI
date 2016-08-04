@@ -13,9 +13,9 @@ if post then
   r.eid=tonumber(mg.get_var(post, 'eid')) or 0
   presetID=tonumber(mg.get_var(post, 'presetID'))
   recMode=tonumber(mg.get_var(post, 'recMode'))
-  tuijyuuFlag=tonumber(mg.get_var(post, 'tuijyuuFlag'))
+  tuijyuuFlag=tonumber(mg.get_var(post, 'tuijyuuFlag')) or 0
   priority=tonumber(mg.get_var(post, 'priority'))
-  pittariFlag=tonumber(mg.get_var(post, 'pittariFlag'))
+  pittariFlag=tonumber(mg.get_var(post, 'pittariFlag')) or 0
   suspendMode=tonumber(mg.get_var(post, 'suspendMode'))
   rebootFlag=mg.get_var(post, 'rebootFlag')
   useDefMarginFlag=mg.get_var(post, 'useDefMarginFlag')
