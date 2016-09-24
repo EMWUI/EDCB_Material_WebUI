@@ -333,7 +333,9 @@ function _ConvertEpgInfoText2(onid, tsid, sid, eid)
     if v.contentInfoList then
       s=s..'<li>ジャンル\n<ul>'
       for i,w in ipairs(v.contentInfoList) do
-        s=s..'<li>'..edcb.GetGenreName(math.floor(w.content_nibble/256)*256+255)..' - '..edcb.GetGenreName(w.content_nibble)..'</li>\n'
+        --0x0E01はCS拡張用情報
+        nibble=w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
+        s=s..'<li>'..edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble)..'\n'..'</li>\n'
       end
     s=s..'</ul></li>\n'
     end
@@ -625,7 +627,7 @@ function SerchTemplate(si)
   s=s..'</select></div>\n'
    ..'<div><button class="g_celar'..(si.search and ' advanced ' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="5">\n'
-  for i=0,15 do
+  for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15}) do
     nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
       s=s..'<option class="g'..(i*256+255)..'" value="'..(i*256+255)..'"'
