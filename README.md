@@ -8,9 +8,9 @@ ffmpeg.exe,readex.exeを別途ダウロードしてください
 readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
 
 ###使い方
-EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L410-L475)*をよく読み  
+EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L414-L480)*をよく読み  
 README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
-[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L433-L436)を設定している場合はHttpPublicの中身をそこに  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L437-L440)を設定している場合はHttpPublicの中身をそこに  
 ※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください  
 
 ###テーマカラー
@@ -100,8 +100,10 @@ chcountとshowは週間番組表では使えません
 
 ###注意
 チャンネルが増えたりしたら設定を保存しなおしてください(番組表に表示されません)  
-tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**にしてください  
-有効せずに使用しEPG予約を変更しようとすると番組長などの追加機能の設定がデフォルトにされます
+~~tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**にしてください  
+有効せずに使用しEPG予約を変更しようとすると番組長などの追加機能の設定がデフォルトにされます~~  
+[cc6fafc](https://github.com/xtne6f/EDCB/commit/cc6fafcbfe5cb558e1ed89f6f3ff62ea5ec620ca)でオリジナルの機能がなくなったはずなので必要なくなりました  
+設定は残しておきます
 
 ###動作確認
 
@@ -112,7 +114,7 @@ tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**�
   - firefox
 - Android
   - Chrome
-  - Opera
+  - ~~Opera~~
 
 ※IEでも基本的に動作すると思いますがおすすめしません  
 
