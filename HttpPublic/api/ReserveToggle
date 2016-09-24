@@ -4,7 +4,6 @@ id=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
 
 changed=false
 
-edcb.htmlEscape=15
 for i,v in ipairs(edcb.EnumRecPresetInfo()) do
   if v.id==0 then
     recMode=(v.recSetting.recMode==5 and 0 or v.recSetting.recMode)
