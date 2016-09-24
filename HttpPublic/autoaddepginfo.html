@@ -3,7 +3,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path))
 
