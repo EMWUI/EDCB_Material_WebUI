@@ -8,9 +8,9 @@ ffmpeg.exe,readex.exeを別途ダウロードしてください
 readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
 
 ###使い方
-EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L414-L480)*をよく読み  
+EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L420-L486)*をよく読み  
 README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
-[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L437-L440)を設定している場合はHttpPublicの中身をそこに  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L443-L446)を設定している場合はHttpPublicの中身をそこに  
 ※HttpPublicFolderの任意のフォルダに入れる場合**apiフォルダ**だけは***HttpPublicFolder直下***に入れてください  
 
 ###テーマカラー
@@ -28,7 +28,8 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合があるようです  
 また公開フォルダ外のファイルはapiを経由するためシークできないようになっています  
 **LuaFileSystem(lfs.dll)が必要です**  
-lfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
+同梱のlfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
+ですがxtne6f氏がEDCB-tools-bin.zipで配布しているパッチ適用済みのものを使用することをおすすめします  
 
 必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
 `batPath[=EDCBのbatフォルダ]`  
