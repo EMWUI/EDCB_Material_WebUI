@@ -79,10 +79,12 @@
 		$('[name=reset]').val(val);
 	});
 	//初期化
+	var dialog = document.querySelector('dialog');
+	if(!dialog.showModal){
+	  dialogPolyfill.registerDialog(dialog);
+	}
 	$('.init').click(function(){
 		$('.mdl-dialog__content').text('"' + $(this).data('text') + '"を初期化しますか?');
-	    var dialog = document.querySelector('dialog');
-	    dialogPolyfill.registerDialog(dialog);
 	    dialog.showModal();
 	});
 });
