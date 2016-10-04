@@ -297,8 +297,8 @@ function template(temp)
 end
 
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
-function _ConvertEpgInfoText2(onid, tsid, sid, eid)
-  local s, v = '', edcb.SearchEpg(onid, tsid, sid, eid)
+function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
+  local s, v = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid))
       s='<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   if v then
       beforeEnd=true

@@ -216,8 +216,18 @@ for i,v in ipairs(sort or {}) do
       minTime=minTime and os.time(mmt.minTime)>minTime and minTime or os.time(mmt.minTime)
       maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
+    mmt=edcb.GetEventMinMaxTimeArchive and edcb.GetEventMinMaxTimeArchive(v.onid, v.tsid, v.sid)
+    if mmt then
+      minTime=minTime and os.time(mmt.minTime)>minTime and minTime or os.time(mmt.minTime)
+      maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
+    end
     --表示範囲の番組だけ取得する
     st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}
+    for j,w in ipairs(edcb.EnumEventInfoArchive and
+        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
+      w.past=true
+      table.insert(st[#st].et, w)
+    end
     table.sort(st[#st].et, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   end
 end
@@ -402,7 +412,7 @@ for i=pagemin,pagemax do
       search=(w.shortInfo and ConvertSearch(w, v.service_name) or '')									--検索
 
       r=nil
-      id=rt[string.format('%04X%04X%04X%04X', w.onid, w.tsid, w.sid, w.eid)]
+      id=not w.past and rt[string.format('%04X%04X%04X%04X', w.onid, w.tsid, w.sid, w.eid)] or nil
       if id then
         r=edcb.GetReserveData(id)
       end
@@ -419,7 +429,7 @@ for i=pagemin,pagemax do
         ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)..search
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene({})..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..'&eid='..w.eid..'">番組詳細</a>'
+        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene({})..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime) or '&eid='..w.eid)..'">番組詳細</a>'
         ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
           ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加

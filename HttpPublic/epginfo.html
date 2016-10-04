@@ -10,6 +10,7 @@ onid=tonumber(mg.get_var(mg.request_info.query_string,'onid')) or 0
 tsid=tonumber(mg.get_var(mg.request_info.query_string,'tsid')) or 0
 sid=tonumber(mg.get_var(mg.request_info.query_string,'sid')) or 0
 eid=tonumber(mg.get_var(mg.request_info.query_string,'eid')) or 0
+startTime=tonumber(mg.get_var(mg.request_info.query_string,'startTime')) or 0
 presetID=tonumber(mg.get_var(mg.request_info.query_string,'presetID')) or 65535
 tab=tonumber(mg.get_var(mg.request_info.query_string,'tab')) or 0
 page=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
@@ -86,11 +87,18 @@ if not r and presetID==65535 then
   presetID=0
 end
 
+et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('*t',startTime), durationSecond=1})
+
 ct={title='番組情報'}
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
-  .._ConvertEpgInfoText2(onid, tsid, sid, eid)
+
+  if et and #et~=0 then
+    ct.main=ct.main.._ConvertEpgInfoText2(et[1])
+  else
+    ct.main=ct.main.._ConvertEpgInfoText2(onid, tsid, sid, eid)
+  end
 
 if beforeEnd then
   redirect=mg.get_var(post, 'andKey') and 'submit="#search' or 'redirect="'..(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid or 'epg.html?tab='..tab..'&date='..date..(pageIndex~=0 and '&chpage='..pageIndex or ''))..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
