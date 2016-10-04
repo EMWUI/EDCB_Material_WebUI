@@ -210,8 +210,8 @@ $(function(){
 
 	var notification = document.querySelector('.mdl-js-snackbar');
 	//EPG取得
-	$('.epg').click(function(){
-		$.get(root + 'api/Epg', {epg: $(this).data('epg'), ctok: $(this).data('ctok')}, function(result, textStatus, xhr){
+	$('.api_tools').click(function(){
+		$.get(root + 'api/Common', $(this).data(), function(result, textStatus, xhr){
 			var xml = $(xhr.responseXML);
 			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
 		});
