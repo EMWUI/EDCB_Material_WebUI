@@ -19,17 +19,13 @@ function getMovieList(Snack){
 					loadingMovieList = false;
 					refreshPath = true;
 					folder();
-					if (Snack){
-						message = '取得しました';
-					}
+					if (Snack) message = '取得しました';
 				}
 			}else{
 				message = '取得に失敗しました';
 				showSpinner(false);
 			}
-			if (message){
-				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: message});
-			}
+			if (message) $('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: message});
 		},
 		complete: function(){
 			loadingMovieList = false;
@@ -46,9 +42,8 @@ function refreshMovieList(){
 //ライブラリ表示
 function folder(){
 	id = location.hash == '' ? 'home' : location.hash.slice(1);
-	if (!$('#' + id).length > 0){
-		refreshPath = true;
-	}
+	if (!$('#' + id).length > 0) refreshPath = true;
+
 	$('.mdl-layout__tab').removeClass('is-active');
 	$('#' + id).addClass('is-active');
 	var notification = $('.mdl-js-snackbar').get(0);
@@ -65,8 +60,8 @@ function folder(){
 		var movie = new DOMParser().parseFromString(xml, 'text/xml');
 		$(movie).find('dir').each(function(){
 			if ($(this).children('id').text() == id){
-				found=true;
-				$(this).children('dir,file').each(function(){
+				found = true;
+				$(this).children('dir, file').each(function(){
 					var name = $(this).children('name').text();
 					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'));
 					if ($(this).context.tagName == 'dir'){
@@ -172,7 +167,7 @@ function folder(){
 
 //表示切替
 function toggleView(view){
-	ViewMode=view;
+	ViewMode = view;
 	localStorage.setItem('ViewMode', view)
 	if (ViewMode == 'grid'){
 		$('.view-list').show();
@@ -190,9 +185,7 @@ function toggleView(view){
 
 //スワイプ処理
 function librarySwipe(obj){
-	if (obj.length > 0){
-		location.hash = '#' + obj.data('id');
-	}
+	if (obj.length > 0) location.hash = '#' + obj.data('id');
 }
 
 function librarySearch(key){
@@ -202,9 +195,8 @@ function librarySearch(key){
 			var xml = sessionStorage.getItem('movie');
 			var movie = new DOMParser().parseFromString(xml, 'text/xml');
 			var library = $('<div>', {id: 'library', class: 'mdl-grid'});
-			if (ViewMode == 'grid'){
-				library.addClass('list');
-			}
+			if (ViewMode == 'grid') library.addClass('list');
+
 			$(movie).find('file').each(function(){
 				var name = $(this).children('name').text();
 				if (name.match(key)){
@@ -259,7 +251,7 @@ $(function(){
 	$(window).on('load', function(){
 		if ($(window).width() < 479){
 			$('#subheader').hide().addClass('scroll');
-			setInterval("$('#subheader').show()",1000)
+			setInterval("$('#subheader').show()", 1000)
 		}
 	});
 

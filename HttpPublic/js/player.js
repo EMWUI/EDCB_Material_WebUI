@@ -43,12 +43,8 @@ function loadMovie(obj){
 	$('#titlebar').text(obj.data('name'));
 
 	$('.ctl-button').removeClass('is-disabled');
-	if (obj.is('.item:first')){
-		$('#playprev').addClass('is-disabled');
-	}
-	if (obj.is('.item:last')){
-		$('#playnext').addClass('is-disabled');
-	}
+	if (obj.is('.item:first')) $('#playprev').addClass('is-disabled');
+	if (obj.is('.item:last' )) $('#playnext').addClass('is-disabled');
 }
 
 function playMovie(obj){
@@ -80,10 +76,7 @@ $(function(){
 	var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
 	video.muted = localStorage.getItem('muted') == 'true' ? true : false;
 	video.volume = localStorage.getItem('volume') ? localStorage.getItem('volume') : 1;
-	if (autoplay){
-		$('#autoplay').prop('checked', true);
-	}
-
+	if (autoplay) $('#autoplay').prop('checked', true);
 
 	//閉じる
 	$('.close.mdl-badge').click(function(){
@@ -111,7 +104,7 @@ $(function(){
 		var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
 		if (autoplay && !$('.playing').is('.item:last')){
 			playMovie($('.playing').next());
-		}else if(autoplay && $('.playing').is('.item:last')){
+		}else if (autoplay && $('.playing').is('.item:last')){
 			notification.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
 		}else{
 			$('.bar').addClass('is-visible');
@@ -134,7 +127,7 @@ $(function(){
 	});
 	
 	$('#video').on('volumechange', function(){
-		if(video.muted){
+		if (video.muted){
 			$('#volume-icon').text('volume_off');
 		}else if (video.volume == 0){
 			$('#volume-icon').text('volume_mute');
@@ -149,9 +142,7 @@ $(function(){
 
 	$('#video').on('ratechange', function(){
 		$('#rate').text(video.playbackRate);
-		if (sessionStorage.getItem('autoplay') == 'true'){
-			video.defaultPlaybackRate = video.playbackRate;
-		}
+		if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = video.playbackRate;
 	});
 
 	$('#video').on('loadeddata', function(){
@@ -175,9 +166,7 @@ $(function(){
 			$('.videoTime').addClass('is-disabled');
 			$('.duration').text('0:00');
 			$('.currentTime').text('0:00');
-			if ($(this).data('keepdisk')){
-				$('#seek').prop('disabled', true);
-			}
+			if ($(this).data('keepdisk')) $('#seek').prop('disabled', true);
 		}else{
 			xcode = $(this).data('duration') ? true : false;
 			var adjust = seek * (duration / 99);
@@ -189,9 +178,7 @@ $(function(){
 			$('#seek').attr('max', 100).attr('step', 0.01);
 			$('.videoTime').removeClass('is-disabled');
 			$('.duration').text(getVideoTime(duration));
-			if (!$(this).data('public') && !$(this).data('duration')){
-				$('#seek').prop('disabled', true);
-			}
+			if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);
 		}
 	});
 
@@ -220,7 +207,7 @@ $(function(){
 	});
 
 	$('#volume-icon').click(function(){
-		if(video.muted){
+		if (video.muted){
 			video.muted = false;
 			$('#volume').get(0).MaterialSlider.change(video.volume);
 		}else{
@@ -230,14 +217,10 @@ $(function(){
 	});
 
 	$('#playprev').click(function(){
-		if (!$(this).hasClass('is-disabled')){
-			playMovie($('.playing').prev());
-		}
+		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').prev());
 	});
 	$('#playnext').click(function(){
-		if (!$(this).hasClass('is-disabled')){
-			playMovie($('.playing').next());
-		}
+		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').next());
 	});
 
 	$('#fullscreen').click(function(e){
@@ -277,9 +260,7 @@ $(function(){
 		}
 	});
 
-	if (localStorage.getItem('quality') == 'HD'){
-		$('#HD').prop('checked', true);
-	}
+	$('#'+ localStorage.getItem('quality')).prop('checked', true);
 	$('#HD').change(function(){
 		if ($(this).prop('checked')){
 			localStorage.setItem('quality', 'HD');
@@ -295,7 +276,7 @@ $(function(){
 		$('#player').hover(function(){
 			stopTimer();
 			$('.bar').addClass('is-visible');
-		},function(){
+		}, function(){
 			hideBar(500);
 		});
 

@@ -71,7 +71,7 @@ function tab(tab){
 }
 
 function delPreset(obj){
-	obj=$(obj).parent();
+	obj = $(obj).parent();
 	obj.addClass('hidden');
 	var remove = function(){obj.remove();};
 	var clear = setTimeout(remove, 2500);
@@ -109,16 +109,12 @@ $(function(){
 
 	//一覧の行をリンクに
 	$('tr[data-href]').click(function(e){
-		if (!$(e.target).is('.flag,.flag *,.count li')){
-			window.location = $(this).data('href');
-		};
+		if (!$(e.target).is('.flag, .flag *, .count li')) window.location = $(this).data('href');
 	});
 	//検索ページ用
 	$('[data-search]').click(function(e){
-		if (!$(e.target).is('.flag,.flag *')){
-			if ($('#advanced').prop('checked')) {
-				$('#hidden').append( $('<input>', { type:'hidden', name:'advanced', value:'1' }) );
-			}
+		if (!$(e.target).is('.flag, .flag *')){
+			if ($('#advanced').prop('checked')) $('#hidden').append( $('<input>', { type: 'hidden', name: 'advanced', value: '1' }) );
 			$('#hidden').attr('action', $(this).data('search')).submit();
 		}
 	});
@@ -171,7 +167,7 @@ $(function(){
 		}else{
 			var subGenre = $(this).data('subGenre');
 			$('#subGenre').prop('disabled', false).prop('checked', subGenre).parent().removeClass('is-disabled');
-			if (!subGenre){ $('.subGenre').hide(); }
+			if (!subGenre) $('.subGenre').hide();
 		}
 	});
 	//全ジャンル選択解除
@@ -275,8 +271,8 @@ $(function(){
 	//選択
 	$(document).on('click', '#dateList_touch .mdl-list__item', function(){
 		$(this).toggleClass('mdl-color--accent mdl-color-text--accent-contrast');
-		var option=$('#dateList_select option').eq( $(this).data('count') );
-		if(option.prop('selected') == true){
+		var option = $('#dateList_select option').eq( $(this).data('count') );
+		if (option.prop('selected')){
 			option.prop('selected', false);
 		}else{
 			option.prop('selected', true);
@@ -338,9 +334,7 @@ $(function(){
 
 	//検索バーのアイコンクリックで検索
 	$('[for=header-andKey]').click(function(){
-		if ($(this).parent().hasClass('is-dirty')){
-			$('#search-bar').submit();
-		}
+		if ($(this).parent().hasClass('is-dirty')) $('#search-bar').submit();
 	});
 	//検索バー連動
 	$('#search-bar').val($('#andKey').val());
@@ -354,15 +348,15 @@ $(function(){
 	//プリセット読み込み
 	$('[name=presetID]').change(function(){
 		var preset, messege;
- 		var tag='recpresetinfo';
- 		var tagid='id';
+ 		var tag = 'recpresetinfo';
+ 		var tagid = 'id';
 
 		if ($(this).val() != 65535){
 			preset = $($('html').data('preset'));
 			id = $(this).val();
 		}else{
 			preset = $($('html').data('xml'));
-			if($(this).data('reseveid')){
+			if ($(this).data('reseveid')){
 				id = $(this).data('reseveid');
 				tag = 'reserveinfo';
 				tagid = 'ID';
@@ -486,7 +480,7 @@ $(function(){
 										$(div, {class: container}).append(
 											$(div, {class: head, text: 'フォルダ'}) ).append(
 											$(div, {class: content, text: recFolder}) ).append(
-											$('<input>', {class: 'recFolderList', type: 'hidden', name:'recFolder', value: recFolder}) ) ).append(
+											$('<input>', {class: 'recFolderList', type: 'hidden', name: 'recFolder', value: recFolder}) ) ).append(
 										$(div, {class: container}).append(
 											$(div, {class: head + middle, text: '出力PlugIn'}) ).append(
 											$(div, {class: select}).append(
@@ -582,9 +576,9 @@ $(function(){
 											$(div, {class: head, text: 'ファイル名PlugIn'}) ).append(
 											$(div, {class: content, text: (recNamePlugIn != '' ? recNamePlugIn : '－')}) ) ).append(
 										recNamePlugInoption ).append(
-										$('<input>', {type: 'hidden', name:'recFolder', value: recFolder}) ).append(
-										$('<input>', {type: 'hidden', name:'writePlugIn', value: writePlugIn}) ).append(
-										$('<input>', {type: 'hidden', name:'recNamePlugIn', value: recNamePlugIn}) ) );
+										$('<input>', {type: 'hidden', name: 'recFolder', value: recFolder}) ).append(
+										$('<input>', {type: 'hidden', name: 'writePlugIn', value: writePlugIn}) ).append(
+										$('<input>', {type: 'hidden', name: 'recNamePlugIn', value: recNamePlugIn}) ) );
 							});
 						}else{
 							$('#preset').append(
@@ -633,9 +627,9 @@ $(function(){
 											$(div, {class: head, text: 'ファイル名PlugIn'}) ).append(
 											$(div, {class: content, text: (recNamePlugIn != '' ? recNamePlugIn : '－')}) ) ).append(
 										recNamePlugInoption ).append(
-										$('<input>', {type: 'hidden', name:'partialrecFolder', value: recFolder}) ).append(
-										$('<input>', {type: 'hidden', name:'partialwritePlugIn', value: writePlugIn}) ).append(
-										$('<input>', {type: 'hidden', name:'partialrecNamePlugIn', value: recNamePlugIn}) ) );
+										$('<input>', {type: 'hidden', name: 'partialrecFolder', value: recFolder}) ).append(
+										$('<input>', {type: 'hidden', name: 'partialwritePlugIn', value: writePlugIn}) ).append(
+										$('<input>', {type: 'hidden', name: 'partialrecNamePlugIn', value: recNamePlugIn}) ) );
 							});
 						}else{
 							$('#partialpreset').append(
@@ -661,7 +655,7 @@ $(function(){
 						$('#partialpreset').hide();
 					}
 					var name;
-					if($(this).children('name').text().length > 0){
+					if ($(this).children('name').text().length > 0){
 						name = $(this).children('name').text();
 					}else{
 						name = $('[name=presetID] option:selected').text();
@@ -670,7 +664,7 @@ $(function(){
 				}
 			});
 		}
-		if (!messege){ messege = 'プリセットの読み込に失敗しました';}
+		if (!messege) messege = 'プリセットの読み込に失敗しました';
 		notification.MaterialSnackbar.showSnackbar({message: messege});
 	});
 	//録画マージン
@@ -792,9 +786,7 @@ $(function(){
 	});
 	//録画無効マーク
 	$('.disabled span').click(function(){
-		if ($(this).hasClass('recmark')){
-			reserve( $(this) );
-		}
+		if ($(this).hasClass('recmark')) reserve( $(this) );
 	});
 	//検索ページ追加ボタン
 	$('.add').click(function(){
@@ -802,7 +794,7 @@ $(function(){
 	});
 
 	//通信エラー
-	$(document).ajaxError(function(e,xhr, textStatus, errorThrown){
+	$(document).ajaxError(function(e, xhr, textStatus, errorThrown){
 		notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
 	});
 
@@ -810,6 +802,7 @@ $(function(){
 	$('.submit').click(function(){
 		showSpinner(true);
 		var form = $( $(this).data('form') );
+		var data = form.data();
 		$.ajax({
 			url: form.attr('action'),
 			type: form.attr('method'),
@@ -819,13 +812,13 @@ $(function(){
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
 					notification.MaterialSnackbar.showSnackbar({message: xml.find('success').text(), timeout: 1500});
-					if (form.data('redirect')){
-						setTimeout('location.href="'+form.data('redirect')+'";',1500);
-					}else if (form.data('submit')){
-						setTimeout('$("'+ form.data('submit') +'").submit();',1500);
+					if (data.redirect){
+						setTimeout('location.href="'+data.redirect+'";', 1500);
+					}else if (data.submit){
+						setTimeout('$("'+ data.submit +'").submit();', 1500);
 					}else if (form.hasClass('reload')){
 						notification.MaterialSnackbar.showSnackbar({message: 'リロードします', timeout: 1000});
-						setTimeout('location.reload()',2500);
+						setTimeout('location.reload()', 2500);
 					}
 				}else{
 					notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
@@ -849,10 +842,7 @@ $(function(){
 		var middle = ' mdl-cell--middle';
 		var recNamePlugInoption;
 		
-		var partial = '';
-		if ($(this).hasClass('partial')){
-			partial = 'partial';
-		}
+		var partial = $(this).hasClass('partial') ? 'partial' : '';
 
 		if ($('#preset').data('option')){
 			recNamePlugIn = $(this).children('recNamePlugIndll').text();

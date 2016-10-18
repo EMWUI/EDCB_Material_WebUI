@@ -78,11 +78,10 @@
 		$('.'+val).show();
 		$('[name=reset]').val(val);
 	});
+
 	//初期化
 	var dialog = document.querySelector('dialog');
-	if(!dialog.showModal){
-	  dialogPolyfill.registerDialog(dialog);
-	}
+	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
 	$('.init').click(function(){
 		$('.mdl-dialog__content').text('"' + $(this).data('text') + '"を初期化しますか?');
 	    dialog.showModal();

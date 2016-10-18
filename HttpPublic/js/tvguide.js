@@ -2,11 +2,11 @@
 	var date = new Date();
 	var hour = date.getHours();
 	var min  = MIN = date.getMinutes();
-	if (min < 10){min = '0' + min;}
-	if (hour < basehour){hour = hour + 24;}
+	if (min < 10) min = '0' + min;
+	if (hour < basehour) hour = hour + 24;
 	//現時刻の位置
 	var line = ((hour - basehour) * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
-	return {line:line, min:min};
+	return {line: line, min: min};
 }
 
 function line(){
@@ -15,7 +15,7 @@ function line(){
 	$('#line').css('top', time.line);
 
 	//ラインに分を表示
-	if (time.min != $('#line').text()){$('#line').text(time.min);}
+	if (time.min != $('#line').text()) $('#line').text(time.min);
 }
 
 function end(){
@@ -25,7 +25,7 @@ function end(){
 }
 
 function jump(){
-	$('main').animate({scrollTop:now().line - marginmin * oneminpx}, 550, 'swing');
+	$('main').animate({scrollTop: now().line - marginmin * oneminpx}, 550, 'swing');
 }
 
 $(function(){
@@ -114,12 +114,12 @@ $(function(){
 	$('#tv-guide-container').on('scroll', function(){
 		var header = $('header').height();
 		$.each($('.cell'), function(){
-			base=$(this).offset().top-header;
-			height=$(this).innerHeight();
-			content=$(this).children('.content');
+			base = $(this).offset().top-header;
+			height = $(this).innerHeight();
+			content = $(this).children('.content');
 
 			if (content.hasClass('reserve')){
-				if(base < -3 && height+base > 3){
+				if (base < -3 && height+base > 3){
 					content.css('top', -base).outerHeight(height+base-3).css('min-height', height+base).css('border-top', 'none');
 					return;
 				}
@@ -132,11 +132,11 @@ $(function(){
 			content.css('top', 0).css('min-height', height).css('border-top', '');
 		})
 		$.each($('#hour-container .hour'), function(){
-			base=$(this).offset().top-header;
-			height=$(this).innerHeight();
-			content=$(this).find('tt');
+			base = $(this).offset().top-header;
+			height = $(this).innerHeight();
+			content = $(this).find('tt');
 
-			if(base < 0 && height+base > 0){
+			if (base < 0 && height+base > 0){
 				content.css('padding-top', -base+5);
 			}else{
 				content.css('padding-top', '');
@@ -165,7 +165,7 @@ $(function(){
 		//ドラッグスクロール排除
 		if (e.which == 1 && pageX == e.pageX && pageY == e.pageY){
 			if (!$(e.target).is('a, label, .nothing')){
-				if($(this).hasClass('clicked')){
+				if ($(this).hasClass('clicked')){
 					$(this).removeClass('clicked');
 				}else{
 					$('.cell').removeClass('clicked');
@@ -182,7 +182,7 @@ $(function(){
 		$('.cell').hover(
 			function(){
 				$(this).addClass('clicked');
-			},function(){
+			}, function(){
 				$(this).removeClass('clicked');
 		});
 	}
@@ -190,7 +190,7 @@ $(function(){
 	//チャンネルトグル
 	$('.stationToggle').change(function(){
 		var obj = $('.id-' + $(this).val());
-		if($(this).prop('checked')){
+		if ($(this).prop('checked')){
 			obj.show();
 		}else{
 			obj.hide();
@@ -200,7 +200,7 @@ $(function(){
 	//ジャンルトグル
 	$('.genreToggle').change(function(){
 		$('.cell').removeClass('nothing');
-		if($(this).val() == 'all'){
+		if ($(this).val() == 'all'){
 			$('.content').show().removeClass('choice');
 		}else{
 			$('.content').show().removeClass('choice').not( $(this).val() ).hide().parent().addClass('nothing');
