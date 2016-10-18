@@ -86,7 +86,7 @@ NOW=baseTime<now and now<baseTime+interval*3600 or nil
 
 hour=hour<0 and hour+24 or hour
 
-hrefGene=(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')
+hrefGene=(hour~=4 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')
 
 ct={}
 
@@ -210,12 +210,22 @@ ct.subheader='<div id="subheader">\n'
   ..(NOW and 'id="now' or 'href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..nowHour..'&interval='..interval..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
+  ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
   ..'<div id="service" class="pulldown dividers navigation__item mdl-color-text--primary">'..(st and st.service_name or '')..'</div>\n'
 
-menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="service">\n'
+menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
+  ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'
+  ..'<li><a class="select mdl-menu__item" data-val=".DTV">地デジ</a></li>\n'
+  ..(oneseg and '<li><a class="select mdl-menu__item" data-val=".SEG">ワンセグ</a></li>\n' or '')
+  ..'<li><a class="select mdl-menu__item" data-val=".BS">BS</a></li>\n'
+  ..'<li><a class="select mdl-menu__item" data-val=".CS">CS</a></li>\n'
+  ..'<li><a class="select mdl-menu__item" data-val=".S-other">その他</a></li>\n'
+  ..'</ul>\n'
+  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="service">\n'
 for j,v in ipairs(sort or {}) do
   if (oneseg or not v.partialReceptionFlag) then
-    menu=menu..'<li><a class="mdl-menu__item'..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n'
+  	service = v.onid==4 and 'BS' or (v.onid==6 or v.onid==7) and 'CS' or v.partialReceptionFlag and 'SEG' or (0x7880<=v.onid and v.onid<=0x7FE8) and 'DTV' or 'S-other'
+    menu=menu..'<li class="'..service..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n'
   end
 end
 menu=menu..'</ul>\n'

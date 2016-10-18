@@ -155,6 +155,14 @@ $(function(){
 		$('main').animate({scrollTop: $(this).data('scroll')}, 550, 'swing');
 	});
 
+	//サービス絞り込み
+	$('.select').click(function(){
+		$('.select.mdl-color-text--accent').removeClass('mdl-color-text--accent');
+		$(this).addClass('mdl-color-text--accent');
+		$('#select').text($(this).text());
+		$('[for=service] li').show().not($(this).data('val')).hide();
+	});
+
 	//番組詳細表示
 	$('.cell').mousedown(function(e){
 		if (e.which == 1){
