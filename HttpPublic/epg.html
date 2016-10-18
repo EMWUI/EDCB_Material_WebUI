@@ -214,6 +214,7 @@ for i,v in ipairs(sort or {}) do
     mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
     if mmt then
       minTime=minTime and os.time(mmt.minTime)>minTime and minTime or os.time(mmt.minTime)
+      minTime_=minTime_ and os.time(mmt.minTime)>minTime_ and minTime_ or os.time(mmt.minTime)
       maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
     mmt=edcb.GetEventMinMaxTimeArchive and edcb.GetEventMinMaxTimeArchive(v.onid, v.tsid, v.sid)
@@ -264,7 +265,7 @@ end
 
 if minTime then
   minhour=math.floor((minTime+timezone-(interval==25 and 4 or baseHour)*3600)/3600)
-  mindate=math.floor((minTime+timezone)/(24*3600))
+  mindate=math.max(math.floor((minTime+timezone)/(24*3600)), math.floor((minTime_+timezone)/(24*3600))-3)
   maxhour=math.floor((maxTime+timezone-baseHour*3600)/3600)
   maxdate=math.floor((maxTime+timezone)/(24*3600))
 
