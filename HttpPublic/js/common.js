@@ -87,6 +87,128 @@ function delPreset(obj){
 	$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar(data);
 }
 
+//通知バッチ
+function badgeNotify(i){
+	i = i ? 1 : -1;
+	var count = Number($('#notification i').attr('data-badge')) + i;
+	if (count == 0){
+		$('#notification i').removeClass('mdl-badge').text('notifications_none');
+		$('#noNotify').show();
+	}else{
+		$('#notification i').addClass('mdl-badge').text('notifications');
+	}
+	$('#notification i').attr('data-badge', count);
+}
+
+//通知リスト削除
+function delNotify(notify, eid, noSnack){
+	badgeNotify();
+
+	notify.parents('.content').find('.notify_icon').remove();
+	notify.data('notification', false).children().text('add_alert');
+
+	if (!noSnack) document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '削除しました'});
+
+	var array = JSON.parse(localStorage.getItem('notifications'));
+	array.some(function(v, i){
+    	if (v.eid == eid) array.splice(i,1);
+    });
+
+	localStorage.setItem('notifications', JSON.stringify(array));
+}
+
+//通知登録
+var NotifySound = $('<audio src="video/notification.mp3">')[0];
+NotifySound.volume = 0.2;
+function creatNotify(notify, data, save){
+	var notifyList;
+	var notifyIcon = $('<div class="notify_icon"><i class="material-icons">notifications_active</i></div>');
+	var timeout = data.start*1000 - new Date().getTime() - 30*1000;
+
+	badgeNotify(true);
+
+	var timer = setTimeout(function(){
+		delNotify(notify, data.eid, true);
+		notifyIcon.remove();
+		notifyList.remove();
+		notify.children().text('notifications');
+
+		$.get(root + 'api/GetEventInfo', data, function(result, textStatus, xhr){
+			var xml = $(xhr.responseXML);
+			var title = xml.find('event_name').text();
+			var options = {
+				body: xml.find('startTime').text().match(/(\d+:\d+):\d+/)[1] + '～ ' + xml.find('service_name').text() + '\n' + xml.find('event_text').text(),
+				tag: data.onid + '-' + data.tsid + '-' + data.sid + '-' + data.eid,
+				icon: 'img/apple-touch-icon.png' }
+
+			var notification = new Notification(title, options);
+			      
+			notification.onclick = function(event){
+				event.preventDefault();
+				window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
+				notification.close();
+			}
+
+			NotifySound.play(); //Notification.soundはどこも未対応
+
+			//通知を閉じる
+			setTimeout(function(){
+				notification.close();
+			}, 15*1000);
+		});
+	}, timeout);
+
+	notify.parents('.mdl-layout-spacer').prev().append(notifyIcon);
+	notify.click(function(){
+		clearTimeout(timer);
+		notifyList.remove();
+	}).data('notification', true).children().text('notifications_off');
+
+	$('#noNotify').hide();
+
+	var notification = document.querySelector('.mdl-js-snackbar');
+
+	var date = new Date(data.start*1000);
+	var week = ['日', '月', '火', '水', '木', '金', '土'];
+	date = ('0'+(date.getMonth()+1)).slice(-2) + '/' + ('0'+date.getDate()).slice(-2) + '(' + week[date.getDay()] + ') ' + ('0'+date.getHours()).slice(-2) + ':' + ('0'+date.getMinutes()).slice(-2);
+
+	notifyList = $('<li>', {class: 'mdl-list__item mdl-list__item--two-line', data: {start: data.start}}).append(
+		$('<span>', {class: 'mdl-list__item-primary-content', click: function(){window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');}}).append(
+			$('<span>', {html: data.title}) ).append(
+			$('<span>', {class: 'mdl-list__item-sub-title', text: date + ' ' + data.name}) ) ).append(
+		$('<span>', {class: 'mdl-list__item-secondary-content'}).append(
+			$('<button>', {
+				class: 'mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon',
+				html: $('<i>', {class: 'material-icons', text: 'notifications_off'}),
+				click: function(){
+					clearTimeout(timer);
+					delNotify(notify, data.eid);
+
+					notifyList.remove();
+					notifyIcon.remove();
+					notify.data('notification', false).children().text('add_alert'); } }) ) );
+
+	var done;
+	$('#notifylist li').each(function(){
+		//開始時間でソート
+		if (data.start < $(this).data('start')){
+			done = true;
+			$(this).before(notifyList);
+			return false;
+		}
+	});
+	if (!done) $('#notifylist').append(notifyList);
+
+	//リストを保存
+	if (save){
+		var list = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
+		list.push(data);
+		localStorage.setItem('notifications', JSON.stringify(list));
+
+		notification.MaterialSnackbar.showSnackbar({message: '追加しました'});
+	}
+}
+
 $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
 
@@ -136,6 +258,55 @@ $(function(){
 			loadMovie($('#video'));
 			$('#video').load().data('load', true);
 			$('#volume').get(0).MaterialSlider.change(localStorage.getItem('volume'));
+		}
+	});
+
+	//通知
+	if (!isTouch && window.Notification){
+		if (Notification.permission == 'granted'){
+			$('.notification').removeClass('hidden');
+			//通知リスト読み込み
+			if (localStorage.getItem('notifications')){
+				var list = JSON.parse(localStorage.getItem('notifications'));
+				$.each(list, function(i, data){
+					var now = new Date().getTime();
+					var start = data.start*1000;
+					if (start < now){
+						//時間が過ぎてたらリストから削除
+						delNotify(notify, data.eid);
+					}else{
+						var notify = $('.start_' + data.start/10 + ' #notify_' + data.eid);
+						creatNotify(notify, data);
+					}
+				});
+			}
+		}else if (Notification.permission == 'default'){
+			//通知許可要求
+			Notification.requestPermission(function(result){
+				if (result == 'granted') $('.notification').removeClass('hidden');
+			});
+		}
+	}
+	if ($('h4 .notify').length > 0 && !$('h4 .notify').attr('disabled')){
+		var timeout = $('.notify').data('start')*1000 - new Date().getTime() - 30*1000;
+		setTimeout(function(){
+			$('.notify').attr('disabled', true).children().text('notifications');
+		}, timeout);
+	}
+	$('h4 .notify').click(function(){
+		var notify = $(this);
+		if (!notify.attr('disabled')){
+			var data = notify.data();
+			if (data.notification){
+				//登録済み通知削除
+				delNotify(notify, data.eid);
+			}else{
+				data.title = notify.prevAll('.title').html();
+				delete data['upgraded'];
+				delete data['notification'];
+
+				creatNotify(notify, data, true);
+			}
 		}
 	});
 

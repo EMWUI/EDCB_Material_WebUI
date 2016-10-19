@@ -77,6 +77,7 @@ function template(temp)
           <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html">録画結果</a>
         </nav>
       </div>
+      <button id="notification" class="notification hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons mdl-badge--no-background mdl-badge--overlap" data-badge="0">notifications_none</i></button>
 ]=]
 ..(temp.menu and '      <button id="menu" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>\n' or '')..[=[
       <span class="mdl-layout-title">]=]..(temp.title or '')..[=[</span>
@@ -273,13 +274,13 @@ function template(temp)
           </div>
         </div>
       </div>
-      <span class="close mdl-badge material-icons" data-badge="&#xE5CD;"></span>
+      <span class="close icons mdl-badge" data-badge="&#xE5CD;"></span>
 ]=])..[=[
     </div>
   </div>
 ]=] or '')
 
-..(temp.menu and '<div class="menu">\n'..temp.menu..'</div>\n' or '')
+..'<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
 
 -- メイン
 ..(temp.main or '')
@@ -299,16 +300,18 @@ end
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
 function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
   local s, v = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid))
+  local now=os.time()
+  local startTime=os.time(v.startTime)
       s='<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   if v then
       beforeEnd=true
-      if v.durationSecond then beforeEnd=os.time(v.startTime)+v.durationSecond>os.time() end
-      s=s..'<div>\n<h4 class="mdl-typography--title">'
+      if v.durationSecond then beforeEnd=startTime+v.durationSecond>os.time() end
+      s=s..'<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     if v.shortInfo then
-      s=s..ConvertTitle(v.shortInfo.event_name)
+      s=s..'<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>'
     end
-    s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..(v.startTime and os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(v.startTime))+1]..') %H:%M-', os.time(v.startTime))
-      ..(v.durationSecond and os.date('%H:%M', os.time(v.startTime)+v.durationSecond) or '未定') or '未定')..'</span>'
+    s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..(v.startTime and os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', startTime)+1]..') %H:%M-', startTime)
+      ..(v.durationSecond and os.date('%H:%M', startTime+v.durationSecond) or '未定') or '未定')..'</span>'
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         service_name=w.service_name
@@ -316,7 +319,9 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
         break
       end
     end
-    s=s..'</span>\n'..ConvertSearch(v, service_name)..'</h4>\n'
+    s=s..'</span>\n'
+      ..'<a id="notify_'..v.eid..'" class="notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+      ..ConvertSearch(v, service_name)..'</h4>\n'
     if v.shortInfo then
       s=s..'<p>'..v.shortInfo.text_char:gsub('\r?\n', '<br>\n'):gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</p>\n'
     end

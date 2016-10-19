@@ -16,6 +16,8 @@ function line(){
 
 	//ラインに分を表示
 	if (time.min != $('#line').text()) $('#line').text(time.min);
+
+	$('.start_' + Math.floor( new Date().getTime()/10000+3 )).find('.notification').attr('disabled', true).children().text('notifications');
 }
 
 function end(){
@@ -233,6 +235,25 @@ $(function(){
 			$('#autoepg [name=serviceList]').val(service);
 		}
 		$('#autoepg').submit();
+	});
+
+	//通知
+	$('.cell .notify').click(function(){
+		var notify = $(this);
+		if (!notify.attr('disabled')){
+			var data = notify.data();
+			if (data.notification){
+				//登録済み通知削除
+				delNotify(notify, data.eid);
+			}else{
+				data.title = notify.parent().prevAll('.mdl-typography--body-1-force-preferred-font').html();
+				data.name = notify.parents('.station').data('name');
+				delete data['upgraded'];
+				delete data['notification'];
+
+				creatNotify(notify, data, true);
+			}
+		}
 	});
 
 	//予約追加・有効・無効

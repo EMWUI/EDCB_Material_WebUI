@@ -139,6 +139,14 @@ dialog {
 
 
 
+/* badge */
+.mdl-button .material-icons.mdl-badge[data-badge]:after {
+  right: -10px; }
+.icons.mdl-badge:after {
+  font-family: 'Material Icons'; }
+
+
+
 /* header */
 header {
   position: relative; }
@@ -175,8 +183,8 @@ header {
     .search-box.is-focused,
     .search-box.is-dirty {
       width: calc(100% - 48px); }
-    .is-focused ~ #menu,
-    .is-dirty ~ #menu,
+    .is-focused ~ button,
+    .is-dirty ~ button,
     .is-focused ~ .mdl-layout-title,
     .is-dirty ~ .mdl-layout-title {
       opacity: 0; } }
@@ -265,6 +273,15 @@ header {
   vertical-align: middle;
   margin-right: 8px; }
 
+.mdl-menu.mdl-list {
+  max-width:500px;
+  min-width:350px; }
+  .mdl-menu .mdl-list__item-primary-content{
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis; }
+    .mdl-menu .mdl-list__item-primary-content>span{
+      white-space: nowrap; }
 
 
 main {
@@ -558,6 +575,11 @@ h4 .mdl-button--icon {
   .tool .mdl-button {
     margin-top: 8px }
 
+#notification {
+  overflow: visible; }
+.notify_icon .material-icons {
+  margin-left: 1px;
+  font-size: 16px; }
 
 .t4,.t5 {
   background: #0277BD; }
@@ -1202,9 +1224,6 @@ h4 .mdl-button--icon {
     position: absolute;
     top: 0;
     right: -11px; }
-    #popupmovie .mdl-badge[data-badge]:after {
-      font-family: 'Material Icons';
-      cursor: pointer; }
   #popup #video {
     max-height: calc(90vh - 68px); }
   @media (max-width: 479px) {
@@ -1285,9 +1304,6 @@ h4 .mdl-button--icon {
     .macro-list-container2 {
       flex-direction: column; } }
 
-.mdl-badge.material-icons:after {
-  font-family: 'Material Icons'; }
-
 
 
 /*ライブラリ*/
@@ -1346,7 +1362,7 @@ h4 .mdl-button--icon {
 .item,
 .folder,
 .path span,
-.close.mdl-badge.material-icons {
+.close.icons.mdl-badge {
   cursor: pointer; }
 
 .path .mdl-layout__tab {
