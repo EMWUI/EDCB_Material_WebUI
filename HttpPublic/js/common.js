@@ -100,35 +100,54 @@ function badgeNotify(i){
 	$('#notification i').attr('data-badge', count);
 }
 
+//通知保存
+function saveNotify(data, remove){
+	var list = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
+
+	if (remove){
+		list.some(function(v, i){
+			if (v.eid == data.eid) list.splice(i,1);
+		});
+	}else{
+		delete data['upgraded'];
+		delete data['notification'];
+
+		list.push(data);
+	}
+
+	localStorage.setItem('notifications', JSON.stringify(list));
+}
 //通知リスト削除
-function delNotify(notify, eid, noSnack){
+function delNotify(notify, data, noSnack){
 	badgeNotify();
+	saveNotify(data, true);
 
 	notify.parents('.content').find('.notify_icon').remove();
 	notify.data('notification', false).children().text('add_alert');
 
 	if (!noSnack) document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '削除しました'});
 
-	var array = JSON.parse(localStorage.getItem('notifications'));
-	array.some(function(v, i){
-    	if (v.eid == eid) array.splice(i,1);
-    });
-
-	localStorage.setItem('notifications', JSON.stringify(array));
 }
 
 //通知登録
 var NotifySound = $('<audio src="video/notification.mp3">')[0];
 NotifySound.volume = 0.2;
 function creatNotify(notify, data, save){
+	var notification = document.querySelector('.mdl-js-snackbar');
 	var notifyList;
 	var notifyIcon = $('<div class="notify_icon"><i class="material-icons">notifications_active</i></div>');
 	var timeout = data.start*1000 - new Date().getTime() - 30*1000;
 
 	badgeNotify(true);
 
+	//リストを保存
+	if (save){
+		saveNotify(data);
+		notification.MaterialSnackbar.showSnackbar({message: '追加しました'});
+	}
+
 	var timer = setTimeout(function(){
-		delNotify(notify, data.eid, true);
+		delNotify(notify, data, true);
 		notifyIcon.remove();
 		notifyList.remove();
 		notify.children().text('notifications');
@@ -166,8 +185,6 @@ function creatNotify(notify, data, save){
 
 	$('#noNotify').hide();
 
-	var notification = document.querySelector('.mdl-js-snackbar');
-
 	var date = new Date(data.start*1000);
 	var week = ['日', '月', '火', '水', '木', '金', '土'];
 	date = ('0'+(date.getMonth()+1)).slice(-2) + '/' + ('0'+date.getDate()).slice(-2) + '(' + week[date.getDay()] + ') ' + ('0'+date.getHours()).slice(-2) + ':' + ('0'+date.getMinutes()).slice(-2);
@@ -182,7 +199,7 @@ function creatNotify(notify, data, save){
 				html: $('<i>', {class: 'material-icons', text: 'notifications_off'}),
 				click: function(){
 					clearTimeout(timer);
-					delNotify(notify, data.eid);
+					delNotify(notify, data);
 
 					notifyList.remove();
 					notifyIcon.remove();
@@ -198,15 +215,6 @@ function creatNotify(notify, data, save){
 		}
 	});
 	if (!done) $('#notifylist').append(notifyList);
-
-	//リストを保存
-	if (save){
-		var list = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
-		list.push(data);
-		localStorage.setItem('notifications', JSON.stringify(list));
-
-		notification.MaterialSnackbar.showSnackbar({message: '追加しました'});
-	}
 }
 
 $(function(){
@@ -273,7 +281,7 @@ $(function(){
 					var start = data.start*1000;
 					if (start < now){
 						//時間が過ぎてたらリストから削除
-						delNotify(notify, data.eid);
+						saveNotify(data, true);
 					}else{
 						var notify = $('.start_' + data.start/10 + ' #notify_' + data.eid);
 						creatNotify(notify, data);
@@ -299,11 +307,9 @@ $(function(){
 			var data = notify.data();
 			if (data.notification){
 				//登録済み通知削除
-				delNotify(notify, data.eid);
+				delNotify(notify, data);
 			}else{
 				data.title = notify.prevAll('.title').html();
-				delete data['upgraded'];
-				delete data['notification'];
 
 				creatNotify(notify, data, true);
 			}

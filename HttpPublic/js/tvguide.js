@@ -244,12 +244,10 @@ $(function(){
 			var data = notify.data();
 			if (data.notification){
 				//登録済み通知削除
-				delNotify(notify, data.eid);
+				delNotify(notify, data);
 			}else{
 				data.title = notify.parent().prevAll('.mdl-typography--body-1-force-preferred-font').html();
 				data.name = notify.parents('.station').data('name');
-				delete data['upgraded'];
-				delete data['notification'];
 
 				creatNotify(notify, data, true);
 			}
