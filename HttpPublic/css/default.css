@@ -416,7 +416,6 @@ h4 .mdl-button--icon {
 
 #tv-guide-header {
   height: 24px;
-  padding-left: 22px;
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex;
@@ -429,9 +428,6 @@ h4 .mdl-button--icon {
     text-align: center;
     overflow: hidden;
     box-sizing: border-box; }
-  @media (max-width: 479px) {
-    #tv-guide-header {
-      padding-left: 16px; } }
 
 #tv-guide-main {
   display: -webkit-inline-flex;
@@ -439,11 +435,13 @@ h4 .mdl-button--icon {
   display:         inline-flex; }
 
 
-#hour-container {
+.hour-container {
   position:relative;
   width: 22px;
   left: 0;
   z-index: 5; }
+  .hour-container:not(:first-of-type) {
+    display:none; }
   .hour {
     display: -webkit-flex;
     display:     -ms-flexbox;
@@ -458,7 +456,7 @@ h4 .mdl-button--icon {
       line-height: 18px;
       text-align: center; }
   @media (max-width: 479px) {
-    #hour-container {
+    .hour-container {
       width: 22px; }
       .hour tt {
         font-size: 12px;

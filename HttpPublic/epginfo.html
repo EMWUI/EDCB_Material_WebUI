@@ -87,20 +87,21 @@ if not r and presetID==65535 then
   presetID=0
 end
 
+ct={title='番組情報'}
+
 et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('*t',startTime), durationSecond=1})
 
-ct={title='番組情報'}
+if et and #et~=0 then
+  epgInfo, End = _ConvertEpgInfoText2(et[1])
+else
+  epgInfo, End = _ConvertEpgInfoText2(onid, tsid, sid, eid)
+end
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
+  ..epgInfo
 
-  if et and #et~=0 then
-    ct.main=ct.main.._ConvertEpgInfoText2(et[1])
-  else
-    ct.main=ct.main.._ConvertEpgInfoText2(onid, tsid, sid, eid)
-  end
-
-if beforeEnd then
+if not End then
   redirect=mg.get_var(post, 'andKey') and 'submit="#search' or 'redirect="'..(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid or 'epg.html?tab='..tab..'&date='..date..(pageIndex~=0 and '&chpage='..pageIndex or ''))..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
 
   ct.js=(recording and '<script src="js/player.js"></script>\n' or '')

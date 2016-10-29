@@ -299,19 +299,16 @@ end
 
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
 function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
-  local s, v = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid))
-  local now=os.time()
-  local startTime=os.time(v.startTime)
+  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid))
       s='<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   if v then
-      beforeEnd=true
-      if v.durationSecond then beforeEnd=startTime+v.durationSecond>os.time() end
-      s=s..'<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
+    local now, startTime = os.time(), os.time(v.startTime)
+    End=v.durationSecond and startTime+v.durationSecond<now
+    s=s..'<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     if v.shortInfo then
       s=s..'<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>'
     end
-    s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..(v.startTime and os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', startTime)+1]..') %H:%M-', startTime)
-      ..(v.durationSecond and os.date('%H:%M', startTime+v.durationSecond) or '未定') or '未定')..'</span>'
+    s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..(v.startTime and FormatTimeAndDuration(os.time(v.startTime), v.durationSecond)..(v.durationSecond and '' or '～未定') or '未定')..'</span>'
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         service_name=w.service_name
@@ -363,16 +360,8 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
       ..string.format('<li>EventID:%d(0x%04X)</li>\n', v.eid, v.eid)
     s=s..'</ul></li>\n</ul>\n'
       ..'</section>\n'
-  elseif r then
-    s=s..'<div>\n<h4 class="mdl-typography--title">'..ConvertTitle(r.title)
-      ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">'..os.date('<span class="date">%Y/%m/%d('..({'日','月','火','水','木','金','土'})[os.date('%w', os.time(r.startTime))+1]..') %H:%M-', os.time(r.startTime))
-      ..os.date('%H:%M', os.time(r.startTime)+r.durationSecond)..'</span>\n'
-      ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n'
-      ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">'
-      ..'<div>EPGが見つかりません</div>'
-      ..'</section>\n'
   end
-  return s
+  return s, End
 end
 
 --録画設定フォームのテンプレート
@@ -849,6 +838,12 @@ function player(video, ori)
 </div>
 </div>
 ]=]
+end
+
+--時間の文字列を取得する
+function FormatTimeAndDuration(t,dur)
+  return os.date('%Y/%m/%d(',t)..({'日','月','火','水','木','金','土',})[1+os.date('%w',t)]
+    ..os.date(') %H:%M',t)..(dur and os.date('-%H:%M',t+dur) or '')
 end
 
 --レスポンスを生成する

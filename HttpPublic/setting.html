@@ -9,12 +9,13 @@ Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
-Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path))~=0
+Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
+TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',path)
 w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
 w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
@@ -106,7 +107,7 @@ ct.dialog={button='<button class="submit close mdl-button mdl-button--primary" d
 
 edcb.htmlEscape=15
 a=edcb.GetServiceList()
-sort={}
+sort, b={}, {}
 count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
 if count>0 then
   for i=0,count do
@@ -117,6 +118,7 @@ if count>0 then
     tsid=0+m[2]
     sid=0+m[3]
     end
+    b[''..v]=true
     for i,v in ipairs(a or {}) do
       if onid==v.onid and tsid==v.tsid and sid==v.sid then
         table.insert(sort, v)
@@ -125,14 +127,7 @@ if count>0 then
     end
   end
   for i,v in ipairs(a or {}) do
-    have=true
-    for j,w in ipairs(sort) do
-      if v.onid==w.onid and v.tsid==w.tsid and v.sid==w.sid then
-        have=nil
-        break
-      end
-    end
-    if have then table.insert(sort, v) end
+    if not b[''..v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(sort, v) end
   end
 else
   sort=a
@@ -145,20 +140,12 @@ else
   end)
 end
 
-hidelist={}
+HIDE_SERVICES={}
 count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
 if count>0 then
   for i=0,count do
     v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-    b={
-    onid=0+m[1],
-    tsid=0+m[2],
-    sid=0+m[3]
-    }
-    table.insert(hidelist,b)
-    end
+    HIDE_SERVICES[''..v]=true
   end
 end
 
@@ -203,6 +190,10 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'
   ..'<span class="mdl-tooltip" for="tt-chc">0で無制限</span></div>\n'
+
+  ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-COLUMN">時間軸の挿入間隔</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="TIME_COLUMN" value="'..TIME_COLUMN..'" min="1" id="TIME_COLUMN"><label class="mdl-textfield__label" for="TIME_COLUMN"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-COLUMN">軽量化が有効時のみ</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">1分の高さ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="ONE_MIN_PX" value="'..ONE_MIN_PX..'" min="1" id="ONE_MIN_PX"><label class="mdl-textfield__label" for="ONE_MIN_PX"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>px</div></div>\n'
@@ -311,22 +302,16 @@ bs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" i
 cs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="cs"><ul class="mdl-list">\n'
 other='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="sonota"><ul class="mdl-list">\n'
 for i,v in ipairs(sort or {}) do
-  hide=nil
-  for j,w in ipairs(hidelist) do
-    if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
-      hide=true
-      break
-    end
-  end
+  if HIDE_SERVICES[''..v.onid..'-'..v.tsid..'-'..v.sid] then v.hide=true end
   if (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
     sort='<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">\n'
       ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>\n'
-      ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(hide and ' checked' or '')..'>'
+      ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' checked' or '')..'>'
       ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'..v.service_name..'</label></span>'
       ..'<span class="mdl-list__item-sub-title">'..v.sid..'</span></span>\n'
       ..'<span class="mdl-list__item-secondary-action">'
       ..'<label class="mdl-switch mdl-js-switch" for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
-      ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(hide and '' or ' checked')..'>'
+      ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'>'
       ..'</label></span>\n'
       ..'<input type="hidden" name="sort" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
       ..'</li>\n'

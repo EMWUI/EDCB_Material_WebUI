@@ -20,10 +20,14 @@ if r then
 
   ct.macro=true
 
+  epgInfo=_ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n'
-    .._ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
-    ..'<section class="mdl-layout__tab-panel" id="recset">\n'
+    ..(#epgInfo>0 and epgInfo
+      or '<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n<div>\n<h4 class="mdl-typography--title">'..ConvertTitle(r.title)
+        ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(os.time(r.startTime), r.durationSecond)..'</span>\n'
+        ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
+    ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
     ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'" data-redirect="'..redirect..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
@@ -61,9 +65,11 @@ if r then
 
     ..'</div>\n</div>\n'
 
-  ct.tab=(edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid) and '<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n' or '')
-       ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
+  if #epgInfo>0 or recording then
+  	ct.tab=(#epgInfo>0 and '<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n' or '')
+       ..((#epgInfo>0 or recording) and '<a href="#recset" class="mdl-layout__tab">録画設定</a>\n' or '')
        ..(recording and '<a href="#movie" class="play mdl-layout__tab">再生</a>\n' or '')
+  end
 
 end
 

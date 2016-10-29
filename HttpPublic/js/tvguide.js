@@ -53,7 +53,7 @@ $(function(){
 		//チャンネル名連動
 		$('#tv-guide-container').scroll(function(){
 			$('#tv-guide-header').css('top', target.scrollTop());
-			$('#hour-container').css('left', target.scrollLeft());
+			$('#tv-guide-main .hour-container').first().css('left', target.scrollLeft());
 			$('#line').css('left', target.scrollLeft());
 		});
 
@@ -109,6 +109,7 @@ $(function(){
 			}
 		});
 	}else{
+		$('.hour-container').show();
 		$('#line').width($('#tv-guide').width() - 4);
 	}
 

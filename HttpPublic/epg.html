@@ -3,12 +3,13 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',false,path))~=0
+Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
+TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',path)
 w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
 w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
@@ -89,6 +90,7 @@ baseTime=baseDate*24*3600+baseHour*3600-timezone+date*24*3600
 NOW=baseTime<now and now<baseTime+interval*3600 or nil
 
 function hrefGene(href)
+  href=href or {}
   local s='?tab='..(href.tab or tab)
     ..'&date='..(href.date or date)
     ..((hour~=0 or href.hour) and href.hour~=0 and (href.date~=0 or interval~=25) and '&hour='..(href.hour or hour) or '')
@@ -104,8 +106,7 @@ ct={title='番組表'}
 ct.css='<style>\n'
   ..'main{background:'..background
   ..';}\n.station{width:'..w_service
-  ..'px;}#tv-guide-header{padding-left:'..w_hour
-  ..'px;}#hour-container{width:'..w_hour
+  ..'px;}.hour-container{width:'..w_hour
   ..'px;}.hour{height:'..(ONE_MIN_PX*60)
   ..'px;}\n'
 
@@ -133,8 +134,7 @@ ct.css='<style>\n'
   ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
 
   ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
-  ..'px;}#tv-guide-header{padding-left:'..w_hour_sp
-  ..'px;}#hour-container{width:'..w_hour_sp
+  ..'px;}.hour-container{width:'..w_hour_sp
   ..'px;}}\n'
   ..'</style>\n'
 
@@ -152,10 +152,18 @@ ct.js='<script>\n'
 
 
 
+HIDE_SERVICES={}
+count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
+if count>0 then
+  for i=0,count do
+    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
+    HIDE_SERVICES[''..v]=true
+  end
+end
+
 edcb.htmlEscape=15
 a=edcb.GetServiceList()
 sort={}
-hidecount=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
 count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
 if count>0 then
   for i=0,count do
@@ -168,17 +176,10 @@ if count>0 then
     end
     for j,v in ipairs(a or {}) do
       if onid==v.onid and tsid==v.tsid and sid==v.sid then
-        if hidecount>0 then
-          for k=0,hidecount do
-            w=edcb.GetPrivateProfile('HIDE','hide'..k,0,path)
-            m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-            if onid==0+m[1] and tsid==0+m[2] and sid==0+m[3] then
-              v.hide=true
-              break
-            end
-          end
+        if HIDE_SERVICES[''..w] then
+          v.hide=true
+          if not show then break end
         end
-        if v.hide and not show then break end
         table.insert(sort, v)
         break
       end
@@ -234,6 +235,7 @@ for i,v in ipairs(sort or {}) do
 end
 
 
+name={'地デジ','ワンセグ','BS','CS','その他'}
 
 ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
@@ -243,15 +245,15 @@ ct.subheader='<div id="subheader">\n'
   ..(NOW and 'id="now' or 'href="epg.html'..hrefGene({date=0,hour=0})..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
-  ..'<div id="onid" class="pulldown dividers navigation__item mdl-color-text--primary">'..(tab==0 and '地デジ' or tab==1 and 'ワンセグ' or tab==2 and 'BS' or tab==3 and 'CS' or tab==4 and 'その他' or '')..'</div>\n'
+  ..'<div id="onid" class="pulldown dividers navigation__item mdl-color-text--primary">'..(name[tab+1] or '')..'</div>\n'
 
 menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
-  ..'<li><a class="mdl-menu__item'..(tab==0 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=0,chpage=0}))..'">地デジ</a></li>\n'
-  ..(oneseg and '<li><a class="mdl-menu__item'..(tab==1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=1,chpage=0}))..'">ワンセグ</a></li>\n' or '')
-  ..'<li><a class="mdl-menu__item'..(tab==2 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=2,chpage=0}))..'">BS</a></li>\n'
-  ..'<li><a class="mdl-menu__item'..(tab==3 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=3,chpage=0}))..'">CS</a></li>\n'
-  ..'<li><a class="mdl-menu__item'..(tab==4 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=4,chpage=0}))..'">その他</a></li>\n'
-  ..'</ul>\n'
+for i,v in ipairs(name) do
+  if i~=2 or oneseg then 
+    menu=menu..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..v..'</a></li>\n'
+  end
+end
+menu=menu..'</ul>'
 
 if 0<CH_COUNT and CH_COUNT<#st then
   ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
@@ -372,27 +374,24 @@ ctt={'<div id="tv-guide">'
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
 for i=pagemin,pagemax do
   v=st[i]
+  if (i-pagemin)%TIME_COLUMN==0 then table.insert(ctt, '<div class="hour-container"></div>') end
   table.insert(ctt, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
 end
 table.insert(ctt, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
-
-  ..(NOW and '<div id="line"></div>\n' or '')
-
-  ..'<div id="hour-container" class="mdl-color-text--white">\n'
 )
 
+colHead='<div class="hour-container mdl-color-text--white">\n'
 for i=baseHour,baseHour+interval-1 do
-     j=i-24*math.floor(i/24)
-  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n')
+  j=i%24
+  colHead=colHead..'<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n'
 end
-
-table.insert(ctt, '</div>\n')
-
+colHead=colHead..'</div>\n'
 
 for i=pagemin,pagemax do
   v=st[i]
+  if (i-pagemin)%TIME_COLUMN==0 then table.insert(ctt, colHead) end
   table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'" data-name="'..v.service_name..'">\n')
   lastPx=0
   total=0
@@ -433,7 +432,7 @@ for i=pagemin,pagemax do
 
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene({})..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime) or '&eid='..w.eid)..'">番組詳細</a>'
+        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime) or '&eid='..w.eid)..'">番組詳細</a>'
         ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
           ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
@@ -454,7 +453,7 @@ for i=pagemin,pagemax do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</div>\n</div>\n'
+ct.main=ct.main..table.concat(ctt)..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
