@@ -33,7 +33,7 @@
 	//並び替え
 	$('#sort ul').sortable({handle: '.handle'});
 	//初期値保存
-	$('.mdl-list').each(function(){
+	$('#sort .mdl-list').each(function(){
 		$(this).data('sort', $(this).sortable('toArray').join(','));
 	})
 
@@ -63,7 +63,7 @@
 			}
 		});
 		//並び替え
-		$('.mdl-list').each(function(){
+		$('#sort .mdl-list').each(function(){
 			var obj = $(this);
 			$.each(obj.data('sort').split(','), function(index, value){
 				$('#'+value).appendTo(obj);
