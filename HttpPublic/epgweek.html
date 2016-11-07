@@ -292,7 +292,6 @@ table.insert(ctt, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
 
-  ..(NOW and '<div id="line"></div>\n' or '')
 )
 
 colHead='<div class="hour-container mdl-color-text--white">\n'
@@ -371,7 +370,7 @@ for i=0,7 do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</div>\n</div>\n'
+ct.main=ct.main..table.concat(ctt)..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
