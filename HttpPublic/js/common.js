@@ -1,4 +1,4 @@
-﻿isTouch = ('ontouchstart' in window);
+﻿isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in window);
 if (isTouch){
 	document.write('<link href="' + path + 'css/touch.css" rel="stylesheet" type="text/css">');
 }else{
@@ -130,7 +130,7 @@ function delNotify(notify, data, noSnack){
 }
 
 //通知登録
-var NotifySound = $('<audio src="video/notification.mp3">')[0];
+var NotifySound = $('<audio src="' + path + 'video/notification.mp3">')[0];
 NotifySound.volume = 0.2;
 function creatNotify(notify, data, save){
 	var notification = document.querySelector('.mdl-js-snackbar');
@@ -143,6 +143,7 @@ function creatNotify(notify, data, save){
 	//リストを保存
 	if (save){
 		saveNotify(data);
+
 		notification.MaterialSnackbar.showSnackbar({message: '追加しました'});
 	}
 

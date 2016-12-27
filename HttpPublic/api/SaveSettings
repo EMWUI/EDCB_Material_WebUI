@@ -48,6 +48,8 @@ elseif post then
   ONE_MIN_PX=(mg.get_var(post, 'ONE_MIN_PX') or '')
   MARGIN_HOUR=(mg.get_var(post, 'MARGIN_HOUR') or '')
   MARGIN_MIN=(mg.get_var(post, 'MARGIN_MIN') or '')
+  TIME_COLUMN=(mg.get_var(post, 'TIME_COLUMN') or '')
+
   CH_COUNT=(mg.get_var(post, 'CH_COUNT') or '')
 
   background=(mg.get_var(post, 'background') or '')
@@ -96,6 +98,7 @@ elseif post then
   edcb.WritePrivateProfile('GUIDE','ONE_MIN_PX',ONE_MIN_PX,path)
   edcb.WritePrivateProfile('GUIDE','MARGIN_HOUR',MARGIN_HOUR,path)
   edcb.WritePrivateProfile('GUIDE','MARGIN_MIN',MARGIN_MIN,path)
+  edcb.WritePrivateProfile('GUIDE','TIME_COLUMN',TIME_COLUMN,path)
   edcb.WritePrivateProfile('GUIDE','service',w_service,path)
   edcb.WritePrivateProfile('GUIDE','service_sp',w_service_sp,path)
   edcb.WritePrivateProfile('GUIDE','hour',w_hour,path)
@@ -129,6 +132,7 @@ elseif post then
   edcb.WritePrivateProfile('BACKGROUND','shortage',shortage,path)
   edcb.WritePrivateProfile('BACKGROUND','shortage_border',shortage_border,path)
 
+  edcb.WritePrivateProfile('SORT',nil,'',path)
   for i=0,10000 do
     v=mg.get_var(post, 'sort', i)
     if not v then break end
@@ -136,15 +140,12 @@ elseif post then
     edcb.WritePrivateProfile('SORT','sort'..i,v,path)
   end
 
-  if mg.get_var(post, 'hide') then
-    for i=0,10000 do
-      v=mg.get_var(post, 'hide', i)
-      if not v then break end
-      edcb.WritePrivateProfile('HIDE','count',i,path)
-      edcb.WritePrivateProfile('HIDE','hide'..i,v,path)
-    end
-  else
-    edcb.WritePrivateProfile('HIDE',nil,'',path)
+  edcb.WritePrivateProfile('HIDE',nil,'',path)
+  for i=0,10000 do
+    v=mg.get_var(post, 'hide', i)
+    if not v then break end
+    edcb.WritePrivateProfile('HIDE','count',i,path)
+    edcb.WritePrivateProfile('HIDE','hide'..i,v,path)
   end
 
   messege='保存しました'

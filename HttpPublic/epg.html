@@ -407,9 +407,9 @@ for i=pagemin,pagemax do
     end
     if endPx-lastPx>2 then
       category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
-      title=(w.shortInfo and ConvertTitle(w.shortInfo.event_name) or '')									--番組タイトル
-      info=string.gsub((w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..w.shortInfo.text_char..'</div>' or ''), '\r?\n', '<br>')						--番組詳細
-      search=(w.shortInfo and ConvertSearch(w, v.service_name) or '')									--検索
+      title=w.shortInfo and ConvertTitle(w.shortInfo.event_name) or ''									--番組タイトル
+      info=w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(w.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
+      search=w.shortInfo and ConvertSearch(w, v.service_name) or ''									--検索
 
       r=nil
       id=not w.past and rt[string.format('%04X%04X%04X%04X', w.onid, w.tsid, w.sid, w.eid)] or nil
@@ -439,7 +439,7 @@ for i=pagemin,pagemax do
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'
 
-        ..string.gsub(string.gsub((w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..w.extInfo.text_char..'</p>' or ''), 'https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>'), '\r?\n', '<br>')
+        ..(w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
 
         ..'</div></div></div></div>\n')
 

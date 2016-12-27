@@ -320,7 +320,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
       ..'<a id="notify_'..v.eid..'" class="notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
       ..ConvertSearch(v, service_name)..'</h4>\n'
     if v.shortInfo then
-      s=s..'<p>'..v.shortInfo.text_char:gsub('\r?\n', '<br>\n'):gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</p>\n'
+      s=s..'<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'
     end
 
     s=s..'</div>\n'
@@ -328,7 +328,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
      ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
 
     if v.extInfo then
-      s=s..'<div class="mdl-typography--body-1">\n'..v.extInfo.text_char:gsub('\r?\n', '<br>\n'):gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</div>\n'
+      s=s..'<div class="mdl-typography--body-1">\n'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>\n')..'</div>\n'
 
     end
     s=s..'<ul>\n'
@@ -838,6 +838,40 @@ function player(video, ori)
 </div>
 </div>
 ]=]
+end
+
+--URIをタグ装飾する
+function DecorateUri(s)
+  local i=1
+  while i<=#s do
+    if s:find('^http',i) or s:find('^ｈｔｔｐ',i) then
+      local hw='&/:;%#$?()~.=+-_0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+      local fw='＆／：；％＃＄？（）￣．＝＋－＿０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+      local j,href=i,''
+      while j<=#s do
+        local k=hw:find(s:sub(j,j),1,true)
+        if k then
+          href=href..hw:sub(k,k)
+          j=j+1
+        else
+          k=fw:find(s:sub(j,j+2),1,true)
+          if j+2<=#s and k and k%3==1 then
+            href=href..hw:sub((k+2)/3,(k+2)/3)..(k==1 and 'amp;' or '')
+            j=j+3
+          else
+            break
+          end
+        end
+      end
+      if href:find('^https?://.') then
+        href='<a href="'..href..'" target="_blank">'..s:sub(i,j-1)..'</a>'
+        s=s:sub(1,i-1)..href..s:sub(j)
+        i=i+#href-(j-i)
+      end
+    end
+    i=i+1
+  end
+  return s
 end
 
 --時間の文字列を取得する

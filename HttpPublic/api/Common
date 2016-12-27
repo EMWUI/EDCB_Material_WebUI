@@ -1,12 +1,14 @@
 ﻿dofile(mg.document_root..'\\api\\util.lua')
 
-AssertCsrf(mg.request_info.query_string)
-
 edcb.htmlEscape=15
 
 epg=mg.get_var(mg.request_info.query_string,'epg')
 notify=mg.get_var(mg.request_info.query_string,'notify')
 suspend=mg.get_var(mg.request_info.query_string,'suspend')
+
+if epg or suspend then
+	AssertCsrf(mg.request_info.query_string)
+end
 
 if epg then
   if epg=='reload' then

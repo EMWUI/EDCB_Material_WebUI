@@ -56,7 +56,7 @@ if v then
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
     ..'<div>\n<h4 class="mdl-typography--title">'..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(os.time(v.startTime), v.durationSecond)..'</span>'
-    ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..info:gsub('https?://[%w/:%#%$&%?%(%)~%.=%+%-_]+', '<a href="%1" target="_blank">%1</a>')..'</section>\n'
+    ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..DecorateUri(info)..'</section>\n'
 
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', ori and false or true)
