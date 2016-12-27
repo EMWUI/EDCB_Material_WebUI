@@ -55,7 +55,7 @@ if v then
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
-    ..'<div>\n<h4 class="mdl-typography--title">'..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(os.time(v.startTime), v.durationSecond)..'</span>'
+    ..'<div>\n<h4 class="mdl-typography--title">'..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span>'
     ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..DecorateUri(info)..'</section>\n'
 
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'

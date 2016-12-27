@@ -253,7 +253,7 @@ if #a>0 then
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                or ' class="add search '..(r and 'recmark">' or 'mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 
-      ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(os.time(v.startTime))
+      ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime)
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
       ..'\n <td class="service mdl-data-table__cell--non-numeric">'..service_name
       ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')

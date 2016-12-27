@@ -78,16 +78,16 @@ date=(hour~=24 and date+adjust or date)
 hour=(hour~=24 and hour-adjust*24 or hour)
 
 now=os.time()
-timezone=os.time(os.date('*t',now))-os.time(os.date('!*t',now))
+timezone=now-os.time(os.date('!*t',now))
 nowDate=math.floor((now+timezone)/(24*3600))
 nowHour=math.floor(((now+timezone)-nowDate*24*3600)/3600)
 baseHour=hour==0 and nowHour-MARGIN_HOUR or hour
 baseHour=baseHour<0 and baseHour+24 or baseHour
-baseDate=math.floor((now+timezone-baseHour*3600)/(24*3600))
-baseDate=hour>nowHour and baseDate+1 or baseDate
-baseTime=baseDate*24*3600+baseHour*3600-timezone+date*24*3600
+baseDate=math.floor((now+(9-baseHour)*3600)/(24*3600))
+baseDate=nowHour<hour and baseDate+1 or baseDate
+baseTime=((baseDate+date)*24+baseHour)*3600
 
-NOW=baseTime<now and now<baseTime+interval*3600 or nil
+NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600 or nil
 
 function hrefGene(href)
   href=href or {}
@@ -224,9 +224,9 @@ for i,v in ipairs(sort or {}) do
       maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
     --表示範囲の番組だけ取得する
-    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}
+    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}
     for j,w in ipairs(edcb.EnumEventInfoArchive and
-        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
+        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
       w.past=true
       table.insert(st[#st].et, w)
     end
@@ -266,17 +266,17 @@ if 0<CH_COUNT and CH_COUNT<#st then
 end
 
 if minTime then
-  minhour=math.floor((minTime+timezone-(interval==25 and 4 or baseHour)*3600)/3600)
-  mindate=math.max(math.floor((minTime+timezone)/(24*3600)), math.floor((minTime_+timezone)/(24*3600))-3)
-  maxhour=math.floor((maxTime+timezone-baseHour*3600)/3600)
-  maxdate=math.floor((maxTime+timezone)/(24*3600))
+  minhour=math.floor((minTime-(interval==25 and 4 or baseHour)*3600)/3600)
+  mindate=math.max(math.floor((minTime)/(24*3600)), math.floor((minTime_)/(24*3600))-3)
+  maxhour=math.floor((maxTime-baseHour*3600)/3600)
+  maxdate=math.floor((maxTime)/(24*3600))
 
   href=hrefGene({
     date=date+math.floor((baseHour-interval)/24),
     hour=interval~=25 and baseHour-interval-24*math.floor((baseHour-interval)/24) or nil
   })
 
-  d=os.date('*t', baseTime-(4-(hour==0 and MARGIN_HOUR or 0))*3600)
+  d=os.date('!*t', baseTime-4-(hour==0 and MARGIN_HOUR or 0)*3600)
   ct.subheader=ct.subheader..'<div class="navigation__item navigation__icon right_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
     ..(minhour>=date*24+nowDate*24 and 'disabled' or 'href="epg.html'..href..'"')..'><i class="material-icons">chevron_left</i></a></div>\n'
 
@@ -285,7 +285,7 @@ if minTime then
   menu=menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
 
   for i=mindate,maxdate do
-    d=os.date('*t', (i*24*3600-timezone))
+    d=os.date('!*t', i*24*3600)
     menu=menu..'<li><a class="mdl-menu__item'
       ..(i-baseDate==date and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({date=i-baseDate,hour=4}))
       ..'">'..d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'..'</a></li>\n'
@@ -396,9 +396,9 @@ for i=pagemin,pagemax do
   lastPx=0
   total=0
   for j,w in ipairs(v.et) do
-    startTime=os.time(w.startTime)
+    startTime=os.time(w.startTime)+timezone
     startPx=math.min(math.floor((startTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
-    endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
+    endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime)+timezone or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
       table.insert(ctt, '<div class="cell'..(NOW and date==0 and startTime>now and ' end_'..math.floor(startTime/10) or '')..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
@@ -421,18 +421,18 @@ for i=pagemin,pagemax do
       mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-      table.insert(ctt, '<div class="cell'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..(NOW and date==0 and endTime~=startTime and ' end_'..math.floor(endTime/10) or '')..'" style="height:'..(endPx-lastPx)..'px">\n'
-        ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
+      table.insert(ctt, '<div class="cell'..(now+timezone<startTime-30 and ' start_'..math.floor((startTime-timezone)/10) or '')..(NOW and date==0 and endTime~=startTime and ' end_'..math.floor((endTime-timezone)/10) or '')..'" style="height:'..(endPx-lastPx)..'px">\n'
+        ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now+timezone and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
-        ..'<div><div class="startTime">'..os.date('%M', startTime)..'</div>'..mark..'</div>'
+        ..'<div><div class="startTime">'..string.format('%02d', w.startTime.min)..'</div>'..mark..'</div>'
 
         ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-        ..'<a id="notify_'..w.eid..'" class="notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+        ..'<a id="notify_'..w.eid..'" class="notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime-timezone..'"'..(startTime-30<=now+timezone and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now+timezone and 'notifications' or 'add_alert')..'</i></a>'
         ..search
 
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime) or '&eid='..w.eid)..'">番組詳細</a>'
+        ..'<a class="mdl-button mdl-js-button mdl-button--raised" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime)+timezone or '&eid='..w.eid)..'">番組詳細</a>'
         ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
           ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加

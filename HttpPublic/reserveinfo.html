@@ -25,7 +25,7 @@ if r then
     ..'<div class="mdl-grid">\n'
     ..(#epgInfo>0 and epgInfo
       or '<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n<div>\n<h4 class="mdl-typography--title">'..ConvertTitle(r.title)
-        ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(os.time(r.startTime), r.durationSecond)..'</span>\n'
+        ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
         ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
     ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'" data-redirect="'..redirect..'">\n'
