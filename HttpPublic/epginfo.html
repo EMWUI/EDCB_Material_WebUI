@@ -89,7 +89,7 @@ end
 
 ct={title='番組情報'}
 
-et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('*t',startTime), durationSecond=1})
+et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
 
 if et and #et~=0 then
   epgInfo, End = _ConvertEpgInfoText2(et[1])

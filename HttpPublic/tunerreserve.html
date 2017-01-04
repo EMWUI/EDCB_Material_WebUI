@@ -62,7 +62,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
-    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(os.time(w.startTime), w.durationSecond)
+    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(w.startTime, w.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(w.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric">'..w.stationName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..w.comment
