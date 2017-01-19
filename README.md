@@ -2,10 +2,11 @@ EDCB Material WebUI
 ===================
 
 **EDCBのWebUIをMaterial Design Liteでマテリアルデザインっぽくします**  
-[xtne6f氏](https://github.com/xtne6f/EDCB)の[9bdd0a0](https://github.com/xtne6f/EDCB/commit/9bdd0a0f0c72a24eb680b1f890bf54c46bd2e939)以降で動作します  
-またファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要にです  
-ffmpeg.exe,readex.exeを別途ダウロードしてください  
-readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)のEDCB-tools-bin.zipから
+[xtne6f氏](https://github.com/xtne6f/EDCB)の[b003e20](https://github.com/xtne6f/EDCB/commit/b003e20c553aaee827f279c4989b9a495f776f79)以降で動作します  
+またファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要です  
+ffmpeg.exe,readex.exe,lfs.dllを別途ダウロードしてください  
+lfs.dll,readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からEDCB-work-plus-s-bin.zip、EDCB-tools-bin.zipにそれぞれ同梱されています
+
 
 ###使い方
 EDCBのReadme_Mod.txtの*[Civetwebの組み込みについて](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L420-L486)*をよく読み  
@@ -28,8 +29,6 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合があるようです  
 また公開フォルダ外のファイルはapiを経由するためシークできないようになっています  
 **LuaFileSystem(lfs.dll)が必要です**  
-同梱のlfs.dllはxtne6f氏の[build_memo.txt](https://gist.github.com/xtne6f/f9b6f19c10cd146fe580)を参考にビルドしました  
-ですがxtne6f氏がEDCB-tools-bin.zipで配布しているパッチ適用済みのものを使用することをおすすめします  
 
 必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
 `batPath[=EDCBのbatフォルダ]`  
@@ -137,4 +136,3 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
 * [jQuery UI Touch Punch](http://touchpunch.furf.com)
 * [Hammer.JS](http://hammerjs.github.io)
 * [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
-* [LuaFileSystem](https://keplerproject.github.io/luafilesystem/) ([ソース](https://github.com/keplerproject/luafilesystem/releases))
