@@ -35,7 +35,7 @@
 	//初期値保存
 	$('#sort .mdl-list').each(function(){
 		$(this).data('sort', $(this).sortable('toArray').join(','));
-	})
+	});
 
 	$('.switch').change(function(){
 		if ($(this).prop('checked')){

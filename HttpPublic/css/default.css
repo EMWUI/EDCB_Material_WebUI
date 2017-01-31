@@ -767,19 +767,22 @@ h4 .mdl-button--icon {
     [type="number"] {
     text-align: right; } }
 
-.mdl-grid.form .preset {
-  padding-bottom: 0; }
+[id$="preset"] .preset {
+  border: 1px solid rgba(0,0,0,.1);
+  padding: 4px;
+  border-radius: 2px; }
   .preset {
     position: relative;
     line-height: 20px!important; }
   .preset:not(:last-child) {
     margin-bottom: 8px!important; }
   @media (min-width: 480px) {
-    .preset>div>div:first-child {
-      padding-left: 24px; } }
-  @media (max-width: 479px) {
-    .preset.mdl-grid.mdl-grid--no-spacing>.mdl-cell {
-      margin-left: 15px; } }
+    .mdl-grid.form .preset {
+      margin-left: 16px; }
+    .preset>div>div.mdl-cell {
+      width: calc(75% + 16px); }
+    .preset>div>div.mdl-cell:first-child {
+      width: calc(25% - 16px); } }
 .addPreset {
   color: rgba(0, 0, 0, 0.54);
   align-items: center;

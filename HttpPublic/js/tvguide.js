@@ -83,7 +83,7 @@ $(function(){
 				e.preventDefault();
 
 				$('body').addClass('drag');
-		        
+
 		        XX = X;
 		        YY = Y;
 
@@ -183,13 +183,13 @@ $(function(){
 					$(this).addClass('clicked');
 				}
 			}
-		}else if (hover == false && e.which == 1){
+		}else if (!hover && e.which == 1){
 			$('.cell').removeClass('clicked');
 		}
 	});
 
 	//マウスホバーで番組詳細表示
-	if (hover == true){
+	if (hover){
 		$('.cell').hover(
 			function(){
 				$(this).addClass('clicked');
@@ -207,7 +207,7 @@ $(function(){
 			obj.hide();
 		}
 	});
-	
+
 	//ジャンルトグル
 	$('.genreToggle').change(function(){
 		$('.cell').removeClass('nothing');
@@ -257,7 +257,7 @@ $(function(){
 
 	//予約追加・有効・無効
 	$('.addreserve').click(function(){
-		$('#spinner').addClass('is-visible').children().addClass('is-active');
+		showSpinner(true);
 		var target = $(this);
 		var data = target.data();
 		var message, url;
@@ -273,7 +273,7 @@ $(function(){
 		$.ajax({
 			url: url,
 			data: data,
-			
+
 			success: function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
@@ -281,13 +281,13 @@ $(function(){
 					var recmode = xml.find('recmode').text();
 					var overlapmode = xml.find('overlapmode').text();
 					var id = xml.find('reserveid').text();
-					var button, recmode, mark;
+					var button, mark;
 
 					if (recmode == 5){
-						message = '予約を無効にしました'
+						message = '予約を無効にしました';
 						button = '有効';
 						recmode = 'disabled';
-						mark = '無'
+						mark = '無';
 					}else{
 						button = '無効';
 						if (overlapmode == 1){
@@ -310,8 +310,8 @@ $(function(){
 				}
 				notification.MaterialSnackbar.showSnackbar({message: message});
 				target.parents('.cell').removeClass('clicked');
+				showSpinner();
 			}
-		})
-		$('#spinner').removeClass('is-visible').children().removeClass('is-active');
+		});
 	});
 });

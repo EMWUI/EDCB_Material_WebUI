@@ -1,4 +1,4 @@
-﻿loadingMovieList = false;
+﻿var loadingMovieList;
 //ライブラリ一覧取得
 function getMovieList(Snack){
 	loadingMovieList = true;
@@ -13,7 +13,7 @@ function getMovieList(Snack){
 					message = $(xml).find('error').text();
 					showSpinner(false);
 				}else{
-					var xml = new XMLSerializer().serializeToString(xml);
+					xml = new XMLSerializer().serializeToString(xml);
 					sessionStorage.setItem('movie', xml);
 					sessionStorage.setItem('movie_expires', new Date().getTime() + 24*60*60*1000);
 					loadingMovieList = false;
@@ -42,7 +42,7 @@ function refreshMovieList(){
 //ライブラリ表示
 function folder(){
 	id = location.hash == '' ? 'home' : location.hash.slice(1);
-	if (!$('#' + id).length > 0) refreshPath = true;
+	if ($('#' + id).length == 0) refreshPath = true;
 
 	$('.mdl-layout__tab').removeClass('is-active');
 	$('#' + id).addClass('is-active');
@@ -73,22 +73,20 @@ function folder(){
 
 						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name).append(
-								$('<div>', {class: 'mdl-card__title mdl-card--expand'}).append(
-									$('<i>', {class: 'material-icons', text: 'folder'}) ) ).append(
-								$('<div>', {class: 'mdl-card__actions'}).append(
-									$('<span>', {class: 'filename', text: name}) ) );
+								$('<div>', {class: 'mdl-card__title mdl-card--expand', html: $('<i>', {class: 'material-icons', text: 'folder'}) }),
+								$('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 						}else{
 							obj.addClass('mdl-list__item').append(
-								$('<span>', {class: 'mdl-list__item-primary-content'}).append(
-									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}) ).append(
-									$('<span>', {text: name}) ) );
+								$('<span>', {class: 'mdl-list__item-primary-content', append: [
+									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
+									$('<span>', {text: name}) ]}) );
 						}
 					}else{
 						var data = {
 							name: name,
 							path: $(this).children('path').text(),
 							public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
-						}
+						};
 						obj.addClass('item').data(data);
 						$(obj).click(function(){
 							$('#popup').addClass('is-visible');
@@ -102,47 +100,33 @@ function folder(){
 							if (thumbs != 0){
 								obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 							}else{
-								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}).append($('<i>', {class: 'material-icons', text: 'movie_creation'}) ) );
+								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
 							}
-							obj.append($('<div>', {class: 'mdl-card__actions'}).append($('<span>', {class: 'filename', text: name}) ) );
+							obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 						}else{
 							obj.addClass('mdl-list__item').append(
-								$('<span>', {class: 'mdl-list__item-primary-content'}).append(
-									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}) ).append(
-									$('<span>', {text: name}) ) );
+								$('<span>', {class: 'mdl-list__item-primary-content', append: [
+									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}),
+									$('<span>', {text: name}) ]}) );
 						}
 					}
 					$('#library').append(obj);
 				});
 				$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 
-				var name = $(this).children('name').text()
+				var name = $(this).children('name').text();
 				$('.mdl-layout__header-row .mdl-layout-title').text(name);
 				if (refreshPath){
 					var obj = $(this);
 					var i = $(this).children('id').text();
 
-					var add = $('<span>', {id: i, class: 'mdl-layout__tab is-active', text: name, data: {id: i} });
-			 		$(add).click(function(){
-			 			location.hash = '#'+$(this).data('id');
-					});
-					$('.path').html(add);
+					$('.path').html($('<span>', {id: i, class: 'mdl-layout__tab is-active', text: name, data: {id: i}, click: function(){location.hash = '#'+$(this).data('id');} }) );
 					while (i.match(/\d+/g)){
 						i = obj.siblings('id').text();
-						var add = $('<span>', {id: i, class: 'mdl-layout__tab', text: obj.siblings('name').text(), data: {id: i} });
-			 			$(add).click(function(){
-			 				location.hash = '#'+$(this).data('id');
-						});
-						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
+						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend($('<span>', {id: i, class: 'mdl-layout__tab', text: obj.siblings('name').text(), data: {id: i}, click: function(){location.hash = '#'+$(this).data('id');} }) );
 						obj = obj.parent();
 					}
-					if (i != 'home'){
-						var add = $('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'} });
-			 			$(add).click(function(){
-			 				location.hash = '#home';
-						});
-						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend(add);
-					}
+					if (i != 'home') $('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) );
 					refreshPath = false;
 				}
 			}
@@ -168,7 +152,7 @@ function folder(){
 //表示切替
 function toggleView(view){
 	ViewMode = view;
-	localStorage.setItem('ViewMode', view)
+	localStorage.setItem('ViewMode', view);
 	if (ViewMode == 'grid'){
 		$('.view-list').show();
 		$('.view-grid').hide();
@@ -189,7 +173,7 @@ function librarySwipe(obj){
 }
 
 function librarySearch(key){
-		if (key.length > 0){ 
+		if (key.length > 0){
 			$('#library').empty();
 			var found;
 			var xml = sessionStorage.getItem('movie');
@@ -210,7 +194,7 @@ function librarySearch(key){
 						$('.bar').addClass('is-visible');
 						playMovie($(this));
 					};
-					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, on: {click: event} });
+					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, click: event });
 
 					if (ViewMode == 'grid'){
 						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
@@ -218,14 +202,14 @@ function librarySearch(key){
 						if (thumbs != 0){
 							obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 						}else{
-							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}).append($('<i>', {class: 'material-icons', text: 'movie_creation'}) ) );
+							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
 						}
-						obj.append($('<div>', {class: 'mdl-card__actions'}).append($('<span>', {class: 'filename', text: name}) ) );
+						obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 					}else{
 						obj.addClass('mdl-list__item').append(
-							$('<span>', {class: 'mdl-list__item-primary-content'}).append(
-								$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}) ).append(
-								$('<span>', {text: name}) ) );
+							$('<span>', {class: 'mdl-list__item-primary-content', append: [
+								$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}),
+								$('<span>', {text: name}) ]}) );
 					}
 					library.append(obj);
 				}
@@ -233,9 +217,9 @@ function librarySearch(key){
 			$('main').html(library);
 			$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 			$('.mdl-layout__header-row .mdl-layout-title').text('検索 (' + key + ')');
-			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, on: {click: function(){location.hash = '#home';} } }) ).append(
-				'<i class="mdl-layout__tab material-icons">chevron_right').append(
-				$('<span>', {id: 'search_', class: 'mdl-layout__tab is-active', text: '検索', data: {id: 'search'}, on: {click: function(){location.hash = '#search@'+ key;} } }) );
+			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) ).append(
+				$('<i>', {class: 'mdl-layout__tab material-icons', text: 'chevron_right'}),
+				$('<span>', {id: 'search_', class: 'mdl-layout__tab is-active', text: '検索', data: {id: 'search'}, click: function(){location.hash = '#search@'+ key;} }) );
 			showSpinner(false);
 		}
 }
@@ -251,7 +235,7 @@ $(function(){
 	$(window).on('load', function(){
 		if ($(window).width() < 479){
 			$('#subheader').hide().addClass('scroll');
-			setInterval("$('#subheader').show()", 1000)
+			setInterval("$('#subheader').show()", 1000);
 		}
 	});
 
@@ -276,7 +260,7 @@ $(function(){
 	//スワイプ
 	if (isTouch){
 		delete Hammer.defaults.cssProps.userSelect;
-		
+
 		$('.lib-swipe').hammer().on('swiperight', function(){
 			librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') );
 		});

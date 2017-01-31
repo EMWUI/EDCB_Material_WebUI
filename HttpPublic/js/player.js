@@ -1,7 +1,7 @@
 ﻿function getVideoTime(Time){
-		var m = Math.floor(Time / 60);
-		var s = ('0' + Math.floor(Time - m * 60)).slice(-2);
-		return m + ':' + s;
+	var m = Math.floor(Time / 60);
+	var s = ('0' + Math.floor(Time - m * 60)).slice(-2);
+	return m + ':' + s;
 }
 
 function hideBar(time){
@@ -12,7 +12,7 @@ function hideBar(time){
 			$('#player').css('cursor', 'none');
 		}
 	}, time);
-};
+}
 function stopTimer(){
 	clearInterval(hoverID);
 	$('#player').css('cursor', 'default');
@@ -32,7 +32,7 @@ function loadMovie(obj){
 	}else{
 		path = root + 'api/Movie?fname=' + path + (MIME ? '&xcode=' : '') + quality + offset;
 	}
-	
+
 	if (MIME){
 		$('#HD').prop('disabled', true).parents('.mdl-menu__item').attr('disabled', true);
 	}else{
@@ -67,7 +67,7 @@ function playerResize() {
 	}else{
 		$('#player').removeClass('is-small');
 	}
-};
+}
 
 $(function(){
 	var notification = document.querySelector('.mdl-js-snackbar');
@@ -85,104 +85,97 @@ $(function(){
 		video.playbackRate = 1;
 	});
 
-	$('#video').on('resize', function(){
-		playerResize();
-	});
 	$(window).on('resize', function(){
 		playerResize();
 	});
 
-	$('#video').on('pause', function(){
-		$('#play').text('play_arrow');
-	});
-
-	$('#video').on('play', function(){
-		$('#play').text('pause');
-	});
-
-	$('#video').on('ended', function(){
-		var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
-		if (autoplay && !$('.playing').is('.item:last')){
-			playMovie($('.playing').next());
-		}else if (autoplay && $('.playing').is('.item:last')){
-			notification.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
-		}else{
-			$('.bar').addClass('is-visible');
+	$('#video').on({
+		'resize': function(){
+			playerResize();
+		},
+		'pause': function(){
+			$('#play').text('play_arrow');
+		},
+		'play': function(){
+			$('#play').text('pause');
+		},
+		'ended': function(){
+			var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
+			if (autoplay && !$('.playing').is('.item:last')){
+				playMovie($('.playing').next());
+			}else if (autoplay && $('.playing').is('.item:last')){
+				notification.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
+			}else{
+				$('.bar').addClass('is-visible');
+			}
+		},
+		'error': function(){
+			var messege;
+			var errorcode = video.error.code;
+			if (errorcode == 1){
+				messege = 'MEDIA_ERR_ABORTED';
+			}else if (errorcode == 2){
+				messege = 'MEDIA_ERR_NETWORK';
+			}else if (errorcode == 3){
+				messege = 'MEDIA_ERR_DECODE';
+			}else if (errorcode == 4){
+				messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
+			}
+			notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
+		},
+		'volumechange': function(){
+			if (video.muted){
+				$('#volume-icon').text('volume_off');
+			}else if (video.volume == 0){
+				$('#volume-icon').text('volume_mute');
+			}else if (video.volume > 0.5){
+				$('#volume-icon').text('volume_up');
+			}else{
+				$('#volume-icon').text('volume_down');
+			}
+			localStorage.setItem('volume', video.volume);
+			localStorage.setItem('muted', video.muted);
+		},
+		'ratechange': function(){
+			$('#rate').text(video.playbackRate);
+			if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = video.playbackRate;
+		},
+		'loadeddata': function(){
+			hideBar(1000);
+		},
+		'canplay': function(){
+			var duration;
+			if ($(this).data('duration')){
+				duration = $('#video').data('duration');
+			}else{
+				duration = video.duration;
+			}
+			hideBar(2000);
+			$(this).removeClass('is-loadding');
+			$('#seek').prop('disabled', false);
+			if (duration == 'Infinity' || duration == 0){
+				xcode = true;
+				$(this).off('timeupdate');
+				$('#seek').attr('max', 99).attr('step', 1);
+				$('.videoTime').addClass('is-disabled');
+				$('.duration').text('0:00');
+				$('.currentTime').text('0:00');
+				if ($(this).data('keepdisk')) $('#seek').prop('disabled', true);
+			}else{
+				xcode = $(this).data('duration') ? true : false;
+				var adjust = seek * (duration / 99);
+				$(this).on('timeupdate', function(){
+					var currentTime = video.currentTime + adjust;
+					$('.currentTime').text(getVideoTime(currentTime));
+					$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
+				});
+				$('#seek').attr('max', 100).attr('step', 0.01);
+				$('.videoTime').removeClass('is-disabled');
+				$('.duration').text(getVideoTime(duration));
+				if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);
+			}
 		}
 	});
-
-	$('#video').on('error', function(){
-		var messege
-		var errorcode = video.error.code;
-		if (errorcode == 1){
-			messege = 'MEDIA_ERR_ABORTED';
-		}else if (errorcode == 2){
-			messege = 'MEDIA_ERR_NETWORK';
-		}else if (errorcode == 3){
-			messege = 'MEDIA_ERR_DECODE';
-		}else if (errorcode == 4){
-			messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
-		}
-		notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
-	});
-	
-	$('#video').on('volumechange', function(){
-		if (video.muted){
-			$('#volume-icon').text('volume_off');
-		}else if (video.volume == 0){
-			$('#volume-icon').text('volume_mute');
-		}else if (video.volume > 0.5){
-			$('#volume-icon').text('volume_up');
-		}else{
-			$('#volume-icon').text('volume_down');
-		}
-		localStorage.setItem('volume', video.volume);
-		localStorage.setItem('muted', video.muted);
-	});
-
-	$('#video').on('ratechange', function(){
-		$('#rate').text(video.playbackRate);
-		if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = video.playbackRate;
-	});
-
-	$('#video').on('loadeddata', function(){
-		hideBar(1000);
-	});
-
-	$('#video').on('canplay', function(){
-		var duration;
-		if ($(this).data('duration')){
-			duration = $('#video').data('duration');
-		}else{
-			duration = video.duration;
-		}
-		hideBar(2000);
-		$(this).removeClass('is-loadding')
-		$('#seek').prop('disabled', false);
-		if (duration == 'Infinity' || duration == 0){
-			xcode = true;
-			$(this).off('timeupdate');
-			$('#seek').attr('max', 99).attr('step', 1);
-			$('.videoTime').addClass('is-disabled');
-			$('.duration').text('0:00');
-			$('.currentTime').text('0:00');
-			if ($(this).data('keepdisk')) $('#seek').prop('disabled', true);
-		}else{
-			xcode = $(this).data('duration') ? true : false;
-			var adjust = seek * (duration / 99);
-			$(this).on('timeupdate', function(){
-				var currentTime = video.currentTime + adjust;
-				$('.currentTime').text(getVideoTime(currentTime));
-				$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
-			});
-			$('#seek').attr('max', 100).attr('step', 0.01);
-			$('.videoTime').removeClass('is-disabled');
-			$('.duration').text(getVideoTime(duration));
-			if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);
-		}
-	});
-
-
 
 	$('#play').click(function(){
 		if (video.paused){
