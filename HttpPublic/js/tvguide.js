@@ -277,10 +277,9 @@ $(function(){
 			success: function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
-					var start = xml.find('start').text();
-					var recmode = xml.find('recmode').text();
-					var overlapmode = xml.find('overlapmode').text();
-					var id = xml.find('reserveid').text();
+					var recmode = xml.find('recMode').text();
+					var overlapmode = xml.find('overlapMode').text();
+					var id = xml.find('ID').text();
 					var button, mark;
 
 					if (recmode == 5){

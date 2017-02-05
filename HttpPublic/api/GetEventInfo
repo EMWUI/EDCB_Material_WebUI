@@ -2,9 +2,17 @@ onid=mg.get_var(mg.request_info.query_string,'onid')
 tsid=mg.get_var(mg.request_info.query_string,'tsid')
 sid=mg.get_var(mg.request_info.query_string,'sid')
 eid=mg.get_var(mg.request_info.query_string,'eid')
+startTime=tonumber(mg.get_var(mg.request_info.query_string,'startTime')) or 0
 
 edcb.htmlEscape=15
-v=edcb.SearchEpg(onid, tsid, sid, eid)
+et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
+
+if et and #et~=0 then
+  v=et[1]
+else
+  v=edcb.SearchEpg(onid, tsid, sid, eid)
+end
+
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'>'}
 if not v then
   table.insert(ct, '<entry><err>EPGデータを読み込み中、または存在しません</err></entry>')
@@ -37,7 +45,8 @@ else
     for j,w in ipairs(v.contentInfoList) do
       table.insert(ct, '<contentInfo><nibble1>'
         ..math.floor(w.content_nibble/256)..'</nibble1><nibble2>'
-        ..(w.content_nibble%256)..'</nibble2></contentInfo>')
+        ..(w.content_nibble%256)..'</nibble2><component_type_name>'
+        ..edcb.GetGenreName(math.floor(w.content_nibble/256)*256+255)..' - '..edcb.GetGenreName(w.content_nibble)..'</component_type_name></contentInfo>')
     end
   end
   if v.eventGroupInfo then
@@ -59,7 +68,8 @@ else
         ..v.componentInfo.stream_content..'</stream_content><component_type>'
         ..v.componentInfo.component_type..'</component_type><component_tag>'
         ..v.componentInfo.component_tag..'</component_tag><text>'
-        ..v.componentInfo.text_char..'</text></videoInfo>')
+        ..v.componentInfo.text_char..'</text><component_type_name>'
+        ..edcb.GetComponentTypeName(v.componentInfo.stream_content*256+v.componentInfo.component_type)..'</component_type_name></videoInfo>')
     end
     if v.audioInfoList then
       for j,w in ipairs(v.audioInfoList) do
@@ -73,7 +83,8 @@ else
           ..(w.main_component_flag and 1 or 0)..'</main_component_flag><quality_indicator>'
           ..w.quality_indicator..'</quality_indicator><sampling_rate>'
           ..w.sampling_rate..'</sampling_rate><text>'
-          ..w.text_char..'</text></audioInfo>')
+          ..w.text_char..'</text><component_type_name>'
+          ..edcb.GetComponentTypeName(w.stream_content*256+w.component_type)..'</component_type_name></audioInfo>')
       end
     end
     if v.eventRelayInfo then

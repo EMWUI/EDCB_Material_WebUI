@@ -5,6 +5,11 @@ post=ReadPost()
 AssertCsrf(post)
 
 changed=false
+onid=tonumber(mg.get_var(post, 'onid')) or 0
+tsid=tonumber(mg.get_var(post, 'tsid')) or 0
+sid=tonumber(mg.get_var(post, 'sid')) or 0
+eid=tonumber(mg.get_var(post, 'eid')) or 0
+
 r=edcb.GetReserveData(tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0)
 if post and r then
   presetID=tonumber(mg.get_var(post, 'presetID'))
@@ -66,9 +71,95 @@ if post and r then
     rs.tunerID=tunerID
     rs.partialRecFlag=partialRecFlag and 1 or 0
     changed=edcb.ChgReserveData(r)
+  else
+    start={}
+    start.year,start.month,start.day=(mg.get_var(post, 'startDate') or ''):match('(%d+)/(%d+)/(%d+)')
+    start.hour,start.min,start.sec=(mg.get_var(post, 'startTime') or ''):match('(%d+):(%d+):(%d+)')
+    endHour,endMin,endSec=(mg.get_var(post, 'endTime') or ''):match('(%d+):(%d+):(%d+)')
+    if start.year and start.hour and endHour then
+      --start.wdayをセットするため
+      start=os.time(start)
+      if start then
+        timezone=start-os.time(os.date('!*t', start))
+        start=os.date('!*t', start+timezone)
+        if start then
+          dur=(endHour-start.hour)*3600+(endMin-start.min)*60+endSec-start.sec
+          if -24*3600<dur and dur<24*3600 then
+            --プログラム予約化
+            r.eid=65535
+            r.startTime=start
+            r.durationSecond=dur<0 and dur+24*3600 or dur
+            changed=edcb.ChgReserveData(r)
+          end
+        end
+      end
+    end
   end
 end
 
+if changed then
+  for i,v in ipairs(edcb.GetReserveData()) do
+    if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
+      id=v.reserveID
+      r=edcb.GetReserveData(id)
+      break
+    end
+  end
+
+  changed='<reserveinfo><ID>'
+    ..r.reserveID..'</ID><title>'
+    ..r.title..'</title><startDate>'
+    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                    r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
+    ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
+    ..r.durationSecond..'</duration><service_name>'
+    ..r.stationName..'</service_name><ONID>'
+    ..r.onid..'</ONID><TSID>'
+    ..r.tsid..'</TSID><SID>'
+    ..r.sid..'</SID><eventID>'
+    ..r.eid..'</eventID><comment>'
+    ..r.comment..'</comment><overlapMode>'
+    ..r.overlapMode..'</overlapMode><recsetting><recMode>'
+    ..r.recSetting.recMode..'</recMode><priority>'
+    ..r.recSetting.priority..'</priority><tuijyuuFlag>'
+    ..(r.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
+    ..r.recSetting.serviceMode..'</serviceMode><pittariFlag>'
+    ..(r.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
+    ..r.recSetting.batFilePath..'</batFilePath><recFolderList>'
+  for j,w in ipairs(r.recSetting.recFolderList) do
+    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    changed=changed..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn>'
+      ..recNamePlugInoption..'</recFolderInfo>'
+  end
+  changed=changed..'</recFolderList><suspendMode>'
+    ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
+    ..(r.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
+    ..(r.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
+    ..(r.recSetting.startMargin or 0)..'</startMargine><endMargine>'
+    ..(r.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(r.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
+    ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
+    ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'
+  for j,w in ipairs(r.recSetting.partialRecFolder) do
+    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    changed=changed..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn>'
+      ..recNamePlugInoption..'</recFolderInfo>'
+  end
+  changed=changed..'</partialRecFolder></recsetting><recFileNameList>'
+  for j,w in ipairs(r.recFileNameList) do
+    changed=changed..'<name>'..w..'</name>'
+  end
+  changed=changed..'</recFileNameList></reserveinfo>\r\n'
+end
+
 ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
-  ..(changed and '<success>予約を変更しました</success></entry>' or '<err>予約を変更できませんでした</err></entry>')
+  ..(changed and '<success>予約を変更しました</success>'..changed..'</entry>' or '<err>予約を変更できませんでした</err></entry>')
 mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

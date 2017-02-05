@@ -887,13 +887,13 @@ $(function(){
 			success: function(result, textStatus, xhr) {
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
-					var start = xml.find('start').text();
-					var recmode = xml.find('recmode').text();
-					var overlapmode = xml.find('overlapmode').text();
-					var id = xml.find('reserveid').text();
+					var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
+					var recmode = xml.find('recMode').text();
+					var overlapmode = xml.find('overlapMode').text();
+					var id = xml.find('ID').text();
 
 					var mode = '';
-					if (recmode==5){
+					if (recmode == 5){
 						//無効
 						mode = 'disabled';
 					}else if (overlapmode == 1){
@@ -909,7 +909,7 @@ $(function(){
 					if (obj.hasClass('search')){
 						parents = obj.parents('td');
 						//スイッチ追加
-						if (!obj.hasClass('addreserve') && start != 1){
+						if (!obj.hasClass('addreserve') && !start){
 							var reserveid = 'reserve' + id;
 							var label = document.createElement('label');
 							label.setAttribute('for', reserveid);

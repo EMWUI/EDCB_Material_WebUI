@@ -43,13 +43,62 @@ if added then
       break
     end
   end
-  recMode=r.recSetting.recMode
-  overlapMode=r.overlapMode
-  state=r.recSetting.recMode==5 and 'disablerec' or r.overlapMode==1 and 'partially' or r.overlapMode==2 and 'shortage' or ''
-  start=os.time(r.startTime)<os.time() and 1 or 0
+    
+  added='<reserveinfo><ID>'
+    ..r.reserveID..'</ID><title>'
+    ..r.title..'</title><startDate>'
+    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                    r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
+    ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
+    ..r.durationSecond..'</duration><service_name>'
+    ..r.stationName..'</service_name><ONID>'
+    ..r.onid..'</ONID><TSID>'
+    ..r.tsid..'</TSID><SID>'
+    ..r.sid..'</SID><eventID>'
+    ..r.eid..'</eventID><comment>'
+    ..r.comment..'</comment><overlapMode>'
+    ..r.overlapMode..'</overlapMode><recsetting><recMode>'
+    ..r.recSetting.recMode..'</recMode><priority>'
+    ..r.recSetting.priority..'</priority><tuijyuuFlag>'
+    ..(r.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
+    ..r.recSetting.serviceMode..'</serviceMode><pittariFlag>'
+    ..(r.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
+    ..r.recSetting.batFilePath..'</batFilePath><recFolderList>'
+  for j,w in ipairs(r.recSetting.recFolderList) do
+    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    added=added..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn>'
+      ..recNamePlugInoption..'</recFolderInfo>'
+  end
+  added=added..'</recFolderList><suspendMode>'
+    ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
+    ..(r.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
+    ..(r.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
+    ..(r.recSetting.startMargin or 0)..'</startMargine><endMargine>'
+    ..(r.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(r.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
+    ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
+    ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'
+  for j,w in ipairs(r.recSetting.partialRecFolder) do
+    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
+    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    added=added..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn>'
+      ..recNamePlugInoption..'</recFolderInfo>'
+  end
+  added=added..'</partialRecFolder></recsetting><recFileNameList>'
+  for j,w in ipairs(r.recFileNameList) do
+    added=added..'<name>'..w..'</name>'
+  end
+  added=added..'</recFileNameList></reserveinfo>\r\n'
 end
 
 
 ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
-  ..(added and '<success><reserveid>'..id..'</reserveid><startTime>'..os.time(r.startTime)..'</startTime><recmode>'..recMode..'</recmode><overlapmode>'..overlapMode..'</overlapmode><state>'..state..'</state><start>'..start..'</start></success></entry>' or '<err>予約を追加できませんでした</err></entry>')
+  ..(added and '<success>予約を追加しました</success>'..added..'</entry>' or '<err>予約を追加できませんでした</err></entry>')
 mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
