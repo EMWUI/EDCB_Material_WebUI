@@ -116,8 +116,6 @@ if aa.searchInfo then
 
   redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '') or 'autoaddepg.html'..(page~=0 and '?page='..page or ''))..(interval~=25 and '&interval='..interval or '')
 
-  ct.js='<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumAutoAdd\');});\n</script>\n'
-
   ct.macro=true
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'

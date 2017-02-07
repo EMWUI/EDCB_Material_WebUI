@@ -404,6 +404,8 @@ h4 .mdl-button--icon {
 
 /* 番組表 */
 #tv-guide-container {
+  width: 100%;
+  position: relative;
   overflow-x: auto; }
 
 #tv-guide {
@@ -420,7 +422,7 @@ h4 .mdl-button--icon {
   display:     -ms-inline-flexbox;
   display:         inline-flex;
   position: relative;
-  z-index: 15; }
+  z-index: 3; }
   #tv-guide-header a {
     border-right: solid 1px #FFF;
     border-left: solid 1px #FFF;
@@ -429,7 +431,7 @@ h4 .mdl-button--icon {
     overflow: hidden;
     box-sizing: border-box; }
 
-#tv-guide-main {
+.tv-guide {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex; }
@@ -439,7 +441,7 @@ h4 .mdl-button--icon {
   position:relative;
   width: 22px;
   left: 0;
-  z-index: 5; }
+  z-index: 2; }
   .hour-container:not(:first-of-type) {
     display:none; }
   .hour {
@@ -469,14 +471,14 @@ h4 .mdl-button--icon {
 
 
 #line {
-  padding: 5px 2px 0;
+  padding: 5px 8px 0;
   left: 0;
   height: 0px;
   width: 100%;
   color: #FF3D00;
-  text-shadow: 0 4px 6px rgba(0,0,0,0.8);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.26);
   font-size: large;
-  z-index: 10;
+  z-index: 2;
   position: absolute;
   pointer-events: none;
   box-sizing: border-box;
@@ -484,13 +486,32 @@ h4 .mdl-button--icon {
   #line:before {
     top: 0;
     right: 0;
-    width: 100%;
-    height: 2px;
-    background: rgba(255,61,0,0.54);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.8);  
+    width: calc(100% - 20px);
+    height: 1px;
+    background: rgba(255,61,0,0.87);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.26);  
     position: absolute;
     pointer-events: none;
     content: ''; }
+  #line:after {
+    top: -5px;
+    left: 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,61,0,0.87);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.26);  
+    position: absolute;
+    pointer-events: none;
+    content: ''; }
+  @media (max-width: 479px) {
+    #line {
+      padding-left: 5px; }
+    #line:before {
+      width: calc(100% - 13px); }
+      #line:after {
+        left: 3px; } }
+
 
 .station {
   width: 210px;
@@ -656,7 +677,7 @@ h4 .mdl-button--icon {
   border: 3px dotted #FF3D00; }
 
 .content.view {
-  border-color: #3D5AFE; }
+  border-color: #3D5AFE!important; }
 
 .content.disabled {
   border-color: #757575; }
@@ -680,7 +701,79 @@ h4 .mdl-button--icon {
   #autoaddepg {
     padding-top: 16px; } }
 
-
+/* サイドパネル */
+#sidePanel {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  right: 0;
+  left: auto;
+  width: 600px;
+  max-width: 90%;
+  border-right: 0;
+  background-color: #fff;
+  z-index: 999;
+  box-shadow: 0 0 2px 2px rgba(0, 0, 0, .14), 0 -2px 1px 3px rgba(0, 0, 0, .2), 0 0 5px 1px rgba(0, 0, 0, .12); }
+  .sidePanel {
+    -webkit-transform: translateX(603px);
+    transform: translateX(603px); }
+  .sidePanel_headder {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    height: 48px;
+    padding: 0 24px 0 32px;
+    background-color: #3f51b5;
+    color: #fff;
+    align-items: center; }
+  .sidePanel_title {
+    font-size: 16px;
+    padding-left: 8px;
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    line-height: 1;
+    letter-spacing: .02em;
+    font-weight: 400;
+    box-sizing: border-box; }
+  .sidePanel-content {
+    display: -webkit-inline-flex;
+    display:     -ms-inline-flexbox;
+    display:         inline-flex;
+    -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1;
+    -webkit-flex-shrink: 1;
+        -ms-flex-negative: 1;
+            flex-shrink: 1;
+    flex-direction: column;
+    overflow-y: auto;
+    border-bottom: 1px solid #e0e0e0; }
+  #summary {
+    padding: 0 32px;
+    border-bottom: 1px solid #e0e0e0; }
+  #sidePanel .mdl-tabs__tab {
+    -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1; }
+  #sidePanel .mdl-tabs__panel {
+    -webkit-flex-grow: 1;
+        -ms-flex-positive: 1;
+            flex-grow: 1;
+    -webkit-flex-shrink: 10;
+        -ms-flex-negative: 10;
+            flex-shrink: 10;
+    min-height: 200px;
+    padding: 16px 32px 0;
+    overflow-x: hidden;
+    overflow-y: auto; }
+  @media (max-width: 479px) {
+    .sidePanel_headder {
+      padding: 0 16px; }
+    #sidePanel h4 {
+      margin: 16px 0; }
+    #sidePanel .summary {
+      padding: 0 16px; }
+    #sidePanel .mdl-tabs__panel {
+      padding: 16px 16px 0; } }
 
 /* form */
 .form {

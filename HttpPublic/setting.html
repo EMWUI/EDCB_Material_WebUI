@@ -21,6 +21,7 @@ w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
 CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',false,path))~=0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -180,12 +181,16 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div><label for="Light_Mode-flag" class="mdl-switch mdl-js-switch"><input id="Light_Mode-flag" type="checkbox" class="mdl-switch__input" name="Light_Mode" value="1"'..(Light_Mode and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Light_Mode">スマホ等でヘッダーの調整を無効に</span></div>\n'
 
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細をサイドパネルで表示します</span></div>\n'
+
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-hover">番組表の詳細をマウスホバーで表示</span></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
 
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'

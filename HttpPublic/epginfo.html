@@ -105,7 +105,6 @@ if not End then
   redirect=mg.get_var(post, 'andKey') and 'submit="#search' or 'redirect="'..(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid or 'epg.html?tab='..tab..'&date='..date..(pageIndex~=0 and '&chpage='..pageIndex or ''))..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
 
   ct.js=(recording and '<script src="js/player.js"></script>\n' or '')
-    ..'<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
 
   ct.macro=true
 

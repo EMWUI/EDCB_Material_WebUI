@@ -16,7 +16,6 @@ if r then
   redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
   ct.js=(recording and '<script src="js/player.js"></script>\n'or '')
-    ..'<script>\n$(function(){getpreset(\''..PathToRoot()..'api/EnumReserveInfo\');});\n</script>\n'
 
   ct.macro=true
 

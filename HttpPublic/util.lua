@@ -317,7 +317,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
       end
     end
     s=s..'</span>\n'
-      ..'<a id="notify_'..v.eid..'" class="notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+      ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
       ..ConvertSearch(v, service_name)..'</h4>\n'
     if v.shortInfo then
       s=s..'<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'
@@ -325,7 +325,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
 
     s=s..'</div>\n'
 
-     ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
+      ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
 
     if v.extInfo then
       s=s..'<div class="mdl-typography--body-1">\n'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>\n')..'</div>\n'
@@ -881,7 +881,9 @@ end
 function FormatTimeAndDuration(t,dur)
   dur=dur and (t.hour*3600+t.min*60+t.sec+dur)
   return string.format('%d/%02d/%02d(%s) %02d:%02d',t.year,t.month,t.day,({'日','月','火','水','木','金','土',})[t.wday],t.hour,t.min)
-    ..(dur and string.format('～%02d:%02d',math.floor(dur/3600)%24,math.floor(dur/60)%60) or '')end
+    ..(t.sec~=0 and string.format('<small>:%02d</small>',t.sec) or '')
+    ..(dur and string.format('～%02d:%02d',math.floor(dur/3600)%24,math.floor(dur/60)%60)..(dur%60~=0 and string.format('<small>:%02d</small>',dur%60) or '') or '')
+end
 
 --レスポンスを生成する
 function Response(code,ctype,charset,cl)

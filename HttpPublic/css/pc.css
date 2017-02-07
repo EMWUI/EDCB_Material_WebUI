@@ -2,6 +2,7 @@
   width: 7px;
   height: 7px;
   background: #E1E1E1; }
+  #sidePanel .mdl-tabs__panel::-webkit-scrollbar,
   .macro-list::-webkit-scrollbar {
     width: 4px; }
   ::-webkit-scrollbar-thumb {

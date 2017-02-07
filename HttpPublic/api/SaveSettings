@@ -49,6 +49,7 @@ elseif post then
   MARGIN_HOUR=(mg.get_var(post, 'MARGIN_HOUR') or '')
   MARGIN_MIN=(mg.get_var(post, 'MARGIN_MIN') or '')
   TIME_COLUMN=(mg.get_var(post, 'TIME_COLUMN') or '')
+  sidePanel=tonumber(mg.get_var(post, 'sidePanel')) or 0~=0
 
   CH_COUNT=(mg.get_var(post, 'CH_COUNT') or '')
 
@@ -104,6 +105,7 @@ elseif post then
   edcb.WritePrivateProfile('GUIDE','hour',w_hour,path)
   edcb.WritePrivateProfile('GUIDE','hour_sp',w_hour_sp,path)
   edcb.WritePrivateProfile('GUIDE','CH_COUNT',CH_COUNT,path)
+  edcb.WritePrivateProfile('GUIDE','sidePanel',sidePanel,path)
 
   edcb.WritePrivateProfile('BACKGROUND','background',background,path)
 
