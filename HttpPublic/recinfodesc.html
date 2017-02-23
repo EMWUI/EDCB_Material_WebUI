@@ -14,7 +14,7 @@ if v then
   -- トランスコード済みのファイルがvideoフォルダにあればそっち使う
   fname=string.match(w.recFilePath, '[^\\]*$') or ''
   for i,ext in ipairs({'.mp4','.webm'}) do
-    f=io.open(edcb.Convert('cp932', 'utf-8', mg.script_name:gsub('[^\\/]*$','')..'video\\'..fname..ext), 'rb')
+    f=edcb.io and edcb.io.open(mg.script_name:gsub('[^\\/]*$','')..'video\\'..fname..ext, 'rb')
     if f then
       f:close()
       video='video/'..fname..ext
@@ -22,7 +22,7 @@ if v then
     end
   end
   if not video then
-    f=io.open(edcb.Convert('cp932', 'utf-8', w.recFilePath), 'rb')
+    f=edcb.io and edcb.io.open(w.recFilePath, 'rb')
     if f then
       f:close()
       video=PathToRoot()..'api/Movie?id='..v.id

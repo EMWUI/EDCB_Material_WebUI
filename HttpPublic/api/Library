@@ -23,7 +23,7 @@ if status then
               table.insert(ct, '</dir>')
             end
           elseif string.find(file, '%.ts$') or string.find(file, '%.mp4$') or string.find(file, '%.webm$') then
-            thumbs=io.open(edcb.Convert('cp932', 'utf-8', mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg'), 'rb')
+            thumbs=edcb.io and edcb.io.open(mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg', 'rb')
             if thumbs then
               thumbs:close()
             end

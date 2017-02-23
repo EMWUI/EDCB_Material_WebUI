@@ -24,47 +24,46 @@ XEXT='.webm'
 -- 転送開始前に変換しておく量(bytes)
 XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
 
-fname=mg.get_var(mg.request_info.query_string,'fname') or nil
+fpath=mg.get_var(mg.request_info.query_string,'fname') or nil
 
 -- ts以外を除外
-if fname and not (string.find(fname, '%.ts$') or string.find(fname, '%.mp4$') or string.find(fname, '%.webm$')) then
-   fname=nil
+if fpath and not (string.find(fpath, '%.ts$') or string.find(fpath, '%.mp4$') or string.find(fpath, '%.webm$')) then
+   fpath=nil
 end
 
 r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
 v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))
 
 if r then
-  fname=r
+  fpath=r
   if XCODE then
     -- トランスコード中のファイルがあればそっち使う
-    f=io.open(edcb.Convert('cp932', 'utf-8', fname..XEXT), 'rb')
+    f=edcb.io and edcb.io.open(fpath..XEXT, 'rb')
     if f then
       f:close()
-      fname=fname..XEXT
+      fpath=fpath..XEXT
       XCODE=false
     end
   end
 elseif v then
-  fname=v.recFilePath
+  fpath=v.recFilePath
 end
 
 -- 転送開始位置(99分率)(容量確保録画には未対応)
 offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
 
 f=nil
-if fname then
-  fpath=edcb.Convert('cp932', 'utf-8', fname)
-  f=io.open(fpath, 'rb')
+if fpath then
+  f=edcb.io.open(fpath, 'rb')
   if f then
     offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
     if XCODE then
       f:close()
-      f=io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
-      fname=string.match(fname, '([^\\]+)%.[^%.]+$')..XEXT
+      f=edcb.io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
+      fname=string.match(fpath, '([^\\]+)%.[^%.]+$')..XEXT
     else
       f:seek('set', offset)
-      fname=string.match(fname, '[^\\]+$')
+      fname=string.match(fpath, '[^\\]+$')
       XPREPARE=nil
     end
   end
