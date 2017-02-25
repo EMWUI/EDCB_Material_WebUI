@@ -2,7 +2,14 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
 LibraryPath=tonumber(edcb.GetPrivateProfile('SET','LibraryPath',0,path))~=0 and path or 'Common.ini'
+
+MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
+
+if MakeThumbs then
+	AssertCsrf(mg.request_info.query_string)
+end
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'}
 
@@ -10,28 +17,39 @@ if status then
   id=0
   function attrdir(path)
     local filelist={}
-    for file in lfs.dir(path) do
-      if file ~= '.' and file ~= '..' then
-        f=path..'\\'..file
-        file=edcb.Convert('utf-8', 'cp932', file)
-        if lfs.attributes(f) then
-          if lfs.attributes(f).mode == "directory" then
-            if file ~= 'chapters' then
-              id=id+1
-              table.insert(ct, '<dir><name>'..file:gsub('&', '&amp;')..'</name><id>'..id..'</id>')
-              attrdir(f)
-              table.insert(ct, '</dir>')
+    for fname in lfs.dir(path) do
+      if fname ~= '.' and fname ~= '..' then
+        fpath=path..'\\'..fname
+        fname=edcb.Convert('utf-8', 'cp932', fname)
+        if lfs.attributes(fpath) then
+          if lfs.attributes(fpath).mode == "directory" then
+            if fname ~= 'chapters' then
+              if MakeThumbs then
+                attrdir(fpath)
+              else
+                id=id+1
+                table.insert(ct, '<dir><name>'..fname:gsub('&', '&amp;')..'</name><id>'..id..'</id>')
+                attrdir(fpath)
+                table.insert(ct, '</dir>')
+              end
             end
-          elseif string.find(file, '%.ts$') or string.find(file, '%.mp4$') or string.find(file, '%.webm$') then
-            thumbs=edcb.io and edcb.io.open(mg.document_root..'\\thumbs\\'..file:gsub('.[^.]*$', '')..'.jpg', 'rb')
+          elseif mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
+            thumbs=edcb.io and edcb.io.open(mg.document_root..'\\thumbs\\'..fname..'.jpg', 'rb')
             if thumbs then
               thumbs:close()
             end
-            table.insert(filelist, '<file><name>'..file:gsub('&', '&amp;')..'</name>'
-              ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', f)):gsub('%%2f', '/')..'</path>'
-              ..(Public and  '<public>'..mg.url_encode(Public..'/'..file):gsub('%%2f', '/')..'</public>' or '')
-              ..'<thumbs>'..(thumbs and mg.url_encode(file:gsub('.[^.]*$', '')..'.jpg') or 0)..'</thumbs>'
-              ..'</file>')
+            if MakeThumbs then
+              if not thumbs then
+                f=edcb.io.popen(ffmpeg..' -i "'..edcb.Convert('utf-8', 'cp932', fpath)..'" -ss 5 -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\thumbs\\'..fname..'.jpg'..'"')
+                f:close()
+              end
+            else
+              table.insert(filelist, '<file><name>'..fname:gsub('&', '&amp;')..'</name>'
+                ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', fpath)):gsub('%%2f', '/')..'</path>'
+                ..(Public and  '<public>'..mg.url_encode(Public..'/'..fname):gsub('%%2f', '/')..'</public>' or '')
+                ..'<thumbs>'..(thumbs and mg.url_encode(fname..'.jpg') or 0)..'</thumbs>'
+                ..'</file>')
+            end
           end
         else
           table.insert(ct, '<err>'..edcb.Convert('utf-8', 'cp932', f):gsub('&', '&amp;')..'</err>')
@@ -41,20 +59,28 @@ if status then
     table.insert(ct, table.concat(filelist))
   end
 
-  table.insert(ct, '<dir><name>ホーム</name><id>home</id>')
+  if not MakeThumbs then table.insert(ct, '<dir><name>ホーム</name><id>home</id>') end
 
   count=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath))-1
   for i=0,count do
     dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
     Public=NativeToDocumentPath(dir)
     if #dir>0 then
-      table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir):gsub(':\\', '_'):gsub('/', '_')..'</id>')
-      attrdir(edcb.Convert('cp932', 'utf-8', dir))
-      table.insert(ct, '</dir>')
+      if MakeThumbs then
+        attrdir(edcb.Convert('cp932', 'utf-8', dir))
+      else
+        table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir):gsub(':\\', '_'):gsub('/', '_')..'</id>')
+        attrdir(edcb.Convert('cp932', 'utf-8', dir))
+        table.insert(ct, '</dir>')
+      end
     end
   end
 
-  table.insert(ct, '</dir></entry>')
+  if MakeThumbs then
+    table.insert(ct, '<info>サムネを作成しました</info></entry>')
+  else
+    table.insert(ct, '</dir></entry>')
+  end
 else
   table.insert(ct, '<error>"lfs.dll"がありません</error></entry>')
 end

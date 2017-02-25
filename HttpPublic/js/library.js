@@ -11,7 +11,7 @@ function getMovieList(Snack){
 				var xml = xhr.responseXML;
 				if ($(xml).find('error').length > 0){
 					message = $(xml).find('error').text();
-					showSpinner(false);
+					showSpinner();
 				}else{
 					xml = new XMLSerializer().serializeToString(xml);
 					sessionStorage.setItem('movie', xml);
@@ -19,11 +19,11 @@ function getMovieList(Snack){
 					loadingMovieList = false;
 					refreshPath = true;
 					folder();
-					if (Snack) message = '取得しました';
+					if (Snack) message = '更新しました';
 				}
 			}else{
-				message = '取得に失敗しました';
-				showSpinner(false);
+				message = '更新に失敗しました';
+				showSpinner();
 			}
 			if (message) $('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: message});
 		},
@@ -132,20 +132,20 @@ function folder(){
 			}
 		});
 		componentHandler.upgradeDom();
-		showSpinner(false);
+		showSpinner();
 		if (!found){
 			notification.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
 			var data = {
-				message: 'リストを再取得しますか？',
+				message: 'ライブラリを更新しますか？',
 				actionHandler: function(event) {
 					getMovieList(true);
 				},
-				actionText: '再取得'
+				actionText: '更新'
 			};
 			notification.MaterialSnackbar.showSnackbar(data);
 		}
 	}else{
-		notification.MaterialSnackbar.showSnackbar({message: 'リスト取得中です。', timeout: 1000});
+		notification.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新中です。', timeout: 1000});
 	}
 }
 
@@ -220,7 +220,7 @@ function librarySearch(key){
 			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) ).append(
 				$('<i>', {class: 'mdl-layout__tab material-icons', text: 'chevron_right'}),
 				$('<span>', {id: 'search_', class: 'mdl-layout__tab is-active', text: '検索', data: {id: 'search'}, click: function(){location.hash = '#search@'+ key;} }) );
-			showSpinner(false);
+			showSpinner();
 		}
 }
 
@@ -272,5 +272,18 @@ $(function(){
 	$('#library-search').submit(function(){
 		location.hash = '#search@' + $('#Key').val();
 		return false;
+	});
+
+	$('.thumbs').click(function(){
+		showSpinner(true);
+		var notification = $('.mdl-js-snackbar').get(0);
+		notification.MaterialSnackbar.showSnackbar({message: 'サムネの作成を開始します'});
+		$.get(root + 'api/Library', $(this).data(), function(result, textStatus, xhr){
+			var xml = $(xhr.responseXML);
+			showSpinner();
+			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
+			notification.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新します'});
+			getMovieList(true);
+		});
 	});
 });

@@ -51,7 +51,7 @@ f=nil
 if fpath then
   fname='xcode'..(fpath:match('%.[0-9A-Za-z]+$') or '')
   -- 拡張子を限定
-  if mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') then
+  if mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
     f=edcb.io.open(fpath, 'rb')
     if f then
       offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
