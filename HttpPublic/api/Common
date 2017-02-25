@@ -20,9 +20,10 @@ elseif notify then
   messege=edcb.GetNotifyUpdateCount(notify)
 elseif suspend then
   if suspend=='standby' then
-  	messege='スタンバイに移行'..(edcb.SendSuspend(1) and 'します' or 'できる状態ではありません')
+    --ok=edcb.os.execute('start "SetSuspendState" powershell -NoProfile -Command "& {[Threading.Thread]::Sleep(5000);Add-Type -AssemblyName System.Windows.Forms;[System.Windows.Forms.Application]::SetSuspendState([System.Windows.Forms.PowerState]::Suspend,$false,$false)}"')
+  	messege='スタンバイに移行'..((ok or edcb.SendSuspend and edcb.SendSuspend(1)) and 'します' or 'できる状態ではありません')
   elseif suspend=='hibernation' then
-  	messege='休止に移行'..(edcb.SendSuspend(2) and 'します' or 'できる状態ではありません')
+  	messege='休止に移行'..(edcb.SendSuspend and edcb.SendSuspend(2) and 'します' or 'できる状態ではありません')
   end
 end
 

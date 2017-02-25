@@ -12,7 +12,7 @@ r=edcb.GetReserveData(tonumber(mg.get_var(mg.request_info.query_string,'id')) or
 ct={title='予約情報'}
 
 if r then
-  recording=edcb.GetRecFilePath and edcb.GetRecFilePath(r.reserveID) or nil
+  recording=edcb.GetRecFilePath(r.reserveID)
   redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
   ct.js=(recording and '<script src="js/player.js"></script>\n'or '')

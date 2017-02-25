@@ -26,11 +26,6 @@ XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
 
 fpath=mg.get_var(mg.request_info.query_string,'fname') or nil
 
--- ts以外を除外
-if fpath and not (string.find(fpath, '%.ts$') or string.find(fpath, '%.mp4$') or string.find(fpath, '%.webm$')) then
-   fpath=nil
-end
-
 r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
 v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))
 
@@ -54,17 +49,20 @@ offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
 
 f=nil
 if fpath then
-  f=edcb.io.open(fpath, 'rb')
-  if f then
-    offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
-    if XCODE then
-      f:close()
-      f=edcb.io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
-      fname=string.match(fpath, '([^\\]+)%.[^%.]+$')..XEXT
-    else
-      f:seek('set', offset)
-      fname=string.match(fpath, '[^\\]+$')
-      XPREPARE=nil
+  fname='xcode'..(fpath:match('%.[0-9A-Za-z]+$') or '')
+  -- 拡張子を限定
+  if mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') then
+    f=edcb.io.open(fpath, 'rb')
+    if f then
+      offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
+      if XCODE then
+        f:close()
+        f=edcb.io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
+        fname='xcode'..XEXT
+      else
+        f:seek('set', offset)
+        XPREPARE=nil
+      end
     end
   end
 end
