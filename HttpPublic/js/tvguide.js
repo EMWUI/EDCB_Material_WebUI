@@ -227,6 +227,20 @@ $(function(){
 			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
 		});
 	});
+	var dialog = document.querySelector('dialog');
+	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
+	$('.suspend').click(function(){
+		var self = $(this);
+		$('.mdl-dialog__content').text(self.text() + 'に移行します');
+	    $('#dialog_button').unbind('click').click(function(){
+			document.querySelector('dialog').close();
+			$.get(root + 'api/Common', self.data(), function(result, textStatus, xhr){
+				var xml = $(xhr.responseXML);
+				notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
+			});
+		});
+	    dialog.showModal();
+	});
 
 	//EPG予約
 	$('.autoepg').click(function(){
