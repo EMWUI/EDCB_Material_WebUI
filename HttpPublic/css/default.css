@@ -145,6 +145,11 @@ dialog {
 .icons.mdl-badge:after {
   font-family: 'Material Icons'; }
 
+.mdl-radio,
+.mdl-checkbox {
+  height: auto;
+  min-height:24px; }
+
 
 
 /* header */
@@ -486,7 +491,7 @@ h4 .mdl-button--icon {
   #line:before {
     top: 0;
     right: 0;
-    width: calc(100% - 20px);
+    width: calc(100% - 19px);
     height: 1px;
     background: rgba(255,61,0,0.87);
     box-shadow: 0 1px 2px rgba(0,0,0,0.26);  
@@ -495,7 +500,7 @@ h4 .mdl-button--icon {
     content: ''; }
   #line:after {
     top: -5px;
-    left: 10px;
+    left: 9px;
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -850,9 +855,6 @@ h4 .mdl-button--icon {
   width: 70px; }
 .number .text-right {
   margin-right: 8px; }
-
-[for="chkRecEnd"]{
-  height: auto; }
 
 .text-right .mdl-textfield__input {
   text-align: right; }

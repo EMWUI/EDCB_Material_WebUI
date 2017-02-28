@@ -15,7 +15,7 @@ function line(){
 	$('#line').css('top', time.line);
 
 	//ラインに分を表示
-	if (time.min != $('#line').text()) $('#line').text(time.min);
+	//if (time.min != $('#line').text()) $('#line').text(time.min);
 
 	$('.start_' + Math.floor( new Date().getTime()/10000+3 )).find('.notification').attr('disabled', true).children().text('notifications');
 }
@@ -110,7 +110,7 @@ $(function(){
 		});
 	}else{
 		$('.hour-container').show();
-		$('#line').width($('#tv-guide').width() - 16);
+		$('#line').width($('#tv-guide').width() - 13);
 	}
 
 	/*禁断の果実
@@ -167,6 +167,7 @@ $(function(){
 	});
 
 	//番組詳細表示
+	var popup;
 	$('.cell').mousedown(function(e){
 		if (e.which == 1){
 			pageX = e.pageX;
@@ -174,18 +175,26 @@ $(function(){
 		}
 	}).mouseup(function(e){
 		//ドラッグスクロール排除
-		if (e.which == 1 && pageX == e.pageX && pageY == e.pageY){
-			if (!$(e.target).is('a, label, .nothing')){
-				if ($(this).hasClass('clicked')){
-					$(this).removeClass('clicked');
-				}else{
-					$('.cell').removeClass('clicked');
-					$(this).addClass('clicked');
+		var self = $(this);
+		if (e.which == 1 && pageX == e.pageX && pageY == e.pageY && !popup){
+			popup = setTimeout(function(){
+				popup = false;
+				if (!$(e.target).is('a, label, .nothing')){
+					if (self.hasClass('clicked')){
+						self.removeClass('clicked');
+					}else{
+						$('.cell').removeClass('clicked');
+						self.addClass('clicked');
+					}
 				}
-			}
+			}, 200);
 		}else if (!hover && e.which == 1){
 			$('.cell').removeClass('clicked');
 		}
+	}).dblclick(function(){
+		clearTimeout(popup);
+		popup = false;
+		$(this).find('.open_info').click();
 	});
 
 	//マウスホバーで番組詳細表示
