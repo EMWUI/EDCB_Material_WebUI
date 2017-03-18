@@ -16,14 +16,20 @@ function line(){
 
 	//ラインに分を表示
 	//if (time.min != $('#line').text()) $('#line').text(time.min);
-
-	$('.start_' + Math.floor( new Date().getTime()/10000+3 )).find('.notification').attr('disabled', true).children().text('notifications');
 }
 
-function end(){
-	line();
-	//終了番組を薄く
-	$('.end_' + Math.floor( new Date().getTime()/10000 )).children().addClass('end').find('.addreserve').remove();
+function end(cell, mark){
+	setTimeout(function(){
+		var next = cell.next();
+		next.find('.notification').attr('disabled', true).children().text('notifications');
+		end(next, mark);
+
+		//番組終了
+		setTimeout(function(){
+			cell.find('.addreserve').remove();
+			if (mark) cell.children().addClass('end');
+		}, cell.data('endtime')*1000 - new Date().getTime());
+	}, (cell.data('endtime') - 30)*1000 - new Date().getTime());
 }
 
 function jump(){
@@ -326,6 +332,8 @@ $(function(){
 
 	//番組詳細を表示
 	$('.open_info').click(function(){
+		var past = $(this).data('starttime');
+
 		showSpinner(true);
 		$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
 		$('[href="#recset"], #recset, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
@@ -390,7 +398,7 @@ $(function(){
 						'<li>TransportStreamID:' + tsid + '(0x' + ('000'+tsid.toString(16).toUpperCase()).slice(-4) + ')' +
 						'<li>ServiceID:'         + sid  + '(0x' + ('000'+ sid.toString(16).toUpperCase()).slice(-4) + ')' +
 						'<li>EventID:'           + eid  + '(0x' + ('000'+ eid.toString(16).toUpperCase()).slice(-4) + ')' );
-					$('#epginfo').attr('href', 'epginfo.html?onid=' + onid + '&tsid=' + tsid + '&sid=' + sid + '&eid=' + eid);
+					$('#epginfo').attr('href', 'epginfo.html?onid=' + onid + '&tsid=' + tsid + '&sid=' + sid + (past ? '&startTime=' + past : '&eid=' + eid));
 
 					$('[name=onid]').val(onid);
 					$('[name=tsid]').val(tsid);

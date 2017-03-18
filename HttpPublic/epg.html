@@ -104,12 +104,12 @@ end
 
 ct={title='番組表'}
 
-ct.css='<style>\n'
+ct.css='<style>'
   ..'main{background:'..background
-  ..';}\n.station{width:'..w_service
+  ..';}.station{width:'..w_service
   ..'px;}.hour-container{width:'..w_hour
   ..'px;}.hour{height:'..(ONE_MIN_PX*60)
-  ..'px;}\n'
+  ..'px;}'
 
   ..'.news{background:'..news
   ..';}.sports{background:'..sports
@@ -127,27 +127,25 @@ ct.css='<style>\n'
   ..';}.other{background:'..other
   ..';}.none{background:'..none
   ..';}.nothing{background:'..nothing
-  ..';}\n'
+  ..';}'
 
   ..'.content.reserve{'..(paint and 'border-color:transparent;background:' or 'border-color:')..reserve..';}'
   ..'.content.disabled{'..(paint and 'border-color:transparent;background:' or 'border-color:')..disabled..';}'
   ..'.content.partially{background:'..partially..';border-color:'..partially_border..';}'
-  ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
+  ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}'
 
   ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
   ..'px;}.hour-container{width:'..w_hour_sp
-  ..'px;}}\n'
+  ..'px;}}'
   ..'</style>\n'
 
-ct.js='<script>\n'
-  ..'Light_Mode='..(Light_Mode and 'true' or 'false')..';\n'
-  ..'oneminpx='..ONE_MIN_PX..';\n'
-  ..'basehour='..baseHour..';\n'
-  ..'marginmin='..MARGIN_MIN..';\n'
-  ..'hover='..(hover and 'true' or 'false')..';\n'
-  ..(NOW and (date==0 and '$(function(){jump();});\nsetInterval("end()", 1000);\n'
-                       or 'setInterval("line()", 1000);\n')
-          or '')
+ct.js='<script>'
+  ..'Light_Mode='..(Light_Mode and 'true' or 'false')
+  ..';oneminpx='..ONE_MIN_PX
+  ..';basehour='..baseHour
+  ..';marginmin='..MARGIN_MIN
+  ..';hover='..(hover and 'true' or 'false')..';'
+  ..(NOW and '$(function(){$(".now").each(function(){'..(date==0 and 'end($(this), true);});jump();' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
 
@@ -459,7 +457,7 @@ for i=pagemin,pagemax do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime)+timezone or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell'..(NOW and date==0 and startTime>now and ' end_'..math.floor(startTime/10) or '')..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
+      table.insert(ctt, '<div class="cell" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -479,7 +477,7 @@ for i=pagemin,pagemax do
       mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-      table.insert(ctt, '<div class="cell eid_'..w.eid..(now+timezone<startTime-30 and ' start_'..math.floor((startTime-timezone)/10) or '')..(NOW and date==0 and endTime~=startTime and ' end_'..math.floor((endTime-timezone)/10) or '')..'" style="height:'..(endPx-lastPx)..'px">\n'
+      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now+timezone and now+timezone<endTime and ' now' or '')..'" data-endtime="'..endTime-timezone..'" style="height:'..(endPx-lastPx)..'px">\n'
         ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now+timezone and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
         ..'<div><div class="startTime">'..string.format('%02d', w.startTime.min)..'</div>'..mark..'</div>'
@@ -493,7 +491,7 @@ for i=pagemin,pagemax do
         ..'<a class="mdl-button mdl-js-button mdl-button--raised'
           ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..os.time(w.startTime)+timezone or 'eid="'..w.eid)
                        or '" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime)+timezone or '&eid='..w.eid))..'">番組詳細</a>'
-        ..(endTime~=startTime and endTime-now>0 and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
+        ..(endTime~=startTime and now+timezone<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
           ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'

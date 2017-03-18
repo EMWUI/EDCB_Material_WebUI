@@ -187,7 +187,7 @@ function librarySearch(key){
 					var data = {
 						name: name,
 						path: $(this).children('path').text(),
-						public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
+						public: $(this).children('public').length > 0
 					};
 					var event = function(){
 						$('#popup').addClass('is-visible');
@@ -198,8 +198,7 @@ function librarySearch(key){
 
 					if (ViewMode == 'grid'){
 						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-						var thumbs = $(this).children('thumbs').text();
-						if (thumbs != 0){
+						if ($(this).children('thumbs').length > 0){
 							obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 						}else{
 							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );

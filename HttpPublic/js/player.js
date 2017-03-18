@@ -26,7 +26,7 @@ function loadMovie(obj){
 	var offset = seek > 0 ? '&offset=' + seek : '';
 
 	if (obj.data('public') && MIME){
-		path = obj.data('public');
+		path = root + path;
 	}else if (obj.data('rec')){
 		path = path + quality + offset;
 	}else{
@@ -162,7 +162,7 @@ $(function(){
 				$('.currentTime').text('0:00');
 				if ($(this).data('keepdisk')) $('#seek').prop('disabled', true);
 			}else{
-				xcode = $(this).data('duration') ? true : false;
+				xcode = $(this).data('duration');
 				var adjust = seek * (duration / 99);
 				$(this).on('timeupdate', function(){
 					var currentTime = video.currentTime + adjust;
@@ -185,16 +185,19 @@ $(function(){
 		}
 	});
 
-	$('#seek').change(function(){
-		if (xcode){
-			loadMovie($('#video'));
-			video.play();
-		}else{
-			video.currentTime = (video.duration / 100)* $(this).val();
+	$('#seek').on({
+		'change click': function(){
+			if (xcode){
+				loadMovie($('#video'));
+				video.play();
+			}
+		},
+		'input': function(){
+			if (!xcode) video.currentTime = (video.duration / 100) * $(this).val();
 		}
 	});
 
-	$('#volume').change(function(){
+	$('#volume').on('input', function(){
 		video.muted = false;
 		video.volume = $(this).val();
 	});

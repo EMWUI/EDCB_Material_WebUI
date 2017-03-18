@@ -34,20 +34,17 @@ if status then
               end
             end
           elseif mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
-            thumbs=edcb.io and edcb.io.open(mg.document_root..'\\thumbs\\'..fname..'.jpg', 'rb')
-            if thumbs then
-              thumbs:close()
-            end
+            thumbs=edcb.FindFile and edcb.FindFile(mg.document_root..'\\thumbs\\'..fname..'.jpg', 1)
             if MakeThumbs then
               if not thumbs then
                 f=edcb.io.popen(ffmpeg..' -i "'..edcb.Convert('utf-8', 'cp932', fpath)..'" -ss 5 -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\thumbs\\'..fname..'.jpg'..'"')
                 f:close()
               end
             else
-              table.insert(filelist, '<file><name>'..fname:gsub('&', '&amp;')..'</name>'
-                ..'<path>'..mg.url_encode(edcb.Convert('utf-8', 'cp932', fpath)):gsub('%%2f', '/')..'</path>'
-                ..(Public and  '<public>'..mg.url_encode(Public..'/'..fname):gsub('%%2f', '/')..'</public>' or '')
-                ..'<thumbs>'..(thumbs and mg.url_encode(fname..'.jpg') or 0)..'</thumbs>'
+              table.insert(filelist, '<file><name>'..fname:gsub('&', '&amp;')..'</name><path>'
+                ..(Public and mg.url_encode(Public..'/'..fname):gsub('%%2f', '/')..'</path><public>1</public>'
+                           or mg.url_encode(edcb.Convert('utf-8', 'cp932', fpath)):gsub('%%2f', '/')..'</path>')
+                ..(thumbs and '<thumbs>'..mg.url_encode(fname..'.jpg')..'</thumbs>' or '')
                 ..'</file>')
             end
           end

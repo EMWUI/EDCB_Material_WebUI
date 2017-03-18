@@ -36,7 +36,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..(temp.dialog and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
-..'<script>\npath=\''..path..'\';\nroot=\''..mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')..'\';\n</script>\n'
+..'<script>path=\''..path..'\';root=\''..mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')..'\';</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
 -- javascript
@@ -299,7 +299,7 @@ end
 
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
 function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
-  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid))
+  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid)), true
       s='<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   if v then
     local now, startTime = os.time(), os.time(v.startTime)

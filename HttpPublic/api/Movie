@@ -33,9 +33,8 @@ if r then
   fpath=r
   if XCODE then
     -- トランスコード中のファイルがあればそっち使う
-    f=edcb.io and edcb.io.open(fpath..XEXT, 'rb')
+    f=edcb.FindFile(fpath..XEXT, 1)
     if f then
-      f:close()
       fpath=fpath..XEXT
       XCODE=false
     end
