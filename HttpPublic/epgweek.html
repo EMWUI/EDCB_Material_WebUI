@@ -378,7 +378,7 @@ for i=0,7 do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" style="height:'..(startPx-lastPx)..'px"><div class="content nothing"></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing"></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end

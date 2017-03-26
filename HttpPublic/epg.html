@@ -457,7 +457,7 @@ for i=pagemin,pagemax do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime)+timezone or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
