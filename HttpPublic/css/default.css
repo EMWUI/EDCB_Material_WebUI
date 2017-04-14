@@ -389,6 +389,28 @@ h4 .mdl-button--icon {
   font-size: 24px;
   margin-right: 32px; }
 
+.mdl-layout__drawer .mdl-navigation {
+  -webkit-flex-grow: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1; }
+  .navigation__footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e0e0e0; }
+    .navigation__footer p {
+      margin: 0;
+      font-size: 13px; }
+    .navigation__footer ul {
+      margin: 0;
+      padding: 0; }
+    .navigation__footer li {
+      display: inline-block;
+      font-size: 13px; }
+    .navigation__footer li:not(:last-child) {
+      padding: 0 10px 0 0; }
+    .navigation__footer a {
+      color: #757575;
+      text-decoration: none; }
+
 
 
 /* pagination */

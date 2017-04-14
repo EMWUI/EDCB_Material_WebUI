@@ -282,61 +282,6 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
 
-ct.main='<main class="tv-guide mdl-layout__content">\n'
-
-if sidePanel then
-  ct.main=ct.main..[=[
-<div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
-<div class="sidePanel-content">
-<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
-<div><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
-</div>
-<section class="tab-swipe mdl-tabs__panel is-active" id="detail">
-<div id="ext" class="mdl-typography--body-1"></div>
-<ul>
-<li>ジャンル<ul id="genreInfo"></ul></li>
-<li>映像<ul id="videoInfo"></ul></li>
-<li>音声<ul id="audioInfo"></ul></li>
-<li>その他<ul id="otherInfo"></ul></li>
-</ul>
-</section>
-<section class="mdl-tabs__panel" id="recset">
-<form id="set" method="POST" data-action="add">
-<div class="form mdl-grid mdl-grid--no-spacing">
-<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
-<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
-]=]
-  preset=false
-  r=nil
-  rs=r and r.recSetting or nil
-  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-    if v.id==0 then
-      preset=true
-      rs=v.recSetting
-      ct.main=ct.main..'<option value="'..v.id..'" selected>'..v.name..'\n'
-    else
-      ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
-    end
-  end
-  ct.main=ct.main..'<option id="reserved" value="65535">予約時\n</select></div></div>\n'
-
-    ..'<input type="hidden" name="onid">\n'
-    ..'<input type="hidden" name="tsid">\n'
-    ..'<input type="hidden" name="sid">\n'
-    ..'<input type="hidden" name="eid">\n'
-
-    ..RecSettingTemplate(rs)..'</div></form>\n'
-    ..'</section>\n</div>\n'
-
-    ..'<div class="mdl-dialog__actions">\n'
-    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約追加</button>\n'
-    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-    ..'</div>\n'
-
-    ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
-end
-
 ctt={'<div id="tv-guide-container"><div id="tv-guide">'
 
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
@@ -373,10 +318,10 @@ for i=0,7 do
   end
   table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   for j,w in ipairs(b) do
-    startTime=os.time(w.startTime)+timezone
-    startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startTime=os.time(w.startTime)
+    startPx=math.min(math.floor((startTime+timezone-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor((endTime+timezone-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
       table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing"></div></div>\n')
       total=total+startPx-lastPx
@@ -398,20 +343,20 @@ for i=0,7 do
       mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now+timezone and now+timezone<endTime and ' now' or '')..'" data-endtime="'..endTime-timezone..'" style="height:'..(endPx-lastPx)..'px">\n'
+      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
         ..'<div class="content '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
         ..'<div><div class="startTime">'..string.format('%02d', w.startTime.min)..'</div>'..mark..'</div>'
 
         ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-        ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime-timezone..'"'..(startTime-30<=now+timezone and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now+timezone and 'notifications' or 'add_alert')..'</i></a>'
+        ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
         ..search..'</span>\n'
 
         ..'<p class="tool mdl-typography--caption-color-contrast">'
         ..'<a class="mdl-button mdl-js-button mdl-button--raised'
-          ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..os.time(w.startTime)+timezone or 'eid="'..w.eid)
-                       or '" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..os.time(w.startTime)+timezone or '&eid='..w.eid)..'&week='..hrefGene)..'">番組詳細</a>'
-        ..(endTime~=startTime and now+timezone<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
+          ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
+                       or '" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)..'&week='..hrefGene)..'">番組詳細</a>'
+        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
           ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
                 or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
@@ -431,7 +376,13 @@ for i=0,7 do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div></div>\n'
+ct.main='<main class="tv-guide mdl-layout__content">\n'
+
+  ..(sidePanel and sidePanelTemplate() or '')
+
+  ..table.concat(ctt)
+
+  ..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'

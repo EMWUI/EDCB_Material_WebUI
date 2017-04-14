@@ -111,6 +111,14 @@ function template(temp)
       <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">assignment</i>録画結果</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[search.html"><i class="material-icons">search</i>検索</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
+      <div class="mdl-layout-spacer"></div>
+      <div class="navigation__footer">
+        <p>EMWUI<small> - <a href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank">GitHub</a></small></p>
+        <ul>
+          <li><a class="mdl-color-text--cyan" href="]=]..path..[=[notifylog.lua?c=8192">情報通知ログ</a></li>
+          <li><a class="mdl-color-text--cyan" href="]=]..path..[=[debuglog.lua?c=8192">デバッグ出力</a></li>
+        </ul>
+      </div>
     </nav>
   </div>
   <div class="drawer-swipe"></div>
@@ -300,11 +308,10 @@ end
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
 function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
   local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid)), true
-      s='<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   if v then
     local now, startTime = os.time(), os.time(v.startTime)
     End=v.durationSecond and startTime+v.durationSecond<now
-    s=s..'<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
+    s='<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     if v.shortInfo then
       s=s..'<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>'
     end
@@ -814,6 +821,58 @@ function SerchTemplate(si)
       ..'<div class="number textfield-container">確認対象期間<div class="text-right mdl-textfield mdl-js-textfield"><input id="chkRecDay" class="mdl-textfield__input" type="number" name="chkRecDay" value="'..si.chkRecDay..'" min="0"><label class="mdl-textfield__label" for="chkRecDay"></label><span class="mdl-textfield__error">Input is not a number!</span></div>日前まで</div>\n'
       ..'</div></div>\n'
   end
+
+  return s
+end
+
+function sidePanelTemplate()
+  local s=[=[
+<div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
+<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
+<div class="sidePanel-content">
+<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
+<div><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
+</div>
+<section class="panel-swipe mdl-tabs__panel is-active" id="detail">
+<div id="ext" class="mdl-typography--body-1"></div>
+<ul>
+<li>ジャンル<ul id="genreInfo"></ul></li>
+<li>映像<ul id="videoInfo"></ul></li>
+<li>音声<ul id="audioInfo"></ul></li>
+<li>その他<ul id="otherInfo"></ul></li>
+</ul>
+</section>
+<section class="panel-swipe mdl-tabs__panel" id="recset">
+<form id="set" method="POST" data-action="add">
+<div class="form mdl-grid mdl-grid--no-spacing">
+<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
+<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
+]=]
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==0 then
+      rs=v.recSetting
+      s=s..'<option value="'..v.id..'" selected>'..v.name..'\n'
+    else
+      s=s..'<option value="'..v.id..'">'..v.name..'\n'
+    end
+  end
+  s=s..'<option id="reserved" value="65535">予約時\n</select></div></div>\n'
+
+    ..'<input type="hidden" name="onid">\n'
+    ..'<input type="hidden" name="tsid">\n'
+    ..'<input type="hidden" name="sid">\n'
+    ..'<input type="hidden" name="eid">\n'
+    ..RecSettingTemplate(rs)..'</div></form>\n'
+    ..'</section>\n</div>\n'
+
+    ..'<div class="mdl-card__actions">\n'
+    ..'<button class="progres mdl-button mdl-js-button mdl-button--primary">プログラム予約化</button>\n'
+    ..'<div class="mdl-layout-spacer"></div>\n'
+    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約追加</button>\n'
+    ..'</div>\n'
+
+    ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
 
   return s
 end
