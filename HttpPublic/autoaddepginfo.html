@@ -166,9 +166,10 @@ if aa.searchInfo then
     ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
   end
 
-  ct.main=ct.main..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
-    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
+  ct.main=ct.main..'<div class="mdl-card__actions mdl-card--border">\n'
+    ..'<div class="mdl-layout-spacer"></div>\n'
     ..(aa.dataID~=0 and '<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
     ..'</div>\n</div>\n</div>\n'
 
 end

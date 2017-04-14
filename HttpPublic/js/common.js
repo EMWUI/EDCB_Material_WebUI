@@ -643,7 +643,7 @@ function setDefault(mark){
 		setRecSettting(defRecSetting);
 
 		$('#set').attr('action', root + 'api/ReserveAdd');
-		$('#reserved, #delreseved').hide();
+		$('#reserved, #delreseved, .progres').hide();
 		$('[name=presetID]').val(0);
 		$('#reserve').text('予約追加');
 
@@ -735,9 +735,24 @@ $(function(){
 		$(this).next().slideToggle();
 	});
 
-	//ダイアログ閉じ
+	//ダイアログ
+	if ($('dialog').length>0){
+		var dialog = document.querySelector('dialog');
+		if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
+		$('.show_dialog').click(function(){
+			dialog.showModal();
+		});
+	}
+	$('.progres').click(function(){
+		$('.mdl-dialog__content>span').remove();
+		$('#progres').appendTo('.mdl-dialog__content').show();
+		$('#progres_button').show();
+		$('#suspend').hide();
+		dialog.showModal();
+	});
+	//閉じ
 	$('dialog .close').click(function(){
-		document.querySelector('dialog').close();
+		dialog.close();
 	});
 
 	//再生タブ
@@ -1188,6 +1203,7 @@ $(function(){
 
 	//サブミット
 	$('.submit').click(function(){
+		if ($('dialog').attr('open')) dialog.close();
 		showSpinner(true);
 		var form = $( $(this).data('form') );
 		var data = form.data();
@@ -1214,7 +1230,8 @@ $(function(){
 
 							$('#set').attr('action', root + 'api/ReserveChg?id='+id);
 							$('#del').attr('action', root + 'api/ReserveDel?id='+id);
-							$('#reserved, #delreseved').show();
+							$('#progres').attr('action', root + 'api/ReserveChg?id='+id);
+							$('#reserved, #delreseved, .progres').show();
 							$('[name=presetID]').data('reseveid', id).val(65535);
 							$('#reserve').text('変更');
 

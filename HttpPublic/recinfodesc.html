@@ -63,9 +63,10 @@ if v then
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
     ..'</div>\n'
 
-    ..'<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">\n'
-    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ..'<div class="mdl-card__actions mdl-card--border">\n'
+    ..'<div class="mdl-layout-spacer"></div>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
     ..'</div>\n'
 
     ..'</div></div>\n'

@@ -107,6 +107,21 @@ if not End then
 
   ct.js=(recording and '<script src="js/player.js"></script>\n' or '')
 
+  if r then
+    dur=r.startTime.hour*3600+r.startTime.min*60+r.startTime.sec+r.durationSecond
+    ct.dialog={
+      content='<form id="progres" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID
+        ..'" data-'..redirect..'"><div>'..(r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>')
+        ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" value="'..string.format('%d/%d/%d', r.startTime.year, r.startTime.month, r.startTime.day)
+        ..'" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
+        ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" value="'..string.format('%d:%d:%d', r.startTime.hour, r.startTime.min, r.startTime.sec)
+        ..'" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" value="'..string.format('%d:%d:%d', math.floor(dur/3600)%24, math.floor(dur/60)%60, dur%60)
+        ..'" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
+        ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
+      button='<button id="dialog_button" class="submit mdl-button" data-form="#progres">変更</button>'
+    }
+  end
+
   ct.macro=true
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
@@ -144,9 +159,11 @@ if not End then
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
-    ..'<div class="mdl-dialog__actions">\n'
-    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
+    ..'<div class="mdl-card__actions">\n'
+    ..(r and '<button class="show_dialog mdl-button mdl-js-button mdl-button--primary">プログラム予約'..(r.eid==65535 and '' or '化')..'</button>\n' or '')
+    ..'<div class="mdl-layout-spacer"></div>\n'
     ..(r and '<form id="del" data-'..redirect..'" method="POST" action="'..PathToRoot()..'api/ReserveDel?id='..r.reserveID..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
     ..'</div>\n'
 
   ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'

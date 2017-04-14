@@ -246,9 +246,12 @@ $(function(){
 	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
 	$('.suspend').click(function(){
 		var self = $(this);
-		$('.mdl-dialog__content').text(self.text() + 'に移行します');
-	    $('#dialog_button').unbind('click').click(function(){
-			document.querySelector('dialog').close();
+		$('#progres').hide().appendTo('main');
+		$('#suspend').show();
+		$('#progres_button').hide();
+		$('.mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
+	    $('#suspend').unbind('click').click(function(){
+			dialog.close();
 			$.get(root + 'api/Common', self.data(), function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);
 				notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});

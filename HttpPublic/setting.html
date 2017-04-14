@@ -343,11 +343,11 @@ ct.main=ct.main..dtv..'</ul></div>\n'
   ..'</div></section></form></div>\n'
 
 ..[=[
-<div class="mdl-dialog__actions mdl-card__actions mdl-card--border">
-<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">保存</button>
-<button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
-<div class="mdl-layout-spacer"></div>
+<div class="mdl-card__actions mdl-card--border">
 <button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
+<div class="mdl-layout-spacer"></div>
+<button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
+<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">保存</button>
 </div>
 <form id="reset" class="reload" method="GET" action="]=]..PathToRoot()..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
 </div>

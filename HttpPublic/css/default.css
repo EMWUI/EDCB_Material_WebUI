@@ -34,7 +34,12 @@ select {
 
 dialog {
   padding: 0; }
-
+  dialog .mdl-textfield {
+    padding: 8px 0; }
+  dialog p+.mdl-textfield {
+    padding-top: 0; }
+  dialog .mdl-textfield__label:after {
+    bottom: 8px; }
 
 /* マーク */
 .mark {
@@ -301,14 +306,22 @@ main {
 .main-content {
   background: #FFF;
   border-radius: 2px; }
-  .main-content>div:not(.mdl-dialog__actions) {
+  .main-content>div:not(.mdl-card__actions) {
   padding: 16px 40px 0; }
   .main-content>div:first-child {
   padding-top: 8px; }
   .main-content>div:not(:first-child) {
   border-top: 1px solid rgba(0,0,0,.1); }
+  .main-content>.mdl-card__actions,
+  .sidePanel>.mdl-card__actions {
+    display: flex; }
+  .main-content>.mdl-card__actions>button {
+    margin-right: 8px;
+    height: 36px; }
+  .main-content>.mdl-card__actions>button:last-child {
+    margin-right: 0; }
   @media (max-width: 479px) {
-    .main-content>div:not(.mdl-dialog__actions) {
+    .main-content>div:not(.mdl-card__actions) {
       padding: 16px 16px 0; } }
 
 h4 .mdl-button--icon {
