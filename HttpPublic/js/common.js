@@ -261,8 +261,8 @@ function setEpgInfo(target, data, past){
 				$('#sidePanel_date').html(startDate+' '+startTime.match(/(\d+:\d+):\d+/)[1] + '～' + ('0'+endTime.getHours()).slice(-2) + ':' + ('0'+endTime.getMinutes()).slice(-2));
 				$('#service').html(xml.find('service_name').text());
 				$('#links').html($('.open .links a').clone(true));
-				$('#summary p').html(xml.find('event_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1">$1</a> ').replace(/\n/g,'<br>'));
-				$('#ext').html(xml.find('event_ext_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1">$1</a> ').replace(/\n/g,'<br>'));
+				$('#summary p').html(xml.find('event_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
+				$('#ext').html(xml.find('event_ext_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
 				$('#genreInfo').html(genre);
 				$('#videoInfo').html('<li>' + xml.find('videoInfo').find('component_type_name').text() + ' ' + $(this).find('videoInfo').find('text').text());
 				$('#audioInfo').html(audio);

@@ -163,49 +163,8 @@ if sidePanel then ct.macro=true end
 
 
 
-HIDE_SERVICES={}
-count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-if count>0 then
-  for i=0,count do
-    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-    HIDE_SERVICES[''..v]=true
-  end
-end
-
 edcb.htmlEscape=15
-a=edcb.GetServiceList()
-sort={}
-count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
-if count>0 then
-  for i=0,count do
-    w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-    m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-    onid=0+m[1]
-    tsid=0+m[2]
-    sid=0+m[3]
-    end
-    for j,v in ipairs(a or {}) do
-      if onid==v.onid and tsid==v.tsid and sid==v.sid then
-        if HIDE_SERVICES[''..w] then
-          v.hide=true
-          if not show then break end
-        end
-        table.insert(sort, v)
-        break
-      end
-    end
-  end
-else
-  sort=a
-  table.sort(sort, function(a,b) 
-    if a.remote_control_key_id==b.remote_control_key_id then
-    	return a.sid<b.sid
-    else
-    	return a.remote_control_key_id<b.remote_control_key_id
-    end
-  end)
-end
+sort=ServiceList(edcb.GetServiceList())
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
@@ -216,12 +175,11 @@ minTime=nil
 maxTime=nil
 st={}
 for i,v in ipairs(sort or {}) do
-  if (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) and (
-     tab==0 and 0x7880<=v.onid and v.onid<=0x7FE8 and v.service_type==0x01 or
-     tab==1 and v.partialReceptionFlag or
-     tab==2 and v.onid==4 or
-     tab==3 and (v.onid==6 or v.onid==7) or
-     tab==4 and v.onid~=4 and v.onid~=6 and v.onid~=7 and (v.onid<0x7880 or 0x7FE8<v.onid)) then
+  if tab==0 and NetworkType(v.onid)=='地デジ' and v.service_type==0x01 or
+     tab==1 and NetworkType(v.onid)=='地デジ' and v.partialReceptionFlag or
+     tab==2 and NetworkType(v.onid)=='BS' or
+     tab==3 and NetworkType(v.onid):find('^CS') or
+     tab==4 and NetworkType(v.onid)=='その他' then
     table.insert(st, v)
     mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
     if mmt then
@@ -411,7 +369,7 @@ for i=pagemin,pagemax do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell'..((j==0 or os.time(v.et[j-1].startTime)<now) and now<startTime and ' now' or '')..'" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
+      table.insert(ctt, '<div class="cell'..((j==1 or os.time(v.et[j-1].startTime)<now) and now<startTime and ' now' or '')..'" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end

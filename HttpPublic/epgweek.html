@@ -152,59 +152,15 @@ if sidePanel then ct.macro=true end
 
 
 
-HIDE_SERVICES={}
-count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-if count>0 then
-  for i=0,count do
-    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-    HIDE_SERVICES[v]=true
-  end
-end
-
 edcb.htmlEscape=15
-a=edcb.GetServiceList()
-sort={}
-count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
-if count>0 then
-  for i=0,count do
-    w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-    m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-    monid=0+m[1]
-    mtsid=0+m[2]
-    msid=0+m[3]
-    end
-    for j,v in ipairs(a or {}) do
-      if onid==v.onid and tsid==v.tsid and sid==v.sid then
-        st=v
-      end
-      if monid==v.onid and mtsid==v.tsid and msid==v.sid then
-        if HIDE_SERVICES[w] then
-          v.hide=true
-          if not show then break end
-        end
-        table.insert(sort, v)
-        break
-      end
-    end
-  end
-else
-  sort=a
-  table.sort(sort, function(a,b) 
-    if a.remote_control_key_id==b.remote_control_key_id then
-    	return a.sid<b.sid
-    else
-    	return a.remote_control_key_id<b.remote_control_key_id
-    end
-  end)
-  for j,v in ipairs(sort or {}) do
-    if onid==v.onid and tsid==v.tsid and sid==v.sid then
-      st=v
-      break
-    end
+sort=ServiceList(edcb.GetServiceList())
+
+for j,v in ipairs(sort or {}) do
+  if onid==v.onid and tsid==v.tsid and sid==v.sid then
+    st=v
+    break
   end
 end
-
 if not st then
   st=sort[1]
 end

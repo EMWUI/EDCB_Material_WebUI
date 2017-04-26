@@ -360,7 +360,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
     s=s..'</ul></li>\n'
     end
     s=s..'<li>その他\n<ul>'
-      ..((v.onid<0x7880 or 0x7FE8<v.onid) and (v.freeCAFlag and '<li>有料放送</li>\n' or '<li>無料放送</li>\n') or '')
+      ..(NetworkType(v.onid)=='地デジ' and '' or v.freeCAFlag and '<li>有料放送</li>\n' or '<li>無料放送</li>\n')
       ..string.format('<li>OriginalNetworkID:%d(0x%04X)</li>\n', v.onid, v.onid)
       ..string.format('<li>TransportStreamID:%d(0x%04X)</li>\n', v.tsid, v.tsid)
       ..string.format('<li>ServiceID:%d(0x%04X)</li>\n', v.sid, v.sid)
@@ -375,13 +375,11 @@ end
 function RecSettingTemplate(rs)
   local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">\n'
-    ..'<option value="0"'..(rs.recMode==0 and ' selected' or '')..'>全サービス\n'
-    ..'<option value="1"'..(rs.recMode==1 and ' selected' or '')..'>指定サービスのみ\n'
-    ..'<option value="2"'..(rs.recMode==2 and ' selected' or '')..'>全サービス（デコード処理なし）\n'
-    ..'<option value="3"'..(rs.recMode==3 and ' selected' or '')..'>指定サービスのみ（デコード処理なし）\n'
-    ..'<option value="4"'..(rs.recMode==4 and ' selected' or '')..'>視聴\n'
-    ..'<option value="5"'..(rs.recMode==5 and ' selected' or '')..'>無効\n</select></div></div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">'
+    for i=1,#RecModeTextList() do
+      s=s..'\n<option value="'..(i-1)..'"'..(rs.recMode==i-1 and ' selected' or '')..'>'..RecModeTextList()[i]
+    end
+    s=s..'\n</select></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">イベントリレー追従</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -389,12 +387,11 @@ function RecSettingTemplate(rs)
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">優先度</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--1-col mdl-grid mdl-grid--no-spacing"><select name="priority">\n'
-    ..'<option value="1"'..(rs.priority==1 and ' selected' or '')..'>1\n'
-    ..'<option value="2"'..(rs.priority==2 and ' selected' or '')..'>2\n'
-    ..'<option value="3"'..(rs.priority==3 and ' selected' or '')..'>3\n'
-    ..'<option value="4"'..(rs.priority==4 and ' selected' or '')..'>4\n'
-    ..'<option value="5"'..(rs.priority==5 and ' selected' or '')..'>5\n</select></div></div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--1-col mdl-grid mdl-grid--no-spacing"><select name="priority">'
+    for i=1,5 do
+      s=s..'\n<option value="'..i..'"'..(rs.priority==i and ' selected' or '')..'>'..i
+    end
+    s=s..'\n</select></div></div>\n'
     
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ぴったり（？）録画</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -681,33 +678,14 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
     ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="service" name="serviceList" multiple size="5">\n'
 
-  a=edcb.GetChDataList()
-  st={}
-  table.sort(a, function(a,b) return a.sid<b.sid end)
-  for i,v in ipairs(a or {}) do
-    if 0x7880<=v.onid and v.onid<=0x7FE8 then
-      table.insert(st, v)
-    end
-  end
-  for i,v in ipairs(a or {}) do
-    if (v.onid==4) then
-      table.insert(st, v)
-    end
-  end
-  for i,v in ipairs(a or {}) do
-    if (v.onid~=4 and v.onid<0x7880 or 0x7FE8<v.onid) then
-      table.insert(st, v)
-    end
-  end
-
-  for i,v in ipairs(st) do
+  for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
       s=s..'<option class="'..(
-        v.onid==4 and 'BS'..(v.serviceType==0x01 and '' or ' data hide') or
-        (v.onid==6 or v.onid==7) and 'CS'..(v.serviceType==0x01 and '' or ' data hide') or
-        v.onid==10 and 'HD'..(v.serviceType==0x01 and ' image' or ' hide data') or
-        (v.onid==1 or v.onid==3) and 'SD'..(v.serviceType==0x01 and '' or ' data hide') or
-        (0x7880<=v.onid and v.onid<=0x7FE8) and (v.partialFlag and 'SEG hide' or 'DTV'..(v.serviceType==0x01 and '' or ' data hide')) or 'S-other')
-      ..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
+        NetworkType(v.onid)=='BS' and 'BS' or
+        NetworkType(v.onid)=='CS3' and 'HD' or
+        NetworkType(v.onid):find('^CS')  and 'CS' or
+        NetworkType(v.onid)=='地デジ' and (v.partialFlag and 'SEG hide' or 'DTV') or 'S-other')
+        ..((v.partialFlag or v.serviceType==0x01 or v.serviceType==0xA5) and '' or ' data hide')
+        ..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
       for j,w in ipairs(si.serviceList) do
         if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
           s=s..' selected'
@@ -900,6 +878,81 @@ function player(video, ori)
 </div>
 </div>
 ]=]
+end
+
+function RecModeTextList()
+  return {'全サービス','指定サービスのみ','全サービス（デコード処理なし）','指定サービスのみ（デコード処理なし）','視聴','無効'}
+end
+
+function NetworkType(onid)
+  return not onid and {'地デジ','BS','CS1','CS2','CS3','その他'}
+    or NetworkType()[0x7880<=onid and onid<=0x7FE8 and 1 or onid==4 and 2 or onid==6 and 3 or onid==7 and 4 or onid==10 and 5 or 6]
+end
+
+function SelectChDataList(a)
+  local n,m,r=0,0,{}
+  table.sort(a, function(a,b) return a.sid<b.sid end)
+  for i,v in ipairs(a) do
+    --EPG取得対象サービスのみ
+    if v.epgCapFlag then
+      --地デジ優先ソート
+      if NetworkType(v.onid)=='地デジ' then
+        n=n+1
+        table.insert(r,n,v)
+      elseif NetworkType(v.onid)=='BS' then
+        m=m+1
+        table.insert(r,n+m,v)
+      else
+        table.insert(r,v)
+      end
+    end
+  end
+  return r
+end
+
+function ServiceList(a)
+  local HIDE_SERVICES={}
+  local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
+  if count>0 then
+    for i=0,count do
+      v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
+      HIDE_SERVICES[''..v]=true
+    end
+  end
+
+  local sort={}
+  count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
+  if count>0 then
+    for i=0,count do
+      w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+      m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+      monid=0+m[1]
+      mtsid=0+m[2]
+      msid=0+m[3]
+      end
+      for j,v in ipairs(a or {}) do
+        if monid==v.onid and mtsid==v.tsid and msid==v.sid then
+          if HIDE_SERVICES[w] then
+            v.hide=true
+            if not show then break end
+          end
+          table.insert(sort, v)
+          break
+        end
+      end
+    end
+  else
+    sort=a
+    table.sort(sort, function(a,b) 
+      if a.remote_control_key_id==b.remote_control_key_id then
+        return a.sid<b.sid
+      else
+        return a.remote_control_key_id<b.remote_control_key_id
+      end
+    end)
+  end
+  return sort
 end
 
 --URIをタグ装飾する
