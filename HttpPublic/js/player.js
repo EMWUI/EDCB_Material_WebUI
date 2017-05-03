@@ -160,7 +160,6 @@ $(function(){
 				$('.videoTime').addClass('is-disabled');
 				$('.duration').text('0:00');
 				$('.currentTime').text('0:00');
-				if ($(this).data('keepdisk')) $('#seek').prop('disabled', true);
 			}else{
 				xcode = $(this).data('duration');
 				var adjust = seek * (duration / 99);

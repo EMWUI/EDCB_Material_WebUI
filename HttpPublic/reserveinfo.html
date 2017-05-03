@@ -2,8 +2,6 @@ dofile(mg.document_root..'\\api\\util.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-KeepDisk=tonumber(edcb.GetPrivateProfile('SET','KeepDisk','1','EpgTimerSrv.ini'))~=0
-
 page=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
 
 edcb.htmlEscape=15
@@ -66,7 +64,7 @@ if r then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-keepdisk="'..(KeepDisk and 'true' or 'false')..'"></video>\n')
+      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true"></video>\n')
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 

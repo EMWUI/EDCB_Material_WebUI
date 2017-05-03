@@ -43,7 +43,7 @@ elseif v then
   fpath=v.recFilePath
 end
 
--- 転送開始位置(99分率)(容量確保録画には未対応)
+-- 転送開始位置(99分率)
 offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
 
 f=nil
@@ -56,7 +56,9 @@ if fpath then
       offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
       if XCODE then
         f:close()
-        f=edcb.io.popen(readex..' '..offset..' 4 "'..fpath..'" | '..XCMD, 'rb')
+        -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する
+        sync=fname:lower():find('%.ts$') and edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
+        f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | '..XCMD..'"', 'rb')
         fname='xcode'..XEXT
       else
         f:seek('set', offset)
