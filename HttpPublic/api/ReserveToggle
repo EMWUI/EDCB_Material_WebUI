@@ -1,17 +1,16 @@
 ﻿dofile(mg.document_root..'\\api\\util.lua')
 
-id=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
-
 changed=false
+id=GetVarInt(mg.request_info.query_string, 'id') or 0
+
+edcb.htmlEscape=15
+r=edcb.GetReserveData(id)
 
 for i,v in ipairs(edcb.EnumRecPresetInfo()) do
   if v.id==0 then
     recMode=(v.recSetting.recMode==5 and 0 or v.recSetting.recMode)
   end
 end
-
-edcb.htmlEscape=15
-r=edcb.GetReserveData(id)
 if r then
   AssertCsrf(mg.request_info.query_string)
 

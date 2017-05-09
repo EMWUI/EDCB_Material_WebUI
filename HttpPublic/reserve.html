@@ -16,7 +16,7 @@ ct.js='<script>setInterval("rec()",1000);</script>\n'
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
-pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 if PAGE_COUNT==0 then
   PAGE_COUNT=#a
@@ -53,7 +53,7 @@ ct.main='<main class="mdl-layout__content">\n'
   ..'<tbody>\n'
 
 ctt={}
-for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   v=a[i]
   bg=v.recSetting.recMode==5 and ' disabled'
      or v.overlapMode==1 and ' partially'

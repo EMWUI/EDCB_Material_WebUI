@@ -14,6 +14,15 @@ function ReadPost()
   return post
 end
 
+--クエリパラメータを整数チェックして取得する
+function GetVarInt(qs,n,ge,le,occ)
+  n=tonumber(mg.get_var(qs,n,occ))
+  if n and n==math.floor(n) and n>=(ge or -2147483648) and n<=(le or 2147483647) then
+    return n
+  end
+  return nil
+end
+
 --CSRFトークンを取得する
 --※このトークンを含んだコンテンツを圧縮する場合はBEAST攻撃に少し気を配る
 function CsrfToken()

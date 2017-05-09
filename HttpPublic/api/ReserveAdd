@@ -5,10 +5,10 @@ post=ReadPost()
 AssertCsrf(post)
 
 added=false
-onid=tonumber(mg.get_var(post, 'onid')) or 0
-tsid=tonumber(mg.get_var(post, 'tsid')) or 0
-sid=tonumber(mg.get_var(post, 'sid')) or 0
-eid=tonumber(mg.get_var(post, 'eid')) or 0
+onid=GetVarInt(post, 'onid') or 0
+tsid=GetVarInt(post, 'tsid') or 0
+sid=GetVarInt(post, 'sid') or 0
+eid=GetVarInt(post, 'eid') or 0
 
 if post then
   r={recSetting={}}
@@ -16,29 +16,63 @@ if post then
   r.tsid=tsid
   r.sid=sid
   r.eid=eid
-  presetID=tonumber(mg.get_var(post, 'presetID'))
-  recMode=tonumber(mg.get_var(post, 'recMode'))
-  tuijyuuFlag=tonumber(mg.get_var(post, 'tuijyuuFlag')) or 0
-  priority=tonumber(mg.get_var(post, 'priority'))
-  pittariFlag=tonumber(mg.get_var(post, 'pittariFlag')) or 0
-  suspendMode=tonumber(mg.get_var(post, 'suspendMode'))
-  rebootFlag=mg.get_var(post, 'rebootFlag')
-  useDefMarginFlag=mg.get_var(post, 'useDefMarginFlag')
-  startMargin=tonumber(mg.get_var(post, 'startMargin'))
-  endMargin=tonumber(mg.get_var(post, 'endMargin'))
-  serviceMode=mg.get_var(post, 'serviceMode')
-  serviceMode_1=mg.get_var(post, 'serviceMode_1')
-  serviceMode_2=mg.get_var(post, 'serviceMode_2')
-  continueRecFlag=mg.get_var(post, 'continueRecFlag')
-  tunerID=tonumber(mg.get_var(post, 'tunerID'))
-  partialRecFlag=mg.get_var(post, 'partialRecFlag')
+  rs=r.recSetting
+  presetID=GetVarInt(post,'presetID',0,0xFFFE)
+  if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then
+    rs.batFilePath=mg.get_var(post, 'batFilePath')
+    rs.recFolderList={}
+    for i=0,10000 do
+      if not mg.get_var(post, 'recFolder', i) then break end
+      table.insert(rs.recFolderList, {
+        recFolder=mg.get_var(post, 'recFolder', i),
+        writePlugIn=mg.get_var(post, 'writePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
+      } )
+    end
+    rs.partialRecFolder={}
+    for i=0,10000 do
+      if not mg.get_var(post, 'partialrecFolder', i) then break end
+      table.insert(rs.partialRecFolder, {
+        recFolder=mg.get_var(post, 'partialrecFolder', i),
+        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
+      } )
+    end
+    presetID=0xFFFF
+  elseif presetID then
+    for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+      if v.id==presetID then
+        rs.batFilePath=v.recSetting.batFilePath
+        rs.recFolderList=v.recSetting.recFolderList
+        rs.partialRecFolder=v.recSetting.partialRecFolder
+        presetID=0xFFFF
+        break
+      end
+    end
+  end
+  rs.recMode=GetVarInt(post,'recMode',0,5)
+  rs.tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1
+  rs.priority=GetVarInt(post,'priority',1,5)
+  rs.pittariFlag=GetVarInt(post,'pittariFlag')==1
+  rs.suspendMode=GetVarInt(post,'suspendMode',0,4)
+  rs.rebootFlag=GetVarInt(post,'rebootFlag')==1
+  useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
+  rs.startMargin=useMargin and GetVarInt(post,'startMargin')
+  rs.endMargin=useMargin and GetVarInt(post,'endMargin')
+  serviceMode_1=GetVarInt(post,'serviceMode_1',0,1) or 0
+  serviceMode_2=GetVarInt(post,'serviceMode_2',0,1) or 0
+  rs.serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*serviceMode_1+32*serviceMode_2
+  rs.continueRecFlag=GetVarInt(post,'continueRecFlag')==1
+  rs.tunerID=GetVarInt(post,'tunerID')
+  rs.partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
   eventInfo=edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid)
   if eventInfo and eventInfo.startTime and eventInfo.durationSecond and
-     presetID and
-     recMode and
-     priority and
-     suspendMode and
-     (useDefMarginFlag or startMargin and endMargin) and tunerID
+     presetID==0xFFFF and
+     rs.recMode and
+     rs.priority and
+     rs.suspendMode and
+     (not useMargin or rs.startMargin and rs.endMargin) and
+     rs.tunerID
   then
     r.title=eventInfo.shortInfo and eventInfo.shortInfo.event_name or ''
     r.startTime=eventInfo.startTime
@@ -51,40 +85,6 @@ if post then
         break
       end
     end
-    rs=r.recSetting
-    rs.batFilePath=mg.get_var(post, 'batFilePath')
-    rs.recFolderList={}
-    for i=0,10000 do
-     if not mg.get_var(post, 'recFolder', i) then break end
-      table.insert(rs.recFolderList, {
-        recFolder=mg.get_var(post, 'recFolder', i),
-        writePlugIn=mg.get_var(post, 'writePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
-      } )
-    end
-    rs.partialRecFolder={}
-    for i=0,10000 do
-     if not mg.get_var(post, 'partialrecFolder', i) then break end
-      table.insert(rs.partialRecFolder, {
-        recFolder=mg.get_var(post, 'partialrecFolder', i),
-        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
-      } )
-    end
-    rs.recMode=recMode
-    rs.tuijyuuFlag=tuijyuuFlag~=0
-    rs.priority=priority
-    rs.pittariFlag=pittariFlag~=0
-    rs.suspendMode=suspendMode
-    rs.rebootFlag=rebootFlag~=nil
-    if not useDefMarginFlag then
-      rs.startMargin=startMargin
-      rs.endMargin=endMargin
-    end
-    rs.serviceMode=serviceMode and 0 or 1+(serviceMode_1 and 16 or 0)+(serviceMode_2 and 32 or 0)
-    rs.continueRecFlag=continueRecFlag~=nil
-    rs.tunerID=tunerID
-    rs.partialRecFlag=partialRecFlag and 1 or 0
     added=edcb.AddReserveData(r)
   end
 end

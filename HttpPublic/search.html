@@ -16,7 +16,7 @@ if post then
   AssertCsrf(post)
 end
 
-dataID=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
+dataID=GetVarInt(mg.request_info.query_string, 'id') or 0
 if dataID~=0 then
   for i,v in ipairs(edcb.EnumAutoAdd()) do
     if v.dataID==dataID then
@@ -40,12 +40,12 @@ if not key then
     aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag') or false,
     notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
     notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
-    freeCAFlag=tonumber(mg.get_var(post, 'freeCAFlag') or mg.get_var(mg.request_info.query_string, 'freeCAFlag')) or 0,
+    freeCAFlag=GetVarInt(post, 'freeCAFlag') or GetVarInt(mg.request_info.query_string, 'freeCAFlag') or 0,
     chkRecEnd=mg.get_var(post, 'chkRecEnd') or mg.get_var(mg.request_info.query_string, 'chkRecEnd') or false,
     chkRecDay=mg.get_var(post, 'chkRecDay') or mg.get_var(mg.request_info.query_string, 'chkRecDay') or 0,
     chkRecNoService=mg.get_var(post, 'chkRecNoService') or mg.get_var(mg.request_info.query_string, 'chkRecNoService') or false,
-    chkDurationMin=tonumber(mg.get_var(post, 'chkDurationMin') or mg.get_var(mg.request_info.query_string, 'chkDurationMin')) or 0,
-    chkDurationMax=tonumber(mg.get_var(post, 'chkDurationMax') or mg.get_var(mg.request_info.query_string, 'chkDurationMax')) or 0,
+    chkDurationMin=GetVarInt(post, 'chkDurationMin') or GetVarInt(mg.request_info.query_string, 'chkDurationMin') or 0,
+    chkDurationMax=GetVarInt(post, 'chkDurationMax') or GetVarInt(mg.request_info.query_string, 'chkDurationMax') or 0,
     network=0,
     days=mg.get_var(post, 'days') or mg.get_var(mg.request_info.query_string, 'days') or 0,
     days29=mg.get_var(post, 'days29') or mg.get_var(mg.request_info.query_string, 'days29') or 0,
@@ -149,8 +149,8 @@ if not key then
   key.search=not (dataID>0 or mg.get_var(post, 'id'))
 end
 
-pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
-autopage=tonumber(mg.get_var(mg.request_info.query_string,'autopage')) or 0
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
 
 ct={title='検索'}
 

@@ -64,14 +64,13 @@ CATEGORY={
 }
 
 show=mg.get_var(mg.request_info.query_string,'show') or nil
-page=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
-hour=tonumber(mg.get_var(mg.request_info.query_string,'hour')) or 4
+hour=GetVarInt(mg.request_info.query_string,'hour',0,25) or 4
 --hour=0で現在時刻-MARGIN_HOUR時間を基準、0以外で"hour"時を基準
-interval=tonumber(mg.get_var(mg.request_info.query_string,'interval')) or 25
+interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
 
-onid=tonumber(mg.get_var(mg.request_info.query_string,'onid')) or 0
-tsid=tonumber(mg.get_var(mg.request_info.query_string,'tsid')) or 0
-sid=tonumber(mg.get_var(mg.request_info.query_string,'sid')) or 0
+onid=GetVarInt(mg.request_info.query_string,'onid') or 0
+tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
+sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))

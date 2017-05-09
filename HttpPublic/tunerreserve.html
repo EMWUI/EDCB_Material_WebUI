@@ -7,8 +7,8 @@ partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
 shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
 
 PAGE_COUNT=30
-tab=tonumber(mg.get_var(mg.request_info.query_string,'tab')) or 1
-pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+tab=GetVarInt(mg.request_info.query_string,'tab') or 1
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 
 ct={title='チューナー別'}

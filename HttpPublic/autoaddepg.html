@@ -10,7 +10,7 @@ ct={title='EPG予約'}
 
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
-pageIndex=tonumber(mg.get_var(mg.request_info.query_string,'page')) or 0
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 if PAGE_COUNT==0 then
   PAGE_COUNT=#a
@@ -47,7 +47,7 @@ ct.main='<main class="mdl-layout__content">\n'
   ..'<tbody>\n'
 
 ctt={}
-for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   v=a[i].searchInfo
   serviceName='なし'
   if #v.serviceList>0 then
