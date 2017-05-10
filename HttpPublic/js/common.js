@@ -1010,6 +1010,10 @@ $(function(){
 	$('.andKey').change(function(){
 		$('.andKey').val($(this).val());
 	});
+	//検索プリセット
+	$('#save_preset').click(function(){
+		$('#search').append('<input type="hidden" name="save" value="1">').attr('action', 'search.html?preset='+$('#preset_name').val()).submit();
+	});
 
 
 
