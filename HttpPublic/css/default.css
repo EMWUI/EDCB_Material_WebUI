@@ -157,6 +157,12 @@ dialog {
 
 
 
+/* chip */
+.mdl-chip:not(:last-child) {
+  margin-right: 5px; }
+
+
+
 /* header */
 header {
   position: relative; }
