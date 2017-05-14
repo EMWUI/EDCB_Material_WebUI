@@ -22,3 +22,13 @@
 
 #dateList .multiple {
   display: none; }
+
+.chip-container>div {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  overflow: auto; }
+  .chip-container>div::-webkit-scrollbar {
+    display: none; }
+    .chip-container>div>span {
+      padding-left:8px; }

@@ -40,6 +40,10 @@ dialog {
     padding-top: 0; }
   dialog .mdl-textfield__label:after {
     bottom: 8px; }
+  dialog .icon {
+    position: absolute;
+    top: 10px;
+    right: 15px; }
 
 /* マーク */
 .mark {
@@ -158,8 +162,14 @@ dialog {
 
 
 /* chip */
-.mdl-chip:not(:last-child) {
+.mdl-chip:not(:last-of-type) {
   margin-right: 5px; }
+.mdl-grid.chip-container {
+  padding: 8px 0 0 }
+.mdl-grid.chip-container>div {
+  padding: 0 8px }
+.chip-container+.mdl-grid {
+  padding-top: 0; }
 
 
 
