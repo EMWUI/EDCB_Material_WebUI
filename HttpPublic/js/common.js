@@ -44,8 +44,12 @@ function saerchbar(){
 function tab(tab){
 	if (tab.length > 0){
 		var panel = tab.attr('href');
-		$('.mdl-layout__tab, .mdl-layout__tab-panel, .mdl-tabs__tab, .mdl-tabs__panel').removeClass('is-active');
-		if (tab.hasClass('mdl-layout__tab')) $('main').scrollTop(0);
+		if (tab.hasClass('mdl-layout__tab')){
+			$('.mdl-layout__tab, .mdl-layout__tab-panel').removeClass('is-active');
+			$('main').scrollTop(0);
+		}else{
+			$('.mdl-tabs__tab, .mdl-tabs__panel').removeClass('is-active');
+		}
 		tab.addClass('is-active');
 		$(panel).addClass('is-active');
 		if (panel == '#movie' && !$('video').data('load')){
@@ -711,10 +715,16 @@ $(function(){
 
 		//タブ移動
 		$('.tab-swipe').hammer().on('swiperight', function(){
-			tab( $('.mdl-layout__tab.is-active, .mdl-tabs__tab.is-active').prev() );
+			tab( $('.mdl-layout__tab.is-active').prev() );
 		});
 		$('.tab-swipe').hammer().on('swipeleft', function(){
-			tab( $('.mdl-layout__tab.is-active, .mdl-tabs__tab.is-active').next() );
+			tab( $('.mdl-layout__tab.is-active').next() );
+		});
+		$('.panel-swipe').hammer().on('swiperight', function(){
+			tab( $('.mdl-tabs__tab.is-active').prev() );
+		});
+		$('.panel-swipe').hammer().on('swipeleft', function(){
+			tab( $('.mdl-tabs__tab.is-active').next() );
 		});
 	}
 
@@ -1226,7 +1236,7 @@ $(function(){
 						setTimeout('location.href="'+data.redirect+'";', 1500);
 					}else if (data.submit){
 						setTimeout('$("'+ data.submit +'").submit();', 1500);
-					}else if (form.hasClass('reload')){
+					}else if (data.reload || form.hasClass('reload')){
 						notification.MaterialSnackbar.showSnackbar({message: 'リロードします', timeout: 1000});
 						setTimeout('location.reload()', 2500);
 					}else if (data.action) {

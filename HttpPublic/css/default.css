@@ -49,7 +49,7 @@ dialog {
 .mark {
   border: 1px solid #C51162;
   font-size: 12px;
-  font-family: 'HG丸ｺﾞｼｯｸM-PRO';
+  font-family: "HG丸ｺﾞｼｯｸM-PRO","Roboto","Helvetica","Arial",sans-serif;
   font-weight: bold;
   color: #FFF;
   background: #FF4081;
@@ -986,7 +986,7 @@ h4 .mdl-button--icon {
     padding-left: 24px; }
     #dateList_edit .time div {
       display: inline-block; }
-  #dateList_edit .tilde {
+  .tilde {
     margin: 0 8px; }
 
   #dayList:not(:checked) + span *,
