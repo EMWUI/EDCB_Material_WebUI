@@ -11,7 +11,7 @@ eid=GetVarInt(post, 'eid') or 0
 
 changed=false
 r=edcb.GetReserveData(GetVarInt(mg.request_info.query_string,'id') or 0)
-if post and r then
+if post and r and GetVarInt(post,'presetID') then
   rs=r.recSetting
   presetID=GetVarInt(post,'presetID')
   if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then

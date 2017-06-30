@@ -272,17 +272,17 @@ header {
     background: rgba(0,0,0 ,0.12); }
   @media (max-width: 479px) {
     #subheader .mdl-navigation {
-     padding: 8px 0 8px 16px; }
+     padding: 8px 0 8px 8px; }
     .navigation__item.pulldown {
       min-width: 88px; }
     .space {
-      width: 16px; } }
+      width: 8px; } }
 
 
 
 /* menu */
 .menu .mdl-menu {
-  max-height: calc(100vh - 150px);
+  max-height: calc(100vh - 190px);
   overflow: auto; }
   .mdl-menu::-webkit-scrollbar {
     width: 3px; }
@@ -826,7 +826,7 @@ h4 .mdl-button--icon {
       padding: 0 16px; }
     #sidePanel h4 {
       margin: 16px 0; }
-    #sidePanel .summary {
+    #sidePanel #summary {
       padding: 0 16px; }
     #sidePanel .mdl-tabs__panel {
       padding: 16px 16px 0; } }
