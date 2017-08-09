@@ -24,9 +24,10 @@ if post and (aa.dataID==0 or lastRecSetting) then
   aa.recSetting=lastRecSetting or {}
   rs=aa.recSetting
   presetID=GetVarInt(post,'presetID',0,lastRecSetting and 0xFFFF or 0xFFFE)
+  rs.batFilePath=mg.get_var(post, 'batFilePath')
+  rs.recFolderList={}
+  rs.partialRecFolder={}
   if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then
-    rs.batFilePath=mg.get_var(post, 'batFilePath')
-    rs.recFolderList={}
     for i=0,10000 do
       if not mg.get_var(post, 'recFolder', i) then break end
       table.insert(rs.recFolderList, {
@@ -35,7 +36,6 @@ if post and (aa.dataID==0 or lastRecSetting) then
         recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
       } )
     end
-    rs.partialRecFolder={}
     for i=0,10000 do
       if not mg.get_var(post, 'partialrecFolder', i) then break end
       table.insert(rs.partialRecFolder, {
