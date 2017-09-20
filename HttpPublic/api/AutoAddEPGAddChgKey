@@ -86,7 +86,7 @@ if post and (aa.dataID==0 or lastRecSetting) then
     si.titleOnlyFlag=GetVarInt(post,'titleOnlyFlag')==1
     si.aimaiFlag=GetVarInt(post,'aimaiFlag')==1
     si.notContetFlag=GetVarInt(post,'notContetFlag')==1
-    si.notDateFlag=false
+    si.notDateFlag=GetVarInt(post,'notDateFlag')==1
     si.freeCAFlag=GetVarInt(post,'freeCAFlag',0,2) or 0
     si.chkRecEnd=GetVarInt(post,'chkRecEnd')==1
     si.chkRecDay=GetVarInt(post,'chkRecDay') or 0
