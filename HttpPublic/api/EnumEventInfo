@@ -1,10 +1,86 @@
+startTime=mg.get_var(mg.request_info.query_string,'startTime')
+onair=mg.get_var(mg.request_info.query_string,'onair')
+
 key={
   onid=mg.get_var(mg.request_info.query_string,'ONID'),
   tsid=mg.get_var(mg.request_info.query_string,'TSID'),
   sid=mg.get_var(mg.request_info.query_string,'SID')
 }
+
 edcb.htmlEscape=15
-a=edcb.EnumEventInfo({key})
+if onair or startTime then
+  if onair then
+    now=os.time()
+    startTime=os.date('*t',now-6*3600)
+  end
+  durationSecond=mg.get_var(mg.request_info.query_string,'duration') or 24*3600
+
+  b=edcb.EnumEventInfo({key},{startTime=startTime, durationSecond=durationSecond})
+
+  if onair then
+    table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
+    event={
+      onid=key.onid,
+      tsid=key.tsid,
+      sid=key.sid,
+      eid=0,
+      shortInfo={event_name='', text_char=''}
+    }
+    next=nil
+    nextstart=0
+    eventend=9999999999
+
+    for j,w in ipairs(b) do
+      if w.startTime then
+        startTime=os.time(w.startTime)
+        endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime)
+        nextstart=nextstart<endTime and endTime<now and endTime or nextstart
+        if startTime<=now and now<endTime then
+          eventend=endTime
+          event=w
+          next=b[j+1]
+          if endTime~=os.time(next.startTime) then
+            for k=j+2, #b-j-2 do
+              if endTime==os.time(b[k].startTime) then
+                next=b[k]
+                break
+              end
+            end
+          end
+          break
+        end
+        if now<startTime and startTime<eventend then
+          eventend=startTime
+          event.startTime=os.date('*t',nextstart)
+          event.durationSecond=startTime-nextstart
+          next=w
+        end
+      end
+    end
+
+	if next then
+      startTime=os.time(event.startTime)
+      next_startTime=os.time(next.startTime)
+      endTime=event.durationSecond and startTime+event.durationSecond or next_startTime
+      if endTime~=next_startTime then
+        next={
+          onid=key.onid,
+          tsid=key.tsid,
+          sid=key.sid,
+          eid=0,
+          startTime=os.date('*t',endTime),
+          durationSecond=next_startTime-endTime,
+          shortInfo={event_name='', text_char=''}
+        }
+      end
+      a={event,next}
+    end
+  end
+else
+  a=edcb.EnumEventInfo({key})
+end
+
+
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'>'}
 if not a then
   table.insert(ct, '<entry><err>EPGデータを読み込み中、または存在しません</err></entry>')

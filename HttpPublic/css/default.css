@@ -1453,6 +1453,77 @@ h4 .mdl-button--icon {
 
 
 
+/*ロケフリ*/
+#onair:not(.webPanel) {
+  max-width: 1200px; }
+  #onair .mdl-list__item {
+    position: relative; }
+  #onair .mdl-list__item .mdl-progress {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    width: calc(100% - 32px); }
+  #onair .mdl-list__item-avatar.material-icons.mdl-color--primary {
+    background:center / 27px no-repeat;
+    font-size: 24px;
+    padding: 8px; }
+  #onair .mdl-list__item--three-line .mdl-list__item-text-body {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    flex-direction: column; }
+    #onair .date {
+      -webkit-flex-shrink: 0;
+      -ms-flex-negative: 0;
+      flex-shrink: 0; }
+    #onair .mdl-list__item-text-body>span {
+      display: -webkit-flex;
+      display:     -ms-flexbox;
+      display:         flex; }
+    #onair .mdl-list__item-text-body>span:first-child {
+      color: rgba(0,0,0,.87);
+      font-weight: bold; }
+  #onair .mdl-list__item-primary-content {
+    width: calc(100% - 48px); }
+  #onair .mdl-list__item-secondary-content{
+    justify-content: center; }
+  #onair .epginfo{
+    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: rgba(255,255,255,0);
+    cursor: pointer; }
+    #onair .epginfo:hover {
+      text-decoration: underline; }
+  #onair .title,
+  #onair .nexttitle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; }
+/*webパネル*/
+.webPanel ul.main-content {
+  padding: 8px 0; }
+  .webPanel .mdl-list__item {
+    padding: 8px; }
+    .webPanel .mdl-list__item .mdl-list__item-primary-content .mdl-list__item-avatar {
+      margin-right:  8px; }
+  .webPanel .mdl-list__item--two-line {
+    height: auto; }
+    .webPanel .mdl-list__item--two-line .mdl-list__item-primary-content {
+      font-size: 13px;
+      height: auto;
+      line-height: 13px; }
+    .webPanel .mdl-list__item-avatar, .webPanel  .mdl-list__item-avatar.material-icons {
+      height: 32px;
+      width: 32px; }
+#onair.webPanel .epginfo {
+  font-size: 16px;
+  line-height: 17px; }
+  #onair.webPanel .mdl-list__item-avatar.material-icons.mdl-color--primary {
+    padding: 4px; }
+  #onair.webPanel .mdl-list__item .mdl-progress {
+    width: calc(100% - 16px); }
+
+
+
 /*ライブラリ*/
 #library .mdl-list__item {   
   transition-duration: .28s;
