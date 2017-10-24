@@ -9,9 +9,9 @@ lfs.dll,readex.exeのダウンロードはEDCBの[releases](https://github.com/x
 
 
 ### 使い方
-EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L469-L537)をよく読み  
+EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L512-L616)をよく読み  
 README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
-[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L492-L495)を設定している場合はHttpPublicの中身をそこに  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L541-L545)を設定している場合はHttpPublicの中身をそこに  
 ※HttpPublicFolderの任意のフォルダに入れる場合*apiフォルダ*だけは**HttpPublicFolder直下**に入れてください  
 
 ### テーマカラー
@@ -77,6 +77,12 @@ HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッ
 * 録画結果ページ  
 録画結果(GetRecFileInfo())からファイルパスを取得してます  
 リネームや移動していると再生することが出来ません
+
+##### 放送中一覧
+`\img\logo`に`ONID-SID.png`があると局ロゴを表示します  
+ファイル名は仮です(スマートなロゴ抽出方法が知らないためファイル名等が指定できるものがあれば…)  
+URLに`?webPanel=`を追加するとWEBパネル向けのデザインになります  
+WEBパネルに追加して使用してください
 
 ##### 番組表の隠しコマンド
 `hour=整数`  
