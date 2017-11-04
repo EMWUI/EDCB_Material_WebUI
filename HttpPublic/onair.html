@@ -142,7 +142,7 @@ for i,v in ipairs(sort or {}) do
       ..'" data-tsid="'..v.tsid
       ..'" data-sid="'..v.sid
       ..'" data-eid="'..event.eid
-      ..'" data-nexteid="'..next.eid
+      ..'" data-nexteid="'..(next.eid or 0)
       ..'" data-start="'..startTime
       ..'" data-end="'..endTime*1000
       ..'" data-duration="'..(event.durationSecond or 0)
