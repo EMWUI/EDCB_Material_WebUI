@@ -1,11 +1,16 @@
 ﻿function now(){
+	var elapse;
 	var date = new Date();
 	var hour = date.getHours();
 	var min  = MIN = date.getMinutes();
 	if (min < 10) min = '0' + min;
-	if (hour < basehour) hour = hour + 24;
 	//現時刻の位置
-	var line = ((hour - basehour) * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
+	if (baseTime>24) {
+		elapse = Math.floor((date-baseTime*1000)/1000/60/60);
+	}else{
+		elapse = hour - baseTime;
+	}
+	var line = (elapse * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
 	return {line: line, min: min};
 }
 
@@ -156,7 +161,11 @@ $(function(){
 
 	//現時間にスクロール
 	$('#now').click(function(){
-		jump();
+		if (!lastTime || Date.now()<(baseTime+(interval*3600))*1000){
+			jump();
+		}else{
+			location.reload();
+		}
 	});
 
 	//指定時間にスクロール

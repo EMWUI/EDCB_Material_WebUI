@@ -129,9 +129,10 @@ ct.css='<style>\n'
 ct.js='<script>'
   ..'Light_Mode='..(Light_Mode and 'true' or 'false')
   ..';oneminpx='..ONE_MIN_PX
-  ..';basehour='..baseHour
+  ..';baseTime='..baseHour
   ..';marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
+  ..';lastTime=false'
   ..';$(function(){end($($(".now")));});'
   ..'setInterval("line()", 1000);'
   ..'</script>\n'
