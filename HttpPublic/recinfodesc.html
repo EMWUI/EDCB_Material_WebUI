@@ -35,27 +35,30 @@ if v then
   title=ConvertTitle(v.title)
   w=os.date('%w', os.time(v.startTime))
 
-  info=v.programInfo:gsub('(.-)'..string.gsub(v.title, '%[(.-)%]', '%%[%1%%]')..'\r?\n\r?\n', '')
-    :gsub('\r?\n', '<br>\n')
-    :gsub('<div>\n<br>\n</div>', '')
-    :gsub('<br>\n<br>\n<br>', '')
-    :gsub('ジャンル : <br>\n', '</div>\n<ul>\n<li>結果<ul><li>'..v.comment..'</li></ul></li>\n<li>ドロップ '..v.drops..'</li>\n<li>スクランブル '..v.scrambles..'</li>\n<li>ジャンル<ul><li>')
-    :gsub('<br>\n<br>\n映像 : ', '</li></ul></li>\n<li>映像<ul><li>')
-    :gsub('<br>\n音声 : ', '</li></ul></li>\n<li>音声<ul><li>')
-    :gsub('kHz<br>\n<br>\n', 'kHz\n</li></ul></li>\n<li>その他<ul><li>')
-    :gsub('放送<br>\n<br>\n', '放送<br>\n')
-
-  info=string.find(info, "詳細情報") and info:gsub('\n<br>\n詳細情報<br>', '</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n<div class="mdl-typography--body-1">')
-                                             :gsub('\n詳細情報<br>', '</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n<div class="mdl-typography--body-1">')
-                                      or info:gsub('<br>\n</div>\n<ul>', '</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n<ul>')
-
-  info=(#info>0 and '<p>'..info..'</li></ul></li>\n' or '</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n<ul><li>結果<ul><li>'..v.comment..'</li></ul></li>')..'</ul>'
+  if string.find(v.programInfo, '詳細情報') then
+    info,extInfo,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\n\r?\n詳細情報\r?\n(.-)%s*ジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
+  else
+    info,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\nジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
+  end
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
-    ..'<div>\n<h4 class="mdl-typography--title">'..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span>'
-    ..'<span class="service">'..v.serviceName..'</span></span></h4>\n'..DecorateUri(info)..'</section>\n'
-
+    ..'<div>\n<h4 class="mdl-typography--title">'
+    ..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
+    ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service">'
+    ..v.serviceName..'</span></span></h4>\n<p>'
+    ..info..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
+    ..(extInfo and '<div class="mdl-typography--body-1">'..DecorateUri(extInfo):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
+    ..'<ul><li>結果<ul><li>'
+    ..v.comment..'</li></ul></li><li>ドロップ '
+    ..v.drops..'</li><li>スクランブル '
+    ..v.scrambles..'</li><li>ジャンル<ul><li>'
+    ..genreInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>映像<ul><li>'
+    ..videoInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>音声<ul><li>'
+    ..audioInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>その他<ul><li>'
+    ..otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '</li>\n<li>')
+    ..'</li></ul></li>\n</ul></section>'
+    
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', ori and false or true)
       ..'</div>\n</section>\n' or '')
@@ -70,7 +73,6 @@ if v then
     ..'</div>\n'
 
     ..'</div></div>\n'
-
 end
 
 
