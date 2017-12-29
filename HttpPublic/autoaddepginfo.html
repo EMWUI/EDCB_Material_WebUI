@@ -22,7 +22,7 @@ pageIndex=GetVarInt(mg.request_info.query_string,'chpage',0,100000) or 0
 
 edcb.htmlEscape=15
 
-post=ReadPost()
+post=AssertPost()
 
 aa={dataID=GetVarInt(mg.request_info.query_string,'id') or 0}
 if aa.dataID==0 then
@@ -62,8 +62,6 @@ end
 if aa.searchInfo then
   si=aa.searchInfo
   if post then
-    AssertCsrf(post)
-
     si.andKey=mg.get_var(post, 'andKey')
     si.notKey=mg.get_var(post, 'notKey')
     si.regExpFlag=mg.get_var(post, 'regExpFlag')

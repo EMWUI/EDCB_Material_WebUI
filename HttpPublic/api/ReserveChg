@@ -1,8 +1,6 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
-post=ReadPost()
-
-AssertCsrf(post)
+post=AssertPost()
 
 onid=GetVarInt(post, 'onid') or 0
 tsid=GetVarInt(post, 'tsid') or 0

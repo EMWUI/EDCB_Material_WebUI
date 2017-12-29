@@ -2,7 +2,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
 
-post=ReadPost()
+post=AssertPost()
 
 messege=false
 
@@ -32,7 +32,6 @@ if reset then
   end
 
 elseif post then
-  AssertCsrf(post)
 
 --  edcb.WritePrivateProfile('', '', mg.get_var(post, ''), path)
 

@@ -11,11 +11,7 @@ PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
 edcb.htmlEscape=15
 
-post=ReadPost()
-
-if post then
-  AssertCsrf(post)
-end
+post=AssertPost()
 
 dataID=GetVarInt(mg.request_info.query_string, 'id') or 0
 if dataID~=0 then

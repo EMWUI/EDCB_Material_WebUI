@@ -2,9 +2,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 
 ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'
 
-post=ReadPost()
-
-AssertCsrf(post)
+post=AssertPost()
 
 if post then
   edcb.DelAutoAdd(GetVarInt(mg.request_info.query_string,'id') or 0)

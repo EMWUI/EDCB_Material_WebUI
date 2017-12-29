@@ -1,8 +1,6 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
-post=ReadPost()
-
-AssertCsrf(post)
+post=AssertPost()
 
 if post then
   edcb.DelReserveData(GetVarInt(mg.request_info.query_string,'id') or 0)

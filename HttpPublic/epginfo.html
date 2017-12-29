@@ -22,11 +22,9 @@ dataID=GetVarInt(mg.request_info.query_string, 'id') or 0
 autopage=GetVarInt(mg.request_info.query_string,'autopage') or 0
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
-post=ReadPost()
+post=AssertPost()
 
 if post then
-  AssertCsrf(post)
-
   for i=0,10000 do
     v=mg.get_var(post, 'network', i)
     if not v then break end

@@ -1,8 +1,6 @@
 dofile(mg.document_root..'\\api\\util.lua')
 
-post=ReadPost()
-
-AssertCsrf(post)
+post=AssertPost()
 
 aa={}
 lastRecSetting=nil
