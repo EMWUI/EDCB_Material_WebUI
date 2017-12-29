@@ -1,7 +1,7 @@
 EDCB Material WebUI
 ===================
 
-**EDCBのWebUIをMaterial Design Liteでマテリアルデザインっぽくします**  
+**EDCBのWebUI([Legacy WebUI](https://github.com/xtne6f/EDCB/tree/work-plus-s/ini/HttpPublic/legacy))をベースにMaterial Design Liteでマテリアルデザインっぽくします**  
 [xtne6f氏](https://github.com/xtne6f/EDCB)の[e186f9a](https://github.com/xtne6f/EDCB/commit/b72c091672f3c042c7c1369e51282fcadcf61df8)以降で動作します  
 またファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要です  
 ffmpeg.exe,readex.exe,lfs.dllを別途ダウロードしてください  
@@ -9,9 +9,9 @@ lfs.dll,readex.exeのダウンロードはEDCBの[releases](https://github.com/x
 
 
 ### 使い方
-EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L512-L616)をよく読み  
+EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L537-L641)をよく読み  
 README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
-[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#L541-L545)を設定している場合はHttpPublicの中身をそこに  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L566-L570)を設定している場合はHttpPublicの中身をそこに  
 ※HttpPublicFolderの任意のフォルダに入れる場合*apiフォルダ*だけは**HttpPublicFolder直下**に入れてください  
 
 ### テーマカラー
