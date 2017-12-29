@@ -21,7 +21,7 @@ w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
 CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',false,path))~=0
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -104,7 +104,7 @@ ct.tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
   ..'<a href="#guide" class="mdl-layout__tab" data-val="tvguide">番組表</a>\n'
   ..'<a href="#sort" class="mdl-layout__tab" data-val="sort">並び替え</a>\n'
 
-ct.dialog={button='<button class="submit close mdl-button mdl-button--primary" data-form="#reset">初期化</button>\n'}
+ct.dialog={{id='dialog',button='<button class="submit close mdl-button mdl-button--primary" data-form="#reset">初期化</button>\n'}}
 
 edcb.htmlEscape=15
 a=edcb.GetServiceList()
@@ -159,6 +159,10 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div><label for="tkntrec" class="mdl-switch mdl-js-switch"><input id="tkntrec" type="checkbox" class="mdl-switch__input" name="tkntrec" value="1"'..(tkntrec and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-tkntrec">オフで使用するとオリジナル設定がデフォルトに変更されます</span></div>\n'
 
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
+
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ファイル名PlugIn オプション</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="option" class="mdl-switch mdl-js-switch"><input id="option" type="checkbox" class="mdl-switch__input" name="option" value="1"'..(option and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
@@ -180,10 +184,6 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Light_Mode">軽量化</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="Light_Mode-flag" class="mdl-switch mdl-js-switch"><input id="Light_Mode-flag" type="checkbox" class="mdl-switch__input" name="Light_Mode" value="1"'..(Light_Mode and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Light_Mode">スマホ等でヘッダーの調整を無効に</span></div>\n'
-
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細をサイドパネルで表示します</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'

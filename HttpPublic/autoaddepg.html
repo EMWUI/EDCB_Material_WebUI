@@ -5,6 +5,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 path='Setting\\HttpPublic.ini'
 disable=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 ct={title='EPG予約'}
 
@@ -31,7 +32,78 @@ if math.ceil((#a/PAGE_COUNT)-1)>0 then
   pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
 end
 
-ct.main='<main class="mdl-layout__content">\n'
+ct.main='<main class="sidePanel-container">\n'
+
+if sidePanel then
+  ct.macro=true
+
+  si={
+    andKey='',
+    notKey='',
+    regExpFlag=false,
+    titleOnlyFlag=false,
+    aimaiFlag=false,
+    notContetFlag=false,
+    freeCAFlag=0,
+    chkRecEnd=false,
+    chkRecDay=6,
+    chkRecNoService=false,
+    chkDurationMin=0,
+    chkDurationMax=0,
+    contentList={},
+    dateList={},
+    serviceList={},
+    side=sidePanel
+  }
+  for i,v in ipairs(edcb.GetChDataList()) do
+    if v.searchFlag then
+      table.insert(si.serviceList, v)
+    end
+  end
+  ct.main=ct.main..[=[
+<div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
+<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">EPG予約</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><span class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></span></div>
+<div class="sidePanel-content">
+<div><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">検索条件</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
+</div>
+<form id="set" method="POST" data-action="autoadd">
+<section class="panel-swipe mdl-tabs__panel is-active" id="detail">
+<div class="form mdl-grid mdl-grid--no-spacing">
+<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">自動予約無効</div>
+<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>
+<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag"></label><span class="mdl-switch__label"></span></div></div>
+]=]..SerchTemplate(si)..[=[
+</div></section>
+<section class="panel-swipe mdl-tabs__panel" id="recset">
+<div class="form mdl-grid mdl-grid--no-spacing">
+<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
+<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
+]=]
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==0 then
+      rs=v.recSetting
+    end
+    ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
+  end
+  ct.main=ct.main..'<option id="reserved" value="65535" selected>登録時\n</select></div></div>\n'
+
+    ..'<input type="hidden" name="onid">\n'
+    ..'<input type="hidden" name="tsid">\n'
+    ..'<input type="hidden" name="sid">\n'
+    ..'<input type="hidden" name="eid">\n'
+      ..RecSettingTemplate(rs)
+    ..'</div></section></form>\n</div>\n'
+    ..'<div class="mdl-card__actions">\n'
+    ..'<div class="mdl-layout-spacer"></div>\n'
+    --削除ボタンは間違えて押したらいやなのでコメントアウト
+    --..'<form id="del" method="POST" data-action="del"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
+    ..'</div>\n'
+
+    ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
+end
+
+ct.main=ct.main..'<div class="mdl-layout__content">'
   ..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
@@ -59,7 +131,9 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     end
   end
   disableFlag=string.match(v.andKey, '^%^%!{999}(.*)')
-  table.insert(ctt, '<tr class="mdl-grid--no-spacing" data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&page='..pageIndex or '')..'"'..(disableFlag and ' class="disabled"' or '')..'>'
+  table.insert(ctt, '<tr class="epginfo'..(disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
+    ..(sidePanel and 'data-id="'..a[i].dataID
+                  or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&page='..pageIndex or ''))..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(disableFlag and disableFlag or v.andKey)
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..v.notKey
     ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
@@ -69,7 +143,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     ..'\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')
+ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
      ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..'"><i class="material-icons">add</i></a>'
 
 ct=template(ct)

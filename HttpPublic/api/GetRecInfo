@@ -1,0 +1,41 @@
+id=mg.get_var(mg.request_info.query_string,'id')
+
+edcb.htmlEscape=15
+v=edcb.GetRecFileInfo(id)
+
+ct={'<?xml version="1.0" encoding="UTF-8" ?'..'>'}
+if not v then
+  table.insert(ct, '<entry><err>存在しません</err></entry>')
+else
+  table.insert(ct, '<entry>\r\n<recinfo><id>'
+    ..v.id..'</id><recFilePath>'
+    ..v.recFilePath..'</recFilePath><title>'
+    ..v.title..'</title><ONID>'
+    ..v.onid..'</ONID><TSID>'
+    ..v.tsid..'</TSID><SID>'
+    ..v.sid..'</SID><eventID>'
+    ..v.eid..'</eventID><service_name>'
+    ..v.serviceName..'</service_name>')
+  if v.startTime then
+    table.insert(ct, os.date('<startDate>%Y/%m/%d</startDate><startTime>%H:%M:%S</startTime><startDayOfWeek>', os.time(v.startTime))
+      ..(v.startTime.wday-1)..'</startDayOfWeek>')
+  end
+  if v.durationSecond then
+    table.insert(ct, '<duration>'..v.durationSecond..'</duration>')
+  end
+  if v.startTimeEpg then
+    table.insert(ct, os.date('<startDateEpg>%Y/%m/%d</startDateEpg><startTimeEpg>%H:%M:%S</startTimeEpg><startDayOfWeekEpg>', os.time(v.startTimeEpg))
+      ..(v.startTime.wday-1)..'</startDayOfWeekEpg>')
+  end
+  table.insert(ct, '<drops>'
+    ..v.drops..'</drops><scrambles>'
+    ..v.scrambles..'</scrambles><recStatus>'
+    ..v.recStatus..'</recStatus><comment>'
+    ..v.comment..'</comment><programInfo>'
+    ..v.programInfo..'</programInfo><errInfo>'
+    ..v.errInfo..'</errInfo></recinfo>\r\n</entry>')
+end
+cl=0
+for i,v in ipairs(ct) do cl=cl+#v end
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+for i,v in ipairs(ct) do mg.write(v) end

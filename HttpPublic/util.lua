@@ -48,14 +48,16 @@ function template(temp)
 ]=]
 
 -- dialog
-..(temp.dialog and '<dialog class="mdl-dialog">\n<div class="mdl-dialog__content">'
-  ..(temp.dialog.content or '')
-  ..'</div>\n<div class="mdl-dialog__actions">\n'
-  ..(temp.dialog.button or '')
-  ..'<button class="mdl-button close">キャンセル</button>\n'
-  ..'</div>\n</dialog>' or '')
+for i,v in ipairs(temp.dialog or {}) do
+  s=s..'<dialog id="'..v.id..'" class="mdl-dialog">\n<div class="mdl-dialog__content">'
+    ..(v.content or '')
+    ..'</div>\n<div class="mdl-dialog__actions">\n'
+    ..(v.button or '')
+    ..'<button class="mdl-button close" data-dialog="#'..v.id..'">キャンセル</button>\n'
+    ..'</div>\n</dialog>'
+end
 
-..[=[
+s=s..[=[
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header]=]..(not temp.Scrollable and ' mdl-layout--fixed-tabs' or '')..[=[">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row">
@@ -783,9 +785,9 @@ function SerchTemplate(si)
     ..'</select></div></div>\n'
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">番組長で絞り込み</div>\n'
     ..'<div class="number mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--3-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield"><input id="DurationMin" class="mdl-textfield__input" type="number" name="chkDurationMin" value="'..si.chkDurationMin..'" min="0"><label class="mdl-textfield__label" for="DurationMin"></label><span class="mdl-textfield__error">Input is not a number!</span></div>分以上</div>\n'
+    ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--'..(si.side and 6 or 3)..'-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield"><input id="DurationMin" class="mdl-textfield__input" type="number" name="chkDurationMin" value="'..si.chkDurationMin..'" min="0"><label class="mdl-textfield__label" for="DurationMin"></label><span class="mdl-textfield__error">Input is not a number!</span></div>分以上</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-    ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--3-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield"><input id="DurationMax" class="mdl-textfield__input" type="number" name="chkDurationMax" value="'..si.chkDurationMax..'" min="0"><label class="mdl-textfield__label" for="DurationMax"></label><span class="mdl-textfield__error">Input is not a number!</span></div>分以下</div>\n'
+    ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--'..(si.side and 6 or 3)..'-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield"><input id="DurationMax" class="mdl-textfield__input" type="number" name="chkDurationMax" value="'..si.chkDurationMax..'" min="0"><label class="mdl-textfield__label" for="DurationMax"></label><span class="mdl-textfield__error">Input is not a number!</span></div>分以下</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div></div>\n'
     ..'<span class="mdl-tooltip" for="DurationMin">0分で絞り込み無し</span><span class="mdl-tooltip" for="DurationMax">0分で絞り込み無し</span></div>\n'
 
@@ -804,7 +806,7 @@ function SerchTemplate(si)
   return s
 end
 
-function sidePanelTemplate()
+function sidePanelTemplate(reserve)
   local s=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
@@ -822,7 +824,7 @@ function sidePanelTemplate()
 </ul>
 </section>
 <section class="panel-swipe mdl-tabs__panel" id="recset">
-<form id="set" method="POST" data-action="add">
+<form id="set" method="POST" data-action="]=]..(reserve and 'reserve' or 'add')..[=[">
 <div class="form mdl-grid mdl-grid--no-spacing">
 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
 <div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
@@ -845,7 +847,7 @@ function sidePanelTemplate()
     ..'</section>\n</div>\n'
 
     ..'<div class="mdl-card__actions">\n'
-    ..'<button class="progres mdl-button mdl-js-button mdl-button--primary">プログラム予約化</button>\n'
+    ..'<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約化</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
     ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約追加</button>\n'

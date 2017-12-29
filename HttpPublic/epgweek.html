@@ -14,7 +14,7 @@ w_service=edcb.GetPrivateProfile('GUIDE','service','208',path)
 w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','120',path)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',false,path))~=0
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -132,20 +132,27 @@ ct.js='<script>'
   ..';baseTime='..baseHour
   ..';marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
-  ..';lastTime=false'
-  ..';$(function(){end($($(".now")));});'
+  ..';lastTime=false;'
+  ..'$(function(){end($($(".now")));});'
   ..'setInterval("line()", 1000);'
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
 
 ct.dialog={
-  content='<form id="progres" method="POST" data-action="del"><div>'
-    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-  button='<button id="suspend" class="mdl-button">OK</button><button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
+  {
+    id='dialog_progres',
+    content='<form id="progres" method="POST" data-action="del"><div>'
+      ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
+      ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
+      ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
+      ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
+      ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
+    button='<button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
+  },
+  {
+    id='suspend',
+    button='<button class="ok mdl-button">OK</button>'
+  }
 }
 
 if sidePanel then ct.macro=true end
@@ -224,8 +231,8 @@ ct.menu=menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
   ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
   ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'
-  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-ctok="'..CsrfToken()..'">スタンバイ</li>\n'
-  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken()..'">休止</li>\n'
+  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-dialog="suspend" data-ctok="'..CsrfToken()..'">スタンバイ</li>\n'
+  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-dialog="suspend" data-ctok="'..CsrfToken()..'">休止</li>\n'
   ..'</ul>\n'
 
 
@@ -258,7 +265,7 @@ for i=0,7 do
 end
 table.insert(ctt, '</div>\n'
 
-  ..'<div id="tv-guide-main" class="tv-guide">\n'
+  ..'<div id="tv-guide-main">\n'
 
 )
 
@@ -340,7 +347,7 @@ for i=0,7 do
   table.insert(ctt, '</div>\n')
 end
 
-ct.main='<main class="tv-guide mdl-layout__content">\n'
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 

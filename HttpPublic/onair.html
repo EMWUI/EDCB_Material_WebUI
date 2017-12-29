@@ -4,7 +4,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
 onesegflag=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',false,path))~=0
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 
@@ -17,7 +17,8 @@ if webPanel then
   ct.css='<style>.mdl-layout__header {min-height: 48px; }.mdl-layout__header-row,.mdl-layout__drawer-button {display: none; }</style>'
 end
 
-ct.dialog={
+ct.dialog={{
+  id='dialog_progres',
   content='<form id="progres" method="POST" data-action="del"><div>'
     ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
     ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
@@ -25,13 +26,15 @@ ct.dialog={
     ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
     ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
   button='<button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
-}
+}}
 
-ct.main='  <main class="tv-guide mdl-layout__content">\n'
+if sidePanel then ct.macro=true end
+
+ct.main='  <main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
-  ..'<div id="tv-guide-container" class="tab-swipe"><div id="onair" class="mdl-grid'..(webPanel and ' webPanel mdl-grid--no-spacing' or '')..'">\n'
+  ..'<div class="tab-swipe"><div id="onair" class="mdl-grid'..(webPanel and ' webPanel mdl-grid--no-spacing' or '')..'">\n'
 
 edcb.htmlEscape=15
 a=edcb.GetServiceList()
@@ -152,8 +155,9 @@ for i,v in ipairs(sort or {}) do
       ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..v.onid..'-'..v.sid..'.png\');">' or '>tv')..'</i>'..v.service_name
       ..'<span class="mdl-list__item-text-body">\n'
       ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(event.shortInfo and ConvertTitle(event.shortInfo.event_name) or '')..'</span></span>\n'
-      ..(webPanel and '' or '<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', next_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', next_endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n')
+      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', next_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', next_endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
       ..'</span></span>'
+      ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
 
       ..'<div class="mdl-progress mdl-js-progress"></div>'
       ..'</li>\n'

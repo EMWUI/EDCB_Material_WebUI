@@ -49,10 +49,10 @@ function getEPG(obj){
 setInterval(function(){
 	$('.mdl-layout__tab-panel.is-active>.mdl-list__item').each(function(){
 		var data = $(this).data();
-		if (data.end < new Date().getTime()){
+		if (data.end < Date.now()){
 			updateEPG($(this));
 		}else{
-			var progress = (new Date().getTime()/1000 - data.start) / data.duration  * 100;
+			var progress = (Date.now()/1000 - data.start) / data.duration  * 100;
 			$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
 		}
 	});
@@ -63,7 +63,7 @@ $(function(){
 		updateEPG($(this));
 	});
 
-	$('.epginfo').click(function(){
+	$('span.epginfo').click(function(){
 		var data = $(this).parents('li').data();
 		if ($(this).hasClass('next')) data.eid = data.nexteid;
 
@@ -72,10 +72,6 @@ $(function(){
 		}else{
 			window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
 		}
-	});
-
-	$('.close_info').click(function(){
-		$('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open');
 	});
 });
 

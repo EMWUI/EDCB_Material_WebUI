@@ -5,6 +5,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
 shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 PAGE_COUNT=30
 tab=GetVarInt(mg.request_info.query_string,'tab') or 1
@@ -17,11 +18,27 @@ ct.css='<style>\n.partially{background:'..partially..';}'..'.shortage{background
 
 ct.js='<script>\nsetInterval("rec()",1000);\n</script>\n'
 
+ct.dialog={{
+  id='dialog_progres',
+  content='<form id="progres" method="POST" data-action="del"><div>'
+    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
+    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
+    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
+    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
+  button='<button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
+}}
+
+if sidePanel then ct.macro=true end
+
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
+
+  ..(sidePanel and sidePanelTemplate(true) or '')
+
   ..'<div class="list mdl-grid">\n'
   ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
 
@@ -58,7 +75,9 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     bg=w.recSetting.recMode==5 and ' disabled'
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex..'">\n'
+  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
+    ..(sidePanel and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
+                  or 'data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex)..'">\n'
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')

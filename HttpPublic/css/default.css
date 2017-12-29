@@ -1,4 +1,4 @@
-﻿main>.mdl-grid:not(.list) {
+﻿.mdl-layout__content>.mdl-grid:not(.list) {
   max-width: 1200px; }
 
 
@@ -311,6 +311,7 @@ header {
 
 
 main {
+  height: 100%;
   background: #FAFAFA;
   will-change: margin;
   transition-property: margin;
@@ -368,6 +369,8 @@ h4 .mdl-button--icon {
   word-break: normal;
   overflow: auto;
   max-height: 60vh; }
+  #sidePanel #error pre {
+    max-height: none; }
 
 @media (max-width: 479px) {
   .main-content h4 {
@@ -460,9 +463,7 @@ h4 .mdl-button--icon {
 
 /* 番組表 */
 #tv-guide-container {
-  width: 100%;
-  position: relative;
-  overflow-x: auto; }
+  position: relative; }
 
 #tv-guide {
   min-width: 100%;
@@ -487,10 +488,11 @@ h4 .mdl-button--icon {
     overflow: hidden;
     box-sizing: border-box; }
 
-.tv-guide {
+#tv-guide-main {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex; }
+
 
 
 .hour-container {
@@ -803,6 +805,8 @@ h4 .mdl-button--icon {
     flex-direction: column;
     overflow-y: auto;
     border-bottom: 1px solid #e0e0e0; }
+  .sidePanel-content>form {
+    overflow-y: auto; }
   #summary {
     padding: 0 32px;
     border-bottom: 1px solid #e0e0e0; }
@@ -830,6 +834,15 @@ h4 .mdl-button--icon {
       padding: 0 16px; }
     #sidePanel .mdl-tabs__panel {
       padding: 16px 16px 0; } }
+.sidePanel-container {
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex;
+  position: relative;
+  z-index: 1; }
+.sidePanel-container>div {
+  width: 100%;
+  overflow: auto!important; }
 
 /* form */
 .form {
@@ -999,17 +1012,28 @@ h4 .mdl-button--icon {
     bottom: 0;
     right: 0; }
 
+    #sidePanel #dateList_edit {
+      display: none; }
+      #dateList_edit.is-visible {
+        display: block!important; }
+
   @media (min-width: 700px) {
     #dateList {
       flex-wrap: nowrap; }
+      #sidePanel #dateList {
+        flex-wrap: wrap; }
     #dateList_select {
       width: 160px; }
     #dateList_touch {
       width: 175px; }
     #dateList_edit {
       padding-left: 16px; }
+      #sidePanel #dateList_edit {
+        padding-left: 0; }
     #edit_dateList {
-      display: none; } }
+      display: none; }
+    #sidePanel #edit_dateList {
+      display: block; } }
 
   @media (max-width: 699px) {
     #dateList_main {
@@ -1018,9 +1042,7 @@ h4 .mdl-button--icon {
     #dateList .touch {
       flex-grow: 1; }
     #dateList_edit {
-      display: none; }
-      #dateList_edit.is-visible {
-        display: block; } }
+      display: none; } }
 
 
 
@@ -1514,6 +1536,12 @@ h4 .mdl-button--icon {
     .webPanel .mdl-list__item-avatar, .webPanel  .mdl-list__item-avatar.material-icons {
       height: 32px;
       width: 32px; }
+    #onair.webPanel .next {
+      display: none; }
+    #onair.webPanel .mdl-list__item-avatar:hover+span .next {
+      display: flex; }
+    #onair.webPanel .mdl-list__item-avatar:hover+span .epginfo:not(.next) {
+      display: none; }
 #onair.webPanel .epginfo {
   font-size: 16px;
   line-height: 17px; }

@@ -251,15 +251,12 @@ $(function(){
 			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
 		});
 	});
-	var dialog = document.querySelector('dialog');
+	var dialog = document.querySelector('dialog#suspend');
 	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
 	$('.suspend').click(function(){
 		var self = $(this);
-		$('#progres').hide().appendTo('main');
-		$('#suspend').show();
-		$('#progres_button').hide();
-		$('.mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
-	    $('#suspend').unbind('click').click(function(){
+		$('#suspend .mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
+	    $('#suspend .ok').unbind('click').click(function(){
 			dialog.close();
 			$.get(root + 'api/Common', self.data(), function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);

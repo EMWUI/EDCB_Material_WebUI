@@ -5,8 +5,44 @@ edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
+  disableFlag=string.match(v.searchInfo.andKey, '^%^%!{999}(.*)')
   table.insert(ct, '<recpresetinfo><id>'
-    ..v.dataID..'</id><recsetting><recMode>'
+    ..v.dataID..'</id><searchsetting><disableFlag>'
+    ..(disableFlag and 1 or 0)..'</disableFlag><andKey>'
+    ..(disableFlag or v.searchInfo.andKey)..'</andKey><notKey>'
+    ..v.searchInfo.notKey..'</notKey><regExpFlag>'
+    ..(v.searchInfo.regExpFlag and 1 or 0)..'</regExpFlag><titleOnlyFlag>'
+    ..(v.searchInfo.titleOnlyFlag and 1 or 0)..'</titleOnlyFlag><aimaiFlag>'
+    ..(v.searchInfo.aimaiFlag and 1 or 0)..'</aimaiFlag><notContetFlag>'
+    ..(v.searchInfo.notContetFlag and 1 or 0)..'</notContetFlag><notDateFlag>'
+    ..(v.searchInfo.notDateFlag and 1 or 0)..'</notDateFlag><freeCAFlag>'
+    ..v.searchInfo.freeCAFlag..'</freeCAFlag><chkRecEnd>'
+    ..(v.searchInfo.chkRecEnd and 1 or 0)..'</chkRecEnd><chkRecDay>'
+    ..v.searchInfo.chkRecDay..'</chkRecDay><chkRecNoService>'
+    ..(v.searchInfo.chkRecNoService and 1 or 0)..'</chkRecNoService><chkDurationMin>'
+    ..v.searchInfo.chkDurationMin..'</chkDurationMin><chkDurationMax>'
+    ..v.searchInfo.chkDurationMax..'</chkDurationMax>')
+  for j,w in ipairs(v.searchInfo.contentList) do
+    table.insert(ct, '<contentList><content_nibble>'
+      ..w.content_nibble..'</content_nibble><user_nibble>'
+      ..w.user_nibble..'</user_nibble></contentList>')
+  end
+  for j,w in ipairs(v.searchInfo.dateList) do
+    table.insert(ct, '<dateList><startDayOfWeek>'
+      ..w.startDayOfWeek..'</startDayOfWeek><startHour>'
+      ..w.startHour..'</startHour><startMin>'
+      ..w.startMin..'</startMin><endDayOfWeek>'
+      ..w.endDayOfWeek..'</endDayOfWeek><endHour>'
+      ..w.endHour..'</endHour><endMin>'
+      ..w.endMin..'</endMin></dateList>')
+  end
+  for j,w in ipairs(v.searchInfo.serviceList) do
+    table.insert(ct, '<serviceList><onid>'
+      ..w.onid..'</onid><tsid>'
+      ..w.tsid..'</tsid><sid>'
+      ..w.sid..'</sid></serviceList>')
+  end
+  table.insert(ct, '</searchsetting><recsetting><recMode>'
     ..v.recSetting.recMode..'</recMode><priority>'
     ..v.recSetting.priority..'</priority><tuijyuuFlag>'
     ..(v.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
