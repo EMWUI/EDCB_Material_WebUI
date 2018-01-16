@@ -64,11 +64,11 @@ $(function(){
 	});
 
 	$('span.epginfo').click(function(){
-		var data = $(this).parents('li').data();
+		var data = $(this).parents('li').clone(true).data();
 		if ($(this).hasClass('next')) data.eid = data.nexteid;
 
 		if ($(this).hasClass('panel')){
-			setEpgInfo($(this).parents('li'), data);
+			getEpgInfo($(this).parents('li'), data);
 		}else{
 			window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
 		}

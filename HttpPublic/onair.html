@@ -157,7 +157,6 @@ for i,v in ipairs(sort or {}) do
       ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(event.shortInfo and ConvertTitle(event.shortInfo.event_name) or '')..'</span></span>\n'
       ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', next_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', next_endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
       ..'</span></span>'
-      ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
 
       ..'<div class="mdl-progress mdl-js-progress"></div>'
       ..'</li>\n'

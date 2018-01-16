@@ -341,7 +341,7 @@ $(function(){
 
 	//番組詳細を表示
 	$('.open_info').click(function(){
-		setEpgInfo($(this).parents('.cell'), $(this).data(), $(this).data('starttime'));
+		getEpgInfo($(this).parents('.cell'), $(this).data(), $(this).data('starttime'));
 	});
 
 	$('.close_info').click(function(){

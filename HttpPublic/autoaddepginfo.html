@@ -116,7 +116,7 @@ if aa.searchInfo then
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
-    ..'<form id="autoaddepg" method="POST" action="'..PathToRoot()..'api/AutoAddEPGAddChgKey?id='..aa.dataID..'" data-redirect="'..redirect..'">\n'
+    ..'<form id="autoaddepg" method="POST" action="'..PathToRoot()..'api/AutoAddEPGAddChgKey?id='..aa.dataID..'">\n'
     ..'<section class="mdl-layout__tab-panel is-active" id="search">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
@@ -159,10 +159,10 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/autoaddepgdelkey?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/autoaddepgdelkey?id='..aa.dataID..'" data-action="close"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
   end
 
-  ct.main=ct.main..'<div class="mdl-card__actions mdl-card--border">\n'
+  ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
     ..(aa.dataID~=0 and '<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'

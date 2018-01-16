@@ -141,13 +141,13 @@ ct.js='<script>'
 ct.dialog={
   {
     id='dialog_progres',
-    content='<form id="progres" method="POST" data-action="del"><div>'
+    content='<form id="progres" method="POST"><div>'
       ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
       ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
       ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
       ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
       ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-    button='<button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
+    button='<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
   },
   {
     id='suspend',

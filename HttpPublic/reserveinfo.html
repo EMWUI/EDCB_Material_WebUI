@@ -11,7 +11,6 @@ ct={title='予約情報'}
 
 if r then
   recording=edcb.GetRecFilePath(r.reserveID)
-  redirect=mg.get_var(mg.request_info.query_string,'tuner') and 'tunerreserve.html' or 'reserve.html'..(page and '?page='..page or '')
 
   ct.js=(recording and '<script src="js/player.js"></script>\n'or '')
 
@@ -19,14 +18,14 @@ if r then
   ct.dialog={{
     id='dialog_progres',
     content='<form id="progres" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID
-      ..'" data-redirect="'..redirect..'"><div>'..(r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>')
+      ..'"><div>'..(r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>')
       ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" value="'..string.format('%d/%d/%d', r.startTime.year, r.startTime.month, r.startTime.day)
       ..'" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
       ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" value="'..string.format('%d:%d:%d', r.startTime.hour, r.startTime.min, r.startTime.sec)
       ..'" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" value="'..string.format('%d:%d:%d', math.floor(dur/3600)%24, math.floor(dur/60)%60, dur%60)
       ..'" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
       ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-    button='<button id="dialog_button" class="submit mdl-button" data-form="#progres">変更</button>'
+    button='<button id="dialog_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
   }}
 
   ct.macro=true
@@ -40,7 +39,7 @@ if r then
         ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
         ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
-    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'" data-redirect="'..redirect..'">\n'
+    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
@@ -69,12 +68,12 @@ if r then
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
-    ..'<div class="mdl-card__actions mdl-card--border">\n'
-    ..'<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約'..(r.eid==65535 and '' or '化')..'</button>\n'
+    ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
+    ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約'..(r.eid==65535 and '' or '化')..'</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/reservedel?id='..r.reserveID..'" data-redirect="'..redirect..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
-    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
+    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/reservedel?id='..r.reserveID..'" data-action="close"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ..'<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
     ..'</div>\n'
 
     ..'</div>\n</div>\n'

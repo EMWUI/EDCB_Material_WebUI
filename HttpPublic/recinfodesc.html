@@ -47,17 +47,17 @@ if v then
     ..title..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
     ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service">'
     ..v.serviceName..'</span></span></h4>\n<p>'
-    ..info..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
+    ..(info or '')..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
     ..(extInfo and '<div class="mdl-typography--body-1">'..DecorateUri(extInfo):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
     ..'<ul><li>結果<ul><li>'
     ..v.comment..'</li></ul></li><li>ドロップ '
     ..v.drops..'</li><li>スクランブル '
-    ..v.scrambles..'</li><li>ジャンル<ul><li>'
-    ..genreInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>映像<ul><li>'
-    ..videoInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>音声<ul><li>'
-    ..audioInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li><li>その他<ul><li>'
-    ..otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '</li>\n<li>')
-    ..'</li></ul></li>\n</ul></section>'
+    ..v.scrambles..'</li>'
+    ..(genreInfo and '<li>ジャンル<ul><li>'..genreInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
+    ..(videoInfo and '<li>映像<ul><li>'..videoInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
+    ..(audioInfo and '<li>音声<ul><li>'..audioInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
+    ..(otherInfo and '<li>その他<ul><li>'..otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '</li>\n<li>')..'</li></ul></li>\n' or '')
+    ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', ori and false or true)
@@ -66,19 +66,19 @@ if v then
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
     ..'</div>\n'
 
-    ..'<div class="mdl-card__actions mdl-card--border">\n'
+    ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
+    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/RecInfoDel?id='..v.id..'" data-action="close"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/RecInfoDel?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
     ..'</div>\n'
 
     ..'</div></div>\n'
-end
-
 
 ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'
      ..(video and '<a href="#movie" class="play mdl-layout__tab">再生</a>\n' or '')
      ..(#v.errInfo>0 and '<a href="#error" class="mdl-layout__tab">エラーログ</a>\n' or '')
+end
+
 
 ct=template(ct)
 
