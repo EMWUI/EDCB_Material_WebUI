@@ -76,7 +76,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   v=a[i]
   bg=v.drops>0 and ' drops'
      or v.scrambles>0 and ' scrambles' or ''
-  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'"'
+  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" '
     ..(sidePanel and 'data-recinfoid="'..v.id
                   or 'data-href="recinfodesc.html?id='..v.id ..'&page='..pageIndex)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)

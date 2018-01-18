@@ -67,10 +67,15 @@ $(function(){
 		var data = $(this).parents('li').clone(true).data();
 		if ($(this).hasClass('next')) data.eid = data.nexteid;
 
-		if ($(this).hasClass('panel')){
-			getEpgInfo($(this).parents('li'), data);
+		if (data.eid!=0){
+			if ($(this).hasClass('panel')){
+				getEpgInfo($(this).parents('li'), data);
+			}else{
+				window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
+			}
 		}else{
-			window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
+			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'この時間帯の番組情報がありません'});
+			$('#sidePanel, .open').removeClass('is-visible open');
 		}
 	});
 });

@@ -292,7 +292,7 @@ if dataID==0 then
 
   table.insert(ct.dialog, {
     id='dialog_preset',
-    content='<label class="icon mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="lock"><input type="checkbox" id="lock" class="mdl-icon-toggle__input"'..(key.lock and 'checked' or '')..'><i class="mdl-icon-toggle__label material-icons">lock</i></label>'
+    content='<label class="icon mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="lock"><input type="checkbox" id="lock" class="mdl-icon-toggle__input"'..(key.lock and ' checked' or '')..'><i class="mdl-icon-toggle__label material-icons">lock</i></label>'
       ..'登録名<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'..(preset or '')..'" id="preset_name"><label class="mdl-textfield__label" for="preset_name"></label></div>'
       ..'※同じ名前がある場合上書きします',
     button='<button id="save_preset" class="mdl-button" type="submit">保存</button>'
@@ -402,9 +402,9 @@ if #a>0 then
       end
     end
 
-    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing"'..(r and '  data-start="'..(r.durationSecond and (os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'"' or '')..' data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)..'"'
-      ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                    or 'data-search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
+    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-start="'..(os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
+      ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
+                               or 'search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
 
       ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid)..'" data-ctok="'..CsrfToken()..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'

@@ -337,7 +337,7 @@ function getEpgInfo(target, data, past){
 							$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 						}
 
-						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'Error : 予約が見つかりませんでした'});
+						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '予約が見つかりませんでした'});
 					}
 
 					showSpinner();
