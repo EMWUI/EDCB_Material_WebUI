@@ -518,7 +518,7 @@ function RecSettingTemplate(rs)
       bat=bat..'<option value="'..rs.batFilePath..'" selected>'..rs.batFilePath..'\n'
     end
     for file in lfs.dir(batPath) do
-      if file ~= '.' and file ~= '..' and string.find(file, '%.bat$') then
+      if file ~= '.' and file ~= '..' and string.find(file, '%.bat$') or string.find(file, '%.ps1$') then
         bat=bat..'<option value="'..batPath..'\\'..file..'"'..(rs.batFilePath==batPath..'\\'..file and ' selected' or '')..'>'..file..'\n'
       end
     end
