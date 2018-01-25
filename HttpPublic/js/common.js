@@ -29,8 +29,8 @@ function rec(){
 
 //検索バー表示
 function saerchbar(){
-	$('main').on('scroll', function(){
-		if ($('main').scrollTop() > 0){
+	$('main>.mdl-layout__content').scroll(function(){
+		if ($('main>.mdl-layout__content').scrollTop() > 0){
 			$('.serch-bar').removeClass('scroll');
 			$('main').addClass('serch-bar');
 		}else{
@@ -288,86 +288,128 @@ function getEpgInfo(target, data, past){
 	$('[href="#detail"], #detail').addClass('is-active');
 	target.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
-	var id;
-	if (target.hasClass('cell')){
-		id = target.find('.addreserve').data('id');
-	}else{
-		id = target.children('.flag').data('id');
-	}
+
+	var id = data.id || target.find('.addreserve').data('id') || target.children('.flag').data('id');
 
 	$.ajax({
 		url: root + 'api/GetEventInfo',
 		data: data,
 		success: function(result, textStatus, xhr){
-			var xml = $(xhr.responseXML);
-			if (id){
-				function searchReserve(){
-					var done;
-					ReserveAutoaddList.find('reserveinfo').each(function(){
-						if (id == $(this).find('ID').text()){
-							done=true;
-							if ($(this).find('eventID').text() == 65535){
-								//プログラム予約向け
-								setEpgInfo($(this));
-								$('#epginfo').attr('href', 'reserveinfo.html?id=' + id);
-								$('[href="#detail"], #detail').removeClass('is-active');
-								$('[href="#recset"], #recset').addClass('is-active');
+			var info = $(xhr.responseXML);
+			if (info.find('eventinfo').length > 0){
+				function action(){
+					var Reserve = ReserveAutoaddList[data.onid+'-'+data.tsid+'-'+data.sid+'-'+data.eid];
+					if (Reserve){
+						if (!id){//追加されてた
+							id = Reserve.find('ID').text();
+							if (target.hasClass('onair')){
+								var next = data.next ? 'next' : '';
+								target.data(next+'id', id);
 							}else{
-								setEpgInfo(xml, past);
+								addMark(info, $('.open .addreserve'), $('.open .content'));
 							}
+						}
+						setEpgInfo(info);
+						setReserve(Reserve, id);
+					}else{
+						if (id){//削除されてた
+							if (target.hasClass('reserve')){
+								target.remove();
+							}else{
+								if (target.hasClass('onair')){
+									var next = data.next ? 'next' : '';
+									target.removeData(next+'id');
+								}
 
-							$('#set').attr('action', root + 'api/ReserveChg?id='+id);
-							$('#del').attr('action', root + 'api/ReserveDel?id='+id);
-							$('#progres').attr('action', root + 'api/ReserveChg?id='+id);
-							$('#reserved, #delreseved, #toprogres').show();
-							$('[name=presetID]').data('reseveid', id).val(65535);
-							$('#reserve').text('変更');
-
-							setRecSettting($(this));
+								setEpgInfo(info, past);
+								setDefault(true);
+								$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+							}
+							if (!target.hasClass('onair')) $('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '予約が見つかりませんでした'});
+						}else{
+							setEpgInfo(info, past);
+							setDefault();
 
 							$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-
-							return false;
 						}
-					});
-					if (!done){
-						if (xml.find('eventinfo').length > 0){
-							setEpgInfo(xml, past);
-							setDefault(true);
-							$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-						}
-
-						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '予約が見つかりませんでした'});
 					}
-
 					showSpinner();
 				}
 
 				$.get(root + 'api/Common', {notify: 2}, function(result, textStatus, xhr){
 					var Count = $(xhr.responseXML).find('info').text();
-					if(ReserveAutoaddList && Count == notifyCount){
-						searchReserve();
+					if (ReserveAutoaddList && Count == notifyCount){
+						action();
 					}else{
 						notifyCount = Count;
 						sessionStorage.setItem('notifyCount', notifyCount);
 						$.get(root + 'api/EnumReserveInfo', function(result, textStatus, xhr){
-							ReserveAutoaddList = $(xhr.responseXML);
-							searchReserve();
+							ReserveAutoaddList={};
+							$(xhr.responseXML).find('reserveinfo').each(function(){
+								ReserveAutoaddList[$(this).find('ONID').text()+'-'+$(this).find('TSID').text()+'-'+$(this).find('SID').text()+'-'+$(this).find('eventID').text()]=$(this);
+							});
+							action();
 						});
 					}
 				});
-			}else if (xml.find('eventinfo').length > 0){
-					setEpgInfo(xml, past);
-					setDefault();
-
-					$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-					showSpinner();
 			}else{
-				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
-				showSpinner();
+				if (id){
+				//プログラム予約または番組変更でなくなった
+					function action(){
+						var Reserve = ReserveAutoaddList[data.onid+'-'+data.tsid+'-'+data.sid+'-'+data.eid];
+						if (Reserve){
+							$('#epginfo').attr('href', 'reserveinfo.html?id=' + id);
+							$('[href="#detail"], #detail').removeClass('is-active');
+							$('[href="#recset"], #recset').addClass('is-active');
+
+							setEpgInfo(Reserve);
+							setReserve(Reserve, id);
+						}else{
+							target.remove();
+							$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '予約が見つかりませんでした'});
+							showSpinner();
+						}
+					}
+
+					$.get(root + 'api/Common', {notify: 2}, function(result, textStatus, xhr){
+						var Count = $(xhr.responseXML).find('info').text();
+						if (ReserveAutoaddList && Count == notifyCount){
+							action();
+						}else{
+							notifyCount = Count;
+							sessionStorage.setItem('notifyCount', notifyCount);
+							$.get(root + 'api/EnumReserveInfo', function(result, textStatus, xhr){
+								ReserveAutoaddList={};
+								$(xhr.responseXML).find('reserveinfo').each(function(){
+									ReserveAutoaddList[$(this).find('ONID').text()+'-'+$(this).find('TSID').text()+'-'+$(this).find('SID').text()+'-'+$(this).find('eventID').text()]=$(this);
+								});
+								action();
+							});
+						}
+					});
+				}else{
+					$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'Error : ' + info.find('err').text()});
+					showSpinner();
+				}
 			}
 		}
 	});
+}
+
+//予約をセット
+function setReserve(Reserve, id){
+	$('#action').attr('name', 'change');
+	$('#set').attr('action', root + 'api/setReserve?id='+id);
+	$('#del').attr('action', root + 'api/setReserve?id='+id);
+	$('#progres').attr('action', root + 'api/setReserve?id='+id);
+	$('#reserved, #delreseved, #toprogres').show();
+	$('[name=presetID]').data('reseveid', id).val(65535);
+	$('#reserve').text('変更');
+
+	setRecSettting(Reserve);
+
+	$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+	showSpinner();
 }
 
 //EGP予約をセット
@@ -871,8 +913,9 @@ function setDefault(mark){
 
 		if (mark){
 			$('.open .mark.reserve').remove();
-			$('.open .addreserve').removeData('id').text('予約追加');
+			$('.open .addreserve').data('id', false).text('予約追加');
 			$('.open .reserve').removeClass('reserve disabled partially shortage view');
+			$('.open .flag').data('id', false).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',click:function(){reserve($(this));},html:'<i class="material-icons">add</i>'}));
 		}
 	}else{
 		if (PresetList){
@@ -884,6 +927,90 @@ function setDefault(mark){
 			});
 		}
 	}
+}
+
+//予約処理
+function reserve(obj){
+	showSpinner(true);
+	var url;
+	var data = obj.parents('td').data();
+
+	if (data.id){
+		url = root + 'api/reservetoggle';
+	}else{
+		url = root + 'api/oneclickadd';
+	}
+	$.ajax({
+		url: url,
+		data: data,
+
+		success: function(result, textStatus, xhr) {
+			var xml = $(xhr.responseXML);
+			if (xml.find('success').length > 0){
+				var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
+				var recmode = xml.find('recMode').text();
+				var overlapmode = xml.find('overlapMode').text();
+				var id = xml.find('ID').text();
+
+				var mode = '';
+				if (recmode == 5){
+					//無効
+					mode = 'disabled';
+				}else if (overlapmode == 1){
+					//チューナー不足
+					mode = 'partially';
+				}else if (overlapmode == 2){
+					//一部録画
+					mode = 'shortage';
+				}
+
+				var parents;
+				//検索ページ向け
+				if (obj.hasClass('search')){
+					parents = obj.parents('td');
+					//スイッチ追加
+					if (start){
+						obj.removeClass().addClass('search recmark').empty().parent('td').data('id', id).data('toggle', 1).removeData('oneClick');
+						if (recmode != 5) obj.unbind('click');
+					}else if (!obj.hasClass('addreserve')){
+						var reserveid = 'reserve' + id;
+						var label = $('<label>', {
+							class: 'mdl-switch mdl-js-switch',
+							for: reserveid,
+							html: $('<input>', {
+								id: reserveid,
+								class: 'search addreserve mdl-switch__input',
+								type: 'checkbox',
+								checked: recmode != 5,
+								change: function(){reserve($(this));}
+							})
+						});
+						componentHandler.upgradeElement(label.get(0));
+
+						obj.parent('td').data('id', id).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
+					}
+				}else{
+					parents = obj.parents('tr');
+				}
+				parents.removeClass('disabled partially shortage').addClass(mode);
+				if (recmode != 5 && obj.hasClass('mdl-switch__input')){
+					obj.prop('checked', true).parent().addClass('is-checked');
+				}else{
+					obj.prop('checked', false).parent().removeClass('is-checked');
+				}
+			}else{
+				if (obj.hasClass('mdl-switch__input')){
+					if (obj.prop('checked')){
+						obj.prop('checked', false).parent().removeClass('is-checked');
+					}else{
+						obj.prop('checked', true).parent().addClass('is-checked');
+					}
+				}
+				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
+			}
+			showSpinner();
+		}
+	});
 }
 
 //録画マーク追加
@@ -1332,97 +1459,6 @@ $(function(){
 		}
 	});
 
-	//予約処理
-	function reserve(obj){
-		showSpinner(true);
-		var url;
-		var data = obj.parents('td').data();
-
-		if (data.id){
-			url = root + 'api/reservetoggle';
-		}else{
-			url = root + 'api/oneclickadd';
-		}
-		$.ajax({
-			url: url,
-			data: data,
-
-			success: function(result, textStatus, xhr) {
-				var xml = $(xhr.responseXML);
-				if (xml.find('success').length > 0){
-					var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
-					var recmode = xml.find('recMode').text();
-					var overlapmode = xml.find('overlapMode').text();
-					var id = xml.find('ID').text();
-
-					var mode = '';
-					if (recmode == 5){
-						//無効
-						mode = 'disabled';
-					}else if (overlapmode == 1){
-						//チューナー不足
-						mode = 'partially';
-					}else if (overlapmode == 2){
-						//一部録画
-						mode = 'shortage';
-					}
-
-					var parents;
-					//検索ページ向け
-					if (obj.hasClass('search')){
-						parents = obj.parents('td');
-						//スイッチ追加
-						if (start){
-							obj.removeClass().addClass('search recmark').empty().parent('td').data('id', id);
-							if (recmode != 5) obj.unbind('click');
-						}else if (!obj.hasClass('addreserve')){
-							var reserveid = 'reserve' + id;
-							var label = document.createElement('label');
-							label.setAttribute('for', reserveid);
-							label.className = 'mdl-switch mdl-js-switch';
-
-							var input = document.createElement('input');
-							input.id = reserveid;
-							input.setAttribute('type', 'checkbox');
-							input.setAttribute('checked', (recmode != 5 ? true : false));
-							input.className = 'search addreserve mdl-switch__input';
-
-							//予約イベント追加
-							$(input).change(function(){
-								reserve($(this));
-							});
-
-							label.appendChild(input);
-							componentHandler.upgradeElement(label);
-
-							var add = document.createElement('span');
-							add.appendChild(label);
-							obj.parent('td').data('id', id).html(add).parent('tr').data('start', xml.find('startTime').text()*1000);
-						}
-					}else{
-						parents = obj.parents('tr');
-					}
-					parents.removeClass('disabled partially shortage').addClass(mode);
-					if (recmode != 5 && obj.hasClass('mdl-switch__input')){
-							obj.prop('checked', true).parent().addClass('is-checked');
-					}else{
-							obj.prop('checked', false).parent().removeClass('is-checked');
-					}
-				}else{
-					if (obj.hasClass('mdl-switch__input')){
-						if (obj.prop('checked')){
-							obj.prop('checked', false).parent().removeClass('is-checked');
-						}else{
-							obj.prop('checked', true).parent().addClass('is-checked');
-						}
-					}
-					notification.MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
-				}
-				showSpinner();
-			}
-		});
-	}
-
 	//予約トグルスイッチ
 	$('.flag input').change(function(){
 		reserve( $(this) );
@@ -1516,27 +1552,20 @@ $(function(){
 										if (recmode != 5) obj.unbind('click');
 									}else if (!obj.hasClass('addreserve')){
 										var reserveid = 'reserve' + id;
-										var label = document.createElement('label');
-										label.setAttribute('for', reserveid);
-										label.className = 'mdl-switch mdl-js-switch';
-
-										var input = document.createElement('input');
-										input.id = reserveid;
-										input.setAttribute('type', 'checkbox');
-										input.setAttribute('checked', (recmode != 5 ? true : false));
-										input.className = 'search addreserve mdl-switch__input';
-
-										//予約イベント追加
-										$(input).change(function(){
-											reserve($(this));
+										var label = $('<label>', {
+											class: 'mdl-switch mdl-js-switch',
+											for: reserveid,
+											html: $('<input>', {
+												id: reserveid,
+												class: 'search addreserve mdl-switch__input',
+												type: 'checkbox',
+												checked: recmode != 5,
+												change: function(){reserve($(this));}
+											})
 										});
+										componentHandler.upgradeElement(label.get(0));
 
-										label.appendChild(input);
-										componentHandler.upgradeElement(label);
-
-										var add = document.createElement('span');
-										add.appendChild(label);
-										obj.parent('td').data('id', id).html(add).parent('tr').data('start', xml.find('startTime').text()*1000);
+										obj.parent('td').data('id', id).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
 									}
 								}else{
 									parents = obj.parents('tr');
@@ -1556,21 +1585,11 @@ $(function(){
 							count = $('#contentList option:selected').length;
 							$('.open .category').html( (count==0 ? '全ジャンル' : $('#contentList option:selected:first').text()+(count>1 ? '<small>.他'+(count-1)+'ch' : '')) );
 							$('.open .mode').text($('[name=recMode] option:selected').text());
-
-							$.get(root + 'api/EnumAutoAdd', function(result, textStatus, xhr){
-								ReserveAutoaddList = $(xhr.responseXML);
-								searchReserve(ReserveAutoaddList);
-							});
 						}else if (data.action == 'del'){
 							setDefault(true);
-							if ($('.open').hasClass('epginfo')){
+							if ($('.open').hasClass('reserve')){
+								$('.open.reserve').remove();
 								$('#sidePanel, .close_info.mdl-layout__obfuscator').removeClass('is-visible');
-								if ($('.open').hasClass('search')){
-									$('.open .flag').removeClass('open').data('id',false).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',html:'<i class="material-icons">add</i>'}));
-									$('.add').click(function(){reserve( $(this) );});
-								}else{
-									$('.open').remove();
-								}
 							}
 						}else if (data.action == 'close'){
 							$('#actions').remove();
