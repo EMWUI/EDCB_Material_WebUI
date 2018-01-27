@@ -125,13 +125,13 @@ if changed then
     ..(r.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
     ..r.recSetting.batFilePath..'</batFilePath><recFolderList>'
   for j,w in ipairs(r.recSetting.recFolderList) do
-    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     changed=changed..'<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn>'
-      ..recNamePlugInoption..'</recFolderInfo>'
+      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
+      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
+      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>'
   end
   changed=changed..'</recFolderList><suspendMode>'
     ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
@@ -143,13 +143,13 @@ if changed then
     ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
     ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'
   for j,w in ipairs(r.recSetting.partialRecFolder) do
-    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     changed=changed..'<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn>'
-      ..recNamePlugInoption..'</recFolderInfo>'
+      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
+      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
+      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>'
   end
   changed=changed..'</partialRecFolder></recsetting><recFileNameList>'
   for j,w in ipairs(r.recFileNameList) do

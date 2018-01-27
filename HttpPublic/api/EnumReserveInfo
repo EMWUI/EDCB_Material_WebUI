@@ -1,6 +1,3 @@
-path='Setting\\HttpPublic.ini'
-option=tonumber(edcb.GetPrivateProfile('SET','option',false,path))~=0
-
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
@@ -26,13 +23,13 @@ for i,v in ipairs(a) do
     ..(v.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
     ..v.recSetting.batFilePath..'</batFilePath><recFolderList>')
   for j,w in ipairs(v.recSetting.recFolderList) do
-    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     table.insert(ct, '<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn>'
-      ..recNamePlugInoption..'</recFolderInfo>')
+      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
+      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
+      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
   end
   table.insert(ct, '</recFolderList><suspendMode>'
     ..v.recSetting.suspendMode..'</suspendMode><rebootFlag>'
@@ -44,13 +41,13 @@ for i,v in ipairs(a) do
     ..v.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
     ..v.recSetting.tunerID..'</tunerID><partialRecFolder>')
   for j,w in ipairs(v.recSetting.partialRecFolder) do
-    recName,recName2,recName3=string.match(w.recNamePlugIn, '^(.+%.dll)(%?(.*))??')
-    recNamePlugInoption=option and '<recNamePlugIndll>'..(recName and recName or w.recNamePlugIn)..'</recNamePlugIndll><recNamePlugInoption>'..(recName3 and recName3 or '')..'</recNamePlugInoption>' or ''
+    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     table.insert(ct, '<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn>'
-      ..recNamePlugInoption..'</recFolderInfo>')
+      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
+      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
+      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
   end
   table.insert(ct, '</partialRecFolder></recsetting><recFileNameList>')
   for j,w in ipairs(v.recFileNameList) do
