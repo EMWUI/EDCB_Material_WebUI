@@ -1486,7 +1486,7 @@ h4 .mdl-button--icon {
     height: 2px;
     width: calc(100% - 32px); }
   #onair .mdl-list__item-avatar.material-icons.mdl-color--primary {
-    background:center / 27px no-repeat;
+    background:center / 32px no-repeat;
     font-size: 24px;
     padding: 8px; }
   #onair .mdl-list__item--three-line .mdl-list__item-text-body {
@@ -1546,6 +1546,7 @@ h4 .mdl-button--icon {
   font-size: 16px;
   line-height: 17px; }
   #onair.webPanel .mdl-list__item-avatar.material-icons.mdl-color--primary {
+    background:center / 26px no-repeat;
     padding: 4px; }
   #onair.webPanel .mdl-list__item .mdl-progress {
     width: calc(100% - 16px); }

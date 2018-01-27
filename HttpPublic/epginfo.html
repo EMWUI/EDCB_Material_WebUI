@@ -123,7 +123,7 @@ if not End then
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
-    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/'..(r and 'ReserveChg?id='..r.reserveID or 'ReserveAdd')..'" data-action="add">\n'
+    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/'..(r and 'ReserveChg?id='..r.reserveID or 'ReserveAdd')..'" data-action="add" data-onid="'..onid..'" data-tsid="'..tsid..'" data-sid="'..sid..'" data-eid="'..eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reseveid="'..r.reserveID..'"' or '')..'>\n'

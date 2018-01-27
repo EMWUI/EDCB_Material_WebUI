@@ -39,7 +39,7 @@ if r then
         ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
         ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
-    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'">\n'
+    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/reservechg?id='..r.reserveID..'" data-onid="'..r.onid..'" data-tsid="'..r.tsid..'" data-sid="'..r.sid..'" data-eid="'..r.eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
