@@ -327,9 +327,9 @@ for i=0,7 do
         ..'<a class="mdl-button mdl-js-button mdl-button--raised'
           ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
                        or '" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)..'&week='..hrefGene)..'">番組詳細</a>'
-        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'"'								--終了前
-          ..(r and ' data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
-                or ' data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'">録画予約')..'</a>' or '')		--なし新規追加
+        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
+          ..(r and '" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+                or '">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'
 
@@ -355,7 +355,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div></div>\n'
 
-  ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
+  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="notKey">\n'

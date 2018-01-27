@@ -313,12 +313,16 @@ header {
 main {
   height: 100%;
   background: #FAFAFA;
-  will-change: margin;
-  transition-property: margin;
-  transition-duration: .5s;
-  transition-timing-function: cubic-bezier(.4,0,.2,1); }
+  will-change: margin; }
+  main, #sidePanel {
+    transition-property: margin, height;
+    transition-duration: .5s;
+    transition-timing-function: cubic-bezier(.4,0,.2,1); }
   main.serch-bar {
     margin-top:-48px; }
+    main.serch-bar #sidePanel {
+      margin-top:48px;
+      height: calc(100% - 48px); }
 
 .main-content {
   background: #FFF;
@@ -1227,7 +1231,7 @@ h4 .mdl-button--icon {
   position: relative; }
   #movie #player {
    overflow: hidden; }
-  #popup #player {
+  .window #player {
     padding: 24px; }
   .player-container {
     position: relative;
@@ -1264,7 +1268,7 @@ h4 .mdl-button--icon {
     height: 100%;
     max-height: none; }
   @media (max-width: 479px) {
-    #popup #player {
+    .window #player {
       padding: 12px; } }
 
 
@@ -1374,7 +1378,7 @@ h4 .mdl-button--icon {
 
 
 /* ポップアップ */
-#popup {
+.window {
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex;
@@ -1382,23 +1386,23 @@ h4 .mdl-button--icon {
   justify-content: center;
   background: rgba(0,0,0,0.1);
   z-index: 99; }
-  #popup > .mdl-card {
+  .window > .mdl-card {
     margin-right: 0;
     overflow: visible;
     width: auto;
     min-width: 280px;
     max-width: 90vw;
     max-height: 90vh; }
-  #popup .mdl-badge {
+  .window .mdl-badge {
     position: absolute;
     top: 0;
     right: -11px; }
-  #popup #video {
+  .window #video {
     max-height: calc(90vh - 68px); }
   @media (max-width: 479px) {
-    #popup > .mdl-card {
-      max-width: 94vw;
-      max-height: 94vh; } }
+    .window > .mdl-card {
+      max-width: 94%;
+      max-height: 94%; } }
 
 .macro-list{ 
   overflow-y: auto;

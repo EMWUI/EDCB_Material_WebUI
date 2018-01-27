@@ -29,8 +29,8 @@ function rec(){
 
 //検索バー表示
 function saerchbar(){
-	$('main').on('scroll', function(){
-		if ($('main').scrollTop() > 0){
+	$('main>.mdl-layout__content').scroll(function(){
+		if ($('main>.mdl-layout__content').scrollTop() > 0){
 			$('.serch-bar').removeClass('scroll');
 			$('main').addClass('serch-bar');
 		}else{
@@ -207,7 +207,7 @@ function creatNotify(notify, data, save){
 //マクロ一覧表示
 function macro(obj){
 	$(obj).prevAll('input').addClass('is-active');
-	$('#popup').addClass('is-visible');
+	$('#macro').addClass('is-visible');
 }
 
 //番組詳細を表示
@@ -490,12 +490,12 @@ function setAutoAdd(target){
 			autoadd.find('dateList').each(function(){
 				var DayOfWeek = ['日','月','火','水','木','金','土'];
 				var time = {
-					startDayOfWeek: DayOfWeek[autoadd.find('startDayOfWeek').text()],
-					startMin: autoadd.find('startMin').text(),
-					startHour: autoadd.find('startHour').text(),
-					endDayOfWeek: DayOfWeek[autoadd.find('endDayOfWeek').text()],
-					endHour: autoadd.find('endHour').text(),
-					endMin: autoadd.find('endMin').text()
+					startDayOfWeek: DayOfWeek[$(this).find('startDayOfWeek').text()],
+					startMin: $(this).find('startMin').text(),
+					startHour: $(this).find('startHour').text(),
+					endDayOfWeek: DayOfWeek[$(this).find('endDayOfWeek').text()],
+					endHour: $(this).find('endHour').text(),
+					endMin: $(this).find('endMin').text()
 				};
 				$('#dateList_select').append('<option value="' + time.startDayOfWeek + '-' + time.startHour + ':' + time.startMin + '-' + time.endDayOfWeek + '-' + time.endHour + ':' + time.endMin + '">' + time.startDayOfWeek + ' ' + time.startHour + ':' + time.startMin + ' ～ ' + time.endDayOfWeek + ' ' + time.endHour + ':' + time.endMin + '</otion>');
 				var val;
@@ -793,8 +793,9 @@ function setDefault(mark){
 
 		if (mark){
 			$('.open .mark.reserve').remove();
-			$('.open .addreserve').removeData('id').text('予約追加');
+			$('.open .addreserve').data('id', false).text('予約追加');
 			$('.open .reserve').removeClass('reserve disabled partially shortage view');
+			$('.open .flag').data('id', false).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',click:function(){reserve($(this));},html:'<i class="material-icons">add</i>'}));
 		}
 	}else{
 		$.get(root + 'api/EnumRecPreset', function(result, textStatus, xhr){
@@ -1228,7 +1229,7 @@ $(function(){
 	});
 	$('.close.macro').click(function(){
 		$('input.is-active').removeClass('is-active');
-		$('#popup').removeClass('is-visible');
+		$('#macro').removeClass('is-visible');
 	});
 	$('.macro-item').click(function(){
 		var elem = $('input.is-active').get(0);
@@ -1237,7 +1238,7 @@ $(function(){
 		var def = $('input.is-active').val();
 		var val = def.substr(0, start) + $(this).data('macro') + def.substr(end, def.length);
 		$('input.is-active').val(val).removeClass('is-active').parent().addClass('is-dirty');
-		$('#popup').removeClass('is-visible');
+		$('#macro').removeClass('is-visible');
 	});
 
 

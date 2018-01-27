@@ -18,7 +18,7 @@ function template(temp)
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
 ]=]
 ..(not css==0 and css or '<link rel="stylesheet" href="'..path..'css/material.min.css">')..'\n'
-..(temp.dialog and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
+..((temp.dialog or temp.progres) and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
 <link rel="stylesheet" href="]=]..path..[=[css/default.css">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
@@ -34,7 +34,7 @@ function template(temp)
 <script src="]=]..path..[=[js/hammer.min.js"></script>
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
-..(temp.dialog and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
+..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
 ..'<script>path=\''..path..'\';root=\''..mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')..'\';</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
@@ -126,10 +126,9 @@ s=s..[=[
   <div class="drawer-swipe"></div>
 ]=]
 
-..((temp.macro or temp.video) and [=[
-  <div id="popup" class="mdl-layout__obfuscator">
+..(temp.macro and [=[
+  <div id="macro" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
-]=]..(temp.macro and [=[
       <div class="mdl-card__title">
         <h2 class="mdl-card__title-text">マクロ一覧</h2>
       </div>
@@ -257,7 +256,11 @@ s=s..[=[
       <div class="mdl-dialog__actions mdl-card__actions mdl-card--border">
         <button class="macro close mdl-button">キャンセル</button>
       </div>
-]=] or [=[
+    </div>
+  </div>
+]=] or '')..(temp.video and [=[
+  <div id="popup" class="window mdl-layout__obfuscator">
+    <div class="mdl-card mdl-shadow--16dp">
       <div id="player" class="is-small">
         <div class="player-container">
           <video id="video"></video>
@@ -285,7 +288,6 @@ s=s..[=[
         </div>
       </div>
       <span class="close icons mdl-badge" data-badge="&#xE5CD;"></span>
-]=])..[=[
     </div>
   </div>
 ]=] or '')

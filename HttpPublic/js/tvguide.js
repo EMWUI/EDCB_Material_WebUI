@@ -9,6 +9,7 @@
 		elapse = Math.floor((date-baseTime*1000)/1000/60/60);
 	}else{
 		elapse = hour - baseTime;
+		if (hour<baseTime) elapse += 24;
 	}
 	var line = (elapse * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
 	return {line: line, min: min};

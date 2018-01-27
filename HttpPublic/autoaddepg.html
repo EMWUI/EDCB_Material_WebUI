@@ -32,7 +32,7 @@ if math.ceil((#a/PAGE_COUNT)-1)>0 then
   pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
 end
 
-ct.main='<main class="sidePanel-container">\n'
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
 if sidePanel then
   ct.macro=true
@@ -144,7 +144,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
 end
 
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
-     ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(sidePanel and '" target="_blandk"' or '')..'"><i class="material-icons">add</i></a>'
+     ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(sidePanel and '" target="_blandk' or '')..'"><i class="material-icons">add</i></a>'
 
 ct=template(ct)
 

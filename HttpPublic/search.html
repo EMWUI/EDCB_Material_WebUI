@@ -3,7 +3,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
@@ -282,7 +281,7 @@ ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-6
   ..'<button class="mdl-button mdl-js-button mdl-button--icon" form="search"><i class="material-icons">search</i></button><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search" value="'..key.andKey..'"><label class="mdl-textfield__label"></label></div>\n'
   ..'</div></div>\n'
 
-ct.main='<main class="sidePanel-container">\n'
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate(true) or '')
 
@@ -406,7 +405,7 @@ if #a>0 then
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                                or 'search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
 
-      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid)..'" data-ctok="'..CsrfToken()..'"><span'
+      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken()..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 
@@ -417,52 +416,53 @@ if #a>0 then
       ..'\n')
   end
 
-  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>\n'
+  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')
+end
+ct.main=ct.main..'\n</div>\n'
+
+
+  ..'<form id="hidden" method="POST" action="search.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(autopage and (pageIndex~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
+  ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="andKey" value="'..key.andKey..'">\n'
+  ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
+  ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
+  ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
+  ..(key.aimaiFlag and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
+  ..(key.notContetFlag and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
+  ..(key.notDateFlag and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
+  ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
+  ..(key.network and '<input type="hidden" name="network" value="'..key.network..'">\n' or '')
+  ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
+  ..(key.chkRecNoService and '<input type="hidden" name="chkRecNoService" value="1">\n' or '')
+  ..(key.chkDurationMin and '<input type="hidden" name="chkDurationMin" value="'..key.chkDurationMin..'">\n' or '')
+  ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
+  ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
+  ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
+  ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+
+if key.contentList then
+  for i,v in ipairs(key.contentList) do
+    ct.main=ct.main..'<input type="hidden" name="contentList" value="'..v.content_nibble..'">\n'
+  end
 end
 
-
-  ct.main=ct.main..'<form id="hidden" method="POST" action="search.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(autopage and (pageIndex~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
-    ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
-    ..'<input type="hidden" name="andKey" value="'..key.andKey..'">\n'
-    ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
-    ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
-    ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
-    ..(key.aimaiFlag and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
-    ..(key.notContetFlag and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
-    ..(key.notDateFlag and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
-    ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
-    ..(key.network and '<input type="hidden" name="network" value="'..key.network..'">\n' or '')
-    ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
-    ..(key.chkRecNoService and '<input type="hidden" name="chkRecNoService" value="1">\n' or '')
-    ..(key.chkDurationMin and '<input type="hidden" name="chkDurationMin" value="'..key.chkDurationMin..'">\n' or '')
-    ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
-    ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
-    ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
-    ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
-
-  if key.contentList then
-    for i,v in ipairs(key.contentList) do
-      ct.main=ct.main..'<input type="hidden" name="contentList" value="'..v.content_nibble..'">\n'
-    end
+if key.serviceList then
+  for i,v in ipairs(key.serviceList) do
+    ct.main=ct.main..'<input type="hidden" name="serviceList" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
   end
+end
 
-  if key.serviceList then
-    for i,v in ipairs(key.serviceList) do
-      ct.main=ct.main..'<input type="hidden" name="serviceList" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
-    end
+if key.dateList then
+  ct.main=ct.main..'<input type="hidden" name="dateList" value="'
+  for i,v in ipairs(key.dateList) do
+    ct.main=ct.main..(i==1 and '' or ',')
+      ..({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
+      ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
   end
-
-  if key.dateList then
-    ct.main=ct.main..'<input type="hidden" name="dateList" value="'
-    for i,v in ipairs(key.dateList) do
-      ct.main=ct.main..(i==1 and '' or ',')
-        ..({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
-        ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
-    end
-    ct.main=ct.main..'">\n'
-  end
-  ct.main=ct.main..'</form>\n'
+  ct.main=ct.main..'">\n'
+end
+ct.main=ct.main..'</form>\n'
 
 if (dataID>0 or mg.get_var(post, 'id')) then
   ct.main=ct.main..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"  data-search="autoaddepginfo.html?id='..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit</i></a>\n'
