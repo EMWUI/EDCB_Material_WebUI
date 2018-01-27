@@ -143,7 +143,8 @@ for i,v in ipairs(sort or {}) do
       end
     end
 
-    f=edcb.FindFile and edcb.FindFile(mg.script_name:gsub('[^\\/]*$','')..'\\img\\logo\\'..v.onid..'-'..v.sid..'.png', 1)
+    fname=('%04X%04X'):format(v.onid,v.sid)..'.png'  --局ロゴのファイル名 BS1: 00040065.png
+    f=edcb.FindFile and edcb.FindFile(mg.script_name:gsub('[^\\/]*$','')..'\\img\\logo\\'..fname, 1)
 
     list='<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line" data-onid="'..v.onid
       ..'" data-name="'..v.service_name
@@ -159,7 +160,7 @@ for i,v in ipairs(sort or {}) do
       ..'">\n'
 
       ..'<span class="mdl-list__item-primary-content">'
-      ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..v.onid..'-'..v.sid..'.png\');">' or '>tv')..'</i>'..v.service_name
+      ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..fname..'\');">' or '>tv')..'</i>'..v.service_name
       ..'<span class="mdl-list__item-text-body">\n'
       ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(event.shortInfo and ConvertTitle(event.shortInfo.event_name) or '')..'</span></span>\n'
       ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', next_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', next_endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
