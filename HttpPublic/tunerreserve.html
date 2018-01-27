@@ -75,7 +75,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     bg=w.recSetting.recMode==5 and ' disabled'
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
+  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(sidePanel and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
                   or 'data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex)..'">\n'
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'

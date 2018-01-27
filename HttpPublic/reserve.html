@@ -77,7 +77,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   bg=v.recSetting.recMode==5 and ' disabled'
      or v.overlapMode==1 and ' partially'
      or v.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(v.durationSecond and (os.time(v.startTime)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
+  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(v.durationSecond and (os.time(v.startTime)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                   or 'data-href="reserveinfo.html?id='..v.reserveID..'&page='..pageIndex)..'">\n'
 

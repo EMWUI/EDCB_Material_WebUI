@@ -313,16 +313,12 @@ header {
 main {
   height: 100%;
   background: #FAFAFA;
-  will-change: margin; }
-  main, #sidePanel {
-    transition-property: margin, height;
-    transition-duration: .5s;
-    transition-timing-function: cubic-bezier(.4,0,.2,1); }
+  will-change: margin;
+  transition-property: margin;
+  transition-duration: .5s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1); }
   main.serch-bar {
     margin-top:-48px; }
-    main.serch-bar #sidePanel {
-      margin-top:48px;
-      height: calc(100% - 48px); }
 
 .main-content {
   background: #FFF;
@@ -1401,8 +1397,8 @@ h4 .mdl-button--icon {
     max-height: calc(90vh - 68px); }
   @media (max-width: 479px) {
     #popup > .mdl-card {
-      max-width: 94%;
-      max-height: 94%; } }
+      max-width: 94vw;
+      max-height: 94vh; } }
 
 .macro-list{ 
   overflow-y: auto;
@@ -1490,7 +1486,7 @@ h4 .mdl-button--icon {
     height: 2px;
     width: calc(100% - 32px); }
   #onair .mdl-list__item-avatar.material-icons.mdl-color--primary {
-    background:center / 32px no-repeat;
+    background:center / 27px no-repeat;
     font-size: 24px;
     padding: 8px; }
   #onair .mdl-list__item--three-line .mdl-list__item-text-body {
@@ -1550,7 +1546,6 @@ h4 .mdl-button--icon {
   font-size: 16px;
   line-height: 17px; }
   #onair.webPanel .mdl-list__item-avatar.material-icons.mdl-color--primary {
-    background:center / 26px no-repeat;
     padding: 4px; }
   #onair.webPanel .mdl-list__item .mdl-progress {
     width: calc(100% - 16px); }
