@@ -503,8 +503,8 @@ function setAutoAdd(target){
 
 				$('#dateList_select option').each(function(i){
 					if (val){ val += ','; }else{ val = ''; }
-					val += autoadd.val();
-					html += '<li class="mdl-list__item" data-count="' + i + '"><span class="mdl-list__item-primary-content">' + autoadd.text() + '</span></li>';
+					val += $(this).val();
+					html += '<li class="mdl-list__item" data-count="' + i + '"><span class="mdl-list__item-primary-content">' + $(this).text() + '</span></li>';
 				});
 				$('[name=dateList]').val(val);
 				$("#dateList_touch").html(html);
