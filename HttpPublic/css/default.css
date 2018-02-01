@@ -1343,10 +1343,12 @@ h4 .mdl-button--icon {
       padding-right: 8px; }
     #control .mdl-switch:not(.is-checked) .mdl-switch__thumb {
       background: #E1E1E1; }
-    #HD {
+    .quality {
       display: none; }
-    #HD:not(:checked)+label {
-      color:rgba(0,0,0,.38); }
+    .quality:not(:checked)+label {
+      color:rgba(0,0,0,0) }
+      #settings+div+div {
+        margin-right: 20px; }
   #seek-container {
     display: -webkit-flex;
     display:     -ms-flexbox;
@@ -1558,27 +1560,29 @@ h4 .mdl-button--icon {
 
 
 /*ライブラリ*/
-#library .mdl-list__item {   
+.library .mdl-list__item {   
   transition-duration: .28s;
   transition-timing-function: cubic-bezier(.4,0,.2,1);
   transition-property: background-color; }
   #library .mdl-list__item:hover {
     background-color: #eee; }
 
-#library .mdl-card {
+.library .mdl-card {
   min-height: 150px;
   background: #fff center / cover; }
-  #library .mdl-card__title {
+  .library .mdl-card__title {
     padding: 8px;
     justify-content: center; }
-  #library .mdl-card__title > .material-icons {
+  .library .mdl-card__title > .material-icons {
     color: #757575;
     font-size: 75px; }
-  #library .mdl-card > .mdl-card__actions {
+  .library .mdl-card > .mdl-card__actions {
     height: 52px;
     padding: 16px;
     background: rgba(0, 0, 0, 0.2); }
-  #library .mdl-list__item-avatar.material-icons {
+  .library .mdl-list__item-avatar {
+    background: center / 80px no-repeat; }
+  .library .mdl-list__item-avatar.material-icons {
     font-size: 24px;
     padding: 8px; }
   .is-small-screen #library .mdl-card {
@@ -1587,25 +1591,40 @@ h4 .mdl-button--icon {
     height: 38px;
     padding: 8px; }
   @media (min-width: 1300px) {
-    #library .mdl-card {
+    .library .mdl-card {
       min-height: 200px; }
-    #library .mdl-card__title {
+    .library .mdl-card__title {
       padding: 16px }
-    #library .mdl-card__title > .material-icons {
+    .library .mdl-card__title > .material-icons {
       font-size: 100px; } }
   @media (max-width: 700px) {
-    #library .mdl-card > .mdl-card__actions {
+    .library .mdl-card > .mdl-card__actions {
       height: 38px;
       padding: 8px; }
     .is-small-screen #library .mdl-card {
       min-height: 100px; }
-      #library .mdl-card__title > .material-icons {
+      .library .mdl-card__title > .material-icons {
         font-size: 50px; } }
+
+#folder .folder{
+  display: flex;
+  align-items: center;
+  padding: 0;
+  height: 48px;
+  color: #757575;
+  background: #fff; }
+  .icon {
+    padding: 0 16px; }
 
 .filename {
   color: #fff;
   font-size: 14px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; }
+.foldername {
+  padding-right: 16px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap; }

@@ -49,11 +49,12 @@ function folder(){
 	var notification = $('.mdl-js-snackbar').get(0);
 	if (!loadingMovieList){
 		showSpinner(true);
-		$('#library').empty();
+		$('.library').empty();
+		$('#folder').hide();
 		if (ViewMode == 'grid'){
-			$('#library').addClass('list');
+			$('.library').addClass('list');
 		}else{
-			$('#library').removeClass('list');
+			$('.library').removeClass('list');
 		}
 		var found;
 		var xml = sessionStorage.getItem('movie');
@@ -64,7 +65,7 @@ function folder(){
 				$(this).children('dir, file').each(function(){
 					var name = $(this).children('name').text();
 					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'));
-					if ($(this).context.tagName == 'dir'){
+					if ($(this).prop('tagName') == 'dir'){
 						obj.addClass('folder').data('id', $(this).children('id').text());
 			 			$(obj).click(function(){
 							refreshPath = true;
@@ -72,20 +73,22 @@ function folder(){
 						});
 
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name).append(
-								$('<div>', {class: 'mdl-card__title mdl-card--expand', html: $('<i>', {class: 'material-icons', text: 'folder'}) }),
-								$('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
+							obj.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name).append(
+								$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons', text: 'folder'}) }),
+								$('<div>', {class: 'foldername', text: name }) );
+							$('#folder').show().append(obj);
 						}else{
 							obj.addClass('mdl-list__item').append(
 								$('<span>', {class: 'mdl-list__item-primary-content', append: [
 									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
 									$('<span>', {text: name}) ]}) );
+							$('#file').append(obj);
 						}
 					}else{
 						var data = {
 							name: name,
 							path: $(this).children('path').text(),
-							public: $(this).children('public').length > 0 ? root + $(this).children('public').text() : false
+							public: $(this).children('public').length > 0
 						};
 						obj.addClass('item').data(data);
 						$(obj).click(function(){
@@ -94,9 +97,9 @@ function folder(){
 							playMovie($(this));
 						});
 
+						var thumbs = $(this).children('thumbs').text();
 						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name);
-							var thumbs = $(this).children('thumbs').text();
 							if (thumbs != 0){
 								obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 							}else{
@@ -104,15 +107,21 @@ function folder(){
 							}
 							obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 						}else{
+							var avatar;
+							if (thumbs != 0){
+								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'thumbs/' + thumbs + '\');'});
+							}else{
+								avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
+							}
 							obj.addClass('mdl-list__item').append(
 								$('<span>', {class: 'mdl-list__item-primary-content', append: [
-									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}),
+									avatar,
 									$('<span>', {text: name}) ]}) );
 						}
+						$('#file').append(obj);
 					}
-					$('#library').append(obj);
 				});
-				$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+				$('#file li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 
 				var name = $(this).children('name').text();
 				$('.mdl-layout__header-row .mdl-layout-title').text(name);
@@ -174,12 +183,13 @@ function librarySwipe(obj){
 
 function librarySearch(key){
 		if (key.length > 0){
+			key = decodeURI(key);
 			$('#library').empty();
 			var found;
 			var xml = sessionStorage.getItem('movie');
 			var movie = new DOMParser().parseFromString(xml, 'text/xml');
-			var library = $('<div>', {id: 'library', class: 'mdl-grid'});
-			if (ViewMode == 'grid') library.addClass('list');
+			$('.library').empty();
+			if (ViewMode == 'grid') $('.library').addClass('list');
 
 			$(movie).find('file').each(function(){
 				var name = $(this).children('name').text();
@@ -196,24 +206,30 @@ function librarySearch(key){
 					};
 					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, click: event });
 
+					var thumbs = $(this).children('thumbs').text();
 					if (ViewMode == 'grid'){
 						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-						if ($(this).children('thumbs').length > 0){
+						if (thumbs != 0){
 							obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 						}else{
 							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
 						}
 						obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 					}else{
+						var avatar;
+						if (thumbs != 0){
+							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'thumbs/' + thumbs + '\');'});
+						}else{
+							avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
+						}
 						obj.addClass('mdl-list__item').append(
 							$('<span>', {class: 'mdl-list__item-primary-content', append: [
-								$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'}),
+								avatar,
 								$('<span>', {text: name}) ]}) );
 					}
-					library.append(obj);
+					$('#file').append(obj);
 				}
 			});
-			$('main').html(library);
 			$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
 			$('.mdl-layout__header-row .mdl-layout-title').text('検索 (' + key + ')');
 			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) ).append(

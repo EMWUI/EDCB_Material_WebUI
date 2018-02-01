@@ -20,26 +20,26 @@ function stopTimer(){
 
 function loadMovie(obj){
 	var path = obj.data('path');
-	var MIME = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
+	var canPlay = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
 	var quality = localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '';
 	seek = $('#seek').val();
 	var offset = seek > 0 ? '&offset=' + seek : '';
 
-	if (obj.data('public') && MIME){
+	if (obj.data('public') && canPlay){
 		path = root + path;
 	}else if (obj.data('rec')){
 		path = path + quality + offset;
 	}else{
-		path = root + 'api/Movie?fname=' + path + (MIME ? '&xcode=' : '') + quality + offset;
+		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '');
 	}
 
-	if (MIME){
+	if (canPlay){
 		$('#HD').prop('disabled', true).parents('.mdl-menu__item').attr('disabled', true);
 	}else{
 		$('#HD').prop('disabled', false).parents('.mdl-menu__item').attr('disabled', false);
 	}
 
-	$('#video').addClass('is-loadding').attr('src', path).data(obj.data());
+	$('#video').addClass('is-loadding').attr('src', path).data(obj.data()).data('xcode', !canPlay);
 	$('#titlebar').text(obj.data('name'));
 
 	$('.ctl-button').removeClass('is-disabled');
@@ -70,6 +70,7 @@ function playerResize() {
 }
 
 $(function(){
+	var xcode;
 	var notification = document.querySelector('.mdl-js-snackbar');
 
 	var video = $('#video').get(0);
@@ -144,24 +145,18 @@ $(function(){
 			hideBar(1000);
 		},
 		'canplay': function(){
-			var duration;
-			if ($(this).data('duration')){
-				duration = $('#video').data('duration');
-			}else{
-				duration = video.duration;
-			}
+			var duration= $(this).data('duration') || video.duration;
 			hideBar(2000);
 			$(this).removeClass('is-loadding');
 			$('#seek').prop('disabled', false);
-			if (duration == 'Infinity' || duration == 0){
-				xcode = true;
+			xcode = $(this).data('xcode');
+			if (xcode && !$(this).data('rec')){
 				$(this).off('timeupdate');
 				$('#seek').attr('max', 99).attr('step', 1);
 				$('.videoTime').addClass('is-disabled');
 				$('.duration').text('0:00');
 				$('.currentTime').text('0:00');
 			}else{
-				xcode = $(this).data('duration');
 				var adjust = seek * (duration / 99);
 				$(this).on('timeupdate', function(){
 					var currentTime = video.currentTime + adjust;
@@ -171,7 +166,7 @@ $(function(){
 				$('#seek').attr('max', 100).attr('step', 0.01);
 				$('.videoTime').removeClass('is-disabled');
 				$('.duration').text(getVideoTime(duration));
-				if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);
+				//if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);  //Firefoxだとシークできたので
 			}
 		}
 	});
@@ -256,14 +251,16 @@ $(function(){
 	});
 
 	$('#'+ localStorage.getItem('quality')).prop('checked', true);
-	$('#HD').change(function(){
+	$('.quality').change(function(){
+		var paused = video.paused;
+		$('.quality').not($(this)).prop('checked', false);
 		if ($(this).prop('checked')){
-			localStorage.setItem('quality', 'HD');
+			localStorage.setItem('quality', $(this).attr('id'));
 		}else{
 			localStorage.removeItem('quality');
 		}
 		loadMovie($('#video'));
-		video.play();
+		if (!paused) video.play();
 	});
 
 	hideBar(0);

@@ -60,7 +60,7 @@ if v then
     ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', ori and false or true)
+      ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', not ori)
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

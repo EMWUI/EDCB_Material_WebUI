@@ -1,30 +1,32 @@
-status, lfs=pcall(require, 'lfs')
-if status then
-  CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
-  lfs.chdir (CurrentDir)
-end
-
+-- vim:set ft=lua:
+dofile(mg.document_root..'\\api\\util.lua')
 path='Setting\\HttpPublic.ini'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
-readex=edcb.GetPrivateProfile('SET','readex','Tools\\readex',path)
+dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',path)
+readex=edcb.GetPrivateProfile('SET','readex',dir..'readex.exe',path)
+
+--mp4=true
 
 -- トランスコードするかどうか
-XCODE=tonumber(mg.get_var(mg.request_info.query_string, 'xcode') and 0 or 1)~=0
+XCODE=tonumber(mg.get_var(mg.request_info.query_string, 'xcode') or 1)~=0
 -- 変換コマンド
-quality=mg.get_var(mg.request_info.query_string, 'quality') or nil
-
-if quality then
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
+if mp4 then
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',path)
 else
-  XOPT=edcb.GetPrivateProfile('SET','ffmpegoption','-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
 end
-XCMD=ffmpeg..' -i pipe:0 '..XOPT
+
+XCMD='"'..ffmpeg..'" -i pipe:0 '..XOPT
 -- 変換後の拡張子
-XEXT='.webm'
+XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
 XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
 
-fpath=mg.get_var(mg.request_info.query_string,'fname') or nil
+fpath=mg.get_var(mg.request_info.query_string,'fname')
+if fpath and mg.get_var(mg.request_info.query_string,'public') then
+  fpath=DocumentToNativePath(fpath)
+end
 
 r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
 v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))

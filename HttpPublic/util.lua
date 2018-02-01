@@ -258,7 +258,9 @@ s=s..[=[
       </div>
     </div>
   </div>
-]=] or '')..(temp.video and [=[
+]=] or '')
+if temp.video then
+  s=s.. [=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <div id="player" class="is-small">
@@ -280,8 +282,20 @@ s=s..[=[
             <i id="settings" class="ctl-button material-icons">settings</i>
             <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
               <li class="mdl-menu__item"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
-              <li class="mdl-menu__item"><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"><label for="HD"><i class="material-icons">hd</i></label></span></li>
+              <li class="mdl-menu__item" id="quality"><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
               <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
+            </ul>
+            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
+]=]
+local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
+if list=='' then
+  s=s..'<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>'
+else
+  for v in list:gmatch('[^,]+') do
+    s=s..'<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
+  end
+end
+s=s..[=[
             </ul>
             <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
           </div>
@@ -290,9 +304,10 @@ s=s..[=[
       <span class="close icons mdl-badge" data-badge="&#xE5CD;"></span>
     </div>
   </div>
-]=] or '')
+]=]
+end
 
-..'<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
+s=s..'<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
 
 -- メイン
 ..(temp.main or '')
@@ -786,8 +801,9 @@ function sidePanelTemplate(reserve)
 end
 
 --プレイヤー
-function player(video, ori)
-  return '<div id="player" class="is-small">\n'
+function player(video, xcode)
+  local list = edcb.GetPrivateProfile('set','quality','',path)
+  local s='<div id="player" class="is-small">\n'
 ..video..[=[
 <div id="control" class="bar is-visible">
 <i id="play" class="ctl-button material-icons">play_arrow</i>
@@ -801,13 +817,27 @@ function player(video, ori)
 <p class="mdl-layout-spacer small-only"></p>
 <i id="settings" class="ctl-button material-icons">settings</i>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
-<li class="mdl-menu__item"]=]..(ori and ' disabled' or '')..'><label for="HD" class="mdl-layout-spacer">画質</label><span><input type="checkbox" id="HD"'..(ori and ' disabled' or '')..[=[><label for="HD"><i class="material-icons">hd</i></label></span></li>
+<li class="mdl-menu__item" id="quality"]=]..(xcode and ' disabled' or '')..[=[><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
 <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
 </ul>
+]=]
+  if not xcode then
+    s=s..'<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">'
+    if list=='' then
+      s=s..'<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>'
+    else
+      for v in list:gmatch('[^,]+') do
+        s=s..'<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
+      end
+    end
+    s=s..'</ul>'
+  end
+  s=s..[=[
 <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
 </div>
 </div>
 ]=]
+  return s
 end
 
 function RecModeTextList()
