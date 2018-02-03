@@ -14,16 +14,20 @@ function showSpinner(visible){
 	}
 }
 
+function errMessage(xml){
+	xml.find('err').each(function(i){
+		$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: (i==0 ? 'Error : ' : '')+$(this).text()});
+	});
+}
+
 //予約一覧
 function rec(){
-	var date = new Date().getTime();
-	$('tr').each(function(){
+	$('tr.reserve').each(function(){
 		var obj = $(this);
-		if (!obj.hasClass('start') && obj.data('start') < date){
+		setTimeout(function(){
 			obj.addClass('start').children('.flag').children('span').empty().addClass('recmark');
-		}else if (obj.data('end') < date){
-			obj.remove();
-		}
+			setTimeout(function (){obj.remove();}, obj.data('end')-Date.now());
+		}, obj.data('start')-Date.now())
 	});
 }
 
@@ -138,7 +142,7 @@ function creatNotify(notify, data, save){
 		notifyList.remove();
 		notify.children().text('notifications');
 
-		$.get(root + 'api/GetEventInfo', data, function(result, textStatus, xhr){
+		$.get(root + 'api/EnumEventInfo', data, function(result, textStatus, xhr){
 			var xml = $(xhr.responseXML);
 			var title = xml.find('event_name').text();
 			var options = {
@@ -210,6 +214,18 @@ function macro(obj){
 	$('#macro').addClass('is-visible');
 }
 
+function progReserve(start, end){
+	$('#start-y').val(start.getFullYear());
+	$('#start-m').val(start.getMonth()+1);
+	$('#start-d').val(start.getDate());
+	$('#start-h').val(start.getHours());
+	$('#start-i').val(('0'+ start.getMinutes()).slice(-2));
+	$('#start-s').val(('0'+ start.getSeconds()).slice(-2));
+	$('#end-h').val(end.getHours());
+	$('#end-i').val(('0'+ end.getMinutes()).slice(-2));
+	$('#end-s').val(('0'+ end.getSeconds()).slice(-2));
+}
+
 //番組詳細を表示
 function setEpgInfo(info, past){
 	var onid = Number(info.find('ONID').first().text());
@@ -274,9 +290,7 @@ function setEpgInfo(info, past){
 	$('[name=sid]').val(sid);
 	$('[name=eid]').val(eid);
 
-	$('#startDate').val(startDate);
-	$('#startTime').val(startTime);
-	$('#endTime').val(('0'+endTime.getHours()).slice(-2) + ':' + ('0'+endTime.getMinutes()).slice(-2) + ':' + ('0'+endTime.getSeconds()).slice(-2));
+	progReserve(start, endTime);
 
 	$('#epginfo').attr('href', 'epginfo.html?onid=' + onid + '&tsid=' + tsid + '&sid=' + sid + (past ? '&startTime=' + past : '&eid=' + eid));
 	$('#set').data('onid', onid).data('tsid', tsid).data('sid', sid).data('eid', eid);
@@ -293,7 +307,7 @@ function getEpgInfo(target, data, past){
 	var id = data.id || target.find('.addreserve').data('id') || target.children('.flag').data('id');
 
 	$.ajax({
-		url: root + 'api/GetEventInfo',
+		url: root + 'api/EnumEventInfo?basic=0',
 		data: data,
 		success: function(result, textStatus, xhr){
 			var info = $(xhr.responseXML);
@@ -408,7 +422,7 @@ function getEpgInfo(target, data, past){
 						}
 					});
 				}else{
-					$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
+					errMessage(info);
 					showSpinner();
 				}
 			}
@@ -418,9 +432,10 @@ function getEpgInfo(target, data, past){
 
 //予約をセット
 function setReserve(Reserve, id){
-	$('#set').attr('action', root + 'api/ReserveChg?id='+id);
-	$('#del').attr('action', root + 'api/ReserveDel?id='+id);
-	$('#progres').attr('action', root + 'api/ReserveChg?id='+id);
+	$('#set').attr('action', root + 'api/setReserve?id='+id);
+	$('#del').attr('action', root + 'api/setReserve?id='+id);
+	$('#progres').attr('action', root + 'api/setReserve?id='+id);
+	$('#action').attr('name', 'change');
 	$('#reserved, #delreseved, #toprogres').show();
 	$('[name=presetID]').data('reseveid', id).val(65535);
 	$('#reserve').text('変更');
@@ -444,8 +459,8 @@ function setAutoAdd(target){
 		var id = target.data('id');
 		var autoadd=ReserveAutoaddList[id];
 		if (autoadd){
-			$('#set').attr('action', root + 'api/AutoAddEPGAddChgKey?id='+id);
-			$('#del').attr('action', root + 'api/AutoAddEPGDelKey?id='+id);
+			$('#set').attr('action', root + 'api/SetAutoAdd?id='+id);
+			$('#del').attr('action', root + 'api/SetAutoAdd?id='+id);
 			$('#epginfo').attr('href', 'autoaddepginfo.html?id='+id);
 
 		    if (autoadd.find('disableFlag').text() == 1){
@@ -549,8 +564,8 @@ function setAutoAdd(target){
 			sessionStorage.setItem('notifyCount', notifyCount);
 			$.get(root + 'api/EnumAutoAdd', function(result, textStatus, xhr){
 				ReserveAutoaddList={};
-				$(xhr.responseXML).find('recpresetinfo').each(function(){
-					ReserveAutoaddList[$(this).find('id').text()]=$(this);
+				$(xhr.responseXML).find('autoaddinfo').each(function(){
+					ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 				});
 				action();
 			});
@@ -567,7 +582,7 @@ function setRecInfo(target){
 	target.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
 
-	$.get(root + 'api/GetRecInfo?id='+target.data('recinfoid'), function(result, textStatus, xhr){
+	$.get(root + 'api/EnumRecInfo?id='+target.data('recinfoid'), function(result, textStatus, xhr){
 		var xml = $(xhr.responseXML);
 		if (xml.find('recinfo').length > 0){
 			var onid = Number(xml.find('ONID').first().text());
@@ -601,15 +616,50 @@ function setRecInfo(target){
 
 			$('pre').text(xml.find('errInfo').text());
 
-			$('#epginfo').attr('href', 'recinfodesc.html?id=' + xml.find('id').first().text());
+			$('#epginfo').attr('href', 'recinfodesc.html?id=' + xml.find('ID').first().text());
 
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 			showSpinner();
 		}else{
-			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
+			errMessage(xml);
 			showSpinner();
 		}
 	});
+}
+
+function recFolderInfo(i, val, partial){
+    var div = '<div>';
+    var cell = 'mdl-cell';
+    var container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
+    var select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
+    var textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
+    var delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
+    var middle = 'mdl-cell mdl-cell--middle';
+	var recNamePlugIn = val.recNamePlugIn.match(/^(.*\.dll)?(?:\?(.*))?/);
+	partial = partial ? 'partial' : '';
+	return $(div, {class: 'preset '+container, append: [
+				$(div, {class: delbtn, click: function(){delPreset(this);}, html:
+					$('<i>', {class: 'material-icons', text: 'delete'}) }),
+				$(div, {class: container, append: [
+					$(div, {class: cell, text: 'フォルダ'}),
+					$(div, {class: cell, text: (val.recFolder=='' ? '!Default' : val.recFolder)}),
+					$('<input>', {class: 'recFolderList', type: 'hidden', name: partial+'recFolder', value: val.recFolder}) ]}),
+				$(div, {class: container, append: [
+					$(div, {class: middle, text: '出力PlugIn'}),
+					$(div, {class: select, html:
+						$('<select>', {name: partial+'writePlugIn', html:
+							$('#Write').html(), val: val.writePlugIn }) }) ]}),
+				$(div, {class: container, append: [
+					$(div, {class: middle, text: 'ファイル名PlugIn'}),
+					$(div, {class: select, html:
+						$('<select>', {name: partial+'recNamePlugIn', html:
+							$('#RecName').html(), val: recNamePlugIn[1]}) }) ]}),
+				$(div, {class: container, append: [
+					$(div, {class: middle, text: 'オプション'}),
+					$(div, {class: textfield, append: [
+						$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: partial+'recName', id: partial+'recName'+i, val: recNamePlugIn[2]}),
+						$('<label>', {class: 'mdl-textfield__label', for: partial+'recName'+i, text: 'ファイル名PlugIn'}),
+						$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]})
 }
 
 //録画設定をセット
@@ -683,17 +733,9 @@ function setRecSettting(self){
 
     //プリセット
     //録画後実行bat
-    var batFilePath = recset.children('batFilePath').text();
-
-    var div = '<div>';
-    var cell = 'mdl-cell';
-    var container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
-    var select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
-    var textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
-    var delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
-    var middle = 'mdl-cell mdl-cell--middle';
     $('.preset').remove();
 
+    var batFilePath = recset.children('batFilePath').text();
 	if ($('[name="batFilePath"] option[value="' + batFilePath.replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&') + '"]').length == 0){
 		$('[name="batFilePath"]').append($('<option>', {value: batFilePath, text: batFilePath}));
 	}
@@ -701,67 +743,24 @@ function setRecSettting(self){
 	var recFolderList = recset.children('recFolderList');
 	if (recFolderList.text().length > 0){
 		$(recFolderList).children('recFolderInfo').each(function(i){
-			var recFolder = $(this).children('recFolder').text();
-			var writePlugIn = $(this).children('writePlugIn').text();
-			var recNamePlugIn = $(this).children('recNamePlugIndll').text();
-
-			$('#preset .addPreset').before(
-				$(div, {class: 'preset '+container, append: [
-					$(div, {class: delbtn, click: function(){delPreset(this);}, html:
-						$('<i>', {class: 'material-icons', text: 'delete'}) }),
-					$(div, {class: container, append: [
-						$(div, {class: cell, text: 'フォルダ'}),
-						$(div, {class: cell, text: recFolder}),
-						$('<input>', {class: 'recFolderList', type: 'hidden', name: 'recFolder', value: recFolder}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: '出力PlugIn'}),
-						$(div, {class: select, html:
-							$('<select>', {name: 'writePlugIn', html:
-								$('#Write').html(), val: writePlugIn})}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: 'ファイル名PlugIn'}),
-						$(div, {class: select, html:
-							$('<select>', {name: 'recNamePlugIn', html:
- 								$('#RecName').html(), val: recNamePlugIn})}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: 'オプション'}),
-						$(div, {class: textfield, append: [
-							$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: 'recName', value: $(this).children('recNamePlugInoption').text(), id: 'recName'+i}),
-							$('<label>', {class: 'mdl-textfield__label', for: 'recName'+i, text: 'ファイル名PlugIn'}),
-							$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]}) );
+			var val = {
+				recFolder: $(this).children('recFolder').text(),
+				writePlugIn: $(this).children('writePlugIn').text(),
+				recNamePlugIn: $(this).children('recNamePlugIn').text()
+			}
+			$('#preset .addPreset').before(recFolderInfo(i, val));
 		});
 	}
 	//部分受信プリセット
 	var partialRecFolder = recset.children('partialRecFolder');
 	if (partialRecFolder.text().length > 0){
 		$(partialRecFolder).children('recFolderInfo').each(function(i){
-			var recFolder = $(this).children('recFolder').text();
-			var writePlugIn = $(this).children('writePlugIn').text();
-			var recNamePlugIn = $(this).children('recNamePlugIndll').text();
-
-			$('#partialpreset .addPreset').before(
-				$(div, {class: 'preset '+container, append: [
-					$(div, {class: delbtn, click: function(){delPreset(this);}, html:
-						$('<i>', {class: 'material-icons', text: 'delete'}) }),
-					$(div, {class: container, append: [
-						$(div, {class: cell, text: 'フォルダ'}),
-						$(div, {class: cell, text: recFolder}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: '出力PlugIn'}),
-						$(div, {class: select, html:
-							$('<select>', {name: 'partialwritePlugIn', html:
-								$('#Write').html(), val: writePlugIn})}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: 'ファイル名PlugIn'}),
-						$(div, {class: select, html:
-							$('<select>', {name: 'partialrecNamePlugIn', html:
-								$('#RecName').html(), val:recNamePlugIn})}) ]}),
-					$(div, {class: container, append: [
-						$(div, {class: middle, text: 'オプション'}),
-						$(div, {class: textfield, append: [
-							$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: 'partialrecName', value: $(this).children('recNamePlugInoption').text(), id: 'partialrecName'+i}),
-							$('<label>', {class: 'mdl-textfield__label', for: 'partialrecName'+i, text: 'ファイル名PlugIn'}),
-							$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]}) );
+			var val = {
+				recFolder: $(this).children('recFolder').text(),
+				writePlugIn: $(this).children('writePlugIn').text(),
+				recNamePlugIn: $(this).children('recNamePlugIn').text()
+			}
+			$('#partialpreset .addPreset').before(recFolderInfo(i, val, true));
 		});
 	}
     componentHandler.upgradeDom();
@@ -786,16 +785,17 @@ function setDefault(mark){
 	if (PresetList){
 		setRecSettting(PresetList['0']);
 
-		$('#set').attr('action', root + 'api/ReserveAdd');
+		$('#set').attr('action', root + 'api/setReserve');
+		$('#action').attr('name', 'add');
 		$('#reserved, #delreseved, #toprogres').hide();
 		$('[name=presetID]').val(0);
 		$('#reserve').text('予約追加');
 
 		if (mark){
 			$('.open .mark.reserve').remove();
-			$('.open .addreserve').data('id', false).text('予約追加');
+			$('.open .addreserve').data('id', false).data('oneclick', 1).data('toggle', 0).text('予約追加');
 			$('.open .reserve').removeClass('reserve disabled partially shortage view');
-			$('.open .flag').data('id', false).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',click:function(){reserve($(this));},html:'<i class="material-icons">add</i>'}));
+			$('.open .flag').data('id', false).data('oneclick', 1).data('toggle', 0).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',click:function(){reserve($(this));},html:'<i class="material-icons">add</i>'}));
 		}
 	}else{
 		$.get(root + 'api/EnumRecPreset', function(result, textStatus, xhr){
@@ -811,16 +811,10 @@ function setDefault(mark){
 //予約処理
 function reserve(obj){
 	showSpinner(true);
-	var url;
 	var data = obj.parents('td').data();
 
-	if (data.id){
-		url = root + 'api/reservetoggle';
-	}else{
-		url = root + 'api/oneclickadd';
-	}
 	$.ajax({
-		url: url,
+		url: root + 'api/setReserve',
 		data: data,
 
 		success: function(result, textStatus, xhr) {
@@ -866,7 +860,7 @@ function reserve(obj){
 						});
 						componentHandler.upgradeElement(label.get(0));
 
-						obj.parent('td').data('id', id).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
+						obj.parent('td').data('id', id).data('toggle', 1).data('oneclick', 0).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
 					}
 				}else{
 					parents = obj.parents('tr');
@@ -885,7 +879,7 @@ function reserve(obj){
 						obj.prop('checked', true).parent().addClass('is-checked');
 					}
 				}
-				$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: xml.find('err').text()});
+				errMessage(xml);
 			}
 			showSpinner();
 		}
@@ -900,11 +894,12 @@ function addMark(xml, target, content){
 	var messege, button, mark;
 
 	if (recmode == 5){
-		messege = '予約を無効にしました';
+		messege = '無効';
 		button = '有効';
 		recmode = 'disabled';
 		mark = '無';
 	}else{
+		messege = '有効';
 		button = '無効';
 		if (overlapmode == 1){
 			recmode = 'partially';
@@ -919,7 +914,7 @@ function addMark(xml, target, content){
 			mark = '録';
 		}
 	}
-	target.data('id', id).text(button);
+	target.data('id', id).data('toggle', 1).data('oneclick', 0).text(button);
 	content.not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 	content.removeClass('disabled partially shortage view').addClass('reserve ' + recmode).find('.mark.reserve').text(mark);
 
@@ -1320,8 +1315,8 @@ $(function(){
 			}else{
 				$.get(root + 'api/' + 'EnumAutoAdd', function(result, textStatus, xhr){
 					ReserveAutoaddList={};
-					$(xhr.responseXML).find('reserveinfo').each(function(){
-						ReserveAutoaddList[$(this).find('id').text()]=$(this);
+					$(xhr.responseXML).find('autoaddinfo').each(function(){
+						ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 					});
 					action(ReserveAutoaddList, key);
 				});
@@ -1369,7 +1364,7 @@ $(function(){
 	//通信エラー
 	$(document).ajaxError(function(e, xhr, textStatus, errorThrown){
 		showSpinner();
-		notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
+		if (xhr.status!=0) notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
 	});
 
 	//サブミット
@@ -1403,22 +1398,19 @@ $(function(){
 						if (data.action == 'add' || data.action == 'reserve'){
 							var id = xml.find('ID').text();
 
-							$('#set').attr('action', root + 'api/ReserveChg?id='+id);
-							$('#del').attr('action', root + 'api/ReserveDel?id='+id);
-							$('#progres').attr('action', root + 'api/ReserveChg?id='+id);
+							$('#set').attr('action', root + 'api/setReserve?id='+id);
+							$('#del').attr('action', root + 'api/setReserve?id='+id);
+							$('#progres').attr('action', root + 'api/setReserve?id='+id);
+							$('#action').attr('name', 'change');
 							$('#reserved, #delreseved, #toprogres').show();
 							$('[name=presetID]').data('reseveid', id).val(65535);
 							$('#reserve').text('変更');
 
 							addMark(xml, $('.open .addreserve'), $('.open .content'));
 
-							var startDate = xml.find('startDate').text();
-							var startTime = xml.find('startTime').text();
-							var start = new Date(startDate+' '+startTime);
-							var endTime = new Date(start.getTime() + Number(xml.find('duration').text())*1000);
-							$('#startDate').val(startDate);
-							$('#startTime').val(startTime);
-							$('#endTime').val(('0'+endTime.getHours()).slice(-2) + ':' + ('0'+endTime.getMinutes()).slice(-2) + ':' + ('0'+endTime.getSeconds()).slice(-2));
+							var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
+							var end = new Date(start.getTime() + Number(xml.find('duration').text())*1000);
+							progReserve(start, end);
 
 						    if (data.action == 'reserve'){
 								var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
@@ -1459,7 +1451,7 @@ $(function(){
 										});
 										componentHandler.upgradeElement(label.get(0));
 
-										obj.parent('td').data('id', id).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
+										obj.parent('td').data('id', id).data('toggle', 1).data('oneclick', 0).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
 									}
 								}else{
 									parents = obj.parents('tr');
@@ -1491,7 +1483,7 @@ $(function(){
 						}
 					}
 				}else{
-					notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + xml.find('err').text()});
+					errMessage(xml);
 				}
 				showSpinner();
 			}
@@ -1502,40 +1494,7 @@ $(function(){
 		delPreset(this);
 	});
 	$('.addPreset').click(function(){
-		var div = '<div>';
-		var cell = 'mdl-cell';
-		var container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
-		var select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
-		var textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
-		var delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
-		var middle = 'mdl-cell mdl-cell--middle';
-
-		var partial = $(this).hasClass('partial') ? 'partial' : '';
-
-		$(this).before(
-			$(div, {class: 'preset '+container, append: [
-				$(div, {class: delbtn, click: function(){delPreset(this);}, html:
-					$('<i>', {class: 'material-icons', text: 'delete'}) }),
-				$(div, {class: container, append: [
-					$(div, {class: cell, text: 'フォルダ'}),
-					$(div, {class: cell, text: '!Default'}),
-					$('<input>', {class: 'recFolderList', type: 'hidden', name: partial+'recFolder', value: ''}) ]}),
-				$(div, {class: container, append: [
-					$(div, {class: middle, text: '出力PlugIn'}),
-					$(div, {class: select, html:
-						$('<select>', {name: partial+'writePlugIn', html:
-							$('#Write').html(), val: 'Write_Default.dll' }) }) ]}),
-				$(div, {class: container, append: [
-					$(div, {class: middle, text: 'ファイル名PlugIn'}),
-					$(div, {class: select, html:
-						$('<select>', {name: partial+'recNamePlugIn', html:
-							$('#RecName').html() }) }) ]}),
-				$(div, {class: container, append: [
-					$(div, {class: middle, text: 'オプション'}),
-					$(div, {class: textfield, append: [
-						$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: partial+'recName', id: 'recName'}),
-						$('<label>', {class: 'mdl-textfield__label', for: 'recName', text: 'ファイル名PlugIn'}),
-						$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]}) );
+		$(this).before(recFolderInfo($(this).prevAll().length+1, {recFolder: '', writePlugIn: 'Write_Default.dll', recNamePlugIn: ''}, $(this).hasClass('partial')));
 
 		componentHandler.upgradeDom();
 	});

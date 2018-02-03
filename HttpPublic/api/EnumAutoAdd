@@ -1,12 +1,15 @@
+-- vim:set ft=lua:
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
-  disableFlag=string.match(v.searchInfo.andKey, '^%^%!{999}(.*)')
-  table.insert(ct, '<recpresetinfo><id>'
-    ..v.dataID..'</id><searchsetting><disableFlag>'
-    ..(disableFlag and 1 or 0)..'</disableFlag><andKey>'
-    ..(disableFlag or v.searchInfo.andKey)..'</andKey><notKey>'
+  disableFlag=string.match(v.searchInfo.andKey, '^^!{999}(.*)')
+  caseFlag=(disableFlag or v.searchInfo.andKey):match('^C!{999}(.*)')
+  table.insert(ct, '<autoaddinfo><ID>'
+    ..v.dataID..'</ID><searchsetting><disableFlag>'
+    ..(disableFlag and 1 or 0)..'</disableFlag><caseFlag>'
+    ..(caseFlag and 1 or 0)..'</caseFlag><andKey>'
+    ..(caseFlag or disableFlag or v.searchInfo.andKey)..'</andKey><notKey>'
     ..v.searchInfo.notKey..'</notKey><regExpFlag>'
     ..(v.searchInfo.regExpFlag and 1 or 0)..'</regExpFlag><titleOnlyFlag>'
     ..(v.searchInfo.titleOnlyFlag and 1 or 0)..'</titleOnlyFlag><aimaiFlag>'
@@ -73,7 +76,7 @@ for i,v in ipairs(a) do
       ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
       ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
   end
-  table.insert(ct, '</partialRecFolder></recsetting></recpresetinfo>\r\n')
+  table.insert(ct, '</partialRecFolder></recsetting></autoaddinfo>\r\n')
 end
 table.insert(ct, '</items></entry>')
 cl=0

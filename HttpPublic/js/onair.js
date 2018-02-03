@@ -40,19 +40,19 @@ function getEPG(obj){
 	});
 }
 
-setInterval(function(){
-	$('.mdl-layout__tab-panel.is-active>.mdl-list__item').each(function(){
-		var data = $(this).data();
-		if (data.end < Date.now()){
-			getEPG($(this));
-		}else{
-			var progress = (Date.now()/1000 - data.start) / data.duration  * 100;
-			$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
-		}
-	});
-},1000);
-
 $(function(){
+	setInterval(function(){
+		$('.mdl-layout__tab-panel.is-active>.mdl-list__item').each(function(){
+			var data = $(this).data();
+			if (data.end < Date.now()){
+				getEPG($(this));
+			}else{
+				var progress = (Date.now()/1000 - data.start) / data.duration  * 100;
+				$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
+			}
+		});
+	},1000);
+
 	$('span.epginfo').click(function(){
 		var data = $(this).parents('li').clone(true).data();
 		if ($(this).hasClass('next')){

@@ -53,7 +53,30 @@ for i,v in ipairs(temp.dialog or {}) do
     ..'</div>\n<div class="mdl-dialog__actions">\n'
     ..(v.button or '')
     ..'<button class="mdl-button close" data-dialog="#'..v.id..'">キャンセル</button>\n'
-    ..'</div>\n</dialog>'
+    ..'</div>\n</dialog>\n'
+end
+
+if temp.progres then
+  local r=type(temp.progres)=='table' and temp.progres or nil
+  local dur=r and r.startTime.hour*3600+r.startTime.min*60+r.startTime.sec+r.durationSecond or nil
+  s=s..'<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
+    ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')
+    ..'"><div>\n'..(r and r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>\n')
+    ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-y" id="start-y" min="1900" max="3000'..(r and '" value="'..r.startTime.year or '')
+    ..'"><label class="mdl-textfield__label" for="start-y"></label></div><span class="colon">/</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-m" id="start-m" min="1" max="12'..(r and '" value="'..r.startTime.month or '')
+    ..'"><label class="mdl-textfield__label" for="start-m"></label></div><span class="colon">/</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-d" id="start-d" min="1" max="31'..(r and '" value="'..r.startTime.day or '')
+    ..'"><label class="mdl-textfield__label" for="start-d"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-h" id="start-h" min="0" max="23'..(r and '" value="'..r.startTime.hour or '')
+    ..'"><label class="mdl-textfield__label" for="start-h"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-i" id="start-i" min="0" max="59'..(r and '" value="'..r.startTime.min or '')
+    ..'"><label class="mdl-textfield__label" for="start-i"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-s" id="start-s" min="0" max="59'..(r and '" value="'..r.startTime.sec or '')
+    ..'"><label class="mdl-textfield__label" for="start-s"></label></div></div>\n<span class="tilde">～</span>\n'
+    ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-h" id="end-h" min="0" max="23'..(dur and '" value="'..math.floor(dur/3600)%24 or '')
+    ..'"><label class="mdl-textfield__label" for="end-h"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-i" id="end-i" min="0" max="59'..(dur and '" value="'..math.floor(dur/60)%60 or '')
+    ..'"><label class="mdl-textfield__label" for="end-i"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-s" id="end-s" min="0" max="59'..(dur and '" value="'..dur%60 or '')
+    ..'"><label class="mdl-textfield__label" for="end-s"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken()
+    ..'">\n</div></form></div>\n<div class="mdl-dialog__actions">\n'
+    ..'<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>\n'
+    ..'<button class="mdl-button close" data-dialog="#dialog_progres">キャンセル</button>\n'
+    ..'</div>\n</dialog>\n'
 end
 
 s=s..[=[
@@ -551,14 +574,15 @@ end
 function SerchTemplate(si)
   local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.disableFlag and si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
+    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.caseFlag or si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div class="mdl-cell--12-col mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="notKey" value="'..si.notKey..'" size="25" id="notKey"><label class="mdl-textfield__label" for="notKey"></label></div>\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div><label for="reg" class="mdl-checkbox mdl-js-checkbox"><input id="reg" class="mdl-checkbox__input" type="checkbox" name="regExpFlag" value="1"'..(si.regExpFlag and ' checked="checked"' or '')..'><span class="mdl-checkbox__label">正規表現</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="aimai" class="mdl-checkbox mdl-js-checkbox"><input id="aimai" class="mdl-checkbox__input" type="checkbox" name="aimaiFlag" value="1"'..(si.aimaiFlag and ' checked="checked"' or '')..'><span class="mdl-checkbox__label">あいまい検索</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="titleOnly" class="mdl-checkbox mdl-js-checkbox"><input id="titleOnly" class="mdl-checkbox__input" type="checkbox" name="titleOnlyFlag" value="1"'..(si.titleOnlyFlag and ' checked="checked"' or '')..'><span class="mdl-checkbox__label">番組名のみ</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div>\n'
+    ..'<div><label for="reg" class="mdl-checkbox mdl-js-checkbox"><input id="reg" class="mdl-checkbox__input" type="checkbox" name="regExpFlag" value="1"'..(si.regExpFlag and ' checked' or '')..'><span class="mdl-checkbox__label">正規表現</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="aimai" class="mdl-checkbox mdl-js-checkbox"><input id="aimai" class="mdl-checkbox__input" type="checkbox" name="aimaiFlag" value="1"'..(si.aimaiFlag and ' checked' or '')..'><span class="mdl-checkbox__label">あいまい検索</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="titleOnly" class="mdl-checkbox mdl-js-checkbox"><input id="titleOnly" class="mdl-checkbox__input" type="checkbox" name="titleOnlyFlag" value="1"'..(si.titleOnlyFlag and ' checked' or '')..'><span class="mdl-checkbox__label">番組名のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" type="checkbox" name="caseFlag" value="1"'..(si.caseFlag and ' checked' or '')..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象ジャンル' or 'ジャンル絞り込み')..'</div>\n'
@@ -785,13 +809,14 @@ function sidePanelTemplate(reserve)
     ..'<input type="hidden" name="tsid">\n'
     ..'<input type="hidden" name="sid">\n'
     ..'<input type="hidden" name="eid">\n'
+    ..'<input type="hidden" id="action">\n'
     ..RecSettingTemplate(rs)..'</div></form>\n'
     ..'</section>\n</div>\n'
 
     ..'<div class="mdl-card__actions">\n'
     ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約化</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約追加</button>\n'
     ..'</div>\n'
 

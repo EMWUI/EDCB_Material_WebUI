@@ -40,7 +40,7 @@ if preset then
     end
     if not done then edcb.WritePrivateProfile('search', 'list', list..preset..',', path) end
 
-    edcb.WritePrivateProfile(_preset, 'andKey', mg.get_var(post,'andKey'), path)
+    edcb.WritePrivateProfile(_preset, 'andKey', (GetVarInt(post,'caseFlag')==1  and 'C!{999}' or '')..mg.get_var(post,'andKey'), path)
     edcb.WritePrivateProfile(_preset, 'notKey', mg.get_var(post,'notKey'), path)
     edcb.WritePrivateProfile(_preset, 'regExpFlag', GetVarInt(post,'regExpFlag')==1, path)
     edcb.WritePrivateProfile(_preset, 'titleOnlyFlag', GetVarInt(post,'titleOnlyFlag')==1, path)
@@ -140,7 +140,8 @@ end
 
 if not key then
   key={
-    andKey=mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or '',
+    andKey=((GetVarInt(post,'caseFlag') or mg.get_var(mg.request_info.query_string, 'caseFlag'))==1  and 'C!{999}' or '')
+      ..(mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or ''),
     notKey=mg.get_var(post, 'notKey') or mg.get_var(mg.request_info.query_string, 'notKey') or '',
     regExpFlag=mg.get_var(post, 'regExpFlag') or mg.get_var(mg.request_info.query_string, 'regExpFlag') or false,
     titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag') or mg.get_var(mg.request_info.query_string, 'titleOnlyFlag') or false,
@@ -256,6 +257,7 @@ if not key then
   end
   disableFlag=mg.get_var(post, 'disableFlag') or mg.get_var(mg.request_info.query_string, 'disableFlag') or false
 end
+key.caseFlag=key.andKey:match('^C!{999}(.*)')
 
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
@@ -264,16 +266,7 @@ ct={title='検索'}
 
 ct.js='<script>$(function(){saerchbar()});setInterval("rec()",1000);</script>\n'
 
-ct.dialog={{
-  id='dialog_progres',
-  content='<form id="progres" method="POST"><div>'
-    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-  button='<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
-}}
+ct.progres=true
 
 if sidePanel then ct.macro=true end
 
@@ -289,13 +282,13 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
 if dataID==0 then
 
-  table.insert(ct.dialog, {
+  ct.dialog={{
     id='dialog_preset',
     content='<label class="icon mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="lock"><input type="checkbox" id="lock" class="mdl-icon-toggle__input"'..(key.lock and ' checked' or '')..'><i class="mdl-icon-toggle__label material-icons">lock</i></label>'
       ..'登録名<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'..(preset or '')..'" id="preset_name"><label class="mdl-textfield__label" for="preset_name"></label></div>'
       ..'※同じ名前がある場合上書きします',
     button='<button id="save_preset" class="mdl-button" type="submit">保存</button>'
-  })
+  }}
 
   ct.main=ct.main..'<div class="mdl-grid chip-container"><div>'
   for v in edcb.GetPrivateProfile('search','list','',path):gmatch('[^,]+') do
@@ -405,7 +398,7 @@ if #a>0 then
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                                or 'search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
 
-      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-id="'..r.reserveID or '')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken()..'"><span'
+      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken()..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 

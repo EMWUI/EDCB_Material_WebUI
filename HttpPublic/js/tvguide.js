@@ -299,30 +299,22 @@ $(function(){
 		showSpinner(true);
 		var target = $(this);
 		var data = target.data();
-		var message, url;
-
-		if (data.id){
-			message = '予約を有効にしました';
-			url = root + 'api/reservetoggle';
-		}else if (data.eid){
-			message = '予約を追加しました';
-			url = root + 'api/oneclickadd';
-		}
 
 		$.ajax({
-			url: url,
+			url: root + 'api/setReserve',
 			data: data,
 
 			success: function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
-					var disable = addMark(xml, target, target.parents('.content'));
+					var add = data.oneclick==1;
+					var message = addMark(xml, target, target.parents('.content')) + 'に';
+					if (add) message = '追加';
 
-					if (disable) message = disable;
+					notification.MaterialSnackbar.showSnackbar({message: '予約を' + message + 'しました'});
 				}else{
-					message = 'Error : ' + xml.find('err').text();
+					errMessage(xml)
 				}
-				notification.MaterialSnackbar.showSnackbar({message: message});
 				target.parents('.cell').removeClass('clicked');
 				showSpinner();
 			}

@@ -150,22 +150,12 @@ ct.js='<script>'
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
 
-ct.dialog={
-  {
-    id='dialog_progres',
-    content='<form id="progres" method="POST"><div>'
-      ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-      ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-      ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-      ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-      ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-    button='<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
-  },
-  {
+ct.dialog={{
     id='suspend',
     button='<button class="ok mdl-button">OK</button>'
-  }
-}
+ }}
+
+ct.progres=true
 
 if sidePanel then ct.macro=true end
 
@@ -176,7 +166,7 @@ sort=ServiceList(edcb.GetServiceList())
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
-  rt[string.format('%04X%04X%04X%04X', v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
+  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
 end
 
 minTime=nil
@@ -388,7 +378,7 @@ for i=pagemin,pagemax do
       search=w.shortInfo and ConvertSearch(w, v.service_name) or ''									--検索
 
       r=nil
-      id=not w.past and rt[string.format('%04X%04X%04X%04X', w.onid, w.tsid, w.sid, w.eid)] or nil
+      id=not w.past and rt[('%04X%04X%04X%04X'):format(w.onid, w.tsid, w.sid, w.eid)] or nil
       if id then
         r=edcb.GetReserveData(id)
       end
@@ -400,7 +390,7 @@ for i=pagemin,pagemax do
       table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
         ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
-        ..'<div><div class="startTime">'..string.format('%02d', w.startTime.min)..'</div>'..mark..'</div>'
+        ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
 
         ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
         ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
@@ -412,8 +402,8 @@ for i=pagemin,pagemax do
           ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
                        or '" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
         ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
-          ..(r and '" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
-                or '">録画予約')..'</a>' or '')		--なし新規追加
+          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
+                or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'
 

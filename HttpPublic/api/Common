@@ -1,4 +1,5 @@
-﻿dofile(mg.document_root..'\\api\\util.lua')
+﻿-- vim:set ft=lua:
+dofile(mg.document_root..'\\api\\util.lua')
 
 edcb.htmlEscape=15
 
@@ -21,9 +22,9 @@ elseif notify then
 elseif suspend then
   if suspend=='standby' then
     --ok=edcb.os.execute('start "SetSuspendState" powershell -NoProfile -Command "& {[Threading.Thread]::Sleep(5000);Add-Type -AssemblyName System.Windows.Forms;[System.Windows.Forms.Application]::SetSuspendState([System.Windows.Forms.PowerState]::Suspend,$false,$false)}"')
-  	messege='スタンバイに移行'..((ok or edcb.SendSuspend and edcb.SendSuspend(1)) and 'します' or 'できる状態ではありません')
+  	messege='スタンバイに移行'..((ok or edcb.SendSuspend and edcb.SendSuspend(1)) and 'します' or 'できません (スクリプトのコメントアウトを解除してください)')
   elseif suspend=='hibernation' then
-  	messege='休止に移行'..(edcb.SendSuspend and edcb.SendSuspend(2) and 'します' or 'できる状態ではありません')
+  	messege='休止に移行'..(edcb.SendSuspend and edcb.SendSuspend(2) and 'します' or 'できません')
   end
 end
 

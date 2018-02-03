@@ -12,18 +12,9 @@ PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 ct={title='予約一覧'}
 
 ct.css='<style>.partially{background:'..partially..';}'..'.shortage{background:'..shortage..';}</style>\n'
-ct.js='<script>setInterval("rec()",1000);</script>\n'
+ct.js='<script>$(function(){rec();});</script>\n'
 
-ct.dialog={{
-  id='dialog_progres',
-  content='<form id="progres" method="POST"><div>'
-    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-  button='<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
-}}
+ct.progres=true
 
 if sidePanel then ct.macro=true end
 
@@ -81,7 +72,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                   or 'data-href="reserveinfo.html?id='..v.reserveID..'&page='..pageIndex)..'">\n'
 
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(v.startTime)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)

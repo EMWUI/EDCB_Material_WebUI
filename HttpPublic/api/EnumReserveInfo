@@ -1,3 +1,4 @@
+-- vim:set ft=lua:
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
@@ -23,13 +24,10 @@ for i,v in ipairs(a) do
     ..(v.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
     ..v.recSetting.batFilePath..'</batFilePath><recFolderList>')
   for j,w in ipairs(v.recSetting.recFolderList) do
-    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     table.insert(ct, '<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
-      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
-      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
+      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>')
   end
   table.insert(ct, '</recFolderList><suspendMode>'
     ..v.recSetting.suspendMode..'</suspendMode><rebootFlag>'
@@ -41,13 +39,10 @@ for i,v in ipairs(a) do
     ..v.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
     ..v.recSetting.tunerID..'</tunerID><partialRecFolder>')
   for j,w in ipairs(v.recSetting.partialRecFolder) do
-    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
     table.insert(ct, '<recFolderInfo><recFolder>'
       ..w.recFolder..'</recFolder><writePlugIn>'
       ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
-      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
-      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
+      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>')
   end
   table.insert(ct, '</partialRecFolder></recsetting><recFileNameList>')
   for j,w in ipairs(v.recFileNameList) do

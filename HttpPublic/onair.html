@@ -17,16 +17,7 @@ if webPanel then
   ct.css='<style>.mdl-layout__header {min-height: 48px; }.mdl-layout__header-row,.mdl-layout__drawer-button {display: none; }</style>'
 end
 
-ct.dialog={{
-  id='dialog_progres',
-  content='<form id="progres" method="POST" data-action="del"><div>'
-    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-  button='<button id="progres_button" class="submit mdl-button" data-form="#progres">変更</button>'
-}}
+ct.progres=true
 
 if sidePanel then ct.macro=true end
 
@@ -96,50 +87,25 @@ for i,v in ipairs(sort or {}) do
   if (onesegflag or not v.partialReceptionFlag) then
     b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-9*3600), durationSecond=24*3600}) or {}
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
-    event={eid=0}
-    next=nil
-    nextstart=0
-    eventend=9999999999
-
-    for j,w in ipairs(b) do
-      if w.startTime then
-        startTime=os.time(w.startTime)
-        endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime)
-        nextstart=nextstart<endTime and endTime<now and endTime or nextstart
-        if startTime<=now and now<endTime then
-          eventend=endTime
-          event=w
-          next=b[j+1]
-          if endTime~=os.time(b[j+1].startTime) then
-            for k=j+2, #b-j-2 do
-              if endTime==os.time(b[k].startTime) then
-                next=b[k]
-                break
-              end
+    for j,v in ipairs(b) do
+      if v.startTime then
+        if now<os.time(v.startTime) then
+          next=v
+          startTime=os.time(event.startTime)
+          _startTime=os.time(v.startTime)
+          endTime=event.durationSecond and startTime+event.durationSecond or _startTime
+          if endTime~=_startTime then
+            if endTime<now then
+              event={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+            else
+              next={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+              _startTime=endTime
             end
           end
+          _endTime=next.durationSecond and _startTime+next.durationSecond or (j<#b and os.time(b[j+1].startTime) or _startTime)
           break
         end
-        if now<startTime and startTime<eventend then
-          eventend=startTime
-          event.startTime=os.date('*t',nextstart)
-          event.durationSecond=startTime-nextstart
-          next=w
-        end
-      end
-    end
-
-    if next then
-      startTime=os.time(event.startTime)
-      next_startTime=os.time(next.startTime)
-      endTime=event.durationSecond and startTime+event.durationSecond or next_startTime
-      next_endTime=next.durationSecond and next_startTime+next.durationSecond or next_startTime
-      if endTime~=next_startTime then
-        next={
-          eid=0,
-          startTime=os.date('*t',endTime),
-          durationSecond=next_startTime-endTime
-        }
+        event=v
       end
     end
 
@@ -163,7 +129,7 @@ for i,v in ipairs(sort or {}) do
       ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..fname..'\');">' or '>tv')..'</i>'..v.service_name
       ..'<span class="mdl-list__item-text-body">\n'
       ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(event.shortInfo and ConvertTitle(event.shortInfo.event_name) or '')..'</span></span>\n'
-      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', next_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', next_endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
+      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', _endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
       ..'</span></span>'
 
       ..'<div class="mdl-progress mdl-js-progress"></div>'

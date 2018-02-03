@@ -1,0 +1,260 @@
+-- vim:set ft=lua:
+dofile(mg.document_root..'\\api\\util.lua')
+
+function recSetting(r,presetID,post)
+  local rs=r.recSetting
+  rs.batFilePath=mg.get_var(post, 'batFilePath')
+  rs.recFolderList={}
+  rs.partialRecFolder={}
+  if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then
+    for i=0,10000 do
+      if not mg.get_var(post, 'recFolder', i) then break end
+      table.insert(rs.recFolderList, {
+        recFolder=mg.get_var(post, 'recFolder', i),
+        writePlugIn=mg.get_var(post, 'writePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
+      } )
+    end
+    for i=0,10000 do
+      if not mg.get_var(post, 'partialrecFolder', i) then break end
+      table.insert(rs.partialRecFolder, {
+        recFolder=mg.get_var(post, 'partialrecFolder', i),
+        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
+      } )
+    end
+  elseif presetID~=0xFFFF then
+    for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+      if v.id==presetID then
+        r.recSetting=v.recSetting
+        break
+      end
+    end
+  end
+  rs.recMode=GetVarInt(post,'recMode',0,5)
+  rs.tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1
+  rs.priority=GetVarInt(post,'priority',1,5)
+  rs.pittariFlag=GetVarInt(post,'pittariFlag')==1
+  rs.suspendMode=GetVarInt(post,'suspendMode',0,4)
+  rs.rebootFlag=GetVarInt(post,'rebootFlag')==1
+  useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
+  rs.startMargin=useMargin and GetVarInt(post,'startMargin')
+  rs.endMargin=useMargin and GetVarInt(post,'endMargin')
+  serviceMode_1=GetVarInt(post,'serviceMode_1',0,1) or 0
+  serviceMode_2=GetVarInt(post,'serviceMode_2',0,1) or 0
+  rs.serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*serviceMode_1+32*serviceMode_2
+  rs.continueRecFlag=GetVarInt(post,'continueRecFlag')==1
+  rs.tunerID=GetVarInt(post,'tunerID')
+  rs.partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
+  if rs.recMode and
+     rs.priority and
+     rs.suspendMode and
+     (not useMargin or rs.startMargin and rs.endMargin) and
+     rs.tunerID
+  then
+    return r
+  else
+    return false
+  end
+end
+
+function eventInfo(r)
+  eventInfo=edcb.SearchEpg(r.onid, r.tsid, r.sid, r.eid)
+  if eventInfo and eventInfo.startTime and eventInfo.durationSecond then
+    r.title=eventInfo.shortInfo and eventInfo.shortInfo.event_name or ''
+    r.startTime=eventInfo.startTime
+    r.startTimeEpg=eventInfo.startTime
+    r.durationSecond=eventInfo.durationSecond
+    r.stationName=''
+    for i,v in ipairs(edcb.GetServiceList() or {}) do
+      if v.onid==r.onid and v.tsid==r.tsid and v.sid==r.sid then
+        r.stationName=v.service_name
+        break
+      end
+    end
+    return r
+  end
+  return false
+end
+
+post=AssertPost()
+
+id=GetVarInt(mg.request_info.query_string,'id') or 0
+add=mg.get_var(post,'add')
+change=mg.get_var(post,'change')
+del=mg.get_var(post,'del')
+OneClick=GetVarInt(mg.request_info.query_string,'oneclick',0,1)==1
+toggle=GetVarInt(mg.request_info.query_string,'toggle',0,1)==1
+
+if post then
+  if add then
+    onid=GetVarInt(post, 'onid') or 0
+    tsid=GetVarInt(post, 'tsid') or 0
+    sid=GetVarInt(post, 'sid') or 0
+    eid=GetVarInt(post, 'eid') or 0
+    r={onid=onid,tsid=tsid,sid=sid,eid=eid,recSetting={}}
+    presetID=GetVarInt(post,'presetID',0,0xFFFE)
+    r=recSetting(r,presetID,post)
+    if r then
+      r=eventInfo(r)
+      if r then
+        done=edcb.AddReserveData(r)
+      else
+        err='イベント情報が見つかりません'
+      end
+ 	else
+      err='録画設定が正しくありません'
+ 	end
+  elseif change then
+    r=edcb.GetReserveData(id)
+    if r then
+      if mg.get_var(post,'start-y') then
+        r.startTime={
+          year=GetVarInt(post,'start-y',1900,3000),
+          month=GetVarInt(post,'start-m',1,12),
+          day=GetVarInt(post,'start-d',1,31),
+          hour=GetVarInt(post,'start-h',0,23),
+          min=GetVarInt(post,'start-i',0,59),
+          sec=GetVarInt(post,'start-s',0,59)
+        }
+        endHour=GetVarInt(post,'end-h',0,23)
+        endMin=GetVarInt(post,'end-i',0,59)
+        endSec=GetVarInt(post,'end-s',0,59)
+        --正当な日時か検査
+        if r.startTime.year and r.startTime.month and r.startTime.day and
+           r.startTime.hour and r.startTime.min and r.startTime.sec and
+           os.time(r.startTime) and endHour and endMin and endSec
+        then
+          --プログラム予約化
+          r.eid=65535
+          r.durationSecond=(endHour-r.startTime.hour)*3600+(endMin-r.startTime.min)*60+endSec-r.startTime.sec
+          r.durationSecond=r.durationSecond+(r.durationSecond<0 and 24*3600 or 0)
+          done=edcb.ChgReserveData(r)
+        else
+          err='不正な日時です'
+        end
+      else
+        presetID=GetVarInt(post,'presetID',0,65534)
+        r=recSetting(r,presetID,post)
+        if r then
+          done=edcb.ChgReserveData(r)
+        else
+          err='録画設定が正しくありません'
+        end
+      end
+    else
+      err='予約が見つかりません'
+    end
+  elseif del then
+    if edcb.GetReserveData(id) then
+      edcb.DelReserveData(id)
+      messege='<success>予約を削除しました</success>'
+    else
+      err='予約が見つかりません'
+    end
+  end
+elseif OneClick then
+  AssertCsrf(mg.request_info.query_string)
+  onid=GetVarInt(mg.request_info.query_string,'onid') or 0
+  tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
+  sid=GetVarInt(mg.request_info.query_string,'sid') or 0
+  eid=GetVarInt(mg.request_info.query_string,'eid') or 0
+  r={onid=onid,tsid=tsid,sid=sid,eid=eid}
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==0 then
+      r.recSetting=v.recSetting
+      break
+    end
+  end
+  r=eventInfo(r)
+  if r then
+    done=edcb.AddReserveData(r)
+  else
+    err='イベント情報が見つかりません'
+  end
+elseif toggle then
+  AssertCsrf(mg.request_info.query_string)
+  r=edcb.GetReserveData(id)
+  if r then
+    for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+      if v.id==0 then
+        recMode=(v.recSetting.recMode==5 and 0 or v.recSetting.recMode)
+        break
+      end
+    end
+    r.recSetting.recMode=(r.recSetting.recMode==5 and recMode or 5)
+    done=edcb.ChgReserveData(r)
+  else
+    err='予約が見つかりません'
+  end
+end
+
+if done then
+  edcb.htmlEscape=15
+  if add or OneClick then
+    for i,v in ipairs(edcb.GetReserveData()) do
+      if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
+        id=v.reserveID
+        break
+      end
+    end
+  end
+  r=edcb.GetReserveData(id)
+
+  messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success><reserveinfo><ID>'
+    ..r.reserveID..'</ID><title>'
+    ..r.title..'</title><startDate>'
+    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                    r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
+    ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
+    ..r.durationSecond..'</duration><service_name>'
+    ..r.stationName..'</service_name><ONID>'
+    ..r.onid..'</ONID><TSID>'
+    ..r.tsid..'</TSID><SID>'
+    ..r.sid..'</SID><eventID>'
+    ..r.eid..'</eventID><comment>'
+    ..r.comment..'</comment><overlapMode>'
+    ..r.overlapMode..'</overlapMode><recsetting><recMode>'
+    ..r.recSetting.recMode..'</recMode><priority>'
+    ..r.recSetting.priority..'</priority><tuijyuuFlag>'
+    ..(r.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
+    ..r.recSetting.serviceMode..'</serviceMode><pittariFlag>'
+    ..(r.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
+    ..r.recSetting.batFilePath..'</batFilePath><recFolderList>'
+  for j,w in ipairs(r.recSetting.recFolderList) do
+    messege=messege..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>'
+  end
+  messege=messege..'</recFolderList><suspendMode>'
+    ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
+    ..(r.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
+    ..(r.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
+    ..(r.recSetting.startMargin or 0)..'</startMargine><endMargine>'
+    ..(r.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(r.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
+    ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
+    ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'
+  for j,w in ipairs(r.recSetting.partialRecFolder) do
+    messege=messege..'<recFolderInfo><recFolder>'
+      ..w.recFolder..'</recFolder><writePlugIn>'
+      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
+      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>'
+  end
+  messege=messege..'</partialRecFolder></recsetting><recFileNameList>'
+  for j,w in ipairs(r.recFileNameList) do
+    messege=messege..'<name>'..w..'</name>'
+  end
+  messege=messege..'</recFileNameList></reserveinfo>\r\n'
+elseif err then
+  messege='<err>予約を'..(
+        (add or OneClick)  and '追加'
+     or (change or toggle) and '変更'
+                            or '削除')
+    ..'できませんでした</err><err>'..err..'</err>'
+end
+
+
+ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)

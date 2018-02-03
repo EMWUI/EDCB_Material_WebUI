@@ -62,7 +62,9 @@ end
 if aa.searchInfo then
   si=aa.searchInfo
   if post then
-    si.andKey=mg.get_var(post, 'andKey')
+    si.andKey=(mg.get_var(post,'disableFlag') and '^!{999}' or '')
+      ..(GetVarInt(post,'caseFlag')==1 and 'C!{999}' or '')
+      ..(mg.get_var(post,'andKey') or ''):gsub('%c','')
     si.notKey=mg.get_var(post, 'notKey')
     si.regExpFlag=mg.get_var(post, 'regExpFlag')
     si.titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag')
@@ -85,7 +87,7 @@ if aa.searchInfo then
     for i=0,10000 do
       v=mg.get_var(post, 'serviceList', i)
       if not v then break end
-      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      m={v:match('^(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)$')}
       if #m==3 then
         table.insert(si.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
       end
@@ -96,32 +98,33 @@ if aa.searchInfo then
       if #m==6 then
         dateInfo={
           startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+          startHour=0+m[2],
+          startMin=0+m[3],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]],
+          endHour=0+m[5],
+          endMin=0+m[6]
         }
-        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
-          dateInfo.startHour=0+m[2]
-          dateInfo.startMin=0+m[3]
-          dateInfo.endHour=0+m[5]
-          dateInfo.endMin=0+m[6]
-          table.insert(si.dateList, dateInfo)
+        if dateInfo.startDayOfWeek and dateInfo.startHour<24 and dateInfo.startMin<60 and
+           dateInfo.endDayOfWeek and dateInfo.endHour<24 and dateInfo.endMin<60 then
+          table.insert(aa.searchInfo.dateList,dateInfo)
         end
       end
     end
   end
-  si.disableFlag=string.match(si.andKey, '^%^%!{999}(.*)') or mg.get_var(post, 'disableFlag') and si.andKey
-
-  redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '') or 'autoaddepg.html'..(page~=0 and '?page='..page or ''))..(interval~=25 and '&interval='..interval or '')
+  si.disableFlag=si.andKey:match('^^!{999}(.*)')
+  si.caseFlag=(si.disableFlag or si.andKey):match('^C!{999}(.*)')
 
   ct.macro=true
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
-    ..'<form id="autoaddepg" method="POST" action="'..PathToRoot()..'api/AutoAddEPGAddChgKey?id='..aa.dataID..'">\n'
+    ..'<form id="autoaddepg" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'">\n'
     ..'<section class="mdl-layout__tab-panel is-active" id="search">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">自動予約無効</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+    ..'<input type="hidden" name="addchg" value="1">\n'
     ..'<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag" '..(si.disableFlag and ' checked' or '')..'></label><span class="mdl-switch__label"></span></div></div>\n\n'
     ..SerchTemplate(si)
 
@@ -159,7 +162,7 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/autoaddepgdelkey?id='..aa.dataID..'" data-action="close"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-action="close"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
   end
 
   ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'

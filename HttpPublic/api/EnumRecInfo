@@ -1,0 +1,57 @@
+-- vim:set ft=lua:
+id=mg.get_var(mg.request_info.query_string,'id')
+
+edcb.htmlEscape=15
+if id then
+  a=edcb.GetRecFileInfo(id)
+  if a then a={a} end
+else
+  a=edcb.GetRecFileInfoBasic()
+  table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
+end
+
+ct={'<?xml version="1.0" encoding="UTF-8" ?'..'>\r\n'}
+if not a then
+  table.insert(ct, '<entry><err>録画結果が存在しません</err></entry>')
+else
+  index=math.max(tonumber(mg.get_var(mg.request_info.query_string,'index')) or 0,0)
+  count=math.max(tonumber(mg.get_var(mg.request_info.query_string,'count')) or 200,0)
+  countTo=math.min(index+count,#a)
+
+  table.insert(ct, '<entry><total>'..#a..'</total><index>'..index..'</index><count>'..math.max(countTo-index,0)..'</count><items>\r\n')
+  for i=index+1,countTo do
+    v=a[i]
+    table.insert(ct, '<recinfo><ID>'
+      ..v.id..'</ID><recFilePath>'
+      ..v.recFilePath..'</recFilePath><title>'
+      ..v.title..'</title><ONID>'
+      ..v.onid..'</ONID><TSID>'
+      ..v.tsid..'</TSID><SID>'
+      ..v.sid..'</SID><eventID>'
+      ..v.eid..'</eventID><service_name>'
+      ..v.serviceName..'</service_name>')
+    if v.startTime then
+      table.insert(ct, os.date('<startDate>%Y/%m/%d</startDate><startTime>%H:%M:%S</startTime><startDayOfWeek>', os.time(v.startTime))
+        ..(v.startTime.wday-1)..'</startDayOfWeek>')
+    end
+    if v.durationSecond then
+      table.insert(ct, '<duration>'..v.durationSecond..'</duration>')
+    end
+    if v.startTimeEpg then
+      table.insert(ct, os.date('<startDateEpg>%Y/%m/%d</startDateEpg><startTimeEpg>%H:%M:%S</startTimeEpg><startDayOfWeekEpg>', os.time(v.startTimeEpg))
+        ..(v.startTime.wday-1)..'</startDayOfWeekEpg>')
+    end
+    table.insert(ct, '<drops>'
+      ..v.drops..'</drops><scrambles>'
+      ..v.scrambles..'</scrambles><recStatus>'
+      ..v.recStatus..'</recStatus><comment>'
+      ..v.comment..'</comment><programInfo>'
+      ..v.programInfo..'</programInfo><errInfo>'
+      ..v.errInfo..'</errInfo></recinfo>\r\n')
+  end
+  table.insert(ct, '</items></entry>')
+end
+cl=0
+for i,v in ipairs(ct) do cl=cl+#v end
+mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+for i,v in ipairs(ct) do mg.write(v) end

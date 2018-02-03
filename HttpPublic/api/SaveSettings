@@ -1,3 +1,4 @@
+-- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'

@@ -1,3 +1,4 @@
+-- vim:set ft=lua:
 key={
   network=tonumber(mg.get_var(mg.request_info.query_string,'network')) or 0,
   days29=tonumber(mg.get_var(mg.request_info.query_string,'days')) or 0,
@@ -41,9 +42,11 @@ else
     end
     if v.contentInfoList then
       for j,w in ipairs(v.contentInfoList) do
+        nibble=w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
         table.insert(ct, '<contentInfo><nibble1>'
           ..math.floor(w.content_nibble/256)..'</nibble1><nibble2>'
-          ..(w.content_nibble%256)..'</nibble2></contentInfo>')
+          ..(w.content_nibble%256)..'</nibble2><component_type_name>'
+          ..edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble)..'</component_type_name></contentInfo>')
       end
     end
     if v.eventGroupInfo then
@@ -65,7 +68,8 @@ else
           ..v.componentInfo.stream_content..'</stream_content><component_type>'
           ..v.componentInfo.component_type..'</component_type><component_tag>'
           ..v.componentInfo.component_tag..'</component_tag><text>'
-          ..v.componentInfo.text_char..'</text></videoInfo>')
+          ..v.componentInfo.text_char..'</text><component_type_name>'
+          ..edcb.GetComponentTypeName(v.componentInfo.stream_content*256+v.componentInfo.component_type)..'</component_type_name></videoInfo>')
       end
       if v.audioInfoList then
         for j,w in ipairs(v.audioInfoList) do
@@ -79,7 +83,8 @@ else
             ..(w.main_component_flag and 1 or 0)..'</main_component_flag><quality_indicator>'
             ..w.quality_indicator..'</quality_indicator><sampling_rate>'
             ..w.sampling_rate..'</sampling_rate><text>'
-            ..w.text_char..'</text></audioInfo>')
+            ..w.text_char..'</text><component_type_name>'
+            ..edcb.GetComponentTypeName(w.stream_content*256+w.component_type)..'</component_type_name></audioInfo>')
         end
       end
       if v.eventRelayInfo then

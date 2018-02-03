@@ -16,18 +16,9 @@ ct={title='チューナー別'}
 
 ct.css='<style>\n.partially{background:'..partially..';}'..'.shortage{background:'..shortage..';}\n</style>\n'
 
-ct.js='<script>\nsetInterval("rec()",1000);\n</script>\n'
+ct.js='<script>$(function(){rec();});</script>\n'
 
-ct.dialog={{
-  id='dialog_progres',
-  content='<form id="progres" method="POST"><div>'
-    ..'<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startDate" id="startDate"><label class="mdl-textfield__label" for="startDate"></label></div>'
-    ..'<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="startTime" id="startTime"><label class="mdl-textfield__label" for="startTime"></label></div><span class="tilde">～</span>'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="endTime" id="endTime"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n</div></form>',
-  button='<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>'
-}}
+ct.progres=true
 
 if sidePanel then ct.macro=true end
 
@@ -79,7 +70,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(w.durationSecond and (os.time(w.startTime)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(w.durationSecond and (os.time(w.startTime)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(sidePanel and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
                   or 'data-href="reserveinfo.html?id='..w.reserveID..'&tuner=&page='..pageIndex)..'">\n'
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..w.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(w.startTime)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(w.startTime, w.durationSecond)

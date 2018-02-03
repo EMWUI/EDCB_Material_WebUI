@@ -1,4 +1,5 @@
-﻿status, lfs=pcall(require, 'lfs')
+-- vim:set ft=lua:
+status, lfs=pcall(require, 'lfs')
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
