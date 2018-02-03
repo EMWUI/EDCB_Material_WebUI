@@ -5,14 +5,14 @@ EDCB Material WebUI
 [xtne6f氏](https://github.com/xtne6f/EDCB)の[e186f9a](https://github.com/xtne6f/EDCB/commit/b72c091672f3c042c7c1369e51282fcadcf61df8)以降で動作します  
 またファイル再生にffmpeg.exe,readex.exe、ライブラリ機能にlfs.dllが必要です  
 ffmpeg.exe,readex.exe,lfs.dllを別途ダウロードしてください  
-lfs.dll,readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からEDCB-work-plus-s-bin.zip、EDCB-tools-bin.zipにそれぞれ同梱されています
+lfs.dll,readex.exeのダウンロードはEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からEDCB-work-plus-s-bin.zipまたはEDCB-tools-bin.zipに同梱されています
 
 
 ### 使い方
 EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L537-L641)をよく読み  
-README.md以外をEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れてください  
-[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L566-L570)を設定している場合はHttpPublicの中身をそこに  
-※HttpPublicFolderの任意のフォルダに入れる場合*apiフォルダ*だけは**HttpPublicFolder直下**に入れてください  
+HttpPublicをEpgTimerSrv.exeと同じ場所に、ffmpeg.exeとreadex.exeをToolsフォルダに入れ http://localhost:5510/EMWUI/ 等にアクセスしてください  
+[HttpPublicFolder](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L566-L570)を設定している場合はHttpPublicの中身を適切に配置してください  
+※*apiフォルダ*は必ず**HttpPublicFolder直下**に入れてください  
 
 ### テーマカラー
 テーマカラーを変えることが出来ます  
@@ -25,14 +25,14 @@ Setting\HttpPublic.iniのSETのcssに下部に表示されてる<LINK>タグを�
 .markのborderはA700を指定しています
 
 ### ライブラリ
-録画保存フォルダのビデオファイル(ts,mp4,webm等)を表示・再生します  
-Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合があるようです  
-また公開フォルダ外のファイルはスクリプトを経由するためシークできないようになっています  
 **LuaFileSystem(lfs.dll)が必要です**  
+録画保存フォルダのビデオファイル(ts,mp4,webm等)を表示・再生します  
+Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が  
+また公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
 
 必要に応じてSetting\HttpPublic.iniのSETに以下のキー[=デフォルト]を指定してください  
 `batPath[=EDCBのbatフォルダ]`  
-録画設定でこのフォルダの.batが選択可能になります  
+録画設定でこのフォルダの.batと.ps1が選択可能になります  
 \# 変更する場合必ずフルパスで設定
 
 `LibraryPath=1`  
@@ -48,25 +48,36 @@ Chrome系ブラウザでmp4を再生しようとするとエラーで再生で�
 `xprepare[=48128]`  
 転送開始前に変換しておく量(bytes)
 
-**※ffmpegとreadexのデフォルト値がToolsフォルダに変更になりました※**  
 `ffmpeg[=Tools\ffmpeg]`  
-ffmpeg.exeのパス
+ffmpeg.exeのパス  
 
 `readex[=Tools\readex]`  
 readex.exeのパス  
 
-`ffmpegoption[=-vcodec libvpx -b 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -]`  
-ffmpegのオプション  
+#### 画質設定(ffmpegオプション)  
+以下のような設定を書き込むとデフォルトと以下で指定した設定を読み込めるようになります
+
+    [MOVIE]
+    HD=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+
+もしくは[MOVIE]に`画質名=ffmpegオプション`を[SET]のqualityに画質名をコンマ区切りで複数の設定を読み込むことができます  
+\# 例(オプションはものすごく適当です)
+
+    [SET]
+    quality=720p,480p,360p
+    [MOVIE]
+    720p=-vcodec libvpx -b:v 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 1280x720 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    480p=-vcodec libvpx -b:v 1500k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 720x480 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+
 \# -iは指定する必要ありません  
 \# リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する
 
-次は**[MOVIE]**で指定  
-`HD[=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -]`  
-ffmpegのオプションのHD用設定  
-\# HDと言いつつデフォルトでは960x540なのでバランスを見つつHDに調整してください
+
+
 
 ##### サムネ
-HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッド表示の時にサムネを表示します
+HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとサムネを表示します
 
 ##### ファイル再生
 * トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(99分率))を指定して再読み込み)  
@@ -79,8 +90,9 @@ HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとグリッ
 リネームや移動していると再生することが出来ません
 
 ##### 放送中一覧
-`\img\logo`に`ONID-SID.png`があると局ロゴを表示します  
-ファイル名は仮です(スマートなロゴ抽出方法が知らないためファイル名等が指定できるものがあれば…)  
+`\img\logo`に4桁で16進数の`ONIDSID.png`があると局ロゴを表示します  
+例 BS1: `00040065.png` NHK(東京): `7FE00400.png`  
+(LibISDB(TvTest)のtslogoextractのソースをちょっといじって使用するとBS・CSは作成しやすいかも）
 URLに`?webPanel=`を追加するとWEBパネル向けのデザインになります  
 WEBパネルに追加して使用してください
 
@@ -112,10 +124,6 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
 ### 注意
 チャンネルが増えたりしたら設定を保存しなおしてください(番組表に表示されません)  
 **スタンバイの機能を使うにはスクリプト(api/Common)のコメントアウトを解除する必要があります**  
-~~tkntrec氏版をお使いのかたは必ず設定のtkntrec氏版を**有効**にしてください  
-有効せずに使用しEPG予約を変更しようとすると番組長などの追加機能の設定がデフォルトにされます~~  
-[cc6fafc](https://github.com/xtne6f/EDCB/commit/cc6fafcbfe5cb558e1ed89f6f3ff62ea5ec620ca)でオリジナルの機能がなくなったはずなので必要なくなりました  
-設定は残しておきます
 
 ### 動作確認
 
@@ -125,8 +133,6 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
   - firefox
 - Android
   - Chrome
-
-※IEでも基本的に動作すると思いますがおすすめしません  
 
 ### その他
 このプログラムの使用し不利益が生じても一切の責任を負いません  
