@@ -57,7 +57,7 @@ function tab(tab){
 		tab.addClass('is-active');
 		$(panel).addClass('is-active');
 		if (panel == '#movie' && !$('video').data('load')){
-			$('video').load().data('load', true);
+			$('video').trigger('load').data('load', true);
 		}
 	}
 }
@@ -997,7 +997,7 @@ $(function(){
 		$('main').scrollTop(0);
 		if ($(this).hasClass('play') && !$('video').data('load')){
 			loadMovie($('#video'));
-			$('#video').load().data('load', true);
+			$('#video').trigger('load').data('load', true);
 			$('#volume').get(0).MaterialSlider.change(localStorage.getItem('volume'));
 		}
 	});

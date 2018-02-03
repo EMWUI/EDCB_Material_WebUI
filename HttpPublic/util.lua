@@ -29,7 +29,7 @@ function template(temp)
 ..(temp.css or '')
 
 ..[=[
-<script src="]=]..path..[=[js/jquery.min.js"></script>
+<script src="]=]..path..[=[js/jquery-3.3.1.min.js"></script>
 <script src="]=]..path..[=[js/material.min.js"></script>
 <script src="]=]..path..[=[js/hammer.min.js"></script>
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
