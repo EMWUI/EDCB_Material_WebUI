@@ -3,7 +3,8 @@ status, lfs=pcall(require, 'lfs')
 dofile(mg.document_root..'\\api\\util.lua')
 
 path='Setting\\HttpPublic.ini'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg','Tools\\ffmpeg',path)
+dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',path)
 LibraryPath=tonumber(edcb.GetPrivateProfile('SET','LibraryPath',0,path))~=0 and path or 'Common.ini'
 
 MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
@@ -24,7 +25,7 @@ if status then
         fname=edcb.Convert('utf-8', 'cp932', fname)
         if lfs.attributes(fpath) then
           if lfs.attributes(fpath).mode == "directory" then
-            if fname ~= 'chapters' then
+            if fname ~= 'chapters' and not fpath:find('\\video\\thumbs$') then
               if MakeThumbs then
                 attrdir(fpath)
               else
@@ -35,10 +36,10 @@ if status then
               end
             end
           elseif mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
-            thumbs=edcb.FindFile and edcb.FindFile(mg.document_root..'\\thumbs\\'..fname..'.jpg', 1)
+            thumbs=edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\thumbs\\'..fname..'.jpg', 1)
             if MakeThumbs then
               if not thumbs then
-                f=edcb.io.popen(ffmpeg..' -i "'..edcb.Convert('utf-8', 'cp932', fpath)..'" -ss 5 -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\thumbs\\'..fname..'.jpg'..'"')
+                f=edcb.io.popen(ffmpeg..' -i "'..edcb.Convert('utf-8', 'cp932', fpath)..'" -ss 5 -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\video\\thumbs\\'..fname..'.jpg'..'"')
                 f:close()
               end
             else
@@ -67,7 +68,8 @@ if status then
       if MakeThumbs then
         attrdir(edcb.Convert('cp932', 'utf-8', dir))
       else
-        table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..(Public or dir):gsub(':\\', '_'):gsub('/', '_')..'</id>')
+        id=id+1
+        table.insert(ct, '<dir><name>'..(Public or dir)..'</name><id>'..id..'</id>')
         attrdir(edcb.Convert('cp932', 'utf-8', dir))
         table.insert(ct, '</dir>')
       end

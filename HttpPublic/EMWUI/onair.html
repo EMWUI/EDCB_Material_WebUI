@@ -11,7 +11,6 @@ webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 ct={title='放送中'}
 
 ct.js='<script src="js/onair.js"></script>\n'
-  ..'<script src="js/player.js"></script>\n'
 
 if webPanel then
   ct.css='<style>.mdl-layout__header {min-height: 48px; }.mdl-layout__header-row,.mdl-layout__drawer-button {display: none; }</style>'

@@ -119,7 +119,7 @@ function delNotify(notify, data, noSnack){
 }
 
 //通知登録
-var NotifySound = $('<audio src="' + path + 'video/notification.mp3">')[0];
+var NotifySound = $('<audio src="' + root + 'video/notification.mp3">')[0];
 NotifySound.volume = 0.2;
 function creatNotify(notify, data, save){
 	var notification = $('.mdl-js-snackbar').get(0);

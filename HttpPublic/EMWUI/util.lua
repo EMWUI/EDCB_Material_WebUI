@@ -35,7 +35,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
-..'<script>path=\''..path..'\';root=\''..mg.script_name:gsub('[^\\/]*$',''):gsub(mg.document_root..'/',''):gsub('[^\\/]*[\\/]','../')..'\';</script>\n'
+..'<script>path=\''..path..'\';root=\''..PathToRoot()..'\';</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
 -- javascript
@@ -464,7 +464,7 @@ function RecSettingTemplate(rs)
   s=s..'</div>\n<div id="preset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
   if #rs.recFolderList>0 then
     for i,v in ipairs(rs.recFolderList) do
-      recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
+      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
       s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
         ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell">フォルダ</div><div class="mdl-cell">'..v.recFolder..'</div></div>\n'
@@ -498,7 +498,7 @@ function RecSettingTemplate(rs)
 
   if #rs.partialRecFolder>0 then
     for i,v in ipairs(rs.partialRecFolder) do
-      recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
+      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
       s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
         ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell">フォルダ</div><div class="mdl-cell">'..v.recFolder..'</div></div>\n'
@@ -589,7 +589,7 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop"><div class="has-button'..(si.search and ' advanced' or '')..'"><div class="pulldown mdl-layout-spacer"><select id="content">\n'
     ..'<option value="all">すべて表示\n'
   for i=0,15 do
-    nibble1=edcb.GetGenreName(i*256+255)
+    local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
       s=s..'<option value=".g'..(i*256+255)..'">'..nibble1..'\n'
     end
@@ -598,7 +598,7 @@ function SerchTemplate(si)
    ..'<div><button class="g_celar'..(si.search and ' advanced ' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="5">\n'
   for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15}) do
-    nibble1=edcb.GetGenreName(i*256+255)
+    local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
       s=s..'<option class="g'..(i*256+255)..'" value="'..(i*256+255)..'"'
       for j,v in ipairs(si.contentList) do
@@ -609,7 +609,7 @@ function SerchTemplate(si)
       end
       s=s..'>'..nibble1..'\n'
       for j=0,15 do
-        nibble2=edcb.GetGenreName(i*256+j)
+        local nibble2=edcb.GetGenreName(i*256+j)
         if nibble2~='' then
           s=s..'<option class="g'..(i*256+255)..' subGenre" value="'..(i*256+j)..'"'
           for k,v in ipairs(si.contentList) do
@@ -682,20 +682,20 @@ function SerchTemplate(si)
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">時間絞り込み</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div id="dateList" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
     ..'<div id="dateList_main"><div class="multiple"><select id="dateList_select" multiple size="6">\n'
+  local dateListValue, dateList_SP = '', ''
   for i,v in ipairs(si.dateList) do
-    value=({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
+    local value=({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
       ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
 
-    list=({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..' '..(v.startHour<10 and 0 or '')..v.startHour..':'..(v.startMin<10 and 0 or '')..v.startMin..' ～ '
+    local list=({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..' '..(v.startHour<10 and 0 or '')..v.startHour..':'..(v.startMin<10 and 0 or '')..v.startMin..' ～ '
       ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..' '..(v.endHour<10 and 0 or '')..v.endHour..':'..(v.endMin<10 and 0 or '')..v.endMin
 
     s=s..'<option value="'..value..'">'..list..'\n'
-    dateListValue=(dateListValue and dateListValue..',' or '' )..value
-    dateList_SP=(dateList_SP and dateList_SP or '')..'<li class="mdl-list__item" data-count="'..(i-1)..'"><span class="mdl-list__item-primary-content">'..list..'</span></li>\n'
-
+    dateListValue=dateListValue..(i==1 and '' or ',')..value
+    dateList_SP=dateList_SP..'<li class="mdl-list__item" data-count="'..(i-1)..'"><span class="mdl-list__item-primary-content">'..list..'</span></li>\n'
   end
   s=s..'</select></div>\n'
-    ..'<div class="touch"><ul id="dateList_touch" class="mdl-list">\n'..(dateList_SP and dateList_SP or '')..'</ul></div>\n'
+    ..'<div class="touch"><ul id="dateList_touch" class="mdl-list">\n'..dateList_SP..'</ul></div>\n'
     ..''
     ..'<div><button id="add_dateList" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">追加</button>'
     ..'<button id="del_dateList" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">削除</button></div>\n'
@@ -741,7 +741,7 @@ function SerchTemplate(si)
     ..'</div></div>\n'
 
     ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="notdate"><input id="notdate" class="mdl-checkbox__input" type="checkbox" name="notDateFlag" value="1"'..(si.notDateFlag and ' checked' or '')..'><span class="mdl-checkbox__label">NOT扱い</span></label></div>\n'
-    ..'</div><input type="hidden" name="dateList" value="'..(dateListValue and dateListValue or '')..'"></div>\n'
+    ..'</div><input type="hidden" name="dateList" value="'..dateListValue..'"></div>\n'
 
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">スクランブル放送</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="freeCAFlag">\n'
@@ -795,6 +795,7 @@ function sidePanelTemplate(reserve)
 <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
 <div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
 ]=]
+  local rs
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do
     if v.id==0 then
       rs=v.recSetting
@@ -900,7 +901,7 @@ function ServiceList(a)
   local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
   if count>0 then
     for i=0,count do
-      v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
+      local v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
       HIDE_SERVICES[''..v]=true
     end
   end
@@ -909,15 +910,10 @@ function ServiceList(a)
   count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
   if count>0 then
     for i=0,count do
-      w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-      m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-      if #m==3 then
-      monid=0+m[1]
-      mtsid=0+m[2]
-      msid=0+m[3]
-      end
+      local w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+      local m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
       for j,v in ipairs(a or {}) do
-        if monid==v.onid and mtsid==v.tsid and msid==v.sid then
+        if #m==3 and 0+m[1]==v.onid and 0+m[2]==v.tsid and 0+m[3]==v.sid then
           if HIDE_SERVICES[w] then
             v.hide=true
             if not show then break end

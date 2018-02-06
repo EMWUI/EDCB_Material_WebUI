@@ -14,9 +14,9 @@ if v then
   -- トランスコード済みのファイルがvideoフォルダにあればそっち使う
   fname=string.match(w.recFilePath, '[^\\]*$') or ''
   for i,ext in ipairs({'.mp4','.webm'}) do
-    f=edcb.FindFile and edcb.FindFile(mg.script_name:gsub('[^\\/]*$','')..'video\\'..fname..ext, 1)
+    f=edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\'..fname..ext, 1)
     if f then
-      video='video/'..fname..ext
+      video=PathToRoot()..'video/'..mg.url_encode(fname)..ext
       break
     end
   end

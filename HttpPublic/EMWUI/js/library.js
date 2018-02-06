@@ -101,7 +101,7 @@ function folder(){
 						if (ViewMode == 'grid'){
 							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name);
 							if (thumbs != 0){
-								obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
+								obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 							}else{
 								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
 							}
@@ -109,7 +109,7 @@ function folder(){
 						}else{
 							var avatar;
 							if (thumbs != 0){
-								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'thumbs/' + thumbs + '\');'});
+								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 							}else{
 								avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 							}
@@ -210,7 +210,7 @@ function librarySearch(key){
 					if (ViewMode == 'grid'){
 						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
 						if (thumbs != 0){
-							obj.css('background-image', 'url(\'' + root + 'thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
+							obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 						}else{
 							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
 						}
@@ -218,7 +218,7 @@ function librarySearch(key){
 					}else{
 						var avatar;
 						if (thumbs != 0){
-							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'thumbs/' + thumbs + '\');'});
+							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 						}else{
 							avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 						}
