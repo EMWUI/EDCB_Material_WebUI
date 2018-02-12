@@ -122,6 +122,7 @@ ct.js='<script>'
   ..';baseTime='..baseTime-timezone
   ..';marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')..';'
+  ..';lastTime=false;'
   ..'$(function(){$(".now").each(function(){end($(this));});lastTime;});setInterval("line()", 1000);'
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
@@ -146,8 +147,9 @@ for i,v in ipairs(edcb.GetReserveData()) do
 end
 
 key={
-  andKey='オリンピック',
+  andKey='オリンピック|五輪',
   notKey='',
+  regExpFlag=true,
   titleOnlyFlag=true,
   contentList={{content_nibble=262}},
   serviceList={},
@@ -170,7 +172,7 @@ for i,v in ipairs(b)do
   _endTime=os.time(v.startTime)+(v.durationSecond or 0)
   if baseTime-timezone<_endTime and (i==0 or v.eid~=b[i-1].eid) then
     if not lastendTime or lastendTime<_endTime then lastendTime=_endTime end
-    for j=1, 1000 do
+    for j=1, #st+1 do
       if st[j] then
         w=st[j][#st[j]]
         startTime=os.time(w.startTime)
@@ -195,7 +197,7 @@ end
 
 ctt={'<div id="tv-guide-container"><div id="tv-guide">'
 
-  ..'<div id="tv-guide-header" style="height:0;"></div>\n'
+  ..'<div id="tv-guide-header" class="hidden" style="height:0;"></div>\n'
 
   ..'<div id="tv-guide-main">\n'
 
