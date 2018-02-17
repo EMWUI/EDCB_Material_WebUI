@@ -60,7 +60,7 @@ if v then
     ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" '..(ori and 'preload="none" data-path="'..video..'" data-duration="'..v.durationSecond..'"' or 'src="'..video..'" data-public="true" data-load="true"')..' data-rec="true"></video>\n', not ori)
+      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..v.durationSecond or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', not ori)
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
@@ -75,7 +75,7 @@ if v then
     ..'</div></div>\n'
 
 ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'
-     ..(video and '<a href="#movie" class="play mdl-layout__tab">再生</a>\n' or '')
+     ..(video and '<a href="#movie" id="movie_tab" class="mdl-layout__tab">再生</a>\n' or '')
      ..(#v.errInfo>0 and '<a href="#error" class="mdl-layout__tab">エラーログ</a>\n' or '')
 end
 

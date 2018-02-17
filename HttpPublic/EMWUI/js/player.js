@@ -1,7 +1,9 @@
 ﻿function getVideoTime(Time){
-	var m = Math.floor(Time / 60);
-	var s = ('0' + Math.floor(Time - m * 60)).slice(-2);
-	return m + ':' + s;
+	var h = Math.floor(Time / 3600);
+	var m = Math.floor((Time / 60 ) % 60);
+	var s = ('0'+ Math.floor(Time % 60)).slice(-2);
+	if (h>0) m = h +':'+ ('0'+ m).slice(-2);
+	return m +':'+ s;
 }
 
 function hideBar(time){
@@ -18,6 +20,7 @@ function stopTimer(){
 	$('#player').css('cursor', 'default');
 }
 
+var seek = 0;
 function loadMovie(obj){
 	var path = obj.data('path');
 	var canPlay = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
@@ -70,14 +73,21 @@ function playerResize() {
 }
 
 $(function(){
-	var xcode;
+	var xcode, duration;
 	var notification = document.querySelector('.mdl-js-snackbar');
 
 	var video = $('#video').get(0);
-	var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
-	video.muted = localStorage.getItem('muted') == 'true' ? true : false;
+	video.muted = localStorage.getItem('muted') == 'true';
 	video.volume = localStorage.getItem('volume') ? localStorage.getItem('volume') : 1;
-	if (autoplay) $('#autoplay').prop('checked', true);
+	$('#autoplay').prop('checked', sessionStorage.getItem('autoplay') == 'true');
+
+    $('#volume').on('mdl-componentupgraded', function() {
+		if (video.muted){
+			this.MaterialSlider.change(0);
+		}else{
+			this.MaterialSlider.change(video.volume);
+		}
+    });
 
 	//閉じる
 	$('.close.mdl-badge').click(function(){
@@ -101,7 +111,7 @@ $(function(){
 			$('#play').text('pause');
 		},
 		'ended': function(){
-			var autoplay = sessionStorage.getItem('autoplay') == 'true' ? true : false;
+			var autoplay = sessionStorage.getItem('autoplay') == 'true';
 			if (autoplay && !$('.playing').is('.item:last')){
 				playMovie($('.playing').next());
 			}else if (autoplay && $('.playing').is('.item:last')){
@@ -112,7 +122,7 @@ $(function(){
 		},
 		'error': function(){
 			var messege;
-			var errorcode = video.error.code;
+			var errorcode = this.error.code;
 			if (errorcode == 1){
 				messege = 'MEDIA_ERR_ABORTED';
 			}else if (errorcode == 2){
@@ -125,43 +135,45 @@ $(function(){
 			notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
 		},
 		'volumechange': function(){
-			if (video.muted){
+			if (this.muted){
 				$('#volume-icon').text('volume_off');
-			}else if (video.volume == 0){
+			}else if (this.volume == 0){
 				$('#volume-icon').text('volume_mute');
-			}else if (video.volume > 0.5){
+			}else if (this.volume > 0.5){
 				$('#volume-icon').text('volume_up');
 			}else{
 				$('#volume-icon').text('volume_down');
 			}
-			localStorage.setItem('volume', video.volume);
-			localStorage.setItem('muted', video.muted);
+			localStorage.setItem('volume', this.volume);
+			localStorage.setItem('muted', this.muted);
 		},
 		'ratechange': function(){
-			$('#rate').text(video.playbackRate);
-			if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = video.playbackRate;
+			$('#rate').text(this.playbackRate);
+			//if (sessionStorage.getItem('autoplay') == 'true') this.defaultPlaybackRate = this.playbackRate;
 		},
 		'loadeddata': function(){
 			hideBar(1000);
 		},
 		'canplay': function(){
-			var duration= $(this).data('duration') || video.duration;
 			hideBar(2000);
 			$(this).removeClass('is-loadding');
 			$('#seek').prop('disabled', false);
+			
 			xcode = $(this).data('xcode');
+			duration= $(this).data('duration') || this.duration;
+			
 			if (xcode && !$(this).data('rec')){
 				$(this).off('timeupdate');
 				$('#seek').attr('max', 99).attr('step', 1);
 				$('.videoTime').addClass('is-disabled');
-				$('.duration').text('0:00');
-				$('.currentTime').text('0:00');
+				$('.currentTime,.duration').text('0:00');
 			}else{
-				var adjust = seek * (duration / 99);
 				$(this).on('timeupdate', function(){
-					var currentTime = video.currentTime + adjust;
-					$('.currentTime').text(getVideoTime(currentTime));
-					$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
+					if(!$(this).data('touched')){
+						var currentTime = video.currentTime + seek * (duration / 99);
+						$('.currentTime').text(getVideoTime(currentTime));
+						$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
+					}
 				});
 				$('#seek').attr('max', 100).attr('step', 0.01);
 				$('.videoTime').removeClass('is-disabled');
@@ -180,13 +192,24 @@ $(function(){
 	});
 
 	$('#seek').on({
-		'change click': function(){
+		'touchstart mousedown': function(){
+			$('#video').data('touched', true);
+		},
+		'touchend mouseup': function(){
+			$('#video').data('touched', false);
+		},
+		'change': function(){
 			if (xcode){
+				var paused = video.paused;
 				loadMovie($('#video'));
-				video.play();
+				if (!paused) video.play();
 			}
 		},
 		'input': function(){
+			if (!xcode || $('#video').data('rec')){
+				var currentTime = video.currentTime + $(this).val() * (duration / 99);
+				$('.currentTime').text(getVideoTime(currentTime));
+			}
 			if (!xcode) video.currentTime = (video.duration / 100) * $(this).val();
 		}
 	});
@@ -241,13 +264,8 @@ $(function(){
 	});
 
 	$('#autoplay').change(function(){
-		if ($(this).prop('checked')){
-			video.defaultPlaybackRate = video.playbackRate;
-			sessionStorage.setItem('autoplay', true);
-		}else{
-			video.defaultPlaybackRate = 1;
-			sessionStorage.setItem('autoplay', false);
-		}
+		sessionStorage.setItem('autoplay', $(this).prop('checked'));
+		//video.defaultPlaybackRate = $(this).prop('checked') ? video.playbackRate : 1;
 	});
 
 	$('#'+ localStorage.getItem('quality')).prop('checked', true);

@@ -992,13 +992,14 @@ $(function(){
 		dialog.close();
 	});
 
-	//再生タブ
 	$('.mdl-layout__tab').click(function(){
 		$('main').scrollTop(0);
-		if ($(this).hasClass('play') && !$('video').data('load')){
-			loadMovie($('#video'));
+	});
+	//再生タブ
+	$('#movie_tab').click(function(){
+		if (!$('video').data('load')){
+			if (!$('video').data('public')) loadMovie($('#video'));
 			$('#video').trigger('load').data('load', true);
-			$('#volume').get(0).MaterialSlider.change(localStorage.getItem('volume'));
 		}
 	});
 
