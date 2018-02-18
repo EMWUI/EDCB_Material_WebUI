@@ -897,7 +897,8 @@ function SelectChDataList(a)
   return r
 end
 
-function ServiceList(a)
+function ServiceList()
+  local a=edcb.GetServiceList()
   local HIDE_SERVICES={}
   local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
   if count>0 then

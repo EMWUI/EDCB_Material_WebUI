@@ -2,7 +2,7 @@
 	var elapse;
 	var date = new Date();
 	var hour = date.getHours();
-	var min  = MIN = date.getMinutes();
+	var min, MIN = min = date.getMinutes();
 	if (min < 10) min = '0' + min;
 	//現時刻の位置
 	if (baseTime>24) {
@@ -179,7 +179,7 @@ $(function(){
 		$('.select.mdl-color-text--accent').removeClass('mdl-color-text--accent');
 		$(this).addClass('mdl-color-text--accent');
 		$('#select').text($(this).text());
-		$('[for=service] li').show().not($(this).data('val')).hide();
+		$('[for=select_service] li').show().not($(this).data('val')).hide();
 	});
 
 	//番組詳細表示

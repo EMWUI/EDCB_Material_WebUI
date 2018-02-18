@@ -29,25 +29,19 @@ else
       ..v.tsid..'</TSID><SID>'
       ..v.sid..'</SID><eventID>'
       ..v.eid..'</eventID><service_name>'
-      ..v.serviceName..'</service_name>')
-    if v.startTime then
-      table.insert(ct, os.date('<startDate>%Y/%m/%d</startDate><startTime>%H:%M:%S</startTime><startDayOfWeek>', os.time(v.startTime))
-        ..(v.startTime.wday-1)..'</startDayOfWeek>')
-    end
-    if v.durationSecond then
-      table.insert(ct, '<duration>'..v.durationSecond..'</duration>')
-    end
-    if v.startTimeEpg then
-      table.insert(ct, os.date('<startDateEpg>%Y/%m/%d</startDateEpg><startTimeEpg>%H:%M:%S</startTimeEpg><startDayOfWeekEpg>', os.time(v.startTimeEpg))
-        ..(v.startTime.wday-1)..'</startDayOfWeekEpg>')
-    end
-    table.insert(ct, '<drops>'
+      ..v.serviceName..'</service_name>'
+      ..os.date('<startDate>%Y/%m/%d</startDate><startTime>%H:%M:%S</startTime><startDayOfWeek>', os.time(v.startTime))
+      ..(v.startTime.wday-1)..'</startDayOfWeek><duration>'
+      ..v.durationSecond..'</duration>'
+      ..os.date('<startDateEpg>%Y/%m/%d</startDateEpg><startTimeEpg>%H:%M:%S</startTimeEpg><startDayOfWeekEpg>', os.time(v.startTimeEpg))
+      ..(v.startTimeEpg.wday-1)..'</startDayOfWeekEpg><drops>'
       ..v.drops..'</drops><scrambles>'
       ..v.scrambles..'</scrambles><recStatus>'
       ..v.recStatus..'</recStatus><comment>'
       ..v.comment..'</comment><programInfo>'
       ..v.programInfo..'</programInfo><errInfo>'
-      ..v.errInfo..'</errInfo></recinfo>\r\n')
+      ..v.errInfo..'</errInfo><protect>'
+      ..(v.protectFlag and 1 or 0)..'</protect></recinfo>\r\n')
   end
   table.insert(ct, '</items></entry>')
 end

@@ -32,47 +32,7 @@ ct.main='  <main class="sidePanel-container mdl-layout__content">\n'
   ..'<div class="tab-swipe"><div id="onair" class="mdl-grid'..(webPanel and ' webPanel mdl-grid--no-spacing' or '')..'">\n'
 
 edcb.htmlEscape=15
-a=edcb.GetServiceList()
-sort={}
-hidecount=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
-if count>0 then
-  for i=0,count do
-    w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-    m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-    onid=0+m[1]
-    tsid=0+m[2]
-    sid=0+m[3]
-    end
-    for j,v in ipairs(a or {}) do
-      if onid==v.onid and tsid==v.tsid and sid==v.sid then
-        if hidecount>0 then
-          for k=0,hidecount do
-            w=edcb.GetPrivateProfile('HIDE','hide'..k,0,path)
-            m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-            if onid==0+m[1] and tsid==0+m[2] and sid==0+m[3] then
-              v.hide=true
-              break
-            end
-          end
-        end
-        if v.hide and not show then break end
-        table.insert(sort, v)
-        break
-      end
-    end
-  end
-else
-  sort=a
-  table.sort(sort, function(a,b) 
-    if a.remote_control_key_id==b.remote_control_key_id then
-      return a.sid<b.sid
-    else
-      return a.remote_control_key_id<b.remote_control_key_id
-    end
-  end)
-end
+sort=ServiceList()
 
 dtv={}
 oneseg={}
@@ -84,51 +44,57 @@ now=os.time()
 
 for i,v in ipairs(sort or {}) do
   if (onesegflag or not v.partialReceptionFlag) then
-    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-9*3600), durationSecond=24*3600}) or {}
+    x={eid=0, startTime=os.date('*t',now)}
+    y=x
+    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-12*3600), durationSecond=24*3600}) or {}
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
-    for j,v in ipairs(b) do
-      if v.startTime then
-        if now<os.time(v.startTime) then
-          next=v
-          startTime=os.time(event.startTime)
-          _startTime=os.time(v.startTime)
-          endTime=event.durationSecond and startTime+event.durationSecond or _startTime
+    for j,w in ipairs(b) do
+      if w.startTime then
+        if now<os.time(w.startTime) then
+          if 0<j then x=b[j-1] end
+          y=w
+          startTime=os.time(x.startTime)
+          _startTime=os.time(y.startTime)
+          endTime=x.durationSecond and startTime+x.durationSecond or _startTime
           if endTime~=_startTime then
             if endTime<now then
-              event={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+              x={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
             else
-              next={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+              y={eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
               _startTime=endTime
             end
           end
-          _endTime=next.durationSecond and _startTime+next.durationSecond or (j<#b and os.time(b[j+1].startTime) or _startTime)
+          _endTime=y.durationSecond and _startTime+y.durationSecond or (j<#b and os.time(b[j+1].startTime))
           break
         end
-        event=v
       end
     end
 
     fname=('%04X%04X'):format(v.onid,v.sid)..'.png'  --局ロゴのファイル名 BS1: 00040065.png
     f=edcb.FindFile and edcb.FindFile(mg.script_name:gsub('[^\\/]*$','')..'\\img\\logo\\'..fname, 1)
 
+    startTime=os.time(x.startTime)
+    _startTime=os.time(y.startTime)
+    endTime=x.durationSecond and startTime+x.durationSecond or _startTime
+    _endTime=_endTime or (y.durationSecond and _startTime+y.durationSecond)
     list='<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line" data-onid="'..v.onid
       ..'" data-name="'..v.service_name
       ..'" data-tsid="'..v.tsid
       ..'" data-sid="'..v.sid
-      ..'" data-eid="'..event.eid
-      ..'" data-nexteid="'..(next.eid or 0)
-      ..'" data-id="'..(rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, event.eid)] or 'false')
-      ..'" data-nextid="'..(rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, (next.eid or 0))] or 'false')
-      ..'" data-start="'..startTime
+      ..'" data-eid="'..x.eid
+      ..'" data-nexteid="'..y.eid
+      ..'" data-id="'..(rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, x.eid)] or 'false')
+      ..'" data-nextid="'..(rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, y.eid)] or 'false')
+      ..'" data-start="'..startTime*1000
       ..'" data-end="'..endTime*1000
-      ..'" data-duration="'..(event.durationSecond or 0)
+      ..'" data-duration="'..(x.durationSecond or _startTime-endTime)
       ..'">\n'
 
       ..'<span class="mdl-list__item-primary-content">'
       ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..fname..'\');">' or '>tv')..'</i>'..v.service_name
       ..'<span class="mdl-list__item-text-body">\n'
-      ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(event.shortInfo and ConvertTitle(event.shortInfo.event_name) or '')..'</span></span>\n'
-      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..os.date('%H:%M', _endTime)..'</span></span><span class="nexttitle">'..(next.shortInfo and ConvertTitle(next.shortInfo.event_name) or '')..'</span></span>\n'
+      ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
+      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(_endTime and os.date('%H:%M', _endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
       ..'</span></span>'
 
       ..'<div class="mdl-progress mdl-js-progress"></div>'

@@ -4,54 +4,55 @@
 }
 
 function getEvent(event){
-	var title = event.children('event_name').text().replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g,'<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
-	var textTime = event.children('startTime').text();
-	var startTime = new Date(event.children('startDate').text()+' '+textTime).getTime();
+	var startTime = event.children('startTime').text();
+	var start = new Date(event.children('startDate').text()+' '+startTime).getTime();
 	var duration = Number(event.children('duration').text());
  	return {
 		eid: event.children('eventID').text(),
-		title: title,
-		textTime: textTime.match(/(\d+:\d+):\d+/)[1],
-		startTime: startTime,
-		endTime: startTime+duration*1000,
-		duration: duration
+		title: FormatTitle(event.children('event_name').text()),
+		start: (duration==0 ? Date.now() : start),
+		end: (duration==0 ? Date.now()+5*60*1000 : start+duration*1000) ,
+		startTime: startTime.match(/(\d+:\d+):\d+/)[1],
+		endTime: (duration==0 ? '未定' : getTime(start+duration*1000)),
+		duration: (duration==0 ? 5*60 : duration)
 	}
 }
 
 function getEPG(obj){
 	var data = obj.data();
 	$.get(root + 'api/EnumEventInfo?onair=&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid).done(function(xhr){
-		var event, next, data;
 		if ($(xhr).find('eventinfo').length > 0){
-			event=getEvent( $($(xhr).find('eventinfo')[0]) );
-			next=getEvent( $($(xhr).find('eventinfo')[1]) );
-			data = {
-				eid: event.eid,
-		    	nexteid: next.eid,
-				duration: event.duration,
-		    	start: event.startTime/1000,
-		    	end: event.endTime
+			var x=getEvent( $($(xhr).find('eventinfo')[0]) );
+			var y=getEvent( $($(xhr).find('eventinfo')[1]) );
+			var data = {
+				eid: x.eid,
+		    	nexteid: y.eid,
+				duration: x.duration,
+		    	start: x.start,
+		    	end: x.end
 			};
-			obj.data(data).find('.startTime').text(event.textTime).next('.endTime').text('～' + getTime(event.endTime));
-			obj.find('.title').html(event.title);
-			obj.find('.nextstartTime').text(next.textTime).next('.nextendTime').text('～' + getTime(next.endTime));
-			obj.find('.nexttitle').html(next.title);
+			obj.data(data).find('.startTime').text(x.startTime).next('.endTime').text('～' + x.endTime);
+			obj.find('.title').html(x.title);
+			obj.find('.nextstartTime').text(y.startTime).next('.nextendTime').text('～' + y.endTime);
+			obj.find('.nexttitle').html(y.title);
 		}
 	});
 }
 
 $(function(){
-	setInterval(function(){
-		$('.mdl-layout__tab-panel.is-active>.mdl-list__item').each(function(){
-			var data = $(this).data();
-			if (data.end < Date.now()){
-				getEPG($(this));
-			}else{
-				var progress = (Date.now()/1000 - data.start) / data.duration  * 100;
-				$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
-			}
-		});
-	},1000);
+    $('.mdl-progress').first().on('mdl-componentupgraded', function() {
+		setInterval(function(){
+			$('.is-active>.onair').each(function(){
+				var data = $(this).data();
+				if (data.end < Date.now()){
+					getEPG($(this));
+				}else{
+					var progress = (Date.now() - data.start) / data.duration / 10;
+					$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
+				}
+			});
+		},1000);
+    });
 
 	$('span.epginfo').click(function(){
 		var data = $(this).parents('li').clone(true).data();

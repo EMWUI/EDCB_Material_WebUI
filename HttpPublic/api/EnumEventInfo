@@ -11,35 +11,36 @@ key={onid=onid, tsid=tsid, sid=sid}
 edcb.htmlEscape=15
 if onair then
   --放送中
+  now=os.time()
   if not startTime then
-    now=os.time()
-    startTime=os.date('*t',now-9*3600)
+    startTime=os.date('*t',now-12*3600)
   end
   durationSecond=mg.get_var(mg.request_info.query_string,'duration') or 24*3600
 
   b=edcb.EnumEventInfo({key},{startTime=startTime, durationSecond=durationSecond})
 
-  if b then
+  if b and #b~=0 then
+    a={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0}
+    a={a,a}
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
     for j,v in ipairs(b) do
       if v.startTime then
         if now<os.time(v.startTime) then
-          next=v
+          if j>1 then a[1]=b[j-1] end
+          a[2]=v
           _startTime=os.time(v.startTime)
-          endTime=event.durationSecond and os.time(event.startTime)+event.durationSecond or _startTime
+          endTime=a[1].durationSecond and os.time(a[1].startTime)+a[1].durationSecond or _startTime
           if endTime~=_startTime then
             if endTime<now then
-              event={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime, shortInfo={event_name='', text_char=''}}
+              a[1]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
             else
-              next={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime, shortInfo={event_name='', text_char=''}}
+              a[2]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
             end
           end
           break
         end
-        event=v
       end
     end
-    if event and next then a={event,next} end
   end
 elseif eid or startTime then
   --指定番組
@@ -78,7 +79,7 @@ else
       ..v.tsid..'</TSID><SID>'
       ..v.sid..'</SID><eventID>'
       ..v.eid..'</eventID><service_name>'
-      ..service_name..'</service_name>')
+      ..(service_name or '')..'</service_name>')
     if v.startTime then
       table.insert(ct, string.format('<startDate>%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
                                      v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)

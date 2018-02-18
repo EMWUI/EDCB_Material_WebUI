@@ -170,7 +170,7 @@ end)
 st={}
 for i,v in ipairs(b)do
   _endTime=os.time(v.startTime)+(v.durationSecond or 0)
-  if baseTime-timezone<_endTime and (i==0 or v.eid~=b[i-1].eid) then
+  if baseTime-timezone<_endTime and (i==1 or v.eid~=b[i-1].eid) then
     if not lastendTime or lastendTime<_endTime then lastendTime=_endTime end
     for j=1, #st+1 do
       if st[j] then
@@ -187,7 +187,7 @@ for i,v in ipairs(b)do
     end
   end
 end
-interval=math.floor(lastendTime+timezone-baseTime)/60/60
+interval=math.ceil((lastendTime+timezone-baseTime)/60/60)
 
 SERVICE={}
 for i,v in ipairs(edcb.GetServiceList() or {}) do

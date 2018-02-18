@@ -1,10 +1,6 @@
 ﻿var defRecSetting, PresetList, ReserveAutoaddList;
 var isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in window);
-if (isTouch){
-	document.write('<link href="' + path + 'css/touch.css" rel="stylesheet" type="text/css">');
-}else{
-	document.write('<link href="' + path + 'css/pc.css" rel="stylesheet" type="text/css">');
-}
+var week = ['日', '月', '火', '水', '木', '金', '土'];
 
 function showSpinner(visible){
 	if (visible){
@@ -17,17 +13,6 @@ function showSpinner(visible){
 function errMessage(xml){
 	xml.find('err').each(function(i){
 		$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: (i==0 ? 'Error : ' : '')+$(this).text()});
-	});
-}
-
-//予約一覧
-function rec(){
-	$('tr.reserve').each(function(){
-		var obj = $(this);
-		setTimeout(function(){
-			obj.addClass('start').children('.flag').children('span').empty().addClass('recmark');
-			setTimeout(function (){obj.remove();}, obj.data('end')-Date.now());
-		}, obj.data('start')-Date.now())
 	});
 }
 
@@ -60,24 +45,6 @@ function tab(tab){
 			$('video').trigger('load').data('load', true);
 		}
 	}
-}
-
-function delPreset(obj){
-	obj = $(obj).parent().addClass('hidden');
-	var target = obj.next();
-	obj.appendTo('body');
-	var clear = setTimeout(function(){obj.remove();}, 2500);
-	var data = {
-		message: '削除しました',
-		timeout: 2000,
-		actionHandler: function(){
-			clearInterval(clear);
-			obj.insertBefore(target).removeClass('hidden');
-			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '元に戻しました'})
-		},
-    	actionText: '元に戻す'
-	};
-	$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar(data);
 }
 
 //通知バッチ
@@ -125,7 +92,7 @@ function creatNotify(notify, data, save){
 	var notification = $('.mdl-js-snackbar').get(0);
 	var notifyList;
 	var notifyIcon = $('<div class="notify_icon"><i class="material-icons">notifications_active</i></div>');
-	var timeout = data.start*1000 - new Date().getTime() - 30*1000;
+	var timeout = data.start*1000 - Date.now() - 30*1000;
 
 	badgeNotify(true);
 
@@ -177,7 +144,6 @@ function creatNotify(notify, data, save){
 	$('#noNotify').hide();
 
 	var date = new Date(data.start*1000);
-	var week = ['日', '月', '火', '水', '木', '金', '土'];
 	date = ('0'+(date.getMonth()+1)).slice(-2) + '/' + ('0'+date.getDate()).slice(-2) + '(' + week[date.getDay()] + ') ' + ('0'+date.getHours()).slice(-2) + ':' + ('0'+date.getMinutes()).slice(-2);
 
 	notifyList = $('<li>', {class: 'mdl-list__item mdl-list__item--two-line', data: {start: data.start}, append: [
@@ -214,7 +180,22 @@ function macro(obj){
 	$('#macro').addClass('is-visible');
 }
 
-function progReserve(start, end){
+function FormatTime(start, end){
+	var start = start.match(/(\d+:\d+):(\d+)/);
+	if (end) end = new Date(end);
+	return start[1] + (start[2] != '00' ? '<small>:'+ start[2] +'</small>' : '') +'～'+
+		(end ? ('0'+ end.getHours()).slice(-2) +':'+ ('0'+ end.getMinutes()).slice(-2) + (end.getSeconds() != 0 ? '<small>:'+ ('0' + end.getSeconds()).slice(-2) +'</small>' : '') : '未定');
+}
+function ConvertText(a){
+	return a.replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');
+}
+function ConvertTitle(a){
+	return a.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
+}
+
+//プログラム予約
+function progReserve(start, end, eid){
+	if (!end) end=start;
 	$('#start-y').val(start.getFullYear());
 	$('#start-m').val(start.getMonth()+1);
 	$('#start-d').val(start.getDate());
@@ -224,6 +205,14 @@ function progReserve(start, end){
 	$('#end-h').val(end.getHours());
 	$('#end-i').val(('0'+ end.getMinutes()).slice(-2));
 	$('#end-s').val(('0'+ end.getSeconds()).slice(-2));
+
+	if (eid==65535){
+	  $('#toprogres').text('プログラム予約');
+	  $('#progres p').hide();
+	}else{
+	  $('#toprogres').text('プログラム予約化');
+	  $('#progres p').show();
+	}
 }
 
 //番組詳細を表示
@@ -233,24 +222,52 @@ function setEpgInfo(info, past){
 	var sid = Number(info.find('SID').first().text());
 	var eid = Number(info.find('eventID').first().text());
 
-	var startDate = info.find('startDate').text();
-	var startTime = info.find('startTime').text();
-	var start = new Date(startDate+' '+startTime);
-	var endTime = start.getTime() + Number(info.find('duration').text())*1000;
+	var title = info.find('event_name').length > 0 ? info.find('event_name').text() : info.find('title').text() ;
+	$('#title').html( ConvertTitle(title) );
 
-	var genre = '';
-	var video = '';
-	var audio = '';
-	var other = '';
+	var startTime = info.find('startTime').text();
+	
+	if (startTime.length != 0){
+		var endTime;
+		var startDate = info.find('startDate').text();
+		var start = new Date(startDate+' '+startTime);
+		if (info.find('duration').length != 0) endTime = new Date(start.getTime() + Number(info.find('duration').text())*1000);
+
+		$('#sidePanel_date').html(startDate +'('+ week[info.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
+		progReserve(start, endTime, eid)
+
+		if (!endTime || Date.now()<endTime){
+			$('#sidePanel .mdl-tabs__tab-bar').show();
+			$('#sidePanel .mdl-dialog__actions').show();
+		}else{
+			$('#sidePanel .mdl-tabs__tab-bar').hide();
+			$('#sidePanel .mdl-dialog__actions').hide();
+		}
+	}else{
+		$('#sidePanel_date').html('未定');
+		$('#sidePanel .mdl-tabs__tab-bar').show();
+		$('#sidePanel .mdl-dialog__actions').show();
+	}
+
+	$('#service').html(info.find('service_name').text());
+	$('#links').html($('.open .links a').clone(true));
+	$('#summary p').html( ConvertText(info.find('event_text').text()) );
+	$('#ext').html( ConvertText(info.find('event_ext_text').text()) );
+
+    var genre, video, audio, other = genre = video = audio = '';
 	info.find('contentInfo').each(function(){
-		genre = genre + '<li>' + $(this).find('component_type_name').text();
+		genre += '<li>'+ $(this).find('component_type_name').text();
 	});
+	$('#genreInfo').html(genre);
 	info.find('videoInfo').each(function(){
-		video = video + '<li>' + info.find('videoInfo').find('component_type_name').text() + ' ' + $(this).find('videoInfo').find('text').text();
+		video += '<li>'+ info.find('videoInfo').find('component_type_name').text() +' '+ $(this).find('videoInfo').find('text').text();
 	});
+	$('#videoInfo').html(video);
 	info.find('audioInfo').each(function(){
-		audio = audio + '<li>'+ $(this).find('component_type_name').text() + ' '+ $(this).find('text').text() + '<li>サンプリングレート : ' + {1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[$(this).find('sampling_rate').text()] + 'kHz';
+		audio += '<li>'+ $(this).find('component_type_name').text() +' '+ $(this).find('text').text() +'<li>サンプリングレート : '+ {1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[$(this).find('sampling_rate').text()] +'kHz';
 	});
+	$('#audioInfo').html(audio);
+
 	if (onid<0x7880 || 0x7FE8<onid){
 		if (info.find('freeCAFlag').first().text() == 0){
 			other = '<li>無料放送';
@@ -258,44 +275,22 @@ function setEpgInfo(info, past){
 			other = '<li>有料放送';
 		}
 	}
-
-	endTime = new Date(endTime);
-
-	if (endTime>new Date()){
-		$('#sidePanel .mdl-tabs__tab-bar').show();
-		$('#sidePanel .mdl-dialog__actions').show();
-	}else{
-		$('#sidePanel .mdl-tabs__tab-bar').hide();
-		$('#sidePanel .mdl-dialog__actions').hide();
-	}
-
-	var title = info.find('event_name').length > 0 ? info.find('event_name').text() : info.find('title').text() ;
-	$('#title').html(title.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g,'<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>'));
-	$('#sidePanel_date').html(startDate+' '+startTime.match(/(\d+:\d+):\d+/)[1] + '～' + ('0'+endTime.getHours()).slice(-2) + ':' + ('0'+endTime.getMinutes()).slice(-2));
-	$('#service').html(info.find('service_name').text());
-	$('#links').html($('.open .links a').clone(true));
-	$('#summary p').html(info.find('event_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
-	$('#ext').html(info.find('event_ext_text').text().replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
-	$('#genreInfo').html(genre);
-	$('#videoInfo').html(video);
-	$('#audioInfo').html(audio);
 	$('#otherInfo').html(other +
-		'<li>OriginalNetworkID:' + onid + '(0x' + ('000'+onid.toString(16).toUpperCase()).slice(-4) + ')' +
-		'<li>TransportStreamID:' + tsid + '(0x' + ('000'+tsid.toString(16).toUpperCase()).slice(-4) + ')' +
-		'<li>ServiceID:'         + sid  + '(0x' + ('000'+ sid.toString(16).toUpperCase()).slice(-4) + ')' +
-		'<li>EventID:'           + eid  + '(0x' + ('000'+ eid.toString(16).toUpperCase()).slice(-4) + ')' );
+		'<li>OriginalNetworkID:' + onid +'(0x'+ ('000'+onid.toString(16).toUpperCase()).slice(-4) +')' +
+		'<li>TransportStreamID:' + tsid +'(0x'+ ('000'+tsid.toString(16).toUpperCase()).slice(-4) +')' +
+		'<li>ServiceID:'         + sid  +'(0x'+ ('000'+ sid.toString(16).toUpperCase()).slice(-4) +')' +
+		'<li>EventID:'           + eid  +'(0x'+ ('000'+ eid.toString(16).toUpperCase()).slice(-4) +')' );
 
 	$('[name=onid]').val(onid);
 	$('[name=tsid]').val(tsid);
 	$('[name=sid]').val(sid);
 	$('[name=eid]').val(eid);
 
-	progReserve(start, endTime);
-
-	$('#epginfo').attr('href', 'epginfo.html?onid=' + onid + '&tsid=' + tsid + '&sid=' + sid + (past ? '&startTime=' + past : '&eid=' + eid));
+	$('#epginfo').attr('href', 'epginfo.html?onid='+ onid +'&tsid='+ tsid +'&sid='+ sid + (past ? '&startTime='+ past : '&eid='+ eid));
 	$('#set').data('onid', onid).data('tsid', tsid).data('sid', sid).data('eid', eid);
 }
 
+//番組詳細を取得、予約確認
 function getEpgInfo(target, data, past){
 	showSpinner(true);
 	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
@@ -594,8 +589,8 @@ function setRecInfo(target){
 			var startTime = xml.find('startTime').text();
 			var endTime = new Date(new Date(startDate+' '+startTime).getTime() + Number(xml.find('duration').text())*1000);
 
-			$('#title').html(xml.find('title').text().replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g,'<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>'));
-			$('#sidePanel_date').html(startDate+' '+startTime.match(/(\d+:\d+):\d+/)[1] + '～' + ('0'+endTime.getHours()).slice(-2) + ':' + ('0'+endTime.getMinutes()).slice(-2));
+			$('#title').html( ConvertTitle(xml.find('title').text()) );
+			$('#sidePanel_date').html(startDate +'('+ week[xml.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
 			$('#service').html(xml.find('service_name').text());
 
 			$('#comment').text(xml.find('comment').text());
@@ -604,8 +599,8 @@ function setRecInfo(target){
 
 			if (xml.find('programInfo').text().length>0){
 				var programInfo=xml.find('programInfo').text().match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
-				$('#summary p').text(programInfo[1].replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
-				$('#ext').html(programInfo[2].replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a> ').replace(/\n/g,'<br>'));
+				$('#summary p').html( ConvertText(programInfo[1]) );
+				$('#ext').html( ConvertText(programInfo[2]) );
 				$('#genreInfo').html('<li>'+programInfo[3].replace(/\n/g,'</li><li>')+'</li>');
 				$('#videoInfo').html('<li>'+programInfo[4].replace(/\n/g,'</li><li>')+'</li>');
 				$('#audioInfo').html('<li>'+programInfo[5].replace(/\n/g,'</li><li>')+'</li>');
@@ -627,6 +622,7 @@ function setRecInfo(target){
 	});
 }
 
+//録画フォルダパス作成
 function recFolderInfo(i, val, partial){
     var div = '<div>';
     var cell = 'mdl-cell';
@@ -659,7 +655,25 @@ function recFolderInfo(i, val, partial){
 					$(div, {class: textfield, append: [
 						$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: partial+'recName', id: partial+'recName'+i, val: recNamePlugIn[2]}),
 						$('<label>', {class: 'mdl-textfield__label', for: partial+'recName'+i, text: 'ファイル名PlugIn'}),
-						$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]})
+						$('<i>', {class: 'addmacro material-icons', text: 'add', click: function(){macro(this);} }) ]}) ]}) ]});
+}
+//録画フォルダパス削除
+function delPreset(obj){
+	obj = $(obj).parent().addClass('hidden');
+	var target = obj.next();
+	obj.appendTo('body');
+	var clear = setTimeout(function(){obj.remove();}, 2500);
+	var data = {
+		message: '削除しました',
+		timeout: 2000,
+		actionHandler: function(){
+			clearInterval(clear);
+			obj.insertBefore(target).removeClass('hidden');
+			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '元に戻しました'})
+		},
+    	actionText: '元に戻す'
+	};
+	$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar(data);
 }
 
 //録画設定をセット
@@ -820,30 +834,26 @@ function reserve(obj){
 		success: function(result, textStatus, xhr) {
 			var xml = $(xhr.responseXML);
 			if (xml.find('success').length > 0){
-				var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
+				var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
 				var recmode = xml.find('recMode').text();
 				var overlapmode = xml.find('overlapMode').text();
 				var id = xml.find('ID').text();
 
 				var mode = '';
-				if (recmode == 5){
-					//無効
+				if (recmode == 5){//無効
 					mode = 'disabled';
-				}else if (overlapmode == 1){
-					//チューナー不足
+				}else if (overlapmode == 1){//チューナー不足
 					mode = 'partially';
-				}else if (overlapmode == 2){
-					//一部録画
+				}else if (overlapmode == 2){//一部録画
 					mode = 'shortage';
 				}
 
-				var parents;
-				//検索ページ向け
-				if (obj.hasClass('search')){
-					parents = obj.parents('td');
+				var parents = obj.parents('tr');
+				if (obj.hasClass('search')){//検索ページ向け
+					parents = obj.parents('td').data('id', id);
 					//スイッチ追加
-					if (start){
-						obj.removeClass().addClass('search recmark').empty().parent('td').data('id', id);
+					if (start < Date.now()){
+						obj.removeClass().addClass('search recmark').empty();
 						if (recmode != 5) obj.unbind('click');
 					}else if (!obj.hasClass('addreserve')){
 						var reserveid = 'reserve' + id;
@@ -860,10 +870,13 @@ function reserve(obj){
 						});
 						componentHandler.upgradeElement(label.get(0));
 
-						obj.parent('td').data('id', id).data('toggle', 1).data('oneclick', 0).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
+						var mark = $('<span>').html(label);
+						parents.data('toggle', 1).data('oneclick', 0).html(mark);
+						setTimeout(function(){
+							parents.parent('tr').addClass('start');
+							mark.addClass('recmark').empty();
+						}, start-Date.now());
 					}
-				}else{
-					parents = obj.parents('tr');
 				}
 				parents.removeClass('disabled partially shortage').addClass(mode);
 				if (recmode != 5 && obj.hasClass('mdl-switch__input')){
@@ -1011,9 +1024,8 @@ $(function(){
 			if (localStorage.getItem('notifications')){
 				var list = JSON.parse(localStorage.getItem('notifications'));
 				$.each(list, function(i, data){
-					var now = new Date().getTime();
 					var start = data.start*1000;
-					if (start < now){
+					if (start < Date.now()){
 						//時間が過ぎてたらリストから削除
 						saveNotify(data, true);
 					}else{
@@ -1030,7 +1042,7 @@ $(function(){
 		}
 	}
 	if ($('h4 .notify').length > 0 && !$('h4 .notify').attr('disabled')){
-		var timeout = $('.notify').data('start')*1000 - new Date().getTime() - 30*1000;
+		var timeout = $('.notify').data('start')*1000 - Date.now() - 30*1000;
 		setTimeout(function(){
 			$('.notify').attr('disabled', true).children().text('notifications');
 		}, timeout);
@@ -1368,6 +1380,21 @@ $(function(){
 		if (xhr.status!=0) notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
 	});
 
+	//予約一覧マーク等処理
+	$('tr.reserve').each(function(){
+		var obj = $(this);
+		setTimeout(function(){
+			obj.addClass('start').children('.flag').children('span').empty().addClass('recmark');
+			setTimeout(function (){obj.remove();}, obj.data('end')-Date.now());
+		}, obj.data('start')-Date.now())
+	});
+	//検索ページ向け
+	$('tr.search').each(function(){
+		var obj = $(this);
+		if (obj.data('start')) setTimeout(function(){obj.addClass('start').children('.flag').children('span').addClass('recmark').empty();}, obj.data('start')-Date.now())
+		setTimeout(function (){obj.children('.flag').data('id', false).children('span').remove();}, obj.data('end')-Date.now());
+	});
+
 	//サブミット
 	$('.submit').click(function(){
 		if ($('dialog').attr('open')) {
@@ -1411,13 +1438,11 @@ $(function(){
 
 							var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
 							var end = new Date(start.getTime() + Number(xml.find('duration').text())*1000);
-							progReserve(start, end);
+							progReserve(start, end, xml.find('eventID').text());
 
 						    if (data.action == 'reserve'){
-								var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text()).getTime() < new Date();
 								var recmode = xml.find('recMode').text();
 								var overlapmode = xml.find('overlapMode').text();
-								var id = xml.find('ID').text();
 
 								var mode = '';
 								if (recmode == 5){//無効
@@ -1428,14 +1453,14 @@ $(function(){
 									mode = 'shortage';
 								}
 
-								var parents;
 								var obj = $('.open input');
-								if ($('.open .search').length>0){//検索ページ向け
-									var obj = $('.open  .search');
-									parents = obj.parents('td');
+								var parents = $('.open');
+								if (parents.hasClass('search')){//検索ページ向け
+									obj = $('.open .search');
+									parents = $('.open .flag').data('id', id);
 									//スイッチ追加
-									if (start){
-										obj.removeClass().addClass('search recmark').empty().parent('td').data('id', id);
+									if (start < Date.now()){
+										obj.removeClass().addClass('search recmark').empty();
 										if (recmode != 5) obj.unbind('click');
 									}else if (!obj.hasClass('addreserve')){
 										var reserveid = 'reserve' + id;
@@ -1452,16 +1477,19 @@ $(function(){
 										});
 										componentHandler.upgradeElement(label.get(0));
 
-										obj.parent('td').data('id', id).data('toggle', 1).data('oneclick', 0).html($('<span>').html(label)).parent('tr').data('start', xml.find('startTime').text()*1000);
+										var mark = $('<span>').html(label);
+										parents.data('toggle', 1).data('oneclick', 0).html(mark);
+										setTimeout(function(){
+											parents.parent('tr').addClass('start');
+											mark.addClass('recmark').empty();
+										}, start-Date.now());
 									}
-								}else{
-									parents = obj.parents('tr');
 								}
 								parents.removeClass('disabled partially shortage').addClass(mode);
-								if (recmode != 5 && obj.hasClass('mdl-switch__input')){
-										obj.prop('checked', true).parent().addClass('is-checked');
+								if (recmode != 5){
+									obj.prop('checked', true).parent().addClass('is-checked');
 								}else{
-										obj.prop('checked', false).parent().removeClass('is-checked');
+									obj.prop('checked', false).parent().removeClass('is-checked');
 								}
 							}
 						}else if (data.action == 'autoadd'){

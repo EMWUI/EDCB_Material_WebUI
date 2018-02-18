@@ -1,4 +1,22 @@
-﻿.mdl-layout__content>.mdl-grid:not(.list) {
+﻿@media (pointer: fine) {
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+  background: #E1E1E1; }
+  #sidePanel .mdl-tabs__panel::-webkit-scrollbar,
+  .macro-list::-webkit-scrollbar {
+    width: 4px; }
+  ::-webkit-scrollbar-thumb {
+    background: #B3B3B3; }
+  ::-webkit-scrollbar-corner { 
+    background: #EDEDED; }
+  #tv-guide::-webkit-scrollbar,
+  #tv-guide-header::-webkit-scrollbar,
+  #tv-guide-container::-webkit-scrollbar {
+    display: none; } }
+
+
+.mdl-layout__content>.mdl-grid:not(.list) {
   max-width: 1200px; }
 
 
@@ -27,6 +45,7 @@ select {
       position: absolute;
       content: ''; }
   .pulldown select {
+    height: 33px;
     border: none;
     border-bottom: 1px solid rgba(0,0,0 ,0.12);
     padding: 4px 24px 4px 0; }
@@ -86,7 +105,8 @@ dialog {
   .mdl-data-table .mark {
     font-size: 11px; }
   h4 .mark {
-    font-size: 15px; }
+    font-size: 15px;
+    bottom: 2px; }
 
 
 /*録画中ボタン*/
@@ -173,6 +193,16 @@ dialog {
   padding: 0 8px }
 .chip-container+.mdl-grid {
   padding-top: 0; }
+@media (pointer: coarse) {
+  .chip-container>div {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    overflow: auto; }
+    .chip-container>div::-webkit-scrollbar {
+      display: none; }
+      .chip-container>div>span {
+        padding-left:8px; } }
 
 
 
@@ -280,6 +310,9 @@ header {
       min-width: 88px; }
     .space {
       width: 8px; } }
+  @media (max-width: 479px) and (pointer: coarse) {
+    #subheader .pulldown {
+      min-width: 0px; } }
 
 
 
@@ -779,6 +812,18 @@ h4 .mdl-button--icon {
   background-color: #fff;
   z-index: 999;
   box-shadow: 0 0 2px 2px rgba(0, 0, 0, .14), 0 -2px 1px 3px rgba(0, 0, 0, .2), 0 0 5px 1px rgba(0, 0, 0, .12); }
+  #sidePanel .mdl-cell--3-col {
+    width: 75%; }
+  #sidePanel .mdl-cell--6-col,
+  #sidePanel #dateList_main,
+  #sidePanel #dateList_select {
+    width: 100%; }
+  #sidePanel #dateList .multiple {
+    flex-grow: 1; }
+  #sidePanel .form>div>div:first-child:not(.mdl-cell--middle) {
+    line-height: 20px; }
+  #sidePanel .mdl-cell--hide-desktop {
+    display: block!important; }
   .sidePanel {
     -webkit-transform: translateX(603px);
     transform: translateX(603px); }
@@ -1050,6 +1095,34 @@ h4 .mdl-button--icon {
       flex-grow: 1; }
     #dateList_edit {
       display: none; } }
+
+  .touch {
+    display: none; }
+    @media (pointer: coarse) {
+      #dateList .multiple {
+        display: none; }
+      .touch {
+        display: block; } }
+
+@media (pointer: coarse) {
+  .multiple {
+    padding: 4px 0;
+    position: relative;
+    display: inline-block;
+    box-sizing: border-box; }
+    .multiple:before {
+      top: 16px;
+      right: 10px;
+      border: 5px solid transparent;
+      border-top-color: #9E9E9E;
+      pointer-events: none;
+      position: absolute;
+      content: ''; }
+    .multiple select {
+      border: none;
+      border-bottom: 1px solid rgba(0,0,0 ,0.12);
+      padding: 4px 24px 4px 0; } }
+
 
 
 
@@ -1529,6 +1602,8 @@ h4 .mdl-button--icon {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis; }
+  #onair .mark {
+    padding: 0; }
 /*webパネル*/
 .webPanel ul.main-content {
   padding: 8px 0; }
@@ -1583,14 +1658,17 @@ h4 .mdl-button--icon {
     height: 52px;
     padding: 16px;
     background: rgba(0, 0, 0, 0.2); }
+  .library .mdl-list__item>span {
+    display: block; }
   .library .mdl-list__item-avatar {
+    float: left;
     background: center / 80px no-repeat; }
   .library .mdl-list__item-avatar.material-icons {
     font-size: 24px;
     padding: 8px; }
-  .is-small-screen #library .mdl-card {
+  .is-small-screen .library .mdl-card {
     min-height: 130px; }
-  .is-small-screen #library .mdl-card > .mdl-card__actions {
+  .is-small-screen .library .mdl-card > .mdl-card__actions {
     height: 38px;
     padding: 8px; }
   @media (min-width: 1300px) {
