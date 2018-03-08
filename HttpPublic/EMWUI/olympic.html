@@ -147,7 +147,7 @@ for i,v in ipairs(edcb.GetReserveData()) do
 end
 
 key={
-  andKey='オリンピック|五輪',
+  andKey='(オ|パラ)リンピック|五輪',
   notKey='',
   regExpFlag=true,
   titleOnlyFlag=true,
@@ -187,7 +187,7 @@ for i,v in ipairs(b)do
     end
   end
 end
-interval=math.ceil((lastendTime+timezone-baseTime)/60/60)
+interval=lastendTime and math.ceil((lastendTime+timezone-baseTime)/60/60) or 0
 
 SERVICE={}
 for i,v in ipairs(edcb.GetServiceList() or {}) do
