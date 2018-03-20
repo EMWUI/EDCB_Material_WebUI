@@ -126,7 +126,6 @@ s=s..[=[
 ..(temp.side or '')
 
 ..[=[
-      <a class="mdl-navigation__link" href="]=]..path..[=[olympic.html"><i class="material-icons">favorite</i>オリンピック</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">live_tv</i>放送中</a>
