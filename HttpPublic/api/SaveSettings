@@ -45,6 +45,7 @@ elseif post then
   edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode')==1, path)
   edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1, path)
   edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1, path)
+  edcb.WritePrivateProfile('GUIDE', 'titleScroll', mg.get_var(post,'titleScroll'), path)
   edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000), path)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23), path)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000), path)

@@ -6,6 +6,7 @@ path='Setting\\HttpPublic.ini'
 Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
+titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
@@ -130,7 +131,8 @@ ct.js='<script>'
   ..'Light_Mode='..(Light_Mode and 'true' or 'false')
   ..';oneminpx='..ONE_MIN_PX
   ..';baseTime='..baseHour
-  ..';marginmin='..MARGIN_MIN
+  ..';titleScroll="'..titleScroll
+  ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
   ..';lastTime=false;'
   ..'$(function(){end($($(".now")));});'

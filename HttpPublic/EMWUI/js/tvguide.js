@@ -38,7 +38,9 @@ function end(cell, mark){
 	}, (cell.data('endtime') - 30)*1000 - new Date().getTime());
 }
 
+var intervalID;
 function jump(){
+	if (intervalID) clearInterval(intervalID);;
 	$('#tv-guide-container').animate({scrollTop: now().line - marginmin * oneminpx}, 550, 'swing');
 }
 
@@ -118,6 +120,9 @@ $(function(){
 
 				//慣性スクロール？
 				intervalID = setInterval(moment, 16);
+			},
+			'wheel': function(){
+				if (intervalID) clearInterval(intervalID);;
 			}
 		});
 	}else{
@@ -125,40 +130,51 @@ $(function(){
 		$('#line').width($('#tv-guide').width() - 13);
 	}
 
-	/*禁断の果実
-	$('#tv-guide-container').on('scroll', function(){
-		var header = $('header').height();
-		$.each($('.cell'), function(){
-			base = $(this).offset().top-header;
-			height = $(this).innerHeight();
-			content = $(this).children('.content');
+	//番組名
+	if (titleScroll=='ALL' || (titleScroll=='PC' && !isTouch)){
+		$('#tv-guide-container').on('scroll', function(){
+			var done;
+			var top = $('#tv-guide-container').offset().top + ((!isTouch || !Light_Mode) ? $('#tv-guide-header').height() : 0);
+			var left = ((!isTouch || !Light_Mode) ? $('.hour-container').width() : 0) - $('.station').width();
+			var width = $('#tv-guide-container').width();
+			var height = $('#tv-guide-container').height();
+			$('#tv-guide-main .station ').each(function(){
+			 	if (left <= $(this).position().left && $(this).position().left <= width){  //見えている範囲を絞る(各局で
+					var _done;
+					done = true;
+					$(this).children('.cell').each(function(){
+						if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
+							var base = top - $(this).offset().top;
+							var content = $(this).children('.content');
+							_done = true;
 
-			if (content.hasClass('reserve')){
-				if (base < -3 && height+base > 3){
-					content.css('top', -base).outerHeight(height+base-3).css('min-height', height+base).css('border-top', 'none');
-					return;
+							if (base<=0 && content.css('padding-top') != '0px'){
+								content.css('padding-top', '');
+							}else if(base<height){
+								if (content.hasClass('reserve')){
+									content.css('padding-top', base-3);
+								}else{
+									content.css('padding-top', base);
+								}
+							}
+						}else if (_done){
+							return false;
+						}
+					});
+				}else if (done){
+					return false;
 				}
-			}else{
-				if (base < 0 && height+base > 0){
-					content.css('top', -base).height(height+base).css('min-height', height+base);
-					return;
+			});
+			$('#tv-guide-main .hour').each(function(){
+				var base = top - $(this).offset().top;
+				if (base > 0 && base < $(this).innerHeight()){
+					$(this).find('tt').css('padding-top', base+5);
+				}else{
+					$(this).find('tt').css('padding-top', '');
 				}
-			}
-			content.css('top', 0).css('min-height', height).css('border-top', '');
-		})
-		$.each($('#hour-container .hour'), function(){
-			base = $(this).offset().top-header;
-			height = $(this).innerHeight();
-			content = $(this).find('tt');
-
-			if (base < 0 && height+base > 0){
-				content.css('padding-top', -base+5);
-			}else{
-				content.css('padding-top', '');
-			}
-		})
-	});
-	*/
+			});
+		});
+	}
 
 	//現時間にスクロール
 	$('#now').click(function(){

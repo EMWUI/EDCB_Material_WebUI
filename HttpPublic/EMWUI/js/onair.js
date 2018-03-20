@@ -9,7 +9,7 @@ function getEvent(event){
 	var duration = Number(event.children('duration').text());
  	return {
 		eid: event.children('eventID').text(),
-		title: FormatTitle(event.children('event_name').text()),
+		title: ConvertTitle(event.children('event_name').text()),
 		start: (duration==0 ? Date.now() : start),
 		end: (duration==0 ? Date.now()+5*60*1000 : start+duration*1000) ,
 		startTime: startTime.match(/(\d+:\d+):\d+/)[1],

@@ -11,6 +11,7 @@ PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
+titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
@@ -190,6 +191,11 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">番組名をスクロール</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop l mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="titleScroll"><input type="radio" id="titleScroll" class="mdl-radio__button" name="titleScroll" value="ALL"'..(titleScroll=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">スクロールする</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="titleScrollPC"><input type="radio" id="titleScrollPC" class="mdl-radio__button" name="titleScroll" value="PC"'..(titleScroll=='PC' and ' checked="checked"' or '')..'><span class="mdl-radio__label">PCのみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="titleScrollNever"><input type="radio" id="titleScrollNever" class="mdl-radio__button" name="titleScroll" value="Never"'..(titleScroll=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">スクロールしない</span></label></div><div class="mdl-layout-spacer"></div></div></div>\n'
 
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'
