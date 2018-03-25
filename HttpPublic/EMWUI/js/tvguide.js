@@ -122,7 +122,7 @@ $(function(){
 				intervalID = setInterval(moment, 16);
 			},
 			'wheel': function(){
-				if (intervalID) clearInterval(intervalID);;
+				if (intervalID) clearInterval(intervalID);
 			}
 		});
 	}else{
@@ -179,6 +179,7 @@ $(function(){
 	//現時間にスクロール
 	$('#now').click(function(){
 		if (!lastTime || Date.now()<(baseTime+(interval*3600))*1000){
+			if (intervalID) clearInterval(intervalID);
 			jump();
 		}else{
 			location.reload();

@@ -350,7 +350,7 @@ main {
   height: 100%;
   background: #FAFAFA;
   will-change: margin; }
-  main, #sidePanel {
+  main {
     transition-property: margin, height;
     transition-duration: .5s;
     transition-timing-function: cubic-bezier(.4,0,.2,1); }
@@ -811,7 +811,10 @@ h4 .mdl-button--icon {
   border-right: 0;
   background-color: #fff;
   z-index: 999;
-  box-shadow: 0 0 2px 2px rgba(0, 0, 0, .14), 0 -2px 1px 3px rgba(0, 0, 0, .2), 0 0 5px 1px rgba(0, 0, 0, .12); }
+  box-shadow: 0 0 2px 2px rgba(0, 0, 0, .14), 0 -2px 1px 3px rgba(0, 0, 0, .2), 0 0 5px 1px rgba(0, 0, 0, .12);
+  transition-property: transform, margin, height;
+  transition-duration: .2s, .5s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1); }
   #sidePanel .mdl-cell--3-col {
     width: 75%; }
   #sidePanel .mdl-cell--6-col,
