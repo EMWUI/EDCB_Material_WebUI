@@ -3,7 +3,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
@@ -64,10 +63,10 @@ CATEGORY={
   'other',
 }
 
-show=mg.get_var(mg.request_info.query_string,'show') or nil
-hour=GetVarInt(mg.request_info.query_string,'hour',0,25) or 4
+show=mg.get_var(mg.request_info.query_string,'show')
+hour=GetVarInt(mg.request_info.query_string,'hour',0,27) or 4
 --hour=0で現在時刻-MARGIN_HOUR時間を基準、0以外で"hour"時を基準
-interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
+interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or 25
 
 onid=GetVarInt(mg.request_info.query_string,'onid') or 0
 tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
@@ -75,18 +74,12 @@ sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
-nowDate=math.floor((now+timezone)/(24*3600))
-nowHour=math.floor(((now+timezone)-nowDate*24*3600)/3600)
-baseHour=hour==0 and nowHour-MARGIN_HOUR or hour
-baseHour=baseHour<0 and baseHour+24 or baseHour
-baseDate=math.floor((now+(9-baseHour)*3600)/(24*3600))
+baseDate=math.floor((now+timezone-4*3600)/24/3600)
+Hour=hour==0 and (math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
+baseTime=(baseDate*24+Hour)*3600
 
-date=interval~=25 and 3<now and now<hour and 1 or 0
-baseTime=((baseDate+date)*24+baseHour)*3600
-
-NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600 or nil
-
-hour=hour<0 and hour+24 or hour
+NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600
 
 hrefGene=(hour~=4 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')
 
@@ -128,9 +121,8 @@ ct.css='<style>\n'
   ..'</style>\n'
 
 ct.js='<script>'
-  ..'Light_Mode='..(Light_Mode and 'true' or 'false')
-  ..';oneminpx='..ONE_MIN_PX
-  ..';baseTime='..baseHour
+  ..'oneminpx='..ONE_MIN_PX
+  ..';baseTime='..Hour
   ..';titleScroll="'..titleScroll
   ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
@@ -154,6 +146,11 @@ if sidePanel then ct.macro=true end
 edcb.htmlEscape=15
 sort=ServiceList()
 
+rt={}
+for i,v in ipairs(edcb.GetReserveData()) do
+  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
+end
+
 for j,v in ipairs(sort or {}) do
   if onid==v.onid and tsid==v.tsid and sid==v.sid then
     st=v
@@ -166,17 +163,12 @@ end
 
 ct.title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>'
 
-rt={}
-for i,v in ipairs(edcb.GetReserveData()) do
-  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
-end
-
 ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..nowHour..'&interval='..interval..'"')
+  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&interval='..interval..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
@@ -202,14 +194,15 @@ menu=menu..'</ul>\n'
 if st then
   ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-  menu=menu..'<ul class="widemenu mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  menu=menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
-  for i=0, 23 ,2 do
-    j=(interval==25 and baseHour or 4)+i
-    if interval==25 or baseHour<=j and j<baseHour+interval then
-      menu=menu..'<li class="scroller mdl-menu__item'..(interval~=25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..((i*60-30)*ONE_MIN_PX)..'">'..(j<4 and j+24 or j>=28 and j-24 or j)..'時</li>\n'
+  start=interval>=25 and Hour or 4
+  for i=start, start+math.max(interval-2, 23) ,2 do
+    j=(interval==25 and Hour or 4)+i
+    if hour<=i and i<hour+interval then
+      menu=menu..'<li class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..(((i-hour)*60-30)*ONE_MIN_PX)..'">'..(i%24+(i%24<4 and 24 or 0))..'時</li>\n'
     else
-      menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..j..(interval~=25 and '&interval='..interval or '')..'">'..j..'時</a></li>\n'
+      menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..(i%24)..(interval~=25 and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
   end
   menu=menu..'</ul>\n'
@@ -223,8 +216,8 @@ ct.menu=menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
   ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
   ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'
-  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-dialog="suspend" data-ctok="'..CsrfToken()..'">スタンバイ</li>\n'
-  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-dialog="suspend" data-ctok="'..CsrfToken()..'">休止</li>\n'
+  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-ctok="'..CsrfToken()..'">スタンバイ</li>\n'
+  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken()..'">休止</li>\n'
   ..'</ul>\n'
 
 
@@ -247,11 +240,10 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 ctt={'<div id="tv-guide-container"><div id="tv-guide">'
 
-  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'}
 
 for i=0,7 do
-  if i%TIME_COLUMN==0 then table.insert(ctt, '<div class="hour-container"></div>') end
-  d=os.date('!*t', ((date+i+baseDate)*24)*3600)
+  d=os.date('!*t', ((i+baseDate)*24)*3600)
   d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
   table.insert(ctt, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')
 end
@@ -259,17 +251,16 @@ table.insert(ctt, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
 
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
 )
 
-colHead='<div class="hour-container mdl-color-text--white">\n'
-for i=baseHour,baseHour+interval-1 do
+for i=Hour,Hour+interval-1 do
   j=i%24
-  colHead=colHead..'<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n'
+  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
 end
-colHead=colHead..'</div>\n'
+table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
 
 for i=0,7 do
-  if i%TIME_COLUMN==0 then table.insert(ctt, colHead) end
   table.insert(ctt, '<div class="station" data-name="'..st.service_name..'">\n')
   lastPx=0
   total=0
@@ -303,7 +294,7 @@ for i=0,7 do
       end
       rs=r and r.recSetting or nil
 
-      mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
+      mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
       table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
@@ -345,7 +336,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..table.concat(ctt)
 
-  ..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div></div>\n'
+  ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'

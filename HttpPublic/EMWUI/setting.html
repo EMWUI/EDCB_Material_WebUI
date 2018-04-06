@@ -8,7 +8,7 @@ Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
-Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
+--Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
@@ -174,16 +174,18 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="number"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="PAGE_COUNT" value="'..PAGE_COUNT..'" min="0" id="PAGE_COUNT"><label class="mdl-textfield__label" for="PAGE_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div></div>\n'
   ..'<span class="mdl-tooltip" for="tt-count">0で無制限</span></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">サブジャンル表示</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop l mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">サブジャンル表示</div>\n<div class="radio_button mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreoption"><input type="radio" id="subGenreoption" class="mdl-radio__button" name="subGenreoption" value="ALL"'..(subGenreoption=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示する</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreEPG"><input type="radio" id="subGenreEPG" class="mdl-radio__button" name="subGenreoption" value="EPG"'..(subGenreoption=='EPG' and ' checked="checked"' or '')..'><span class="mdl-radio__label">EPG予約のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreNever"><input type="radio" id="subGenreNever" class="mdl-radio__button" name="subGenreoption" value="Never"'..(subGenreoption=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示しない</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'</div></div>\n</section>\n'
 
   ..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
+--[=[
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Light_Mode">軽量化</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="Light_Mode-flag" class="mdl-switch mdl-js-switch"><input id="Light_Mode-flag" type="checkbox" class="mdl-switch__input" name="Light_Mode" value="1"'..(Light_Mode and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Light_Mode">スマホ等でヘッダーの調整を無効に</span></div>\n'
+--]=]
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
@@ -192,7 +194,7 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">番組名をスクロール</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop l mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">番組名をスクロール</div>\n<div class="radio_button mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="titleScroll"><input type="radio" id="titleScroll" class="mdl-radio__button" name="titleScroll" value="ALL"'..(titleScroll=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">スクロールする</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="titleScrollPC"><input type="radio" id="titleScrollPC" class="mdl-radio__button" name="titleScroll" value="PC"'..(titleScroll=='PC' and ' checked="checked"' or '')..'><span class="mdl-radio__label">PCのみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="titleScrollNever"><input type="radio" id="titleScrollNever" class="mdl-radio__button" name="titleScroll" value="Never"'..(titleScroll=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">スクロールしない</span></label></div><div class="mdl-layout-spacer"></div></div></div>\n'
@@ -201,9 +203,11 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'
   ..'<span class="mdl-tooltip" for="tt-chc">0で無制限</span></div>\n'
 
+--[=[
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-COLUMN">時間軸の挿入間隔</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="TIME_COLUMN" value="'..TIME_COLUMN..'" min="1" id="TIME_COLUMN"><label class="mdl-textfield__label" for="TIME_COLUMN"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>\n'
   ..'<span class="mdl-tooltip" for="tt-COLUMN">軽量化が有効時のみ</span></div>\n'
+--]=]
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">1分の高さ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="ONE_MIN_PX" value="'..ONE_MIN_PX..'" min="1" id="ONE_MIN_PX"><label class="mdl-textfield__label" for="ONE_MIN_PX"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>px</div></div>\n'

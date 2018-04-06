@@ -1,27 +1,26 @@
-﻿function now(){
+﻿function now(text){
 	var elapse;
 	var date = new Date();
 	var hour = date.getHours();
-	var min, MIN = min = date.getMinutes();
-	if (min < 10) min = '0' + min;
+	var min = date.getMinutes();
 	//現時刻の位置
-	if (baseTime>24) {
+	if (baseTime>27) {
 		elapse = Math.floor((date-baseTime*1000)/1000/60/60);
 	}else{
 		elapse = hour - baseTime;
 		if (hour<baseTime) elapse += 24;
 	}
-	var line = (elapse * 60 + MIN) * oneminpx + $('#tv-guide-header').height();
-	return {line: line, min: min};
+	/*ラインに分を表示
+	if (text){
+		text = ('0'+min).slice(-2);
+		if (text != $('#line span').text()) $('#line span').text(text);
+	}//*/
+	return (elapse * 60 + min) * oneminpx;
 }
 
+//現時刻のライン移動
 function line(){
-	var time = now();
-	//現時刻のライン移動
-	$('#line').css('top', time.line);
-
-	//ラインに分を表示
-	//if (time.min != $('#line').text()) $('#line').text(time.min);
+	$('#line').css('top', now(true));
 }
 
 function end(cell, mark){
@@ -41,12 +40,17 @@ function end(cell, mark){
 var intervalID;
 function jump(){
 	if (intervalID) clearInterval(intervalID);;
-	$('#tv-guide-container').animate({scrollTop: now().line - marginmin * oneminpx}, 550, 'swing');
+	$('#tv-guide-container').animate({scrollTop: now() - marginmin * oneminpx}, 550, 'swing');
 }
+
+$(window).on('load resize', function(){
+	$('#line').width($('#tv-guide-container').width());
+});
 
 $(function(){
 	var target = $('#tv-guide-container');
 
+	var speedX, speedY;
 	var FRICTION  = 0.95;
 	var LIMIT_TO_STOP = 1;
 
@@ -63,79 +67,113 @@ $(function(){
 		target.scrollTop( target.scrollTop() + speedY );
 	}
 
-	if (!isTouch || !Light_Mode){
-		//チャンネル名連動
-		$('#tv-guide-container').scroll(function(){
-			$('#tv-guide-header').css('top', target.scrollTop());
-			$('#tv-guide-main .hour-container').first().css('left', target.scrollLeft());
-			$('#line').css('left', target.scrollLeft());
-		});
-
+	if (!isTouch){
+		var X, XX, Y, YY;
 		$('#tv-guide-main').on({
 		    'touchstart mousedown': function(e){
-				if (!isTouch && e.which != 1){
-					return;
-				}
+				if (e.which != 1) return;
+				
+				X = XX = e.clientX;
+		        Y = YY = e.clientY;
 
-				var data = new Object();
-				data.touched = true;
-		        data.X = X = XX = (isTouch ? event.changedTouches[0].clientX : e.clientX);
-		        data.Y = Y = YY = (isTouch ? event.changedTouches[0].clientY : e.clientY);
-				data.left = target.scrollLeft();
-				data.top = target.scrollTop();
-				target.data(data);
-	        	if (!isTouch){
-					return false;
-				}
-			}
-		});
-		$(document).on({
-		    'touchmove mousemove': function(e){
-				if (!target.data('touched')){
-					return;
-				}
-				e.preventDefault();
-
-				$('body').addClass('drag');
-
-		        XX = X;
-		        YY = Y;
-
-				X = (isTouch ? event.changedTouches[0].clientX : e.clientX);
-				Y = (isTouch ? event.changedTouches[0].clientY : e.clientY);
-
-		        target.scrollLeft( target.data('left') + target.data('X') - X );
-		        target.scrollTop( target.data('top') + target.data('Y') - Y );
-			},
-		    'touchend mouseup': function(e){
-				if (!target.data('touched')){
-					return;
-				}
-
-				$('body').removeClass('drag');
-				target.data('touched', false);
-
-		        speedX = XX - X;
-		        speedY = YY - Y;
-
-				//慣性スクロール？
-				intervalID = setInterval(moment, 16);
+				target.data({
+					touched: true,
+		        	X: XX,
+		        	Y: YY,
+					left: target.scrollLeft(),
+					top: target.scrollTop()
+				});
 			},
 			'wheel': function(){
 				if (intervalID) clearInterval(intervalID);
 			}
 		});
-	}else{
-		$('.hour-container').show();
-		$('#line').width($('#tv-guide').width() - 13);
+		$(document).on({
+		    'touchmove mousemove': function(e){
+				if (!target.data('touched')) return;
+				e.preventDefault();
+
+				$('body').addClass('drag');
+
+				XX = X;
+				YY = Y;
+
+				X = e.clientX;
+				Y = e.clientY;
+
+				target.scrollLeft( target.data('left') + target.data('X') - X );
+				target.scrollTop( target.data('top') + target.data('Y') - Y );
+			},
+		    'touchend mouseup': function(e){
+				if (!target.data('touched')) return;
+
+				$('body').removeClass('drag');
+				target.data('touched', false);
+
+				speedX = XX - X;
+				speedY = YY - Y;
+
+				//慣性スクロール？
+				intervalID = setInterval(moment, 1000/60);
+			}
+		});
+	}else if($(window).width() < 700){
+		//サブヘッダー連動
+		$('#tv-guide-main').data('show', true).on({
+		    'touchstart mousedown': function(e){
+		    	$('#subheader').removeClass('serch-bar');
+				$(this).data({
+					touched: true,
+					top: $('#tv-guide-container').scrollTop()
+				});
+			},
+		    'touchmove mousemove': function(e){
+				if (!$(this).data('touched')) return;
+
+				var data = $(this).data();
+				var TOP = $('#tv-guide-container').scrollTop();
+				var margin = data.top - TOP;
+				if (data.show){
+					if (margin < 0) {
+						$('#subheader').css('margin-top', margin);	//表示が多いと重い時が
+						//$('#subheader').addClass('serch-bar').css('margin-top', -48);	//不満な場合こっちを ※下のifも外すこと
+						if (margin<=-48) $(this).data('show', false);
+					}else{
+						$('#subheader').css('margin-top', 0);
+						$(this).data('top', TOP);
+					}
+				}else{
+					if (margin > 0){
+						$('#subheader').css('margin-top', Math.min(margin-48, 0));
+						//$('#subheader').addClass('serch-bar').css('margin-top', 0);	//ここも同じように
+						if (margin>=48) $(this).data('show', true);
+					}else{
+						$('#subheader').css('margin-top', -48);
+						$(this).data('top', TOP);
+					}
+				}
+			},
+		    'touchend mouseup': function(e){
+				$(this).data('touched', false);
+				var data = $(this).data();
+				var margin = data.top - $('#tv-guide-container').scrollTop();
+				if ((data.show && margin<-24) || (!data.show && margin<24)){
+					$('#subheader').addClass('serch-bar').css('margin-top', -48);
+					$(this).data('show', false);
+				}else {
+					$('#subheader').addClass('serch-bar').css('margin-top', 0);
+					$(this).data('show', true);
+				}
+			}
+		});
 	}
 
 	//番組名
 	if (titleScroll=='ALL' || (titleScroll=='PC' && !isTouch)){
 		$('#tv-guide-container').on('scroll', function(){
 			var done;
-			var top = $('#tv-guide-container').offset().top + ((!isTouch || !Light_Mode) ? $('#tv-guide-header').height() : 0);
-			var left = ((!isTouch || !Light_Mode) ? $('.hour-container').width() : 0) - $('.station').width();
+			var top = $('#tv-guide-container').offset().top + $('#tv-guide-header').height();
+			var left = $('.hour-container').width() - $('.station').width();
 			var width = $('#tv-guide-container').width();
 			var height = $('#tv-guide-container').height();
 			$('#tv-guide-main .station ').each(function(){
@@ -178,7 +216,7 @@ $(function(){
 
 	//現時間にスクロール
 	$('#now').click(function(){
-		if (!lastTime || Date.now()<(baseTime+(interval*3600))*1000){
+		if (!lastTime || Date.now()<lastTime*1000){
 			if (intervalID) clearInterval(intervalID);
 			jump();
 		}else{

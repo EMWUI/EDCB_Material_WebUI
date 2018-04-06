@@ -82,7 +82,7 @@ end
 s=s..[=[
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header]=]..(not temp.Scrollable and ' mdl-layout--fixed-tabs' or '')..[=[">
   <header class="mdl-layout__header">
-    <div class="mdl-layout__header-row">
+    <div class="mdl-layout__header-row mdl-color--primary">
       <div class="search-box mdl-cell--order-2 mdl-textfield mdl-js-textfield mdl-textfield--expandable mdl-textfield--floating-label mdl-textfield--align-right">
         <label class="mdl-button mdl-js-button mdl-button--icon" for="header-andKey">
           <i class="material-icons">search</i>

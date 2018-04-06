@@ -3,7 +3,6 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 path='Setting\\HttpPublic.ini'
-Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
 titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
@@ -68,30 +67,32 @@ CATEGORY={
 show=mg.get_var(mg.request_info.query_string,'show')
 tab=GetVarInt(mg.request_info.query_string,'tab',0,4) or 0
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
-hour=GetVarInt(mg.request_info.query_string,'hour',0,25) or 0
+hour=GetVarInt(mg.request_info.query_string,'hour',0,27) or 0
 --hour=0で現在時刻-MARGIN_HOUR時間を基準、0以外で"hour"時を基準
 interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
 CH_COUNT=GetVarInt(mg.request_info.query_string,'chcount') or DEF_CH_COUNT
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
-adjust=math.floor(hour/24)
-date=(hour~=24 and date+adjust or date)
-hour=(hour~=24 and hour-adjust*24 or hour)
-
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
-nowDate=math.floor((now+timezone)/(24*3600))
-nowHour=math.floor(((now+timezone)-nowDate*24*3600)/3600)
-baseHour=hour==0 and nowHour-MARGIN_HOUR or hour
-baseHour=baseHour<0 and baseHour+24 or baseHour
-baseDate=math.floor((now+(9-baseHour)*3600)/(24*3600))
-baseDate=nowHour<hour and baseDate+1 or baseDate
-baseTime=((baseDate+date)*24+baseHour)*3600
+baseDate=math.floor((now+timezone-4*3600)/24/3600)
+Hour=hour==0 and (math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
+pageDate=baseDate+date
+pageTime=(pageDate*24+Hour)*3600
+Date=os.date('!*t', pageDate*24*3600)
 
-NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600 or nil
+NOW=pageTime<now+timezone and now+timezone<pageTime+interval*3600
 
 function hrefGene(href)
   href=href or {}
+  if type(href)=='number' then
+    local HOUR=math.floor(href%(24*3600)/3600)
+    href={
+      date=math.floor(href/24/3600)-baseDate-(HOUR<4 and 1 or 0),
+      hour=interval==25 and hour==0 and 0 or HOUR<4 and HOUR+24 or HOUR
+    }
+  end
   local s='?tab='..(href.tab or tab)
     ..'&date='..(href.date or date)
     ..((hour~=0 or href.hour) and href.hour~=0 and (href.date~=0 or interval~=25) and '&hour='..(href.hour or hour) or '')
@@ -140,15 +141,13 @@ ct.css='<style>'
   ..'</style>\n'
 
 ct.js='<script>'
-  ..'Light_Mode='..(Light_Mode and 'true' or 'false')
-  ..';oneminpx='..ONE_MIN_PX
-  ..';basehour='..baseHour
-  ..';baseTime='..baseTime-timezone
+  ..'oneminpx='..ONE_MIN_PX
+  ..';baseTime='..pageTime-timezone
   ..';interval='..interval
   ..';titleScroll="'..titleScroll
   ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')..';'
-  ..(NOW and '$(function(){$(".now").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..baseTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
+  ..(NOW and '$(function(){$(".now").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..pageTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
 
@@ -193,9 +192,9 @@ for i,v in ipairs(sort or {}) do
       maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
     --表示範囲の番組だけ取得する
-    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}
+    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-6*3600), durationSecond=(interval+6)*3600}) or {}
     for j,w in ipairs(edcb.EnumEventInfoArchive and
-        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',baseTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
+        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
       w.past=true
       table.insert(st[#st].et, w)
     end
@@ -235,25 +234,25 @@ if 0<CH_COUNT and CH_COUNT<#st then
 end
 
 if minTime then
-  minhour=math.floor((minTime-(interval==25 and 4 or baseHour)*3600)/3600)
-  mindate=math.max(math.floor((minTime)/(24*3600)), math.floor((minTime_)/(24*3600))-3)
-  maxhour=math.floor((maxTime-baseHour*3600)/3600)
-  maxdate=math.floor((maxTime)/(24*3600))
+  if minTime+timezone>=pageTime then
+    prev='disabled'
+  else
+    prev='href="epg.html'..hrefGene(pageTime-(interval==25 and 24 or interval)*3600)..'"'
+  end
+  if maxTime+timezone<pageTime+interval*3600 then
+    next='disabled'
+  else
+    next='href="epg.html'..hrefGene(pageTime+(interval==25 and 24 or interval)*3600)..'"'
+  end
 
-  href=hrefGene({
-    date=date+math.floor((baseHour-interval)/24),
-    hour=interval~=25 and baseHour-interval-24*math.floor((baseHour-interval)/24) or nil
-  })
-
-  d=os.date('!*t', baseTime-4-(hour==0 and MARGIN_HOUR or 0)*3600)
-  ct.subheader=ct.subheader..'<div class="navigation__item navigation__icon right_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-    ..(minhour>=date*24+nowDate*24 and 'disabled' or 'href="epg.html'..href..'"')..'><i class="material-icons">chevron_left</i></a></div>\n'
-
-    ..'<div id="date" class="pulldown navigation__item mdl-color-text--primary">'..d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'..'</div>\n'
+  ct.subheader=ct.subheader..'<div class="navigation__item navigation__icon right_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '..prev..'><i class="material-icons">chevron_left</i></a></div>\n'
+    ..'<div id="date" class="pulldown navigation__item mdl-color-text--primary">'..Date.month..'/'..Date.day..'('..({'日','月','火','水','木','金','土'})[Date.wday]..')'..'</div>\n'
+    ..'<div class="dividers navigation__item navigation__icon left_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '..next..'><i class="material-icons">chevron_right</i></a></div>\n'
 
   menu=menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
 
-  for i=mindate,maxdate do
+  minTime=math.min(math.max(minTime, minTime_-3*24*3600)+timezone, math.max(minTime+timezone, pageTime-3*24*3600))
+  for i=math.floor((minTime-4*3600)/24/3600),math.floor((maxTime+timezone-4*3600)/24/3600) do
     d=os.date('!*t', i*24*3600)
     menu=menu..'<li><a class="mdl-menu__item'
       ..(i-baseDate==date and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({date=i-baseDate,hour=4}))
@@ -262,26 +261,19 @@ if minTime then
 
   menu=menu..'</ul>\n'
 
-  href=hrefGene({
-    date=date+math.floor((baseHour+interval)/24),
-    hour=interval~=25 and baseHour+interval-24*math.floor((baseHour+interval)/24) or nil
-  })
+  ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-  ct.subheader=ct.subheader..'<div class="dividers navigation__item navigation__icon left_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-    ..(maxhour<nowDate*24+date*24+interval and 'disabled' or 'href="epg.html'..href..'"')..'><i class="material-icons">chevron_right</i></a></div>\n'
+  menu=menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
-    ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
-
-  menu=menu..'<ul class="widemenu mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
-
-  k=0
-  for i=0, 23 ,2 do
-    j=(interval==25 and baseHour or 4)+i
-    if interval==25 or baseHour<=j and j<baseHour+interval then
-      menu=menu..'<li class="scroller mdl-menu__item'..(interval~=25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..((k*60-MARGIN_MIN)*ONE_MIN_PX)..'">'..(j<4 and j+24 or j>=28 and j-24 or j)..'時</li>\n'
-      k=k+2
+  start=interval>=25 and Hour or 4
+  for i=start, start+math.max(interval-2, 23) ,2 do
+    j=i%24
+    if j<4 then j=j+24 end
+    if Hour<=i and i<Hour+interval then
+      d=os.date('!*t', (pageDate*24+i)*3600)
+      menu=menu..'<li class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..(((i-Hour)*60-MARGIN_MIN)*ONE_MIN_PX)..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</li>\n'
     else
-      menu=menu..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=j})..'">'..j..'時</a></li>\n'
+      menu=menu..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n'
     end
   end
 
@@ -338,36 +330,36 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 ctt={'<div id="tv-guide-container"><div id="tv-guide">'
 
-  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n'}
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'}
 
 for i=pagemin,pagemax do
   v=st[i]
-  if (i-pagemin)%TIME_COLUMN==0 then table.insert(ctt, '<div class="hour-container"></div>') end
   table.insert(ctt, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
 end
 table.insert(ctt, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
+
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
 )
 
-colHead='<div class="hour-container mdl-color-text--white">\n'
-for i=baseHour,baseHour+interval-1 do
+for i=Hour,Hour+interval-1 do
   j=i%24
-  colHead=colHead..'<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>\n'
+  d=os.date('!*t', ((pageDate*24)+i)*3600)
+  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
-colHead=colHead..'</div>\n'
+table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
 
 for i=pagemin,pagemax do
   v=st[i]
-  if (i-pagemin)%TIME_COLUMN==0 then table.insert(ctt, colHead) end
   table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'" data-name="'..v.service_name..'">\n')
   lastPx=0
   total=0
   for j,w in ipairs(v.et) do
     startTime=os.time(w.startTime)
-    startPx=math.min(math.floor((startTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startPx=math.min(math.floor((startTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
       table.insert(ctt, '<div class="cell'..((j==1 or os.time(v.et[j-1].startTime)<now) and now<startTime and ' now' or '')..'" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       total=total+startPx-lastPx
@@ -398,13 +390,12 @@ for i=pagemin,pagemax do
         ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
         ..search..'</span>\n'
 
-
         ..'<p class="tool mdl-typography--caption-color-contrast">'
         ..'<a class="mdl-button mdl-js-button mdl-button--raised'
           ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
                        or '" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
         ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
-          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')																--予約あり有効無効
+          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
                 or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
         ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
         ..'</p>'
@@ -429,7 +420,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..table.concat(ctt)
 
-  ..(NOW and '<div id="line"></div>\n' or '')..'</div>\n</div></div>\n'
+  ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
@@ -437,7 +428,6 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..'<input type="hidden" name="notKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
-
 
 
 ct=template(ct)

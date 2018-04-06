@@ -222,6 +222,8 @@ header {
   .is-dirty + .navigation-container {
     opacity: 0;
     width: 100px; }
+  .mdl-layout__header-row {
+    z-index: 3; }
   .mdl-layout__header .mdl-layout-title {
     max-width: calc(100% - 160px);
     overflow: hidden;
@@ -253,7 +255,8 @@ header {
 #subheader {
   height: 48px;
   background-color: #fff;
-  overflow: hidden;
+  overflow: hidden; }
+  #subheader.serch-bar {
   transition-duration: .5s;
   transition-timing-function: cubic-bezier(.4,0,.2,1); }
   #subheader.serch-bar.scroll {
@@ -305,7 +308,7 @@ header {
     background: rgba(0,0,0 ,0.12); }
   @media (max-width: 479px) {
     #subheader .mdl-navigation {
-     padding: 8px 0 8px 8px; }
+     padding: 8px; }
     .navigation__item.pulldown {
       min-width: 88px; }
     .space {
@@ -323,13 +326,13 @@ header {
   .mdl-menu::-webkit-scrollbar {
     width: 3px; }
 .widemenu {
-   width: 345px; }
+   width: 348px; }
 .widemenu .mdl-menu__item {
   width: 83px;
   float: left; }
   @media (max-width: 479px) {
     .widemenu {
-      width: 230px; } }
+      width: 233px; } }
 
 .mdl-menu__item .material-icons {
   vertical-align: middle;
@@ -507,7 +510,6 @@ h4 .mdl-button--icon {
 
 #tv-guide {
   min-width: 100%;
-  overflow: auto;
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex;
@@ -518,7 +520,8 @@ h4 .mdl-button--icon {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 3; }
   #tv-guide-header a {
     border-right: solid 1px #FFF;
@@ -536,7 +539,7 @@ h4 .mdl-button--icon {
 
 
 .hour-container {
-  position:relative;
+  position: sticky;
   width: 22px;
   left: 0;
   z-index: 2; }
@@ -569,10 +572,10 @@ h4 .mdl-button--icon {
 
 
 #line {
-  padding: 5px 8px 0;
+  padding-top: 5px;
   left: 0;
   height: 0px;
-  width: 100%;
+  width: 100vw;
   color: #FF3D00;
   text-shadow: 0 1px 2px rgba(0,0,0,0.26);
   font-size: large;
@@ -602,13 +605,15 @@ h4 .mdl-button--icon {
     position: absolute;
     pointer-events: none;
     content: ''; }
+  #line span {
+    margin-left: 8px; }
   @media (max-width: 479px) {
-    #line {
-      padding-left: 5px; }
     #line:before {
       width: calc(100% - 13px); }
-      #line:after {
-        left: 3px; } }
+    #line:after {
+      left: 3px; }
+    #line span {
+      margin-left: 2px; } }
 
 
 .station {
@@ -627,7 +632,6 @@ h4 .mdl-button--icon {
       width: 125px; } }
 
 .cell {
-  position:relative;
   border-top: solid 1px transparent;
   border-bottom: solid 1px transparent;
   box-sizing: border-box; }
@@ -661,10 +665,8 @@ h4 .mdl-button--icon {
   border-radius: 2px;
   box-sizing: border-box; }
   .clicked .content:not(.nothing) {
-    top: 0px;  
     height:auto !important;
     box-shadow: 0 8px 10px 1px rgba(0,0,0,.14),0 3px 14px 2px rgba(0,0,0,.12),0 5px 5px -3px rgba(0,0,0,.2);
-    position: absolute;
     z-index: 1; }
   .end:not(.choice) {
     opacity: 0.54; }
@@ -948,6 +950,9 @@ h4 .mdl-button--icon {
     bottom: 0px; }
 
 
+.radio_button {
+  align-items: center; }
+
 .recmargin.is-disabled {
   color: rgba(0,0,0,.26);
   cursor: auto; }
@@ -975,7 +980,8 @@ h4 .mdl-button--icon {
 .number .text-right {
   margin-right: 8px; }
 
-.text-right .mdl-textfield__input {
+.text-right .mdl-textfield__input,
+.text-right .mdl-menu__item {
   text-align: right; }
   @media (max-width: 479px) {
     [type="number"] {
