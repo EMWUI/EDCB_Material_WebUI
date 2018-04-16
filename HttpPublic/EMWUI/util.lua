@@ -897,44 +897,40 @@ function SelectChDataList(a)
 end
 
 function ServiceList()
-  local a=edcb.GetServiceList()
+  local a=edcb.GetServiceList() or {}
   local HIDE_SERVICES={}
   local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
   if count>0 then
     for i=0,count do
-      local v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-      HIDE_SERVICES[''..v]=true
+      HIDE_SERVICES[''..edcb.GetPrivateProfile('HIDE','hide'..i,0,path)]=true
     end
   end
 
-  local sort={}
+  local sort
   count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
   if count>0 then
+    local GetServiceList={}
+    for i,v in ipairs(a) do
+      GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
+    end
+    sort={}
     for i=0,count do
-      local w=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-      local m={string.match(w, '^(%d+)%-(%d+)%-(%d+)$')}
-      for j,v in ipairs(a or {}) do
-        if #m==3 and 0+m[1]==v.onid and 0+m[2]==v.tsid and 0+m[3]==v.sid then
-          if HIDE_SERVICES[w] then
-            v.hide=true
-            if not show then break end
-          end
+      local key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+      local v=GetServiceList[key]
+      if v then
+        if HIDE_SERVICES[key] then v.hide=true end
+        if show or not v.hide then
           table.insert(sort, v)
-          break
         end
       end
     end
   else
-    sort=a
-    table.sort(sort, function(a,b) 
-      if a.remote_control_key_id==b.remote_control_key_id then
-        return a.sid<b.sid
-      else
-        return a.remote_control_key_id<b.remote_control_key_id
-      end
+    table.sort(a, function(a,b) return
+      ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
+      ('%04X%04X'):format(b.remote_control_key_id, b.sid)
     end)
   end
-  return sort
+  return sort or a
 end
 
 --URIをタグ装飾する

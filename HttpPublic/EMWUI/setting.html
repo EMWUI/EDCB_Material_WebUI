@@ -106,38 +106,36 @@ ct.tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
 
 ct.dialog={{id='dialog',button='<button class="submit close mdl-button mdl-button--primary" data-form="#reset">初期化</button>\n'}}
 
+GetChDataList={}
+for i,v in ipairs(edcb.GetChDataList()) do
+   GetChDataList[v.onid..'-'..v.tsid..'-'..v.sid]=true
+end
+
 edcb.htmlEscape=15
-a=edcb.GetServiceList()
-sort, b={}, {}
+a=edcb.GetServiceList() or {}
+sort={}
 count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
 if count>0 then
+  GetServiceList={}
+  for i,v in ipairs(a) do
+    GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
+  end
   for i=0,count do
-    v=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
-    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-    onid=0+m[1]
-    tsid=0+m[2]
-    sid=0+m[3]
-    end
-    b[''..v]=true
-    for i,v in ipairs(a or {}) do
-      if onid==v.onid and tsid==v.tsid and sid==v.sid then
-        table.insert(sort, v)
-        break
-      end
+    key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+    v=GetServiceList[key]
+    if v then
+      table.insert(sort, v)
+      GetServiceList[key]=nil
     end
   end
-  for i,v in ipairs(a or {}) do
-    if not b[''..v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(sort, v) end
+  for j,w in pairs(a) do
+    if GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid] then table.insert(sort, w) end
   end
 else
   sort=a
-  table.sort(sort, function(a,b) 
-    if a.remote_control_key_id==b.remote_control_key_id then
-    	return a.sid<b.sid
-    else
-    	return a.remote_control_key_id<b.remote_control_key_id
-    end
+  table.sort(sort, function(a,b) return
+    ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
+    ('%04X%04X'):format(b.remote_control_key_id, b.sid)
   end)
 end
 
@@ -315,9 +313,9 @@ oneseg='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-co
 bs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="bs"><ul class="mdl-list">\n'
 cs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="cs"><ul class="mdl-list">\n'
 other='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="sonota"><ul class="mdl-list">\n'
-for i,v in ipairs(sort or {}) do
-  if HIDE_SERVICES[''..v.onid..'-'..v.tsid..'-'..v.sid] then v.hide=true end
-  if (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
+for i,v in ipairs(sort) do
+  if GetChDataList[''..v.onid..'-'..v.tsid..'-'..v.sid] and (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
+    if HIDE_SERVICES[''..v.onid..'-'..v.tsid..'-'..v.sid] then v.hide=true end
     sort='<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">\n'
       ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>\n'
       ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' checked' or '')..'>'
