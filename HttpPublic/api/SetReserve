@@ -108,18 +108,18 @@ if post then
   elseif change then
     r=edcb.GetReserveData(id)
     if r then
-      if mg.get_var(post,'start-y') then
+      if mg.get_var(post,'startdate') then
+        startdate={string.match(mg.get_var(post,'startdate'), '^(%d+)%-(%d+)%-(%d+)$')}
+        startTime={string.match(mg.get_var(post,'starttime'), '^(%d+):(%d+):(%d+)$')}
         r.startTime={
-          year=GetVarInt(post,'start-y',1900,3000),
-          month=GetVarInt(post,'start-m',1,12),
-          day=GetVarInt(post,'start-d',1,31),
-          hour=GetVarInt(post,'start-h',0,23),
-          min=GetVarInt(post,'start-i',0,59),
-          sec=GetVarInt(post,'start-s',0,59)
+          year=startdate[1],
+          month=startdate[2],
+          day=startdate[3],
+          hour=startTime[1],
+          min=startTime[2],
+          sec=startTime[3]
         }
-        endHour=GetVarInt(post,'end-h',0,23)
-        endMin=GetVarInt(post,'end-i',0,59)
-        endSec=GetVarInt(post,'end-s',0,59)
+        endHour,endMin,endSec=string.match(mg.get_var(post,'endtime'), '^(%d+):(%d+):(%d+)$')
         --正当な日時か検査
         if r.startTime.year and r.startTime.month and r.startTime.day and
            r.startTime.hour and r.startTime.min and r.startTime.sec and

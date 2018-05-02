@@ -196,15 +196,9 @@ function ConvertTitle(a){
 //プログラム予約
 function progReserve(start, end, eid){
 	if (!end) end=start;
-	$('#start-y').val(start.getFullYear());
-	$('#start-m').val(start.getMonth()+1);
-	$('#start-d').val(start.getDate());
-	$('#start-h').val(start.getHours());
-	$('#start-i').val(('0'+ start.getMinutes()).slice(-2));
-	$('#start-s').val(('0'+ start.getSeconds()).slice(-2));
-	$('#end-h').val(end.getHours());
-	$('#end-i').val(('0'+ end.getMinutes()).slice(-2));
-	$('#end-s').val(('0'+ end.getSeconds()).slice(-2));
+	$('#startdate').val(start.getFullYear() +'-'+ ('0'+(start.getMonth()+1)).slice(-2) +'-'+ ('0'+start.getDate()).slice(-2));
+	$('#starttime').val(('0'+start.getHours()).slice(-2) +':'+ ('0'+start.getMinutes()).slice(-2) +':'+ ('0'+start.getSeconds()).slice(-2));
+	$('#endtime').val(('0'+end.getHours()).slice(-2) +':'+ ('0'+ end.getMinutes()).slice(-2) +':'+ ('0'+ end.getSeconds()).slice(-2));
 
 	if (eid==65535){
 	  $('#toprogres').text('プログラム予約');
@@ -1163,14 +1157,12 @@ $(function(){
 	}
 	//追加
 	function add_time(time){
-		$('#dateList_select').append('<option value="' + time.startDayOfWeek + '-' + time.startHour + ':' + time.startMin + '-' + time.endDayOfWeek + '-' + time.endHour + ':' + time.endMin + '">' + time.startDayOfWeek + ' ' + time.startHour + ':' + time.startMin + ' ～ ' + time.endDayOfWeek + ' ' + time.endHour + ':' + time.endMin + '</otion>');
+		$('#dateList_select').append('<option value="'+ time.startDayOfWeek +'-'+ time.startTime +'-'+ time.endDayOfWeek +'-'+ time.endTime + '">' + time.startDayOfWeek +' '+ time.startTime +' ～ '+ time.endDayOfWeek +' '+ time.endTime + '</otion>');
 	}
 	$('#add_dateList').click(function(){
 		var time = {
-			startMin: $('#startMin').val(),
-			startHour: $('#startHour').val(),
-			endHour: $('#endHour').val(),
-			endMin: $('#endMin').val()
+			startTime:$('#startTime').val(),
+			endTime:$('#endTime').val()
 		};
 
 		if ($('#dayList').prop('checked')){

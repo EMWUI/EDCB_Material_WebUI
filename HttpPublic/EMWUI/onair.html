@@ -51,7 +51,7 @@ for i,v in ipairs(sort or {}) do
     for j,w in ipairs(b) do
       if w.startTime then
         if now<os.time(w.startTime) then
-          if 0<j then x=b[j-1] end
+          x=b[j-1] or x
           y=w
           startTime=os.time(x.startTime)
           _startTime=os.time(y.startTime)

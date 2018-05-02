@@ -1060,6 +1060,8 @@ h4 .mdl-button--icon {
     padding-left: 24px; }
     #dateList_edit .time div {
       display: inline-block; }
+    #dateList_edit .time .mdl-textfield {
+      width: auto; }
   .tilde {
     margin: 0 8px; }
 

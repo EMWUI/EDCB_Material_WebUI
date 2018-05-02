@@ -62,17 +62,11 @@ if temp.progres then
   s=s..'<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
     ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')
     ..'"><div>\n'..(r and r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>\n')
-    ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-y" id="start-y" min="1900" max="3000'..(r and '" value="'..r.startTime.year or '')
-    ..'"><label class="mdl-textfield__label" for="start-y"></label></div><span class="colon">/</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-m" id="start-m" min="1" max="12'..(r and '" value="'..r.startTime.month or '')
-    ..'"><label class="mdl-textfield__label" for="start-m"></label></div><span class="colon">/</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-d" id="start-d" min="1" max="31'..(r and '" value="'..r.startTime.day or '')
-    ..'"><label class="mdl-textfield__label" for="start-d"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-h" id="start-h" min="0" max="23'..(r and '" value="'..r.startTime.hour or '')
-    ..'"><label class="mdl-textfield__label" for="start-h"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-i" id="start-i" min="0" max="59'..(r and '" value="'..r.startTime.min or '')
-    ..'"><label class="mdl-textfield__label" for="start-i"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="start-s" id="start-s" min="0" max="59'..(r and '" value="'..r.startTime.sec or '')
-    ..'"><label class="mdl-textfield__label" for="start-s"></label></div></div>\n<span class="tilde">～</span>\n'
-    ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-h" id="end-h" min="0" max="23'..(dur and '" value="'..math.floor(dur/3600)%24 or '')
-    ..'"><label class="mdl-textfield__label" for="end-h"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-i" id="end-i" min="0" max="59'..(dur and '" value="'..math.floor(dur/60)%60 or '')
-    ..'"><label class="mdl-textfield__label" for="end-i"></label></div><span class="colon">:</span>\n<div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="end-s" id="end-s" min="0" max="59'..(dur and '" value="'..dur%60 or '')
-    ..'"><label class="mdl-textfield__label" for="end-s"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken()
+    ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="date" name="startdate" id="startdate" min="1900-01-01" max="2999-12-31'..(r and '" value="'..string.format('%d-%02d-%02d', r.startTime.year,r.startTime.month,r.startTime.day) or '')
+    ..'"><label class="mdl-textfield__label" for="startdate"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="time" name="starttime" step="1" id="starttime"'..(r and '" value="'..string.format('%02d:%02d:%02d', r.startTime.hour,r.startTime.min,r.startTime.sec) or '')
+    ..'"><label class="mdl-textfield__label" for="starttime"></label></div></div>\n<span class="tilde">～</span>\n'
+    ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="time" name="endtime" step="1" id="endtime"'..(dur and '" value="'..string.format('%02d:%02d:%02d', math.floor(dur/3600)%24,math.floor(dur/60)%60,dur%60) or '')
+    ..'"><label class="mdl-textfield__label" for="endtime"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken()
     ..'">\n</div></form></div>\n<div class="mdl-dialog__actions">\n'
     ..'<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>\n'
     ..'<button class="mdl-button close" data-dialog="#dialog_progres">キャンセル</button>\n'
@@ -721,24 +715,10 @@ function SerchTemplate(si)
     ..'<label class="mdl-checkbox mdl-js-checkbox" for="sat"><input id="sat" class="DayOfWeek mdl-checkbox__input" value="土" type="checkbox" disabled><span class="mdl-checkbox__label">土</span></label>\n'
     ..'</span></label></div>\n'
 
-    ..'<div class="time">\n<div><span class="pulldown"><select id="startHour" data-margin="1">\n'
-  for i=0,23 do
-    s=s..'<option value="'..(i<10 and '0' or '')..i..'">'..(i<10 and '0' or '')..i
-  end
-  s=s..'</select>\n</span>：<span class="pulldown"><select id="startMin">\n'
-  for i=0,59 do
-    s=s..'<option value="'..(i<10 and '0' or '')..i..'">'..(i<10 and '0' or '')..i
-  end
-  s=s..'</select></span>\n</div><div><span class="tilde">～</span><span class="pulldown"><select id="endHour">\n'
-  for i=0,23 do
-    s=s..'<option value="'..(i<10 and '0' or '')..i..'"'..(i==1 and ' selected' or '')..'>'..(i<10 and '0' or '')..i
-  end
-  s=s..'</select>\n</span>：<span class="pulldown"><select id="endMin">\n'
-  for i=0,59 do
-    s=s..'<option value="'..(i<10 and '0' or '')..i..'">'..(i<10 and '0' or '')..i
-  end
-  s=s..'</select></span>\n</div></div>\n'
-    ..'</div></div>\n'
+    ..'<div class="time">'
+    ..'<div class="mdl-textfield mdl-js-textfield"><input id="startTime" class="mdl-textfield__input" type="time" name="startTime" value="00:00"><label class="mdl-textfield__label" for="startTime"></label></div>'
+    ..'<div><span class="tilde">～</span><div class="mdl-textfield mdl-js-textfield"><input id="endTime" class="mdl-textfield__input" type="time" name="endTime" value="01:00"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
+    ..'</div></div></div>\n'
 
     ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="notdate"><input id="notdate" class="mdl-checkbox__input" type="checkbox" name="notDateFlag" value="1"'..(si.notDateFlag and ' checked' or '')..'><span class="mdl-checkbox__label">NOT扱い</span></label></div>\n'
     ..'</div><input type="hidden" name="dateList" value="'..dateListValue..'"></div>\n'
@@ -906,14 +886,13 @@ function ServiceList()
     end
   end
 
-  local sort
+  local sort={}
   count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
   if count>0 then
     local GetServiceList={}
     for i,v in ipairs(a) do
       GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
     end
-    sort={}
     for i=0,count do
       local key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
       local v=GetServiceList[key]
@@ -929,8 +908,23 @@ function ServiceList()
       ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
       ('%04X%04X'):format(b.remote_control_key_id, b.sid)
     end)
+    local n,m=0,0
+    for i,v in ipairs(a) do
+      if v.service_type==1 then
+        --地デジ優先ソート
+        if NetworkType(v.onid)=='地デジ' then
+          n=n+1
+          table.insert(sort,n,v)
+        elseif NetworkType(v.onid)=='BS' then
+          m=m+1
+          table.insert(sort,n+m,v)
+        else
+          table.insert(sort,v)
+        end
+      end
+    end
   end
-  return sort or a
+  return sort
 end
 
 --URIをタグ装飾する
