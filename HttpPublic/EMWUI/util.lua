@@ -667,7 +667,7 @@ function SerchTemplate(si)
     ..'<div><button class="all_select mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">全選択</button></div>'
     ..'</div>\n'
 
-    ..'<div class="mdl-grid mdl-grid--no-spacing">\n'
+    ..'<div class="mdl-grid mdl-grid--no-spacing">表示絞り込み：'
     ..'<div class="mdl-cell--4-col-phone"><label for="image" class="mdl-checkbox mdl-js-checkbox"><input id="image" class="mdl-checkbox__input" type="checkbox" checked><span class="mdl-checkbox__label">映像のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_DTV"><input id="EXT_DTV" class="extraction mdl-checkbox__input" type="checkbox" value=".DTV" checked><span class="mdl-checkbox__label">地上波</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_SEG"><input id="EXT_SEG" class="extraction mdl-checkbox__input" type="checkbox" value=".SEG"><span class="mdl-checkbox__label">ワンセグ</span></label></div><div class="mdl-layout-spacer"></div>\n'
