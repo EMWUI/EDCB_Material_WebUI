@@ -363,4 +363,4 @@ ct.main=ct.main..dtv..'</ul></div>\n'
 
 ct=template(ct)
 
-mg.write(Response(200, 'text/html', 'utf-8', #ct)..'\r\n', ct)
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))

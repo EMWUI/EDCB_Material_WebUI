@@ -8,5 +8,5 @@ if not mg.request_info.uri:find('/$') and
    not mg.request_info.uri:lower():find('%.html$') then
   mg.write(Response(301, nil, nil, 0)..'Location: '..mg.request_info.uri..'/\r\n\r\n')
 else
-  mg.write(Response(200, 'text/html', 'utf-8', #ct)..'\r\n', ct)
+  mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
 end

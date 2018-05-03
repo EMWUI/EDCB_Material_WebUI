@@ -5,9 +5,13 @@ css=edcb.GetPrivateProfile('SET','css',false,path)
 authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',path)
 details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',path)
 
+--このサイズ以上のときページ圧縮する(nilのとき常に非圧縮)
+GZIP_THRESHOLD_BYTE=4096
+
 function template(temp)
   local path = temp.path or ''
-  local s=[=[
+  local s=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
+  s:Append([=[
 <!doctype html>
 <html lang="ja">
 <head>
@@ -44,22 +48,22 @@ function template(temp)
 ..[=[
 </head>
 <body>
-]=]
+]=])
 
 -- dialog
 for i,v in ipairs(temp.dialog or {}) do
-  s=s..'<dialog id="'..v.id..'" class="mdl-dialog">\n<div class="mdl-dialog__content">'
+  s:Append('<dialog id="'..v.id..'" class="mdl-dialog">\n<div class="mdl-dialog__content">'
     ..(v.content or '')
     ..'</div>\n<div class="mdl-dialog__actions">\n'
     ..(v.button or '')
     ..'<button class="mdl-button close" data-dialog="#'..v.id..'">キャンセル</button>\n'
-    ..'</div>\n</dialog>\n'
+    ..'</div>\n</dialog>\n')
 end
 
 if temp.progres then
   local r=type(temp.progres)=='table' and temp.progres or nil
   local dur=r and r.startTime.hour*3600+r.startTime.min*60+r.startTime.sec+r.durationSecond or nil
-  s=s..'<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
+  s:Append('<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
     ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')
     ..'"><div>\n'..(r and r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>\n')
     ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="date" name="startdate" id="startdate" min="1900-01-01" max="2999-12-31'..(r and '" value="'..string.format('%d-%02d-%02d', r.startTime.year,r.startTime.month,r.startTime.day) or '')
@@ -70,10 +74,10 @@ if temp.progres then
     ..'">\n</div></form></div>\n<div class="mdl-dialog__actions">\n'
     ..'<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>\n'
     ..'<button class="mdl-button close" data-dialog="#dialog_progres">キャンセル</button>\n'
-    ..'</div>\n</dialog>\n'
+    ..'</div>\n</dialog>\n')
 end
 
-s=s..[=[
+s:Append([=[
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header]=]..(not temp.Scrollable and ' mdl-layout--fixed-tabs' or '')..[=[">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row mdl-color--primary">
@@ -275,9 +279,9 @@ s=s..[=[
       </div>
     </div>
   </div>
-]=] or '')
+]=] or ''))
 if temp.video then
-  s=s.. [=[
+  s:Append([=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <div id="player" class="is-small">
@@ -303,16 +307,16 @@ if temp.video then
               <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
             </ul>
             <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
-]=]
+]=])
 local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
 if list=='' then
-  s=s..'<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>'
+  s:Append('<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>')
 else
   for v in list:gmatch('[^,]+') do
-    s=s..'<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
+    s:Append('<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n')
   end
 end
-s=s..[=[
+s:Append([=[
             </ul>
             <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
           </div>
@@ -321,10 +325,10 @@ s=s..[=[
       <span class="close icons mdl-badge" data-badge="&#xE5CD;"></span>
     </div>
   </div>
-]=]
+]=])
 end
 
-s=s..'<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
+s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
 
 -- メイン
 ..(temp.main or '')
@@ -337,7 +341,8 @@ s=s..'<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylis
   </div>
 </div>
 </body>
-</html>]=]
+</html>]=])
+  s:Finish()
   return s
 end
 
@@ -972,20 +977,55 @@ end
 --レスポンスを生成する
 function Response(code,ctype,charset,cl)
   return 'HTTP/1.1 '..code..' '..mg.get_response_code_text(code)
+    ..'\r\nX-Frame-Options: SAMEORIGIN'
     ..(ctype and '\r\nX-Content-Type-Options: nosniff\r\nContent-Type: '..ctype..(charset and '; charset='..charset or '') or '')
     ..(cl and '\r\nContent-Length: '..cl or '')
     ..(mg.keep_alive(not not cl) and '\r\n' or '\r\nConnection: close\r\n')
 end
 
---可能ならコンテンツをgzip圧縮する(lua-zlib(zlib.dll)が必要)
-function Deflate(ct)
-  for k,v in pairs(mg.request_info.http_headers) do
-    if k:lower()=='accept-encoding' and v:lower():find('gzip') then
-      local status,zlib = pcall(require,'zlib')
-      return status and zlib.deflate(6,31)(ct,'finish') or nil
+--コンテンツを連結するオブジェクトを生成する
+function CreateContentBuilder(thresh)
+  local self={ct={''},len=0,thresh_=thresh}
+  function self:Append(s)
+    if self.thresh_ and self.len+#s>=self.thresh_ and not self.stream_ then
+      self.stream_=true
+      --可能ならコンテンツをgzip圧縮する(lua-zlib(zlib.dll)が必要)
+      for k,v in pairs(mg.request_info.http_headers) do
+        if k:lower()=='accept-encoding' and v:lower():find('gzip') then
+          local status,zlib=pcall(require,'zlib')
+          if status then
+            self.stream_=zlib.deflate(6,31)
+            self.ct={'',(self.stream_(table.concat(self.ct)))}
+            self.len=#self.ct[2]
+            self.gzip=true
+          end
+          break
+        end
+      end
+    end
+    s=self.gzip and self.stream_(s) or s
+    if #s>0 then
+      self.ct[#self.ct+1]=s
+      self.len=self.len+#s
     end
   end
-  return nil
+  function self:Finish()
+    if self.gzip and self.stream_ then
+      self.ct[#self.ct+1]=self.stream_()
+      self.len=self.len+#self.ct[#self.ct]
+    end
+    self.stream_=nil
+  end
+  function self:Pop(s)
+    self:Finish()
+    self.ct[1]=s or ''
+    s=table.concat(self.ct)
+    self.ct={''}
+    self.len=0
+    self.gzip=nil
+    return s
+  end
+  return self
 end
 
 --クエリパラメータを整数チェックして取得する
