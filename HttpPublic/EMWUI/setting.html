@@ -112,6 +112,16 @@ for i,v in ipairs(edcb.GetChDataList()) do
 end
 
 edcb.htmlEscape=15
+
+HIDE_SERVICES={}
+count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
+if count>0 then
+  for i=0,count do
+    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
+    HIDE_SERVICES[''..v]=true
+  end
+end
+
 a=edcb.GetServiceList() or {}
 sort={}
 count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
@@ -123,13 +133,27 @@ if count>0 then
   for i=0,count do
     key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
     v=GetServiceList[key]
-    if v then
+    if v and GetChDataList[key] then
+      v.hide=HIDE_SERVICES[key]
       table.insert(sort, v)
       GetServiceList[key]=nil
+    else
+      --TSID変更検出
+      for j,w in ipairs(a) do
+        change=key:match(w.onid..'-(%d+)-'..w.sid)
+        if change and change~=w.tsid then
+          w.change=change
+          w.hide=HIDE_SERVICES[key]
+          table.insert(sort, w)
+          GetServiceList[key]=nil
+          GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid]=nil
+          break
+        end
+      end
     end
   end
-  for j,w in pairs(a) do
-    if GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid] then table.insert(sort, w) end
+  for i,v in ipairs(a) do
+    if GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(sort, v) end
   end
 else
   sort=a
@@ -137,15 +161,6 @@ else
     ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
     ('%04X%04X'):format(b.remote_control_key_id, b.sid)
   end)
-end
-
-HIDE_SERVICES={}
-count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-if count>0 then
-  for i=0,count do
-    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-    HIDE_SERVICES[''..v]=true
-  end
 end
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
@@ -315,12 +330,11 @@ cs='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" i
 other='<div class="mdl-tabs__panel mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="sonota"><ul class="mdl-list">\n'
 for i,v in ipairs(sort) do
   if GetChDataList[''..v.onid..'-'..v.tsid..'-'..v.sid] and (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
-    if HIDE_SERVICES[''..v.onid..'-'..v.tsid..'-'..v.sid] then v.hide=true end
     sort='<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">\n'
       ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>\n'
       ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' checked' or '')..'>'
       ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'..v.service_name..'</label></span>'
-      ..'<span class="mdl-list__item-sub-title">'..v.sid..'</span></span>\n'
+      ..'<span class="mdl-list__item-sub-title">'..v.sid..(v.change and ' <span class="mdl-color-text--accent">※TSID変更を検出 '..v.change..'→'..v.tsid..'</span>' or '')..'</span></span>\n'
       ..'<span class="mdl-list__item-secondary-action">'
       ..'<label class="mdl-switch mdl-js-switch" for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
       ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'>'
