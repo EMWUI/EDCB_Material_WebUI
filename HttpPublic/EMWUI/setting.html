@@ -136,21 +136,20 @@ if count>0 then
     if v and GetChDataList[key] then
       v.hide=HIDE_SERVICES[key]
       table.insert(sort, v)
-      GetServiceList[key]=nil
     else
       --TSID変更検出
-      for j,w in ipairs(a) do
-        change=key:match(w.onid..'-(%d+)-'..w.sid)
-        if change and change~=w.tsid then
+      for j,w in pairs(GetServiceList) do
+        change=key:match(w.onid..'-(%d+)-'..w.sid..'$')
+        if change and tonumber(change)~=w.tsid and GetChDataList[w.onid..'-'..w.tsid..'-'..w.sid] then
           w.change=change
           w.hide=HIDE_SERVICES[key]
           table.insert(sort, w)
-          GetServiceList[key]=nil
           GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid]=nil
           break
         end
       end
     end
+    GetServiceList[key]=nil
   end
   for i,v in ipairs(a) do
     if GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(sort, v) end
