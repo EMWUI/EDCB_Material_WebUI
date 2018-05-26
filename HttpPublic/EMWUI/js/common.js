@@ -440,7 +440,7 @@ function setAutoAdd(target){
 	showSpinner(true);
 	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
 	$('[href="#recset"], #recset, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
-	$('[href="#detail"], #detail').addClass('is-active');
+	$('[href="#search_"], #search_').addClass('is-active');
 	target.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
 

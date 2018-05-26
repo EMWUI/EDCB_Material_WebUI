@@ -1,0 +1,494 @@
+dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+path='Setting\\HttpPublic.ini'
+oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
+hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
+titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
+ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
+MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
+MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
+TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',path)
+w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
+w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
+w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
+w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
+DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
+
+background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
+
+news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',path)
+sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',path)
+information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',path)
+drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',path)
+music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',path)
+variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',path)
+movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',path)
+anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',path)
+documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',path)
+theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',path)
+education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',path)
+welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',path)
+extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',path)
+other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',path)
+none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',path)
+nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',path)
+
+reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',path)
+disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
+partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
+partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',path)
+shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
+shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',path)
+paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,path))~=0
+
+
+CATEGORY={
+  'news',
+  'sports',
+  'information',
+  'drama',
+  'music',
+  'variety',
+  'movie',
+  'anime',
+  'documentary',
+  'theater',
+  'education',
+  'welfare',
+  'extension',
+  'extension',
+  'extension',
+  'other',
+}
+
+now=os.time()
+timezone=now-os.time(os.date('!*t',now))
+baseDate=math.floor((now+timezone-MARGIN_HOUR*3600)/24/3600)
+Hour=(math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24
+baseTime=(baseDate*24+Hour)*3600
+
+ct={}
+
+ct.css='<style>'
+  ..'main{background:'..background
+  ..';}.station{width:'..w_service
+  ..'px;}.hour-container{width:'..w_hour
+  ..'px;}.hour{height:'..(ONE_MIN_PX*60)
+  ..'px;}'
+
+  ..'.news{background:'..news
+  ..';}.sports{background:'..sports
+  ..';}.information{background:'..information
+  ..';}.drama{background:'..drama
+  ..';}.music{background:'..music
+  ..';}.variety{background:'..variety
+  ..';}.movie{background:'..movie
+  ..';}.anime{background:'..anime
+  ..';}.documentary{background:'..documentary
+  ..';}.theater{background:'..theater
+  ..';}.education{background:'..education
+  ..';}.welfare{background:'..welfare
+  ..';}.extension{background:'..extension
+  ..';}.other{background:'..other
+  ..';}.none{background:'..none
+  ..';}.nothing{background:'..nothing
+  ..';}'
+
+  ..'.content.reserve{'..(paint and 'border-color:transparent;background:' or 'border-color:')..reserve..';}'
+  ..'.content.disabled{'..(paint and 'border-color:transparent;background:' or 'border-color:')..disabled..';}'
+  ..'.content.partially{background:'..partially..';border-color:'..partially_border..';}'
+  ..'.content.shortage{background:'..shortage..';border-color:'..shortage_border..';}'
+
+  ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
+  ..'px;}.hour-container{width:'..w_hour_sp
+  ..'px;}}'
+  ..'</style>\n'
+
+ct.js='<script>'
+  ..'oneminpx='..ONE_MIN_PX
+  ..';baseTime='..baseTime-timezone
+  ..';titleScroll="'..titleScroll
+  ..'";marginmin='..MARGIN_MIN
+  ..';hover='..(hover and 'true' or 'false')
+  ..';lastTime=false;'
+  ..'$(function(){$(".now").each(function(){end($(this));});lastTime;});setInterval("line()", 1000);'
+  ..'</script>\n'
+  ..'<script src="js/tvguide.js"></script>\n'
+
+ct.dialog={{
+    id='suspend',
+    button='<button class="ok mdl-button">OK</button>'
+ }}
+
+ct.progres=true
+
+if sidePanel then ct.macro=true end
+
+
+
+edcb.htmlEscape=15
+
+
+rt={}
+for i,v in ipairs(edcb.GetReserveData()) do
+  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
+end
+
+post=AssertPost()
+preset=mg.get_var(mg.request_info.query_string, 'preset')
+if preset then
+  _preset=preset..'_Search'
+    key={
+      andKey=edcb.GetPrivateProfile(_preset,'andKey','',path),
+      notKey=edcb.GetPrivateProfile(_preset,'notKey','',path),
+      regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,path))~=0,
+      titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,path))~=0,
+      aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,path))~=0,
+      notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,path))~=0,
+      notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,path))~=0,
+      freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,path)),
+      chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,path))~=0,
+      chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,path)),
+      chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,path))~=0,
+      chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,path)),
+      chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,path)),
+      network=edcb.GetPrivateProfile(_preset,'network',0,path),
+      days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,path)),
+      days29=tonumber(edcb.GetPrivateProfile(_preset,'days29',0,path)),
+      contentList={},
+      serviceList={},
+      dateList={},
+      lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,path))~=0,
+      search=true
+    }
+
+    for i=0,1000 do
+      v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,path))
+      if v==0 then break end
+      table.insert(key.contentList, {content_nibble=v})
+    end
+
+    for i=0,1000 do
+      v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,path)
+      if v==0 then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+
+    for v in string.gmatch(edcb.GetPrivateProfile(preset_,'dateList','',path), '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      dateList=v
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+elseif post then
+  key={
+    andKey=((GetVarInt(post,'caseFlag') or mg.get_var(mg.request_info.query_string, 'caseFlag'))==1  and 'C!{999}' or '')
+      ..(mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or ''),
+    notKey=mg.get_var(post, 'notKey') or mg.get_var(mg.request_info.query_string, 'notKey') or '',
+    regExpFlag=mg.get_var(post, 'regExpFlag') or mg.get_var(mg.request_info.query_string, 'regExpFlag') or false,
+    titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag') or mg.get_var(mg.request_info.query_string, 'titleOnlyFlag') or false,
+    aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag') or false,
+    notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
+    notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
+    freeCAFlag=GetVarInt(post, 'freeCAFlag') or GetVarInt(mg.request_info.query_string, 'freeCAFlag') or 0,
+    chkRecEnd=mg.get_var(post, 'chkRecEnd') or mg.get_var(mg.request_info.query_string, 'chkRecEnd') or false,
+    chkRecDay=mg.get_var(post, 'chkRecDay') or mg.get_var(mg.request_info.query_string, 'chkRecDay') or 0,
+    chkRecNoService=mg.get_var(post, 'chkRecNoService') or mg.get_var(mg.request_info.query_string, 'chkRecNoService') or false,
+    chkDurationMin=GetVarInt(post, 'chkDurationMin') or GetVarInt(mg.request_info.query_string, 'chkDurationMin') or 0,
+    chkDurationMax=GetVarInt(post, 'chkDurationMax') or GetVarInt(mg.request_info.query_string, 'chkDurationMax') or 0,
+    network=0,
+    days=mg.get_var(post, 'days') or mg.get_var(mg.request_info.query_string, 'days') or 0,
+    days29=mg.get_var(post, 'days29') or mg.get_var(mg.request_info.query_string, 'days29') or 0,
+    contentList={},
+    serviceList={},
+    dateList={},
+    lock=mg.get_var(post, 'lock'),
+    search=dataID==0 or not mg.get_var(post, 'id'),
+  }
+
+  if mg.get_var(post, 'network') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'network', i)
+      if not v then break end
+      key.network=key.network+v
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'network') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'network', i)
+      if not v then break end
+      key.network=key.network+v
+    end
+  end
+
+  if mg.get_var(post, 'contentList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'contentList', i)
+      if not v then break end
+      table.insert(key.contentList, {content_nibble=tonumber(v)})
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'contentList') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'contentList', i)
+      if not v then break end
+      table.insert(key.contentList, {content_nibble=tonumber(v)})
+    end
+  end
+
+  if mg.get_var(post, 'serviceList') then
+    for i=0,10000 do
+      v=mg.get_var(post, 'serviceList', i)
+      if not v then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'serviceList') then
+    for i=0,10000 do
+      v=mg.get_var(mg.request_info.query_string, 'serviceList', i)
+      if not v then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+  else
+    for j,w in ipairs(edcb.GetChDataList()) do
+      if w.searchFlag then
+        table.insert(key.serviceList, w)
+      end
+    end
+  end
+
+  if mg.get_var(post, 'dateList') then
+    for v in string.gmatch(mg.get_var(post, 'dateList') or '', '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      dateList=v
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+  elseif mg.get_var(mg.request_info.query_string, 'dateList') then
+    for v in string.gmatch(mg.get_var(mg.request_info.query_string, 'dateList') or '', '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      dateList=v
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+  end
+end
+
+if not key then
+  key={
+    andKey='(オ|パラ)リンピック|五輪',
+    notKey='',
+    regExpFlag=true,
+    titleOnlyFlag=true,
+    contentList={{content_nibble=262}},
+    serviceList={},
+    days=2
+  }
+  for i,v in ipairs(edcb.GetChDataList()) do
+    if v.searchFlag then table.insert(key.serviceList, v) end
+  end
+end
+
+b=edcb.SearchEpg(key)
+table.sort(b, function(a,b) 
+  if os.time(a.startTime)==os.time(b.startTime) then
+    return a.sid < b.sid
+  else
+    return os.time(a.startTime) < os.time(b.startTime)
+  end
+end)
+
+st={}
+for i,v in ipairs(b)do
+  _endTime=os.time(v.startTime)+(v.durationSecond or 0)
+  if baseTime-timezone<_endTime and (i==1 or v.eid~=b[i-1].eid) then
+    if not lastendTime or lastendTime<_endTime then lastendTime=_endTime end
+    for j=1, #st+1 do
+      if st[j] then
+        w=st[j][#st[j]]
+        startTime=os.time(w.startTime)
+        endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600
+      else
+        st[j]={}
+      end
+      if #st[j]==0 or startTime<os.time(v.startTime) and endTime<=os.time(v.startTime) then
+        table.insert(st[j], v)
+        break
+      end
+    end
+  end
+end
+interval=lastendTime and math.ceil((lastendTime+timezone-baseTime)/60/60) or MARGIN_HOUR+1
+
+SERVICE={}
+for i,v in ipairs(edcb.GetServiceList() or {}) do
+  SERVICE[('%04X%04X%04X'):format(v.onid, v.tsid, v.sid)]=v.service_name
+end
+
+ct.title='検索 ('..(preset or post and key.andKey or 'オリンピック')..')'
+
+ct.subheader='<div id="subheader">\n'
+  ..'<nav class="mdl-navigation">\n'
+  ..'<div class="mdl-layout-spacer"></div>\n'
+
+  ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" id="now"><i class="material-icons">radio_button_checked</i></a></div>\n'
+
+  ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..(preset or 'プリセット')..'</div>\n'
+  ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
+
+
+ct.menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="preset">\n'
+for v in edcb.GetPrivateProfile('search','list','',path):gmatch('[^,]+') do
+  ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..v..'</a></li>\n'
+end
+ct.menu=ct.menu..'</ul>'
+
+  ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+if Hour<4 then
+  ct.menu=ct.menu..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
+    ..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
+    ..'<li class="scroller mdl-menu__item" data-scroll="0">'..(Hour+24)..'時</li>\n'
+end
+for i=4,Hour+interval,8 do
+  j=i%24
+  if i<=Hour-8  then
+      ct.menu=ct.menu..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
+  elseif i<Hour then
+      ct.menu=ct.menu..'<li class="scroller mdl-menu__item" data-scroll="0">'..Hour..'時</li>\n'
+  else
+    d=os.date('!*t', ((baseDate*24)+i)*3600)
+    ct.menu=ct.menu..'<li class="scroller mdl-menu__item" data-scroll="'..(((i-Hour)*60-MARGIN_MIN)*ONE_MIN_PX)..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</li>\n'
+  end
+end
+ct.menu=ct.menu..'</ul>\n'
+
+ctt={'<div id="tv-guide-container"><div id="tv-guide">'
+
+  ..'<div id="tv-guide-header" class="hidden" style="height:0;"></div>\n'
+
+  ..'<div id="tv-guide-main">\n'
+
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'}
+for i=Hour,Hour+interval-1 do
+  j=i%24
+  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j==4 and os.date('!*t', ((baseDate*24)+i)*3600).day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
+end
+table.insert(ctt, '<div id="line"></div></div>\n')
+
+for i,v in ipairs(st) do
+  table.insert(ctt, '<div class="station" style="flex-grow: 0;">')
+  lastPx=0
+  total=0
+  for j,w in ipairs(v) do
+    startTime=os.time(w.startTime)
+    startPx=math.min(math.floor((startTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600 --終了時間未定
+    endPx=math.min(math.floor((endTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    if startPx-lastPx>0 then
+      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing"></div></div>\n')
+      total=total+startPx-lastPx
+      lastPx=startPx
+    end
+    if endPx-lastPx>2 then
+      category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
+      title=w.shortInfo and ConvertTitle(w.shortInfo.event_name) or ''									--番組タイトル
+      info=w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(w.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
+      service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or ''
+      search=w.shortInfo and ConvertSearch(w, service_name) or ''									--検索
+
+      r=nil
+      id=rt[('%04X%04X%04X%04X'):format(w.onid, w.tsid, w.sid, w.eid)] or nil
+      if id then
+        r=edcb.GetReserveData(id)
+      end
+      rs=r and r.recSetting or nil
+
+      mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
+      recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
+
+      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
+        ..'<div class="content '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
+
+        ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
+
+        ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..service_name..' - '..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
+        ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+        ..search..'</span>\n'
+
+        ..'<p class="tool mdl-typography--caption-color-contrast">'
+        ..'<a class="mdl-button mdl-js-button mdl-button--raised'
+          ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
+                       or '" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
+        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
+          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+                or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
+        ..'</p>'
+
+        ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
+
+        ..'</div></div></div></div>\n')
+
+      total=total+endPx-lastPx
+      lastPx=endPx
+    end
+  end
+  if total<interval*60*ONE_MIN_PX then
+    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n')
+  end
+  table.insert(ctt, '</div>\n')
+end
+
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
+
+  ..(sidePanel and sidePanelTemplate() or '')
+
+  ..table.concat(ctt)
+
+  ..'</div>\n</div></div>\n'
+
+
+ct=template(ct)
+
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))

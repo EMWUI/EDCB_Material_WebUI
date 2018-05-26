@@ -8,7 +8,7 @@
     width: 4px; }
   ::-webkit-scrollbar-thumb {
     background: #B3B3B3; }
-  ::-webkit-scrollbar-corner { 
+  ::-webkit-scrollbar-corner {
     background: #EDEDED; }
   #tv-guide::-webkit-scrollbar,
   #tv-guide-header::-webkit-scrollbar,
@@ -16,6 +16,8 @@
     display: none; } }
 
 
+.mdl-layout__container {
+  height: 100vh; }
 .mdl-layout__content>.mdl-grid:not(.list) {
   max-width: 1200px; }
 
@@ -140,7 +142,7 @@ dialog {
     cursor: pointer; }
   .disabled .recmark:before {
     display: none; }
-  .disabled .recmark:hover { 
+  .disabled .recmark:hover {
     background: #EF5350 !important; }
 
 
@@ -249,6 +251,9 @@ header {
     .is-focused ~ .mdl-layout-title,
     .is-dirty ~ .mdl-layout-title {
       opacity: 0; } }
+.navigation__footer small .material-icons {
+  font-size:smaller;
+  vertical-align:text-bottom; }
 
 
 
@@ -374,7 +379,9 @@ main {
   border-top: 1px solid rgba(0,0,0,.1); }
   .main-content>.mdl-card__actions,
   .sidePanel>.mdl-card__actions {
-    display: flex; }
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex; }
   .main-content>.mdl-card__actions>button {
     margin-right: 8px;
     height: 36px; }
@@ -401,7 +408,7 @@ h4 .mdl-button--icon {
   margin: 0 0 16px; }
   #detail ul {
     padding-left: 24px; }
-    #detail ul ul{ 
+    #detail ul ul{
       padding-left: 16px;
       line-height: 16px; }
 
@@ -520,7 +527,8 @@ h4 .mdl-button--icon {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
   display:         inline-flex;
-  position: sticky;
+  position: -webkit-sticky;
+  position:         sticky;
   top: 0;
   z-index: 3; }
   #tv-guide-header a {
@@ -539,7 +547,8 @@ h4 .mdl-button--icon {
 
 
 .hour-container {
-  position: sticky;
+  position: -webkit-sticky;
+  position:         sticky;
   width: 22px;
   left: 0;
   z-index: 2; }
@@ -590,7 +599,7 @@ h4 .mdl-button--icon {
     width: calc(100% - 19px);
     height: 1px;
     background: rgba(255,61,0,0.87);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.26);  
+    box-shadow: 0 1px 2px rgba(0,0,0,0.26);
     position: absolute;
     pointer-events: none;
     content: ''; }
@@ -601,7 +610,7 @@ h4 .mdl-button--icon {
     height: 10px;
     border-radius: 50%;
     background: rgba(255,61,0,0.87);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.26);  
+    box-shadow: 0 1px 2px rgba(0,0,0,0.26);
     position: absolute;
     pointer-events: none;
     content: ''; }
@@ -875,10 +884,9 @@ h4 .mdl-button--icon {
     -webkit-flex-grow: 1;
         -ms-flex-positive: 1;
             flex-grow: 1;
-    -webkit-flex-shrink: 10;
-        -ms-flex-negative: 10;
-            flex-shrink: 10;
-    min-height: 200px;
+    -webkit-flex-shrink: 100;
+        -ms-flex-negative: 100;
+            flex-shrink: 100;
     padding: 16px 32px 0;
     overflow-x: hidden;
     overflow-y: auto; }
@@ -891,6 +899,9 @@ h4 .mdl-button--icon {
       padding: 0 16px; }
     #sidePanel .mdl-tabs__panel {
       padding: 16px 16px 0; } }
+  @media (max-height: 650px) {
+    .sidePanel-content {
+      height: 100% } }
 .sidePanel-container {
   display: -webkit-inline-flex;
   display:     -ms-inline-flexbox;
@@ -900,6 +911,13 @@ h4 .mdl-button--icon {
 .sidePanel-container>div {
   width: 100%;
   overflow: auto!important; }
+
+.tab-container {
+  min-height: 80%; 
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  flex-direction: column; }
 
 /* form */
 .form {
@@ -972,7 +990,7 @@ h4 .mdl-button--icon {
   padding: 4px 24px 4px 0;
   box-sizing: border-box; }
 
-#service option.hide { 
+#service option.hide {
   display:none; }
 
 .number .mdl-textfield {
@@ -1200,7 +1218,7 @@ h4 .mdl-button--icon {
   .list .mdl-data-table {
     display: block;
     border: none;
-    background-color: transparent; 
+    background-color: transparent;
     box-shadow: none;
     overflow: hidden; }
   .list tbody {
@@ -1329,8 +1347,8 @@ h4 .mdl-button--icon {
   #player:-webkit-full-screen #video {
     background-size: contain;
     padding: 0!important;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     max-height: none; }
   #player:-moz-full-screen,
   #player:-moz-full-screen #video {
@@ -1453,7 +1471,7 @@ h4 .mdl-button--icon {
     color: rgba(0,0,0,.26);
     cursor: default; }
   .is-small #control {
-	 flex-wrap: wrap;
+     flex-wrap: wrap;
      -webkit-transform: translateY(60px);
      transform: translateY(60px); }
   .is-small #seek-container {
@@ -1493,16 +1511,20 @@ h4 .mdl-button--icon {
       max-width: 94%;
       max-height: 94%; } }
 
-.macro-list{ 
+.macro-list {
   overflow-y: auto;
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   flex-grow: 1;
   flex-shrink: 10; }
   .macro-list-container{
     flex-grow: 1;
     min-width: 200px; }
   .macro-list-container2 {
-    display: flex;
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
     flex-grow: 1; }
   .macro-list label {
     width: 100%;
@@ -1529,7 +1551,9 @@ h4 .mdl-button--icon {
     right: 0; }
   .macro-item{
     padding: 0 16px;
-    display: flex;
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
     border: none;
     color: rgba(0,0,0,.87);
     background-color: transparent;
@@ -1558,7 +1582,7 @@ h4 .mdl-button--icon {
       min-width: 16px; }
   @media (min-width: 701px) {
     .macro-list,
-    .macro-list-container2 { 
+    .macro-list-container2 {
       overflow-y: auto;
       flex-wrap: wrap; } }
   @media (max-width: 700px) {
@@ -1634,7 +1658,9 @@ h4 .mdl-button--icon {
     #onair.webPanel .next {
       display: none; }
     #onair.webPanel .mdl-list__item-avatar:hover+span .next {
-      display: flex; }
+      display: -webkit-flex;
+      display:     -ms-flexbox;
+      display:         flex; }
     #onair.webPanel .mdl-list__item-avatar:hover+span .epginfo:not(.next) {
       display: none; }
 #onair.webPanel .epginfo {
@@ -1649,7 +1675,7 @@ h4 .mdl-button--icon {
 
 
 /*ライブラリ*/
-.library .mdl-list__item {   
+.library .mdl-list__item {
   transition-duration: .28s;
   transition-timing-function: cubic-bezier(.4,0,.2,1);
   transition-property: background-color; }
@@ -1699,7 +1725,9 @@ h4 .mdl-button--icon {
         font-size: 50px; } }
 
 #folder .folder{
-  display: flex;
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
   align-items: center;
   padding: 0;
   height: 48px;

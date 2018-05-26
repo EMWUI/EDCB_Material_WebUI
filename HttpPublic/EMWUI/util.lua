@@ -136,7 +136,7 @@ s:Append([=[
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
       <div class="mdl-layout-spacer"></div>
       <div class="navigation__footer">
-        <p>EMWUI<small> - <a href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank">GitHub</a></small></p>
+        <p>by EMWUI<small> - <a href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank">GitHub<i class="material-icons">launch</i></a></small></p>
         <ul>
           <li><a class="mdl-color-text--cyan" href="]=]..path..[=[notifylog.lua?c=8192">情報通知ログ</a></li>
           <li><a class="mdl-color-text--cyan" href="]=]..path..[=[debuglog.lua?c=8192">デバッグ出力</a></li>
@@ -763,8 +763,7 @@ function sidePanelTemplate(reserve)
 <div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
 <div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
-<div><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
-</div>
+<div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
 <section class="panel-swipe mdl-tabs__panel is-active" id="detail">
 <div id="ext" class="mdl-typography--body-1"></div>
 <ul>
@@ -796,7 +795,7 @@ function sidePanelTemplate(reserve)
     ..'<input type="hidden" name="sid">\n'
     ..'<input type="hidden" name="eid">\n'
     ..'<input type="hidden" id="action">\n'
-    ..RecSettingTemplate(rs)..'</div></form>\n'
+    ..RecSettingTemplate(rs)..'</div></div></form>\n'
     ..'</section>\n</div>\n'
 
     ..'<div class="mdl-card__actions">\n'
