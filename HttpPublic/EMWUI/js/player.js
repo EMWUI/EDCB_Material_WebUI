@@ -22,18 +22,22 @@ function stopTimer(){
 
 var seek = 0;
 function loadMovie(obj){
-	var path = obj.data('path');
-	var canPlay = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
+	var canPlay;
+	var path= obj.data('path');
+	if (path) canPlay = video.canPlayType('video/' + path.match(/[^\.]*$/)).length > 0;
 	var quality = localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '';
 	seek = $('#seek').val();
 	var offset = seek > 0 ? '&offset=' + seek : '';
+	var audio = '&audio='+$('[name=audio]:checked').val();
 
 	if (obj.data('public') && canPlay){
 		path = root + path;
 	}else if (obj.data('rec')){
-		path = path + quality + offset;
+		path = path + quality + offset + ($('.audio:checked').length>0 ? audio : '');
+	}else if ($('#video').data('cast')){
+		path = root + 'api/TvCast?onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio);
 	}else{
-		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '');
+		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '') + ($('.audio:checked').length>0 ? audio : '');
 	}
 
 	if (canPlay){
@@ -43,11 +47,18 @@ function loadMovie(obj){
 	}
 
 	$('#video').addClass('is-loadding').attr('src', path).data(obj.data()).data('xcode', !canPlay);
-	$('#titlebar').text(obj.data('name'));
+	$('#titlebar').html(obj.data('name') +' - '+ (obj.data('title') ? ConvertTitle(obj.data('title')) : ''));
 
-	$('.ctl-button').removeClass('is-disabled');
-	if (obj.is('.item:first')) $('#playprev').addClass('is-disabled');
-	if (obj.is('.item:last' )) $('#playnext').addClass('is-disabled');
+	if (obj.hasClass('item')){
+		$('.ctl-button').removeClass('is-disabled');
+		if (obj.is('.item:first')) $('#playprev').addClass('is-disabled');
+		if (obj.is('.item:last' )) $('#playnext').addClass('is-disabled');
+	}
+	if (obj.hasClass('onair')){
+		$('.ctl-button').removeClass('is-disabled');
+		if (obj.is('.is-active>.onair:first')) $('#playprev').addClass('is-disabled');
+		if (obj.is('.is-active>.onair:last' )) $('#playnext').addClass('is-disabled');
+	}
 }
 
 function playMovie(obj){
@@ -56,7 +67,6 @@ function playMovie(obj){
 	}else{
 		$('#titlebar').addClass('is-visible');
 		$('#seek').get(0).MaterialSlider.change(0);
-		$('#volume').get(0).MaterialSlider.change(video.volume);
 		loadMovie(obj);
 	}
 	video.play();
@@ -80,6 +90,7 @@ $(function(){
 	video.muted = localStorage.getItem('muted') == 'true';
 	video.volume = localStorage.getItem('volume') ? localStorage.getItem('volume') : 1;
 	$('#autoplay').prop('checked', sessionStorage.getItem('autoplay') == 'true');
+	$('#apk').prop('checked', localStorage.getItem('apk') == 'true');
 
     $('#volume').on('mdl-componentupgraded', function() {
 		if (video.muted){
@@ -130,9 +141,9 @@ $(function(){
 			}else if (errorcode == 3){
 				messege = 'MEDIA_ERR_DECODE';
 			}else if (errorcode == 4){
-				messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
+				if ($('#video').attr('src')!='') messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
 			}
-			notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
+			if (messege) notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
 		},
 		'volumechange': function(){
 			if (this.muted){
@@ -162,17 +173,29 @@ $(function(){
 			xcode = $(this).data('xcode');
 			duration= $(this).data('duration') || this.duration;
 			
-			if (xcode && !$(this).data('rec')){
+			if ($(this).data('cast')){
+				this.play();
+
+				var data = $('.is_cast').data();
+				$('#seek').prop('disabled', true);
+				$('.duration').text(getVideoTime(data.duration));
+
+				$(this).on('timeupdate', function(){
+					var currentTime = (Date.now() - data.start)/1000;
+					$('.currentTime').text(getVideoTime(currentTime));
+					$('#seek').get(0).MaterialSlider.change(currentTime / data.duration * 100);
+				});
+			}else if (xcode && !$(this).data('rec')){
 				$(this).off('timeupdate');
 				$('#seek').attr('max', 99).attr('step', 1);
 				$('.videoTime').addClass('is-disabled');
 				$('.currentTime,.duration').text('0:00');
 			}else{
 				$(this).on('timeupdate', function(){
-					if(!$(this).data('touched')){
+					if (!$(this).data('touched')){
 						var currentTime = video.currentTime + seek * (duration / 99);
 						$('.currentTime').text(getVideoTime(currentTime));
-						$('#seek').get(0).MaterialSlider.change(currentTime / (duration / 100));
+						$('#seek').get(0).MaterialSlider.change(currentTime / duration * 100);
 					}
 				});
 				$('#seek').attr('max', 100).attr('step', 0.01);
@@ -229,27 +252,22 @@ $(function(){
 		}
 	});
 
-	$('#playprev').click(function(){
-		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').prev());
-	});
-	$('#playnext').click(function(){
-		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').next());
-	});
-
 	$('#fullscreen').click(function(e){
 		var player = $('#player').get(0);
 		if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
 			if (player.requestFullscreen) {
 				player.requestFullscreen();
-			} else if (video.msRequestFullscreen) {
+			} else if (player.msRequestFullscreen) {
 				player.msRequestFullscreen();
-			} else if (video.mozRequestFullScreen) {
+			} else if (player.mozRequestFullScreen) {
 				player.mozRequestFullScreen();
-			} else if (video.webkitRequestFullscreen) {
+			} else if (player.webkitRequestFullscreen) {
 				player.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
 			}
+			screen.orientation.lock('landscape');
 			$('#fullscreen').text('fullscreen_exit');
 		} else {
+			screen.orientation.unlock('landscape');
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
 			} else if (document.msExitFullscreen) {
@@ -270,13 +288,19 @@ $(function(){
 
 	$('#'+ localStorage.getItem('quality')).prop('checked', true);
 	$('.quality').change(function(){
-		var paused = video.paused;
-		$('.quality').not($(this)).prop('checked', false);
 		if ($(this).prop('checked')){
 			localStorage.setItem('quality', $(this).attr('id'));
 		}else{
 			localStorage.removeItem('quality');
 		}
+		if (localStorage.getItem('apk') != 'true'){
+			var paused = video.paused;
+			loadMovie($('#video'));
+			if (!paused) video.play();
+		}
+	});
+	$('.audio').change(function(){
+		var paused = video.paused;
 		loadMovie($('#video'));
 		if (!paused) video.play();
 	});

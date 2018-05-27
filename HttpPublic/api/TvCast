@@ -1,0 +1,103 @@
+-- vim:set ft=lua:
+path='Setting\\HttpPublic.ini'
+dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg',path)
+NwTV=dir..'NwTV.ps1'
+
+onid=tonumber(mg.get_var(mg.request_info.query_string, 'onid'))
+tsid=tonumber(mg.get_var(mg.request_info.query_string, 'tsid'))
+sid=tonumber(mg.get_var(mg.request_info.query_string, 'sid'))
+UPD=mg.get_var(mg.request_info.query_string,'UPD')
+
+mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,path))~=0
+
+-- 変換コマンド
+quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
+
+if mp4 then
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',path)
+else
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+end
+
+audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
+if audio then
+  if audio==0 then
+    XOPT='-map 0:0 -map 0:1 -map 0:2 '..XOPT
+  elseif audio<10 then
+    XOPT='-map 0:0 -map 0:'..audio..' '..XOPT
+  elseif audio==10 then
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FL] -map [FR] '..XOPT  --デュアルモノ[日]
+  elseif audio==11 then
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FR] -map [FL] '..XOPT  --デュアルモノ[英]
+  end
+end
+
+-- 変換後の拡張子
+XEXT=mp4 and '.mp4' or '.webm'
+-- 転送開始前に変換しておく量(bytes)
+XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
+
+n=math.floor(tonumber(mg.get_var(mg.request_info.query_string, 'n')) or 0)
+if n<0 then
+  -- プロセスが残っていたらすべて終わらせる
+  if UPD then
+    edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
+  else
+    edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]%%[_]%%\'" call terminate >nul')
+  end
+elseif n<=65535 then
+  if UPD then
+    edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..' -UDP 1"')
+  else
+    -- 前回のプロセスが残っていたら終わらせる
+    edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]'..n..'[_]%%\'" call terminate >nul')
+    -- チャンネル指定があればEpgDataCap_Bonを起動
+    if n==0 and onid and tsid and sid then
+      edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..'"')
+      retry=0
+      while true do
+        -- 最大5秒間EpgDataCap_Bonの準備ができるまで待つ
+        retry=retry+1
+        ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
+        if ff or retry > 25 then break end
+        edcb.Sleep(200)
+      end
+    else
+      -- 名前付きパイプがあれば開く
+      ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
+    end
+    if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
+      f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\'..ff[1].name..'" '..XOPT..'"', 'rb')
+      fname='view'..XEXT
+    end
+  end
+end
+
+if not f then
+  if UPD then
+    ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><info></info></entry>'
+    mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
+  else
+    mg.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
+  end
+else
+  mg.write('HTTP/1.1 200 OK\r\nContent-Type: '..mg.get_mime_type(fname)..'\r\nContent-Disposition: filename='..fname..'\r\nConnection: close\r\n\r\n')
+  while true do
+    buf=f:read(XPREPARE or 48128)
+    XPREPARE=nil
+    if buf and #buf ~= 0 then
+      if not mg.write(buf) then
+        -- キャンセルされた
+        edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
+        mg.cry('canceled')
+        break
+      end
+    else
+      -- 終端に達した
+      mg.cry('end')
+      break
+    end
+  end
+  f:close()
+end

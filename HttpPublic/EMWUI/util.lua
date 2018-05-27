@@ -101,6 +101,7 @@ s:Append([=[
       </div>
       <button id="notification" class="notification hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons mdl-badge--no-background mdl-badge--overlap" data-badge="0">notifications_none</i></button>
 ]=]
+..(temp.video and '<button id="menu_video" class="hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>' or '')
 ..(temp.menu and '      <button id="menu" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>\n' or '')..[=[
       <span class="mdl-layout-title">]=]..(temp.title or '')..[=[</span>
       <div class="mdl-layout-spacer"></div>
@@ -288,7 +289,7 @@ if temp.video then
         <div class="player-container">
           <video id="video"></video>
           <div id="titlebar" class="bar"></div>
-          <div id="control" class="bar">
+          <div id="control" class="ext bar">
             <i id="playprev" class="ctl-button material-icons">skip_previous</i>
             <i id="play" class="ctl-button material-icons">play_arrow</i>
               <i id="playnext" class="ctl-button material-icons">skip_next</i>
@@ -302,18 +303,26 @@ if temp.video then
             <p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
             <i id="settings" class="ctl-button material-icons">settings</i>
             <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
-              <li class="mdl-menu__item"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+              <li class="mdl-menu__item" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+              <button id="audio" class="mdl-menu__item"><span class="mdl-layout-spacer">音声</span><span><i class="material-icons">navigate_next</i></button>
               <li class="mdl-menu__item" id="quality"><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
               <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
             </ul>
-            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
+            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+              <li class="multi mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="1"><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi1">主音声</label></li>
+              <li class="multi mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="2"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi2">副音声</label></li>
+              <li class="dual mdl-menu__item"><input type="radio" id="dual1" name="audio" class="audio" value="10"><label for="dual1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual1">[二] 日本語</label></li>
+              <li class="dual mdl-menu__item"><input type="radio" id="dual2" name="audio" class="audio" value="11"><label for="dual2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual2">[二] 英語</label></li>
+              <li class="dual mdl-menu__item"><input type="radio" id="RAW" name="audio" class="audio" value="100"><label for="RAW" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="RAW">RAW</label></li>
+            </ul>
+            <ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 ]=])
 local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
 if list=='' then
   s:Append('<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>')
 else
   for v in list:gmatch('[^,]+') do
-    s:Append('<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n')
+    s:Append('<li class="mdl-menu__item"><input type="radio" id="'..v..'" name="quality" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n')
   end
 end
 s:Append([=[
@@ -328,7 +337,13 @@ s:Append([=[
 ]=])
 end
 
-s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n</div>\n'
+s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n'
+  ..(temp.video and
+    '<ul class="ext submenu mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_video">\n'
+    ..'<li class="mdl-menu__item" id="menu_apk"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>'
+    ..'<button id="menu_quality" class="mdl-menu__item" disabled><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button>'
+    ..'</ul></div>\n'
+    ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality">\n</ul>\n' or '</div>\n')
 
 -- メイン
 ..(temp.main or '')
@@ -409,7 +424,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
     s=s..'</ul></li>\n</ul>\n'
       ..'</section>\n'
   end
-  return s, End
+  return s, {multi=#v.audioInfoList>=2, dual=v.audioInfoList[1].component_type==2}, End
 end
 
 --録画設定フォームのテンプレート
@@ -811,11 +826,11 @@ function sidePanelTemplate(reserve)
 end
 
 --プレイヤー
-function player(video, xcode)
+function player(video, audio, xcode)
   local list = edcb.GetPrivateProfile('set','quality','',path)
   local s='<div id="player" class="is-small">\n'
 ..video..[=[
-<div id="control" class="bar is-visible">
+<div id="control" class="ext bar is-visible">
 <i id="play" class="ctl-button material-icons">play_arrow</i>
 <div id="seek-container" class="mdl-layout-spacer">
 <span class="currentTime videoTime">0:00</span>
@@ -827,10 +842,19 @@ function player(video, xcode)
 <p class="mdl-layout-spacer small-only"></p>
 <i id="settings" class="ctl-button material-icons">settings</i>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
+<button id="audio" class="mdl-menu__item"]=]..((audio.multi or audio.dual) and '' or ' disabled')..[=[><span class="mdl-layout-spacer">音声</span><span><i class="material-icons">navigate_next</i></button>
 <li class="mdl-menu__item" id="quality"]=]..(xcode and ' disabled' or '')..[=[><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
 <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
 </ul>
-]=]
+<ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+]=]..(audio.multi and [=[
+<li class="multi mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="1" checked><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="multi1">主音声</label></li>
+<li class="multi mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="2"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="multi2">副音声</label></li>
+]=] or '')..(audio.dual and [=[
+<li class="dual mdl-menu__item"><input type="radio" id="dual1" name="audio" class="audio" value="10" checked><label for="dual1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="dual1">[二] 日本語</label></li>
+<li class="dual mdl-menu__item"><input type="radio" id="dual2" name="audio" class="audio" value="11"><label for="dual2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="dual2">[二] 英語</label></li>
+<li class="dual mdl-menu__item"><input type="radio" id="RAW" name="audio" class="audio" value="100"><label for="RAW" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="RAW">[二] 日本語+英語</label></li>
+]=] or '')..'</ul>'
   if not xcode then
     s=s..'<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">'
     if list=='' then

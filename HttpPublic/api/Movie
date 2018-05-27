@@ -17,6 +17,19 @@ else
   XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
 end
 
+audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
+if audio then
+  if audio==0 then
+    XOPT='-map 0:0 -map 0:1 -map 0:2 '..XOPT
+  elseif audio<10 then
+    XOPT='-map 0:0 -map 0:'..audio..' '..XOPT
+  elseif audio==10 then
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FL] -map [FR] '..XOPT  --デュアルモノ[日]
+  elseif audio==11 then
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FR] -map [FL] '..XOPT  --デュアルモノ[英]
+  end
+end
+
 XCMD='"'..ffmpeg..'" -i pipe:0 '..XOPT
 -- 変換後の拡張子
 XEXT=mp4 and '.mp4' or '.webm'

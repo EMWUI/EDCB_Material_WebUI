@@ -94,6 +94,7 @@ function folder(){
 						$(obj).click(function(){
 							$('#popup').addClass('is-visible');
 							$('.bar').addClass('is-visible');
+							$('.audio').prop('checked', false);
 							playMovie($(this));
 						});
 
@@ -202,6 +203,7 @@ function librarySearch(key){
 					var event = function(){
 						$('#popup').addClass('is-visible');
 						$('.bar').addClass('is-visible');
+						$('.audio').prop('checked', false);
 						playMovie($(this));
 					};
 					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, click: event });
@@ -287,6 +289,13 @@ $(function(){
 	$('#library-search').submit(function(){
 		location.hash = '#search@' + $('#Key').val();
 		return false;
+	});
+
+	$('#playprev').click(function(){
+		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').prev());
+	});
+	$('#playnext').click(function(){
+		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').next());
 	});
 
 	$('.thumbs').click(function(){

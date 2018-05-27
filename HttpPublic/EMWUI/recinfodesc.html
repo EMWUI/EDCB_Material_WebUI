@@ -40,6 +40,7 @@ if v then
   else
     info,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\nジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
   end
+  audio={multi=audioInfo:find('ステレオ.*ステレオ'), dual=audioInfo:find('デュアルモノ')}
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
@@ -60,7 +61,7 @@ if v then
     ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..v.durationSecond or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', not ori)
+      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..v.durationSecond or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', audio, not ori)
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

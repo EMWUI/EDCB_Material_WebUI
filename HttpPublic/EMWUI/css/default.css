@@ -1416,44 +1416,51 @@ h4 .mdl-button--icon {
   #control p {
     margin: 0; }
   #control .mdl-menu__item {
-    display: -webkit-flex;
-    display:     -ms-flexbox;
-    display:         flex;
-    align-items: center;
-    color: #424242;
-    padding: 0px;
+    color: #424242; }
+  #control .mdl-menu__item {
     height: 33px;
     line-height: 33px; }
     #control .mdl-menu__item:hover {
       background-color: rgba(0,0,0,0.1); }
     #control .mdl-menu__item[disabled] {
       color: rgba(0,0,0,.26); }
-    #control .mdl-menu__item > * {
-      padding: 0 16px; }
     #control .mdl-menu__item[disabled] #HD+label {
       color: rgba(0,0,0,.26); }
-    #control .mdl-menu__item label {
-      cursor: pointer; }
-    #control .mdl-menu__item[disabled] label {
-      cursor: auto; }
     #control #rate {
       padding: 0;
       text-align: center; }
-    #control .mdl-menu__item .material-icons {
-      margin-right: 0; }
     #control .mdl-menu__outline {
       background: rgba(255,255,255,0.7); }
-    #control .mdl-menu__item .mdl-switch.is-upgraded {
-      padding-left: 28px;
-      padding-right: 8px; }
-    #control .mdl-switch:not(.is-checked) .mdl-switch__thumb {
-      background: #E1E1E1; }
-    .quality {
+    .quality,.audio {
       display: none; }
-    .quality:not(:checked)+label {
+    .quality:not(:checked)+label,.audio:not(:checked)+label {
       color:rgba(0,0,0,0) }
-      #settings+div+div {
+      #settings+div~div {
         margin-right: 20px; }
+
+.ext .mdl-menu__item {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  width: 100%;
+  align-items: center;
+  padding: 0px; }
+  .ext .mdl-menu__item > * {
+    padding: 0 16px; }
+  .ext .mdl-menu__item .mdl-switch.is-upgraded {
+    padding-left: 28px;
+    padding-right: 8px; }
+  .ext .mdl-switch:not(.is-checked) .mdl-switch__thumb {
+    background: #E1E1E1; }
+  .ext .mdl-menu__item .material-icons {
+    margin-right: 0; }
+  .ext .mdl-menu__item label {
+    cursor: pointer; }
+  .ext .mdl-menu__item[disabled] label {
+    cursor: auto; }
+    .menu+div {
+      margin-right: 50px; }
+
   #seek-container {
     display: -webkit-flex;
     display:     -ms-flexbox;
@@ -1626,6 +1633,9 @@ h4 .mdl-button--icon {
     width: calc(100% - 48px); }
   #onair .mdl-list__item-secondary-content{
     justify-content: center; }
+    @media (max-width: 479px) {
+      #onair  .mdl-list__item-secondary-content {
+        margin-left: 8px; } }
   #onair .epginfo{
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(255,255,255,0);
@@ -1671,6 +1681,26 @@ h4 .mdl-button--icon {
     padding: 4px; }
   #onair.webPanel .mdl-list__item .mdl-progress {
     width: calc(100% - 16px); }
+
+
+
+#tvcast .list {
+  justify-content: center; }
+.info-card {
+  padding: 8px 40px 32px; }
+  @media (max-width: 479px) {
+    .info-card {
+      padding: 16px 16px 24px; }
+    .info-card h4 {
+      margin-top: 8px; } }
+.selecter {
+  display: -webkit-flex;
+  display:     -ms-flexbox;
+  display:         flex;
+  justify-content:center;
+  align-items: center; }
+#view {
+  margin-left: 8px; }
 
 
 

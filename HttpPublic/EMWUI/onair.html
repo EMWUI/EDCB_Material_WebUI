@@ -8,9 +8,10 @@ sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 
-ct={title='放送中'}
+ct={title='放送中', video=true}
 
 ct.js='<script src="js/onair.js"></script>\n'
+  ..'<script src="js/player.js"></script>\n'
 
 if webPanel then
   ct.css='<style>.mdl-layout__header {min-height: 48px; }.mdl-layout__header-row,.mdl-layout__drawer-button {display: none; }</style>'
@@ -96,6 +97,7 @@ for i,v in ipairs(sort or {}) do
       ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
       ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(_endTime and os.date('%H:%M', _endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
       ..'</span></span>'
+      ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
 
       ..'<div class="mdl-progress mdl-js-progress"></div>'
       ..'</li>\n'

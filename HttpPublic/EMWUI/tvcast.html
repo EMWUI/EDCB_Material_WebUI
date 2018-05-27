@@ -1,0 +1,93 @@
+﻿dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+onid=GetVarInt(mg.request_info.query_string,'onid')
+tsid=GetVarInt(mg.request_info.query_string,'tsid')
+sid=GetVarInt(mg.request_info.query_string,'sid')
+
+edcb.htmlEscape=15
+sort=ServiceList()
+
+if onid and tsid and sid then
+  for j,v in ipairs(sort) do
+    if onid==v.onid and tsid==v.tsid and sid==v.sid then
+      st=v
+      break
+    end
+  end
+end
+if not st then
+  st=sort[1]
+end
+
+now=os.time()
+a=edcb.EnumEventInfo({{onid=(onid or st.onid), tsid=(tsid or st.tsid), sid=(sid or st.sid)}}, {startTime=os.date('*t',now-6*3600), durationSecond=24*3600}) or {}
+table.sort(a, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
+x={eid=0, startTime=os.date('*t',now)}
+for i,v in ipairs(a) do
+  if v.startTime then
+    startTime=os.time(v.startTime)
+    endTime=v.durationSecond and startTime+v.durationSecond or (i<#a and os.time(a[i+1].startTime) or startTime)
+    if startTime<now and now<endTime then
+      x=v
+      break
+    elseif now<startTime then
+      x={eid=0, startTime=os.date('*t',endTime), durationSecond=(i<#a and os.time(a[i+1].startTime) or startTime)-endTime}
+      break
+    end
+  end
+end
+
+ct={title='リモート視聴'}
+
+ct.js='<script src="js/onair.js"></script>\n'
+  ..'<script src="js/player.js"></script>\n'
+  ..'<script>$(function(){update();'..(onid and "loadMovie($('#epginfo'));" or '')..'});</script>'
+
+ct.main='<main id="tvcast" class="tab-swipe mdl-layout__content">\n'
+  ..'<div class="mdl-grid list">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col">\n'
+
+  ..'<div id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
+  ..player('<video id="video" data-cast="true"></video>\n' ,{multi=true, dual=true})
+  ..'</div>\n</div>\n'
+
+  ..'</div>\n'
+  
+  ..'<div class="info-card mdl-cell mdl-cell--8-col mdl-shadow--4dp"><div id="epginfo" class="open is_cast" data-onid="'..x.onid..'" data-tsid="'..x.tsid..'" data-sid="'..x.sid..'" data-start="'..(x.startTime and os.time(x.startTime)*1000 or '')..'" data-end="'..(x.startTime and x.durationSecond and (os.time(x.startTime)+x.durationSecond)*1000 or '')..'" data-duration="'..(x.durationSecond or 0)
+  ..'">\n<h4 class="mdl-typography--title"><span id="title" class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span>'
+  ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date">'..(x.startTime and FormatTimeAndDuration(x.startTime, x.durationSecond)..(x.durationSecond and '' or '～未定') or '未定')
+  ..'</span><span id="service" class="service">'
+for i,v in ipairs(edcb.GetServiceList() or {}) do
+  if x.onid==v.onid and x.tsid==v.tsid and x.sid==v.sid then
+    ct.main=ct.main..v.service_name
+    break
+  end
+end
+ct.main=ct.main..'</span></span></h4>\n<p>'..(x.shortInfo and DecorateUri(x.shortInfo.text_char):gsub('\r?\n', '<br>\n') or '')
+
+  ..'</p>\n<div class="selecter">\n'
+  ..'<div class="pulldown">\n<select id="category">\n'
+  ..'<option data-val="option">すべて</option>\n'
+  ..'<option data-val=".DTV"'..(0x7880<=st.onid and st.onid<=0x7FE8 and ' selected' or  '')..'>地デジ</option>\n'
+  ..(oneseg and '<option data-val=".SEG">ワンセグ</option>\n' or '')
+  ..'<option data-val=".BS"'..(x.onid==4 and ' selected' or  '')..'>BS</option>\n'
+  ..'<option data-val=".CS"'..(x.onid==6 or x.onid==7 and ' selected' or  '')..'>CS</option>\n'
+  ..'<option data-val=".S-other">その他</option>\n'
+  ..'</select>\n</div>：'
+  ..'<div class="pulldown">\n<select id="serviceList">\n'
+for j,v in ipairs(sort or {}) do
+  if (oneseg or not v.partialReceptionFlag) then
+  	service = v.onid==4 and 'BS' or (v.onid==6 or v.onid==7) and 'CS' or v.partialReceptionFlag and 'SEG' or (0x7880<=v.onid and v.onid<=0x7FE8) and 'DTV' or 'S-other'
+    ct.main=ct.main..'<option class="'..service..'"'..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' selected' or '')..' data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'">'..v.service_name..'</option>\n'
+  end
+end
+
+ct.main=ct.main..'</select></div>\n<button id="view" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">視聴</button>\n'
+
+  ..'</div>\n</div>\n</div>'
+
+ct=template(ct)
+
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))

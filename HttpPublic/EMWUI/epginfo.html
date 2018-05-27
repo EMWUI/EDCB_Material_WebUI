@@ -89,9 +89,9 @@ ct={title='番組情報'}
 et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
 
 if et and #et~=0 then
-  epgInfo, End = _ConvertEpgInfoText2(et[1])
+  epgInfo, audio, End = _ConvertEpgInfoText2(et[1])
 else
-  epgInfo, End = _ConvertEpgInfoText2(onid, tsid, sid, eid)
+  epgInfo, audio, End = _ConvertEpgInfoText2(onid, tsid, sid, eid)
 end
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
@@ -141,7 +141,7 @@ if not End then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n')
+      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n', audio)
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 

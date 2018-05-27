@@ -18,7 +18,7 @@ if r then
 
   ct.macro=true
 
-  epgInfo=_ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
+  epgInfo, audio=_ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n'
     ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
@@ -53,7 +53,7 @@ if r then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n')
+      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n', audio)
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
