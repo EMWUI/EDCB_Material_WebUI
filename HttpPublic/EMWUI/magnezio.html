@@ -1,0 +1,297 @@
+﻿dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+--[[
+MagnezioのHTMLオーバーレイ機能のためのページ
+
+使い方
+1. AndroidにMagnezioをインストール
+2. EpgDataCap_Bon.exeからMagnezioでUPD再生できるようにする
+3. 適当な場所にoverlay.htmlを作成<meta http-equiv="refresh" content="0; url=【このページのURL】"/>を記載
+  例：http://192.168.1.2:5510/EMWUI/magnezio.html
+4. Androidデバイス上の/sdcard/com.mediagram.magnezio/html/にoverlay.htmlをコピー
+ （インストールすると/sdcard/com.mediagram.magnezio/は自動で作成されるhtmlフォルダは自分で）
+5. Magnezioを起動、HTMLオーバーレイを有効
+6. チャンネルを選択しUPD再生、視聴
+
+注意
+チャンネルを選んでもUPD再生を有効にしない限り視聴できない（忘れがち）
+終了する際は必ず停止ボタンを押してから （配信しっぱなしになる）
+]]
+
+edcb.htmlEscape=15
+sort=ServiceList()
+
+ct=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
+ct:Append([=[
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1920,height=1080"/>
+<style>
+* {
+  margin: 0;
+  color: #fff;
+  font-size: 56px;
+  box-sizing: border-box; }
+body {
+  width: 1920px;
+  height: 1080px;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; }
+
+.bar {
+  width: 100%;
+  display: flex;
+  background: rgba(48,48,48,0.75);
+  align-items: center; }
+.bar, .side, #info {
+  transition-property: transform, margin, padding;
+  transition-duration: .5s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1); }
+
+#top .bar {
+  padding: 0 32px;
+  transform: translateY(-120px); }
+  .is-visible:not(.stop) #top .bar, #top .bar.is-visible {
+    transform: translateY(0); }
+  .is-visible:not(.stop) #top .bar, .is-visible_tall #top .bar.is-visible {
+    padding-top: 120px; }
+
+#titleBar {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  overflow: hidden;
+  white-space: nowrap; }
+#eventName {
+  overflow: hidden;
+  text-overflow: ellipsis; }
+#logo {
+   margin-right: 0.5em;
+   width: 100px; }
+
+#middle {
+  display: flex;
+  flex-grow: 1; }
+
+.side {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden; }
+  .side .bar {
+    width: 200px;
+    flex-direction: column;
+    align-items: stretch; }
+  .side .bar div {
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center; }
+
+#left .bar {
+  transform: translateX(-200px); }
+  .is-visible #left .bar {
+    transform: translateX(0); }
+
+#center {
+  margin: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-grow: 1;
+  flex-shrink: 1; }
+  #info {
+    padding: 72px;
+    background: rgba(48,48,48,0.75);
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    border-radius: 16px;
+    overflow: hidden;
+    opacity: 0; }
+    #info.is-visible {
+      opacity: 1; }
+    #title {
+      line-height: 1; }
+    #date {
+      margin-bottom: 24px;
+      font-size: 36px; }
+    #text {
+      overflow: auto;
+      font-size: 42px; }
+  
+#right .bar {
+  transform: translateX(200px); }
+  .is-visible #right .bar {
+    margin-right: 144px;
+    transform: translateX(0); }
+
+
+#bottom {
+  overflow: hidden; }
+  #list {
+    margin-bottom: -120px;
+    height: 240px;
+    transform: translateY(240px);
+    padding: 0 16px;
+    align-items: stretch;
+    overflow: auto; }
+    .is-visible #list {
+      margin-bottom: 0;
+      transform: translateY(0); }
+    .stop #list, .is-visible_tall #list {
+      margin-bottom: 0; }
+  .channel {
+    padding: 0 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap; }
+  .channel span {
+    font-size: 24px; }
+  .channel img {
+    width: 150px;
+    padding-bottom: 8px; }
+</style>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script>
+var hideTimmer, stopTimmer, cast, metaData;
+function zero(a){
+  return ('0'+ a).slice(-2);
+}
+function info(meta){
+  var start=new Date(meta.startTime*1000);
+  var end=new Date((meta.startTime+meta.duration)*1000);
+  var date=zero(start.getHours()) +':'+ zero(start.getMinutes()) +'～'+ zero(end.getHours()) +':'+ zero(end.getMinutes()) +' ';
+  $('#eventName').text(date+meta.eventName);
+  $('#title').text(meta.eventName);
+  $('#date').text(start.getFullYear() +'/'+ zero(start.getMonth()+1) +'/'+ zero(start.getDate()) +'('+ ['日','月','火','水','木','金','土'][start.getDay()] +') '+ date+meta.tsName);
+  $('#text').text(meta.text);
+}
+function onMetaData(meta){
+  // >>放送ストリームに含まれているメタデータが通知されます。
+  metaData = meta;
+  if (meta.eventName!=''){
+    info(meta);
+    $('#top .bar').addClass('is-visible');
+    setTimeout(function(){$('#top .bar').removeClass('is-visible');}, 3000)
+  }
+}
+function onVideoStarted(){
+  // >>ビデオ再生が開始したことが通知されます。
+  clearTimeout(stopTimmer);
+  $('#logo').show();
+  if (metaData.eventName!=''){
+    info(metaData);
+  }else{
+    $('#eventName').text($('.cast').text());
+  }
+}
+function onVideoStopped (){
+  // >>ビデオ再生が停止したことが通知されます。
+  //stopTimmer = setTimeout(function(){if(cast)stop(true);}, 5000);
+}
+function stop(auto){
+$('#logo').hide();
+$('#eventName').text((auto?'再生が停止したため':'')+'配信停止リクエスト中');
+  $('#top .bar').addClass('is-visible');
+  $('body').addClass('is-visible_tall');
+  $('#info').removeClass('is-visible');
+  hide(0);
+  $.get(']=]..PathToRoot()..[=[api/TvCast?UPD=&n=-1').done(function(){
+    cast=false;
+    $('#eventName,#title,#date,#text').text('');
+    $('#top .bar, body').removeClass('is-visible is-visible_tall');
+    $('.cast').removeClass('cast');
+    $('body').addClass('is-visible stop');
+  }).fail(function(){
+    $('#eventName').text('配信停止出来ませんでした');
+  });
+}
+function hide(time, a){
+  hideTimmer = setTimeout(function(){if (cast)$('body').removeClass('is-visible');}, time);
+}
+$(function(){
+  $('body').addClass('is-visible');
+  $('body').click(function(e){
+    if (!$(this).hasClass('is-visible')){
+      $(this).addClass('is-visible');
+      clearTimeout(hideTimmer);
+      hide(3000);
+    }
+  });
+  $('.channel').click(function(){
+    cast=true;
+    hide(100);
+    if (!$(this).hasClass('cast')){
+      $('#info').removeClass('is-visible');
+      $('body').removeClass('stop');
+      $('#info div').text('');
+      $('#eventName').text($(this).text());
+      $('#logo').show().prop('src', $(this).children().prop('src'));
+      $('#top .bar').addClass('is-visible is-visible_tall');
+      $('body').addClass('is-visible is-visible_tall');
+      setTimeout(function(){$('#top .bar, body').removeClass('is-visible is-visible_tall');}, 5000)
+      $.get(']=]..PathToRoot()..[=[api/TvCast?UPD=', $(this).data());
+      $('.cast').removeClass('cast');
+      $(this).addClass('cast');
+    }
+  });
+  $('#show').click(function(){
+    $('#info').toggleClass('is-visible');
+  });
+  $('#close').click(function(){
+    stop();
+  });
+  $('.space').click(function(){
+    $('.channel').hide();
+    $($(this).data('space')).show();
+    $('#list').scrollLeft(0);
+    clearTimeout(hideTimmer);
+    hide(3000);
+  });
+  $('#bottom').on({
+    'touchstart mousedown': function(){
+      clearTimeout(hideTimmer);
+      $('body').addClass('is-visible');
+    },
+    'touchend mouseup': function(){
+      hide(3000);
+    }
+  });
+});
+</script>
+</head>
+<body class="stop">
+<div id="top"><div class="bar"><div id="titleBar"><img id="logo"><span id="eventName"></span></div></div></div>
+<div id="middle">
+<div class="side" id="left"><div class="bar"><div class="space" data-space=".DTV">地デジ</div><div class="space" data-space=".BS">BS</div><div class="space" data-space=".CS">CS</div></div></div>
+<div id="center"><div id="info"><div id="title"></div><div id="date"></div><div id="text"></div></div></div>
+<div class="side" id="right"><div class="bar"><div id="show">詳細</div><div></div><div id="close">停止</div></div></div>
+</div>
+<div id="bottom"><div id="list" class="bar">
+]=])
+function Type(onid)
+  return not onid and {'DTV','BS','CS','OTHER'}
+    or Type()[0x7880<=onid and onid<=0x7FE8 and 1 or onid==4 and 2 or (onid==6 or onid==7 or onid==10) and 3 or 4]
+end
+
+for i,v in ipairs(sort) do
+  if not v.partialReceptionFlag then
+    ct:Append('<div class="channel '..Type(v.onid)..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'"><img src="'..'img/logo/'..('%04X%04X'):format(v.onid,v.sid)..'.png"><span>'..v.service_name..'</span></div>')
+  end
+end
+ct:Append([=[
+<div style="min-width:160px;"></div>
+</div>
+</body>
+</html>
+]=])
+
+ct:Finish()
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
