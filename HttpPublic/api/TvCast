@@ -42,19 +42,19 @@ n=math.floor(tonumber(mg.get_var(mg.request_info.query_string, 'n')) or 0)
 if n<0 then
   -- プロセスが残っていたらすべて終わらせる
   if UPD then
-    edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
+    a=edcb.CloseNetworkTV and edcb.CloseNetworkTV() or edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
   else
     edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]%%[_]%%\'" call terminate >nul')
   end
 elseif n<=65535 then
   if UPD then
-    edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..' -UDP 1"')
+    a=edcb.OpenNetworkTV and edcb.OpenNetworkTV(1, onid, tsid, sid) or edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..' -UDP 1"')
   else
     -- 前回のプロセスが残っていたら終わらせる
     edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]'..n..'[_]%%\'" call terminate >nul')
     -- チャンネル指定があればEpgDataCap_Bonを起動
     if n==0 and onid and tsid and sid then
-      edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..'"')
+      a=edcb.OpenNetworkTV and edcb.OpenNetworkTV(2, onid, tsid, sid) or edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..'"')
       retry=0
       while true do
         -- 最大5秒間EpgDataCap_Bonの準備ができるまで待つ
@@ -89,7 +89,7 @@ else
     if buf and #buf ~= 0 then
       if not mg.write(buf) then
         -- キャンセルされた
-        edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
+        a=edcb.CloseNetworkTV and edcb.CloseNetworkTV() or edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
         mg.cry('canceled')
         break
       end

@@ -10,12 +10,12 @@ EDCB Material WebUI
 ### 使い方
 
 1. 必要なファイルの用意 (ffmpeg.exe以外はEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からダウンロード可)
-   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[e186f9a](https://github.com/xtne6f/EDCB/commit/b72c091672f3c042c7c1369e51282fcadcf61df8)以降)  
+   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-170429](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-170429)以降)  
    * lua52.dll   - WebUIを表示するのに必要
    * lfs.dll     - ライブラリ機能に必要
    * ffmpeg.exe  - 再生機能に必要
    * readex.exe  - 再生機能に必要
-2. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/9add270103ae26e62930707cf2b39fb8c5da18b7/Document/Readme_Mod.txt#L537-L641)をよく読む
+2. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
 3. EDCB側の設定を済ませる (HTTPサーバ機能を有効、アクセス制御の設定等)
 4. ファイルを適切に設置 (下記の配置例を参照)  
    \# 解凍したEDCB-work-plus-s-bin.zipにこのEMWUIを放り込めばとりあえず動くはず  
@@ -30,7 +30,7 @@ EDCB Material WebUI
         ├─ Tools/ ＊
         │   ├─ ffmpeg.exe
         │   ├─ readex.exe
-        │   └─ NwTV.ps1 ＊
+        │   └─ NwTV.ps1 ＊ ※1
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
         ├─ EpgTimer.exe ＊
@@ -38,6 +38,7 @@ EDCB Material WebUI
         ├─ lfs.dll ＊
         └─ SendTSTCP.dll ＊
 
+   ※1 [work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降使用の場合、[LuaインタフェースにNwtworkTVモードの操作を追加](https://github.com/xtne6f/EDCB/commit/4162c5b11ea35c719b2324865cd8f3818cb3de07)により不要
 5. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定
 6. http://localhost:5510/EMWUI/ 等にアクセス出来たら準備完了、設定へ
 
@@ -116,7 +117,8 @@ Chrome系ブラウザでmp4を再生しようとするとエラーで再生で�
 HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとサムネを表示します
 
 #### リモート視聴
-**EpgDataCap_Bon.exeの設定、NwTV.ps1、SendTSTCP.dllが必要です**  
+**EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
+***work-plus-s-170429以前を使用の場合NwTV.ps1も必要***  
 EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
 NetworkTVモードを使用している場合は注意してください  
 複数同時配信はできません  

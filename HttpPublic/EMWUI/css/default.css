@@ -1399,16 +1399,16 @@ h4 .mdl-button--icon {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  -webkit-transform: translateY(-36px);
-  transform: translateY(-36px); }
+  -webkit-transform: translateY(-100%);
+  transform: translateY(-100%); }
 #control {
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex;
   bottom: 0;
   align-items: center;
-  -webkit-transform: translateY(40px);
-  transform: translateY(40px); }
+  -webkit-transform: translateY(100%);
+  transform: translateY(100%); }
   #control > *:first-child {
     margin-left: 8px; }
   #control > *:last-child {
@@ -1478,9 +1478,7 @@ h4 .mdl-button--icon {
     color: rgba(0,0,0,.26);
     cursor: default; }
   .is-small #control {
-     flex-wrap: wrap;
-     -webkit-transform: translateY(60px);
-     transform: translateY(60px); }
+     flex-wrap: wrap; }
   .is-small #seek-container {
       width: 100%;
       order: -1; }
