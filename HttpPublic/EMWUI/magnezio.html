@@ -5,16 +5,16 @@ MagnezioのHTMLオーバーレイ機能のためのページ
 
 使い方
 1. AndroidにMagnezioをインストール
-2. EpgDataCap_Bon.exeからMagnezioでUPD再生できるようにする
+2. EpgDataCap_Bon.exeからMagnezioでUDP再生できるようにする
 3. 適当な場所にoverlay.htmlを作成<meta http-equiv="refresh" content="0; url=【このページのURL】"/>を記載
   例：http://192.168.1.2:5510/EMWUI/magnezio.html
 4. Androidデバイス上の/sdcard/com.mediagram.magnezio/html/にoverlay.htmlをコピー
  （インストールすると/sdcard/com.mediagram.magnezio/は自動で作成されるhtmlフォルダは自分で）
 5. Magnezioを起動、HTMLオーバーレイを有効
-6. チャンネルを選択しUPD再生、視聴
+6. チャンネルを選択しUDP再生、視聴
 
 注意
-チャンネルを選んでもUPD再生を有効にしない限り視聴できない（忘れがち）
+チャンネルを選んでもUDP再生を有効にしない限り視聴できない（忘れがち）
 終了する際は必ず停止ボタンを押してから （配信しっぱなしになる）
 ]]
 
@@ -203,7 +203,7 @@ $('#eventName').text((auto?'再生が停止したため':'')+'配信停止リク
   $('body').addClass('is-visible_tall');
   $('#info').removeClass('is-visible');
   hide(0);
-  $.get(']=]..PathToRoot()..[=[api/TvCast?UPD=&n=-1').done(function(){
+  $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1&n=-1').done(function(){
     cast=false;
     $('#eventName,#title,#date,#text').text('');
     $('#top .bar, body').removeClass('is-visible is-visible_tall');
@@ -237,7 +237,7 @@ $(function(){
       $('#top .bar').addClass('is-visible is-visible_tall');
       $('body').addClass('is-visible is-visible_tall');
       setTimeout(function(){$('#top .bar, body').removeClass('is-visible is-visible_tall');}, 5000)
-      $.get(']=]..PathToRoot()..[=[api/TvCast?UPD=', $(this).data());
+      $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1', $(this).data());
       $('.cast').removeClass('cast');
       $(this).addClass('cast');
     }

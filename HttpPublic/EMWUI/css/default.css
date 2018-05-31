@@ -629,9 +629,11 @@ h4 .mdl-button--icon {
   width: 210px;
   border-right: solid 1px transparent;
   border-left: solid 1px transparent;
+  /* チャンネルが少ない時スペースを埋めてくれるがレンダリングが遅い
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
+  */
   -webkit-flex-shrink: 0;
       -ms-flex-negative: 0;
           flex-shrink: 0;

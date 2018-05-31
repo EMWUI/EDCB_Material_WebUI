@@ -143,6 +143,7 @@ $(function(){
 			}else if (errorcode == 4){
 				if ($('#video').attr('src')!='') messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
 			}
+			$(this).removeClass('is-loadding');
 			if (messege) notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
 		},
 		'volumechange': function(){

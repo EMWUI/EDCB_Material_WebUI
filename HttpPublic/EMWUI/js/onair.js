@@ -202,7 +202,7 @@ $(function(){
 		var data = obj.data();
 		if (data.eid!=0){
 			if (Magnezio){
-				$.get(root + 'api/TvCast?UPD=&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid'));
+				$.get(root + 'api/TvCast?mode=1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid'));
 				location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 			}else{
 				if (data.audio){
