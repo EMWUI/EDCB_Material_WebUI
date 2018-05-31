@@ -10,7 +10,7 @@ EDCB Material WebUI
 ### 使い方
 
 1. 必要なファイルの用意 (ffmpeg.exe以外はEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からダウンロード可)
-   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-170429](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-170429)以降)  
+   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)  
    * lua52.dll   - WebUIを表示するのに必要
    * lfs.dll     - ライブラリ機能に必要
    * ffmpeg.exe  - 再生機能に必要
@@ -27,10 +27,9 @@ EDCB Material WebUI
         │   ├─ EMWUI/
         │   ├─ legacy/
         │   └─ video/ ＊
-        ├─ Tools/ ＊
+        ├─ Tools/
         │   ├─ ffmpeg.exe
-        │   ├─ readex.exe
-        │   └─ NwTV.ps1 ＊ ※1
+        │   └─ readex.exe
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
         ├─ EpgTimer.exe ＊
@@ -38,7 +37,6 @@ EDCB Material WebUI
         ├─ lfs.dll ＊
         └─ SendTSTCP.dll ＊
 
-   ※1 [work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降使用の場合、[LuaインタフェースにNwtworkTVモードの操作を追加](https://github.com/xtne6f/EDCB/commit/4162c5b11ea35c719b2324865cd8f3818cb3de07)により不要
 5. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定
 6. http://localhost:5510/EMWUI/ 等にアクセス出来たら準備完了、設定へ
 
@@ -118,7 +116,6 @@ HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとサムネ
 
 #### リモート視聴
 **EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
-***work-plus-s-170429以前を使用の場合NwTV.ps1も必要***  
 EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
 NetworkTVモードを使用している場合は注意してください  
 複数同時配信はできません  
