@@ -112,10 +112,13 @@ Chrome系ブラウザでmp4を再生しようとするとエラーで再生で�
     RecFolderPath1=C:\hoge
 
 ##### サムネ
-HttpPublicFolderのthumbsフォルダにファイル名.jpgがあるとサムネを表示します
+HttpPublicFolderのvideo\thumbsフォルダに`md5ハッシュ.jpg`があるとサムネを表示できます  
+ライブラリページのメニューから作成することができます
 
 #### リモート視聴
 **EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
+※NwtworkTVモードの操作機能がまだマージされてないフォーク等を使用の場合、[NwTV.ps1](https://gist.github.com/EMWUI/b7bc9eaa3867daa6bfe7a0a650ce5e30)をToolsフォルダに入れリモート視聴することができますが**この機能は削除予定**ですので注意してください  
+
 EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
 NetworkTVモードを使用している場合は注意してください  
 複数同時配信はできません  
