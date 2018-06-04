@@ -4,7 +4,6 @@ dofile(mg.document_root..'\\api\\util.lua')
 path='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',path)
-LibraryPath=tonumber(edcb.GetPrivateProfile('SET','LibraryPath',0,path))~=0 and path or 'Common.ini'
 
 MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
 
@@ -85,18 +84,14 @@ if finddir then
 
   if not MakeThumbs then table.insert(ct, '<dir><name>ホーム</name><id>home</id>') end
 
-  count=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,LibraryPath))-1
-  for i=0,count do
-    dir=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',LibraryPath)
-    if #dir>0 then
-      if MakeThumbs then
-        attrdir(dir)
-      else
-        id=id+1
-        table.insert(ct, '<dir><name>'..(NativeToDocumentPath(dir) or dir):gsub('&', '&amp;')..'</name><id>'..id..'</id>')
-        attrdir(dir)
-        table.insert(ct, '</dir>')
-      end
+  for i,v in ipairs(GetLibraryPathList()) do
+    if MakeThumbs then
+      attrdir(v)
+    else
+      id=id+1
+      table.insert(ct, '<dir><name>'..(NativeToDocumentPath(v) or v):gsub('&', '&amp;')..'</name><id>'..id..'</id>')
+      attrdir(v)
+      table.insert(ct, '</dir>')
     end
   end
 

@@ -36,11 +36,6 @@ XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
 XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
 
-fpath=mg.get_var(mg.request_info.query_string,'fname')
-if fpath and mg.get_var(mg.request_info.query_string,'public') then
-  fpath=DocumentToNativePath(fpath)
-end
-
 r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
 v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))
 
@@ -56,6 +51,25 @@ if r then
   end
 elseif v then
   fpath=v.recFilePath
+else
+  fpath=nil
+  faddr=mg.get_var(mg.request_info.query_string,'fname')
+  if faddr then
+    if mg.get_var(mg.request_info.query_string,'public') then
+      fpath=DocumentToNativePath(faddr)
+    else
+      -- 冗長表現の可能性を潰す
+      faddr=edcb.Convert('utf-8','utf-8',faddr):gsub('[\\/]+','\\')
+      for i,v in ipairs(GetLibraryPathList()) do
+        -- ライブラリ配下にあるか＋禁止文字と正規化のチェック
+        v=(v..'\\'):gsub('[\\/]+','\\')
+        if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f:*?"<>|]') and not faddr:sub(#v+1):find('%.\\') then
+          fpath=faddr
+          break
+        end
+      end
+    end
+  end
 end
 
 -- 転送開始位置(99分率)
