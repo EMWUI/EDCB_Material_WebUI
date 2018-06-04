@@ -10,9 +10,9 @@ EDCB Material WebUI
 ### 使い方
 
 1. 必要なファイルの用意 (ffmpeg.exe以外はEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からダウンロード可)
-   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)  
+   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)
    * lua52.dll   - WebUIを表示するのに必要
-   * lfs.dll     - ライブラリ機能に必要
+   * ~~lfs.dll   - ライブラリ機能に必要~~ [bfbd173](https://github.com/EMWUI/EDCB_Material_WebUI/commit/bfbd173e781b45b8589d825bbcf3f44fe91a8e4f)により不要
    * ffmpeg.exe  - 再生機能に必要
    * readex.exe  - 再生機能に必要
 2. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
@@ -34,7 +34,6 @@ EDCB Material WebUI
         ├─ EpgTimerSrv.exe ＊
         ├─ EpgTimer.exe ＊
         ├─ lua52.dll ＊
-        ├─ lfs.dll ＊
         └─ SendTSTCP.dll ＊
 
 5. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定

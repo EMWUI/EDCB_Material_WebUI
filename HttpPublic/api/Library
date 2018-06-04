@@ -112,7 +112,7 @@ if finddir then
     table.insert(ct, '</dir></entry>')
   end
 else
-  table.insert(ct, '<error>"lfs.dll"がありません</error></entry>')
+  table.insert(ct, '<error>EDCBが非対応です</error></entry>')
 end
 
 cl=0
