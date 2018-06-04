@@ -40,7 +40,7 @@ if v then
   else
     info,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\nジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
   end
-  audio={multi=audioInfo:find('ステレオ.*ステレオ'), dual=audioInfo:find('デュアルモノ')}
+  audio={multi=audioInfo and audioInfo:find('ステレオ.*ステレオ'), dual=audioInfo and audioInfo:find('デュアルモノ')}
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
