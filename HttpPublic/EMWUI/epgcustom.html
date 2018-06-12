@@ -318,10 +318,11 @@ end
 
 if not key then
   key={
-    andKey='(オ|パラ)リンピック|五輪',
+    andKey='(オ|パラ)リンピック|五輪|\\d{4}FIFAワールドカップ',
     notKey='',
     regExpFlag=true,
     titleOnlyFlag=true,
+    chkDurationMin=10,
     contentList={{content_nibble=262}},
     serviceList={},
     days=2
@@ -367,13 +368,16 @@ for i,v in ipairs(edcb.GetServiceList() or {}) do
   SERVICE[('%04X%04X%04X'):format(v.onid, v.tsid, v.sid)]=v.service_name
 end
 
-ct.title='検索 ('..(preset or post and key.andKey or 'オリンピック')..')'
+ct.title='検索 ('..(preset or post and key.andKey or 'オリンピック・FIFAワールドカップ')..')'
 
 ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" id="now"><i class="material-icons">radio_button_checked</i></a></div>\n'
+
+  ..'<div class="navigation__item navigation__icon"><a id="prev" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_less</i></a></div>\n'
+  ..'<div class="dividers navigation__item navigation__icon"><a id="next" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_more</i></a></div>\n'
 
   ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..(preset or 'プリセット')..'</div>\n'
   ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
@@ -396,10 +400,10 @@ for i=4,Hour+interval,8 do
   if i<=Hour-8  then
       ct.menu=ct.menu..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
   elseif i<Hour then
-      ct.menu=ct.menu..'<li class="scroller mdl-menu__item" data-scroll="0">'..Hour..'時</li>\n'
+      ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item" href="#H'..Hour..'">'..Hour..'時</a></li>\n'
   else
     d=os.date('!*t', ((baseDate*24)+i)*3600)
-    ct.menu=ct.menu..'<li class="scroller mdl-menu__item" data-scroll="'..(((i-Hour)*60-MARGIN_MIN)*ONE_MIN_PX)..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</li>\n'
+    ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item" href="#H'..i..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</a></li>\n'
   end
 end
 ct.menu=ct.menu..'</ul>\n'
@@ -413,7 +417,7 @@ ctt={'<div id="tv-guide-container"><div id="tv-guide">'
   ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'}
 for i=Hour,Hour+interval-1 do
   j=i%24
-  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j==4 and os.date('!*t', ((baseDate*24)+i)*3600).day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
+  table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and os.date('!*t', ((baseDate*24)+i)*3600).day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
 table.insert(ctt, '<div id="line"></div></div>\n')
 
@@ -448,7 +452,7 @@ for i,v in ipairs(st) do
       mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
+      table.insert(ctt, '<div '..(i==1 and 'id="id'..j..'" ' or '')..' class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
         ..'<div class="content '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
 
         ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'

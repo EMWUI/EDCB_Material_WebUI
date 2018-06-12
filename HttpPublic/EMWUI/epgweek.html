@@ -200,7 +200,7 @@ if st then
   for i=start, start+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
     if hour<=i and i<hour+interval then
-      menu=menu..'<li class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..(((i-hour)*60-30)*ONE_MIN_PX)..'">'..(i%24+(i%24<4 and 24 or 0))..'時</li>\n'
+      menu=menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     else
       menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..(i%24)..(interval~=25 and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
@@ -256,7 +256,7 @@ table.insert(ctt, '</div>\n'
 
 for i=Hour,Hour+interval-1 do
   j=i%24
-  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
+  table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
 end
 table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
 

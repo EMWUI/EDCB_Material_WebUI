@@ -226,7 +226,28 @@ $(function(){
 
 	//指定時間にスクロール
 	$('.scroller').click(function(){
-		$('#tv-guide-container').animate({scrollTop: $(this).data('scroll')}, 550, 'swing');
+		$('#tv-guide-container').animate({scrollTop: $($(this).attr('href')).position().top-marginmin*oneminpx}, 550, 'swing');
+	});
+	
+	$('#prev').click(function(){
+		$('[id^=id]').each(function(){
+			if ($(this).offset().top > -$('#tv-guide-container').height()){
+				if ($(this).offset().top > marginmin*oneminpx){
+					if ($(this).prevAll('[id^=id]').length > 0) $('#tv-guide-container').animate({scrollTop: $(this).prevAll('[id^=id]').position().top-marginmin*oneminpx}, 550, 'swing');
+				}else{
+					$('#tv-guide-container').animate({scrollTop: $(this).position().top-marginmin*oneminpx}, 550, 'swing');
+				}
+				return false;
+			}
+		});
+	});
+	$('#next').click(function(){
+		$('[id^=id]').each(function(){
+			if ($(this).offset().top > $('#tv-guide-container').height()){
+				$('#tv-guide-container').animate({scrollTop: $(this).position().top-marginmin*oneminpx}, 550, 'swing');
+				return false;
+			}
+		});
 	});
 
 	//サービス絞り込み

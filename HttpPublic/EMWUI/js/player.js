@@ -35,7 +35,7 @@ function loadMovie(obj){
 	}else if (obj.data('rec')){
 		path = path + quality + offset + ($('.audio:checked').length>0 ? audio : '');
 	}else if ($('#video').data('cast')){
-		path = root + 'api/TvCast?onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio);
+		path = root + 'api/TvCast?onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio) +'&null='+ Math.floor(Math.random()*1000); //再生失敗時のキャッシュ対策
 	}else{
 		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '') + ($('.audio:checked').length>0 ? audio : '');
 	}
@@ -294,7 +294,7 @@ $(function(){
 		}else{
 			localStorage.removeItem('quality');
 		}
-		if (localStorage.getItem('apk') != 'true'){
+		if (!$('#video').data('cast') || localStorage.getItem('apk') != 'true'){
 			var paused = video.paused;
 			loadMovie($('#video'));
 			if (!paused) video.play();

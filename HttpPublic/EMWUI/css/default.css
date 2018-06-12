@@ -637,6 +637,7 @@ h4 .mdl-button--icon {
   -webkit-flex-shrink: 0;
       -ms-flex-negative: 0;
           flex-shrink: 0;
+  position: relative;
   box-sizing: border-box; }
   @media (max-width: 479px) {
     .station {

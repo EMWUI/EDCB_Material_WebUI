@@ -271,7 +271,7 @@ if minTime then
     if j<4 then j=j+24 end
     if Hour<=i and i<Hour+interval then
       d=os.date('!*t', (pageDate*24+i)*3600)
-      menu=menu..'<li class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" data-scroll="'..(((i-Hour)*60-MARGIN_MIN)*ONE_MIN_PX)..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</li>\n'
+      menu=menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n'
     else
       menu=menu..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n'
     end
@@ -346,7 +346,7 @@ table.insert(ctt, '</div>\n'
 for i=Hour,Hour+interval-1 do
   j=i%24
   d=os.date('!*t', ((pageDate*24)+i)*3600)
-  table.insert(ctt, '<div class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
+  table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
 table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
 
