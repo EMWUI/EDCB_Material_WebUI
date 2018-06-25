@@ -248,7 +248,7 @@ function setEpgInfo(info, past){
 	$('#summary p').html( ConvertText(info.find('event_text').text()) );
 	$('#ext').html( ConvertText(info.find('event_ext_text').text()) );
 
-    var genre, video, audio, other = genre = video = audio = '';
+	var genre, video, audio, other = genre = video = audio = '';
 	info.find('contentInfo').each(function(){
 		genre += '<li>'+ $(this).find('component_type_name').text();
 	});
@@ -358,6 +358,10 @@ function getEpgInfo(target, data, past){
 								}
 								ReserveAutoaddList[key]=$(this);
 							});
+							defRecSetting={
+								serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+								suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+							}
 							action();
 						});
 					}
@@ -406,6 +410,10 @@ function getEpgInfo(target, data, past){
 									}
 									ReserveAutoaddList[key]=$(this);
 								});
+								defRecSetting={
+									serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+									suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+								}
 								action();
 							});
 						}
@@ -452,33 +460,33 @@ function setAutoAdd(target){
 			$('#del').attr('action', root + 'api/SetAutoAdd?id='+id);
 			$('#epginfo').attr('href', 'autoaddepginfo.html?id='+id);
 
-		    if (autoadd.find('disableFlag').text() == 1){
-		        $('#disable').prop('checked', true).parent().addClass('is-checked');
-		    }else{
-		        $('#disable').prop('checked', false).parent().removeClass('is-checked');
-		    }
+			if (autoadd.find('disableFlag').text() == 1){
+				$('#disable').prop('checked', true).parent().addClass('is-checked');
+			}else{
+				$('#disable').prop('checked', false).parent().removeClass('is-checked');
+			}
 			$('#andKey').val(autoadd.find('andKey').text());
 			$('#notKey').val(autoadd.find('notKey').text());
-		    if (autoadd.find('regExpFlag').text() == 1){
-		        $('#reg').prop('checked', true).parent().addClass('is-checked');
-		    }else{
-		        $('#reg').prop('checked', false).parent().removeClass('is-checked');
-		    }
-		    if (autoadd.find('aimaiFlag').text() == 1){
-		        $('#aimai').prop('checked', true).parent().addClass('is-checked');
-		    }else{
-		        $('#aimai').prop('checked', false).parent().removeClass('is-checked');
-		    }
-		    if (autoadd.find('titleOnlyFlag').text() == 1){
-		        $('#titleOnly').prop('checked', true).parent().addClass('is-checked');
-		    }else{
-		        $('#titleOnly').prop('checked', false).parent().removeClass('is-checked');
-		    }
-		    var contentList=[];
+			if (autoadd.find('regExpFlag').text() == 1){
+				$('#reg').prop('checked', true).parent().addClass('is-checked');
+			}else{
+				$('#reg').prop('checked', false).parent().removeClass('is-checked');
+			}
+			if (autoadd.find('aimaiFlag').text() == 1){
+				$('#aimai').prop('checked', true).parent().addClass('is-checked');
+			}else{
+				$('#aimai').prop('checked', false).parent().removeClass('is-checked');
+			}
+			if (autoadd.find('titleOnlyFlag').text() == 1){
+				$('#titleOnly').prop('checked', true).parent().addClass('is-checked');
+			}else{
+				$('#titleOnly').prop('checked', false).parent().removeClass('is-checked');
+			}
+			var contentList=[];
 			autoadd.find('contentList').each(function(){
 				contentList.push(autoadd.find('content_nibble').text());
 			});
-		    $('#contentList').val(contentList);
+			$('#contentList').val(contentList);
 			if (autoadd.find('notContetFlag').text() == 1){
 				$('#notcontet').prop('checked', true).parent().addClass('is-checked');
 			}else{
@@ -556,6 +564,10 @@ function setAutoAdd(target){
 				$(xhr.responseXML).find('autoaddinfo').each(function(){
 					ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 				});
+				defRecSetting={
+					serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+					suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+				}
 				action();
 			});
 		}
@@ -618,13 +630,13 @@ function setRecInfo(target){
 
 //録画フォルダパス作成
 function recFolderInfo(i, val, partial){
-    var div = '<div>';
-    var cell = 'mdl-cell';
-    var container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
-    var select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
-    var textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
-    var delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
-    var middle = 'mdl-cell mdl-cell--middle';
+	var div = '<div>';
+	var cell = 'mdl-cell';
+	var container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
+	var select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
+	var textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
+	var delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
+	var middle = 'mdl-cell mdl-cell--middle';
 	var recNamePlugIn = val.recNamePlugIn.match(/^(.*\.dll)?(?:\?(.*))?/);
 	partial = partial ? 'partial' : '';
 	return $(div, {class: 'preset '+container, append: [
@@ -665,85 +677,90 @@ function delPreset(obj){
 			obj.insertBefore(target).removeClass('hidden');
 			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '元に戻しました'})
 		},
-    	actionText: '元に戻す'
+		actionText: '元に戻す'
 	};
 	$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar(data);
 }
 
 //録画設定をセット
 function setRecSettting(self){
-    var recset = self.children('recsetting');
-    //録画モード
-    $('[name=recMode]').val(recset.children('recMode').text());
-    //追従
-    if (recset.children('tuijyuuFlag').text() == 1){
-        $('[name=tuijyuuFlag]').prop('checked', true).parent().addClass('is-checked');
-    }else{
-        $('[name=tuijyuuFlag]').prop('checked', false).parent().removeClass('is-checked');
-    }
-    //優先度
-    $('[name=priority]').val(recset.children('priority').text());
-    //ぴったり(？)録画
-    if (recset.children('pittariFlag').text() == 1){
-        $('[name=pittariFlag]').prop('checked', true).parent().addClass('is-checked');
-    }else{
-        $('[name=pittariFlag]').prop('checked', false).parent().removeClass('is-checked');
-    }
-    //録画後動作
-    $('[name=suspendMode]').val(recset.children('suspendMode').text());
-    //復帰後再起動
-    if (recset.children('rebootFlag').text() == 1){
-        $('[name=rebootFlag]').prop('checked', true).parent().addClass('is-checked');
-    }else{
-        $('[name=rebootFlag]').prop('checked', false).parent().removeClass('is-checked');
-    }
-    //録画マージン
-    if (recset.children('useMargineFlag').text() == 0){
-        $('[name=useDefMarginFlag]').prop('checked', true).parent().addClass('is-checked');
-        $('.recmargin').addClass('is-disabled').find('.mdl-textfield').addClass('is-disabled').find('input').prop('disabled', true);
-    }else{
-        $('[name=useDefMarginFlag]').prop('checked', false).parent().removeClass('is-checked');
-        $('.recmargin').removeClass('is-disabled').find('.mdl-textfield').removeClass('is-disabled').find('input').prop('disabled', false);
-    }
-    //開始
-    $('[name=startMargin]').val(recset.children('startMargine').text());
-    //終了
-    $('[name=endMargin]').val(recset.children('endMargine').text());
-    //指定サービス対象データ
-    var serviceMode = recset.children('serviceMode').text();
-    if (serviceMode%2 == 0){
-        $('[name=serviceMode]').prop('checked', true).parent().addClass('is-checked');
-        $('.smode').find('.mdl-checkbox').addClass('is-disabled').removeClass('is-checked').find('input').prop('checked', false).prop('disabled', true);
-    }else{
-        $('[name=serviceMode]').prop('checked', false).parent().removeClass('is-checked');
-        $('.smode').find('.mdl-checkbox').removeClass('is-disabled').find('input').prop('disabled', false);
+	var recset = self.children('recsetting');
+	//録画モード
+	$('[name=recMode]').val(recset.children('recMode').text());
+	//追従
+	if (recset.children('tuijyuuFlag').text() == 1){
+		$('[name=tuijyuuFlag]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=tuijyuuFlag]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	//優先度
+	$('[name=priority]').val(recset.children('priority').text());
+	//ぴったり(？)録画
+	if (recset.children('pittariFlag').text() == 1){
+		$('[name=pittariFlag]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=pittariFlag]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	//録画後動作
+	$('[name=suspendMode]').val(recset.children('suspendMode').text());
+	//復帰後再起動
+	if ($('[name=suspendMode]').val()==0){
+		if (defRecSetting.suspendMode){
+			$('[name=rebootFlag]').prop('checked', true).prop('disabled', true).parent().addClass('is-checked is-disabled');
+		}else{
+			$('[name=rebootFlag]').prop('checked', false).prop('disabled', true).parent().removeClass('is-checked').addClass('is-disabled');
+		}
+	}else if (recset.children('rebootFlag').text() == 1){
+		$('[name=rebootFlag]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=rebootFlag]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	//録画マージン
+	if (recset.children('useMargineFlag').text() == 0){
+		$('[name=useDefMarginFlag]').prop('checked', true).parent().addClass('is-checked');
+		$('.recmargin').addClass('is-disabled').find('.mdl-textfield').addClass('is-disabled').find('input').prop('disabled', true);
+	}else{
+		$('[name=useDefMarginFlag]').prop('checked', false).parent().removeClass('is-checked');
+		$('.recmargin').removeClass('is-disabled').find('.mdl-textfield').removeClass('is-disabled').find('input').prop('disabled', false);
+	}
+	//開始
+	$('[name=startMargin]').val(recset.children('startMargine').text());
+	//終了
+	$('[name=endMargin]').val(recset.children('endMargine').text());
+	//指定サービス対象データ
+	var serviceMode = recset.children('serviceMode').text();
+	if (serviceMode%2 == 0){
+		$('[name=serviceMode]').prop('checked', true).parent().addClass('is-checked');
+		$('.smode').find('.mdl-checkbox').addClass('is-disabled').find('input').prop('checked', false).prop('disabled', true);
+		serviceMode = defRecSetting.serviceMode;
+	}else{
+		$('[name=serviceMode]').prop('checked', false).parent().removeClass('is-checked');
+		$('.smode').find('.mdl-checkbox').removeClass('is-disabled').find('input').prop('disabled', false);
+	}
+	if ((Math.floor(serviceMode/16)%2) != 0){
+		$('[name=serviceMode_1]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=serviceMode_1]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	if ((Math.floor(serviceMode/32)%2) != 0){
+		$('[name=serviceMode_2]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=serviceMode_2]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	//連続録画動作
+	if (recset.children('continueRecFlag').text() == 1){
+		$('[name=continueRecFlag]').prop('checked', true).parent().addClass('is-checked');
+	}else{
+		$('[name=continueRecFlag]').prop('checked', false).parent().removeClass('is-checked');
+	}
+	//使用チューナー強制指定
+	$('[name=tunerID]').val(recset.children('tunerID').text());
 
-        if ((Math.floor(serviceMode/16)%2) != 0){
-            $('[name=serviceMode_1]').prop('checked', true).parent().addClass('is-checked');
-        }else{
-            $('[name=serviceMode_1]').prop('checked', false).parent().removeClass('is-checked');
-        }
+	//プリセット
+	//録画後実行bat
+	$('.preset').remove();
 
-        if ((Math.floor(serviceMode/32)%2) != 0){
-            $('[name=serviceMode_2]').prop('checked', true).parent().addClass('is-checked');
-        }else{
-            $('[name=serviceMode_2]').prop('checked', false).parent().removeClass('is-checked');
-        }
-    }
-    //連続録画動作
-    if (recset.children('continueRecFlag').text() == 1){
-        $('[name=continueRecFlag]').prop('checked', true).parent().addClass('is-checked');
-    }else{
-        $('[name=continueRecFlag]').prop('checked', false).parent().removeClass('is-checked');
-    }
-    //使用チューナー強制指定
-    $('[name=tunerID]').val(recset.children('tunerID').text());
-
-    //プリセット
-    //録画後実行bat
-    $('.preset').remove();
-
-    var batFilePath = recset.children('batFilePath').text();
+	var batFilePath = recset.children('batFilePath').text();
 	if ($('[name="batFilePath"] option[value="' + batFilePath.replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&') + '"]').length == 0){
 		$('[name="batFilePath"]').append($('<option>', {value: batFilePath, text: batFilePath}));
 	}
@@ -771,21 +788,21 @@ function setRecSettting(self){
 			$('#partialpreset .addPreset').before(recFolderInfo(i, val, true));
 		});
 	}
-    componentHandler.upgradeDom();
-    //部分受信サービス
-    if (recset.children('partialRecFlag').text() == 1){
-        $('[name=partialRecFlag]').prop('checked', true).parent().addClass('is-checked');
-        $('#partialpreset').show();
-    }else{
-        $('[name=partialRecFlag]').prop('checked', false).parent().removeClass('is-checked');
-        $('#partialpreset').hide();
-    }
+	componentHandler.upgradeDom();
+	//部分受信サービス
+	if (recset.children('partialRecFlag').text() == 1){
+		$('[name=partialRecFlag]').prop('checked', true).parent().addClass('is-checked');
+		$('#partialpreset').show();
+	}else{
+		$('[name=partialRecFlag]').prop('checked', false).parent().removeClass('is-checked');
+		$('#partialpreset').hide();
+	}
 
-    if (self.children('name').text().length > 0){
-        return self.children('name').text();
-    }else{
-        return $('[name=presetID] option:selected').text();
-    }
+	if (self.children('name').text().length > 0){
+		return self.children('name').text();
+	}else{
+		return $('[name=presetID] option:selected').text();
+	}
 }
 
 //デフォルト読込
@@ -811,6 +828,10 @@ function setDefault(mark){
 			$(xhr.responseXML).find('recpresetinfo').each(function(){
 				PresetList[$(this).find('id').text()]=$(this);
 			});
+			defRecSetting={
+				serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+				suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+			}
 			setDefault(mark);
 		});
 	}
@@ -1286,6 +1307,10 @@ $(function(){
 					$(xhr.responseXML).find('recpresetinfo').each(function(){
 						PresetList[$(this).find('id').text()]=$(this);
 					});
+					defRecSetting={
+						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+					}
 					action(PresetList, key);
 				});
 			}
@@ -1310,6 +1335,10 @@ $(function(){
 						}
 						ReserveAutoaddList[key]=$(this);
 					});
+					defRecSetting={
+						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+					}
 					action(ReserveAutoaddList, key);
 				});
 			}
@@ -1323,6 +1352,10 @@ $(function(){
 					$(xhr.responseXML).find('autoaddinfo').each(function(){
 						ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 					});
+					defRecSetting={
+						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
+						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
+					}
 					action(ReserveAutoaddList, key);
 				});
 			}
@@ -1339,9 +1372,16 @@ $(function(){
 	//指定サービス対象データ
 	$('#smode').change(function(){
 		if ($(this).prop('checked')){
-			$('.smode').find('.mdl-checkbox').addClass('is-disabled').removeClass('is-checked').find('input').prop('checked', false).prop('disabled', true);
+			$('.smode').find('.mdl-checkbox').addClass('is-disabled').find('input').prop('checked', false).prop('disabled', true);
 		}else{
 			$('.smode').find('.mdl-checkbox').removeClass('is-disabled').find('input').prop('disabled', false);
+		}
+	});
+	$('[name=suspendMode]').change(function(){
+		if ($(this).val()==0){
+			$('.reboot').addClass('is-disabled').find('input').prop('checked', false).prop('disabled', true);
+		}else{
+			$('.reboot').removeClass('is-disabled').find('input').prop('disabled', false);
 		}
 	});
 	//部分受信サービス
@@ -1432,7 +1472,7 @@ $(function(){
 							var end = new Date(start.getTime() + Number(xml.find('duration').text())*1000);
 							progReserve(start, end, xml.find('eventID').text());
 
-						    if (data.action == 'reserve'){
+							if (data.action == 'reserve'){
 								var recmode = xml.find('recMode').text();
 								var overlapmode = xml.find('overlapMode').text();
 

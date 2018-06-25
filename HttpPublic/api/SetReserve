@@ -200,8 +200,12 @@ if done then
     end
   end
   r=edcb.GetReserveData(id)
+  rsdef=edcb.GetReserveData(0x7FFFFFFF)
 
-  messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success><reserveinfo><ID>'
+  messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success>'
+    ..(rsdef and '<default><suspendMode>'
+    ..rsdef.recSetting.suspendMode..'</suspendMode><serviceMode>'
+    ..rsdef.recSetting.serviceMode..'</serviceMode></default>' or '')..'<reserveinfo><ID>'
     ..r.reserveID..'</ID><title>'
     ..r.title..'</title><startDate>'
     ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
@@ -231,8 +235,8 @@ if done then
     ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
     ..(r.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
     ..(r.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
-    ..(r.recSetting.startMargin or 0)..'</startMargine><endMargine>'
-    ..(r.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(r.recSetting.startMargin or rsdef and rsdef.recSetting.startMargin or 0)..'</startMargine><endMargine>'
+    ..(r.recSetting.endMargin or rsdef and rsdef.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
     ..(r.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
     ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
     ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'

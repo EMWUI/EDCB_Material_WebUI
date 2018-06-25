@@ -1,7 +1,13 @@
 -- vim:set ft=lua:
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
+rsdef=edcb.GetReserveData(0x7FFFFFFF)
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
+if rsdef then
+  table.insert(ct, '<default><suspendMode>'
+    ..rsdef.recSetting.suspendMode..'</suspendMode><serviceMode>'
+    ..rsdef.recSetting.serviceMode..'</serviceMode></default>')
+end
 for i,v in ipairs(a) do
   table.insert(ct, '<reserveinfo><ID>'
     ..v.reserveID..'</ID><title>'
@@ -33,8 +39,8 @@ for i,v in ipairs(a) do
     ..v.recSetting.suspendMode..'</suspendMode><rebootFlag>'
     ..(v.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
     ..(v.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
-    ..(v.recSetting.startMargin or 0)..'</startMargine><endMargine>'
-    ..(v.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(v.recSetting.startMargin or rsdef and rsdef.recSetting.startMargin or 0)..'</startMargine><endMargine>'
+    ..(v.recSetting.endMargin or rsdef and rsdef.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
     ..(v.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
     ..v.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
     ..v.recSetting.tunerID..'</tunerID><partialRecFolder>')
