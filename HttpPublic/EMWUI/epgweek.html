@@ -148,7 +148,7 @@ sort=ServiceList()
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
-  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
+  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
 end
 
 for j,v in ipairs(sort or {}) do
@@ -221,8 +221,6 @@ ct.menu=menu
   ..'</ul>\n'
 
 
-
-
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
   ..'<label class="drop-down mdl-navigation__link" for="a">ジャンル</label>\n'
   ..'<ul>\n<li><label class="mdl-radio mdl-js-radio" for="g-all"><input type="radio" id="g-all" class="genreToggle mdl-radio__button" name="genreToggle" value="all" checked><span class="mdl-radio__label">すべて</span></label></li>\n'
@@ -236,32 +234,9 @@ ct.side='<input type="checkbox" class="hidden" id="a">\n'
 ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
-
-
-ctt={'<div id="tv-guide-container"><div id="tv-guide">'
-
-  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'}
-
+ctt={}
 for i=0,7 do
-  d=os.date('!*t', ((i+baseDate)*24)*3600)
-  d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
-  table.insert(ctt, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')
-end
-table.insert(ctt, '</div>\n'
-
-  ..'<div id="tv-guide-main">\n'
-
-  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
-)
-
-for i=Hour,Hour+interval-1 do
-  j=i%24
-  table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
-end
-table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
-
-for i=0,7 do
-  table.insert(ctt, '<div class="station" data-name="'..st.service_name..'">\n')
+  table.insert(ctt, '<div class="station" data-name="'..st.service_name..'"><div>\n')
   lastPx=0
   total=0
   b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',baseTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}
@@ -288,7 +263,7 @@ for i=0,7 do
       search=w.shortInfo and ConvertSearch(w, st.service_name) or ''									--検索
 
       r=nil
-      id=not w.past and rt[('%04X%04X%04X%04X'):format(w.onid, w.tsid, w.sid, w.eid)] or nil
+      id=not w.past and rt[w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid] or nil
       if id then
         r=edcb.GetReserveData(id)
       end
@@ -327,15 +302,30 @@ for i=0,7 do
   if total<interval*60*ONE_MIN_PX then
     table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n')
   end
-  table.insert(ctt, '</div>\n')
+  table.insert(ctt, '</div></div>\n')
 end
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
-  ..table.concat(ctt)
+  ..'<div id="tv-guide-container"><div id="tv-guide">'
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'
+  for i=0,7 do
+    d=os.date('!*t', ((i+baseDate)*24)*3600)
+    d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
+    ct.main=ct.main..'<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n'
+  end
+ct.main=ct.main..'</div>\n'
 
+  ..'<div id="tv-guide-main">\n'
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
+  for i=Hour,Hour+interval-1 do
+    j=i%24
+    ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>'
+  end
+ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n'
+  ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'

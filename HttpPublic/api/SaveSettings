@@ -56,6 +56,7 @@ elseif post then
   edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000), path)
   edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000), path)
   edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1, path)
+  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1, path)
 
   edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'), path)
 

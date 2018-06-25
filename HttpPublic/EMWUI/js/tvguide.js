@@ -1,4 +1,5 @@
 ﻿function now(text){
+	var SHOW_MIN;
 	var elapse;
 	var date = new Date();
 	var hour = date.getHours();
@@ -10,11 +11,11 @@
 		elapse = hour - baseTime;
 		if (hour<baseTime) elapse += 24;
 	}
-	/*ラインに分を表示
-	if (text){
+	//ラインに分を表示
+	if (SHOW_MIN && text){
 		text = ('0'+min).slice(-2);
 		if (text != $('#line span').text()) $('#line span').text(text);
-	}//*/
+	}
 	return (elapse * 60 + min) * oneminpx;
 }
 
@@ -50,6 +51,7 @@ $(window).on('load resize', function(){
 $(function(){
 	var target = $('#tv-guide-container');
 
+	var HIDE_SUBHEADER;
 	var speedX, speedY;
 	var FRICTION  = 0.95;
 	var LIMIT_TO_STOP = 1;
@@ -117,7 +119,7 @@ $(function(){
 				intervalID = setInterval(moment, 1000/60);
 			}
 		});
-	}else if($(window).width() < 700){
+	}else if(HIDE_SUBHEADER && $(window).width() < 700){
 		//サブヘッダー連動
 		$('#tv-guide-main').data('show', true).on({
 		    'touchstart mousedown': function(e){
@@ -178,26 +180,28 @@ $(function(){
 			var height = $('#tv-guide-container').height();
 			$('#tv-guide-main .station ').each(function(){
 			 	if (left <= $(this).position().left && $(this).position().left <= width){  //見えている範囲を絞る(各局で
-					var _done;
 					done = true;
-					$(this).children('.cell').each(function(){
-						if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
-							var base = top - $(this).offset().top;
-							var content = $(this).children('.content');
-							_done = true;
+					$(this).children().each(function(i){
+						var _done;
+						$(this).children('.cell').each(function(){
+							if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
+								var base = top - $(this).offset().top;
+								var content = $(this).children('.content');
+								_done = true;
 
-							if (base<=0 && content.css('padding-top') != '0px'){
-								content.css('padding-top', '');
-							}else if(base<height){
-								if (content.hasClass('reserve')){
-									content.css('padding-top', base-3);
-								}else{
-									content.css('padding-top', base);
+								if (base<=0 && content.css('padding-top') != '0px'){
+									content.css('padding-top', '');
+								}else if(base<height){
+									if (content.hasClass('reserve')){
+										content.css('padding-top', base-3);
+									}else{
+										content.css('padding-top', base);
+									}
 								}
+							}else if (_done){
+								return false;
 							}
-						}else if (_done){
-							return false;
-						}
+						});
 					});
 				}else if (done){
 					return false;

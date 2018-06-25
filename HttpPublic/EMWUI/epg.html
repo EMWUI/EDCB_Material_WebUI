@@ -16,6 +16,7 @@ w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
+disableSubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))==0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -63,6 +64,12 @@ CATEGORY={
   'extension',
   'other',
 }
+
+NOT_SUBCH={
+  --サブチャンネルでない、結合させないものを指定
+  ['4-16626-202']=true, --スターチャンネル3
+}
+
 
 show=mg.get_var(mg.request_info.query_string,'show')
 tab=GetVarInt(mg.request_info.query_string,'tab',0,4) or 0
@@ -147,7 +154,7 @@ ct.js='<script>'
   ..';titleScroll="'..titleScroll
   ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')..';'
-  ..(NOW and '$(function(){$(".now").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..pageTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
+  ..(NOW and '$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..pageTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
 
@@ -167,7 +174,7 @@ sort=ServiceList()
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
-  rt[('%04X%04X%04X%04X'):format(v.onid, v.tsid, v.sid, v.eid)]=v.reserveID
+  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
 end
 
 minTime=nil
@@ -292,31 +299,128 @@ ct.menu=menu
   --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken()..'">休止</li>\n'
   ..'</ul>\n'
 
-
-
-
-pagemin=math.max(1,pageIndex*CH_COUNT+1)
-pagemax=CH_COUNT==0 and #st or math.min(#st,(pageIndex+1)*CH_COUNT)
-
-
-
-
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
   ..'<label class="drop-down mdl-navigation__link" for="a">サービス</label>\n'
   ..'<ul>\n'
 
-  for i=pagemin,pagemax do
-    v=st[i]
-    if (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0xA5) then
-      ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'"><input type="checkbox" id="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="stationToggle mdl-switch__input" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
+
+ctt,Head={},{}
+pagemin=math.max(1,pageIndex*CH_COUNT+1)
+pagemax=CH_COUNT==0 and #st or math.min(#st,(pageIndex+1)*CH_COUNT)
+for i=pagemin,pagemax do
+  v=st[i]
+  disableConcat=disableSubChConcat or NetworkType(v.onid):find('^CS')
+  notSubCH=disableConcat or i==1 or NOT_SUBCH[v.onid..'-'..v.tsid..'-'..v.sid] or v.onid~=st[i-1].onid or v.tsid~=st[i-1].tsid
+  if notSubCH then
+    left=0
+    for j=i,#st+1 do
+      if disableConcat or j>#st or (j~=i and NOT_SUBCH[st[j].onid..'-'..st[j].tsid..'-'..st[j].sid]) or v.onid~=st[j].onid or v.tsid~=st[j].tsid then
+        column=j-i
+        ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'"><input type="checkbox" id="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="stationToggle mdl-switch__input" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
+        table.insert(Head, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
+        table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'" data-name="'..v.service_name..'">\n')
+        break
+      end
+    end
+  else
+    left=left+1
+  end
+  lastPx=0
+  total=0
+  table.insert(ctt, '<div id="sid-'..v.sid..'">')
+  for j,w in ipairs(v.et) do
+    startTime=os.time(w.startTime)
+    startPx=math.min(math.floor((startTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
+    endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    if startPx-lastPx>0 then
+      if notSubCH then
+        table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
+      end
+      total=total+startPx-lastPx
+      lastPx=startPx
+    end
+    if endPx-lastPx>2 then
+      --イベントグループのサブでないか
+      if disableSubChConcat or not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
+         w.eventGroupInfo.eventDataList[1].onid==w.onid and
+         w.eventGroupInfo.eventDataList[1].tsid==w.tsid and
+         w.eventGroupInfo.eventDataList[1].sid==w.sid and
+         w.eventGroupInfo.eventDataList[1].eid==w.eid then
+        --サブチャンネル何個分か
+        width=1
+        for k=i+1,#st do
+          span=false
+          if not NOT_SUBCH[st[k].onid..'-'..st[k].tsid..'-'..st[k].sid] and v.onid==st[k].onid and v.tsid==st[k].tsid and w.eventGroupInfo then
+            for l,x in ipairs(w.eventGroupInfo.eventDataList) do
+              if v.onid==x.onid and v.tsid==x.tsid and st[k].sid==x.sid then
+                width=width+1
+                span=true
+                break
+              end
+            end
+          end
+          if not span then
+            break
+          end
+        end
+        category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
+        title=w.shortInfo and ConvertTitle(w.shortInfo.event_name) or ''									--番組タイトル
+        info=w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(w.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
+        search=w.shortInfo and ConvertSearch(w, v.service_name) or ''									--検索
+
+        r=nil
+        id=not w.past and rt[w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid] or nil
+        if id then
+          r=edcb.GetReserveData(id)
+        end
+        rs=r and r.recSetting or nil
+
+        mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
+        recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
+
+        table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
+          ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px;">\n'
+
+          ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
+
+          ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
+          ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+          ..search..'</span>\n'
+
+          ..'<p class="tool mdl-typography--caption-color-contrast">'
+          ..'<a class="mdl-button mdl-js-button mdl-button--raised'
+            ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
+                          or '" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
+          ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
+            ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+                  or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
+          ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
+          ..'</p>'
+
+          ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
+
+          ..'</div></div></div></div>\n')
+
+        total=total+endPx-lastPx
+        lastPx=endPx
+      end
     end
   end
+  if notSubCH and total<interval*60*ONE_MIN_PX then
+    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content nothing"></div></div>\n')
+  end
+  table.insert(ctt, '</div>')
+  if disableConcat or i==#st or NOT_SUBCH[st[i+1].onid..'-'..st[i+1].tsid..'-'..st[i+1].sid] or v.onid~=st[i+1].onid or v.tsid~=st[i+1].tsid then
+    table.insert(ctt, '</div>\n')
+  end
+end
+
 
 ct.side=ct.side..'</ul>\n'
   ..'<input type="checkbox" class="hidden" id="b">\n'
   ..'<label class="drop-down mdl-navigation__link" for="b">ジャンル</label>\n'
   ..'<ul>\n<li><label class="mdl-radio mdl-js-radio" for="g-all"><input type="radio" id="g-all" class="genreToggle mdl-radio__button" name="genreToggle" value="all" checked><span class="mdl-radio__label">すべて</span></label></li>\n'
-
   for i=0,15 do
     nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
@@ -327,99 +431,22 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
 
-
-ctt={'<div id="tv-guide-container"><div id="tv-guide">'
-
-  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'}
-
-for i=pagemin,pagemax do
-  v=st[i]
-  table.insert(ctt, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
-end
-table.insert(ctt, '</div>\n'
-
-  ..'<div id="tv-guide-main">\n'
-
-  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
-)
-
-for i=Hour,Hour+interval-1 do
-  j=i%24
-  d=os.date('!*t', ((pageDate*24)+i)*3600)
-  table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
-end
-table.insert(ctt, (NOW and '<div id="line"><span></span></div>' or '')..'</div>\n')
-
-for i=pagemin,pagemax do
-  v=st[i]
-  table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'" data-name="'..v.service_name..'">\n')
-  lastPx=0
-  total=0
-  for j,w in ipairs(v.et) do
-    startTime=os.time(w.startTime)
-    startPx=math.min(math.floor((startTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
-    endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
-    if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell'..((j==1 or os.time(v.et[j-1].startTime)<now) and now<startTime and ' now' or '')..'" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
-      total=total+startPx-lastPx
-      lastPx=startPx
-    end
-    if endPx-lastPx>2 then
-      category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
-      title=w.shortInfo and ConvertTitle(w.shortInfo.event_name) or ''									--番組タイトル
-      info=w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(w.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
-      search=w.shortInfo and ConvertSearch(w, v.service_name) or ''									--検索
-
-      r=nil
-      id=not w.past and rt[('%04X%04X%04X%04X'):format(w.onid, w.tsid, w.sid, w.eid)] or nil
-      if id then
-        r=edcb.GetReserveData(id)
-      end
-      rs=r and r.recSetting or nil
-
-      mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
-      recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
-
-      table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
-        ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
-
-        ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
-
-        ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-        ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
-        ..search..'</span>\n'
-
-        ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised'
-          ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-'..(w.past and 'startTime="'..startTime+timezone or 'eid="'..w.eid)
-                       or '" href=\"epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
-        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
-          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
-                or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
-        ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(w.shortInfo and w.shortInfo.event_name or '')..'">EPG予約</a>'
-        ..'</p>'
-
-        ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
-
-        ..'</div></div></div></div>\n')
-
-      total=total+endPx-lastPx
-      lastPx=endPx
-    end
-  end
-  if total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n')
-  end
-  table.insert(ctt, '</div>\n')
-end
-
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
-  ..table.concat(ctt)
+  ..'<div id="tv-guide-container"><div id="tv-guide">'
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'..table.concat(Head)..'</div>\n'
 
+  ..'<div id="tv-guide-main">\n'
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
+  for i=Hour,Hour+interval-1 do
+    j=i%24
+    d=os.date('!*t', ((pageDate*24)+i)*3600)
+    ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n'
+  end
+ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n'
+  ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'

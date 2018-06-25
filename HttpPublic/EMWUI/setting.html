@@ -22,6 +22,7 @@ w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
 CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
+subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))~=0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -178,9 +179,9 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Roboto</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Webフォント "Roboto"</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(Roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-Roboto">ウェブからフォント"Roboto"を読み込む</span></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-Roboto">Material Design推奨フォント</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-count">一覧表示数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="number"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="PAGE_COUNT" value="'..PAGE_COUNT..'" min="0" id="PAGE_COUNT"><label class="mdl-textfield__label" for="PAGE_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div></div>\n'
@@ -205,6 +206,10 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-subChConcat">サブチャンネル結合</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="subChConcat" class="mdl-switch mdl-js-switch"><input id="subChConcat" type="checkbox" class="mdl-switch__input" name="subChConcat" value="1"'..(subChConcat and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-subChConcat">CSでは無効</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">番組名をスクロール</div>\n<div class="radio_button mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
   ..'<div><label class="mdl-radio mdl-js-radio" for="titleScroll"><input type="radio" id="titleScroll" class="mdl-radio__button" name="titleScroll" value="ALL"'..(titleScroll=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">スクロールする</span></label></div><div class="mdl-layout-spacer"></div>\n'

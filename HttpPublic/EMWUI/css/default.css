@@ -627,8 +627,6 @@ h4 .mdl-button--icon {
 
 .station {
   width: 210px;
-  border-right: solid 1px transparent;
-  border-left: solid 1px transparent;
   /* チャンネルが少ない時スペースを埋めてくれるがレンダリングが遅い
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
@@ -644,9 +642,16 @@ h4 .mdl-button--icon {
       width: 125px; } }
 
 .cell {
-  border-top: solid 1px transparent;
-  border-bottom: solid 1px transparent;
-  box-sizing: border-box; }
+  border: solid 1px transparent;
+  box-sizing: border-box;
+  transition-property: left,width;
+  transition-duration: .2s;
+  transition-timing-function: cubic-bezier(.4,0,.2,1); }
+  .station>div:nth-child(n + 2)>.cell {
+    position:absolute; }
+  .cell.clicked {
+    left: 0!important;
+    width: 100%!important; }
   .cell a {
     word-break: break-all; }
   .cell .shortInfo {
