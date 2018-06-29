@@ -906,6 +906,16 @@ function SelectChDataList(a)
 end
 
 function ServiceList()
+  local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))~=0
+  local NOT_SUBCH={
+    --サブチャンネルでない、結合させないものを指定
+    ['4-16626-202']=true, --スターチャンネル3
+  }
+
+  function SubChanel(a,b)
+    return SubChConcat and not NOT_SUBCH[a.onid..'-'..a.tsid..'-'..a.sid] and b and a.onid==b.onid and a.tsid==b.tsid
+  end
+
   local a=edcb.GetServiceList() or {}
   local HIDE_SERVICES={}
   local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
@@ -926,25 +936,34 @@ function ServiceList()
       local key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
       local v=GetServiceList[key]
       if v then
-        if HIDE_SERVICES[key] then v.hide=true end
+        v.hide=HIDE_SERVICES[key]
         if show or not v.hide then
+          if NetworkType(v.onid)=='地デジ' or NetworkType(v.onid)=='BS' then
+            v.subCh=SubChanel(v, sort[i])
+          end
           table.insert(sort, v)
         end
       end
     end
   else
+    epgCapFlag={}
+    for i,v in ipairs(edcb.GetChDataList()) do
+      epgCapFlag[v.onid..'-'..v.tsid..'-'..v.sid]=v.epgCapFlag
+    end
     table.sort(a, function(a,b) return
       ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
       ('%04X%04X'):format(b.remote_control_key_id, b.sid)
     end)
     local n,m=0,0
     for i,v in ipairs(a) do
-      if v.service_type==1 then
+      if epgCapFlag[v.onid..'-'..v.tsid..'-'..v.sid] and v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD then
         --地デジ優先ソート
         if NetworkType(v.onid)=='地デジ' then
+          v.subCh=SubChanel(v, sort[n])
           n=n+1
           table.insert(sort,n,v)
         elseif NetworkType(v.onid)=='BS' then
+          v.subCh=SubChanel(v, sort[n+m])
           m=m+1
           table.insert(sort,n+m,v)
         else

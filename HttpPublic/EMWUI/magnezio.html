@@ -282,7 +282,7 @@ function Type(onid)
 end
 
 for i,v in ipairs(sort) do
-  if not v.partialReceptionFlag then
+  if not v.partialReceptionFlag and not v.subCh then
     ct:Append('<div class="channel '..Type(v.onid)..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'"><img src="'..'img/logo/'..('%04X%04X'):format(v.onid,v.sid)..'.png"><span>'..v.service_name..'</span></div>')
   end
 end

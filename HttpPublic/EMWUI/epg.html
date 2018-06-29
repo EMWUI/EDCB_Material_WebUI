@@ -16,7 +16,6 @@ w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
 w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
-disableSubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))==0
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
 
@@ -63,11 +62,6 @@ CATEGORY={
   'extension',
   'extension',
   'other',
-}
-
-NOT_SUBCH={
-  --サブチャンネルでない、結合させないものを指定
-  ['4-16626-202']=true, --スターチャンネル3
 }
 
 
@@ -309,12 +303,10 @@ pagemin=math.max(1,pageIndex*CH_COUNT+1)
 pagemax=CH_COUNT==0 and #st or math.min(#st,(pageIndex+1)*CH_COUNT)
 for i=pagemin,pagemax do
   v=st[i]
-  disableConcat=disableSubChConcat or NetworkType(v.onid):find('^CS')
-  notSubCH=disableConcat or i==1 or NOT_SUBCH[v.onid..'-'..v.tsid..'-'..v.sid] or v.onid~=st[i-1].onid or v.tsid~=st[i-1].tsid
-  if notSubCH then
+  if not v.subCh then
     left=0
     for j=i,#st+1 do
-      if disableConcat or j>#st or (j~=i and NOT_SUBCH[st[j].onid..'-'..st[j].tsid..'-'..st[j].sid]) or v.onid~=st[j].onid or v.tsid~=st[j].tsid then
+      if j>#st or j>i and not st[j].subCh then
         column=j-i
         ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'"><input type="checkbox" id="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="stationToggle mdl-switch__input" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
         table.insert(Head, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
@@ -334,7 +326,7 @@ for i=pagemin,pagemax do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      if notSubCH then
+      if not v.subCh then
         table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
       end
       total=total+startPx-lastPx
@@ -342,7 +334,7 @@ for i=pagemin,pagemax do
     end
     if endPx-lastPx>2 then
       --イベントグループのサブでないか
-      if disableSubChConcat or not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
+      if not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
          w.eventGroupInfo.eventDataList[1].onid==w.onid and
          w.eventGroupInfo.eventDataList[1].tsid==w.tsid and
          w.eventGroupInfo.eventDataList[1].sid==w.sid and
@@ -351,7 +343,7 @@ for i=pagemin,pagemax do
         width=1
         for k=i+1,#st do
           span=false
-          if not NOT_SUBCH[st[k].onid..'-'..st[k].tsid..'-'..st[k].sid] and v.onid==st[k].onid and v.tsid==st[k].tsid and w.eventGroupInfo then
+          if st[k].subCh and w.eventGroupInfo then
             for l,x in ipairs(w.eventGroupInfo.eventDataList) do
               if v.onid==x.onid and v.tsid==x.tsid and st[k].sid==x.sid then
                 width=width+1
@@ -407,11 +399,11 @@ for i=pagemin,pagemax do
       end
     end
   end
-  if notSubCH and total<interval*60*ONE_MIN_PX then
+  if not v.subCh and total<interval*60*ONE_MIN_PX then
     table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content nothing"></div></div>\n')
   end
   table.insert(ctt, '</div>')
-  if disableConcat or i==#st or NOT_SUBCH[st[i+1].onid..'-'..st[i+1].tsid..'-'..st[i+1].sid] or v.onid~=st[i+1].onid or v.tsid~=st[i+1].tsid then
+  if i==#st or not st[i+1].subCh then
     table.insert(ctt, '</div>\n')
   end
 end

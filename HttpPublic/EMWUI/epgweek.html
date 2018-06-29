@@ -127,7 +127,7 @@ ct.js='<script>'
   ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
   ..';lastTime=false;'
-  ..'$(function(){end($($(".now")));});'
+  ..'$(function(){$(".station").css("flex-grow", 1);end($($(".now")));});'
   ..'setInterval("line()", 1000);'
   ..'</script>\n'
   ..'<script src="js/tvguide.js"></script>\n'
@@ -186,7 +186,7 @@ menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
 for j,v in ipairs(sort or {}) do
   if (oneseg or not v.partialReceptionFlag) then
   	service = v.onid==4 and 'BS' or (v.onid==6 or v.onid==7) and 'CS' or v.partialReceptionFlag and 'SEG' or (0x7880<=v.onid and v.onid<=0x7FE8) and 'DTV' or 'S-other'
-    menu=menu..'<li class="'..service..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n'
+    menu=menu..'<li class="'..service..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n'
   end
 end
 menu=menu..'</ul>\n'
