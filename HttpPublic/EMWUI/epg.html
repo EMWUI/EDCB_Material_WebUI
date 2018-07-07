@@ -77,7 +77,7 @@ pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
-Hour=hour==0 and (math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+Hour=hour==0 and math.floor(((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24) or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 pageDate=baseDate+date
 pageTime=(pageDate*24+Hour)*3600
@@ -218,7 +218,7 @@ ct.subheader='<div id="subheader">\n'
 
 menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
 for i,v in ipairs(name) do
-  if i~=2 or oneseg then 
+  if i~=2 or oneseg then
     menu=menu..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..v..'</a></li>\n'
   end
 end
