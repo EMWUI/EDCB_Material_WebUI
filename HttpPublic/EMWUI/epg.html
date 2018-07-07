@@ -218,7 +218,7 @@ ct.subheader='<div id="subheader">\n'
 
 menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
 for i,v in ipairs(name) do
-  if i~=2 or oneseg then 
+  if i~=2 or oneseg then
     menu=menu..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..v..'</a></li>\n'
   end
 end
@@ -433,7 +433,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..'<div id="tv-guide-main">\n'
   ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
   for i=Hour,Hour+interval-1 do
-    j=i%24
+    j=math.floor(i%24)
     d=os.date('!*t', ((pageDate*24)+i)*3600)
     ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n'
   end
