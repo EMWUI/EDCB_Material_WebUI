@@ -572,15 +572,25 @@ function RecSettingTemplate(rs)
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(rs.batFilePath=='' and ' selected' or '')..'>なし\n'
 
   local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)..'\\'
+  local batFilePath, batFileTag
+  if rs.batFilePath:find('%.bat') then
+    batFilePath, batFileTag=rs.batFilePath:match('^(.+%.bat)%*(.*)')
+  else
+    batFilePath, batFileTag=rs.batFilePath:match('^(.+%.ps1)%*(.*)')
+  end
   if rs.batFilePath:gsub('[^\\/]*$','')~=batPath and rs.batFilePath~='' then
-    s=s..'<option value="'..rs.batFilePath..'" selected>'..rs.batFilePath..'\n'
+    s=s..'<option value="'..(batFilePath or rs.batFilePath)..'" selected>'..(batFilePath or rs.batFilePath)..'\n'
   end
   for j,w in ipairs(edcb.FindFile(batPath..'*', 0) or {}) do
     if not w.isdir and w.name:find('%.bat$') or w.name:find('%.ps1$') then
-      s=s..'<option value="'..batPath..w.name..'"'..(rs.batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
+      s=s..'<option value="'..batPath..w.name..'"'..((batFilePath or rs.batFilePath)==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
     end
   end
   s=s..'</select></div></div>\n'
+  if rsdef and rsdef.batFilePath=='*' then
+    s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画タグ</div>\n'
+    ..'<div id="batFileTag_wrap" class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="batFileTag" value="'..(batFileTag or '')..'" id="batFileTag"><label class="mdl-textfield__label" for="batFileTag"></label></div></div>\n'
+  end
 
   return s
 end

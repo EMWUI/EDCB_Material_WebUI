@@ -3,7 +3,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 
 function recSetting(r,presetID,post)
   local rs=r.recSetting
-  rs.batFilePath=mg.get_var(post, 'batFilePath')
+  rs.batFilePath=mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFilePath')>0 and #mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '')
   rs.recFolderList={}
   rs.partialRecFolder={}
   if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then
@@ -12,7 +12,7 @@ function recSetting(r,presetID,post)
       table.insert(rs.recFolderList, {
         recFolder=mg.get_var(post, 'recFolder', i),
         writePlugIn=mg.get_var(post, 'writePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i) and mg.get_var(post, 'recNamePlugIn', i)..(mg.get_var(post, 'recName', i) and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '') or ''
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
       } )
     end
     for i=0,10000 do
@@ -20,7 +20,7 @@ function recSetting(r,presetID,post)
       table.insert(rs.partialRecFolder, {
         recFolder=mg.get_var(post, 'partialrecFolder', i),
         writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(mg.get_var(post, 'partialrecName', i) and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '') or ''
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
       } )
     end
   elseif presetID~=0xFFFF then
