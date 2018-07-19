@@ -34,6 +34,13 @@ if reset then
 
 elseif post then
 
+  titleControl=GetVarInt(post,'titleControl-PC')+GetVarInt(post,'titleControl-SP')
+  for i=0,10000 do
+    v=GetVarInt(post,'titleControl',0,32,i)
+    if not v then break end
+    titleControl=titleControl+v
+  end
+
 --  edcb.WritePrivateProfile('', '', mg.get_var(post, ''), path)
 
   edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1, path)
@@ -45,7 +52,7 @@ elseif post then
   edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode')==1, path)
   edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1, path)
   edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1, path)
-  edcb.WritePrivateProfile('GUIDE', 'titleScroll', mg.get_var(post,'titleScroll'), path)
+  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl, path)
   edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000), path)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23), path)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000), path)

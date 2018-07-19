@@ -171,7 +171,7 @@ $(function(){
 	}
 
 	//番組名
-	if (titleScroll=='ALL' || (titleScroll=='PC' && !isTouch)){
+	if (!isTouch && titleControl&1 && titleControl&4 || isTouch && titleControl&2 && titleControl&16){
 		$('#tv-guide-container').on('scroll', function(){
 			var done;
 			var top = $('#tv-guide-container').offset().top + $('#tv-guide-header').height();
@@ -186,13 +186,13 @@ $(function(){
 						$(this).children('.cell').each(function(){
 							if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
 								var base = top - $(this).offset().top;
-								var content = $(this).children('.content');
+								var content = $(this).find('.content');
 								_done = true;
 
 								if (base<=0 && content.css('padding-top') != '0px'){
 									content.css('padding-top', '');
-								}else if(base<height){
-									if (content.hasClass('reserve')){
+								}else if(base<height+$(this).height()){
+									if ($(this).children('.content-wrap').hasClass('reserve')){
 										content.css('padding-top', base-3);
 									}else{
 										content.css('padding-top', base);
@@ -210,12 +210,15 @@ $(function(){
 			$('#tv-guide-main .hour').each(function(){
 				var base = top - $(this).offset().top;
 				if (base > 0 && base < $(this).innerHeight()){
-					$(this).find('tt').css('padding-top', base+5);
+					$(this).find('tt').css('padding-top', base);
 				}else{
 					$(this).find('tt').css('padding-top', '');
 				}
 			});
 		});
+	}else if (!isTouch && titleControl&1 && titleControl&8 || isTouch && titleControl&2 && titleControl&32){
+	  $('main').addClass('titlescroll');
+	  $('head').append('<style>.titlescroll .content,.titlescroll .hour tt{top:'+ $('#tv-guide-header').height()+'px;}</style>')
 	}
 
 	//現時間にスクロール
@@ -388,7 +391,7 @@ $(function(){
 				var xml = $(xhr.responseXML);
 				if (xml.find('success').length > 0){
 					var add = data.oneclick==1;
-					var message = addMark(xml, target, target.parents('.content')) + 'に';
+					var message = addMark(xml, target, target.parents('.content-wrap')) + 'に';
 					if (add) message = '追加';
 
 					notification.MaterialSnackbar.showSnackbar({message: '予約を' + message + 'しました'});

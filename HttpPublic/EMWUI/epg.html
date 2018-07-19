@@ -5,7 +5,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
-titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
+titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,path))
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
@@ -145,8 +145,8 @@ ct.js='<script>'
   ..'oneminpx='..ONE_MIN_PX
   ..';baseTime='..pageTime-timezone
   ..';interval='..interval
-  ..';titleScroll="'..titleScroll
-  ..'";marginmin='..MARGIN_MIN
+  ..';titleControl='..titleControl
+  ..';marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')..';'
   ..(NOW and '$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..pageTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
   ..'</script>\n'
@@ -327,7 +327,7 @@ for i=pagemin,pagemax do
     endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
       if not v.subCh then
-        table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content nothing'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div>\n')
+        table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content-wrap nothing"><div class="content'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div></div>\n')
       end
       total=total+startPx-lastPx
       lastPx=startPx
@@ -371,8 +371,8 @@ for i=pagemin,pagemax do
         mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
         recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-        table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
-          ..'<div class="content '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px;">\n'
+        table.insert(ctt, '<div class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="'..(left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
+          ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px;"><div class="content">\n'
 
           ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
 
@@ -392,7 +392,7 @@ for i=pagemin,pagemax do
 
           ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
 
-          ..'</div></div></div></div>\n')
+          ..'</div></div></div></div></div>\n')
 
         total=total+endPx-lastPx
         lastPx=endPx
@@ -400,7 +400,7 @@ for i=pagemin,pagemax do
     end
   end
   if not v.subCh and total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content nothing"></div></div>\n')
+    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
   end
   table.insert(ctt, '</div>')
   if i==#st or not st[i+1].subCh then

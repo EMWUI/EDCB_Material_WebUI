@@ -310,7 +310,7 @@ function getEpgInfo(target, data, past){
 								var next = data.next ? 'next' : '';
 								target.data(next+'id', id);
 							}else{
-								addMark(info, $('.open .addreserve'), $('.open .content'));
+								addMark(info, $('.open .addreserve'), $('.open .content-wrap'));
 							}
 						}
 						setEpgInfo(info);
@@ -940,6 +940,7 @@ function addMark(xml, target, content){
 			recmode = 'view';
 			mark = '視';
 		}else{
+			recmode = '';
 			mark = '録';
 		}
 	}
@@ -1467,7 +1468,7 @@ $(function(){
 							$('[name=presetID]').data('reseveid', id).val(65535);
 							$('#reserve').text('変更');
 
-							addMark(xml, $('.open .addreserve'), $('.open .content'));
+							addMark(xml, $('.open .addreserve'), $('.open .content-wrap'));
 
 							var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
 							var end = new Date(start.getTime() + Number(xml.find('duration').text())*1000);

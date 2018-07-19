@@ -5,7 +5,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 path='Setting\\HttpPublic.ini'
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
-titleScroll=edcb.GetPrivateProfile('GUIDE','titleScroll','ALL',path)
+titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,path))
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
@@ -110,7 +110,7 @@ ct.css='<style>'
 ct.js='<script>'
   ..'oneminpx='..ONE_MIN_PX
   ..';baseTime='..baseTime-timezone
-  ..';titleScroll="'..titleScroll
+  ..';titleControl="'..titleControl
   ..'";marginmin='..MARGIN_MIN
   ..';hover='..(hover and 'true' or 'false')
   ..';lastTime=false;'
@@ -431,7 +431,7 @@ for i,v in ipairs(st) do
     endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600 --終了時間未定
     endPx=math.min(math.floor((endTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content nothing"></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -453,7 +453,7 @@ for i,v in ipairs(st) do
       recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
       table.insert(ctt, '<div '..(i==1 and 'id="id'..j..'" ' or '')..' class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
-        ..'<div class="content '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px">\n'
+        ..'<div class="content-wrap '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px"><div class="content">\n'
 
         ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
 
@@ -472,14 +472,14 @@ for i,v in ipairs(st) do
 
         ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
 
-        ..'</div></div></div></div>\n')
+        ..'</div></div></div></div></div>\n')
 
       total=total+endPx-lastPx
       lastPx=endPx
     end
   end
   if total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content nothing"></div></div>\n')
+    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
   end
   table.insert(ctt, '</div></div>\n')
 end
