@@ -3,7 +3,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 
 function recSetting(r,presetID,post)
   local rs=r.recSetting
-  rs.batFilePath=mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFilePath')>0 and #mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '')
+  rs.batFilePath=mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '')
   rs.recFolderList={}
   rs.partialRecFolder={}
   if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then

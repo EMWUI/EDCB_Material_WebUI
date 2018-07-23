@@ -568,28 +568,24 @@ function RecSettingTemplate(rs)
     ..'<option value="4"'..(rs.suspendMode==4 and ' selected' or '')..'>何もしない\n</select></div>\n'
     ..'<div><label for="reboot" class="mdl-checkbox mdl-js-checkbox"><input class="mdl-checkbox__input" type="checkbox" name="rebootFlag" value="1"'..((rs.suspendMode==0 and rsdef and rsdef.rebootFlag or rs.suspendMode~=0 and rs.rebootFlag) and ' checked' or '')..(rs.suspendMode==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">復帰後再起動する</span></label></div></div></div>\n'
 
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(rs.batFilePath=='' and ' selected' or '')..'>なし\n'
+  local batFilePath, batFileTag=rs.batFilePath:match('^([^*]*)%*?(.*)$')
+  s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(batFilePath=='' and ' selected' or '')..'>なし\n'
 
   local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)..'\\'
-  local batFilePath, batFileTag
-  if rs.batFilePath:find('%.bat') then
-    batFilePath, batFileTag=rs.batFilePath:match('^(.+%.bat)%*(.*)')
-  else
-    batFilePath, batFileTag=rs.batFilePath:match('^(.+%.ps1)%*(.*)')
-  end
-  if rs.batFilePath:gsub('[^\\/]*$','')~=batPath and rs.batFilePath~='' then
-    s=s..'<option value="'..(batFilePath or rs.batFilePath)..'" selected>'..(batFilePath or rs.batFilePath)..'\n'
-  end
   for j,w in ipairs(edcb.FindFile(batPath..'*', 0) or {}) do
-    if not w.isdir and w.name:find('%.bat$') or w.name:find('%.ps1$') then
-      s=s..'<option value="'..batPath..w.name..'"'..((batFilePath or rs.batFilePath)==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
+    if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$')) then
+      s=s..'<option value="'..batPath..w.name..'"'..(batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
+      batFilePath=(batFilePath==batPath..w.name and '' or batFilePath)
     end
+  end
+  if batFilePath~='' then
+    s=s..'<option value="'..batFilePath..'" selected>'..batFilePath..'\n'
   end
   s=s..'</select></div></div>\n'
   if rsdef and rsdef.batFilePath=='*' then
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画タグ</div>\n'
-    ..'<div id="batFileTag_wrap" class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="batFileTag" value="'..(batFileTag or '')..'" id="batFileTag"><label class="mdl-textfield__label" for="batFileTag"></label></div></div>\n'
+    ..'<div id="batFileTag_wrap" class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="batFileTag" value="'..batFileTag..'" id="batFileTag"><label class="mdl-textfield__label" for="batFileTag"></label></div></div>\n'
   end
 
   return s
