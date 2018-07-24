@@ -760,8 +760,8 @@ function setRecSettting(self){
 	//録画後実行bat
 	$('.preset').remove();
 
-	var batFilePath = recset.children('batFilePath').text().match(/^(.*\.(?:bat|ps1))?(?:\*(.*))?/);
-	if (batFilePath[1] && $('[name="batFilePath"] option[value="' + batFilePath[1].replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&') + '"]').length == 0){
+	var batFilePath = recset.children('batFilePath').text().match(/^([^*]*)\*?([\s\S]*)$/);
+	if ($('[name="batFilePath"] option[value="' + batFilePath[1].replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&') + '"]').length == 0){
 		$('[name="batFilePath"]').append($('<option>', {value: batFilePath[1], text: batFilePath[1]}));
 	}
 	$('[name="batFilePath"]').val(batFilePath[1]);

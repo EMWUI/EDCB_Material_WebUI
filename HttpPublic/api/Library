@@ -98,7 +98,7 @@ if finddir then
   if MakeThumbs then
     -- 未使用サムネを掃除
     for i,v in ipairs(edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\thumbs\\????????????????????????????????.jpg', 0) or {}) do
-      if v.name:match('^%x+%.jpg$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
+      if v.name:match('^%x+%.[Jj][Pp][Gg]$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
         edcb.os.remove(mg.document_root..'\\video\\thumbs\\'..v.name)
       end
     end
