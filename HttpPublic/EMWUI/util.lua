@@ -945,7 +945,7 @@ function ServiceList()
         v.hide=HIDE_SERVICES[key]
         if show or not v.hide then
           if NetworkType(v.onid)=='地デジ' or NetworkType(v.onid)=='BS' then
-            v.subCh=SubChanel(v, sort[i])
+            v.subCh=SubChanel(v, sort[#sort])
           end
           table.insert(sort, v)
         end
