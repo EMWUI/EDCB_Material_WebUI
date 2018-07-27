@@ -75,7 +75,7 @@ sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
-Hour=hour==0 and (math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+Hour=hour==0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 baseTime=(baseDate*24+Hour)*3600
 
@@ -144,21 +144,19 @@ if sidePanel then ct.macro=true end
 
 
 edcb.htmlEscape=15
-sort=ServiceList()
+ServiceList=CustomServiceList()
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
   rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
 end
 
-for j,v in ipairs(sort or {}) do
+st=ServiceList[1]
+for j,v in ipairs(ServiceList) do
   if onid==v.onid and tsid==v.tsid and sid==v.sid then
     st=v
     break
   end
-end
-if not st then
-  st=sort[1]
 end
 
 ct.title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>'
@@ -174,45 +172,52 @@ ct.subheader='<div id="subheader">\n'
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
   ..'<div id="select_service" class="pulldown dividers navigation__item mdl-color-text--primary">'..(st and st.service_name or '')..'</div>\n'
 
-menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
+ct.menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
   ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'
-  ..'<li><a class="select mdl-menu__item" data-val=".DTV">地デジ</a></li>\n'
-  ..(oneseg and '<li><a class="select mdl-menu__item" data-val=".SEG">ワンセグ</a></li>\n' or '')
-  ..'<li><a class="select mdl-menu__item" data-val=".BS">BS</a></li>\n'
-  ..'<li><a class="select mdl-menu__item" data-val=".CS">CS</a></li>\n'
-  ..'<li><a class="select mdl-menu__item" data-val=".S-other">その他</a></li>\n'
-  ..'</ul>\n'
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'
-for j,v in ipairs(sort or {}) do
-  if (oneseg or not v.partialReceptionFlag) then
-  	service = v.onid==4 and 'BS' or (v.onid==6 or v.onid==7) and 'CS' or v.partialReceptionFlag and 'SEG' or (0x7880<=v.onid and v.onid<=0x7FE8) and 'DTV' or 'S-other'
-    menu=menu..'<li class="'..service..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n'
+
+NetworkList={}
+for i,v in ipairs(NetworkIndex()) do
+  NetworkList[i]={}
+end
+for i,v in ipairs(ServiceList) do
+  if oneseg or not v.partialReceptionFlag then
+    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
   end
 end
-menu=menu..'</ul>\n'
+
+ctt={}
+for i,v in ipairs(NetworkList) do
+  if #v>0 then
+    ct.menu=ct.menu..'<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n'
+    table.insert(ctt, table.concat(v))
+  end
+end
+ct.menu=ct.menu..'</ul>\n'
+
+  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'..table.concat(ctt)..'</ul>\n'
 
 if st then
   ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-  menu=menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  ct.menu=ct.menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
   start=interval>=25 and Hour or 4
   for i=start, start+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
     if hour<=i and i<hour+interval then
-      menu=menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     else
-      menu=menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..(i%24)..(interval~=25 and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..(i%24)..(interval~=25 and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
   end
-  menu=menu..'</ul>\n'
+  ct.menu=ct.menu..'</ul>\n'
 end
 
 ct.subheader=ct.subheader
   ..'<div class="space navigation__item"></div>\n'
   ..'</nav>\n</div>\n'
 
-ct.menu=menu
+ct.menu=ct.menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
   ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
   ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'

@@ -66,7 +66,7 @@ CATEGORY={
 
 
 show=mg.get_var(mg.request_info.query_string,'show')
-tab=GetVarInt(mg.request_info.query_string,'tab',0,4) or 0
+tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkIndex()) or 0
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',0,27) or 0
 --hour=0で現在時刻-MARGIN_HOUR時間を基準、0以外で"hour"時を基準
@@ -77,7 +77,7 @@ pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
-Hour=hour==0 and (math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+Hour=hour==0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 pageDate=baseDate+date
 pageTime=(pageDate*24+Hour)*3600
@@ -164,7 +164,6 @@ if sidePanel then ct.macro=true end
 
 
 edcb.htmlEscape=15
-sort=ServiceList()
 
 rt={}
 for i,v in ipairs(edcb.GetReserveData()) do
@@ -173,13 +172,16 @@ end
 
 minTime=nil
 maxTime=nil
-st={}
-for i,v in ipairs(sort or {}) do
-  if tab==0 and NetworkType(v.onid)=='地デジ' and v.service_type==0x01 or
-     tab==1 and NetworkType(v.onid)=='地デジ' and v.partialReceptionFlag or
-     tab==2 and NetworkType(v.onid)=='BS' or
-     tab==3 and NetworkType(v.onid):find('^CS') or
-     tab==4 and NetworkType(v.onid)=='その他' then
+
+st,NetworkList={},{}
+for i,v in ipairs(NetworkIndex()) do
+  NetworkList[i]=false
+end
+for i,v in ipairs(CustomServiceList()) do
+  if oneseg or not v.partialReceptionFlag then
+    NetworkList[NetworkIndex(v)]=true
+  end
+  if tab==NetworkIndex(v)-1 then
     table.insert(st, v)
     mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
     if mmt then
@@ -204,8 +206,6 @@ for i,v in ipairs(sort or {}) do
 end
 
 
-name={'地デジ','ワンセグ','BS','CS','その他'}
-
 ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
@@ -214,24 +214,24 @@ ct.subheader='<div id="subheader">\n'
   ..(NOW and 'id="now' or 'href="epg.html'..hrefGene({date=0,hour=0})..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
-  ..'<div id="onid" class="pulldown dividers navigation__item mdl-color-text--primary">'..(name[tab+1] or '')..'</div>\n'
+  ..'<div id="onid" class="pulldown dividers navigation__item mdl-color-text--primary">'..(NetworkIndex()[tab+1] or '')..'</div>\n'
 
-menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
-for i,v in ipairs(name) do
-  if i~=2 or oneseg then 
-    menu=menu..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..v..'</a></li>\n'
+ct.menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
+for i,v in ipairs(NetworkList) do
+  if v then
+    ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..NetworkIndex()[i]..'</a></li>\n'
   end
 end
-menu=menu..'</ul>'
+ct.menu=ct.menu..'</ul>'
 
 if 0<CH_COUNT and CH_COUNT<#st then
   ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
 
-  menu=menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n'
+  ct.menu=ct.menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n'
   for i=0, math.ceil(#st/CH_COUNT-1) do
-    menu=menu..'<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n'
+    ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n'
   end
-  menu=menu..'</ul>\n'
+  ct.menu=ct.menu..'</ul>\n'
 end
 
 if minTime then
@@ -250,21 +250,21 @@ if minTime then
     ..'<div id="date" class="pulldown navigation__item mdl-color-text--primary">'..Date.month..'/'..Date.day..'('..({'日','月','火','水','木','金','土'})[Date.wday]..')'..'</div>\n'
     ..'<div class="dividers navigation__item navigation__icon left_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '..next..'><i class="material-icons">chevron_right</i></a></div>\n'
 
-  menu=menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
+  ct.menu=ct.menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
 
   minTime=math.min(math.max(minTime, minTime_-3*24*3600)+timezone, math.max(minTime+timezone, pageTime-3*24*3600))
   for i=math.floor((minTime-4*3600)/24/3600),math.floor((maxTime+timezone-4*3600)/24/3600) do
     d=os.date('!*t', i*24*3600)
-    menu=menu..'<li><a class="mdl-menu__item'
+    ct.menu=ct.menu..'<li><a class="mdl-menu__item'
       ..(i-baseDate==date and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({date=i-baseDate,hour=4}))
       ..'">'..d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'..'</a></li>\n'
   end
 
-  menu=menu..'</ul>\n'
+  ct.menu=ct.menu..'</ul>\n'
 
   ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-  menu=menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  ct.menu=ct.menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
   start=interval>=25 and Hour or 4
   for i=start, start+math.max(interval-2, 23) ,2 do
@@ -272,20 +272,20 @@ if minTime then
     if j<4 then j=j+24 end
     if Hour<=i and i<Hour+interval then
       d=os.date('!*t', (pageDate*24+i)*3600)
-      menu=menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n'
     else
-      menu=menu..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n'
     end
   end
 
-  menu=menu..'</ul>\n'
+  ct.menu=ct.menu..'</ul>\n'
 end
 
 ct.subheader=ct.subheader
   ..'<div class="space navigation__item"></div>\n'
   ..'</nav>\n</div>\n'
 
-ct.menu=menu
+ct.menu=ct.menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
   ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
   ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'

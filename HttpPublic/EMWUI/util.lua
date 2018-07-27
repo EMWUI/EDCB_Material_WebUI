@@ -666,38 +666,36 @@ function SerchTemplate(si)
 
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
-    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="service" name="serviceList" multiple size="5">\n'
+    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="service" name="serviceList" multiple size="5">'
 
+  NetworkList={}
+  for i,v in ipairs(NetworkIndex()) do
+    NetworkList[i]=false
+  end
   for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
-      s=s..'<option class="'..(
-        NetworkType(v.onid)=='BS' and 'BS' or
-        NetworkType(v.onid)=='CS3' and 'HD' or
-        NetworkType(v.onid):find('^CS')  and 'CS' or
-        NetworkType(v.onid)=='地デジ' and (v.partialFlag and 'SEG hide' or 'DTV') or 'S-other')
-        ..((v.partialFlag or v.serviceType==0x01 or v.serviceType==0xA5) and '' or ' data hide')
-        ..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
-      for j,w in ipairs(si.serviceList) do
-        if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
-          s=s..' selected'
-          break
-        end
+    NetworkList[NetworkIndex(v)]=true
+    s=s..'\n<option class="network'..NetworkIndex(v)..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
+    for j,w in ipairs(si.serviceList) do
+      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
+        s=s..' selected'
+        break
       end
-      s=s..'>'..v.serviceName..'\n'
+    end
+    s=s..'>'..v.serviceName
   end
 
-  s=s..'</select></div>\n'
+  s=s..'\n</select></div>\n'
     ..'<div><button class="all_select mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">全選択</button></div>'
     ..'</div>\n'
 
     ..'<div class="mdl-grid mdl-grid--no-spacing">表示絞り込み：'
     ..'<div class="mdl-cell--4-col-phone"><label for="image" class="mdl-checkbox mdl-js-checkbox"><input id="image" class="mdl-checkbox__input" type="checkbox" checked><span class="mdl-checkbox__label">映像のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_DTV"><input id="EXT_DTV" class="extraction mdl-checkbox__input" type="checkbox" value=".DTV" checked><span class="mdl-checkbox__label">地上波</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_SEG"><input id="EXT_SEG" class="extraction mdl-checkbox__input" type="checkbox" value=".SEG"><span class="mdl-checkbox__label">ワンセグ</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_BS"><input id="EXT_BS" class="extraction mdl-checkbox__input" type="checkbox" value=".BS" checked><span class="mdl-checkbox__label">BS</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_CS"><input id="EXT_CS" class="extraction mdl-checkbox__input" type="checkbox" value=".CS" checked><span class="mdl-checkbox__label">CS</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div>\n'
---    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_HD"><input id="EXT_HD" class="extraction mdl-checkbox__input" type="checkbox" value=".HD" checked><span class="mdl-checkbox__label">スカパー!プレミアム</span></label></div><div class="mdl-layout-spacer"></div>\n'
---    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT_other"><input id="EXT_other" class="extraction mdl-checkbox__input" type="checkbox" value=".S-other" checked><span class="mdl-checkbox__label">その他</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'</div>\n'
+  for i,v in ipairs(NetworkList) do
+    if v then
+      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input" type="checkbox" value=".network'..i..'" checked><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    end
+  end
+  s=s..'</div>\n'
     ..'</div></div>\n'
 
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">時間絞り込み</div>\n'
@@ -885,8 +883,13 @@ function RecModeTextList()
   return {'全サービス','指定サービスのみ','全サービス（デコード処理なし）','指定サービスのみ（デコード処理なし）','視聴','無効'}
 end
 
+function NetworkIndex(v)
+  return not v and {'地デジ','ワンセグ','BS','CS','124/128度CS','その他'}
+    or NetworkType(v.onid)=='地デジ' and (v.service_type or v.serviceType)==0x01 and 1 or NetworkType(v.onid)=='地デジ' and (v.partialReceptionFlag or v.partialFlag) and 2 or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/126CS'and 5 or 6
+end
+
 function NetworkType(onid)
-  return not onid and {'地デジ','BS','CS1','CS2','CS3','その他'}
+  return not onid and {'地デジ','BS','110CS1','110CS2','124/128CS','その他'}
     or NetworkType()[0x7880<=onid and onid<=0x7FE8 and 1 or onid==4 and 2 or onid==6 and 3 or onid==7 and 4 or onid==10 and 5 or 6]
 end
 
@@ -911,7 +914,7 @@ function SelectChDataList(a)
   return r
 end
 
-function ServiceList()
+function CustomServiceList()
   local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))~=0
   local NOT_SUBCH={
     --サブチャンネルでない、結合させないものを指定
@@ -931,7 +934,7 @@ function ServiceList()
     end
   end
 
-  local sort={}
+  local ServiceList={}
   count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
   if count>0 then
     local GetServiceList={}
@@ -945,9 +948,9 @@ function ServiceList()
         v.hide=HIDE_SERVICES[key]
         if show or not v.hide then
           if NetworkType(v.onid)=='地デジ' or NetworkType(v.onid)=='BS' then
-            v.subCh=SubChanel(v, sort[#sort])
+            v.subCh=SubChanel(v, ServiceList[#ServiceList])
           end
-          table.insert(sort, v)
+          table.insert(ServiceList, v)
         end
       end
     end
@@ -965,20 +968,20 @@ function ServiceList()
       if epgCapFlag[v.onid..'-'..v.tsid..'-'..v.sid] and v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD then
         --地デジ優先ソート
         if NetworkType(v.onid)=='地デジ' then
-          v.subCh=SubChanel(v, sort[n])
+          v.subCh=SubChanel(v, ServiceList[n])
           n=n+1
-          table.insert(sort,n,v)
+          table.insert(ServiceList,n,v)
         elseif NetworkType(v.onid)=='BS' then
-          v.subCh=SubChanel(v, sort[n+m])
+          v.subCh=SubChanel(v, ServiceList[n+m])
           m=m+1
-          table.insert(sort,n+m,v)
+          table.insert(ServiceList,n+m,v)
         else
-          table.insert(sort,v)
+          table.insert(ServiceList,v)
         end
       end
     end
   end
-  return sort
+  return ServiceList
 end
 
 --URIをタグ装飾する

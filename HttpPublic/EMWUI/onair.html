@@ -33,17 +33,15 @@ ct.main='  <main class="sidePanel-container mdl-layout__content">\n'
   ..'<div class="tab-swipe"><div id="onair" class="mdl-grid'..(webPanel and ' webPanel mdl-grid--no-spacing' or '')..'">\n'
 
 edcb.htmlEscape=15
-sort=ServiceList()
 
-dtv={}
-oneseg={}
-bs={}
-cs={}
-other={}
+NetworkList={}
+for i,v in ipairs(NetworkIndex()) do
+  NetworkList[i]={}
+end
 
 now=os.time()
 
-for i,v in ipairs(sort or {}) do
+for i,v in ipairs(CustomServiceList()) do
   if (onesegflag or not v.partialReceptionFlag) and not v.subCh then
     x={eid=0, startTime=os.date('*t',now)}
     y=x
@@ -78,65 +76,42 @@ for i,v in ipairs(sort or {}) do
     _startTime=os.time(y.startTime)
     endTime=x.durationSecond and startTime+x.durationSecond or _startTime
     _endTime=_endTime or (y.durationSecond and _startTime+y.durationSecond)
-    list='<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line" data-onid="'..v.onid
-      ..'" data-name="'..v.service_name
-      ..'" data-tsid="'..v.tsid
-      ..'" data-sid="'..v.sid
-      ..'" data-eid="'..x.eid
-      ..'" data-nexteid="'..y.eid
-      ..'" data-id="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..x.eid] or 'false')
-      ..'" data-nextid="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..y.eid] or 'false')
-      ..'" data-start="'..startTime*1000
-      ..'" data-end="'..endTime*1000
-      ..'" data-duration="'..(x.durationSecond or _startTime-endTime)
-      ..'">\n'
 
-      ..'<span class="mdl-list__item-primary-content">'
-      ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..fname..'\');">' or '>tv')..'</i>'..v.service_name
-      ..'<span class="mdl-list__item-text-body">\n'
-      ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
-      ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(_endTime and os.date('%H:%M', _endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
-      ..'</span></span>'
-      ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
+    table.insert(NetworkList[NetworkIndex(v)],
+      '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line" data-onid="'..v.onid
+        ..'" data-name="'..v.service_name
+        ..'" data-tsid="'..v.tsid
+        ..'" data-sid="'..v.sid
+        ..'" data-eid="'..x.eid
+        ..'" data-nexteid="'..y.eid
+        ..'" data-id="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..x.eid] or 'false')
+        ..'" data-nextid="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..y.eid] or 'false')
+        ..'" data-start="'..startTime*1000
+        ..'" data-end="'..endTime*1000
+        ..'" data-duration="'..(x.durationSecond or _startTime-endTime)
+        ..'">\n'
 
-      ..'<div class="mdl-progress mdl-js-progress"></div>'
-      ..'</li>\n'
+        ..'<span class="mdl-list__item-primary-content">'
+        ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(f and ' style="background-image:url(\'img/logo/'..fname..'\');">' or '>tv')..'</i>'..v.service_name
+        ..'<span class="mdl-list__item-text-body">\n'
+        ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
+        ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', _startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(_endTime and os.date('%H:%M', _endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
+        ..'</span></span>'
+        ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
 
-    if 0x7880<=v.onid and v.onid<=0x7FE8 and v.service_type==0x01 then
-      table.insert(dtv, list)
-    elseif v.partialReceptionFlag then
-      table.insert(oneseg, list)
-    elseif v.onid==4 then
-      table.insert(bs, list)
-    elseif v.onid==6 or v.onid==7 then
-      table.insert(cs, list)
-    else
-      table.insert(other, list)
-    end
+        ..'<div class="mdl-progress mdl-js-progress"></div>'
+        ..'</li>\n'
+    )
   end
 end
 
 ctt={}
 ct.tab=''
-if #dtv>0 then
-  table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel is-active" id="dtv">\n'..table.concat(dtv)..'</ul>\n')
-  ct.tab='<a href="#dtv" class="mdl-layout__tab is-active">地デジ</a>\n'
-end
-if #oneseg>0 then
-  table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel" id="oneseg">\n'..table.concat(oneseg)..'</ul>\n')
-  ct.tab=ct.tab..'<a href="#oneseg" class="mdl-layout__tab'..(#ct.tab<0 and ' is-active' or '')..'">ワンセグ</a>\n'
-end
-if #bs>0 then
-  table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel" id="bs">\n'..table.concat(bs)..'</ul>\n')
-  ct.tab=ct.tab..'<a href="#bs" class="mdl-layout__tab'..(#ct.tab<0 and ' is-active' or '')..'">BS</a>\n'
-end
-if #cs>0 then 
-  table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel" id="cs">\n'..table.concat(cs)..'</ul>\n')
-  ct.tab=ct.tab..'<a href="#cs" class="mdl-layout__tab'..(#ct.tab<0 and ' is-active' or '')..'">CS</a>\n'
-end
-if #other>0 then
-  table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel" id="sonota">\n'..table.concat(other)..'</ul>\n')
-  ct.tab=ct.tab..'<a href="#sonota" class="mdl-layout__tab'..(#ct.tab<0 and ' is-active' or '')..'">その他</a>\n'
+for i,v in ipairs(NetworkList) do
+  if #v>0 then
+    ct.tab=ct.tab..'<a href="#tab'..i..'" class="mdl-layout__tab'..(i==1 and ' is-active' or '')..'">'..NetworkIndex()[i]..'</a>\n'
+    table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel'..(i==1 and ' is-active' or '')..'" id="tab'..i..'">\n'..table.concat(v)..'</ul>\n')
+  end
 end
 
 ct.main=ct.main..table.concat(ctt)..'</div></div>\n'

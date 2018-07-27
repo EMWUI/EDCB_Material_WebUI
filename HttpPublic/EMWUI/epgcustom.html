@@ -67,7 +67,7 @@ CATEGORY={
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
 baseDate=math.floor((now+timezone-MARGIN_HOUR*3600)/24/3600)
-Hour=(math.floor(((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24
+Hour=math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24
 baseTime=(baseDate*24+Hour)*3600
 
 ct={}
@@ -333,7 +333,7 @@ if not key then
 end
 
 b=edcb.SearchEpg(key)
-table.sort(b, function(a,b) 
+table.sort(b, function(a,b)
   if os.time(a.startTime)==os.time(b.startTime) then
     return a.sid < b.sid
   else
