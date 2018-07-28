@@ -885,7 +885,7 @@ end
 
 function NetworkIndex(v)
   return not v and {'地デジ','ワンセグ','BS','CS','124/128度CS','その他'}
-    or NetworkType(v.onid)=='地デジ' and (v.service_type or v.serviceType)==0x01 and 1 or NetworkType(v.onid)=='地デジ' and (v.partialReceptionFlag or v.partialFlag) and 2 or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/126CS'and 5 or 6
+    or NetworkType(v.onid)=='地デジ' and (v.service_type or v.serviceType)==0x01 and 1 or NetworkType(v.onid)=='地デジ' and (v.partialReceptionFlag or v.partialFlag) and 2 or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/128CS'and 5 or 6
 end
 
 function NetworkType(onid)
