@@ -66,10 +66,10 @@ if temp.progres then
   s:Append('<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
     ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')
     ..'"><div>\n'..(r and r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>\n')
-    ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="date" name="startdate" id="startdate" min="1900-01-01" max="2999-12-31'..(r and '" value="'..string.format('%d-%02d-%02d', r.startTime.year,r.startTime.month,r.startTime.day) or '')
-    ..'"><label class="mdl-textfield__label" for="startdate"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="time" name="starttime" step="1" id="starttime'..(r and '" value="'..string.format('%02d:%02d:%02d', r.startTime.hour,r.startTime.min,r.startTime.sec) or '')
+    ..'予約日時\n<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="date" name="startdate" id="startdate" min="1900-01-01" max="2999-12-31" value="'..(r and string.format('%d-%02d-%02d', r.startTime.year,r.startTime.month,r.startTime.day) or '2018-01-01')
+    ..'"><label class="mdl-textfield__label" for="startdate"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="time" name="starttime" step="1" id="starttime" value="'..(r and string.format('%02d:%02d:%02d', r.startTime.hour,r.startTime.min,r.startTime.sec) or '00:00:00')
     ..'"><label class="mdl-textfield__label" for="starttime"></label></div></div>\n<span class="tilde">～</span>\n'
-    ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="time" name="endtime" step="1" id="endtime'..(dur and '" value="'..string.format('%02d:%02d:%02d', math.floor(dur/3600)%24,math.floor(dur/60)%60,dur%60) or '')
+    ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="time" name="endtime" step="1" id="endtime" value="'..(dur and string.format('%02d:%02d:%02d', math.floor(dur/3600)%24,math.floor(dur/60)%60,dur%60) or '00:00:00')
     ..'"><label class="mdl-textfield__label" for="endtime"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken()
     ..'">\n</div></form></div>\n<div class="mdl-dialog__actions">\n'
     ..'<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>\n'
@@ -359,6 +359,45 @@ s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notif
 </html>]=])
   s:Finish()
   return s
+end
+
+function epgcellTemplate(v, op, id)
+  local category=v.contentInfoList and #v.contentInfoList>0 and CATEGORY[math.floor(v.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
+  local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
+  local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
+  local search=v.shortInfo and ConvertSearch(v, op.service_name) or ''									--検索
+
+  local r=nil
+  local rid=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
+  if rid then
+    r=edcb.GetReserveData(rid)
+  end
+  local rs=r and r.recSetting or nil
+
+  local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
+  local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
+
+  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
+    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px;"><div class="content">\n'
+
+    ..'<div><div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
+
+    ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
+    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
+
+    ..'<p class="tool mdl-typography--caption-color-contrast">'
+    ..'<a class="mdl-button mdl-js-button mdl-button--raised'
+      ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime+timezone or 'eid="'..v.eid)
+                    or '" href="'..op.url)..'">番組詳細</a>'
+    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
+      ..(r and '" data-toggle="1" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+            or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
+    ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
+    ..'</p>'
+
+    ..(not sidePanel and v.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
+
+    ..'</div></div></div></div></div>\n'
 end
 
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)

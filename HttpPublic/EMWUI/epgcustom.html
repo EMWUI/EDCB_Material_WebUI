@@ -436,43 +436,11 @@ for i,v in ipairs(st) do
       lastPx=startPx
     end
     if endPx-lastPx>2 then
-      category=w.contentInfoList and #w.contentInfoList>0 and CATEGORY[math.floor(w.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
-      title=w.shortInfo and ConvertTitle(w.shortInfo.event_name) or ''									--番組タイトル
-      info=w.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(w.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
-      service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or ''
-      search=w.shortInfo and ConvertSearch(w, service_name) or ''									--検索
-
-      r=nil
-      id=rt[w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid] or nil
-      if id then
-        r=edcb.GetReserveData(id)
-      end
-      rs=r and r.recSetting or nil
-
-      mark=(r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or '')	--録画マーク
-      recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
-
-      table.insert(ctt, '<div '..(i==1 and 'id="id'..j..'" ' or '')..' class="cell eid_'..w.eid..(startTime<now and now<endTime and ' now' or '')..'" data-endtime="'..endTime..'" style="height:'..(endPx-lastPx)..'px">\n'
-        ..'<div class="content-wrap '..category..recmode..'" style="min-height:'..(endPx-lastPx-2)..'px"><div class="content">\n'
-
-        ..'<div><div class="startTime">'..('%02d'):format(w.startTime.min)..'</div>'..mark..'</div>'
-
-        ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..service_name..' - '..title..'</span>'..(w.durationSecond and w.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-        ..'<span class="links"><a class="notify_'..w.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
-        ..search..'</span>\n'
-
-        ..'<p class="tool mdl-typography--caption-color-contrast">'
-        ..'<a class="mdl-button mdl-js-button mdl-button--raised'
-          ..(sidePanel and ' open_info" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
-                       or '" href="epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid))..'">番組詳細</a>'
-        ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid								--終了前
-          ..(r and '" data-toggle="1" data-id="'..id..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
-                or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
-        ..'</p>'
-
-        ..(not sidePanel and w.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(w.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
-
-        ..'</div></div></div></div></div>\n')
+      op={
+        service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or '',
+        url='epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)
+      }
+      table.insert(ctt, epgcellTemplate(w, op, (i==1 and 'id="id'..j..'" ' or nil)))
 
       total=total+endPx-lastPx
       lastPx=endPx
@@ -491,6 +459,13 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..table.concat(ctt)
 
   ..'</div>\n</div></div>\n'
+
+  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="andKey">\n'
+  ..'<input type="hidden" name="notKey">\n'
+  ..'<input type="hidden" name="serviceList">\n'
+  ..'</form>\n'
 
 
 ct=template(ct)

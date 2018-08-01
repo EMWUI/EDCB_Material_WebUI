@@ -69,7 +69,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
      or v.overlapMode==2 and ' shortage' or nil
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-start="'..(v.durationSecond and (os.time(v.startTime)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                  or 'data-href="reserveinfo.html?id='..v.reserveID..'&page='..pageIndex)..'">\n'
+                  or 'data-href="reserveinfo.html?id='..v.reserveID..(pageIndex~=0 and '&page='..pageIndex or ''))..'">\n'
 
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
     ..(os.time(v.startTime)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'

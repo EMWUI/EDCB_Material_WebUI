@@ -1561,4 +1561,9 @@ $(function(){
 
 		componentHandler.upgradeDom();
 	});
+
+	//入力チェック
+	$('form').on('input', function () {
+		$('[data-form="#'+$(this).attr('id')+'"]').attr('disabled', !this.checkValidity());
+	});
 });

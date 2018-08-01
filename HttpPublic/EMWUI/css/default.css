@@ -1,19 +1,19 @@
 ﻿@media (pointer: fine) {
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-  background: #E1E1E1; }
-  #sidePanel .mdl-tabs__panel::-webkit-scrollbar,
-  .macro-list::-webkit-scrollbar {
-    width: 4px; }
-  ::-webkit-scrollbar-thumb {
-    background: #B3B3B3; }
-  ::-webkit-scrollbar-corner {
-    background: #EDEDED; }
-  #tv-guide::-webkit-scrollbar,
-  #tv-guide-header::-webkit-scrollbar,
-  #tv-guide-container::-webkit-scrollbar {
-    display: none; } }
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    background: #E1E1E1; }
+    #sidePanel .mdl-tabs__panel::-webkit-scrollbar,
+    .macro-list::-webkit-scrollbar {
+      width: 4px; }
+    ::-webkit-scrollbar-thumb {
+      background: #B3B3B3; }
+    ::-webkit-scrollbar-corner {
+      background: #EDEDED; }
+    #tv-guide::-webkit-scrollbar,
+    #tv-guide-header::-webkit-scrollbar,
+    #tv-guide-container::-webkit-scrollbar {
+      display: none; } }
 
 
 .mdl-layout__container {
@@ -570,7 +570,8 @@ h4 .mdl-button--icon {
       text-align: center; }
     .titlescroll .hour tt {
       display: table;
-      position: sticky;
+      position: -webkit-sticky;
+      position:         sticky;
       top: 24px; }
   @media (max-width: 479px) {
     .hour-container {
@@ -691,7 +692,8 @@ h4 .mdl-button--icon {
   border-radius: 2px;
   box-sizing: border-box; }
   .titlescroll .content {
-    position: sticky;
+    position: -webkit-sticky;
+    position:         sticky;
     top: 24px; }
   .clicked .content-wrap:not(.nothing) {
     height:auto !important;
@@ -933,7 +935,7 @@ h4 .mdl-button--icon {
   overflow: auto!important; }
 
 .tab-container {
-  min-height: 80%; 
+  min-height: 80%;
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex;
