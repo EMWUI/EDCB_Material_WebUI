@@ -671,6 +671,7 @@ h4 .mdl-button--icon {
 .content-wrap {
   position: relative;
   height: 100%;
+  min-height: 100%;
   box-sizing: border-box; }
 .content {
   width: 100%;

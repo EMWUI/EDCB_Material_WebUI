@@ -378,7 +378,7 @@ function epgcellTemplate(v, op, id)
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
   return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
-    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'" style="min-height:'..(endPx-lastPx-2)..'px;"><div class="content">\n'
+    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'"><div class="content">\n'
 
     ..'<div><div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 
@@ -437,8 +437,9 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
     if v.contentInfoList then
       s=s..'<li>ジャンル\n<ul>'
       for i,w in ipairs(v.contentInfoList) do
-        --0x0E01はCS拡張用情報
-        nibble=w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
+        --0x0E00は番組付属情報、0x0E01はCS拡張用情報
+        local nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
+                     w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
         s=s..'<li>'..edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble)..'\n'..'</li>\n'
       end
     s=s..'</ul></li>\n'
@@ -657,7 +658,7 @@ function SerchTemplate(si)
   s=s..'</select></div>\n'
    ..'<div><button class="g_celar'..(si.search and ' advanced ' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="5">\n'
-  for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15}) do
+  for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
     local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
       s=s..'<option class="g'..(i*256+255)..'" value="'..(i*256+255)..'"'

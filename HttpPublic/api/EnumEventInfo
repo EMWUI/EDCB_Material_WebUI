@@ -95,7 +95,8 @@ else
     end
     if v.contentInfoList then
       for j,w in ipairs(v.contentInfoList) do
-        nibble=w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
+        nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
+               w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
         table.insert(ct, '<contentInfo><nibble1>'
           ..math.floor(w.content_nibble / 256)..'</nibble1><nibble2>'
           ..(w.content_nibble % 256)..'</nibble2><component_type_name>'

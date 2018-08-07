@@ -8,16 +8,16 @@ if post then
     if edcb.GetRecFileInfoBasic(id) then
       protect=mg.get_var(post,'protect')==1
       ChgProtectRecFileInfo(id, protect)
-      messege='<success>録画情報をプロテクト'..(protect and '' or 'を解除')..'しました</success></entry>'
+      messege='<success>録画情報をプロテクト'..(protect and '' or 'を解除')..'しました</success>'
     else
-      messege='<err>録画情報のプロテクトを変更できませんでした</err></entry>'
+      messege='<err>録画情報のプロテクトを変更できませんでした</err>'
     end
   elseif mg.get_var(post,'del') then
     if edcb.GetRecFileInfoBasic(id) then
       edcb.DelRecFileInfo(id)
-      messege='<success>録画情報を削除しました</success></entry>'
+      messege='<success>録画情報を削除しました</success>'
     else
-      messege='<err>録画情報を削除できませんでした</err></entry>'
+      messege='<err>録画情報を削除できませんでした</err>'
     end
   end
 end
