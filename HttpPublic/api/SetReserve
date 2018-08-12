@@ -1,29 +1,10 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-function recSetting(r,presetID,post)
-  local rs=r.recSetting
-  rs.batFilePath=mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '')
-  rs.recFolderList={}
-  rs.partialRecFolder={}
-  if mg.get_var(post, 'recFolder') or mg.get_var(post, 'partialrecFolder') then
-    for i=0,10000 do
-      if not mg.get_var(post, 'recFolder', i) then break end
-      table.insert(rs.recFolderList, {
-        recFolder=mg.get_var(post, 'recFolder', i),
-        writePlugIn=mg.get_var(post, 'writePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
-      } )
-    end
-    for i=0,10000 do
-      if not mg.get_var(post, 'partialrecFolder', i) then break end
-      table.insert(rs.partialRecFolder, {
-        recFolder=mg.get_var(post, 'partialrecFolder', i),
-        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
-      } )
-    end
-  elseif presetID~=0xFFFF then
+function recSetting(r,post)
+  local presetID=GetVarInt(post,'presetID',0,65534)
+  if presetID then
+    r.recSetting=nil
     for i,v in ipairs(edcb.EnumRecPresetInfo()) do
       if v.id==presetID then
         r.recSetting=v.recSetting
@@ -31,31 +12,57 @@ function recSetting(r,presetID,post)
       end
     end
   end
-  rs.recMode=GetVarInt(post,'recMode',0,5)
-  rs.tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1
-  rs.priority=GetVarInt(post,'priority',1,5)
-  rs.pittariFlag=GetVarInt(post,'pittariFlag')==1
-  rs.suspendMode=GetVarInt(post,'suspendMode',0,4)
-  rs.rebootFlag=GetVarInt(post,'rebootFlag')==1
-  useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
-  rs.startMargin=useMargin and GetVarInt(post,'startMargin')
-  rs.endMargin=useMargin and GetVarInt(post,'endMargin')
-  serviceMode_1=GetVarInt(post,'serviceMode_1',0,1) or 0
-  serviceMode_2=GetVarInt(post,'serviceMode_2',0,1) or 0
-  rs.serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*serviceMode_1+32*serviceMode_2
-  rs.continueRecFlag=GetVarInt(post,'continueRecFlag')==1
-  rs.tunerID=GetVarInt(post,'tunerID')
-  rs.partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
-  if rs.recMode and
-     rs.priority and
-     rs.suspendMode and
-     (not useMargin or rs.startMargin and rs.endMargin) and
-     rs.tunerID
-  then
-    return r
-  else
-    return false
+  if r.recSetting then
+    local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
+    r.recSetting={
+      batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or r.recSetting.batFilePath,
+      recFolderList=r.recSetting.recFolderList,
+      partialRecFolder=r.recSetting.partialRecFolder,
+      recMode=GetVarInt(post,'recMode',0,5),
+      tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1,
+      priority=GetVarInt(post,'priority',1,5),
+      pittariFlag=GetVarInt(post,'pittariFlag')==1,
+      suspendMode=GetVarInt(post,'suspendMode',0,4),
+      rebootFlag=GetVarInt(post,'rebootFlag')==1,
+      startMargin=useMargin and GetVarInt(post,'startMargin'),
+      endMargin=useMargin and GetVarInt(post,'endMargin'),
+      serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0),
+      continueRecFlag=GetVarInt(post,'continueRecFlag')==1,
+      tunerID=GetVarInt(post,'tunerID'),
+      partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
+    }
+    if mg.get_var(post, 'recFolder') then
+      r.recSetting.recFolderList={}
+      for i=0,10000 do
+        if not mg.get_var(post, 'recFolder', i) then break end
+        table.insert(r.recSetting.recFolderList, {
+          recFolder=mg.get_var(post, 'recFolder', i),
+          writePlugIn=mg.get_var(post, 'writePlugIn', i),
+          recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
+        } )
+      end
+    end
+    if mg.get_var(post, 'partialrecFolder') then
+      r.recSetting.partialrecFolder={}
+      for i=0,10000 do
+        if not mg.get_var(post, 'partialrecFolder', i) then break end
+        table.insert(r.recSetting.partialRecFolder, {
+          recFolder=mg.get_var(post, 'partialrecFolder', i),
+          writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
+          recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
+        } )
+      end
+    end
+    if r.recSetting.recMode and
+       r.recSetting.priority and
+       r.recSetting.suspendMode and
+       (not useMargin or r.recSetting.startMargin and r.recSetting.endMargin) and
+       r.recSetting.tunerID
+    then
+      return r
+    end
   end
+  return false
 end
 
 function eventInfo(r)
@@ -92,9 +99,8 @@ if post then
     tsid=GetVarInt(post, 'tsid') or 0
     sid=GetVarInt(post, 'sid') or 0
     eid=GetVarInt(post, 'eid') or 0
-    r={onid=onid,tsid=tsid,sid=sid,eid=eid,recSetting={}}
-    presetID=GetVarInt(post,'presetID',0,0xFFFE)
-    r=recSetting(r,presetID,post)
+    r={onid=onid,tsid=tsid,sid=sid,eid=eid}
+    r=recSetting(r,post)
     if r then
       r=eventInfo(r)
       if r then
@@ -134,8 +140,7 @@ if post then
           err='不正な日時です'
         end
       else
-        presetID=GetVarInt(post,'presetID',0,65534)
-        r=recSetting(r,presetID,post)
+        r=recSetting(r,post)
         if r then
           done=edcb.ChgReserveData(r)
         else
