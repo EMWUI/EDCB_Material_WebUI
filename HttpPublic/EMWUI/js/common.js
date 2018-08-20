@@ -482,9 +482,14 @@ function setAutoAdd(target){
 			}else{
 				$('#titleOnly').prop('checked', false).parent().removeClass('is-checked');
 			}
+			if (autoadd.find('caseFlag').text() == 1){
+				$('#caseFlag').prop('checked', true).parent().addClass('is-checked');
+			}else{
+				$('#caseFlag').prop('checked', false).parent().removeClass('is-checked');
+			}
 			var contentList=[];
 			autoadd.find('contentList').each(function(){
-				contentList.push(autoadd.find('content_nibble').text());
+				contentList.push($(this).find('content_nibble').text());
 			});
 			$('#contentList').val(contentList);
 			if (autoadd.find('notContetFlag').text() == 1){
@@ -494,7 +499,7 @@ function setAutoAdd(target){
 			}
 			var service=[];
 			autoadd.find('serviceList').each(function(){
-				service.push(autoadd.find('onid').text()+'-'+autoadd.find('tsid').text()+'-'+autoadd.find('sid').text());
+				service.push($(this).find('onid').text()+'-'+$(this).find('tsid').text()+'-'+$(this).find('sid').text());
 			});
 			$('#service').val(service);
 			$('#dateList_select,#dateList_touch').empty();
@@ -705,12 +710,11 @@ function setRecSettting(self){
 	$('[name=suspendMode]').val(recset.children('suspendMode').text());
 	//復帰後再起動
 	if ($('[name=suspendMode]').val()==0){
-		if (defRecSetting.suspendMode){
-			$('[name=rebootFlag]').prop('checked', true).prop('disabled', true).parent().addClass('is-checked is-disabled');
-		}else{
-			$('[name=rebootFlag]').prop('checked', false).prop('disabled', true).parent().removeClass('is-checked').addClass('is-disabled');
-		}
-	}else if (recset.children('rebootFlag').text() == 1){
+		$('.reboot').addClass('is-disabled');
+	}else{
+		$('.reboot').removeClass('is-disabled');
+	}
+	if (recset.children('rebootFlag').text() == 1){
 		$('[name=rebootFlag]').prop('checked', true).parent().addClass('is-checked');
 	}else{
 		$('[name=rebootFlag]').prop('checked', false).parent().removeClass('is-checked');
@@ -979,7 +983,7 @@ $(function(){
 
 	//一覧の行をリンクに
 	$('tr.epginfo').click(function(e){
-		if (!$(e.target).is('.flag, .flag *, .count li')){
+		if (!$(e.target).is('.flag, .flag *, .count a')){
 			if ($(this).data('onid')){
 				getEpgInfo($(this), $(this).data());
 			}else if($(this).data('id')){

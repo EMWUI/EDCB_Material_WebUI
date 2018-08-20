@@ -318,11 +318,10 @@ $(function(){
 
 	//ジャンルトグル
 	$('.genreToggle').change(function(){
-		$('.cell').removeClass('nothing');
-		if ($(this).val() == 'all'){
-			$('.content').show().removeClass('choice');
-		}else{
-			$('.content').show().removeClass('choice').not( $(this).val() ).hide().parent().addClass('nothing');
+		$('.content-wrap.ex').removeClass('nothing choice');
+		$('.content').show();
+		if ($(this).val() != 'all'){
+			$('.content-wrap:not(.nothing)').not( $(this).val() ).addClass('nothing ex').children().hide();
 			$( $(this).val() ).addClass('choice');
 		}
 	});

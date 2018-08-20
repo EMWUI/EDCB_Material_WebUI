@@ -649,10 +649,7 @@ h4 .mdl-button--icon {
 
 .cell {
   border: solid 1px transparent;
-  box-sizing: border-box;
-  transition-property: left,width;
-  transition-duration: .2s;
-  transition-timing-function: cubic-bezier(.4,0,.2,1); }
+  box-sizing: border-box; }
   .station>div:nth-child(n + 2)>.cell {
     position:absolute; }
   .cell.clicked {
@@ -667,11 +664,17 @@ h4 .mdl-button--icon {
   .cell .mdl-typography--caption-color-contrast {
     font-family: monospace;
     word-break: break-all; }
+  @media (pointer: fine) {
+    .cell {
+      transition-property: left,width;
+      transition-duration: .2s;
+      transition-timing-function: cubic-bezier(.4,0,.2,1); } }
 
 .content-wrap {
   position: relative;
   height: 100%;
   min-height: 100%;
+  border-radius: 2px;
   box-sizing: border-box; }
 .content {
   width: 100%;
@@ -690,7 +693,6 @@ h4 .mdl-button--icon {
   overflow: hidden;
   border-right: dotted 3px transparent;
   border-left: dotted 3px transparent;
-  border-radius: 2px;
   box-sizing: border-box; }
   .titlescroll .content {
     position: -webkit-sticky;
@@ -936,7 +938,7 @@ h4 .mdl-button--icon {
   overflow: auto!important; }
 
 .tab-container {
-  min-height: 80%;
+  min-height: 90%;
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex;
