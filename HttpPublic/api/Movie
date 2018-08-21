@@ -1,20 +1,20 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
-path='Setting\\HttpPublic.ini'
+ini='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',path)
-readex=edcb.GetPrivateProfile('SET','readex',dir..'readex.exe',path)
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
+readex=edcb.GetPrivateProfile('SET','readex',dir..'readex.exe',ini)
 
-mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,path))~=0
+mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,ini))~=0
 
 -- トランスコードするかどうか
 XCODE=tonumber(mg.get_var(mg.request_info.query_string, 'xcode') or 1)~=0
 -- 変換コマンド
 quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
 if mp4 then
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',ini)
 else
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',ini)
 end
 
 audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
@@ -34,7 +34,7 @@ XCMD='"'..ffmpeg..'" -i pipe:0 '..XOPT
 -- 変換後の拡張子
 XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
-XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
+XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,ini))
 
 r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
 v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))

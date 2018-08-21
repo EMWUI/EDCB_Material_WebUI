@@ -1,7 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-path='Setting\\HttpPublic.ini'
+ini='Setting\\HttpPublic.ini'
 
 post=AssertPost()
 
@@ -14,15 +14,15 @@ if reset then
 
   if reset=='tvguide' then
 
-    edcb.WritePrivateProfile('GUIDE', nil, '', path)
-    edcb.WritePrivateProfile('BACKGROUND', nil, '', path)
+    edcb.WritePrivateProfile('GUIDE', nil, '',ini)
+    edcb.WritePrivateProfile('BACKGROUND', nil, '',ini)
     
     messege='番組表設定'
 
   elseif reset=='sort' then
 
-    edcb.WritePrivateProfile('SORT', nil, '', path)
-    edcb.WritePrivateProfile('HIDE', nil, '', path)
+    edcb.WritePrivateProfile('SORT', nil, '',ini)
+    edcb.WritePrivateProfile('HIDE', nil, '',ini)
     
     messege='並び替え設定'
 
@@ -41,71 +41,67 @@ elseif post then
     titleControl=titleControl+v
   end
 
---  edcb.WritePrivateProfile('', '', mg.get_var(post, ''), path)
+  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec'),ini)
+  edcb.WritePrivateProfile('SET', 'option', GetVarInt(post,'option'),ini)
+  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto'),ini)
+  edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),ini)
+  edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
 
-  edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1, path)
-  edcb.WritePrivateProfile('SET', 'option', GetVarInt(post,'option')==1, path)
-  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1, path)
-  edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'), path)
-  edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000), path)
+  --edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode'),ini)
+  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg'),ini)
+  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover'),ini)
+  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl,ini)
+  edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23),ini)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'TIME_COLUMN', GetVarInt(post,'TIME_COLUMN',1,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel'),ini)
+  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat'),ini)
 
-  edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode')==1, path)
-  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1, path)
-  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1, path)
-  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl, path)
-  edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23), path)
-  edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'TIME_COLUMN', GetVarInt(post,'TIME_COLUMN',1,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000), path)
-  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1, path)
-  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1, path)
+  edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'),ini)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'), path)
+  edcb.WritePrivateProfile('BACKGROUND', 'news', mg.get_var(post, 'news'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'sports', mg.get_var(post, 'sports'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'information', mg.get_var(post, 'information'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'drama', mg.get_var(post, 'drama'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'music', mg.get_var(post, 'music'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'variety', mg.get_var(post, 'variety'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'movie', mg.get_var(post, 'movie' or ''),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'anime', mg.get_var(post, 'anime'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'documentary', mg.get_var(post, 'documentary'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'theater', mg.get_var(post, 'theater'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'education', mg.get_var(post, 'education'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),ini)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'news', mg.get_var(post, 'news'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'sports', mg.get_var(post, 'sports'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'information', mg.get_var(post, 'information'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'drama', mg.get_var(post, 'drama'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'music', mg.get_var(post, 'music'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'variety', mg.get_var(post, 'variety'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'movie', mg.get_var(post, 'movie' or ''), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'anime', mg.get_var(post, 'anime'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'documentary', mg.get_var(post, 'documentary'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'theater', mg.get_var(post, 'theater'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'education', mg.get_var(post, 'education'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'), path)
+  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially_border', mg.get_var(post, 'partially_border'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage', mg.get_var(post, 'shortage'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage_border', mg.get_var(post, 'shortage_border'),ini)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1, path)
-  edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'partially_border', mg.get_var(post, 'partially_border'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'shortage', mg.get_var(post, 'shortage'), path)
-  edcb.WritePrivateProfile('BACKGROUND', 'shortage_border', mg.get_var(post, 'shortage_border'), path)
-
-  edcb.WritePrivateProfile('SORT', nil, '', path)
+  edcb.WritePrivateProfile('SORT', nil, '',ini)
   for i=0,10000 do
     v=mg.get_var(post, 'sort', i)
     if not v then break end
-    edcb.WritePrivateProfile('SORT', 'count', i, path)
-    edcb.WritePrivateProfile('SORT', 'sort'..i, v, path)
+    edcb.WritePrivateProfile('SORT', 'sort'..i, v,ini)
   end
 
-  edcb.WritePrivateProfile('HIDE', nil, '', path)
+  edcb.WritePrivateProfile('HIDE', nil, '',ini)
   for i=0,10000 do
     v=mg.get_var(post, 'hide', i)
     if not v then break end
-    edcb.WritePrivateProfile('HIDE', 'count', i, path)
-    edcb.WritePrivateProfile('HIDE', 'hide'..i, v, path)
+    edcb.WritePrivateProfile('HIDE', 'hide'..i, v,ini)
   end
 
   messege='保存しました'

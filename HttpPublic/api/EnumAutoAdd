@@ -1,13 +1,9 @@
 -- vim:set ft=lua:
+dofile(mg.document_root..'\\api\\util.lua')
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
 rsdef=edcb.GetReserveData(0x7FFFFFFF)
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
-if rsdef then
-  table.insert(ct, '<default><suspendMode>'
-    ..rsdef.recSetting.suspendMode..'</suspendMode><serviceMode>'
-    ..rsdef.recSetting.serviceMode..'</serviceMode></default>')
-end
 for i,v in ipairs(a) do
   disableFlag=string.match(v.searchInfo.andKey, '^^!{999}(.*)')
   caseFlag=(disableFlag or v.searchInfo.andKey):match('^C!{999}(.*)')
@@ -48,41 +44,9 @@ for i,v in ipairs(a) do
       ..w.tsid..'</tsid><sid>'
       ..w.sid..'</sid></serviceList>')
   end
-  table.insert(ct, '</searchsetting><recsetting><recMode>'
-    ..v.recSetting.recMode..'</recMode><priority>'
-    ..v.recSetting.priority..'</priority><tuijyuuFlag>'
-    ..(v.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
-    ..v.recSetting.serviceMode..'</serviceMode><pittariFlag>'
-    ..(v.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
-    ..v.recSetting.batFilePath..'</batFilePath><recFolderList>')
-  for j,w in ipairs(v.recSetting.recFolderList) do
-    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
-    table.insert(ct, '<recFolderInfo><recFolder>'
-      ..w.recFolder..'</recFolder><writePlugIn>'
-      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
-      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
-      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
-  end
-  table.insert(ct, '</recFolderList><suspendMode>'
-    ..v.recSetting.suspendMode..'</suspendMode><rebootFlag>'
-    ..(v.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
-    ..(v.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
-    ..(v.recSetting.startMargin or rsdef and rsdef.recSetting.startMargin or 0)..'</startMargine><endMargine>'
-    ..(v.recSetting.endMargin or rsdef and rsdef.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
-    ..(v.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
-    ..v.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
-    ..v.recSetting.tunerID..'</tunerID><partialRecFolder>')
-  for j,w in ipairs(v.recSetting.partialRecFolder) do
-    recNameDll, recNameOp=w.recNamePlugIn:match('^(.+%.dll)%?(.*)')
-    table.insert(ct, '<recFolderInfo><recFolder>'
-      ..w.recFolder..'</recFolder><writePlugIn>'
-      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn><recNamePlugIndll>'
-      ..(recNameDll or w.recNamePlugIn or '')..'</recNamePlugIndll><recNamePlugInoption>'
-      ..(recNameOp or '')..'</recNamePlugInoption></recFolderInfo>')
-  end
-  table.insert(ct, '</partialRecFolder></recsetting></autoaddinfo>\r\n')
+  table.insert(ct, '</searchsetting>'
+    ..xmlRecSetting(v.recSetting, rsdef)
+    ..'</autoaddinfo>\r\n')
 end
 table.insert(ct, '</items></entry>')
 cl=0

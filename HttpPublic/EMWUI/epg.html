@@ -1,69 +1,5 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-
-path='Setting\\HttpPublic.ini'
-oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
-hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
-titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,path))
-ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
-MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
-MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
-TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',path)
-w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
-w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
-w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
-w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
-DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
-
-background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
-
-news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',path)
-sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',path)
-information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',path)
-drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',path)
-music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',path)
-variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',path)
-movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',path)
-anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',path)
-documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',path)
-theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',path)
-education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',path)
-welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',path)
-extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',path)
-other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',path)
-none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',path)
-nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',path)
-
-reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',path)
-disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
-partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',path)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
-shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',path)
-paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,path))~=0
-
-
-CATEGORY={
-  'news',
-  'sports',
-  'information',
-  'drama',
-  'music',
-  'variety',
-  'movie',
-  'anime',
-  'documentary',
-  'theater',
-  'education',
-  'welfare',
-  'extension',
-  'extension',
-  'extension',
-  'other',
-}
-
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
 show=mg.get_var(mg.request_info.query_string,'show')
 tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkIndex()) or 0
@@ -74,8 +10,6 @@ interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
 CH_COUNT=GetVarInt(mg.request_info.query_string,'chcount') or DEF_CH_COUNT
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
-now=os.time()
-timezone=now-os.time(os.date('!*t',now))
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
 Hour=hour==0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
@@ -102,65 +36,6 @@ function hrefGene(href)
     ..(interval~=25 and '&interval='..interval or '')
   return s
 end
-
-
-ct={title='番組表'}
-
-ct.css='<style>'
-  ..'main{background:'..background
-  ..';}.station{width:'..w_service
-  ..'px;}.hour-container{width:'..w_hour
-  ..'px;}.hour{height:'..(ONE_MIN_PX*60)
-  ..'px;}'
-
-  ..'.news{background:'..news
-  ..';}.sports{background:'..sports
-  ..';}.information{background:'..information
-  ..';}.drama{background:'..drama
-  ..';}.music{background:'..music
-  ..';}.variety{background:'..variety
-  ..';}.movie{background:'..movie
-  ..';}.anime{background:'..anime
-  ..';}.documentary{background:'..documentary
-  ..';}.theater{background:'..theater
-  ..';}.education{background:'..education
-  ..';}.welfare{background:'..welfare
-  ..';}.extension{background:'..extension
-  ..';}.other{background:'..other
-  ..';}.none{background:'..none
-  ..';}.nothing{background:'..nothing
-  ..';}'
-
-  ..'.content-wrap.reserve{'..(paint and 'border-color:transparent;background:' or 'border-color:')..reserve..';}'
-  ..'.content-wrap.disabled{'..(paint and 'border-color:transparent;background:' or 'border-color:')..disabled..';}'
-  ..'.content-wrap.partially{background:'..partially..';border-color:'..partially_border..';}'
-  ..'.content-wrap.shortage{background:'..shortage..';border-color:'..shortage_border..';}'
-
-  ..'@media screen and (max-width:479px){.station{width:'..w_service_sp
-  ..'px;}.hour-container{width:'..w_hour_sp
-  ..'px;}}'
-  ..'</style>\n'
-
-ct.js='<script>'
-  ..'oneminpx='..ONE_MIN_PX
-  ..';baseTime='..pageTime-timezone
-  ..';interval='..interval
-  ..';titleControl='..titleControl
-  ..';marginmin='..MARGIN_MIN
-  ..';hover='..(hover and 'true' or 'false')..';'
-  ..(NOW and '$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();lastTime='..pageTime+(interval*3600)-timezone..';' or 'end($(this));});')..'});setInterval("line()", 1000);' or '')
-  ..'</script>\n'
-  ..'<script src="js/tvguide.js"></script>\n'
-
-ct.dialog={{
-    id='suspend',
-    button='<button class="ok mdl-button">OK</button>'
- }}
-
-ct.progres=true
-
-if sidePanel then ct.macro=true end
-
 
 
 edcb.htmlEscape=15
@@ -205,6 +80,18 @@ for i,v in ipairs(CustomServiceList()) do
   end
 end
 
+
+ct={
+  title='番組表',
+  css=epgcss(),
+  js=epgjs(pageTime-timezone,(NOW and 'var lastTime='..pageTime+(interval*3600)-timezone..';$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();' or 'end($(this));});')..'setInterval("line()", 1000);});' or '')),
+  progres=true,
+  macro=sidePanel,
+  dialog={{
+    id='suspend',
+    button='<button class="ok mdl-button">OK</button>'
+  }}
+}
 
 ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
@@ -359,7 +246,7 @@ for i=pagemin,pagemax do
         end
 
         op.url='epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)
-        table.insert(ctt, epgcellTemplate(w, op))
+        table.insert(ctt, epgcell(w, op))
 
         total=total+endPx-lastPx
         lastPx=endPx
@@ -411,7 +298,6 @@ ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="andKey">\n'
-  ..'<input type="hidden" name="notKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
 

@@ -1,9 +1,9 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-path='Setting\\HttpPublic.ini'
+ini='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',path)
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
 
 MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
 

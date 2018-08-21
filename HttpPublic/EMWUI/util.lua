@@ -1,14 +1,14 @@
-﻿path='Setting\\HttpPublic.ini'
-Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
-css=edcb.GetPrivateProfile('SET','css',false,path)
-
-authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',path)
-details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',path)
+﻿dofile(mg.document_root..'\\api\\util.lua')
 
 --このサイズ以上のときページ圧縮する(nilのとき常に非圧縮)
 GZIP_THRESHOLD_BYTE=4096
 
+ini='Setting\\HttpPublic.ini'
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
+
 function template(temp)
+  local Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
+  local css=edcb.GetPrivateProfile('SET','css',false,ini)
   local path = temp.path or ''
   local s=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
   s:Append([=[
@@ -27,7 +27,7 @@ function template(temp)
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 ]=]
-..(Roboto and '<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">' or '')
+..(Roboto and '<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 
 -- css
 ..(temp.css or '')
@@ -39,7 +39,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
-..'<script>path=\''..path..'\';root=\''..PathToRoot()..'\';</script>\n'
+..'<script>var path=\''..path..'\';var root=\''..PathToRoot()..'\';</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
 -- javascript
@@ -361,45 +361,6 @@ s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notif
   return s
 end
 
-function epgcellTemplate(v, op, id)
-  local category=v.contentInfoList and #v.contentInfoList>0 and CATEGORY[math.floor(v.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
-  local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
-  local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
-  local search=v.shortInfo and ConvertSearch(v, op.service_name) or ''									--検索
-
-  local r=nil
-  local rid=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
-  if rid then
-    r=edcb.GetReserveData(rid)
-  end
-  local rs=r and r.recSetting or nil
-
-  local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
-  local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
-
-  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
-    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'"><div class="content">\n'
-
-    ..'<div><div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
-
-    ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
-
-    ..'<p class="tool mdl-typography--caption-color-contrast">'
-    ..'<a class="mdl-button mdl-js-button mdl-button--raised'
-      ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime+timezone or 'eid="'..v.eid)
-                    or '" href="'..op.url)..'">番組詳細</a>'
-    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-js-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
-      ..(r and '" data-toggle="1" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
-            or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
-    ..'<a class="autoepg mdl-button mdl-js-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
-    ..'</p>'
-
-    ..(not sidePanel and v.extInfo and '<p class="mdl-typography--caption-color-contrast">'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>')..'</p>' or '')
-
-    ..'</div></div></div></div></div>\n'
-end
-
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
 function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
   local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid)), true
@@ -612,7 +573,7 @@ function RecSettingTemplate(rs)
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(batFilePath=='' and ' selected' or '')..'>なし\n'
 
-  local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',path)..'\\'
+  local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',ini)..'\\'
   for j,w in ipairs(edcb.FindFile(batPath..'*', 0) or {}) do
     if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$')) then
       s=s..'<option value="'..batPath..w.name..'"'..(batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
@@ -633,6 +594,8 @@ end
 
 --検索フォームのテンプレート
 function SerchTemplate(si)
+  local subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
+  local oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
   local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.caseFlag or si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
@@ -691,19 +654,6 @@ function SerchTemplate(si)
     ..'</div></div>\n'
     ..'<input type="hidden" name="serviceList"></div>\n'
 
---[=[
-  if si.search then
-    s=s..'<div class="network mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">対象ネットワーク</div>\n'
-      ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
-      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="DTV"><input id="DTV" class="network mdl-checkbox__input" type="checkbox" name="network" value="1"'..(bit32.band(key.network,1)==1 and ' checked' or '')..'><span class="mdl-checkbox__label">地上波</span></label></div><div class="mdl-layout-spacer"></div>\n'
-      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="BS"><input id="BS" class="network mdl-checkbox__input" type="checkbox" name="network" value="2"'..(bit32.band(key.network,2)==2 and ' checked' or '')..'><span class="mdl-checkbox__label">BS</span></label></div><div class="mdl-layout-spacer"></div>\n'
-      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="CS"><input id="CS" class="network mdl-checkbox__input" type="checkbox" name="network" value="4"'..(bit32.band(key.network,4)==4 and ' checked' or '')..'><span class="mdl-checkbox__label">CS</span></label></div><div class="mdl-layout-spacer"></div>\n'
-      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="other"><input id="other" class="network mdl-checkbox__input" type="checkbox" name="network" value="8"'..(bit32.band(key.network,8)==8 and ' checked' or '')..'><span class="mdl-checkbox__label">その他</span></label></div><div class="mdl-layout-spacer"></div>\n'
-      ..'<input type="hidden" name="network" value="0">\n'
-      ..'</div></div>\n'
-  end
---]=]
-
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
     ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="service" name="serviceList" multiple size="5">'
@@ -714,14 +664,14 @@ function SerchTemplate(si)
   end
   for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
     NetworkList[NetworkIndex(v)]=true
-    s=s..'\n<option class="network'..NetworkIndex(v)..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
+    s=s..'\n<option class="network'..NetworkIndex(v)..(not oneseg and NetworkIndex()[NetworkIndex(v)]=='ワンセグ' and ' hide' or '')..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
     for j,w in ipairs(si.serviceList) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         s=s..' selected'
         break
       end
     end
-    s=s..'>'..v.serviceName
+    s=s..'>('..NetworkIndex()[NetworkIndex(v)]..') '..v.serviceName
   end
 
   s=s..'\n</select></div>\n'
@@ -732,7 +682,7 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell--4-col-phone"><label for="image" class="mdl-checkbox mdl-js-checkbox"><input id="image" class="mdl-checkbox__input" type="checkbox" checked><span class="mdl-checkbox__label">映像のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
   for i,v in ipairs(NetworkList) do
     if v then
-      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input" type="checkbox" value=".network'..i..'" checked><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
+      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input" type="checkbox" value=".network'..i..'"'..(not oneseg and NetworkIndex()[i]=='ワンセグ' and '' or ' checked')..'><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
     end
   end
   s=s..'</div>\n'
@@ -872,7 +822,7 @@ end
 
 --プレイヤー
 function player(video, audio, xcode)
-  local list = edcb.GetPrivateProfile('set','quality','',path)
+  local list = edcb.GetPrivateProfile('set','quality','',ini)
   local s='<div id="player" class="is-small">\n'
 ..video..[=[
 <div id="control" class="ext bar is-visible">
@@ -919,13 +869,48 @@ function player(video, audio, xcode)
   return s
 end
 
+--タイトルのマークを装飾
+function mark(a)
+ return '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">'..a..'</span>'
+end
+function ConvertTitle(title)
+  return title:gsub('%[(新)%]', mark('%1')):gsub('%[(終)%]', mark('%1')):gsub('%[(再)%]', mark('%1'))
+    :gsub('%[(交)%]', mark('%1')):gsub('%[(映)%]', mark('%1')):gsub('%[(手)%]', mark('%1'))
+    :gsub('%[(声)%]', mark('%1')):gsub('%[(多)%]', mark('%1')):gsub('%[(字)%]', mark('%1'))
+    :gsub('%[(二)%]', mark('%1')):gsub('%[(Ｓ)%]', mark('%1')):gsub('%[(Ｂ)%]', mark('%1'))
+    :gsub('%[(SS)%]', mark('%1')):gsub('%[(無)%]', mark('%1')):gsub('%[(Ｃ)%]', mark('%1'))
+    :gsub('%[(S1)%]', mark('%1')):gsub('%[(S2)%]', mark('%1')):gsub('%[(S3)%]', mark('%1'))
+    :gsub('%[(MV)%]', mark('%1')):gsub('%[(双)%]', mark('%1')):gsub('%[(デ)%]', mark('%1'))
+    :gsub('%[(Ｄ)%]', mark('%1')):gsub('%[(Ｎ)%]', mark('%1')):gsub('%[(Ｗ)%]', mark('%1'))
+    :gsub('%[(Ｐ)%]', mark('%1')):gsub('%[(HV)%]', mark('%1')):gsub('%[(SD)%]', mark('%1'))
+    :gsub('%[(天)%]', mark('%1')):gsub('%[(解)%]', mark('%1')):gsub('%[(料)%]', mark('%1'))
+    :gsub('%[(前)%]', mark('%1')):gsub('%[(後)%]', mark('%1')):gsub('%[(初)%]', mark('%1'))
+    :gsub('%[(生)%]', mark('%1')):gsub('%[(販)%]', mark('%1')):gsub('%[(吹)%]', mark('%1'))
+    :gsub('%[(PPV)%]', mark('%1')):gsub('%[(演)%]', mark('%1')):gsub('%[(移)%]', mark('%1'))
+    :gsub('%[(他)%]', mark('%1')):gsub('%[(収)%]', mark('%1')):gsub('　', ' ')
+end
+
+--検索等のリンクを派生
+local authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)
+local details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
+function ConvertSearch(v, service_name)
+  local title=mg.url_encode(v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or '')
+  local startTime=os.time(v.startTime)
+  local endTime=v.durationSecond and startTime+v.durationSecond or startTime
+  local text_char=v.shortInfo.text_char:gsub('%%', '%%%%')
+  return '<a class="mdl-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
+    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
+    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
+    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&text='..title..'&location='..mg.url_encode(service_name)..'&dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&details='..mg.url_encode(details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
+end
+
 function RecModeTextList()
   return {'全サービス','指定サービスのみ','全サービス（デコード処理なし）','指定サービスのみ（デコード処理なし）','視聴','無効'}
 end
 
 function NetworkIndex(v)
   return not v and {'地デジ','ワンセグ','BS','CS','124/128度CS','その他'}
-    or NetworkType(v.onid)=='地デジ' and (v.service_type or v.serviceType)==0x01 and 1 or NetworkType(v.onid)=='地デジ' and (v.partialReceptionFlag or v.partialFlag) and 2 or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/128CS'and 5 or 6
+    or NetworkType(v.onid)=='地デジ' and ((v.service_type or v.serviceType)==0x01 and 1 or (v.partialReceptionFlag or v.partialFlag) and 2) or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/128CS'and 5 or 6
 end
 
 function NetworkType(onid)
@@ -955,7 +940,7 @@ function SelectChDataList(a)
 end
 
 function CustomServiceList()
-  local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))~=0
+  local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
   local NOT_SUBCH={
     --サブチャンネルでない、結合させないものを指定
     ['4-16626-202']=true, --スターチャンネル3
@@ -967,22 +952,21 @@ function CustomServiceList()
 
   local a=edcb.GetServiceList() or {}
   local HIDE_SERVICES={}
-  local count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-  if count>0 then
-    for i=0,count do
-      HIDE_SERVICES[''..edcb.GetPrivateProfile('HIDE','hide'..i,0,path)]=true
-    end
+  for i=0,1000 do
+    local key=edcb.GetPrivateProfile('HIDE','hide'..i,false,ini)
+    if key=='0' then break end
+    HIDE_SERVICES[key]=true
   end
 
   local ServiceList={}
-  count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
-  if count>0 then
+  if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
     local GetServiceList={}
     for i,v in ipairs(a) do
       GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
     end
-    for i=0,count do
-      local key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+    for i=0,1000 do
+      local key=edcb.GetPrivateProfile('SORT','sort'..i,false,ini)
+      if key=='0' then break end
       local v=GetServiceList[key]
       if v then
         v.hide=HIDE_SERVICES[key]

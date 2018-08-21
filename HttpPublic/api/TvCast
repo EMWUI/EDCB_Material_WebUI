@@ -1,7 +1,7 @@
 -- vim:set ft=lua:
-path='Setting\\HttpPublic.ini'
+ini='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg',path)
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg',ini)
 NwTV=dir..'NwTV.ps1'
 
 onid=tonumber(mg.get_var(mg.request_info.query_string, 'onid'))
@@ -9,15 +9,15 @@ tsid=tonumber(mg.get_var(mg.request_info.query_string, 'tsid'))
 sid=tonumber(mg.get_var(mg.request_info.query_string, 'sid'))
 mode=tonumber(mg.get_var(mg.request_info.query_string, 'mode')) or 2
 
-mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,path))~=0
+mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,ini))~=0
 
 -- 変換コマンド
 quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
 
 if mp4 then
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',ini)
 else
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',path)
+  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',ini)
 end
 
 audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
@@ -27,16 +27,16 @@ if audio then
   elseif audio<10 then
     XOPT='-map 0:0 -map 0:'..audio..' '..XOPT
   elseif audio==10 then
-    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FL] -map [FR] '..XOPT  --デュアルモノ[日]
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FL] -map [FR] -metadata:s:a:0 language=jpn -metadata:s:a:1 language=eng '..XOPT  --デュアルモノ[日]
   elseif audio==11 then
-    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FR] -map [FL] '..XOPT  --デュアルモノ[英]
+    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FR] -map [FL] -metadata:s:a:0 language=eng -metadata:s:a:1 language=jpn '..XOPT  --デュアルモノ[英]
   end
 end
 
 -- 変換後の拡張子
 XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
-XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,path))
+XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,ini))
 
 n=math.floor(tonumber(mg.get_var(mg.request_info.query_string, 'n')) or 0)
 if n<0 then

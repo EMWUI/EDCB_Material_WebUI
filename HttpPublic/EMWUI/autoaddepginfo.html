@@ -1,10 +1,5 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-
-path='Setting\\HttpPublic.ini'
-subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
-DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','10',path))
 
 epg=mg.get_var(mg.request_info.query_string,'epg')
 week=mg.get_var(mg.request_info.query_string,'week')
@@ -17,7 +12,7 @@ page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',0,25) or week and 4 or 0
 interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
-CH_COUNT=GetVarInt(mg.request_info.query_string,'chcount') or DEF_CH_COUNT
+CH_COUNT=GetVarInt(mg.request_info.query_string,'chcount')
 pageIndex=GetVarInt(mg.request_info.query_string,'chpage',0,100000) or 0
 
 edcb.htmlEscape=15
@@ -27,28 +22,7 @@ post=AssertPost()
 aa={dataID=GetVarInt(mg.request_info.query_string,'id') or 0}
 if aa.dataID==0 then
   ct={title='EPG予約 新規追加'}
-  aa.searchInfo={
-    andKey='',
-    notKey='',
-    regExpFlag=false,
-    titleOnlyFlag=false,
-    aimaiFlag=false,
-    notContetFlag=false,
-    freeCAFlag=0,
-    chkRecEnd=false,
-    chkRecDay=6,
-    chkRecNoService=false,
-    chkDurationMin=0,
-    chkDurationMax=0,
-    contentList={},
-    dateList={},
-    serviceList={}
-  }
-  for i,v in ipairs(edcb.GetChDataList()) do
-    if v.searchFlag then
-      table.insert(aa.searchInfo.serviceList, v)
-    end
-  end
+  aa.searchInfo=getSearchKey()
 else
   ct={title='EPG予約 条件変更'}
   for i,v in ipairs(edcb.EnumAutoAdd()) do
@@ -62,54 +36,7 @@ end
 if aa.searchInfo then
   si=aa.searchInfo
   if post then
-    si.andKey=(mg.get_var(post,'disableFlag') and '^!{999}' or '')
-      ..(GetVarInt(post,'caseFlag')==1 and 'C!{999}' or '')
-      ..(mg.get_var(post,'andKey') or ''):gsub('%c','')
-    si.notKey=mg.get_var(post, 'notKey')
-    si.regExpFlag=mg.get_var(post, 'regExpFlag')
-    si.titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag')
-    si.aimaiFlag=mg.get_var(post, 'aimaiFlag')
-    si.notContetFlag=mg.get_var(post, 'notContetFlag')
-    si.notDateFlag=mg.get_var(post, 'notDateFlag')
-    si.freeCAFlag=tonumber(mg.get_var(post, 'freeCAFlag')) or 0
-    si.chkRecEnd=mg.get_var(post, 'chkRecEnd')
-    si.chkRecDay=mg.get_var(post, 'chkRecDay') or 0
-    si.chkRecNoService=(tonumber(mg.get_var(post, 'chkRecNoService')) or 0)~=0
-    si.chkDurationMin=tonumber(mg.get_var(post, 'chkDurationMin')) or 0
-    si.chkDurationMax=tonumber(mg.get_var(post, 'chkDurationMax')) or 0
-    si.contentList={}
-    for i=0,10000 do
-      v=mg.get_var(post, 'contentList', i)
-      if not v then break end
-      table.insert(si.contentList, {content_nibble=tonumber(v) or 0})
-    end
-    si.serviceList={}
-    for i=0,10000 do
-      v=mg.get_var(post, 'serviceList', i)
-      if not v then break end
-      m={v:match('^(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)$')}
-      if #m==3 then
-        table.insert(si.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-      end
-    end
-    si.dateList={}
-    for v in string.gmatch(mg.get_var(post, 'dateList') or '', '[^,]+') do
-      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-      if #m==6 then
-        dateInfo={
-          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-          startHour=0+m[2],
-          startMin=0+m[3],
-          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]],
-          endHour=0+m[5],
-          endMin=0+m[6]
-        }
-        if dateInfo.startDayOfWeek and dateInfo.startHour<24 and dateInfo.startMin<60 and
-           dateInfo.endDayOfWeek and dateInfo.endHour<24 and dateInfo.endMin<60 then
-          table.insert(aa.searchInfo.dateList,dateInfo)
-        end
-      end
-    end
+    si=getSearchKey(post)
   end
   si.disableFlag=si.andKey:match('^^!{999}(.*)')
   si.caseFlag=(si.disableFlag or si.andKey):match('^C!{999}(.*)')
@@ -119,7 +46,7 @@ if aa.searchInfo then
   if aa.dataID==0 then redirect='autoaddepg.html'..(page~=0 and '?page='..page or '') end
 
   --コメントアウトを外すと追加後このURLに移動、ここで生成したURLはメンテナンスしてなく一部データが抜けてるかも
-  --redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&interval='..interval or '')
+  --redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT and '&chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&interval='..interval or '')
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
@@ -176,10 +103,9 @@ if aa.searchInfo then
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
     ..'</div>\n</div>\n</div>\n'
 
-end
-
   ct.tab='<a href="#search" class="mdl-layout__tab is-active">検索条件</a>\n'
        ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
+end
 
 ct=template(ct)
 

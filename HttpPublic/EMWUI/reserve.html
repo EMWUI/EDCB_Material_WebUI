@@ -1,37 +1,29 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-path='Setting\\HttpPublic.ini'
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
-
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
-
-ct={title='予約一覧'}
-
-ct.css='<style>.partially{background:'..partially..';}'..'.shortage{background:'..shortage..';}</style>\n'
-
-ct.progres=true
-
-if sidePanel then ct.macro=true end
+ct={
+  title='予約一覧',
+  css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
+  ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+  ..';}</style>\n',
+  progres=true,
+  macro=sidePanel
+}
 
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
 table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
-if PAGE_COUNT==0 then
-  PAGE_COUNT=#a
-end
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if math.ceil((#a/PAGE_COUNT)-1)>0 then
   pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="reserve.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
     ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="reserve.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
 
-  first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
-  for i=first, first+4 do
+  n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  for i=n, n+4 do
     pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="reserve.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
   end
 

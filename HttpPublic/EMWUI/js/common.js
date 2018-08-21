@@ -1,4 +1,4 @@
-﻿var defRecSetting, PresetList, ReserveAutoaddList;
+﻿var PresetList, ReserveAutoaddList;
 var isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in window);
 var week = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -358,10 +358,6 @@ function getEpgInfo(target, data, past){
 								}
 								ReserveAutoaddList[key]=$(this);
 							});
-							defRecSetting={
-								serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-								suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-							}
 							action();
 						});
 					}
@@ -410,10 +406,6 @@ function getEpgInfo(target, data, past){
 									}
 									ReserveAutoaddList[key]=$(this);
 								});
-								defRecSetting={
-									serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-									suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-								}
 								action();
 							});
 						}
@@ -569,10 +561,6 @@ function setAutoAdd(target){
 				$(xhr.responseXML).find('autoaddinfo').each(function(){
 					ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 				});
-				defRecSetting={
-					serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-					suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-				}
 				action();
 			});
 		}
@@ -736,7 +724,7 @@ function setRecSettting(self){
 	if (serviceMode%2 == 0){
 		$('[name=serviceMode]').prop('checked', true).parent().addClass('is-checked');
 		$('.smode').find('.mdl-checkbox').addClass('is-disabled').find('input').prop('checked', false).prop('disabled', true);
-		serviceMode = defRecSetting.serviceMode;
+		serviceMode = recset.children('defserviceMode').text();
 	}else{
 		$('[name=serviceMode]').prop('checked', false).parent().removeClass('is-checked');
 		$('.smode').find('.mdl-checkbox').removeClass('is-disabled').find('input').prop('disabled', false);
@@ -833,10 +821,6 @@ function setDefault(mark){
 			$(xhr.responseXML).find('recpresetinfo').each(function(){
 				PresetList[$(this).find('id').text()]=$(this);
 			});
-			defRecSetting={
-				serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-				suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-			}
 			setDefault(mark);
 		});
 	}
@@ -997,13 +981,6 @@ $(function(){
 	});
 	$('.close_info').click(function(){
 		$('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open');
-	});
-	//検索ページ用
-	$('[data-search]').click(function(e){
-		if (!$(e.target).is('.flag, .flag *')){
-			if ($('#advanced').prop('checked')) $('#hidden').append( $('<input>', { type: 'hidden', name: 'advanced', value: '1' }) );
-			$('#hidden').attr('action', $(this).data('search')).submit();
-		}
 	});
 
 	//drawer ドロップダウン
@@ -1313,10 +1290,6 @@ $(function(){
 					$(xhr.responseXML).find('recpresetinfo').each(function(){
 						PresetList[$(this).find('id').text()]=$(this);
 					});
-					defRecSetting={
-						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-					}
 					action(PresetList, key);
 				});
 			}
@@ -1341,10 +1314,6 @@ $(function(){
 						}
 						ReserveAutoaddList[key]=$(this);
 					});
-					defRecSetting={
-						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-					}
 					action(ReserveAutoaddList, key);
 				});
 			}
@@ -1358,10 +1327,6 @@ $(function(){
 					$(xhr.responseXML).find('autoaddinfo').each(function(){
 						ReserveAutoaddList[$(this).find('ID').text()]=$(this);
 					});
-					defRecSetting={
-						serviceMode: $(xhr.responseXML).find('default').children('serviceMode').text(),
-						suspendMode: $(xhr.responseXML).find('default').children('suspendMode').text()==1
-					}
 					action(ReserveAutoaddList, key);
 				});
 			}
@@ -1534,7 +1499,7 @@ $(function(){
 							$('.open .keyword').text($('#andKey').val());
 							$('.open .notkeyword').text($('#notKey').val());
 							var count = $('#service option:selected').length-1;
-							$('.open .servicelist').html($('#service option:selected:first').text()+(count>0 ? '<small>.他'+count+'ch' : ''));
+							$('.open .servicelist').html($('#service option:selected:first').text().replace(/^\(.*\)\s/g, '')+(count>0 ? '<small>.他'+count+'ch' : ''));
 							count = $('#contentList option:selected').length;
 							$('.open .category').html( (count==0 ? '全ジャンル' : $('#contentList option:selected:first').text()+(count>1 ? '<small>.他'+(count-1)+'ch' : '')) );
 							$('.open .mode').text($('[name=recMode] option:selected').text());

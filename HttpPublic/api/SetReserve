@@ -12,55 +12,9 @@ function recSetting(r,post)
       end
     end
   end
+  r.recSetting=getRecSetting(r.recSetting, post)
   if r.recSetting then
-    local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
-    r.recSetting={
-      batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or r.recSetting.batFilePath,
-      recFolderList=r.recSetting.recFolderList,
-      partialRecFolder=r.recSetting.partialRecFolder,
-      recMode=GetVarInt(post,'recMode',0,5),
-      tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1,
-      priority=GetVarInt(post,'priority',1,5),
-      pittariFlag=GetVarInt(post,'pittariFlag')==1,
-      suspendMode=GetVarInt(post,'suspendMode',0,4),
-      rebootFlag=GetVarInt(post,'rebootFlag')==1,
-      startMargin=useMargin and GetVarInt(post,'startMargin'),
-      endMargin=useMargin and GetVarInt(post,'endMargin'),
-      serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0),
-      continueRecFlag=GetVarInt(post,'continueRecFlag')==1,
-      tunerID=GetVarInt(post,'tunerID'),
-      partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
-    }
-    if mg.get_var(post, 'recFolder') then
-      r.recSetting.recFolderList={}
-      for i=0,10000 do
-        if not mg.get_var(post, 'recFolder', i) then break end
-        table.insert(r.recSetting.recFolderList, {
-          recFolder=mg.get_var(post, 'recFolder', i),
-          writePlugIn=mg.get_var(post, 'writePlugIn', i),
-          recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
-        } )
-      end
-    end
-    if mg.get_var(post, 'partialrecFolder') then
-      r.recSetting.partialrecFolder={}
-      for i=0,10000 do
-        if not mg.get_var(post, 'partialrecFolder', i) then break end
-        table.insert(r.recSetting.partialRecFolder, {
-          recFolder=mg.get_var(post, 'partialrecFolder', i),
-          writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-          recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
-        } )
-      end
-    end
-    if r.recSetting.recMode and
-       r.recSetting.priority and
-       r.recSetting.suspendMode and
-       (not useMargin or r.recSetting.startMargin and r.recSetting.endMargin) and
-       r.recSetting.tunerID
-    then
-      return r
-    end
+    return r
   end
   return false
 end
@@ -99,8 +53,7 @@ if post then
     tsid=GetVarInt(post, 'tsid') or 0
     sid=GetVarInt(post, 'sid') or 0
     eid=GetVarInt(post, 'eid') or 0
-    r={onid=onid,tsid=tsid,sid=sid,eid=eid}
-    r=recSetting(r,post)
+    r=recSetting({onid=onid,tsid=tsid,sid=sid,eid=eid},post)
     if r then
       r=eventInfo(r)
       if r then
@@ -208,9 +161,7 @@ if done then
   rsdef=edcb.GetReserveData(0x7FFFFFFF)
 
   messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success>'
-    ..(rsdef and '<default><suspendMode>'
-    ..rsdef.recSetting.suspendMode..'</suspendMode><serviceMode>'
-    ..rsdef.recSetting.serviceMode..'</serviceMode></default>' or '')..'<reserveinfo><ID>'
+    ..'<reserveinfo><ID>'
     ..r.reserveID..'</ID><title>'
     ..r.title..'</title><startDate>'
     ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
@@ -223,35 +174,9 @@ if done then
     ..r.sid..'</SID><eventID>'
     ..r.eid..'</eventID><comment>'
     ..r.comment..'</comment><overlapMode>'
-    ..r.overlapMode..'</overlapMode><recsetting><recMode>'
-    ..r.recSetting.recMode..'</recMode><priority>'
-    ..r.recSetting.priority..'</priority><tuijyuuFlag>'
-    ..(r.recSetting.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
-    ..r.recSetting.serviceMode..'</serviceMode><pittariFlag>'
-    ..(r.recSetting.pittariFlag and 1 or 0)..'</pittariFlag><batFilePath>'
-    ..r.recSetting.batFilePath..'</batFilePath><recFolderList>'
-  for j,w in ipairs(r.recSetting.recFolderList) do
-    messege=messege..'<recFolderInfo><recFolder>'
-      ..w.recFolder..'</recFolder><writePlugIn>'
-      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>'
-  end
-  messege=messege..'</recFolderList><suspendMode>'
-    ..r.recSetting.suspendMode..'</suspendMode><rebootFlag>'
-    ..(r.recSetting.rebootFlag and 1 or 0)..'</rebootFlag><useMargineFlag>'
-    ..(r.recSetting.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
-    ..(r.recSetting.startMargin or rsdef and rsdef.recSetting.startMargin or 0)..'</startMargine><endMargine>'
-    ..(r.recSetting.endMargin or rsdef and rsdef.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
-    ..(r.recSetting.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
-    ..r.recSetting.partialRecFlag..'</partialRecFlag><tunerID>'
-    ..r.recSetting.tunerID..'</tunerID><partialRecFolder>'
-  for j,w in ipairs(r.recSetting.partialRecFolder) do
-    messege=messege..'<recFolderInfo><recFolder>'
-      ..w.recFolder..'</recFolder><writePlugIn>'
-      ..w.writePlugIn..'</writePlugIn><recNamePlugIn>'
-      ..w.recNamePlugIn..'</recNamePlugIn></recFolderInfo>'
-  end
-  messege=messege..'</partialRecFolder></recsetting><recFileNameList>'
+    ..r.overlapMode..'</overlapMode>'
+    ..xmlRecSetting(r.recSetting, rsdef)
+    ..'<recFileNameList>'
   for j,w in ipairs(r.recFileNameList) do
     messege=messege..'<name>'..w..'</name>'
   end

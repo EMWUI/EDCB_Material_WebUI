@@ -1,28 +1,21 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
-path='Setting\\HttpPublic.ini'
-disable=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 ct={title='EPG予約'}
 
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
-if PAGE_COUNT==0 then
-  PAGE_COUNT=#a
-end
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if math.ceil((#a/PAGE_COUNT)-1)>0 then
   pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
     ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
 
-  first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
-  for i=first, first+4 do
+  n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  for i=n, n+4 do
     pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="autoaddepg.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
   end
 
@@ -37,29 +30,6 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 if sidePanel then
   ct.macro=true
 
-  si={
-    andKey='',
-    notKey='',
-    regExpFlag=false,
-    titleOnlyFlag=false,
-    aimaiFlag=false,
-    notContetFlag=false,
-    freeCAFlag=0,
-    chkRecEnd=false,
-    chkRecDay=6,
-    chkRecNoService=false,
-    chkDurationMin=0,
-    chkDurationMax=0,
-    contentList={},
-    dateList={},
-    serviceList={},
-    side=sidePanel
-  }
-  for i,v in ipairs(edcb.GetChDataList()) do
-    if v.searchFlag then
-      table.insert(si.serviceList, v)
-    end
-  end
   ct.main=ct.main..[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">EPG予約</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><span class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></span></div>
@@ -71,7 +41,7 @@ if sidePanel then
 <div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>
 <input type="hidden" name="addchg" value="1">
 <div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag"></label><span class="mdl-switch__label"></span></div></div>
-]=]..SerchTemplate(si)..[=[
+]=]..SerchTemplate(getSearchKey())..[=[
 </div></section>
 <section class="panel-swipe mdl-tabs__panel" id="recset">
 <div class="form mdl-grid mdl-grid--no-spacing">

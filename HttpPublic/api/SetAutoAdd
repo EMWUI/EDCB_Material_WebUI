@@ -22,110 +22,14 @@ if post then
         end
       end
     end
+    aa.recSetting=getRecSetting(aa.recSetting, post)
     if aa.recSetting then
-      useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
-      aa.recSetting={
-        batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or aa.recSetting.batFilePath,
-        recFolderList=aa.recSetting.recFolderList,
-        partialRecFolder=aa.recSetting.partialRecFolder,
-        recMode=GetVarInt(post,'recMode',0,5),
-        tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1,
-        priority=GetVarInt(post,'priority',1,5),
-        pittariFlag=GetVarInt(post,'pittariFlag')==1,
-        suspendMode=GetVarInt(post,'suspendMode',0,4),
-        rebootFlag=GetVarInt(post,'rebootFlag')==1,
-        startMargin=useMargin and GetVarInt(post,'startMargin',-6*3600,6*3600),
-        endMargin=useMargin and GetVarInt(post,'endMargin',-6*3600,6*3600),
-        serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or
-          1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0),
-        continueRecFlag=GetVarInt(post,'continueRecFlag')==1,
-        tunerID=GetVarInt(post,'tunerID'),
-        partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
-      }
-      if mg.get_var(post, 'recFolder') then
-        aa.recSetting.recFolderList={}
-        for i=0,10000 do
-          if not mg.get_var(post, 'recFolder', i) then break end
-          table.insert(aa.recSetting.recFolderList, {
-            recFolder=mg.get_var(post, 'recFolder', i),
-            writePlugIn=mg.get_var(post, 'writePlugIn', i),
-            recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
-          } )
-        end
-      end
-      if mg.get_var(post, 'partialrecFolder') then
-        aa.recSetting.partialrecFolder={}
-        for i=0,10000 do
-          if not mg.get_var(post, 'partialrecFolder', i) then break end
-          table.insert(rs.partialRecFolder, {
-            recFolder=mg.get_var(post, 'partialrecFolder', i),
-            writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-            recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
-          } )
-        end
-      end
-      if aa.recSetting.recMode and
-         aa.recSetting.priority and
-         aa.recSetting.suspendMode and
-         (not useMargin or aa.recSetting.startMargin and aa.recSetting.endMargin) and
-         aa.recSetting.tunerID
-      then
-        aa.searchInfo={
-          andKey=(mg.get_var(post,'disableFlag') and '^!{999}' or '')
-            ..(GetVarInt(post,'caseFlag') and 'C!{999}' or '')
-            ..(mg.get_var(post,'andKey') or ''):gsub('%c',''),
-          notKey=mg.get_var(post, 'notKey') or '',
-          regExpFlag=GetVarInt(post,'regExpFlag')==1,
-          titleOnlyFlag=GetVarInt(post,'titleOnlyFlag')==1,
-          aimaiFlag=GetVarInt(post,'aimaiFlag')==1,
-          notContetFlag=GetVarInt(post,'notContetFlag')==1,
-          notDateFlag=GetVarInt(post,'notDateFlag')==1,
-          freeCAFlag=GetVarInt(post,'freeCAFlag',0,2) or 0,
-          chkRecEnd=GetVarInt(post,'chkRecEnd')==1,
-          chkRecDay=GetVarInt(post,'chkRecDay') or 0,
-          chkRecNoService=GetVarInt(post,'chkRecNoService')==1,
-          chkDurationMin=GetVarInt(post,'chkDurationMin') or 0,
-          chkDurationMax=GetVarInt(post,'chkDurationMax') or 0
-        }
-        aa.searchInfo.contentList={}
-        for i=0,10000 do
-          v=GetVarInt(post,'contentList',0,65535,i)
-          if not v then break end
-          table.insert(aa.searchInfo.contentList, {content_nibble=v})
-        end
-        aa.searchInfo.serviceList={}
-        for i=0,10000 do
-          v=mg.get_var(post, 'serviceList', i)
-          if not v then break end
-          m={v:match('^(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)%-(%d?%d?%d?%d?%d)$')}
-          if #m==3 then
-            table.insert(aa.searchInfo.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-          end
-        end
-        aa.searchInfo.dateList={}
-        for v in string.gmatch(mg.get_var(post, 'dateList') or '', '[^,]+') do
-          m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-          if #m==6 then
-            dateInfo={
-              startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-              startHour=0+m[2],
-              startMin=0+m[3],
-              endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]],
-              endHour=0+m[5],
-              endMin=0+m[6]
-            }
-            if dateInfo.startDayOfWeek and dateInfo.startHour<24 and dateInfo.startMin<60 and
-               dateInfo.endDayOfWeek and dateInfo.endHour<24 and dateInfo.endMin<60 then
-              table.insert(aa.searchInfo.dateList,dateInfo)
-            end
-          end
-        end
-        done=edcb.AddOrChgAutoAdd(aa)
-        if done then
-          messege='<success>EPG自動予約を'..(aa.dataID==0 and '追加' or '変更')..'しました</success>'
-        else
-          messege='<err>EPG自動予約を'..(aa.dataID==0 and '追加' or '変更')..'できませんでした</err>'
-        end
+      aa.searchInfo=getSearchKey(post)
+      done=edcb.AddOrChgAutoAdd(aa)
+      if done then
+        messege='<success>EPG自動予約を'..(aa.dataID==0 and '追加' or '変更')..'しました</success>'
+      else
+        messege='<err>EPG自動予約を'..(aa.dataID==0 and '追加' or '変更')..'できませんでした</err>'
       end
     end
   elseif mg.get_var(post,'del') then

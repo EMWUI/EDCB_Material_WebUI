@@ -1,55 +1,52 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-path='Setting\\HttpPublic.ini'
 
---tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,path))~=0
-Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,path))~=0
-subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
+--tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,ini))~=0
+Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
+subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
 
---Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,path))~=0
-oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,path))~=0
-hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,path))~=0
-titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,path))
-ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',path)
-MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',path)
-MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',path)
-TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',path)
-w_service=edcb.GetPrivateProfile('GUIDE','service','210',path)
-w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',path)
-w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',path)
-w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',path)
-CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',path))
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
-subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,path))~=0
+--Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,ini))~=0
+oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
+hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,ini))~=0
+titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
+ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',ini)
+MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
+MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
+TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',ini)
+w_service=edcb.GetPrivateProfile('GUIDE','service','210',ini)
+w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
+w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',ini)
+w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',ini)
+CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
+subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
 
-background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',path)
+background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',ini)
 
-news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',path)
-sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',path)
-information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',path)
-drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',path)
-music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',path)
-variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',path)
-movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',path)
-anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',path)
-documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',path)
-theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',path)
-education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',path)
-welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',path)
-extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',path)
-other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',path)
-none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',path)
-nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',path)
+news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',ini)
+sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',ini)
+information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',ini)
+drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',ini)
+music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',ini)
+variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',ini)
+movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',ini)
+anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',ini)
+documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',ini)
+theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',ini)
+education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',ini)
+welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',ini)
+extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',ini)
+other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',ini)
+none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',ini)
+nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',ini)
 
-paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,path))~=0
-reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',path)
-disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',path)
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
-partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',path)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
-shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',path)
+paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,ini))~=0
+reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',ini)
+disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',ini)
+partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
+partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',ini)
+shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',ini)
 
 CATEGORY={
   'news',
@@ -115,24 +112,22 @@ end
 edcb.htmlEscape=15
 
 HIDE_SERVICES={}
-count=tonumber(edcb.GetPrivateProfile('HIDE','count',0,path))
-if count>0 then
-  for i=0,count do
-    v=edcb.GetPrivateProfile('HIDE','hide'..i,0,path)
-    HIDE_SERVICES[''..v]=true
-  end
+for i=0,1000 do
+  v=edcb.GetPrivateProfile('HIDE','hide'..i,false,ini)
+  if key=='0' then break end
+  HIDE_SERVICES[''..v]=true
 end
 
 a=edcb.GetServiceList() or {}
 ServiceList={}
-count=tonumber(edcb.GetPrivateProfile('SORT','count',0,path))
-if count>0 then
+if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
   GetServiceList={}
   for i,v in ipairs(a) do
     GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
   end
-  for i=0,count do
-    key=edcb.GetPrivateProfile('SORT','sort'..i,0,path)
+  for i=0,1000 do
+    key=edcb.GetPrivateProfile('SORT','sort'..i,false,ini)
+    if key=='0' then break end
     v=GetServiceList[key]
     if v and GetChDataList[key] then
       v.hide=HIDE_SERVICES[key]

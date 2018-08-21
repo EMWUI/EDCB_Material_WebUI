@@ -1,26 +1,20 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-
-path='Setting\\HttpPublic.ini'
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',path)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',path)
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
 
 PAGE_COUNT=30
 tab=GetVarInt(mg.request_info.query_string,'tab') or 1
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 
-ct={title='チューナー別'}
-
-ct.css='<style>\n.partially{background:'..partially..';}'..'.shortage{background:'..shortage..';}\n</style>\n'
-
-ct.js='<script>$(function(){rec();});</script>\n'
-
-ct.progres=true
-
-if sidePanel then ct.macro=true end
+ct={
+  title='チューナー別',
+  css='<style>\n.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
+    ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+    ..';}\n</style>\n',
+  js='<script>$(function(){rec();});</script>\n',
+  progres=true,
+  macro=sidePanel
+}
 
 edcb.htmlEscape=15
 a=edcb.GetReserveData()

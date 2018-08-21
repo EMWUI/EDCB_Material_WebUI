@@ -1,12 +1,5 @@
-dofile(mg.document_root..'\\api\\util.lua')
-dofile(mg.script_name:gsub('[^\\/]*$','')..'string.lua')
+-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-
-path='Setting\\HttpPublic.ini'
-subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',path)
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,path))~=0
-
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',path))
 
 edcb.htmlEscape=15
 
@@ -17,10 +10,6 @@ if dataID~=0 then
   for i,v in ipairs(edcb.EnumAutoAdd()) do
     if v.dataID==dataID then
       key=v.searchInfo
-      key.days=0
-      key.network=0
-      disableFlag=string.match(key.andKey, '^%^%!{999}(.*)')
-      key.andKey=string.gsub(key.andKey, '^%^%!{999}(.+)', '%1')
       break
     end
   end
@@ -30,86 +19,75 @@ preset=mg.get_var(mg.request_info.query_string, 'preset')
 if preset then
   _preset=preset..'_Search'
   if GetVarInt(post, 'save')==1 then
-    list=edcb.GetPrivateProfile('search', 'list','',path)
-    for v in string.gmatch(edcb.GetPrivateProfile('search','list','',path), '[^,]+') do
+    list=edcb.GetPrivateProfile('search', 'list','',ini)
+    for v in string.gmatch(edcb.GetPrivateProfile('search','list','',ini), '[^,]+') do
       if v==preset then  --上書き
-        edcb.WritePrivateProfile(_preset, nil, '', path)
+        edcb.WritePrivateProfile(_preset, nil, '',ini)
         done=true
         break
       end
     end
-    if not done then edcb.WritePrivateProfile('search', 'list', list..preset..',', path) end
+    if not done then edcb.WritePrivateProfile('search', 'list', list..preset..',',ini) end
 
-    edcb.WritePrivateProfile(_preset, 'andKey', (GetVarInt(post,'caseFlag')==1  and 'C!{999}' or '')..mg.get_var(post,'andKey'), path)
-    edcb.WritePrivateProfile(_preset, 'notKey', mg.get_var(post,'notKey'), path)
-    edcb.WritePrivateProfile(_preset, 'regExpFlag', GetVarInt(post,'regExpFlag')==1, path)
-    edcb.WritePrivateProfile(_preset, 'titleOnlyFlag', GetVarInt(post,'titleOnlyFlag')==1, path)
-    edcb.WritePrivateProfile(_preset, 'aimaiFlag', GetVarInt(post,'aimaiFlag')==1, path)
-    edcb.WritePrivateProfile(_preset, 'notContetFlag', GetVarInt(post,'notContetFlag')==1, path)
-    edcb.WritePrivateProfile(_preset, 'notDateFlag', GetVarInt(post,'notDateFlag')==1, path)
-    edcb.WritePrivateProfile(_preset, 'freeCAFlag', GetVarInt(post,'freeCAFlag'), path)
-    edcb.WritePrivateProfile(_preset, 'chkRecEnd', GetVarInt(post,'chkRecEnd')==1, path)
-    edcb.WritePrivateProfile(_preset, 'chkRecDay', GetVarInt(post,'chkRecDay'), path)
-    edcb.WritePrivateProfile(_preset, 'chkRecNoService', GetVarInt(post,'chkRecNoService')==1, path)
-    edcb.WritePrivateProfile(_preset, 'chkDurationMin', GetVarInt(post,'chkDurationMin'), path)
-    edcb.WritePrivateProfile(_preset, 'chkDurationMax', GetVarInt(post,'chkDurationMax'), path)
-    edcb.WritePrivateProfile(_preset, 'days', GetVarInt(post,'days'), path)
-    edcb.WritePrivateProfile(_preset, 'days29', GetVarInt(post,'days29'), path)
-    edcb.WritePrivateProfile(_preset, 'dateList', mg.get_var(post,'dateList'), path)
-    edcb.WritePrivateProfile(_preset, 'lock', GetVarInt(post,'lock')==1, path)
-    network=0
-    for i=0,10000 do
-      v=mg.get_var(post, 'network', i)
-      if not v then break end
-      network=network+v
-    end
-    edcb.WritePrivateProfile(_preset, 'network', mg.get_var(post,'network'), path)
+    edcb.WritePrivateProfile(_preset, 'andKey', (GetVarInt(post,'caseFlag') and 'C!{999}' or '')..mg.get_var(post,'andKey'),ini)
+    edcb.WritePrivateProfile(_preset, 'notKey', mg.get_var(post,'notKey'),ini)
+    edcb.WritePrivateProfile(_preset, 'regExpFlag', GetVarInt(post,'regExpFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'titleOnlyFlag', GetVarInt(post,'titleOnlyFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'aimaiFlag', GetVarInt(post,'aimaiFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'notContetFlag', GetVarInt(post,'notContetFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'notDateFlag', GetVarInt(post,'notDateFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'freeCAFlag', GetVarInt(post,'freeCAFlag'),ini)
+    edcb.WritePrivateProfile(_preset, 'chkRecEnd', GetVarInt(post,'chkRecEnd'),ini)
+    edcb.WritePrivateProfile(_preset, 'chkRecDay', GetVarInt(post,'chkRecDay'),ini)
+    edcb.WritePrivateProfile(_preset, 'chkRecNoService', GetVarInt(post,'chkRecNoService'),ini)
+    edcb.WritePrivateProfile(_preset, 'chkDurationMin', GetVarInt(post,'chkDurationMin'),ini)
+    edcb.WritePrivateProfile(_preset, 'chkDurationMax', GetVarInt(post,'chkDurationMax'),ini)
+    edcb.WritePrivateProfile(_preset, 'days', GetVarInt(post,'days'),ini)
+    edcb.WritePrivateProfile(_preset, 'dateList', mg.get_var(post,'dateList'),ini)
+    edcb.WritePrivateProfile(_preset, 'lock', GetVarInt(post,'lock'),ini)
     for i=0,10000 do
       v=mg.get_var(post, 'contentList', i)
       if not v then break end
-      edcb.WritePrivateProfile(_preset, 'contentList'..i, v, path)
+      edcb.WritePrivateProfile(_preset, 'contentList'..i, v,ini)
     end
     for i=1,10000 do
       v=mg.get_var(post, 'serviceList', i)
       if not v then break end
-      edcb.WritePrivateProfile(_preset, 'serviceList'..i, v, path)
+      edcb.WritePrivateProfile(_preset, 'serviceList'..i, v,ini)
     end
   elseif GetVarInt(post, 'del')==1 then
-    edcb.WritePrivateProfile(_preset, nil, '', path)
-    edcb.WritePrivateProfile('search', 'list', edcb.GetPrivateProfile('search','list','',path):gsub(preset..',',''), path)
+    edcb.WritePrivateProfile(_preset, nil, '',ini)
+    edcb.WritePrivateProfile('search', 'list', edcb.GetPrivateProfile('search','list','',ini):gsub(preset..',',''),ini)
   else
     key={
-      andKey=edcb.GetPrivateProfile(_preset,'andKey','',path),
-      notKey=edcb.GetPrivateProfile(_preset,'notKey','',path),
-      regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,path))~=0,
-      titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,path))~=0,
-      aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,path))~=0,
-      notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,path))~=0,
-      notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,path))~=0,
-      freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,path)),
-      chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,path))~=0,
-      chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,path)),
-      chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,path))~=0,
-      chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,path)),
-      chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,path)),
-      network=edcb.GetPrivateProfile(_preset,'network',0,path),
-      days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,path)),
-      days29=tonumber(edcb.GetPrivateProfile(_preset,'days29',0,path)),
+      andKey=edcb.GetPrivateProfile(_preset,'andKey','',ini),
+      notKey=edcb.GetPrivateProfile(_preset,'notKey','',ini),
+      regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,ini))~=0,
+      titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,ini))~=0,
+      aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,ini))~=0,
+      notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,ini))~=0,
+      notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,ini))~=0,
+      freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,ini)),
+      chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,ini))~=0,
+      chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,ini)),
+      chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,ini))~=0,
+      chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,ini)),
+      chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,ini)),
+      days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,ini)),
       contentList={},
       serviceList={},
       dateList={},
-      lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,path))~=0,
-      search=true
+      lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,ini))~=0,
     }
 
     for i=0,1000 do
-      v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,path))
+      v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,ini))
       if v==0 then break end
       table.insert(key.contentList, {content_nibble=v})
     end
 
     for i=0,1000 do
-      v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,path)
+      v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,ini)
       if v==0 then break end
       m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
       if #m==3 then
@@ -117,9 +95,8 @@ if preset then
       end
     end
 
-    for v in string.gmatch(edcb.GetPrivateProfile(preset_,'dateList','',path), '[^,]+') do
+    for v in string.gmatch(edcb.GetPrivateProfile(preset_,'dateList','',ini), '[^,]+') do
       m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-      dateList=v
       if #m==6 then
         dateInfo={
           startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
@@ -136,142 +113,24 @@ if preset then
     end
   end
 end
-
 
 if not key then
-  key={
-    andKey=((GetVarInt(post,'caseFlag') or mg.get_var(mg.request_info.query_string, 'caseFlag'))==1  and 'C!{999}' or '')
-      ..(mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or ''),
-    notKey=mg.get_var(post, 'notKey') or mg.get_var(mg.request_info.query_string, 'notKey') or '',
-    regExpFlag=mg.get_var(post, 'regExpFlag') or mg.get_var(mg.request_info.query_string, 'regExpFlag') or false,
-    titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag') or mg.get_var(mg.request_info.query_string, 'titleOnlyFlag') or false,
-    aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag') or false,
-    notContetFlag=mg.get_var(post, 'notContetFlag') or mg.get_var(mg.request_info.query_string, 'notContetFlag') or false,
-    notDateFlag=mg.get_var(post, 'notDateFlag') or mg.get_var(mg.request_info.query_string, 'notDateFlag') or false,
-    freeCAFlag=GetVarInt(post, 'freeCAFlag') or GetVarInt(mg.request_info.query_string, 'freeCAFlag') or 0,
-    chkRecEnd=mg.get_var(post, 'chkRecEnd') or mg.get_var(mg.request_info.query_string, 'chkRecEnd') or false,
-    chkRecDay=mg.get_var(post, 'chkRecDay') or mg.get_var(mg.request_info.query_string, 'chkRecDay') or 0,
-    chkRecNoService=mg.get_var(post, 'chkRecNoService') or mg.get_var(mg.request_info.query_string, 'chkRecNoService') or false,
-    chkDurationMin=GetVarInt(post, 'chkDurationMin') or GetVarInt(mg.request_info.query_string, 'chkDurationMin') or 0,
-    chkDurationMax=GetVarInt(post, 'chkDurationMax') or GetVarInt(mg.request_info.query_string, 'chkDurationMax') or 0,
-    network=0,
-    days=mg.get_var(post, 'days') or mg.get_var(mg.request_info.query_string, 'days') or 0,
-    days29=mg.get_var(post, 'days29') or mg.get_var(mg.request_info.query_string, 'days29') or 0,
-    contentList={},
-    serviceList={},
-    dateList={},
-    lock=mg.get_var(post, 'lock'),
-    search=dataID==0 or not mg.get_var(post, 'id'),
-  }
-
-  if mg.get_var(post, 'network') then
-    for i=0,10000 do
-      v=mg.get_var(post, 'network', i)
-      if not v then break end
-      key.network=key.network+v
-    end
-  elseif mg.get_var(mg.request_info.query_string, 'network') then
-    for i=0,10000 do
-      v=mg.get_var(mg.request_info.query_string, 'network', i)
-      if not v then break end
-      key.network=key.network+v
-    end
-  end
-
-  if mg.get_var(post, 'contentList') then
-    for i=0,10000 do
-      v=mg.get_var(post, 'contentList', i)
-      if not v then break end
-      table.insert(key.contentList, {content_nibble=tonumber(v)})
-    end
-  elseif mg.get_var(mg.request_info.query_string, 'contentList') then
-    for i=0,10000 do
-      v=mg.get_var(mg.request_info.query_string, 'contentList', i)
-      if not v then break end
-      table.insert(key.contentList, {content_nibble=tonumber(v)})
-    end
-  end
-
-  if mg.get_var(post, 'serviceList') then
-    for i=0,10000 do
-      v=mg.get_var(post, 'serviceList', i)
-      if not v then break end
-      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-      if #m==3 then
-        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-      end
-    end
-  elseif mg.get_var(mg.request_info.query_string, 'serviceList') then
-    for i=0,10000 do
-      v=mg.get_var(mg.request_info.query_string, 'serviceList', i)
-      if not v then break end
-      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-      if #m==3 then
-        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-      end
-    end
-  else
-    for j,w in ipairs(edcb.GetChDataList()) do
-      if w.searchFlag then
-        table.insert(key.serviceList, w)
-      end
-    end
-  end
-
-  if mg.get_var(post, 'dateList') then
-    for v in string.gmatch(mg.get_var(post, 'dateList') or '', '[^,]+') do
-      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-      dateList=v
-      if #m==6 then
-        dateInfo={
-          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
-        }
-        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
-          dateInfo.startHour=0+m[2]
-          dateInfo.startMin=0+m[3]
-          dateInfo.endHour=0+m[5]
-          dateInfo.endMin=0+m[6]
-          table.insert(key.dateList, dateInfo)
-        end
-      end
-    end
-  elseif mg.get_var(mg.request_info.query_string, 'dateList') then
-    for v in string.gmatch(mg.get_var(mg.request_info.query_string, 'dateList') or '', '[^,]+') do
-      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-      dateList=v
-      if #m==6 then
-        dateInfo={
-          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
-        }
-        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
-          dateInfo.startHour=0+m[2]
-          dateInfo.startMin=0+m[3]
-          dateInfo.endHour=0+m[5]
-          dateInfo.endMin=0+m[6]
-          table.insert(key.dateList, dateInfo)
-        end
-      end
-    end
-  end
-  disableFlag=mg.get_var(post, 'disableFlag') or mg.get_var(mg.request_info.query_string, 'disableFlag') or false
+  key=getSearchKey(post)
 end
-key.caseFlag=key.andKey:match('^C!{999}(.*)')
 
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
+key.search=dataID==0 and not mg.get_var(post, 'id')
+key.disableFlag=key.andKey:match('^^!{999}(.*)')
+key.caseFlag=(key.disableFlag or key.andKey):match('^C!{999}(.*)')
 
-ct={title='検索'}
-
-ct.js='<script>$(function(){saerchbar();});</script>\n'
-
-ct.progres=true
-
-if sidePanel then ct.macro=true end
+ct={
+  title='検索',
+  js='<script>$(function(){saerchbar();});</script>\n',
+  progres=true,
+  macro=sidePanel
+}
 
 ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-600"><div class="mdl-navigation">\n'
-  ..'<button class="mdl-button mdl-js-button mdl-button--icon" form="search"><i class="material-icons">search</i></button><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search" value="'..key.andKey..'"><label class="mdl-textfield__label"></label></div>\n'
+  ..'<button class="mdl-button mdl-js-button mdl-button--icon" form="search"><i class="material-icons">search</i></button><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'"><label class="mdl-textfield__label"></label></div>\n'
   ..'</div></div>\n'
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
@@ -280,8 +139,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..'<div class="mdl-layout__content">'
 
-if dataID==0 then
-
+if key.search then
   ct.dialog={{
     id='dialog_preset',
     content='<label class="icon mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="lock"><input type="checkbox" id="lock" class="mdl-icon-toggle__input"'..(key.lock and ' checked' or '')..'><i class="mdl-icon-toggle__label material-icons">lock</i></label>'
@@ -291,8 +149,8 @@ if dataID==0 then
   }}
 
   ct.main=ct.main..'<div class="mdl-grid chip-container"><div>'
-  for v in edcb.GetPrivateProfile('search','list','',path):gmatch('[^,]+') do
-    lock=tonumber(edcb.GetPrivateProfile(v..'_Search','lock',false,path))~=0
+  for v in edcb.GetPrivateProfile('search','list','',ini):gmatch('[^,]+') do
+    lock=tonumber(edcb.GetPrivateProfile(v..'_Search','lock',false,ini))~=0
     ct.main=ct.main..'<a class="mdl-chip mdl-chip--contact'..(lock and '' or ' mdl-chip--deletable')..'" href="search.html?preset='..mg.url_encode(v)..'">'
       ..'<span class="mdl-chip__contact mdl-color--teal mdl-color-text--white">'..v:sub(1,(v:match('^[%w%p]') and 1 or 3))..'</span>'
       ..'<span class="mdl-chip__text">'..v..'</span>'
@@ -315,13 +173,13 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
 
   ..SerchTemplate(key)
 
-  ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
+  ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
 
-  ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+  ..(key.disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
  
   ..'</div></div>\n'
   ..'<div class="mdl-card__actions mdl-card--border">'
-  ..(dataID==0 and '<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" type="button" data-dialog="#dialog_preset">プリセット保存</button>\n' or '')
+  ..(key.search and '<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" type="button" data-dialog="#dialog_preset">プリセット保存</button>\n' or '')
   ..'<div class="mdl-layout-spacer"></div>\n'
   ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" formaction="epgcustom.html" type="submit">番組表</button>\n'
   ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" type="submit">検索</button></div>\n'
@@ -343,23 +201,23 @@ for i,v in ipairs(b or {}) do
   end
 end
 
-if PAGE_COUNT==0 then
-  PAGE_COUNT=#a
-end
+pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if #a>0 then
-
   if math.ceil((#a/PAGE_COUNT)-1)>0 then
-    pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'data-search="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
-      ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'data-search="search.html?page='..(pageIndex-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
+    pg='<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
+      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html?page='..(pageIndex-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
 
-    first=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
-    for i=first, first+4 do
-      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" data-search="search.html?page='..i..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or ''))..'">'..(i+1)..'</a>\n' or '')
+    n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+    for i=n, n+4 do
+      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" formaction="search.html?page='..i..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or ''))..'">'..(i+1)..'</button>\n' or '')
     end
 
-    pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'data-search=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
-      ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'data-search=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+    pg=pg..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
+      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
 
     pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
   end
@@ -376,6 +234,11 @@ if #a>0 then
     ..' <th class="info mdl-data-table__cell--non-numeric">番組内容\n'
     ..'<tbody>\n'
 
+  rt={}
+  for i,v in ipairs(edcb.GetReserveData()) do
+    rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
+  end
+
   ctt={}
   for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     v=a[i]
@@ -386,18 +249,15 @@ if #a>0 then
       end
     end
     r=nil
-    for j,w in ipairs(edcb.GetReserveData()) do
-      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid and w.eid==v.eid then
-        id=w.reserveID
-        r=edcb.GetReserveData(id)
-        rs=r.recSetting
-        break
-      end
+    id=rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
+    if id then
+      r=edcb.GetReserveData(id)
+      rs=r.recSetting
     end
 
     table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-start="'..(os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                               or 'search="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
+                               or 'href="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
 
       ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken()..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
@@ -414,55 +274,54 @@ if #a>0 then
 end
 ct.main=ct.main..'\n</div>\n'
 
+if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKey') then
+  ct.main=ct.main..'<form id="hidden" method="POST">\n'
+    ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+    ..'<input type="hidden" name="andKey" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'">\n'
+    ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
+    ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
+    ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
+    ..(key.aimaiFlag and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
+    ..(key.notContetFlag and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
+    ..(key.notDateFlag and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
+    ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
+    ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
+    ..(key.chkRecNoService and '<input type="hidden" name="chkRecNoService" value="1">\n' or '')
+    ..(key.chkDurationMin and '<input type="hidden" name="chkDurationMin" value="'..key.chkDurationMin..'">\n' or '')
+    ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
+    ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
+    ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
+    ..(key.disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+    ..(key.caseFlag and '<input type="hidden" name="caseFlag" checked>\n' or '')
 
-  ..'<form id="hidden" method="POST" action="search.html'..(pageIndex~=0 and '?page='..pageIndex or '')..(autopage and (pageIndex~=0 and '&' or '?')..'autopage='..autopage or '')..'">\n'
-  ..((dataID>0 or mg.get_var(post, 'id')) and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..'">\n' or '')
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
-  ..'<input type="hidden" name="andKey" value="'..key.andKey..'">\n'
-  ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
-  ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
-  ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
-  ..(key.aimaiFlag and '<input type="hidden" name="aimaiFlag" value="1">\n' or '')
-  ..(key.notContetFlag and '<input type="hidden" name="notContetFlag" value="1">\n' or '')
-  ..(key.notDateFlag and '<input type="hidden" name="notDateFlag" value="1">\n' or '')
-  ..(key.freeCAFlag and '<input type="hidden" name="freeCAFlag" value="'..key.freeCAFlag..'">\n' or '')
-  ..(key.network and '<input type="hidden" name="network" value="'..key.network..'">\n' or '')
-  ..(key.days and '<input type="hidden" name="days" value="'..key.days..'">\n' or '')
-  ..(key.chkRecNoService and '<input type="hidden" name="chkRecNoService" value="1">\n' or '')
-  ..(key.chkDurationMin and '<input type="hidden" name="chkDurationMin" value="'..key.chkDurationMin..'">\n' or '')
-  ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
-  ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
-  ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
-  ..(disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
-
-if key.contentList then
-  for i,v in ipairs(key.contentList) do
-    ct.main=ct.main..'<input type="hidden" name="contentList" value="'..v.content_nibble..'">\n'
+  if key.contentList then
+    for i,v in ipairs(key.contentList) do
+      ct.main=ct.main..'<input type="hidden" name="contentList" value="'..v.content_nibble..'">\n'
+    end
   end
-end
 
-if key.serviceList then
-  for i,v in ipairs(key.serviceList) do
-    ct.main=ct.main..'<input type="hidden" name="serviceList" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
+  if key.serviceList then
+    for i,v in ipairs(key.serviceList) do
+      ct.main=ct.main..'<input type="hidden" name="serviceList" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
+    end
   end
-end
 
-if key.dateList then
-  ct.main=ct.main..'<input type="hidden" name="dateList" value="'
-  for i,v in ipairs(key.dateList) do
-    ct.main=ct.main..(i==1 and '' or ',')
-      ..({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
-      ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
+  if key.dateList then
+    ct.main=ct.main..'<input type="hidden" name="dateList" value="'
+    for i,v in ipairs(key.dateList) do
+      ct.main=ct.main..(i==1 and '' or ',')
+        ..({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
+        ..({'日','月','火','水','木','金','土',})[v.endDayOfWeek%7+1]..'-'..v.endHour..':'..v.endMin
+    end
+    ct.main=ct.main..'">\n'
   end
-  ct.main=ct.main..'">\n'
+  ct.main=ct.main..'</form>\n'
 end
-ct.main=ct.main..'</form>\n'
 
-if (dataID>0 or mg.get_var(post, 'id')) then
-  ct.main=ct.main..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"  data-search="autoaddepginfo.html?id='..(mg.get_var(post, 'id') and mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit</i></a>\n'
-else
-  ct.main=ct.main..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" '..((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'data-search="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add</i></a>\n'
-end
+ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" type="submit" form="hidden" '
+  ..(key.search and ((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
+                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=template(ct)
 
