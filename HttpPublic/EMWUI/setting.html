@@ -6,14 +6,12 @@ Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
 
---Light_Mode=tonumber(edcb.GetPrivateProfile('GUIDE','Light_Mode',true,ini))~=0
 oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
 hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,ini))~=0
 titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
 ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',ini)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
-TIME_COLUMN=edcb.GetPrivateProfile('GUIDE','TIME_COLUMN','3',ini)
 w_service=edcb.GetPrivateProfile('GUIDE','service','210',ini)
 w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
 w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',ini)
@@ -189,11 +187,6 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'</div></div>\n</section>\n'
 
   ..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
---[=[
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Light_Mode">軽量化</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="Light_Mode-flag" class="mdl-switch mdl-js-switch"><input id="Light_Mode-flag" type="checkbox" class="mdl-switch__input" name="Light_Mode" value="1"'..(Light_Mode and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-Light_Mode">スマホ等でヘッダーの調整を無効に</span></div>\n'
---]=]
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
@@ -218,12 +211,6 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="CH_COUNT" value="'..CH_COUNT..'" min="0" id="CH_COUNT"><label class="mdl-textfield__label" for="CH_COUNT"></label><span class="mdl-textfield__error">Input is not a number!</span></div>\n'
   ..'<span class="mdl-tooltip" for="tt-chc">0で無制限</span></div>\n'
-
---[=[
-  ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-COLUMN">時間軸の挿入間隔</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="TIME_COLUMN" value="'..TIME_COLUMN..'" min="1" id="TIME_COLUMN"><label class="mdl-textfield__label" for="TIME_COLUMN"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-COLUMN">軽量化が有効時のみ</span></div>\n'
---]=]
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">1分の高さ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="ONE_MIN_PX" value="'..ONE_MIN_PX..'" min="1" id="ONE_MIN_PX"><label class="mdl-textfield__label" for="ONE_MIN_PX"></label><span class="mdl-textfield__error">1以上で入力してください</span></div>px</div></div>\n'

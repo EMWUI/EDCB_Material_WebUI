@@ -41,27 +41,27 @@ elseif post then
     titleControl=titleControl+v
   end
 
-  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec'),ini)
-  edcb.WritePrivateProfile('SET', 'option', GetVarInt(post,'option'),ini)
-  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto'),ini)
+  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1,ini)
+  edcb.WritePrivateProfile('SET', 'option', GetVarInt(post,'option')==1,ini)
+  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1,ini)
   edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),ini)
   edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
 
-  --edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode'),ini)
-  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg'),ini)
-  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover'),ini)
+  --edcb.WritePrivateProfile('GUIDE', 'Light_Mode', GetVarInt(post,'Light_Mode')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,ini)
   edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl,ini)
   edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23),ini)
   edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'TIME_COLUMN', GetVarInt(post,'TIME_COLUMN',1,100000),ini)
+  --edcb.WritePrivateProfile('GUIDE', 'TIME_COLUMN', GetVarInt(post,'TIME_COLUMN',1,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000),ini)
   edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel'),ini)
-  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat'),ini)
+  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1,ini)
 
   edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'),ini)
 
@@ -82,7 +82,7 @@ elseif post then
   edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),ini)
   edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),ini)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,ini)
   edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),ini)
   edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),ini)
   edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),ini)
