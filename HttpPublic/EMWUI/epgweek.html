@@ -2,22 +2,22 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
 show=mg.get_var(mg.request_info.query_string,'show')
-hour=GetVarInt(mg.request_info.query_string,'hour',0,27) or 4
---hour=0で現在時刻-MARGIN_HOUR時間を基準、0以外で"hour"時を基準
-interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or 25
+hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
+--hour=-1で現在時刻-MARGIN_HOUR時間を基準
+interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
 
 onid=GetVarInt(mg.request_info.query_string,'onid') or 0
 tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
 sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
-Hour=hour==0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+Hour=hour<0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 baseTime=(baseDate*24+Hour)*3600
 
 NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600
 
-hrefGene=(hour~=4 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')
+hrefGene=(hour~=4 and '&hour='..hour or '')..(interval~=DEF_interval and '&interval='..interval or '')
 
 
 edcb.htmlEscape=15
@@ -89,8 +89,8 @@ if st then
 
   ct.menu=ct.menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
-  start=interval>=25 and Hour or 4
-  for i=start, start+math.max(interval-2, 23) ,2 do
+  n=interval>=25 and Hour or 4
+  for i=n, n+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
     if hour<=i and i<hour+interval then
       ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'

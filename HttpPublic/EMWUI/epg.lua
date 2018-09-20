@@ -7,6 +7,12 @@ MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
 
+for i,v in ipairs({'Android','iPhone','iPad'}) do
+  mobile=mg.request_info.http_headers['User-Agent']:match(v)
+  if mobile then break end
+end
+DEF_interval=mobile and 8 or 25
+
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
 
@@ -102,9 +108,9 @@ function epgcell(v, op, id)
   return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<now and now<endTime and ' now ' or ' ')..'" data-endtime="'..endTime..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
     ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'"><div class="content">\n'
 
-    ..'<div><div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
+    ..'<div class="sub_cont"><div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 
-    ..'<div class="mdl-layout-spacer"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
+    ..'<div class="main_cont"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
     ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
 
     ..'<p class="tool mdl-typography--caption-color-contrast">'

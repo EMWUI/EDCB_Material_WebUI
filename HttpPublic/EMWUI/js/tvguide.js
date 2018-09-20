@@ -181,7 +181,7 @@ $(function(){
 			$('#tv-guide-main .station ').each(function(){
 			 	if (left <= $(this).position().left && $(this).position().left <= width){  //見えている範囲を絞る(各局で
 					done = true;
-					$(this).children().each(function(i){
+					$(this).children().each(function(){
 						var _done;
 						$(this).children('.cell').each(function(){
 							if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
@@ -189,7 +189,7 @@ $(function(){
 								var content = $(this).find('.content');
 								_done = true;
 
-								if (base<=0 && content.css('padding-top') != '0px'){
+								if (base<=0){
 									content.css('padding-top', '');
 								}else if(base<height+$(this).height()){
 									if ($(this).children('.content-wrap').hasClass('reserve')){
