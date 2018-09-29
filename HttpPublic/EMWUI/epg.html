@@ -110,14 +110,23 @@ for i,v in ipairs(NetworkList) do
 end
 ct.menu=ct.menu..'</ul>'
 
-if 0<CH_COUNT and CH_COUNT<#st then
-  ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
-
-  ct.menu=ct.menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n'
-  for i=0, math.ceil(#st/CH_COUNT-1) do
-    ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n'
+if 0<CH_COUNT then
+  n=0
+  for i,v in ipairs(st) do
+    if not v.subCh then
+      n=n+1
+    end
   end
-  ct.menu=ct.menu..'</ul>\n'
+
+  if CH_COUNT<n then
+    ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
+    
+    ct.menu=ct.menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n'
+    for i=0, math.ceil(n/CH_COUNT-1) do
+      ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n'
+    end
+    ct.menu=ct.menu..'</ul>\n'
+  end
 end
 
 if minTime then
@@ -183,81 +192,93 @@ ct.side='<input type="checkbox" class="hidden" id="a">\n'
   ..'<label class="drop-down mdl-navigation__link" for="a">サービス</label>\n'
   ..'<ul>\n'
 
-
+WIDE={ 
+  --少し拡幅する
+  ['32391-32391-23608']=true, --MX
+}
 ctt,Head={},{}
-pagemin=math.max(1,pageIndex*CH_COUNT+1)
-pagemax=CH_COUNT==0 and #st or math.min(#st,(pageIndex+1)*CH_COUNT)
-for i=pagemin,pagemax do
-  v=st[i]
-  op={service_name=v.service_name}
+n=0
+pagemin=pageIndex*CH_COUNT+1
+pagemax=(pageIndex+1)*CH_COUNT
+SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
+for i,v in ipairs(st) do
   if not v.subCh then
-    left=0
-    for j=i,#st+1 do
-      if j>#st or j>i and not st[j].subCh then
-        column=j-i
-        ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'"><input type="checkbox" id="c-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="stationToggle mdl-switch__input" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
-        table.insert(Head, '<a class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
-        table.insert(ctt, '<div class="station id-'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..v.onid..'-'..v.tsid..'-'..v.sid..'" data-name="'..v.service_name..'">\n')
-        break
-      end
-    end
-  else
-    left=left+1
+    n=n+1
   end
-  lastPx=0
-  total=0
-  table.insert(ctt, '<div id="sid-'..v.sid..'">')
-  for j,w in ipairs(v.et) do
-    startTime=os.time(w.startTime)
-    startPx=math.min(math.floor((startTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
-    endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
-    if startPx-lastPx>0 then
-      if not v.subCh then
-        table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content-wrap nothing"><div class="content'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div></div>\n')
+  if CH_COUNT==0 or pagemin<=n and n<=pagemax then
+    op={service_name=v.service_name}
+    if not v.subCh then
+      left=0
+      for j=i,#st+1 do
+        if j>#st or j>i and not st[j].subCh then
+          column=j-i
+          id=v.onid..'-'..v.tsid..'-'..v.sid
+          ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..id..'"><input type="checkbox" id="c-'..id..'" class="stationToggle mdl-switch__input" value="'..id..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
+          table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
+          table.insert(ctt, '<div class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..id..'" data-name="'..v.service_name..'">\n')
+          break
+        end
       end
-      total=total+startPx-lastPx
-      lastPx=startPx
+    else
+      left=left+1
     end
-    if endPx-lastPx>2 then
-      --イベントグループのサブでないか
-      if not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
-         w.eventGroupInfo.eventDataList[1].onid==w.onid and
-         w.eventGroupInfo.eventDataList[1].tsid==w.tsid and
-         w.eventGroupInfo.eventDataList[1].sid==w.sid and
-         w.eventGroupInfo.eventDataList[1].eid==w.eid then
-        --サブチャンネル何個分か
-        width=1
-        for k=i+1,#st do
-          span=false
-          if st[k].subCh and w.eventGroupInfo then
-            for l,x in ipairs(w.eventGroupInfo.eventDataList) do
-              if v.onid==x.onid and v.tsid==x.tsid and st[k].sid==x.sid then
-                width=width+1
-                span=true
-                break
+    lastPx=0
+    total=0
+    table.insert(ctt, '<div id="sid-'..v.sid..'">')
+    for j,w in ipairs(v.et) do
+      startTime=os.time(w.startTime)
+      startPx=math.min(math.floor((startTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+      endTime=w.durationSecond and startTime+w.durationSecond or (j<#v.et and os.time(v.et[j+1].startTime) or startTime) --終了時間未定
+      endPx=math.min(math.floor((endTime+timezone-pageTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+      if startPx-lastPx>0 then
+        if not v.subCh then
+          table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px;"><div class="content-wrap nothing"><div class="content'..(NOW and date==0 and startTime<=now and ' end' or '')..'"></div></div></div>\n')
+        end
+        total=total+startPx-lastPx
+        lastPx=startPx
+      end
+      if endPx-lastPx>2 then
+        --イベントグループのサブでないか
+        if not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
+           w.eventGroupInfo.eventDataList[1].onid==w.onid and
+           w.eventGroupInfo.eventDataList[1].tsid==w.tsid and
+           w.eventGroupInfo.eventDataList[1].sid==w.sid and
+           w.eventGroupInfo.eventDataList[1].eid==w.eid then
+          --サブチャンネル何個分か
+          width=1
+          for k=i+1,#st do
+            span=false
+            if st[k].subCh and w.eventGroupInfo then
+              for l,x in ipairs(w.eventGroupInfo.eventDataList) do
+                if v.onid==x.onid and v.tsid==x.tsid and st[k].sid==x.sid then
+                  width=width+1
+                  span=true
+                  break
+                end
               end
             end
+            if not span then
+              break
+            end
           end
-          if not span then
-            break
-          end
+
+          op.url='epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)
+          table.insert(ctt, epgcell(w, op))
+
+          total=total+endPx-lastPx
+          lastPx=endPx
         end
-
-        op.url='epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)
-        table.insert(ctt, epgcell(w, op))
-
-        total=total+endPx-lastPx
-        lastPx=endPx
       end
     end
-  end
-  if not v.subCh and total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
-  end
-  table.insert(ctt, '</div>')
-  if i==#st or not st[i+1].subCh then
-    table.insert(ctt, '</div>\n')
+    if not v.subCh and total<interval*60*ONE_MIN_PX then
+      table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px;top:'..total..'px;"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+    end
+    table.insert(ctt, '</div>')
+    if i==#st or not st[i+1].subCh then
+      table.insert(ctt, '</div>\n')
+    end
+  elseif n>pagemax then
+   break
   end
 end
 

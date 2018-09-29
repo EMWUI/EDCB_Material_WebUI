@@ -7,11 +7,9 @@ MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
 
-for i,v in ipairs({'Android','iPhone','iPad'}) do
-  mobile=mg.request_info.http_headers['User-Agent']:match(v)
-  if mobile then break end
-end
-DEF_interval=mobile and 8 or 25
+local sp=UserAgentSP()
+DEF_CH_COUNT=sp and 15 or DEF_CH_COUNT
+DEF_interval=sp and  8 or 25
 
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
@@ -43,7 +41,7 @@ function epgcss()
   local paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,ini))~=0
   return '<style>'
     ..'main{background:'..edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',ini)
-    ..';}.station{width:'..edcb.GetPrivateProfile('GUIDE','service','210',ini)
+    ..';}.station{--width:'..edcb.GetPrivateProfile('GUIDE','service','210',ini)
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour','22',ini)
     ..'px;}.hour{height:'..(ONE_MIN_PX*60)
     ..'px;}'
@@ -71,7 +69,7 @@ function epgcss()
     ..';}.content-wrap.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)..';border-color:'..edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',ini)
     ..';}'
 
-    ..'@media screen and (max-width:479px){.station{width:'..edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
+    ..'@media screen and (max-width:479px){.station{--width:'..edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour_sp','16',ini)
     ..'px;}}'
     ..'</style>\n'

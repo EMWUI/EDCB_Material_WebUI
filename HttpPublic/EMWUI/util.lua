@@ -1050,6 +1050,16 @@ function FormatTimeAndDuration(t,dur)
     ..(dur and string.format('～%02d:%02d',math.floor(dur/3600)%24,math.floor(dur/60)%60)..(dur%60~=0 and string.format('<small>:%02d</small>',dur%60) or '') or '')
 end
 
+--スマホからのアクセスかどうか
+function UserAgentSP()
+  for i,v in ipairs({'Android','iPhone','iPad'}) do
+    if mg.request_info.http_headers['User-Agent']:match(v) then
+      return true
+    end
+  end
+  return false
+end
+
 --レスポンスを生成する
 function Response(code,ctype,charset,cl)
   return 'HTTP/1.1 '..code..' '..mg.get_response_code_text(code)
