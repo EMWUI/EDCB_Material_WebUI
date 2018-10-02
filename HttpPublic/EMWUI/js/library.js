@@ -93,7 +93,7 @@ function folder(){
 						obj.addClass('item').data(data);
 						$(obj).click(function(){
 							$('#popup').addClass('is-visible');
-							$('.bar').addClass('is-visible');
+							$('#playerUI').addClass('is-visible');
 							$('.audio').prop('checked', false);
 							playMovie($(this));
 						});
@@ -202,7 +202,7 @@ function librarySearch(key){
 					};
 					var event = function(){
 						$('#popup').addClass('is-visible');
-						$('.bar').addClass('is-visible');
+						$('#playerUI').addClass('is-visible');
 						$('.audio').prop('checked', false);
 						playMovie($(this));
 					};

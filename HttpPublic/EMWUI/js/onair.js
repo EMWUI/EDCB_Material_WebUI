@@ -170,7 +170,7 @@ $(function(){
 	$('#popup .close').click(function(){
 		$('.is_cast').removeClass('is_cast');
 		$('.duration,.currentTime').text('0:00');
-		$('#seek').get(0).MaterialSlider.change(0);
+		$('#seek').get(0).MaterialProgress.setProgress(0);
 		$('#video').attr('src', '').unbind('timeupdate');
 	});
 
@@ -209,7 +209,7 @@ $(function(){
 					if (apk){
 						location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 					}else{
-						$('#popup,.bar').addClass('is-visible');
+						$('#popup,#playerUI').addClass('is-visible');
 						audio(data.audio);
 						loadMovie(obj);
 					}
@@ -228,7 +228,7 @@ $(function(){
 							if (apk){
 								location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 							}else{
-								$('#popup,.bar').addClass('is-visible');
+								$('#popup,#playerUI').addClass('is-visible');
 								audio(data.audio);
 								loadMovie(obj);
 							}

@@ -282,52 +282,59 @@ s:Append([=[
   </div>
 ]=] or ''))
 if temp.video then
+  local sp=UserAgentSP()
   s:Append([=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
       <div id="player" class="is-small">
         <div class="player-container">
           <video id="video"></video>
-          <div id="titlebar" class="bar"></div>
-          <div id="control" class="ext bar">
-            <i id="playprev" class="ctl-button material-icons">skip_previous</i>
-            <i id="play" class="ctl-button material-icons">play_arrow</i>
-              <i id="playnext" class="ctl-button material-icons">skip_next</i>
-              <div id="seek-container" class="mdl-layout-spacer">
-              <span class="currentTime videoTime">0:00</span>
-              <p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
-              <span class="duration videoTime">0:00</span>
-            </div>
-            <p class="mdl-layout-spacer small-only"></p>
-            <i id="volume-icon" class="ctl-button material-icons">volume_up</i>
-            <p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
-            <i id="settings" class="ctl-button material-icons">settings</i>
-            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
-              <li class="mdl-menu__item" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
-              <button id="audio" class="mdl-menu__item"><span class="mdl-layout-spacer">音声</span><span><i class="material-icons">navigate_next</i></button>
-              <li class="mdl-menu__item" id="quality"><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
-              <li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
-            </ul>
-            <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
-              <li class="multi mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="1"><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi1">主音声</label></li>
-              <li class="multi mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="2"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi2">副音声</label></li>
-              <li class="dual mdl-menu__item"><input type="radio" id="dual1" name="audio" class="audio" value="10"><label for="dual1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual1">[二] 日本語</label></li>
-              <li class="dual mdl-menu__item"><input type="radio" id="dual2" name="audio" class="audio" value="11"><label for="dual2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual2">[二] 英語</label></li>
-              <li class="dual mdl-menu__item"><input type="radio" id="RAW" name="audio" class="audio" value="100"><label for="RAW" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="RAW">RAW</label></li>
-            </ul>
-            <ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
+          <div id="playerUI"]=]..(sp and ' class="sp"' or '')..'>\n'..(sp and
+           '<div id="center"><i id="playprev" class="ctl-button material-icons">skip_previous</i><i id="play" class="ctl-button material-icons">play_arrow</i><i id="playnext" class="ctl-button material-icons">skip_next</i></div>\n' or '')..[=[
+            <div id="titlebar" class="bar"></div>
+            <div id="control" class="ext bar">
+              <div id="seek-container">]=]..(temp.video=='onair' and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1">')..'</div>\n'
+              ..(not sp and '<i id="playprev" class="ctl-button material-icons">skip_previous</i><i id="play" class="ctl-button material-icons">play_arrow</i><i id="playnext" class="ctl-button material-icons">skip_next</i>\n' or '')..[=[
+              <div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i>]=]..(not sp and '<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>' or '')..[=[</div>
+              <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
+              <p class="mdl-layout-spacer"></p>
+              <i id="settings" class="ctl-button material-icons">settings</i>
+              <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
+                <li class="mdl-menu__item" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+                <button id="audio" class="mdl-menu__item"><span class="mdl-layout-spacer">音声</span><span><i class="material-icons">navigate_next</i></button>
+                <li class="mdl-menu__item" id="quality"><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
+                ]=]..(not sp and '<li class="mdl-menu__item" id="rate"><span class="mdl-layout-spacer">速度</span><span><i class="material-icons">navigate_next</i></li>\n' or '')..[=[
+              </ul>
+              <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+                <li class="multi mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="1"><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi1">主音声</label></li>
+                <li class="multi mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="2"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi2">副音声</label></li>
+                <li class="dual mdl-menu__item"><input type="radio" id="dual1" name="audio" class="audio" value="10"><label for="dual1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual1">[二] 日本語</label></li>
+                <li class="dual mdl-menu__item"><input type="radio" id="dual2" name="audio" class="audio" value="11"><label for="dual2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual2">[二] 英語</label></li>
+                <li class="dual mdl-menu__item"><input type="radio" id="RAW" name="audio" class="audio" value="100"><label for="RAW" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="RAW">RAW</label></li>
+              </ul>
+              <ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 ]=])
-local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
-if list=='' then
-  s:Append('<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>')
-else
-  for v in list:gmatch('[^,]+') do
-    s:Append('<li class="mdl-menu__item"><input type="radio" id="'..v..'" name="quality" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n')
+  local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
+  if list=='' then
+    s:Append('<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>')
+  else
+    for v in list:gmatch('[^,]+') do
+      s:Append('<li class="mdl-menu__item"><input type="radio" id="'..v..'" name="quality" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n')
+    end
   end
-end
-s:Append([=[
-            </ul>
-            <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+  s:Append([=[
+              </ul>
+              <ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">
+]=])
+  if not sp then
+    for i,v in pairs({0.25, 0.5, 0.75, 1, 1.25, 1.5, 2}) do
+      s:Append('<li class="mdl-menu__item"><input type="radio" id="rate'..i..'" name="rate" class="rate" value="'..v..'"'..(v==1 and ' checked' or '')..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n')
+    end
+  end
+  s:Append([=[
+              </ul>
+              <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+            </div>
           </div>
         </div>
       </div>
@@ -823,25 +830,23 @@ end
 --プレイヤー
 function player(video, audio, xcode)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
-  local s='<div id="player" class="is-small">\n'
+  local sp=UserAgentSP()
+  local s='<div id="player" class="is-small"><div class="player-container">\n'
 ..video..[=[
-<div id="control" class="ext bar is-visible">
-<i id="play" class="ctl-button material-icons">play_arrow</i>
-<div id="seek-container" class="mdl-layout-spacer">
-<span class="currentTime videoTime">0:00</span>
-<p class="mdl-layout-spacer"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></p>
-<span class="duration videoTime">0:00</span>
-</div>
-<i id="volume-icon" class="ctl-button material-icons">volume_up</i>
-<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>
-<p class="mdl-layout-spacer small-only"></p>
+<div id="playerUI" class="is-visible]=]..(sp and ' sp' or '')..[=[">
+<div></div>
+<div id="control" class="ext bar">
+<div id="seek-container"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="1"></div>
+]=]..(not sp and '<i id="play" class="ctl-button material-icons">play_arrow</i>' or '')..[=[
+<div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i>]=]..(not sp and '<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>' or '')..[=[</div>
+<div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
+<p class="mdl-layout-spacer"></p>
 <i id="settings" class="ctl-button material-icons">settings</i>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <button id="audio" class="mdl-menu__item"]=]..((audio.multi or audio.dual) and '' or ' disabled')..[=[><span class="mdl-layout-spacer">音声</span><span><i class="material-icons">navigate_next</i></button>
 <li class="mdl-menu__item" id="quality"]=]..(xcode and ' disabled' or '')..[=[><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></li>
-<li class="mdl-menu__item" id="rate-container"><span><i id="rewind" class="material-icons">fast_rewind</i></span><span id="rate" class="mdl-layout-spacer">1.0</span><span><i id="forward" class="material-icons">fast_forward</i></span></li>
-</ul>
-<ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+]=]..(not sp and '<li class="mdl-menu__item" id="rate"><span class="mdl-layout-spacer">速度</span><span><i class="material-icons">navigate_next</i></li>\n' or '')..[=[
+</ul><ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
 ]=]..(audio.multi and [=[
 <li class="multi mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="1" checked><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="multi1">主音声</label></li>
 <li class="multi mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="2"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label class="m" for="multi2">副音声</label></li>
@@ -856,13 +861,23 @@ function player(video, audio, xcode)
       s=s..'<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>'
     else
       for v in list:gmatch('[^,]+') do
-        s=s..'<li class="mdl-menu__item"><input type="checkbox" id="'..v..'" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
+        s=s..'<li class="mdl-menu__item"><input type="radio" id="'..v..'" name="quality" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
       end
     end
     s=s..'</ul>'
+      ..'<ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">'
+  end
+  if not sp then
+    for i,v in pairs({0.25, 0.5, 0.75, 1, 1.25, 1.5, 2}) do
+      s=s..'<li class="mdl-menu__item"><input type="radio" id="rate'..i..'" name="rate" class="rate" value="'..v..'"'..(v==1 and ' checked' or '')..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n'
+    end
   end
   s=s..[=[
+</ul>
 <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+</div>
+]=]..(sp and '<div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '')..[=[
+</div>
 </div>
 </div>
 ]=]

@@ -9,7 +9,7 @@
 function hideBar(time){
 	hoverID = setTimeout(function(){
 		if (!video.paused){
-			$('.bar').removeClass('is-visible');
+			$('#playerUI,#titlebar').removeClass('is-visible');
 			$('#control .mdl-menu__container.is-visible').removeClass('is-visible');
 			$('#player').css('cursor', 'none');
 		}
@@ -65,7 +65,6 @@ function playMovie(obj){
 	if (obj.hasClass('playing')){
 		hideBar(2000);
 	}else{
-		$('#titlebar').addClass('is-visible');
 		$('#seek').get(0).MaterialSlider.change(0);
 		loadMovie(obj);
 	}
@@ -92,13 +91,13 @@ $(function(){
 	$('#autoplay').prop('checked', sessionStorage.getItem('autoplay') == 'true');
 	$('#apk').prop('checked', localStorage.getItem('apk') == 'true');
 
-    $('#volume').on('mdl-componentupgraded', function() {
+	$('#volume').on('mdl-componentupgraded', function() {
 		if (video.muted){
 			this.MaterialSlider.change(0);
 		}else{
 			this.MaterialSlider.change(video.volume);
 		}
-    });
+	});
 
 	//閉じる
 	$('.close.mdl-badge').click(function(){
@@ -125,10 +124,12 @@ $(function(){
 			var autoplay = sessionStorage.getItem('autoplay') == 'true';
 			if (autoplay && !$('.playing').is('.item:last')){
 				playMovie($('.playing').next());
-			}else if (autoplay && $('.playing').is('.item:last')){
-				notification.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
+				$('#titlebar').addClass('is-visible');
 			}else{
-				$('.bar').addClass('is-visible');
+				if (autoplay && $('.playing').is('.item:last')){
+					notification.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
+				}
+				$('#playerUI').addClass('is-visible');
 			}
 		},
 		'error': function(){
@@ -160,11 +161,7 @@ $(function(){
 			localStorage.setItem('muted', this.muted);
 		},
 		'ratechange': function(){
-			$('#rate').text(this.playbackRate);
 			//if (sessionStorage.getItem('autoplay') == 'true') this.defaultPlaybackRate = this.playbackRate;
-		},
-		'loadeddata': function(){
-			hideBar(1000);
 		},
 		'canplay': function(){
 			hideBar(2000);
@@ -184,12 +181,12 @@ $(function(){
 				$(this).on('timeupdate', function(){
 					var currentTime = (Date.now() - data.start)/1000;
 					$('.currentTime').text(getVideoTime(currentTime));
-					$('#seek').get(0).MaterialSlider.change(currentTime / data.duration * 100);
+					$('#seek').get(0).MaterialProgress.setProgress(currentTime / data.duration * 100);
 				});
 			}else if (xcode && !$(this).data('rec')){
 				$(this).off('timeupdate');
 				$('#seek').attr('max', 99).attr('step', 1);
-				$('.videoTime').addClass('is-disabled');
+				$('.Time-wrap').addClass('is-disabled');
 				$('.currentTime,.duration').text('0:00');
 			}else{
 				$(this).on('timeupdate', function(){
@@ -200,7 +197,7 @@ $(function(){
 					}
 				});
 				$('#seek').attr('max', 100).attr('step', 0.01);
-				$('.videoTime').removeClass('is-disabled');
+				$('.Time-wrap').removeClass('is-disabled');
 				$('.duration').text(getVideoTime(duration));
 				//if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);  //Firefoxだとシークできたので
 			}
@@ -267,6 +264,7 @@ $(function(){
 			}
 			screen.orientation.lock('landscape');
 			$('#fullscreen').text('fullscreen_exit');
+			$('.mdl-js-snackbar').appendTo('#player');
 		} else {
 			screen.orientation.unlock('landscape');
 			if (document.exitFullscreen) {
@@ -279,6 +277,7 @@ $(function(){
 				document.webkitExitFullscreen();
 			}
 			$('#fullscreen').text('fullscreen');
+			$('.mdl-js-snackbar').appendTo('.mdl-layout');
 		}
 	});
 
@@ -305,55 +304,29 @@ $(function(){
 		loadMovie($('#video'));
 		if (!paused) video.play();
 	});
+	$('.rate').change(function(){
+		video.playbackRate = $(this).val();
+	});
 
 	hideBar(0);
 	if (!isTouch){
 		$('#player').hover(function(){
 			stopTimer();
-			$('.bar').addClass('is-visible');
+			$('#playerUI').addClass('is-visible');
 		}, function(){
-			hideBar(500);
+			hideBar(0);
 		});
 
-		clientX = clientY = 0;
 		$('#player').mousemove(function(e){
-			if (!$(e.target).is('#control, #control *') && clientX == e.clientX && clientY == e.clientY){
-				hideBar(1000);
-			}else{
-				stopTimer();
-				$('.bar').addClass('is-visible');
-			}
-			clientX = e.clientX;
-			clientY = e.clientY;
-		});
-
-		$('#rewind').click(function(){
-			video.playbackRate = video.playbackRate - 0.25;
-		});
-		$('#rate').click(function(){
-			video.playbackRate = 1;
-		});
-		$('#forward').click(function(){
-			video.playbackRate = video.playbackRate + 0.25;
+			stopTimer();
+			hideBar(2000);
+			$('#playerUI').addClass('is-visible');
 		});
 	}else{
-		$('#volume-container').hide();
-
-		$('#rate-container').attr('disabled', true);
-
-		$('#video').click(function(){
-			if ($('.bar').hasClass('is-visible')){
-				stopTimer();
-				hideBar(0);
-			}else{
-				$('.bar').addClass('is-visible');
-				stopTimer();
-				hideBar(2500);
-			}
-		});
-		$('#control').click(function(){
+		$('#player').click(function(){
+			$('#playerUI').addClass('is-visible');
 			stopTimer();
-			hideBar(2500);
+			hideBar(2000);
 		});
 	}
 });

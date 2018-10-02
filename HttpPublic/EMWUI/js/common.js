@@ -31,7 +31,7 @@ function saerchbar(){
 
 //タブ移動
 function tab(tab){
-	if (tab.length > 0){
+	if (tab.length > 0 && !document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement){
 		var panel = tab.attr('href');
 		if (tab.hasClass('mdl-layout__tab')){
 			$('.mdl-layout__tab, .mdl-layout__tab-panel').removeClass('is-active');
@@ -41,8 +41,9 @@ function tab(tab){
 		}
 		tab.addClass('is-active');
 		$(panel).addClass('is-active');
-		if (panel == '#movie' && !$('video').data('load')){
-			$('video').trigger('load').data('load', true);
+		if (panel == '#movie' && !$('#video').data('load')){
+			if (!$('#video').data('public')) loadMovie($('#video'));
+			$('#video').trigger('load').data('load', true);
 		}
 	}
 }
@@ -1008,8 +1009,8 @@ $(function(){
 	});
 	//再生タブ
 	$('#movie_tab').click(function(){
-		if (!$('video').data('load')){
-			if (!$('video').data('public')) loadMovie($('#video'));
+		if (!$('#video').data('load')){
+			if (!$('#video').data('public')) loadMovie($('#video'));
 			$('#video').trigger('load').data('load', true);
 		}
 	});
