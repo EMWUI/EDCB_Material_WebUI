@@ -186,12 +186,12 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'</div></form>\n</div>\n'
 
 
-b=edcb.SearchEpg(key)
+b=post or preset or mg.get_var(mg.request_info.query_string, 'andKey') and edcb.SearchEpg(key) or {}
 table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
 a={}
 
-for i,v in ipairs(b or {}) do
+for i,v in ipairs(b) do
   if v.startTime then
     startTime=os.time(v.startTime)
     endTime=v.durationSecond and startTime+v.durationSecond or startTime

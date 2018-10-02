@@ -50,6 +50,9 @@ $(window).on('load resize', function(){
 
 $(function(){
 	var target = $('#tv-guide-container');
+	if ($('.station:last-child').offset().left+$('.station:last-child').width() < target.width()){
+		$('#tv-guide').addClass('grow');
+	}
 
 	var HIDE_SUBHEADER;
 	var speedX, speedY;

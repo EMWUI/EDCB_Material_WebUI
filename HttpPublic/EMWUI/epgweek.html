@@ -40,7 +40,7 @@ end
 ct={
   title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>',
   css=epgcss(),
-  js=epgjs(Hour,'$(function(){$(".station").css("flex-grow", 1);end($($(".now")));setInterval("line()", 1000);});'),
+  js=epgjs(Hour,'$(function(){end($($(".now")));setInterval("line()", 1000);});'),
   progres=true,
   macro=sidePanel,
   dialog={{
