@@ -83,7 +83,7 @@ end
 ct={
   title='番組表',
   css=epgcss(),
-  js=epgjs(pageTime-timezone,(NOW and 'var lastTime='..pageTime+(interval*3600)-timezone..';$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();' or 'end($(this));});')..'setInterval("line()", 1000);});' or '')),
+  js=epgjs(pageTime-timezone,(NOW and '$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();' or 'end($(this));});')..'setInterval("line()", 1000);});' or ''),(NOW and pageTime+(interval*3600)-timezone or false)),
   progres=true,
   macro=sidePanel,
   dialog={{

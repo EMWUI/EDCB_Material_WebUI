@@ -40,7 +40,7 @@ function end(cell, mark){
 
 var intervalID;
 function jump(){
-	if (intervalID) clearInterval(intervalID);;
+	if (intervalID) clearInterval(intervalID);
 	$('#tv-guide-container').animate({scrollTop: now() - marginmin * oneminpx}, 550, 'swing');
 }
 

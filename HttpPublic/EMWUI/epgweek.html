@@ -13,6 +13,7 @@ sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
 Hour=hour<0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
+Hour=Hour+interval>29 and 29-interval or Hour
 baseTime=(baseDate*24+Hour)*3600
 
 NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600
@@ -54,7 +55,7 @@ ct.subheader='<div id="subheader">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&interval='..interval..'"')
+  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..st.onid..'&tsid='..st.tsid..'&sid='..st.sid..'&hour=-1'..(interval~=DEF_interval and '&interval='..interval or '')..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
@@ -92,10 +93,10 @@ if st then
   n=interval>=25 and Hour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
-    if hour<=i and i<hour+interval then
+    if Hour<=i and i<Hour+interval then
       ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     else
-      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..'&hour='..(i%24)..(interval~=25 and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&tsid='..st.tsid..'&sid='..st.sid..'&hour='..(i%24)..(interval~=DEF_interval and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
   end
   ct.menu=ct.menu..'</ul>\n'

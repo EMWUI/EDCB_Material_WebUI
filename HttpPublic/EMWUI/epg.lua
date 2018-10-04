@@ -75,11 +75,12 @@ function epgcss()
     ..'</style>\n'
 end
 
-function epgjs(baseTime,option)
+function epgjs(baseTime,option,lastTime)
   local titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
   return '<script>'
     ..'var oneminpx='..ONE_MIN_PX
     ..';var baseTime='..baseTime
+    ..';var lastTime'..(lastTime and '='..lastTime or '')
     ..';var titleControl='..titleControl
     ..';var marginmin='..MARGIN_MIN
     ..';var hover='..(hover and 'true;' or 'false;')
