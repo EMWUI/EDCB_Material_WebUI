@@ -9,15 +9,19 @@ EDCB Material WebUI
 
 ### 使い方
 
-1. 必要なファイルの用意 (ffmpeg.exe以外はEDCBの[releases](https://github.com/xtne6f/EDCB/releases)からダウンロード可)
+1. 必要なファイルのダウンロード (EDCBの[releases](https://github.com/xtne6f/EDCB/releases)と[ffmpeg.org](https://www.ffmpeg.org)から)
    * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)
    * lua52.dll   - WebUIを表示するのに必要
-   * ~~lfs.dll   - ライブラリ機能に必要~~ [bfbd173](https://github.com/EMWUI/EDCB_Material_WebUI/commit/bfbd173e781b45b8589d825bbcf3f44fe91a8e4f)により不要
    * ffmpeg.exe  - 再生機能に必要
+   * ffprobe.exe  - 再生機能に必要 (ffmpegに同梱)
    * readex.exe  - 再生機能に必要
-2. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
-3. EDCB側の設定を済ませる (HTTPサーバ機能を有効、アクセス制御の設定等)
-4. ファイルを適切に設置 (下記の配置例を参照)  
+1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
+1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
+   * `EnableHttpSrv=1`
+   * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
+1. http://localhost:5510/ にアクセス、サーバー機能が有効になったことを確認  
+\# ここでうまく行かない場合はEDCBの設定の問題だと思われます
+1. ファイルを適切に設置 (下記の配置例を参照)  
    \# 解凍したEDCB-work-plus-s-bin.zipにこのEMWUIを放り込めばとりあえず動くはず  
    \# 配置例 (＊があるものは必ずその場所に配置)
 
@@ -29,6 +33,7 @@ EDCB Material WebUI
         │   └─ video/ ＊
         ├─ Tools/
         │   ├─ ffmpeg.exe
+        │   ├─ ffprobe.exe
         │   └─ readex.exe
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
@@ -36,8 +41,8 @@ EDCB Material WebUI
         ├─ lua52.dll ＊
         └─ SendTSTCP.dll ＊
 
-5. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定
-6. http://localhost:5510/EMWUI/ 等にアクセス出来たら準備完了、設定へ
+1. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定
+1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ
 
 ### 設定
 基本的な設定は[設定ページ](http://localhost:5510/EMWUI/setting)にて行ってください  
@@ -59,9 +64,12 @@ HttpPublic.iniは設定ページにて設定を保存すると作成されます
 .markのborderはA700を指定しています
 
 #### 再生機能
-**ffmpeg.exe、readex.exeが必要です**  
+**ffmpeg.exe、ffprobe.exe、readex.exeが必要です**  
 `ffmpeg[=Tools\ffmpeg]`  
 ffmpeg.exeのパス
+
+`ffprobe[=Tools\ffprobe]`  
+ffprobe.exeのパス
 
 `readex[=Tools\readex]`  
 readex.exeのパス
@@ -94,7 +102,6 @@ mp4にトランスコードする場合1に
 
 
 #### ライブラリ
-**LuaFileSystem(lfs.dll)が必要です**  
 録画保存フォルダのビデオファイル(ts,mp4,webm等)を表示・再生します  
 Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が  
 また公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
@@ -125,10 +132,6 @@ NetworkTVモードを使用している場合は注意してください
 
 ##### ファイル再生について
 * トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(99分率))を指定して再読み込み)  
-また総再生時間が得られないためシークバーは動かしてません  
-* スマホではtsの場合再生終了のフラグが得られないのか自動再生が動きません  
-* 番組・予約詳細ページ  
-容量確保録画の場合シークっぽい動作はできません
 * 録画結果ページ  
 録画結果(GetRecFileInfo())からファイルパスを取得してます  
 リネームや移動していると再生することが出来ません
@@ -146,10 +149,12 @@ WEBパネルに追加して使用してください
 開始時間を指定
 
 `interval=整数`  
-表示間隔を指定
+表示間隔を指定  
+デフォルト値 `PC=25` `スマホ=8`
 
 `chcount=整数`  
 読み込むチャンネル数を一時的に変更  
+デフォルト値 `PC=0(無制限)` `スマホ=15`  
 \# showが有効時は非表示のチャンネルを含みます
 
 `show=`  
@@ -157,8 +162,7 @@ WEBパネルに追加して使用してください
 \# 値は指定する必要はありません  
 
 以上をgetメゾットで取得しますurlに含めてください  
-chcountとshowは週間番組表では使えません  
-スマホのブックマークなどでの使用を推薦(設定によっては軽くなるかも)
+chcountとshowは週間番組表では使えません
 
 ### お知らせ機能
 ※PCでのみでの機能です  
@@ -180,8 +184,10 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
   - Chrome
 
 ### その他
-このプログラムの使用し不利益が生じても一切の責任を負いません  
-また改変・再配布などはご自由にどうぞ
+**ios、スカパープレミアムの環境はありません。**  
+このプログラムを使用し不利益が生じても一切の責任を負いません  
+また改変・再配布などはご自由にどうぞ  
+バグ報告は詳細に、環境ない箇所の場合は特に、対処できません
 
 #### Framework & JavaScriptライブラリ
 
