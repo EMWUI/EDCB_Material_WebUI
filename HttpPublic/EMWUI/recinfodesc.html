@@ -1,5 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+ffprobe=edcb.GetPrivateProfile('SET','ffprobe',dir..'ffprobe.exe',ini)
 
 ct={title='録画結果'}
 
@@ -16,6 +18,7 @@ if v then
     f=edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\'..fname..ext, 1)
     if f then
       video=PathToRoot()..'video/'..mg.url_encode(fname)..ext
+      fpath=mg.document_root..'\\video\\'..fname..ext
       break
     end
   end
@@ -23,12 +26,17 @@ if v then
     f=edcb.FindFile and edcb.FindFile(w.recFilePath, 1)
     if f then
       video=PathToRoot()..'api/Movie?id='..v.id
+      fpath=w.recFilePath
       ori=true
     end
   end
 
   if video then
     ct.js='<script src="js/player.js"></script>\n'
+    f=edcb.FindFile and edcb.FindFile(ffprobe, 1)
+    if f then
+      duration=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration -of ini  2>&1"', 'rb'):read('*a'):match('=(.+)\n')
+    end
   end
 
   title=ConvertTitle(v.title)
@@ -60,7 +68,7 @@ if v then
     ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..v.durationSecond or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', audio, not ori)
+      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..(duration or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', audio, not ori)
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

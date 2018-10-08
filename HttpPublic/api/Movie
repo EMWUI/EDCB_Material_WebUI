@@ -3,6 +3,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 ini='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
+ffprobe=edcb.GetPrivateProfile('SET','ffprobe',dir..'ffprobe.exe',ini)
 readex=edcb.GetPrivateProfile('SET','readex',dir..'readex.exe',ini)
 
 mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,ini))~=0
@@ -82,22 +83,38 @@ if fpath then
   if mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
     f=edcb.io.open(fpath, 'rb')
     if f then
-      offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
-      if XCODE then
+      meta=mg.get_var(mg.request_info.query_string,'meta')
+      if meta then
         f:close()
-        -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する
-        sync=fname:lower():find('%.ts$') and edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
-        f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | '..XCMD..'"', 'rb')
-        fname='xcode'..XEXT
+        f=edcb.FindFile and edcb.FindFile(ffprobe, 1)
+        if f then
+          f=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -hide_banner -show_format -show_entries format=duration 2>&1"', 'rb'):read('*a')
+          meta={duration=f:match('duration=(.-)\r\n'), audio={}}
+          for w in f:gmatch(':%sAudio:%s(.-)\r\n') do
+             table.insert(meta.audio,w)
+          end
+        end
       else
-        f:seek('set', offset)
-        XPREPARE=nil
+        offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
+        if XCODE then
+          f:close()
+          -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する
+          sync=fname:lower():find('%.ts$') and edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
+          f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | '..XCMD..'"', 'rb')
+          fname='xcode'..XEXT
+        else
+          f:seek('set', offset)
+          XPREPARE=nil
+        end
       end
     end
   end
 end
 
-if not f then
+if meta then
+  ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(type(meta)=='table' and (meta.duration~='N/A' and '<duration>'..meta.duration..'</duration>' or '')..'<audio>'..#meta.audio..'</audio>' or '<err>なし</err>')..'</entry>'
+  mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
+elseif not f then
   mg.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
 else
   mg.write('HTTP/1.1 200 OK\r\nContent-Type: '..mg.get_mime_type(fname)..'\r\nContent-Disposition: filename='..mg.url_encode(fname)..'\r\nConnection: close\r\n\r\n')

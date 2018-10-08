@@ -66,6 +66,7 @@ function playMovie(obj){
 		hideBar(2000);
 	}else{
 		$('#seek').get(0).MaterialSlider.change(0);
+		$('.currentTime,.duration').text('0:00');
 		loadMovie(obj);
 	}
 	video.play();
@@ -166,16 +167,11 @@ $(function(){
 		'canplay': function(){
 			hideBar(2000);
 			$(this).removeClass('is-loadding');
-			$('#seek').prop('disabled', false);
-			
-			xcode = $(this).data('xcode');
-			duration= $(this).data('duration') || this.duration;
-			
+
 			if ($(this).data('cast')){
 				this.play();
 
 				var data = $('.is_cast').data();
-				$('#seek').prop('disabled', true);
 				$('.duration').text(getVideoTime(data.duration));
 
 				$(this).on('timeupdate', function(){
@@ -183,23 +179,57 @@ $(function(){
 					$('.currentTime').text(getVideoTime(currentTime));
 					$('#seek').get(0).MaterialProgress.setProgress(currentTime / data.duration * 100);
 				});
-			}else if (xcode && !$(this).data('rec')){
-				$(this).off('timeupdate');
-				$('#seek').attr('max', 99).attr('step', 1);
-				$('.Time-wrap').addClass('is-disabled');
-				$('.currentTime,.duration').text('0:00');
 			}else{
-				$(this).on('timeupdate', function(){
-					if (!$(this).data('touched')){
-						var currentTime = video.currentTime + seek * (duration / 99);
-						$('.currentTime').text(getVideoTime(currentTime));
-						$('#seek').get(0).MaterialSlider.change(currentTime / duration * 100);
+				var self = $(this);
+				function timeupdate(duration){
+					self.on('timeupdate', function(){
+						if (!self.data('touched')){
+							var currentTime = video.currentTime + seek * (duration / 99);
+							$('.currentTime').text(getVideoTime(currentTime));
+							$('#seek').get(0).MaterialSlider.change(currentTime / duration * 100);
+						}
+					});
+					$('.Time-wrap').removeClass('is-disabled');
+					$('.duration').text(getVideoTime(duration));
+				};
+
+				xcode = $(this).data('xcode');
+				if (xcode){
+					$('#seek').attr('max', 99);
+					$('#audio').prop('disabled', false);
+					duration = $(this).data('duration');
+					if (duration){
+						timeupdate(duration);
+					}else{
+						$.get(root + 'api/Movie?fname=' + $(this).data('path') + '&meta=', function(result, textStatus, xhr){
+							var xml = $(xhr.responseXML);
+							if (xml.find('duration').length > 0){
+								duration = xml.find('duration').text();
+								timeupdate(duration);
+							}else{
+								duration = false;
+								$(this).off('timeupdate');
+								$('.Time-wrap').addClass('is-disabled');
+							}
+							if (xml.find('audio').length > 0){
+								if (xml.find('audio').text() == 1){
+									$('#RAW').prop('checked', true);
+									$('.dual').show();
+									$('.multi').hide();
+								}else{
+									$('#multi1').prop('checked', true);
+									$('.multi').show();
+									$('.dual').hide();
+								}
+							}
+						});
 					}
-				});
-				$('#seek').attr('max', 100).attr('step', 0.01);
-				$('.Time-wrap').removeClass('is-disabled');
-				$('.duration').text(getVideoTime(duration));
-				//if (!$(this).data('public') && !$(this).data('duration')) $('#seek').prop('disabled', true);  //Firefoxだとシークできたので
+				}else{
+					$('#seek').attr('max', 100);
+					$('#audio').prop('disabled', true);
+					duration = this.duration;
+					timeupdate(duration);
+				}
 			}
 		}
 	});
@@ -227,7 +257,7 @@ $(function(){
 			}
 		},
 		'input': function(){
-			if (!xcode || $('#video').data('rec')){
+			if (duration){
 				var currentTime = video.currentTime + $(this).val() * (duration / 99);
 				$('.currentTime').text(getVideoTime(currentTime));
 			}
