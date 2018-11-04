@@ -38,8 +38,8 @@ function getRecSetting(rs,post)
     local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
     rs={
       batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or rs.batFilePath,
-      recFolderList=rs.recFolderList,
-      partialRecFolder=rs.partialRecFolder,
+      recFolderList={},
+      partialRecFolder={},
       recMode=GetVarInt(post,'recMode',0,5),
       tuijyuuFlag=GetVarInt(post,'tuijyuuFlag'),
       priority=GetVarInt(post,'priority',1,5),
@@ -54,7 +54,6 @@ function getRecSetting(rs,post)
       partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
     }
     if mg.get_var(post, 'recFolder') then
-      rs.recFolderList={}
       for i=0,10000 do
         if not mg.get_var(post, 'recFolder', i) then break end
         table.insert(rs.recFolderList, {
@@ -65,7 +64,6 @@ function getRecSetting(rs,post)
       end
     end
     if mg.get_var(post, 'partialrecFolder') then
-      rs.partialrecFolder={}
       for i=0,10000 do
         if not mg.get_var(post, 'partialrecFolder', i) then break end
         table.insert(rs.partialRecFolder, {
