@@ -1,14 +1,14 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-ini='Setting\\HttpPublic.ini'
-dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
-
 MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
 
 if MakeThumbs then
-	AssertCsrf(mg.request_info.query_string)
+  AssertCsrf(mg.request_info.query_string)
+
+  ini='Setting\\HttpPublic.ini'
+  dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+  ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
 end
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'}

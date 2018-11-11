@@ -288,12 +288,11 @@ if temp.video then
     <div class="mdl-card mdl-shadow--16dp">
       <div id="player" class="is-small">
         <div class="player-container">
-          <video id="video"></video>
           <div id="playerUI"]=]..(sp and ' class="sp"' or '')..'>\n'..(sp and
            '<div id="center"><i id="playprev" class="ctl-button material-icons">skip_previous</i><i id="play" class="ctl-button material-icons">play_arrow</i><i id="playnext" class="ctl-button material-icons">skip_next</i></div>\n' or '')..[=[
             <div id="titlebar" class="bar"></div>
             <div id="control" class="ext bar">
-              <div id="seek-container">]=]..(temp.video=='onair' and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..'</div>\n'
+              <div id="seek-container">]=]..(temp.video=='live' and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..'</div>\n'
               ..(not sp and '<i id="playprev" class="ctl-button material-icons">skip_previous</i><i id="play" class="ctl-button material-icons">play_arrow</i><i id="playnext" class="ctl-button material-icons">skip_next</i>\n' or '')..[=[
               <div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i>]=]..(not sp and '<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>' or '')..[=[</div>
               <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
@@ -336,6 +335,7 @@ if temp.video then
               <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
             </div>
           </div>
+          <video id="video"></video>
         </div>
       </div>
       <span class="close icons mdl-badge" data-badge="&#xE5CD;"></span>
@@ -828,16 +828,15 @@ function sidePanelTemplate(reserve)
 end
 
 --プレイヤー
-function player(video, audio, xcode)
+function player(video, audio, xcode, live)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
   local sp=UserAgentSP()
-  local s='<div id="player" class="is-small"><div class="player-container">\n'
-..video..[=[
+  local s=[=[<div id="player" class="is-small"><div class="player-container">
 <div id="playerUI" class="is-visible]=]..(sp and ' sp' or '')..[=[">
 <div></div>
 <div id="control" class="ext bar">
-<div id="seek-container"><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01"></div>
-]=]..(not sp and '<i id="play" class="ctl-button material-icons">play_arrow</i>' or '')..[=[
+<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..'</div>'
+..(not sp and '<i id="play" class="ctl-button material-icons">play_arrow</i>' or '')..[=[
 <div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i>]=]..(not sp and '<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>' or '')..[=[</div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
 <p class="mdl-layout-spacer"></p>
@@ -876,11 +875,9 @@ function player(video, audio, xcode)
 </ul>
 <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
 </div>
-]=]..(sp and '<div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '')..[=[
-</div>
-</div>
-</div>
-]=]
+]=]..(sp and '<div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '')
+..'</div>\n'
+..video..'</div></div>'
   return s
 end
 

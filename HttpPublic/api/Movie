@@ -85,17 +85,24 @@ if fpath then
     if f then
       meta=mg.get_var(mg.request_info.query_string,'meta')
       if meta then
-        f:close()
-        f=edcb.FindFile and edcb.FindFile(ffprobe, 1)
-        if f then
-          f=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -hide_banner -show_format -show_entries format=duration 2>&1"', 'rb'):read('*a')
-          meta={duration=f:match('duration=(.-)\r\n'), audio={}}
-          for w in f:gmatch(':%sAudio:%s(.-)\r\n') do
-             table.insert(meta.audio,w)
+        ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
+        if ff then
+          ff=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -hide_banner -show_format -show_entries format=duration 2>&1"', 'rb'):read('*a')
+          meta={duration=ff:match('duration=(.-)\r\n'), audio={}}
+          for v in ff:gmatch(':%sAudio:%s(.-)\r\n') do
+             table.insert(meta.audio,v)
           end
+        else
+          meta={duration=GetDurationSec(f)}
         end
+        f:close()
       else
-        offset=math.floor((f:seek('end', 0) or 0) * offset / 99 / 188) * 188
+        fsec,fsize=GetDurationSec(f,fpath)
+        if offset~=0 and offset~=99 and fsec>0 and SeekSec(f,fsec*offset/99) then
+          offset=f:seek('cur',0) or 0
+        else
+          offset=math.floor(fsize*offset/99/188)*188
+        end
         if XCODE then
           f:close()
           -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する

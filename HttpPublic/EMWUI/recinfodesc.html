@@ -15,7 +15,7 @@ if v then
   -- トランスコード済みのファイルがvideoフォルダにあればそっち使う
   fname=string.match(w.recFilePath, '[^\\]*$') or ''
   for i,ext in ipairs({'.mp4','.webm'}) do
-    f=edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\'..fname..ext, 1)
+    f=edcb.io.open(mg.document_root..'\\video\\'..fname..ext, 'rb')
     if f then
       video=PathToRoot()..'video/'..mg.url_encode(fname)..ext
       fpath=mg.document_root..'\\video\\'..fname..ext
@@ -23,7 +23,7 @@ if v then
     end
   end
   if not video then
-    f=edcb.FindFile and edcb.FindFile(w.recFilePath, 1)
+    f=edcb.io.open(w.recFilePath, 'rb')
     if f then
       video=PathToRoot()..'api/Movie?id='..v.id
       fpath=w.recFilePath
@@ -33,10 +33,8 @@ if v then
 
   if video then
     ct.js='<script src="js/player.js"></script>\n'
-    f=edcb.FindFile and edcb.FindFile(ffprobe, 1)
-    if f then
-      duration=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration -of ini  2>&1"', 'rb'):read('*a'):match('=(.+)\n')
-    end
+    dur,fsize=GetDurationSec(f, fpath)
+    f:close()
   end
 
   title=ConvertTitle(v.title)
@@ -68,7 +66,7 @@ if v then
     ..'</ul></section>'
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..(duration or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', audio, not ori)
+      ..player('<video id="video" preload="none" '..(ori and 'data-path="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-rec="true"></video>\n', audio, not ori)
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

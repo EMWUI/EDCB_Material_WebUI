@@ -1469,7 +1469,7 @@ h4 .mdl-button--icon {
   display:         flex;
   align-items: center;
   justify-content: center;
-  z-index: 0; }
+  z-index: 1; }
   #center .ctl-button {
     font-size: 40px; }
   #center #play.ctl-button {
