@@ -28,7 +28,7 @@ ct=template({
 </ul>
 ]=],
 
-  main='<main class="lib-swipe mdl-layout__content">\n<div id="folder" class="library list mdl-grid"></div><div id="file" class="library list mdl-grid"></div>\n'
+  main='<main class="lib-swipe mdl-layout__content">\n<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>\n'
 })
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))

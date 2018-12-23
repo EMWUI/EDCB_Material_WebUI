@@ -20,6 +20,11 @@
   height: 100vh; }
 .mdl-layout__content>.mdl-grid:not(.list) {
   max-width: 1200px; }
+  @media (max-width: 479px) {
+  .mdl-layout__content>.mdl-grid.library,
+  .mdl-layout__content>.mdl-grid:not(.list),
+  #onair {
+    padding: 0; } }
 
 
 
@@ -68,6 +73,14 @@ dialog {
     right: 15px; }
   .colon {
     margin: 0 4px; }
+
+.mini-button {
+  padding: 0 4px;
+  margin-left: 4px;
+  height: auto;
+  min-width: auto;
+  line-height: inherit;
+  border: 1px solid rgba(0,0,0,.1); }
 
 /* マーク */
 .mark {
@@ -197,7 +210,7 @@ dialog {
 .mdl-grid.chip-container {
   padding: 8px 0 0 }
 .mdl-grid.chip-container>div {
-  padding: 0 8px }
+  padding: 8px 8px 0 }
 .chip-container+.mdl-grid {
   padding-top: 0; }
 @media (pointer: coarse) {
@@ -1261,14 +1274,11 @@ h4 .mdl-button--icon {
   .list .mdl-data-table {
     display: block;
     border: none;
-    background-color: transparent;
-    box-shadow: none;
     overflow: hidden; }
   .list tbody {
     display: block; }
   .list .mdl-data-table tbody tr {
     padding: 16px;
-    margin: 8px;
     height: auto;
     display: -webkit-flex;
     display:     -ms-flexbox;
@@ -1276,10 +1286,8 @@ h4 .mdl-button--icon {
     flex-wrap: wrap;
     font-weight: 400;
     white-space: normal;
-    background: rgb(255,255,255);
-    border-radius: 2px;
-    box-sizing: border-box;
-    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12); }
+    border-bottom: 1px solid rgba(0,0,0,.12);
+    box-sizing: border-box; }
     .mdl-data-table.reserve tbody tr {
       padding-left: 60px; }
     .mdl-data-table tbody tr:hover {

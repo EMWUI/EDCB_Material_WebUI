@@ -17,6 +17,7 @@ function template(temp)
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="]=]..edcb.GetPrivateProfile('SET','theme','#3f51b5',ini)..[=[">
 <title>EpgTimer</title>
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
@@ -582,7 +583,7 @@ function RecSettingTemplate(rs)
 
   local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',ini)..'\\'
   for j,w in ipairs(edcb.FindFile(batPath..'*', 0) or {}) do
-    if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$')) then
+    if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$') or w.name:find('%.[Ll][Uu][Aa]$')) then
       s=s..'<option value="'..batPath..w.name..'"'..(batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
       batFilePath=(batFilePath==batPath..w.name and '' or batFilePath)
     end
@@ -832,7 +833,8 @@ function player(video, audio, xcode, live)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
   local sp=UserAgentSP()
   local s=[=[<div id="player" class="is-small"><div class="player-container">
-<div id="playerUI" class="is-visible]=]..(sp and ' sp' or '')..[=[">
+<div id="playerUI" class="is-visible]=]
+..(sp and ' sp"><div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '">')..[=[
 <div></div>
 <div id="control" class="ext bar">
 <div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..'</div>'
@@ -875,7 +877,7 @@ function player(video, audio, xcode, live)
 </ul>
 <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
 </div>
-]=]..(sp and '<div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '')
+]=]
 ..'</div>\n'
 ..video..'</div></div>'
   return s
