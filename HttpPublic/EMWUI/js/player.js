@@ -35,7 +35,7 @@ function loadMovie(obj){
 	}else if (obj.data('rec')){
 		path = path + quality + offset + ($('.audio:checked').length>0 ? audio : '');
 	}else if ($('#video').data('cast')){
-		path = root + 'api/TvCast?onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio) +'&null='+ Math.floor(Math.random()*1000); //再生失敗時のキャッシュ対策
+		path = root + 'api/TvCast?id=-1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio) +'&null='+ Math.floor(Math.random()*1000); //再生失敗時のキャッシュ対策
 	}else{
 		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '') + ($('.audio:checked').length>0 ? audio : '');
 	}
@@ -146,7 +146,17 @@ $(function(){
 				if ($('#video').attr('src')!='') messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
 			}
 			$(this).removeClass('is-loadding');
-			if (messege) notification.MaterialSnackbar.showSnackbar({message: 'Error : ' + messege});
+			if (messege) {;
+				var url = this.currentSrc;
+				var data = {
+					message: 'Error : ' + messege,
+					actionHandler: function(){
+						window.open(url);
+					},
+					actionText: '詳細？'
+				}
+				notification.MaterialSnackbar.showSnackbar(data);
+			}
 		},
 		'volumechange': function(){
 			if (this.muted){

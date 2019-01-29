@@ -202,12 +202,17 @@ $(function(){
 		var data = obj.data();
 		if (data.eid!=0){
 			if (Magnezio){
-				$.get(root + 'api/TvCast?mode=1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid'));
-				location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
+				$.get(root + 'api/TvCast?mode=1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid')).done(function(xhr){
+					if ($(xhr).find('success').length > 0){
+						location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
+					}else{
+						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '失敗'});
+					}
+				});
 			}else{
 				if (data.audio){
 					if (apk){
-						location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+						location.href = 'intent:http://'+location.host+ '/api/TvCast?id=-1&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 					}else{
 						$('#popup,#playerUI').addClass('is-visible');
 						audio(data.audio);
@@ -226,7 +231,7 @@ $(function(){
 								}
 							});
 							if (apk){
-								location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+								location.href = 'intent:http://'+location.host+ '/api/TvCast?id=-1&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 							}else{
 								$('#popup,#playerUI').addClass('is-visible');
 								audio(data.audio);

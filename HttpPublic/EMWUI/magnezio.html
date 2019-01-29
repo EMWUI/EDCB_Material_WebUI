@@ -28,92 +28,134 @@ ct:Append([=[
 <meta name="viewport" content="width=1920,height=1080"/>
 <style>
 * {
+  --color: #EEEEEE;
+
   margin: 0;
-  color: #fff;
-  font-size: 56px;
-  box-sizing: border-box; }
+  color: var(--color);
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(255,255,255,0); }
 body {
   width: 1920px;
   height: 1080px;
+  font-size: 56px;
   position: absolute;
   display: flex;
-  flex-direction: column;
-  overflow: hidden; }
+  justify-content: space-between;
+  flex-direction: column; }
 
-.bar {
-  width: 100%;
-  display: flex;
-  background: rgba(48,48,48,0.75);
-  align-items: center; }
-.bar, .side, #info {
-  transition-property: transform, margin, padding;
-  transition-duration: .5s;
-  transition-timing-function: cubic-bezier(.4,0,.2,1); }
-
-#top .bar {
-  padding: 0 32px;
-  transform: translateY(-120px); }
-  .is-visible:not(.stop) #top .bar, #top .bar.is-visible {
-    transform: translateY(0); }
-  .is-visible:not(.stop) #top .bar, .is-visible_tall #top .bar.is-visible {
-    padding-top: 120px; }
-
-#titleBar {
-  height: 120px;
-  display: flex;
-  align-items: center;
-  flex-grow: 1;
-  overflow: hidden;
-  white-space: nowrap; }
-#eventName {
-  overflow: hidden;
-  text-overflow: ellipsis; }
-#logo {
-   margin-right: 0.5em;
-   width: 100px; }
-
-#middle {
-  display: flex;
-  flex-grow: 1; }
-
-.side {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  overflow: hidden; }
-  .side .bar {
-    width: 200px;
-    flex-direction: column;
-    align-items: stretch; }
-  .side .bar div {
-    height: 150px;
-    display: flex;
-    justify-content: center;
-    align-items: center; }
-
-#left .bar {
-  transform: translateX(-200px); }
-  .is-visible #left .bar {
-    transform: translateX(0); }
-
-#center {
-  margin: 32px;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
+.spacer {
   flex-grow: 1;
   flex-shrink: 1; }
-  #info {
+.hidden {
+  display: none!important; }
+.button {
+  padding: 0 32px;
+  margin: 0 8px;
+  height: 100px;
+  min-width: 160px;
+  border: 5px solid var(--color);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  text-decoration: unset; }
+  .button:active {
+    background-color: rgba(255,255,255,.3); }
+
+#top,
+#bottom,
+#info .info {
+  opacity: 0;
+  pointer-events: none; }
+  #top,
+  #bottom {
+    transition-property: opacity;
+    transition-duration: .2s;
+    transition-timing-function: cubic-bezier(.4,0,.2,1); }
+  #top.is-visible,
+  #info.is-visible .info,
+  .is-visible #top,
+  .is-visible #bottom {
+    pointer-events: auto;
+    opacity: 1; }
+
+#top {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+  padding:  120px 32px; }
+  #titleBar {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    overflow: hidden;
+    white-space: nowrap; }
+  #eventName {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis; }
+    #eventName span {
+     margin-right: 0.5em;
+     font-size: 36px; }
+  #logo {
+    margin-right: 0.5em;
+    width: 100px; }
+
+#bottom {
+  display: flex;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  padding: 200px 0 30px;
+  flex-direction: column; }
+  #bottom > div {
+    display: flex;
+    overflow: auto; }
+  #bottom > div:first-child {
+    margin: 0 32px 32px; }
+  #bottom .button:first-child {
+    margin-left: 0; }
+  #close {
+    margin-right: 160px; }
+  .list {
+    padding: 0 16px; }
+    .list > div:last-child {
+      min-width: 160px; }
+  .channel {
+    margin: 0 16px;
+    padding: 24px;
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap; }
+    .channel:active {
+      background: rgba(255,255,255,.3); }
+    .channel span {
+      font-size: 24px; }
+    .channel img {
+      width: 150px;
+      padding-bottom: 8px; }
+
+#info {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; }
+  #info .info {
+    margin: 0 14% 0 7%;
     padding: 72px;
-    background: rgba(48,48,48,0.75);
+    height: 70%;
+    background: rgba(0, 0, 0, 0.48);
     display: flex;
     flex-direction: column;
     flex-grow: 1;
     border-radius: 16px;
-    overflow: hidden;
-    opacity: 0; }
-    #info.is-visible {
-      opacity: 1; }
+    overflow: hidden; }
     #title {
       line-height: 1; }
     #date {
@@ -122,44 +164,11 @@ body {
     #text {
       overflow: auto;
       font-size: 42px; }
-  
-#right .bar {
-  transform: translateX(200px); }
-  .is-visible #right .bar {
-    margin-right: 144px;
-    transform: translateX(0); }
-
-
-#bottom {
-  overflow: hidden; }
-  #list {
-    margin-bottom: -120px;
-    height: 240px;
-    transform: translateY(240px);
-    padding: 0 16px;
-    align-items: stretch;
-    overflow: auto; }
-    .is-visible #list {
-      margin-bottom: 0;
-      transform: translateY(0); }
-    .stop #list, .is-visible_tall #list {
-      margin-bottom: 0; }
-  .channel {
-    padding: 0 32px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    white-space: nowrap; }
-  .channel span {
-    font-size: 24px; }
-  .channel img {
-    width: 150px;
-    padding-bottom: 8px; }
 </style>
 <script src="js/jquery-3.3.1.min.js"></script>
 <script>
-var hideTimmer, stopTimmer, cast, metaData;
+var hideTimmer, stopTimmer, metaData;
+var cast=]=]..(edcb.IsOpenNetworkTV() and 'true' or 'false')..[=[;
 function zero(a){
   return ('0'+ a).slice(-2);
 }
@@ -167,7 +176,7 @@ function info(meta){
   var start=new Date(meta.startTime*1000);
   var end=new Date((meta.startTime+meta.duration)*1000);
   var date=zero(start.getHours()) +':'+ zero(start.getMinutes()) +'～'+ zero(end.getHours()) +':'+ zero(end.getMinutes()) +' ';
-  $('#eventName').text(date+meta.eventName);
+  $('#eventName').html('<span>'+date+'</span>'+meta.eventName);
   $('#title').text(meta.eventName);
   $('#date').text(start.getFullYear() +'/'+ zero(start.getMonth()+1) +'/'+ zero(start.getDate()) +'('+ ['日','月','火','水','木','金','土'][start.getDay()] +') '+ date+meta.tsName);
   $('#text').text(meta.text);
@@ -177,8 +186,8 @@ function onMetaData(meta){
   metaData = meta;
   if (meta.eventName!=''){
     info(meta);
-    $('#top .bar').addClass('is-visible');
-    setTimeout(function(){$('#top .bar').removeClass('is-visible');}, 3000)
+    $('#top').addClass('is-visible');
+    setTimeout(function(){$('#top').removeClass('is-visible');}, 3000)
   }
 }
 function onVideoStarted(){
@@ -196,18 +205,17 @@ function onVideoStopped (){
   //stopTimmer = setTimeout(function(){if(cast)stop(true);}, 5000);
 }
 function stop(auto){
-$('#logo').hide();
-$('#eventName').text((auto?'再生が停止したため':'')+'配信停止リクエスト中');
-  $('#top .bar').addClass('is-visible');
-  $('body').addClass('is-visible_tall');
+  $('#logo').hide();
+  $('#eventName').text((auto?'再生が停止したため':'')+'配信停止リクエスト中');
+  $('#top').addClass('is-visible');
   $('#info').removeClass('is-visible');
   hide(0);
-  $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1&n=-1').done(function(){
+  $.get(']=]..PathToRoot()..[=[api/TvCast?sid=0').done(function(){
     cast=false;
     $('#eventName,#title,#date,#text').text('');
-    $('#top .bar, body').removeClass('is-visible is-visible_tall');
+    $('#top').removeClass('is-visible');
     $('.cast').removeClass('cast');
-    $('body').addClass('is-visible stop');
+    $('body').addClass('is-visible');
   }).fail(function(){
     $('#eventName').text('配信停止出来ませんでした');
   });
@@ -216,8 +224,7 @@ function hide(time, a){
   hideTimmer = setTimeout(function(){if (cast)$('body').removeClass('is-visible');}, time);
 }
 $(function(){
-  $('body').addClass('is-visible');
-  $('body').click(function(e){
+  $('body').click(function(){
     if (!$(this).hasClass('is-visible')){
       $(this).addClass('is-visible');
       clearTimeout(hideTimmer);
@@ -225,33 +232,41 @@ $(function(){
     }
   });
   $('.channel').click(function(){
-    cast=true;
-    hide(100);
     if (!$(this).hasClass('cast')){
-      $('#info').removeClass('is-visible');
-      $('body').removeClass('stop');
-      $('#info div').text('');
-      $('#eventName').text($(this).text());
-      $('#logo').show().prop('src', $(this).children().prop('src'));
-      $('#top .bar').addClass('is-visible is-visible_tall');
-      $('body').addClass('is-visible is-visible_tall');
-      setTimeout(function(){$('#top .bar, body').removeClass('is-visible is-visible_tall');}, 5000)
-      $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1', $(this).data());
       $('.cast').removeClass('cast');
-      $(this).addClass('cast');
+      $('#info').removeClass('is-visible');
+      $('#info>.info>div').text('');
+      var self = $(this);
+      $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1', $(this).data()).done(function(xhr){
+        if ($(xhr).find('success').length > 0){
+          id=$(xhr).find('success');
+          cast=true;
+          hide(100);
+          self.addClass('cast');
+          $('#eventName').text(self.text());
+          $('#logo').show().prop('src', self.children().prop('src'));
+          $('#top').addClass('is-visible');
+          setTimeout(function(){$('#top, body').removeClass('is-visible');}, 2000)
+        }else{
+          cast=false;
+          $('#logo').hide();
+          $('#eventName').text('配信失敗');
+          $('#top, body').addClass('is-visible');
+          setTimeout(function(){$('#top').removeClass('is-visible');}, 2000)
+        }
+      });
     }
   });
-  $('#show').click(function(){
+  $('.info').click(function(){
     $('#info').toggleClass('is-visible');
   });
   $('#close').click(function(){
     stop();
   });
-  $('.space').click(function(){
-    $('.channel').hide();
-    $($(this).data('space')).show();
-    $('#list').scrollLeft(0);
+  $('.tag').click(function(){
     clearTimeout(hideTimmer);
+    $('.list').addClass('hidden');
+    $($(this).attr('href')).removeClass('hidden');
     hide(3000);
   });
   $('#bottom').on({
@@ -266,10 +281,10 @@ $(function(){
 });
 </script>
 </head>
-<body class="stop">
-<div id="top"><div class="bar"><div id="titleBar"><img id="logo"><span id="eventName"></span></div></div></div>
-<div id="middle">
-<div class="side" id="left"><div class="bar">
+<body]=]..(edcb.IsOpenNetworkTV() and '' or ' class="is-visible"')..[=[>
+<div id="top"><div id="titleBar"><img id="logo"><span id="eventName"></span></div></div>
+<div id="info"><div class="info"><div id="title"></div><div id="date"></div><div id="text"></div></div></div>
+<div id="bottom"><div>
 ]=])
 
 NetworkList={}
@@ -278,26 +293,19 @@ for i,v in ipairs(NetworkIndex()) do
 end
 for i,v in ipairs(CustomServiceList()) do
   if not v.partialReceptionFlag and not v.subCh then
-    table.insert(NetworkList[NetworkIndex(v)], '<div class="channel network'..NetworkIndex(v)..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'"><img src="'..'img/logo/'..('%04X%04X'):format(v.onid,v.sid)..'.png"><span>'..v.service_name..'</span></div>\n')
+    table.insert(NetworkList[NetworkIndex(v)], '<div class="channel" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'"><img src="'..'img/logo/'..('%04X%04X'):format(v.onid,v.sid)..'.png"><span>'..v.service_name..'</span></div>')
   end
 end
 
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct:Append('<div class="space" data-space=".network'..i..'">'..NetworkIndex()[i]..'</div>')
-    table.insert(ctt, table.concat(v))
+    ct:Append('<a class="tag button" href="#network'..i..'">'..NetworkIndex()[i]..'</a>')
+    table.insert(ctt, '<div id="network'..i..'"class="list'..(#ctt>0 and ' hidden' or '')..'">'..table.concat(v)..'<div></div></div>')
   end
 end
 
-ct:Append([=[
-</div></div>
-<div id="center"><div id="info"><div id="title"></div><div id="date"></div><div id="text"></div></div></div>
-<div class="side" id="right"><div class="bar"><div id="show">詳細</div><div></div><div id="close">停止</div></div></div>
-</div>
-<div id="bottom"><div id="list" class="bar">
-]=]..table.concat(ctt)..[=[
-<div style="min-width:160px;"></div>
+ct:Append('<div class="spacer"></div><div class="info button">番組詳細</div><div id="close" class="button">停止</div></div>'..table.concat(ctt)..[=[
 </div>
 </body>
 </html>

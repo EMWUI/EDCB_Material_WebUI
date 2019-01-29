@@ -2,7 +2,6 @@
 ini='Setting\\HttpPublic.ini'
 dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg',ini)
-NwTV=dir..'NwTV.ps1'
 
 onid=tonumber(mg.get_var(mg.request_info.query_string, 'onid'))
 tsid=tonumber(mg.get_var(mg.request_info.query_string, 'tsid'))
@@ -37,55 +36,68 @@ end
 XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
 XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,ini))
+-- NetworkTVモードの名前付きパイプをFindFileで見つけられない場合(EpgTimerSrvのWindowsサービス化など？)に対応するか
+FIND_BY_OPEN=false
 
 n=math.floor(tonumber(mg.get_var(mg.request_info.query_string, 'n')) or 0)
+id=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
+
+-- トランスコードするかどうか
+XCODE=bit32.band(mode,2)==2 and tonumber(mg.get_var(mg.request_info.query_string, 'xcode') or 1)~=0
+
 if n<0 then
   -- プロセスが残っていたらすべて終わらせる
-  if edcb.CloseNetworkTV then
-    edcb.CloseNetworkTV()
-  else
-    edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
-  end
   edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]%%[_]%%\'" call terminate >nul')
 elseif n<=65535 then
-  if mode==1 then
-    if edcb.OpenNetworkTV then
-      edcb.OpenNetworkTV(mode, onid, tsid, sid)
-    else
-      edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..' -UDP 1"')
-    end
-  else
-    -- 前回のプロセスが残っていたら終わらせる
-    edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]'..n..'[_]%%\'" call terminate >nul')
-    -- チャンネル指定があればEpgDataCap_Bonを起動
-    if n==0 and onid and tsid and sid then
-      if edcb.OpenNetworkTV then
-        edcb.OpenNetworkTV(mode, onid, tsid, sid)
-      else
-        edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'" -onid '..onid..' -tsid '..tsid..' -sid '..sid..'"')
+  if onid and edcb.IsOpenNetworkTV then
+    if id<0 then id=math.random(1000) end
+    -- NetworkTVモードを開始
+    ok,pid=edcb.OpenNetworkTV(mode, onid, tsid, sid, id)
+  end
+  if sid==0 then
+    -- NetworkTVモードを終了
+    edcb.CloseNetworkTV(id)
+  elseif XCODE then
+    -- PID取得を試みる
+    if not pid and edcb.IsOpenNetworkTV then ok,pid=edcb.IsOpenNetworkTV(id) end
+    -- 名前付きパイプができるまで待つ
+    for i=1,50 do
+      ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_*_'..pid, 1)
+      if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
+        f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\'..ff[1].name..'" '..XOPT..'"', 'rb')
+        fname='view'..XEXT
+        break
+      elseif FIND_BY_OPEN then
+        -- ポートを予想して開いてみる
+        for j=0,9 do
+          ff=edcb.io.open('\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid, 'rb')
+          if ff then
+            ff:close()
+            -- 再び開けるようになるまで少しラグがある
+            edcb.Sleep(4000)
+            f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" '..XOPT..'"', 'rb')
+            fname='view'..XEXT
+            break
+          end
+        end
+        if ff then break end
       end
-      retry=0
-      while true do
-        -- 最大5秒間EpgDataCap_Bonの準備ができるまで待つ
-        retry=retry+1
-        ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
-        if ff or retry > 25 then break end
-        edcb.Sleep(200)
-      end
-    else
-      -- 名前付きパイプがあれば開く
-      ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
-    end
-    if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-      f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\'..ff[1].name..'" '..XOPT..'"', 'rb')
-      fname='view'..XEXT
+      edcb.Sleep(200)
     end
   end
 end
 
 if not f then
-  if bit32.band(mode,1)==1 then
-    ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><info></info></entry>'
+  if onid and not ok then
+    ct='<error>'..(edcb.IsOpenNetworkTV and 'EpgDataCap_Bonの起動に失敗' or 'EDCBが非対応です')..'</error>'
+  elseif XCODE and not sid==0 and not ff then
+    ct='<error>名前付きパイプが見つかりまでした</error>'
+    if onid then edcb.CloseNetworkTV(id) end
+  elseif ok or sid==0 then
+    ct='<success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success>'..'<id>'..id..'</id>'
+  end
+  if ct then
+    ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'</entry>'
     mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
   else
     mg.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
@@ -98,11 +110,6 @@ else
     if buf and #buf ~= 0 then
       if not mg.write(buf) then
         -- キャンセルされた
-        if edcb.CloseNetworkTV then
-          edcb.CloseNetworkTV()
-        else
-          edcb.os.execute('powershell -NoProfile -ExecutionPolicy RemoteSigned -File "'..NwTV..'"')
-        end
         mg.cry('canceled')
         break
       end
@@ -113,4 +120,5 @@ else
     end
   end
   f:close()
+  if onid then edcb.CloseNetworkTV(id) end
 end
