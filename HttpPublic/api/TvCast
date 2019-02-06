@@ -60,29 +60,31 @@ elseif n<=65535 then
   elseif XCODE then
     -- PID取得を試みる
     if not pid and edcb.IsOpenNetworkTV then ok,pid=edcb.IsOpenNetworkTV(id) end
-    -- 名前付きパイプができるまで待つ
-    for i=1,50 do
-      ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_*_'..pid, 1)
-      if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-        f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\'..ff[1].name..'" '..XOPT..'"', 'rb')
-        fname='view'..XEXT
-        break
-      elseif FIND_BY_OPEN then
-        -- ポートを予想して開いてみる
-        for j=0,9 do
-          ff=edcb.io.open('\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid, 'rb')
-          if ff then
-            ff:close()
-            -- 再び開けるようになるまで少しラグがある
-            edcb.Sleep(4000)
-            f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" '..XOPT..'"', 'rb')
-            fname='view'..XEXT
-            break
+    if ok then
+      -- 名前付きパイプができるまで待つ
+      for i=1,50 do
+        ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_*_'..pid, 1)
+        if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
+          f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\'..ff[1].name..'" '..XOPT..'"', 'rb')
+          fname='view'..XEXT
+          break
+        elseif FIND_BY_OPEN then
+          -- ポートを予想して開いてみる
+          for j=0,9 do
+            ff=edcb.io.open('\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid, 'rb')
+            if ff then
+              ff:close()
+              -- 再び開けるようになるまで少しラグがある
+              edcb.Sleep(4000)
+              f=edcb.io.popen('""'..ffmpeg..'" -f mpegts -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" '..XOPT..'"', 'rb')
+              fname='view'..XEXT
+              break
+            end
           end
+          if ff then break end
         end
-        if ff then break end
+        edcb.Sleep(200)
       end
-      edcb.Sleep(200)
     end
   end
 end
@@ -90,11 +92,11 @@ end
 if not f then
   if onid and not ok then
     ct='<error>'..(edcb.IsOpenNetworkTV and 'EpgDataCap_Bonの起動に失敗' or 'EDCBが非対応です')..'</error>'
-  elseif XCODE and not sid==0 and not ff then
+  elseif XCODE and sid~=0 and not ff then
     ct='<error>名前付きパイプが見つかりまでした</error>'
     if onid then edcb.CloseNetworkTV(id) end
   elseif ok or sid==0 then
-    ct='<success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success>'..'<id>'..id..'</id>'
+    ct='<success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success><id>'..id..'</id>'
   end
   if ct then
     ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'</entry>'
