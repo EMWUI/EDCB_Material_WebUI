@@ -93,7 +93,7 @@ if not f then
   if onid and not ok then
     ct='<error>'..(edcb.IsOpenNetworkTV and 'EpgDataCap_Bonの起動に失敗' or 'EDCBが非対応です')..'</error>'
   elseif XCODE and sid~=0 and not ff then
-    ct='<error>名前付きパイプが見つかりまでした</error>'
+    ct='<error>名前付きパイプが見つかりませんでした</error>'
     if onid then edcb.CloseNetworkTV(id) end
   elseif ok or sid==0 then
     ct='<success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success><id>'..id..'</id>'

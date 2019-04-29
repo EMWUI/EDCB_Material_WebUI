@@ -26,9 +26,9 @@ ct={title='番組情報'}
 et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
 
 if et and #et~=0 then
-  epgInfo, audio, End = _ConvertEpgInfoText2(et[1])
+  epgInfo, audio, End = ConvertEpgInfoText2(et[1])
 else
-  epgInfo, audio, End = _ConvertEpgInfoText2(onid, tsid, sid, eid)
+  epgInfo, audio, End = ConvertEpgInfoText2(onid, tsid, sid, eid)
 end
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n'

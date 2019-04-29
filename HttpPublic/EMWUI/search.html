@@ -186,7 +186,7 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'</div></form>\n</div>\n'
 
 
-b=(post or preset or mg.get_var(mg.request_info.query_string, 'andKey')) and edcb.SearchEpg(key) or {}
+b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andKey')) and edcb.SearchEpg(key) or {}
 table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
 a={}

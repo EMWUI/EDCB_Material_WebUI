@@ -370,8 +370,8 @@ s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notif
 end
 
 --EPG情報をTextに変換(EpgTimerUtil.cppから移植)
-function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
-  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsid, sid, eid)), true
+function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
+  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)), true
   if v then
     local now, startTime = os.time(), os.time(v.startTime)
     End=v.durationSecond and startTime+v.durationSecond<now
@@ -403,6 +403,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
 
     end
     s=s..'<ul>\n'
+      ..(type(tsidOrRecInfo)=='string' and tsidOrRecInfo or '')
     if v.contentInfoList then
       s=s..'<li>ジャンル\n<ul>'
       for i,w in ipairs(v.contentInfoList) do
@@ -411,7 +412,7 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
                      w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
         s=s..'<li>'..edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble)..'\n'..'</li>\n'
       end
-    s=s..'</ul></li>\n'
+      s=s..'</ul></li>\n'
     end
     if v.componentInfo then
       s=s..'<li>映像\n<ul><li>'..edcb.GetComponentTypeName(v.componentInfo.stream_content*256+v.componentInfo.component_type)..' '..v.componentInfo.text_char..'</li></ul></li>\n'
@@ -422,15 +423,15 @@ function _ConvertEpgInfoText2(onidOrEpg, tsid, sid, eid)
         s=s..'<li>'..edcb.GetComponentTypeName(w.stream_content*256+w.component_type)..' '..w.text_char..'</li>\n<li>サンプリングレート : '
           ..(({[1]='16',[2]='22.05',[3]='24',[5]='32',[6]='44.1',[7]='48'})[w.sampling_rate] or '?')..'kHz</li>\n'
       end
-    s=s..'</ul></li>\n'
+      s=s..'</ul></li>\n'
     end
     s=s..'<li>その他\n<ul>'
       ..(NetworkType(v.onid)=='地デジ' and '' or v.freeCAFlag and '<li>有料放送</li>\n' or '<li>無料放送</li>\n')
-      ..string.format('<li>OriginalNetworkID:%d(0x%04X)</li>\n', v.onid, v.onid)
-      ..string.format('<li>TransportStreamID:%d(0x%04X)</li>\n', v.tsid, v.tsid)
-      ..string.format('<li>ServiceID:%d(0x%04X)</li>\n', v.sid, v.sid)
-      ..string.format('<li>EventID:%d(0x%04X)</li>\n', v.eid, v.eid)
-    s=s..'</ul></li>\n</ul>\n'
+      ..('<li>OriginalNetworkID:%d(0x%04X)</li>\n'):format(v.onid,v.onid)
+      ..('<li>TransportStreamID:%d(0x%04X)</li>\n'):format(v.tsid,v.tsid)
+      ..('<li>ServiceID:%d(0x%04X)</li>\n'):format(v.sid,v.sid)
+      ..('<li>EventID:%d(0x%04X)</li>\n'):format(v.eid,v.eid)
+      ..'</ul></li>\n</ul>\n'
       ..'</section>\n'
   end
   return s, {multi=#v.audioInfoList>=2, dual=v.audioInfoList[1].component_type==2}, End

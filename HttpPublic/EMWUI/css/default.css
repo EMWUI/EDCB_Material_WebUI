@@ -78,7 +78,7 @@ dialog {
   padding: 0 4px;
   margin-left: 4px;
   height: auto;
-  min-width: auto;
+  min-width: 38px;
   line-height: inherit;
   border: 1px solid rgba(0,0,0,.1); }
 
@@ -264,10 +264,10 @@ header {
     .search-box.is-focused,
     .search-box.is-dirty {
       width: calc(100% - 48px); }
-    .is-focused ~ button,
-    .is-dirty ~ button,
-    .is-focused ~ .mdl-layout-title,
-    .is-dirty ~ .mdl-layout-title {
+    header .is-focused ~ button,
+    header .is-dirty ~ button,
+    header .is-focused ~ .mdl-layout-title,
+    header .is-dirty ~ .mdl-layout-title {
       opacity: 0; } }
 .navigation__footer small .material-icons {
   font-size:smaller;
@@ -433,6 +433,20 @@ h4 .mdl-button--icon {
     #detail ul ul{
       padding-left: 16px;
       line-height: 16px; }
+#detail li>div {
+  display: flex;
+  flex-wrap: wrap; }
+  #detail li>div>div {
+    display: flex;
+    max-width: 500px;
+    width: 100%; }
+  #detail li>div>div .mdl-textfield {
+    padding: 0;
+    flex-grow: 1; }
+    #detail li>div>div .mdl-textfield__input {
+      font-size: 14px; }
+    #detail li>div>div .mdl-textfield__label:after {
+      bottom: 0; }
 
 #error pre {
   margin: 8px 0 16px;

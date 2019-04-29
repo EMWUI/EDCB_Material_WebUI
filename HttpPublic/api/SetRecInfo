@@ -4,17 +4,36 @@ dofile(mg.document_root..'\\api\\util.lua')
 post=AssertPost()
 if post then
   id=GetVarInt(mg.request_info.query_string,'id') or 0
+  ri=edcb.GetRecFileInfoBasic(id)
   if mg.get_var(post,'protect') then
-    if edcb.GetRecFileInfoBasic(id) then
-      protect=mg.get_var(post,'protect')==1
-      ChgProtectRecFileInfo(id, protect)
+    if ri then
+      protect=mg.get_var(post,'protect')=='1'
+      edcb.ChgProtectRecFileInfo(ri.id, protect)
       messege='<success>録画情報をプロテクト'..(protect and '' or 'を解除')..'しました</success>'
     else
       messege='<err>録画情報のプロテクトを変更できませんでした</err>'
     end
+  elseif mg.get_var(post,'ren') then
+    ren=mg.get_var(post,'ren')
+    if ri and edcb.FindFile(ren, 1) then
+      RecInfoFolder=edcb.GetPrivateProfile('SET','RecInfoFolder','','Common.ini')
+      if RecInfoFolder == '' then
+        ori=ri.recFilePath
+        chg=ren
+      else
+        ori=RecInfoFolder..'\\'..ri.recFilePath:match('[^\\/]-$')
+        chg=RecInfoFolder..'\\'..ren:match('[^\\/]-$')
+      end
+      edcb.os.rename(ori..'.program.txt', chg..'.program.txt')
+      edcb.os.rename(ori..'.err', chg..'.err')
+      edcb.ChgPathRecFileInfo(ri.id, ren)
+      messege='<success>録画ファイルパスを変更しました</success>'
+    else
+      messege='<err>'..(ri and 'ファイル' or '録画情報')..'がみつかりませんでした</err>'
+    end
   elseif mg.get_var(post,'del') then
-    if edcb.GetRecFileInfoBasic(id) then
-      edcb.DelRecFileInfo(id)
+    if ri and not ri.protectFlag then
+      edcb.DelRecFileInfo(ri.id)
       messege='<success>録画情報を削除しました</success>'
     else
       messege='<err>録画情報を削除できませんでした</err>'
