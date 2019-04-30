@@ -60,12 +60,13 @@ if sidePanel then
     ..'<input type="hidden" name="tsid">\n'
     ..'<input type="hidden" name="sid">\n'
     ..'<input type="hidden" name="eid">\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'">\n'
       ..RecSettingTemplate(rs)
     ..'</div></section></div>\n</form>\n'
     ..'<div class="mdl-card__actions">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
     --削除ボタンは間違えて押したらいやなのでコメントアウト
-    --..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    --..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
     ..'</div>\n'
 

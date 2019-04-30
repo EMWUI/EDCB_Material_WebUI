@@ -170,6 +170,8 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..(key.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input" type="checkbox"'..(mg.get_var(post, 'advanced') and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n' or '')
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken('epgcustom.html')..'">\n'
 
   ..SerchTemplate(key)
 
@@ -259,7 +261,7 @@ if #a>0 then
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                                or 'href="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
 
-      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken()..'"><span'
+      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken('setreserve')..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 
@@ -277,7 +279,7 @@ ct.main=ct.main..'\n</div>\n'
 if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKey') then
   ct.main=ct.main..'<form id="hidden" method="POST">\n'
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
     ..'<input type="hidden" name="andKey" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'">\n'
     ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
     ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')

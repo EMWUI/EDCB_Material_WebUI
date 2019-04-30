@@ -158,7 +158,7 @@ end
 
 ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
   ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SaveSettings">\n'
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken('savesettings')..'">\n'
 
   ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
 
@@ -345,7 +345,7 @@ ct.main=ct.main..'</div>\n'..table.concat(ctt)..[=[
 <button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
 <button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">保存</button>
 </div>
-<form id="reset" class="reload" method="GET" action="]=]..PathToRoot()..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
+<form id="reset" class="reload" method="GET" action="]=]..PathToRoot()..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken('savesettings')..[=["><input type="hidden" name="reset"></form>
 </div>
 </div>
 ]=]

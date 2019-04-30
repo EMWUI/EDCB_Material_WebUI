@@ -63,7 +63,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                   or 'data-href="reserveinfo.html?id='..v.reserveID..(pageIndex~=0 and '&page='..pageIndex or ''))..'">\n'
 
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'" data-ctok="'..CsrfToken()..'"><span'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'" data-ctok="'..CsrfToken('setreserve')..'"><span'
     ..(os.time(v.startTime)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)

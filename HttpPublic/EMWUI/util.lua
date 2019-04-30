@@ -71,7 +71,7 @@ if temp.progres then
     ..'"><label class="mdl-textfield__label" for="startdate"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="time" name="starttime" step="1" id="starttime" value="'..(r and string.format('%02d:%02d:%02d', r.startTime.hour,r.startTime.min,r.startTime.sec) or '00:00:00')
     ..'"><label class="mdl-textfield__label" for="starttime"></label></div></div>\n<span class="tilde">～</span>\n'
     ..'<div class="textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="time" name="endtime" step="1" id="endtime" value="'..(dur and string.format('%02d:%02d:%02d', math.floor(dur/3600)%24,math.floor(dur/60)%60,dur%60) or '00:00:00')
-    ..'"><label class="mdl-textfield__label" for="endtime"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken()
+    ..'"><label class="mdl-textfield__label" for="endtime"></label></div></div></div>\n<input type="hidden" name="change" value="1">\n<input type="hidden" name="ctok" value="'..CsrfToken('setreserve')
     ..'">\n</div></form></div>\n<div class="mdl-dialog__actions">\n'
     ..'<button id="progres_button" class="submit mdl-button" data-dialog="#dialog_progres" data-form="#progres">変更</button>\n'
     ..'<button class="mdl-button close" data-dialog="#dialog_progres">キャンセル</button>\n'
@@ -440,8 +440,7 @@ end
 --録画設定フォームのテンプレート
 function RecSettingTemplate(rs)
   local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
-  local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
+  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">'
     for i=1,#RecModeTextList() do
       s=s..'\n<option value="'..(i-1)..'"'..(rs.recMode==i-1 and ' selected' or '')..'>'..RecModeTextList()[i]
@@ -605,8 +604,7 @@ end
 function SerchTemplate(si)
   local subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
   local oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
-  local s='<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
+  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.caseFlag or si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'
@@ -814,13 +812,14 @@ function sidePanelTemplate(reserve)
     ..'<input type="hidden" name="sid">\n'
     ..'<input type="hidden" name="eid">\n'
     ..'<input type="hidden" id="action">\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'">\n'
     ..RecSettingTemplate(rs)..'</div></div></form>\n'
     ..'</section>\n</div>\n'
 
     ..'<div class="mdl-card__actions">\n'
     ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約化</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約追加</button>\n'
     ..'</div>\n'
 

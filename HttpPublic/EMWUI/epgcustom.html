@@ -229,7 +229,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html">\n'
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'

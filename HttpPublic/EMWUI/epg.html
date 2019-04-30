@@ -182,10 +182,10 @@ ct.subheader=ct.subheader
 
 ct.menu=ct.menu
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
-  ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken()..'">EPG取得</li>\n'
-  ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken()..'">EPG再読み込み</li>\n'
-  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-ctok="'..CsrfToken()..'">スタンバイ</li>\n'
-  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken()..'">休止</li>\n'
+  ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken('common')..'">EPG取得</li>\n'
+  ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken('common')..'">EPG再読み込み</li>\n'
+  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-ctok="'..CsrfToken('common')..'">スタンバイ</li>\n'
+  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken('common')..'">休止</li>\n'
   ..'</ul>\n'
 
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
@@ -316,7 +316,7 @@ ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n
   ..'</div>\n</div></div>\n'
 
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour>=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'

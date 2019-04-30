@@ -89,12 +89,13 @@ if aa.searchInfo then
 
   if rs then
     ct.main=ct.main..'<input type="hidden" name="presetID" value="'..(preset and presetID or 65535)..'">'
+      ..'<input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'">\n'
       ..RecSettingTemplate(rs)
   end
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-'..(sidePanel and 'action="close' or 'redirect="autoaddepg.html'..(page~=0 and '?page='..page or ''))..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken()..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-'..(sidePanel and 'action="close' or 'redirect="autoaddepg.html'..(page~=0 and '?page='..page or ''))..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n'
   end
 
   ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'

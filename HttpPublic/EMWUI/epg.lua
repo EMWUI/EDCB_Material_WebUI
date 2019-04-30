@@ -116,7 +116,7 @@ function epgcell(v, op, id)
     ..'<a class="mdl-button mdl-button--raised'
       ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime+timezone or 'eid="'..v.eid)
                     or '" href="'..op.url)..'">番組詳細</a>'
-    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-ctok="'..CsrfToken()..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
+    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-ctok="'..CsrfToken('setreserve')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
       ..(r and '" data-toggle="1" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
             or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
     ..'<a class="autoepg mdl-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
