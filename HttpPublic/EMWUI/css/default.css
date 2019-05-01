@@ -28,6 +28,43 @@
 
 
 
+/*日付入力*/
+input[type=date] {
+  width: 6.6em;
+  position: relative; }
+input[type=date],
+input[type=date]::-webkit-clear-button,
+input[type=date]::-webkit-inner-spin-button,
+input[type=date]::-webkit-date-and-time-value { 
+  -webkit-appearance: none;
+  margin-inline-start: 0; }
+input[type=date]::-webkit-date-and-time-value { 
+  margin: 0; }
+input[type=date]::-webkit-calendar-picker-indicator {
+  color: transparent;
+  cursor: pointer; }
+  .mdl-menu__item input[type=date]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 0; }
+  input[type=date]::-webkit-calendar-picker-indicator:hover {
+    background-color: transparent; }
+.mdl-textfield.has-icon .material-icons {
+    position: absolute;
+    font-size: 14px;
+    top: 14px;
+    right: 0px;
+    margin: 0 0.10em;
+    padding: 0.17em;
+    border-radius: 50%; }
+  .mdl-textfield.has-icon .material-icons:hover {
+    background: rgba(0,0,0,.12); }
+  @media (max-width: 479px) {
+    .mdl-textfield.has-icon .material-icons {
+      top: 12px; } }
+
+
 /*セレクト*/
 select {
   border: 1px solid rgba(0,0,0 ,0.12);
@@ -361,6 +398,23 @@ header {
     .widemenu {
       width: 233px; } }
 
+.mdl-menu__item .mdl-textfield {
+  width: auto;
+  padding: 8px 0; }
+  .mdl-menu__item .mdl-textfield__input {
+    font-size: 14px; }
+  .mdl-menu__item .mdl-textfield__label:after {
+    bottom: 8px; }
+  .mdl-menu__item .mdl-textfield.has-icon .mdl-textfield__input {
+    padding-right: 5px; }
+  .mdl-menu__item .mdl-textfield.has-icon .material-icons {
+    top: 13px; }
+  @media (max-width: 479px) {
+    .mdl-menu__item .mdl-textfield.has-icon .material-icons {
+      top: 10px; } }
+
+.mdl-menu__item.past {
+  color: rgba(0,0,0 ,0.60); }
 .mdl-menu__item .material-icons {
   vertical-align: middle;
   margin-right: 8px; }

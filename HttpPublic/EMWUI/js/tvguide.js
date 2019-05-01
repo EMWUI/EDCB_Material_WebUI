@@ -260,6 +260,11 @@ $(function(){
 		});
 	});
 
+	//指定日に移動
+	$('#date_input').change(function(){
+		$(this).submit();
+	});
+
 	//サービス絞り込み
 	$('.select').click(function(){
 		$('.select.mdl-color-text--accent').removeClass('mdl-color-text--accent');
