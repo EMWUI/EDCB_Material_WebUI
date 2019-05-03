@@ -730,6 +730,9 @@ h4 .mdl-button--icon {
           flex-shrink: 0;
   position: relative;
   box-sizing: border-box; }
+  .station img {
+    height: 0.8em;
+    vertical-align: baseline; }
   #tv-guide-main .station:last-child:before {
     top: 0;
     right: 0;

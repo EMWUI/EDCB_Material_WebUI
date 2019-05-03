@@ -229,7 +229,7 @@ for i,v in ipairs(st) do
           column=j-i
           id=v.onid..'-'..v.tsid..'-'..v.sid
           ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..id..'"><input type="checkbox" id="c-'..id..'" class="stationToggle mdl-switch__input" value="'..id..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
-          table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'">'..v.service_name..'</a>\n')
+          table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'"><img src="logo.lua?onid='..v.onid..'&amp;sid='..v.sid..'">'..v.service_name..'</a>\n')
           table.insert(ctt, '<div class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..id..'" data-name="'..v.service_name..'">\n')
           break
         end
