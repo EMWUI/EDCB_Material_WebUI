@@ -50,12 +50,30 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
   ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
   ..' <th class="comment mdl-data-table__cell--non-numeric">コメント\n'
+  ..' <th class="size">予想サイズ\n'
   ..' <th class="priority">優先度\n'
   ..'<tbody>\n'
 
 ctt={}
+rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
+rate={}
 for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   v=a[i]
+  size=nil
+  if v.recSetting.recMode~=4 then
+    --予想ファイルサイズ
+    for j=1,4 do
+      key=('%04X%04X%04X'):format((j>3 and 65535 or v.onid),(j>2 and 65535 or v.tsid),(j>1 and 65535 or v.sid))
+      rate[key]=rate[key] or tonumber(edcb.GetPrivateProfile('BITRATE',key,0,'Bitrate.ini')) or 0
+      if rate[key]>0 then
+        break
+      elseif j==4 then
+        rate[key]=19456
+      end
+    end
+    size=rate[key]/8*1000*math.max((v.recSetting.startMargin or rsdef and rsdef.startMargin or 0)+
+                                   (v.recSetting.endMargin or rsdef and rsdef.endMargin or 0)+v.durationSecond,0)
+  end
   bg=v.recSetting.recMode==5 and ' disabled'
      or v.overlapMode==1 and ' partially'
      or v.overlapMode==2 and ' shortage' or nil
@@ -70,6 +88,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric">'..v.stationName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
+    ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
     ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..v.recSetting.priority
     ..'\n')
 

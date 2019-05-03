@@ -1385,8 +1385,9 @@ h4 .mdl-button--icon {
     .list .mdl-data-table td.service,
     .list .mdl-data-table td.date {
       color: rgba(0,0,0,.87); }
-    .comment:not(.mdl-cell--4-col-phone) {
-      width: calc(100% - 22px); }
+    .size,
+    .comment {
+      flex-grow: 1; }
   .inline-icons {
     display: inline-block;
     vertical-align: middle;
