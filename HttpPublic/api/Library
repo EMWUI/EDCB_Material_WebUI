@@ -29,7 +29,7 @@ else
         fname=f(s, fname)
         if fname then
           local attr=lfs.attributes(path..'\\'..fname)
-          return {name=edcb.Convert('utf-8', 'cp932', fname), iserr=not attr, isdir=(attr and attr.mode=='directory')}
+          return {name=edcb.Convert('utf-8', 'cp932', fname), iserr=not attr, isdir=(attr and attr.mode=='directory'), mtime=(attr and os.date('*t', attr.modification))}
         end
         return nil
       end
@@ -70,6 +70,7 @@ if finddir then
               table.insert(filelist, '<file><name>'..fname:gsub('&', '&amp;')..'</name><path>'
                 ..(NativeToDocumentPath(fpath) and mg.url_encode(NativeToDocumentPath(fpath)):gsub('%%2f', '/')..'</path><public>1</public>'
                                                 or mg.url_encode(fpath):gsub('%%2f', '/')..'</path>')
+                ..(v.mtime and '<date>'..os.time(v.mtime)..'</date>' or '')
                 ..(thumbs and '<thumbs>'..thumbHash..'.jpg'..'</thumbs>' or '')
                 ..'</file>')
             end
