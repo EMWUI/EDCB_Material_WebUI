@@ -611,7 +611,9 @@ function setRecInfo(target){
 
 			$('pre').text(xml.find('errInfo').text());
 
-			$('#epginfo').attr('href', 'recinfodesc.html?id=' + xml.find('ID').first().text());
+			var id = xml.find('ID').first().text();
+			$('#del').attr('action', root + 'api/SetRecInfo?id=' +id).next('button').prop('disabled', xml.find('protect').text()=='1');
+			$('#epginfo').attr('href', 'recinfodesc.html?id=' +id);
 
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 			showSpinner();

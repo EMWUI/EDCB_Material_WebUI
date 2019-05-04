@@ -29,7 +29,7 @@ end
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
 if sidePanel then
-ct.main=ct.main..[=[
+  ct.main=ct.main..[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">録画結果</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
@@ -47,11 +47,20 @@ ct.main=ct.main..[=[
 </ul></section>
 <section class="panel-swipe mdl-tabs__panel" id="error"><div><pre></pre></div></section>
 </div></div>
-
-</div>
-<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>
 ]=]
+
+  if mg.get_var(mg.request_info.query_string,'del') then
+    ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
+      ..'<div class="mdl-layout-spacer"></div>\n'
+      ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
+      ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+      ..'</div>\n'
+  end
+
+  ct.main=ct.main..'</div>\n'
+    ..'<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
 end
+
   ct.main=ct.main..'<div class="mdl-layout__content">'..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'

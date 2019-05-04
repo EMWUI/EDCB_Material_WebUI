@@ -65,9 +65,12 @@ if sidePanel then
     ..'</div></section></div>\n</form>\n'
     ..'<div class="mdl-card__actions">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    --削除ボタンは間違えて押したらいやなのでコメントアウト
-    --..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
+
+  if mg.get_var(mg.request_info.query_string,'del') then
+    ct.main=ct.main..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
+  end
+
+  ct.main=ct.main..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
     ..'</div>\n'
 
     ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'

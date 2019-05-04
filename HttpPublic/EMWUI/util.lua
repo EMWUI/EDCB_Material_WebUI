@@ -102,7 +102,7 @@ s:Append([=[
       </div>
       <button id="notification" class="notification hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons mdl-badge--no-background mdl-badge--overlap" data-badge="0">notifications_none</i></button>
 ]=]
-..(temp.video and '<button id="menu_video" class="hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>' or '')
+..(temp.video and '<button id="menu_video" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>' or '')
 ..(temp.menu and '      <button id="menu" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>\n' or '')..[=[
       <span class="mdl-layout-title">]=]..(temp.title or '')..[=[</span>
       <div class="mdl-layout-spacer"></div>
@@ -348,8 +348,9 @@ end
 s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n'
   ..(temp.video and
     '<ul class="ext submenu mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_video">\n'
-    ..'<li class="mdl-menu__item" id="menu_apk"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>'
-    ..'<button id="menu_quality" class="mdl-menu__item" disabled><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button>'
+    ..'<li class="mdl-menu__item"><a class="mdl-menu__item" href="onair.html?subch=">サブチャンネルを表示</a></li>'
+    ..'<li class="hidden mdl-menu__item" id="menu_apk"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>'
+    ..'<button id="menu_quality" class="hidden mdl-menu__item" disabled><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button>'
     ..'</ul></div>\n'
     ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality">\n</ul>\n' or '</div>\n')
 
@@ -954,6 +955,7 @@ function SelectChDataList(a)
 end
 
 function CustomServiceList()
+  local subch=mg.get_var(mg.request_info.query_string,'subch')
   local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
   local NOT_SUBCH={
     --サブチャンネルでない、結合させないものを指定
@@ -961,7 +963,7 @@ function CustomServiceList()
   }
 
   function SubChanel(a,b)
-    return SubChConcat and not NOT_SUBCH[a.onid..'-'..a.tsid..'-'..a.sid] and b and a.onid==b.onid and a.tsid==b.tsid
+    return not subch and SubChConcat and not NOT_SUBCH[a.onid..'-'..a.tsid..'-'..a.sid] and b and a.onid==b.onid and a.tsid==b.tsid
   end
 
   local a=edcb.GetServiceList() or {}

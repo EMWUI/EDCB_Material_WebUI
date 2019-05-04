@@ -77,7 +77,7 @@ function audio(audio, update){
 				$('#multi2').prop('checked', true);
 			}
 		}
-	}else if (audio[0].component_type == 2){
+	}else if (audio.length > 0 && audio[0].component_type == 2){
 		//デュアルモノ
 		$('#audio').attr('disabled', false);
 		$('.dual').show();
@@ -178,7 +178,7 @@ $(function(){
 	if (navigator.userAgent.indexOf('Android') > 0){
 		apk = localStorage.getItem('apk') == 'true';
 		//Magnezio = true;	//Magnezioで視聴
-		$('#menu_video').removeClass('hidden');
+		$('[for=menu_video] .mdl-menu__item').removeClass('hidden');
 		if (apk){
 			$('[for=quality] li').appendTo('[for=menu_quality]');
 			$('#menu_quality').prop('disabled', false);
