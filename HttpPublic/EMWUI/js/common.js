@@ -1383,7 +1383,13 @@ $(function(){
 	//通信エラー
 	$(document).ajaxError(function(e, xhr, textStatus, errorThrown){
 		showSpinner();
-		if (xhr.status!=0) notification.MaterialSnackbar.showSnackbar({message: xhr.status + 'Error : ' + xhr.statusText});
+		var message = 'Error : 通信エラー';
+		if (xhr.status!=0){
+			message = xhr.status + 'Error : ' + xhr.statusText;
+		}else if (textStatus.url.match('api/set')){
+			message = 'Error : トークン認証失敗';
+		};
+		notification.MaterialSnackbar.showSnackbar({message: message});
 	});
 
 	//予約一覧マーク等処理

@@ -46,7 +46,7 @@ if aa.searchInfo then
   if aa.dataID==0 then redirect='autoaddepg.html'..(page~=0 and '?page='..page or '') end
 
   --コメントアウトを外すと追加後このURLに移動、ここで生成したURLはメンテナンスしてなく一部データが抜けてるかも
-  --redirect=(week and 'epgweek.html?onid='..onid..'&tsid='..tsid..'&sid='..sid..(hour~=4 and '&hour='..hour or '') or epg and 'epg.html?tab='..tab..'&date='..date..(hour~=0 and '&hour='..hour or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT and '&chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&interval='..interval or '')
+  --redirect=(week and 'epgweek.html?onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..(hour~=4 and '&amp;hour='..hour or '') or epg and 'epg.html?tab='..tab..'&amp;date='..date..(hour~=0 and '&amp;hour='..hour or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT and '&amp;chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&amp;interval='..interval or '')
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'

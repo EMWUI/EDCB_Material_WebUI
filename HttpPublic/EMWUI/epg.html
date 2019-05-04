@@ -34,11 +34,11 @@ function hrefGene(href)
     }
   end
   local s='?tab='..(href.tab or tab)
-    ..'&date='..(href.date or date)
-    ..((hour>=0 or href.hour and href.hour>=0) and '&hour='..(href.hour or hour) or '')
-    ..((href.chpage~=0 and (pageIndex~=0 or href.chpage)) and '&page='..(href.chpage or pageIndex) or '')
-    ..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')
-    ..(interval~=DEF_interval and '&interval='..interval or '')
+    ..'&amp;date='..(href.date or date)
+    ..((hour>=0 or href.hour and href.hour>=0) and '&amp;hour='..(href.hour or hour) or '')
+    ..((href.chpage~=0 and (pageIndex~=0 or href.chpage)) and '&amp;page='..(href.chpage or pageIndex) or '')
+    ..(CH_COUNT~=DEF_CH_COUNT and '&amp;chcount='..CH_COUNT or '')
+    ..(interval~=DEF_interval and '&amp;interval='..interval or '')
   return s
 end
 
@@ -229,7 +229,7 @@ for i,v in ipairs(st) do
           column=j-i
           id=v.onid..'-'..v.tsid..'-'..v.sid
           ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..id..'"><input type="checkbox" id="c-'..id..'" class="stationToggle mdl-switch__input" value="'..id..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
-          table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'"><img src="logo.lua?onid='..v.onid..'&amp;sid='..v.sid..'">'..v.service_name..'</a>\n')
+          table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?onid='..v.onid..'&amp;tsid='..v.tsid..'&amp;sid='..v.sid..(interval~=25 and '&interval='..interval or '')..'"><img src="logo.lua?onid='..v.onid..'&amp;sid='..v.sid..'">'..v.service_name..'</a>\n')
           table.insert(ctt, '<div class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..'"'..(v.hide and ' style="display:none;"' or '')..' data-service="'..id..'" data-name="'..v.service_name..'">\n')
           break
         end
@@ -277,7 +277,7 @@ for i,v in ipairs(st) do
             end
           end
 
-          op.url='epginfo.html'..hrefGene()..'&onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)
+          op.url='epginfo.html'..hrefGene()..'&amp;onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime+timezone or '&amp;eid='..w.eid)
           table.insert(ctt, epgcell(w, op))
 
           total=total+endPx-lastPx
@@ -330,7 +330,7 @@ ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n
   ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
 
-  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&tab='..tab..'&date='..date..(hour>=0 and '&hour='..hour or '')..(interval~=25 and '&interval='..interval or '')..(pageIndex~=0 and '&chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&chcount='..CH_COUNT or '')..'">\n'
+  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&amp;tab='..tab..'&amp;date='..date..(hour>=0 and '&amp;hour='..hour or '')..(interval~=25 and '&amp;interval='..interval or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&amp;chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'

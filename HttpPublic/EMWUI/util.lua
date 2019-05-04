@@ -915,8 +915,8 @@ function ConvertSearch(v, service_name)
   local text_char=v.shortInfo.text_char:gsub('%%', '%%%%')
   return '<a class="mdl-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
     ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
-    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
-    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&text='..title..'&location='..mg.url_encode(service_name)..'&dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&details='..mg.url_encode(details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
+    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
+    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text='..title..'&amp;location='..mg.url_encode(service_name)..'&amp;dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&amp;details='..mg.url_encode(details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&amp;authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
 end
 
 function RecModeTextList()

@@ -210,16 +210,16 @@ if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if #a>0 then
   if math.ceil((#a/PAGE_COUNT)-1)>0 then
-    pg='<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
-      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html?page='..(pageIndex-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
+    pg='<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
+      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html?page='..(pageIndex-1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
 
     n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
     for i=n, n+4 do
-      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" formaction="search.html?page='..i..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or ''))..'">'..(i+1)..'</button>\n' or '')
+      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" formaction="search.html?page='..i..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or ''))..'">'..(i+1)..'</button>\n' or '')
     end
 
-    pg=pg..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
-      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&id='..dataID..(autopage and '&autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
+    pg=pg..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
+      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
 
     pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
   end
@@ -259,7 +259,7 @@ if #a>0 then
 
     table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-start="'..(os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                               or 'href="epginfo.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..'&eid='..v.eid..(pageIndex~=0 and '&page='..pageIndex or '')..(autopage~=0 and '&autopage='..autopage or ''))..'">\n'
+                               or 'href="epginfo.html?onid='..v.onid..'&amp;tsid='..v.tsid..'&amp;sid='..v.sid..'&amp;eid='..v.eid..(pageIndex~=0 and '&amp;page='..pageIndex or '')..(autopage~=0 and '&amp;autopage='..autopage or ''))..'">\n'
 
       ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken('setreserve')..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
@@ -323,7 +323,7 @@ end
 
 ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" type="submit" form="hidden" '
   ..(key.search and ((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
-                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit')..'</i></button>\n'
+                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&amp;page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=template(ct)
 

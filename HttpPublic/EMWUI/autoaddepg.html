@@ -80,7 +80,7 @@ ct.main=ct.main..'<div class="mdl-layout__content">'
   ..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-  ..'<caption class="mdl-cell--hide-phone">'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
 
   ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
   ..' <th class="keyword mdl-data-table__cell--non-numeric">キーワード\n'
@@ -107,10 +107,10 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   caseAndKey=(disAndKey or v.andKey):match('^C!{999}(.*)')
   table.insert(ctt, '<tr class="epginfo'..(disAndKey and ' disabled' or '')..' mdl-grid--no-spacing" '
     ..(sidePanel and 'data-id="'..a[i].dataID
-                  or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&page='..pageIndex or ''))..'">'
+                  or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(caseAndKey or disAndKey or v.andKey)
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..v.notKey
-    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
+    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
     ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
     ..'\n <td class="category mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(#v.contentList>0 and (v.notContetFlag and '<span class=header>否:</span>' or '')..edcb.GetGenreName(v.contentList[1].content_nibble)..(#v.contentList>1 and '<small>.他'..(#v.contentList-1)..'</small>' or '') or '全ジャンル')
     ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(RecModeTextList()[a[i].recSetting.recMode+1] or '')

@@ -18,7 +18,7 @@ baseTime=(baseDate*24+Hour)*3600
 
 NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600
 
-hrefGene=(hour~=4 and '&hour='..hour or '')..(interval~=DEF_interval and '&interval='..interval or '')
+hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_interval and '&amp;interval='..interval or '')
 
 
 edcb.htmlEscape=15
@@ -55,7 +55,7 @@ ct.subheader='<div id="subheader">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..st.onid..'&tsid='..st.tsid..'&sid='..st.sid..'&hour=-1'..(interval~=DEF_interval and '&interval='..interval or '')..'"')
+  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour=-1'..(interval~=DEF_interval and '&amp;interval='..interval or '')..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
@@ -70,7 +70,7 @@ for i,v in ipairs(NetworkIndex()) do
 end
 for i,v in ipairs(ServiceList) do
   if oneseg or not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&tsid='..v.tsid..'&sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
+    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&amp;tsid='..v.tsid..'&amp;sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
   end
 end
 
@@ -96,7 +96,7 @@ if st then
     if Hour<=i and i<Hour+interval then
       ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     else
-      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&tsid='..st.tsid..'&sid='..st.sid..'&hour='..(i%24)..(interval~=DEF_interval and '&interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
   end
   ct.menu=ct.menu..'</ul>\n'
@@ -152,7 +152,7 @@ for i=0,7 do
       lastPx=startPx
     end
     if endPx-lastPx>2 then
-      op.url='epginfo.html?onid='..w.onid..'&tsid='..w.tsid..'&sid='..w.sid..(w.past and '&startTime='..startTime+timezone or '&eid='..w.eid)..'&week='..hrefGene
+      op.url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime+timezone or '&amp;eid='..w.eid)..'&amp;week='..hrefGene
       table.insert(ctt, epgcell(w, op))
 
       total=total+endPx-lastPx
@@ -188,7 +188,7 @@ ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n
   ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
 
-  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&onid='..onid..'&tsid='..tsid..'&sid='..sid..'">\n'
+  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'

@@ -64,7 +64,7 @@ end
   ct.main=ct.main..'<div class="mdl-layout__content">'..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-  ..'<caption class="mdl-cell--hide-phone">'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
 
   ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
   ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
@@ -82,7 +82,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
      or v.scrambles>0 and ' scrambles' or ''
   table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" '
     ..(sidePanel and 'data-recinfoid="'..v.id
-                  or 'data-href="recinfodesc.html?id='..v.id ..'&page='..pageIndex)..'">\n'
+                  or 'data-href="recinfodesc.html?id='..v.id ..'&amp;page='..pageIndex)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric">'..v.serviceName

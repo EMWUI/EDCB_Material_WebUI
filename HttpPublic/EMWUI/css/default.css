@@ -1347,7 +1347,10 @@ h4 .mdl-button--icon {
     border: none;
     overflow: hidden; }
   .list tbody {
-    display: block; }
+    display: block;
+    border-top: 1px solid rgba(0,0,0,.12); }
+  .list caption {
+    padding: 12px 16px; }
   .list .mdl-data-table tbody tr {
     padding: 16px;
     height: auto;
