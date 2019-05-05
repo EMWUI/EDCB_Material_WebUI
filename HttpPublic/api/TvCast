@@ -8,16 +8,29 @@ tsid=tonumber(mg.get_var(mg.request_info.query_string, 'tsid'))
 sid=tonumber(mg.get_var(mg.request_info.query_string, 'sid'))
 mode=tonumber(mg.get_var(mg.request_info.query_string, 'mode')) or 2
 
-mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,ini))~=0
+mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',false,ini))~=0
+
+-- ios判定
+for i,v in ipairs({'iPhone','iPad'}) do
+  if mg.request_info.http_headers['User-Agent']:match(v) then
+    ios=true
+    break
+  end
+end
 
 -- 変換コマンド
 quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
-
-if mp4 then
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',ini)
-else
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',ini)
+XOPT=edcb.GetPrivateProfile('MOVIE',quality,false,ini)
+-- iosの場合強制的にmp4
+if XOPT=='0' or (ios and not XOPT:match('mp4'))then
+  if mp4 or ios then
+    XOPT='-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -'
+  else
+    XOPT='-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -'
+  end
 end
+-- mp4判定 (XOPTにmp4が含まれているはず)
+mp4=XOPT:match('mp4')
 
 audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
 if audio then
@@ -37,7 +50,7 @@ XEXT=mp4 and '.mp4' or '.webm'
 -- 転送開始前に変換しておく量(bytes)
 XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,ini))
 -- NetworkTVモードの名前付きパイプをFindFileで見つけられない場合(EpgTimerSrvのWindowsサービス化など？)に対応するか
-FIND_BY_OPEN=false
+FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',false,ini))~=0
 
 n=math.floor(tonumber(mg.get_var(mg.request_info.query_string, 'n')) or 0)
 id=tonumber(mg.get_var(mg.request_info.query_string, 'id')) or 0
