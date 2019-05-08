@@ -39,6 +39,46 @@ function refreshMovieList(){
 	getMovieList(true);
 }
 
+var order = localStorage.getItem('sortOrder') ? localStorage.getItem('sortOrder') : 'name';
+var asc = localStorage.getItem('ascending') ? localStorage.getItem('ascending') == 'true' : true;
+function sort(a){
+	var list;
+	if (typeof a == 'object'){
+		list = a;
+	}else{
+		list = $('.item').clone(true);
+		$('.item').remove();
+
+		if (typeof a == 'string'){
+			order = a;
+			localStorage.setItem('sortOrder', order);
+		}else if (a === true){
+			asc = !asc;
+			localStorage.setItem('ascending', asc);
+		}
+	}
+	list.sort(function(a,b){
+		if (order == 'date'){
+			if (asc){
+				return $(a).data().date - $(b).data().date;
+			}else{
+				return $(b).data().date - $(a).data().date;
+			}
+		}else if (order == 'name'){
+			if (asc){
+				return $(a).data().name > $(b).data().name ? 1 : -1;
+			}else{
+				return $(a).data().name > $(b).data().name ? -1 : 1;
+			}
+		}
+	});
+	if (ViewMode == 'grid') {
+		$('#file').append(list);
+	}else{
+		$('#file ul').append(list);
+	}
+}
+
 //ライブラリ表示
 function folder(){
 	id = location.hash == '' ? 'home' : location.hash.slice(1);
@@ -57,6 +97,8 @@ function folder(){
 			$('.library').removeClass('list');
 		}
 		var found;
+		var folder = [];
+		var file = [];
 		var xml = sessionStorage.getItem('movie');
 		var movie = new DOMParser().parseFromString(xml, 'text/xml');
 		$(movie).find('dir').each(function(){
@@ -73,21 +115,22 @@ function folder(){
 						});
 
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name).append(
+							obj.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
 								$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons', text: 'folder'}) }),
 								$('<div>', {class: 'foldername', text: name }) );
-							$('#folder').show().append(obj);
 						}else{
-							obj.addClass('mdl-list__item').append(
+							obj.addClass('mdl-list__item mdl-list__item--two-line').append(
 								$('<span>', {class: 'mdl-list__item-primary-content', append: [
 									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
-									$('<span>', {text: name}) ]}) );
-							$('#file').append(obj);
+									$('<span>', {text: name}),
+									$('<span>', {class: 'mdl-list__item-sub-title', text: $(this).children('dir').length +'フォルダ, '+$(this).children('file').length +'ファイル'}) ]}) );
 						}
+						folder.push(obj);
 					}else{
 						var data = {
 							name: name,
 							path: $(this).children('path').text(),
+							date: $(this).children('date').text()*1000,
 							public: $(this).children('public').length > 0
 						};
 						obj.addClass('item').data(data);
@@ -100,29 +143,37 @@ function folder(){
 
 						var thumbs = $(this).children('thumbs').text();
 						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').attr('title', name);
+							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
 							if (thumbs != 0){
 								obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 							}else{
-								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
+								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
 							}
 							obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 						}else{
 							var avatar;
+							var date = new Date(data.date);
 							if (thumbs != 0){
 								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 							}else{
 								avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 							}
-							obj.addClass('mdl-list__item').append(
+							obj.addClass('mdl-list__item mdl-list__item--two-line').append(
 								$('<span>', {class: 'mdl-list__item-primary-content', append: [
 									avatar,
-									$('<span>', {text: name}) ]}) );
+									$('<span>', {text: name}),
+									$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getFullYear() +'/'+ ('0'+(date.getMonth()+1)).slice(-2) +'/'+ ('0'+date.getDate()).slice(-2) +' '+ ('0'+date.getHours()).slice(-2) +':'+ ('0'+date.getMinutes()).slice(-2) +':'+ ('0'+date.getSeconds()).slice(-2)}) ]}) );
 						}
-						$('#file').append(obj);
+						file.push(obj);
 					}
 				});
-				$('#file li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+
+				if (ViewMode == 'grid') {
+					$('#folder').show().append(folder);
+				}else{
+					$('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
+				}
+				sort(file);
 
 				var name = $(this).children('name').text();
 				$('.mdl-layout__header-row .mdl-layout-title').text(name);
@@ -187,6 +238,7 @@ function librarySearch(key){
 			key = decodeURI(key);
 			$('#library').empty();
 			var found;
+			var file = [];
 			var xml = sessionStorage.getItem('movie');
 			var movie = new DOMParser().parseFromString(xml, 'text/xml');
 			$('.library').empty();
@@ -198,6 +250,7 @@ function librarySearch(key){
 					var data = {
 						name: name,
 						path: $(this).children('path').text(),
+						date: $(this).children('date').text()*1000,
 						public: $(this).children('public').length > 0
 					};
 					var event = function(){
@@ -214,25 +267,30 @@ function librarySearch(key){
 						if (thumbs != 0){
 							obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 						}else{
-							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon', html: $('<i>', {class: 'material-icons', text: 'movie_creation'}) }) );
+							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
 						}
 						obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 					}else{
 						var avatar;
+						var date = new Date(data.date);
 						if (thumbs != 0){
 							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 						}else{
 							avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 						}
-						obj.addClass('mdl-list__item').append(
+						obj.addClass('mdl-list__item mdl-list__item--two-line').append(
 							$('<span>', {class: 'mdl-list__item-primary-content', append: [
 								avatar,
-								$('<span>', {text: name}) ]}) );
+								$('<span>', {text: name}),
+								$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getFullYear() +'/'+ ('0'+(date.getMonth()+1)).slice(-2) +'/'+ ('0'+date.getDate()).slice(-2) +' '+ ('0'+date.getHours()).slice(-2) +':'+ ('0'+date.getMinutes()).slice(-2) +':'+ ('0'+date.getSeconds()).slice(-2)}) ]}) );
 					}
-					$('#file').append(obj);
+					file.push(obj);
 				}
 			});
-			$('#library li').wrapAll('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+
+			if (ViewMode != 'grid') $('#file').append('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
+			sort(file);
+
 			$('.mdl-layout__header-row .mdl-layout-title').text('検索 (' + key + ')');
 			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) ).append(
 				$('<i>', {class: 'mdl-layout__tab material-icons', text: 'chevron_right'}),
@@ -274,6 +332,17 @@ $(function(){
 		$('.view-list').hide();
 	}
 
+	$('#sort_'+order).addClass('mdl-color-text--accent');
+	$('#'+ (asc ? 'asc' : 'des')).hide();
+	$('[id^=sort_]').click(function(){
+		$('[id^=sort_]').removeClass('mdl-color-text--accent');
+		$(this).addClass('mdl-color-text--accent');
+		sort($(this).data('val'));
+	});
+	$('#sort').click(function(){
+		sort(true);
+		$('#sort span').toggle();
+	});
 	//スワイプ
 	if (isTouch){
 		delete Hammer.defaults.cssProps.userSelect;

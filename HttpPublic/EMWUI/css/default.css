@@ -1958,17 +1958,33 @@ h4 .mdl-button--icon {
 
 .library .mdl-card {
   min-height: 150px;
-  background: #fff center / cover; }
+  background: #fff center / cover;
+  user-select: none; }
   .library .mdl-card__title {
     padding: 8px;
     justify-content: center; }
-  .library .mdl-card__title > .material-icons {
+  .library .mdl-card__title + .material-icons {
+    position: absolute;
+    width: 100%;
+    height: 80%;
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+   display:         flex;
+    justify-content: center;
+    align-items: center;
     color: #757575;
     font-size: 75px; }
   .library .mdl-card > .mdl-card__actions {
-    height: 52px;
+    max-height: 53px;
     padding: 16px;
-    background: rgba(0, 0, 0, 0.2); }
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .library .mdl-card:hover > .mdl-card__actions {
+      max-height: 100%!important;
+      background: rgba(0, 0, 0, 0.5); }
+    .library .mdl-card:hover > .mdl-card__actions .filename {
+      white-space: normal; }
   .library .mdl-list__item>span {
     display: block; }
   .library .mdl-list__item-avatar {
@@ -1980,22 +1996,24 @@ h4 .mdl-button--icon {
   .is-small-screen .library .mdl-card {
     min-height: 130px; }
   .is-small-screen .library .mdl-card > .mdl-card__actions {
-    height: 38px;
+    max-height: 38px;
     padding: 8px; }
+  .item .mdl-list__item-sub-title {
+    text-align: right; }
   @media (min-width: 1300px) {
     .library .mdl-card {
       min-height: 200px; }
     .library .mdl-card__title {
       padding: 16px }
-    .library .mdl-card__title > .material-icons {
+    .library .mdl-card__title + .material-icons {
       font-size: 100px; } }
   @media (max-width: 700px) {
     .library .mdl-card > .mdl-card__actions {
-      height: 38px;
+      max-height: 38px;
       padding: 8px; }
     .is-small-screen #library .mdl-card {
       min-height: 100px; }
-      .library .mdl-card__title > .material-icons {
+      .library .mdl-card__title + .material-icons {
         font-size: 50px; } }
 
 #folder .folder{

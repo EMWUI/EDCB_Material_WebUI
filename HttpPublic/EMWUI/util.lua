@@ -102,7 +102,7 @@ s:Append([=[
       </div>
       <button id="notification" class="notification hidden mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons mdl-badge--no-background mdl-badge--overlap" data-badge="0">notifications_none</i></button>
 ]=]
-..(temp.video and '<button id="menu_video" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>' or '')
+..(temp.video=='live' and '<button id="menu_video" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>' or '')
 ..(temp.menu and '      <button id="menu" class="mdl-button mdl-js-button mdl-button--icon mdl-cell--order-3"><i class="material-icons">more_vert</i></button>\n' or '')..[=[
       <span class="mdl-layout-title">]=]..(temp.title or '')..[=[</span>
       <div class="mdl-layout-spacer"></div>
