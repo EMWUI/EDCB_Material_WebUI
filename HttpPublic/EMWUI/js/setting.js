@@ -1,4 +1,7 @@
 ﻿$(function(){
+	$('.mdl-progress').on('mdl-componentupgraded', function() {
+		this.MaterialProgress.setProgress($(this).data().free);
+	});
 	//背景色連動
 	$('.bgset').change(function(){
 		$($(this).attr('for')).not('.paint').css('background', $(this).val());

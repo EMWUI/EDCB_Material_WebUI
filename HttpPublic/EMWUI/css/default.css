@@ -1411,6 +1411,32 @@ h4 .mdl-button--icon {
 
 
 /* 設定 */
+.storage {
+  display:flex; }
+  .storage .material-icons {
+    padding: 8px;
+    margin-right: 8px;
+    color: rgba(0,0,0,.60); }
+  .storage .primary-content {
+    width: 100%;
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex;
+    justify-content: center;
+    flex-direction: column; }
+  .storage .storage_detail {
+    display: -webkit-flex;
+    display:     -ms-flexbox;
+    display:         flex; }
+  .storage .mdl-progress {
+    margin: 5px 0;
+    width: auto; }
+  .disk{
+    font-size: 16px; }
+  @media (min-width: 1200px){
+    .storage {
+      width: calc(25% - 16px); } }
+
 #sort .mdl-list__item {
   overflow: visible;
   will-change: box-shadow;
