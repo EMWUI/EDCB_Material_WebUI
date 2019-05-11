@@ -279,6 +279,7 @@ ct.main=ct.main..'\n</div>\n'
 if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKey') then
   ct.main=ct.main..'<form id="hidden" method="POST">\n'
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
     ..'<input type="hidden" name="andKey" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'">\n'
     ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
