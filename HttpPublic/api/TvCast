@@ -11,9 +11,14 @@ mode=tonumber(mg.get_var(mg.request_info.query_string, 'mode')) or 2
 mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',false,ini))~=0
 
 -- ios判定
-for i,v in ipairs({'iPhone','iPad'}) do
-  if mg.request_info.http_headers['User-Agent']:match(v) then
-    ios=true
+for hk,hv in pairs(mg.request_info.http_headers) do
+  if hk:lower()=='user-agent' then
+    for i,v in ipairs({'iPhone','iPad'}) do
+      if hv:match(v) then
+        ios=true
+        break
+      end
+    end
     break
   end
 end

@@ -1068,9 +1068,14 @@ end
 
 --スマホからのアクセスかどうか
 function UserAgentSP()
-  for i,v in ipairs({'Android','iPhone','iPad'}) do
-    if mg.request_info.http_headers['User-Agent']:match(v) then
-      return true
+  for hk,hv in pairs(mg.request_info.http_headers) do
+    if hk:lower()=='user-agent' then
+      for i,v in ipairs({'Android','iPhone','iPad'}) do
+        if hv:match(v) then
+          return true
+        end
+      end
+      return false
     end
   end
   return false
