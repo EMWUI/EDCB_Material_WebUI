@@ -11,10 +11,14 @@ EDCB Material WebUI
 
 1. 必要なファイルのダウンロード (EDCBの[releases](https://github.com/xtne6f/EDCB/releases)と[ffmpeg.org](https://www.ffmpeg.org)から)
    * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)
-   * lua52.dll   - WebUIを表示するのに必要
-   * ffmpeg.exe  - 再生機能に必要
-   * ffprobe.exe  - 再生機能に必要 (ffmpegに同梱)
-   * readex.exe  - 再生機能に必要
+   * lua52.dll [^1]
+   * ffmpeg.exe [^2]
+   * ffprobe.exe [^2] [^3]
+   * readex.exe [^2]
+
+[^1]: WebUIを表示に使用
+[^2]: 再生機能に使用  
+[^3]: ffmpegに同梱  
 1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
 1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
    * `EnableHttpSrv=1`
@@ -30,6 +34,8 @@ EDCB Material WebUI
         │   ├─ api/ ＊
         │   ├─ EMWUI/
         │   ├─ legacy/
+        │   ├─ img/ *
+        │   │   └logo/ *
         │   └─ video/ ＊
         ├─ Tools/
         │   ├─ ffmpeg.exe
@@ -51,7 +57,10 @@ HttpPublic.iniは設定ページにて設定を保存すると作成されます
 
 `batPath[=EDCBのbatフォルダ]`  
 録画設定でこのフォルダの.batと.ps1が選択可能になります  
-\# 変更する場合必ずフルパスで設定
+\# 変更する場合必ずフルパスで設定  
+`batFileTag=`  
+録画タグの候補を表示できるようになります  
+カンマ区切りで指定ください
 
 #### テーマカラー
 テーマカラーを変えることが出来ます  
@@ -79,7 +88,7 @@ readex.exeのパス
 
 #### 画質設定(ffmpegオプション)
 `mp4[=0]`  
-mp4にトランスコードする場合1に
+デフォルトでmp4にトランスコードする場合1に
 
 以下のような設定を書き込むとデフォルトと以下で指定した設定を読み込めるようになります
 
@@ -97,6 +106,7 @@ mp4にトランスコードする場合1に
     360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
 
 \# -iは指定する必要ありません  
+\# -fのオプションを必ず指定するようにしてくださいmp4かどうか判定しています  
 \# リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する  
 \# オプションにてQSVなども有効なようです
 
@@ -123,11 +133,10 @@ HttpPublicFolderのvideo\thumbsフォルダに`md5ハッシュ.jpg`があると�
 
 #### リモート視聴
 **EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
-※NwtworkTVモードの操作機能がまだマージされてないフォーク等を使用の場合、[NwTV.ps1](https://gist.github.com/EMWUI/b7bc9eaa3867daa6bfe7a0a650ce5e30)をToolsフォルダに入れリモート視聴することができますが**この機能は削除予定**ですので注意してください  
+※NwTV.ps1は使えなくなりました
 
 EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
 NetworkTVモードを使用している場合は注意してください  
-複数同時配信はできません  
 **音声が切り替わったタイミングで止まることがありますがその時は再読み込みしてください**
 
 ##### ファイル再生について
@@ -138,11 +147,20 @@ NetworkTVモードを使用している場合は注意してください
 
 
 ##### 放送中一覧
-`\img\logo`に4桁で16進数の`ONIDSID.png`があると局ロゴを表示します  
-例 BS1: `00040065.png` NHK(東京): `7FE00400.png`  
-(LibISDB(TvTest)のtslogoextractのソースをちょっといじって使用するとBS・CSは作成しやすいかも）  
 URLに`?webPanel=`を追加するとWEBパネル向けのデザインになります  
 WEBパネルに追加して使用してください
+
+
+##### 局ロゴ
+TVTestの局ロゴを使用します  
+BMP形式のロゴを保存するにチェックを入れてください  
+\# TVTestのフォルダはEDCBのフォルダと同じ階層にあることを想定しています  
+LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示  
+TVTestのフォルダが想定規定と違う場合やLogoData.ini、Logoフォルダの設定を変更している場合設定ファイルにて指定してください  
+`LOGO_INI[=TVTestのフォルダ\LogoData.ini]`  
+LogoData.iniのパス  
+`LOGO_DIR[=TVTestのフォルダ\Logo]`  
+Logoフォルダのパス  
 
 ##### 番組表の隠しコマンド
 `hour=整数`  
@@ -159,14 +177,18 @@ WEBパネルに追加して使用してください
 
 `show=`  
 非表示指定したチャンネルを読み込む(サイドバーで表示・非表示)  
-\# 値は指定する必要はありません  
+\# 値は指定する必要はありません
+
+`subch=`  
+サービス一覧でサブチャンネルを表示します  
+\# 番組表だけでなくサービス一覧があるページで有効です(放送中、magnezio等)
 
 以上をgetメゾットで取得しますurlに含めてください  
 chcountとshowは週間番組表では使えません
 
 ### お知らせ機能
 ※PCでのみでの機能です  
-登録した番組の開始30秒前にディスクトップ通知します  
+登録した番組の開始30秒前にデスクトップ通知します  
 videoフォルダにnotification.mp3を用意すると通知音が出ます  
 各自で用意してください
 
