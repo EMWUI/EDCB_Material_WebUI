@@ -661,16 +661,15 @@ function recFolderInfo(i, val, partial){
 }
 //録画フォルダパス削除
 function delPreset(obj){
-	obj = $(obj).parent().addClass('hidden');
+	obj = $(obj).parent();
 	var target = obj.next();
-	obj.appendTo('body');
-	var clear = setTimeout(function(){obj.remove();}, 2500);
+	var clone = obj.clone(true);
+	obj.remove();
 	var data = {
 		message: '削除しました',
 		timeout: 2000,
 		actionHandler: function(){
-			clearInterval(clear);
-			obj.insertBefore(target).removeClass('hidden');
+			clone.insertBefore(target);
 			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '元に戻しました'})
 		},
 		actionText: '元に戻す'

@@ -130,7 +130,7 @@ function update(){
 }
 
 $(function(){
-    $('.mdl-progress').first().on('mdl-componentupgraded', function() {
+	$('.mdl-progress').first().on('mdl-componentupgraded', function() {
 		setInterval(function(){
 			$('.is-active>.onair').each(function(){
 				var data = $(this).data();
@@ -142,7 +142,7 @@ $(function(){
 				}
 			});
 		},1000);
-    });
+	});
 
 	$('span.epginfo').click(function(){
 		var data = $(this).parents('li').clone(true).data();

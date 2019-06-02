@@ -314,7 +314,7 @@ if temp.video then
               </ul>
               <ul class="submenu mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 ]=])
-  local list = edcb.GetPrivateProfile('set','quality','','Setting\\HttpPublic.ini')
+  local list = edcb.GetPrivateProfile('set','quality','',ini)
   if list=='' then
     s:Append('<li class="mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>')
   else
@@ -558,7 +558,7 @@ function RecSettingTemplate(rs)
   end
   s=s..'</select>\n'
 
-  s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">連続録画動作</div>\n'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">連続録画動作</div>\n'
     ..'<div class="mdl-cell--middle"><label for="continue" class="mdl-checkbox mdl-js-checkbox"><input id="continue" class="mdl-checkbox__input" type="checkbox" name="continueRecFlag" value="1"'..(rs.continueRecFlag and ' checked' or '')..'><span class="mdl-checkbox__label">後ろの予約を同一ファイルで出力する</span></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">使用チューナー強制指定</div>\n'
@@ -595,7 +595,12 @@ function RecSettingTemplate(rs)
   s=s..'</select></div></div>\n'
   if rsdef and rsdef.batFilePath=='*' then
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画タグ</div>\n'
-    ..'<div id="batFileTag_wrap" class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="batFileTag" value="'..batFileTag..'" id="batFileTag"><label class="mdl-textfield__label" for="batFileTag"></label></div></div>\n'
+      ..'<div id="batFileTag_wrap" class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="batFileTag" value="'..batFileTag..'" id="batFileTag" list="batFileTagList"><label class="mdl-textfield__label" for="batFileTag"></label></div></div>\n'
+      ..'<datalist id="batFileTagList">'
+    for v in edcb.GetPrivateProfile('set','batFileTag','',ini):gmatch('[^,]+') do
+      s=s..'<option value="'..v..'">'
+    end
+    s=s..'</datalist>'
   end
 
   return s
