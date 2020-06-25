@@ -209,12 +209,12 @@ for i,v in ipairs(list) do
     free=nil
     f=edcb.io.popen('fsutil volume diskfree '..v)
     if f then
-      free,total,avail=f:read('*a'):match(':%s*(%d+).*:%s*(%d+).*:%s*(%d+)')
+      free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).*:(%d+).*:(%d+)')
       f:close()
     end
     ct.main=ct.main..'<div class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
       ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..v..'</div><div class="mdl-layout-spacer"></div><div>'
-      ..(free and ('%.3f GB / %.3f GB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</div></div>\n'
+      ..(free and ('%.3f GiB / %.3f GiB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</div></div>\n'
       ..'<div id="disk'..i..'" class="mdl-progress mdl-js-progress" data-free="'..(free and 100-(free/total*100) or 'false')..'"></div></div></div>\n'
   end
 end
