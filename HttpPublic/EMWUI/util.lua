@@ -28,7 +28,7 @@ function template(temp)
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 ]=]
-..(Roboto and '<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
+..(Roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 
 -- css
 ..(temp.css or '')
