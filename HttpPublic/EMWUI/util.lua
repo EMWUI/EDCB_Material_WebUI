@@ -1086,22 +1086,6 @@ function UserAgentSP()
   return false
 end
 
---HTTP日付の文字列を取得する
-function ImfFixdate(t)
-  return ('%s, %02d %s %d %02d:%02d:%02d GMT'):format(({'Sun','Mon','Tue','Wed','Thu','Fri','Sat'})[t.wday],t.day,
-    ({'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'})[t.month],t.year,t.hour,t.min,t.sec)
-end
-
---レスポンスを生成する
-function Response(code,ctype,charset,cl)
-  return 'HTTP/1.1 '..code..' '..mg.get_response_code_text(code)
-    ..'\r\nDate: '..ImfFixdate(os.date('!*t'))
-    ..'\r\nX-Frame-Options: SAMEORIGIN'
-    ..(ctype and '\r\nX-Content-Type-Options: nosniff\r\nContent-Type: '..ctype..(charset and '; charset='..charset or '') or '')
-    ..(cl and '\r\nContent-Length: '..cl or '')
-    ..(mg.keep_alive(not not cl) and '\r\n' or '\r\nConnection: close\r\n')
-end
-
 --コンテンツを連結するオブジェクトを生成する
 function CreateContentBuilder(thresh)
   local self={ct={''},len=0,thresh_=thresh}

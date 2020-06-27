@@ -88,7 +88,7 @@ for i,v in ipairs(CustomServiceList()) do
         ..'">\n'
 
         ..'<span class="mdl-list__item-primary-content">'
-        ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(logo and ' style="background-image:url(logo.lua?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name
+        ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(logo and ' style="background-image:url('..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name
         ..'<span class="mdl-list__item-text-body">\n'
         ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', x_startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', x_endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
         ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', y_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(y_endTime and os.date('%H:%M', y_endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
