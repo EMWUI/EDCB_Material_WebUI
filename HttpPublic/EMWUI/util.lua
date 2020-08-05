@@ -435,7 +435,8 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
       ..'</ul></li>\n</ul>\n'
       ..'</section>\n'
   end
-  return s, {multi=#v.audioInfoList>=2, dual=v.audioInfoList[1].component_type==2}, End
+  local multi=v and v.audioInfoList and #v.audioInfoList>=2
+  return s, {multi=multi, dual=multi and v.audioInfoList[1].component_type==2}, End
 end
 
 --録画設定フォームのテンプレート

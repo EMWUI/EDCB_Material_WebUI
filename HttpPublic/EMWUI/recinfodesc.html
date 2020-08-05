@@ -55,7 +55,8 @@ if v then
         epgInfo, audio=ConvertEpgInfoText2(ev,RecInfo)
       end
     end
-  else
+  end
+  if not epgInfo then
     if string.find(v.programInfo, '詳細情報') then
       info,extInfo,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\n\r?\n詳細情報\r?\n(.-)%s*ジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
     else
