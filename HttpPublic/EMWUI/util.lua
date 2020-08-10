@@ -390,7 +390,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     end
     s=s..'</span>\n'
       ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
-      ..ConvertSearch(v, service_name)..'</h4>\n'
+      ..SearchConverter.Convert(v, service_name)..'</h4>\n'
     if v.shortInfo then
       s=s..'<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'
     end
@@ -435,7 +435,8 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
       ..'</ul></li>\n</ul>\n'
       ..'</section>\n'
   end
-  return s, {multi=#v.audioInfoList>=2, dual=v.audioInfoList[1].component_type==2}, End
+  local multi=v and v.audioInfoList and #v.audioInfoList>=2
+  return s, {multi=multi, dual=multi and v.audioInfoList[1].component_type==2}, End
 end
 
 --録画設定フォームのテンプレート
@@ -671,7 +672,7 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
     ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="service" name="serviceList" multiple size="5">'
 
-  NetworkList={}
+  local NetworkList={}
   for i,v in ipairs(NetworkIndex()) do
     NetworkList[i]=false
   end
@@ -911,9 +912,11 @@ function ConvertTitle(title)
 end
 
 --検索等のリンクを派生
-local authuser=edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)
-local details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
-function ConvertSearch(v, service_name)
+SearchConverter={}
+SearchConverter.Convert=function(v, service_name)
+  local self=SearchConverter
+  self.authuser=self.authuser or edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)
+  self.details=self.details or edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
   local title=mg.url_encode(v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or '')
   local startTime=os.time(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
@@ -921,7 +924,7 @@ function ConvertSearch(v, service_name)
   return '<a class="mdl-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
     ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
     ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
-    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text='..title..'&amp;location='..mg.url_encode(service_name)..'&amp;dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&amp;details='..mg.url_encode(details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&amp;authuser='..authuser..'" target="_blank"><i class="material-icons">event</i></a>'
+    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text='..title..'&amp;location='..mg.url_encode(service_name)..'&amp;dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&amp;details='..mg.url_encode(self.details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&amp;authuser='..self.authuser..'" target="_blank"><i class="material-icons">event</i></a>'
 end
 
 function RecModeTextList()
@@ -967,7 +970,7 @@ function CustomServiceList()
     ['4-16626-202']=true, --スターチャンネル3
   }
 
-  function SubChanel(a,b)
+  local function SubChanel(a,b)
     return not subch and SubChConcat and not NOT_SUBCH[a.onid..'-'..a.tsid..'-'..a.sid] and b and a.onid==b.onid and a.tsid==b.tsid
   end
 
@@ -1000,7 +1003,7 @@ function CustomServiceList()
       end
     end
   else
-    epgCapFlag={}
+    local epgCapFlag={}
     for i,v in ipairs(edcb.GetChDataList()) do
       epgCapFlag[v.onid..'-'..v.tsid..'-'..v.sid]=v.epgCapFlag
     end

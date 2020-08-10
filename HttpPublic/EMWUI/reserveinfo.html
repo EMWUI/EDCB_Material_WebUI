@@ -46,6 +46,7 @@ if r then
   ct.main=ct.main..'<option value="65535"'..(preset and '' or ' selected')..'>予約時\n'
     ..'</select></div></div>\n'
     ..'<input type="hidden" name="id" value="'..r.reserveID..'">\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'">\n'
     ..'<input type="hidden" name="change">\n'
 
     ..RecSettingTemplate(rs)..'</div></form>\n'
