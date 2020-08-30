@@ -11,7 +11,7 @@ if MakeThumbs then
   ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
 end
 
-ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'}
+ct={'<?xml version="1.0" encoding="UTF-8" ?><entry>'}
 
 if edcb.FindFile then
   function finddir(path)
@@ -113,5 +113,5 @@ end
 
 cl=0
 for i,v in ipairs(ct) do cl=cl+#v end
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
 for i,v in ipairs(ct) do mg.write(v) end

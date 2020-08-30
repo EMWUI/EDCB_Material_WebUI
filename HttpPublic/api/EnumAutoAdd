@@ -3,7 +3,7 @@ dofile(mg.document_root..'\\api\\util.lua')
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
 rsdef=edcb.GetReserveData(0x7FFFFFFF)
-ct={'<?xml version="1.0" encoding="UTF-8" ?'..'><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
+ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
   disableFlag=string.match(v.searchInfo.andKey, '^^!{999}(.*)')
   caseFlag=(disableFlag or v.searchInfo.andKey):match('^C!{999}(.*)')
@@ -51,5 +51,5 @@ end
 table.insert(ct, '</items></entry>')
 cl=0
 for i,v in ipairs(ct) do cl=cl+#v end
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
 for i,v in ipairs(ct) do mg.write(v) end

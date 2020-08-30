@@ -11,7 +11,7 @@ for w in string.gmatch(mg.get_var(mg.request_info.query_string,'genru') or '','[
 end
 edcb.htmlEscape=15
 a=edcb.SearchEpg(key)
-ct={'<?xml version="1.0" encoding="UTF-8" ?'..'>'}
+ct={'<?xml version="1.0" encoding="UTF-8" ?>'}
 if not a then
   table.insert(ct, '<entry><err>EPGデータを読み込み中、または存在しません</err></entry>')
 else
@@ -104,5 +104,6 @@ else
 end
 cl=0
 for i,v in ipairs(ct) do cl=cl+#v end
-mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..cl..'\r\nConnection: close\r\n\r\n')
+dofile(mg.document_root..'\\api\\util.lua')
+mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
 for i,v in ipairs(ct) do mg.write(v) end
