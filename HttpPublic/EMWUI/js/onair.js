@@ -66,8 +66,8 @@ function audio(audio, update){
 	if (audio.length >= 2){
 		//多重音声
 		$('#audio').attr('disabled', false);
-		$('.multi').show();
-		$('.dual').hide();
+		$('.multi').attr('disabled', false).show();
+		$('.dual').attr('disabled', true).hide();
 		$('#multi1~label:last').text(audio[0].text=='' ? '主音声' : audio[0].text);
 		$('#multi2~label:last').text(audio[1].text=='' ? '副音声' : audio[1].text);
 		if (!update){
@@ -80,8 +80,8 @@ function audio(audio, update){
 	}else if (audio.length > 0 && audio[0].component_type == 2){
 		//デュアルモノ
 		$('#audio').attr('disabled', false);
-		$('.dual').show();
-		$('.multi').hide();
+		$('.dual').attr('disabled', false).show();
+		$('.multi').attr('disabled', true).hide();
 		var text = audio[0].text.split('\n');
 		if (text.length<2) text = ['日本語','英語'];
 		$('#dual1~label:last').text('[二] '+ text[0]);
@@ -95,7 +95,7 @@ function audio(audio, update){
 			}
 		}
 	}else{
-		$('#audio').attr('disabled', true);
+		$('#audio,.multi,.dual').attr('disabled', true);
 	}
 }
 
@@ -212,7 +212,7 @@ $(function(){
 			}else{
 				if (data.audio){
 					if (apk){
-						location.href = 'intent:http://'+location.host+ '/api/TvCast?id=-1&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+						location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 					}else{
 						$('#popup,#playerUI').addClass('is-visible');
 						audio(data.audio);
@@ -231,7 +231,7 @@ $(function(){
 								}
 							});
 							if (apk){
-								location.href = 'intent:http://'+location.host+ '/api/TvCast?id=-1&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+								location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 							}else{
 								$('#popup,#playerUI').addClass('is-visible');
 								audio(data.audio);

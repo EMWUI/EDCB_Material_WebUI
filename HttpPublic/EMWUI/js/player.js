@@ -28,16 +28,18 @@ function loadMovie(obj){
 	var quality = localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '';
 	seek = $('#seek').val();
 	var offset = seek > 0 ? '&offset=' + seek : '';
-	var audio = '&audio='+$('[name=audio]:checked').val();
+	var multi = $('.multi').attr('disabled') ? '' : '&audio2='+$('[name=audio]:checked').val();
+	var dual = $('.dual').attr('disabled') ? '': '&dual='+$('[name=audio]:checked').val();
+	var cinema = $('#cinema').prop('checked') ? '&cinema=1': '';
 
 	if (obj.data('public') && canPlay){
 		path = root + path;
 	}else if (obj.data('rec')){
-		path = path + quality + offset + ($('.audio:checked').length>0 ? audio : '');
+		path = path + quality + offset + ($('.multi').length > 0 ? multi : '') + ($('.dual').length > 0 ? dual : '') + cinema;
 	}else if ($('#video').data('cast')){
-		path = root + 'api/TvCast?id=-1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + ($('#audio').attr('disabled') ? '' : audio) +'&null='+ Math.floor(Math.random()*1000); //再生失敗時のキャッシュ対策
+		path = root + 'api/TvCast?ctok=' + obj.data('ctok') + '&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid') + quality + multi + dual + cinema +'&null='+ Math.floor(Math.random()*1000); //再生失敗時のキャッシュ対策
 	}else{
-		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + offset + (obj.data('public') ? '&public=' : '') + ($('.audio:checked').length>0 ? audio : '');
+		path = root + 'api/Movie?fname=' + path + (canPlay ? '&xcode=0' : '') + quality + multi + dual + cinema + offset + (obj.data('public') ? '&public=' : '');
 	}
 
 	if (canPlay){
@@ -67,6 +69,8 @@ function playMovie(obj){
 	}else{
 		$('#seek').get(0).MaterialSlider.change(0);
 		$('.currentTime,.duration').text('0:00');
+		$('.multi,.dual').attr('disabled', true);
+		$('#video').removeData('duration');
 		loadMovie(obj);
 	}
 	video.play();
@@ -134,26 +138,19 @@ $(function(){
 			}
 		},
 		'error': function(){
-			var messege;
-			var errorcode = this.error.code;
-			if (errorcode == 1){
-				messege = 'MEDIA_ERR_ABORTED';
-			}else if (errorcode == 2){
-				messege = 'MEDIA_ERR_NETWORK';
-			}else if (errorcode == 3){
-				messege = 'MEDIA_ERR_DECODE';
-			}else if (errorcode == 4){
-				if ($('#video').attr('src')!='') messege = 'MEDIA_ERR_SRC_NOT_SUPPORTED';
-			}
-			$(this).removeClass('is-loadding');
-			if (messege) {;
+			if ($('#video').attr('src') != ''){
+				var errorcode = this.error.code;
+				if (this.networkState == 3){
+					errorcode = 5;
+				}
+				$(this).removeClass('is-loadding');
 				var url = this.currentSrc;
 				var data = {
-					message: 'Error : ' + messege,
+					message: 'Error : ' + ['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode],
 					actionHandler: function(){
-						window.open(url);
+						window.open(url+ '&debug=' + errorcode);
 					},
-					actionText: '詳細？'
+					actionText: 'デバッグ'
 				}
 				notification.MaterialSnackbar.showSnackbar(data);
 			}
@@ -205,7 +202,6 @@ $(function(){
 
 				xcode = $(this).data('xcode');
 				if (xcode){
-					$('#seek').attr('max', 99);
 					$('#audio').prop('disabled', false);
 					duration = $(this).data('duration');
 					if (duration){
@@ -215,6 +211,7 @@ $(function(){
 							var xml = $(xhr.responseXML);
 							if (xml.find('duration').length > 0){
 								duration = xml.find('duration').text();
+								$('#video').data('duration', duration);
 								timeupdate(duration);
 							}else{
 								duration = false;
@@ -224,18 +221,17 @@ $(function(){
 							if (xml.find('audio').length > 0){
 								if (xml.find('audio').text() == 1){
 									$('#RAW').prop('checked', true);
-									$('.dual').show();
-									$('.multi').hide();
+									$('.dual').attr('disabled', false).show();
+									$('.multi').attr('disabled', true).hide();
 								}else{
 									$('#multi1').prop('checked', true);
-									$('.multi').show();
-									$('.dual').hide();
+									$('.multi').attr('disabled', false).show();
+									$('.dual').attr('disabled', true).hide();
 								}
 							}
 						});
 					}
 				}else{
-					$('#seek').attr('max', 100);
 					$('#audio').prop('disabled', true);
 					duration = this.duration;
 					timeupdate(duration);
@@ -339,7 +335,7 @@ $(function(){
 			if (!paused) video.play();
 		}
 	});
-	$('.audio').change(function(){
+	$('.audio,#cinema').change(function(){
 		var paused = video.paused;
 		loadMovie($('#video'));
 		if (!paused) video.play();

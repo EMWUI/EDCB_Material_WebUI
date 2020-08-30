@@ -242,6 +242,20 @@ function Response(code,ctype,charset,cl)
     ..(mg.keep_alive(not not cl) and '\r\n' or '\r\nConnection: close\r\n')
 end
 
+-- ios判定
+function Check_iOS()
+  for hk,hv in pairs(mg.request_info.http_headers) do
+    if hk:lower()=='user-agent' then
+      for i,v in ipairs({'iphone','ipad','macintosh'}) do
+        if hv:lower():match(v) then
+          return true
+        end
+      end
+      break
+    end
+  end
+end
+
 --ライブラリに表示するフォルダのリストを取得する
 function GetLibraryPathList()
   local list={}
@@ -290,8 +304,8 @@ function GetDurationSec(f,fpath)
   local fsize=f:seek('end') or 0
   --ffprobeを使う(正確になるはず)
   if fpath then
-    local dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-    local ffprobe=edcb.GetPrivateProfile('SET','ffprobe',dir..'ffprobe.exe',ini)
+    local tools=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
+    local ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
     local ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
     if ff then
       local dur=tonumber(edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration -of ini  2>&1"', 'rb'):read('*a'):match('=(.+)\r\n'))

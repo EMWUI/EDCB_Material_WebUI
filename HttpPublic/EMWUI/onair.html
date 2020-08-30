@@ -85,6 +85,8 @@ for i,v in ipairs(CustomServiceList()) do
         ..'" data-start="'..x_startTime*1000
         ..'" data-end="'..x_endTime*1000
         ..'" data-duration="'..(x.durationSecond or y_startTime-x_endTime)
+        ..'" data-ctok="'..CsrfToken('tvcast')
+
         ..'">\n'
 
         ..'<span class="mdl-list__item-primary-content">'

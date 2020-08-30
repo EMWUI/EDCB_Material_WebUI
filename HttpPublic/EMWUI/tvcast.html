@@ -74,7 +74,7 @@ for i,v in ipairs(NetworkIndex()) do
 end
 for i,v in ipairs(ServiceList) do
   if oneseg or not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<option class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"'..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' selected' or '')..' data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'">'..v.service_name..'</option>\n')
+    table.insert(NetworkList[NetworkIndex(v)], '<option class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"'..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' selected' or '')..' data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-ctok="'..CsrfToken('tvcast')..'">'..v.service_name..'</option>\n')
   end
 end
 

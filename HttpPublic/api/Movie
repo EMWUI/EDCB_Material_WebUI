@@ -1,44 +1,43 @@
 -- vim:set ft=lua:
-dofile(mg.document_root..'\\api\\util.lua')
-ini='Setting\\HttpPublic.ini'
-dir=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
-ffprobe=edcb.GetPrivateProfile('SET','ffprobe',dir..'ffprobe.exe',ini)
-readex=edcb.GetPrivateProfile('SET','readex',dir..'readex.exe',ini)
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-mp4=tonumber(edcb.GetPrivateProfile('SET','mp4',0,ini))~=0
-
--- トランスコードするかどうか
-XCODE=tonumber(mg.get_var(mg.request_info.query_string, 'xcode') or 1)~=0
--- 変換コマンド
-quality=mg.get_var(mg.request_info.query_string, 'quality') or ''
-if mp4 then
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -',ini)
-else
-  XOPT=edcb.GetPrivateProfile('MOVIE',quality,'-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 -vf yadif=0:-1:1 -s 512x288 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -',ini)
-end
-
-audio=tonumber(mg.get_var(mg.request_info.query_string, 'audio'))
-if audio then
-  if audio==0 then
-    XOPT='-map 0:0 -map 0:1 -map 0:2 '..XOPT
-  elseif audio<10 then
-    XOPT='-map 0:0 -map 0:'..audio..' '..XOPT
-  elseif audio==10 then
-    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FL] -map [FR] '..XOPT  --デュアルモノ[日]
-  elseif audio==11 then
-    XOPT='-filter_complex channelsplit[FL][FR] -map 0:v -map [FR] -map [FL] '..XOPT  --デュアルモノ[英]
-  end
-end
-
-XCMD='"'..ffmpeg..'" -i pipe:0 '..XOPT
--- 変換後の拡張子
-XEXT=mp4 and '.mp4' or '.webm'
+-- トランスコードするかどうか(する場合はreadex.exeとffmpeg.exeを用意すること)
+XCODE=GetVarInt(mg.request_info.query_string, 'xcode',0,1)~=0
+-- デフォルト設定
+-- フィルタオプション
+XFILTER='-vf yadif=0:-1:1'
+XFILTER_CINEMA='-vf pullup -r 24000/1001'
+-- ffmpeg変換オプション($FILTERはフィルタオプションに置換)
+-- libvpxの例:リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する
+XOPT='-vcodec libvpx -b:v 896k -quality realtime -cpu-used 1 $FILTER -s 512x288 -acodec libvorbis -ab 128k -f webm -'
+XOPT_mp4='-vcodec libx264 -profile:v main -level 31 -b:v 896k -maxrate 4M -bufsize 4M -preset veryfast -g 120 $FILTER -s 512x288 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -'
+XOPT_nvenc='-vcodec h264_nvenc -profile:v main -level 31 -b:v 1408k -maxrate 8M -bufsize 8M -preset medium -g 120 $FILTER -s 1280x720 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -'
+-- 出力バッファの量(bytes。asyncbuf.exeを用意すること。変換負荷や通信のむらを吸収する)
+XBUF=0
 -- 転送開始前に変換しておく量(bytes)
-XPREPARE=tonumber(edcb.GetPrivateProfile('SET','xprepare',48128,ini))
+XPREPARE=0
 
-r=edcb.GetRecFilePath((mg.get_var(mg.request_info.query_string,'reid') or 0))
-v=edcb.GetRecFileInfo((mg.get_var(mg.request_info.query_string,'id') or 0))
+-- コマンドはEDCBのToolsフォルダにあるものを優先する
+ini='Setting\\HttpPublic.ini'
+tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
+ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
+readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
+asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'readex.exe',ini)
+
+-- 設定読み込み
+XOPT=edcb.GetPrivateProfile('MOVIE',mg.get_var(mg.request_info.query_string,'quality'),XOPT,ini)
+-- mp4判定 (XOPTにmp4が含まれているはず)
+mp4=XOPT:match('mp4')
+-- iosの場合強制的にmp4
+if Check_iOS() and not mp4 then
+  XOPT=nvenc and XOPT_nvenc or XOPT_mp4
+  mp4=true
+end
+XEXT=mp4 and '.mp4' or '.webm'
+
+r=edcb.GetRecFilePath((GetVarInt(mg.request_info.query_string,'reid') or 0))
+v=edcb.GetRecFileInfo((GetVarInt(mg.request_info.query_string,'id') or 0))
 
 if r then
   fpath=r
@@ -66,6 +65,7 @@ else
         v=(v..'\\'):gsub('[\\/]+','\\')
         if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f:*?"<>|]') and not faddr:sub(#v+1):find('%.\\') then
           fpath=faddr
+          library=true
           break
         end
       end
@@ -73,22 +73,32 @@ else
   end
 end
 
--- 転送開始位置(99分率)
-offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
+if fpath then
+  offset=tonumber(mg.get_var(mg.request_info.query_string,'offset')) or 0
+  audio2=GetVarInt(mg.request_info.query_string,'audio2',0,1) or 0
+  dual=GetVarInt(mg.request_info.query_string,'dual',0,2)
+  dual=dual==1 and ' -dual_mono_mode main' or dual==2 and ' -dual_mono_mode sub' or ''
+  filter=GetVarInt(mg.request_info.query_string,'cinema')==1 and XFILTER_CINEMA or XFILTER
+end
 
 f=nil
 if fpath then
   fname='xcode'..(fpath:match('%.[0-9A-Za-z]+$') or '')
+  fnamets='xcode'..edcb.GetPrivateProfile('SET','TSExt','.ts','EpgTimerSrv.ini'):lower()
   -- 拡張子を限定
-  if mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
+  if fname:lower()==fnamets or library then
     f=edcb.io.open(fpath, 'rb')
     if f then
       meta=mg.get_var(mg.request_info.query_string,'meta')
       if meta then
         ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
         if ff then
-          ff=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -hide_banner -show_format -show_entries format=duration 2>&1"', 'rb'):read('*a')
+          ff=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'"  -hide_banner -show_entries format 2>&1"', 'rb'):read('*a')
           meta={duration=ff:match('duration=(.-)\r\n'), audio={}}
+          fsize=ff:match('size=(.-)\r\n')
+          offset=math.floor(fsize*10/100/188)*188
+          ff=edcb.io.popen('""'..readex..'" '..offset..' 4 "'..fpath..'" | "'
+            ..ffprobe..'" -i pipe:0 -hide_banner -show_format 2>&1"', 'rb'):read('*a')
           for v in ff:gmatch(':%sAudio:%s(.-)\r\n') do
              table.insert(meta.audio,v)
           end
@@ -98,37 +108,63 @@ if fpath then
         f:close()
       else
         fsec,fsize=GetDurationSec(f,fpath)
-        if offset~=0 and offset~=99 and fsec>0 and SeekSec(f,fsec*offset/99) then
+        if offset~=0 and offset~=100 and fsec>0 and SeekSec(f,fsec*offset/100) then
           offset=f:seek('cur',0) or 0
         else
-          offset=math.floor(fsize*offset/99/188)*188
+          offset=math.floor(fsize*offset/100/188)*188
         end
         if XCODE then
           f:close()
           -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する
-          sync=fname:lower():find('%.ts$') and edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
-          f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | '..XCMD..'"', 'rb')
+          sync=edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
+          f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | "'
+            ..ffmpeg..'"'..dual..' -i pipe:0 -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)
+            ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
           fname='xcode'..XEXT
         else
+          -- 容量確保には未対応
           f:seek('set', offset)
-          XPREPARE=nil
         end
       end
     end
   end
 end
 
-if meta then
+debug=GetVarInt(mg.request_info.query_string,'debug',0,5) or 0
+if debug>0 then
+  if f then
+    ct='<success>変換成功</success><errorcode>'
+      ..({'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'})[debug]..'</errorcode>'
+  else
+    ct='<error>変換失敗</error>'
+  end
+  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'<fpath>'
+    ..fpath..'</fpath>'
+    ..(edcb.FindFile(fpath, 1) and '' or '<notfound>404</notfound>')..'<ffmpeg>'
+    ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><ffprobe>'
+    ..(edcb.FindFile(ffprobe, 1) and 'OK' or 'NG')..'</ffprobe><asyncbuf>'
+    ..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf><XCODE>'
+  if XCODE then
+    ct=ct..'<XOPT>'
+      ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><offset>'
+      ..(offset or '')..'</offset><audio2>'
+      ..(audio2 or '')..'</audio2><dual>'
+      ..(dual or '')..'</dual>'
+  else
+    ct=ct..'NO'
+  end
+  ct=ct..'</XCODE></entry>'
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+elseif meta then
   ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(type(meta)=='table' and (meta.duration~='N/A' and '<duration>'..meta.duration..'</duration>' or '')..'<audio>'..#meta.audio..'</audio>' or '<err>なし</err>')..'</entry>'
-  mg.write('HTTP/1.1 200 OK\r\nContent-Type: text/xml\r\nContent-Length: '..#ct..'\r\nConnection: close\r\n\r\n', ct)
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
 elseif not f then
-  mg.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
+  mg.write(Response(404,'text/html','utf-8')..'\r\n')
 else
-  mg.write('HTTP/1.1 200 OK\r\nContent-Type: '..mg.get_mime_type(fname)..'\r\nContent-Disposition: filename='..mg.url_encode(fname)..'\r\nConnection: close\r\n\r\n')
+  mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
   retry=0
   while true do
-    buf=f:read(XPREPARE or 48128)
-    XPREPARE=nil
+    buf=f:read(48128)
     if buf and #buf ~= 0 then
       retry=0
       if not mg.write(buf) then

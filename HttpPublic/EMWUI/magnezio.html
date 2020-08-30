@@ -210,7 +210,7 @@ function stop(auto){
   $('#top').addClass('is-visible');
   $('#info').removeClass('is-visible');
   hide(0);
-  $.get(']=]..PathToRoot()..[=[api/TvCast?sid=0').done(function(){
+  $.get(']=]..PathToRoot()..[=[api/TvCast?sid=0&ctok=]=]..CsrfToken('tvcast')..[=[').done(function(){
     cast=false;
     $('#eventName,#title,#date,#text').text('');
     $('#top').removeClass('is-visible');
@@ -237,7 +237,7 @@ $(function(){
       $('#info').removeClass('is-visible');
       $('#info>.info>div').text('');
       var self = $(this);
-      $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1', $(this).data()).done(function(xhr){
+      $.get(']=]..PathToRoot()..[=[api/TvCast?mode=1&ctok=]=]..CsrfToken('tvcast')..[=[', $(this).data()).done(function(xhr){
         if ($(xhr).find('success').length > 0){
           id=$(xhr).find('success');
           cast=true;
