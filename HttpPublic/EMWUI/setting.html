@@ -1,106 +1,100 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
---tkntrec=tonumber(edcb.GetPrivateProfile('SET','tkntrec',false,ini))~=0
-Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
-subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+function format(reset)
+  if reset=='tvguide' then
+    edcb.WritePrivateProfile('GUIDE', nil, '',ini)
+    edcb.WritePrivateProfile('BACKGROUND', nil, '',ini)
+    return '番組表設定を初期化しました'
+  elseif reset=='sort' then
+    edcb.WritePrivateProfile('SORT', nil, '',ini)
+    edcb.WritePrivateProfile('HIDE', nil, '',ini)
+    return '並び替え設定を初期化しました'
+  end
+end
 
-oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
-hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,ini))~=0
-titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
-ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',ini)
-MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
-MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
-w_service=edcb.GetPrivateProfile('GUIDE','service','210',ini)
-w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
-w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',ini)
-w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',ini)
-CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
-subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
+function save(post)
+  local titleControl=GetVarInt(post,'titleControl-PC')+GetVarInt(post,'titleControl-SP')
+  for i=0,10000 do
+    local v=GetVarInt(post,'titleControl',0,32,i)
+    if not v then break end
+    titleControl=titleControl+v
+  end
 
-background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',ini)
+  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1,ini)
+  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1,ini)
+  edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),ini)
+  edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
+  edcb.WritePrivateProfile('SET', 'FIND_BY_OPEN', GetVarInt(post,'FIND_BY_OPEN')==1,ini)
 
-news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',ini)
-sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',ini)
-information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',ini)
-drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',ini)
-music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',ini)
-variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',ini)
-movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',ini)
-anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',ini)
-documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',ini)
-theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',ini)
-education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',ini)
-welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',ini)
-extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',ini)
-other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',ini)
-none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',ini)
-nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',ini)
+  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl,ini)
+  edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23),ini)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000),ini)
+  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1,ini)
 
-paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,ini))~=0
-reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',ini)
-disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',ini)
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
-partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',ini)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
-shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'),ini)
 
-CATEGORY={
-  'news',
-  'sports',
-  'information',
-  'drama',
-  'music',
-  'variety',
-  'movie',
-  'anime',
-  'documentary',
-  'theater',
-  'education',
-  'welfare',
+  edcb.WritePrivateProfile('BACKGROUND', 'news', mg.get_var(post, 'news'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'sports', mg.get_var(post, 'sports'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'information', mg.get_var(post, 'information'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'drama', mg.get_var(post, 'drama'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'music', mg.get_var(post, 'music'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'variety', mg.get_var(post, 'variety'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'movie', mg.get_var(post, 'movie' or ''),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'anime', mg.get_var(post, 'anime'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'documentary', mg.get_var(post, 'documentary'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'theater', mg.get_var(post, 'theater'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'education', mg.get_var(post, 'education'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),ini)
+
+  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially_border', mg.get_var(post, 'partially_border'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage', mg.get_var(post, 'shortage'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage_border', mg.get_var(post, 'shortage_border'),ini)
+
+  edcb.WritePrivateProfile('SORT', nil, '',ini)
+  for i=0,10000 do
+    local v=mg.get_var(post, 'sort', i)
+    if not v then break end
+    edcb.WritePrivateProfile('SORT', 'sort'..i, v,ini)
+  end
+
+  edcb.WritePrivateProfile('HIDE', nil, '',ini)
+  for i=0,10000 do
+    local v=mg.get_var(post, 'hide', i)
+    if not v then break end
+    edcb.WritePrivateProfile('HIDE', 'hide'..i, v,ini)
+  end
+
+  return '保存しました'
+end
+
+ct={
+  title='設定',
+  js='<script src="js/jquery-ui.min.js"></script>\n'
+    ..'<script src="js/jquery.ui.touch-punch.min.js"></script>\n'
+    ..'<script src="js/setting.js"></script>\n',
+  tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
+    ..'<a href="#guide" class="mdl-layout__tab" data-val="tvguide">番組表</a>\n'
+    ..'<a href="#sort" class="mdl-layout__tab" data-val="sort">並び替え</a>\n',
+  dialog={{id='dialog',button='<button type="submit" class="mdl-button mdl-button--primary" form="reset" data-dialog="#dialog">初期化</button>\n'}}
 }
-
-ct={title='設定'}
-
-ct.css='<style>\n'
-  ..'.news{background:'..news
-  ..';}.sports{background:'..sports
-  ..';}.information{background:'..information
-  ..';}.drama{background:'..drama
-  ..';}.music{background:'..music
-  ..';}.variety{background:'..variety
-  ..';}.movie{background:'..movie
-  ..';}.anime{background:'..anime
-  ..';}.documentary{background:'..documentary
-  ..';}.theater{background:'..theater
-  ..';}.education{background:'..education
-  ..';}.welfare{background:'..welfare
-  ..';}.extension{background:'..extension
-  ..';}.other{background:'..other
-  ..';}.none{background:'..none
-  ..';}.nothing{background:'..nothing
-  ..';}\n'
-
-  ..'.reserve{border: 3px dotted '..(paint and 'transparent' or reserve)..';}\n'
-  ..'.disabled{border-color:'..(paint and 'transparent' or disabled)..';}\n'
-  ..'.partially{background:'..partially..';border-color:'..partially_border..';}\n'
-  ..'.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
-
-  ..'.background{background:'..background..';}\n'
-
-  ..'#set .background>div{margin: 4px 8px;}\n'
-  ..'</style>\n'
-
-ct.js='<script src="js/jquery-ui.min.js"></script>\n'
-  ..'<script src="js/jquery.ui.touch-punch.min.js"></script>\n'
-  ..'<script src="js/setting.js"></script>\n'
-
-ct.tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
-  ..'<a href="#guide" class="mdl-layout__tab" data-val="tvguide">番組表</a>\n'
-  ..'<a href="#sort" class="mdl-layout__tab" data-val="sort">並び替え</a>\n'
-
-ct.dialog={{id='dialog',button='<button class="submit close mdl-button mdl-button--primary" data-form="#reset" data-dialog="#dialog">初期化</button>\n'}}
 
 GetChDataList={}
 for i,v in ipairs(edcb.GetChDataList()) do
@@ -109,66 +103,29 @@ end
 
 edcb.htmlEscape=15
 
-HIDE_SERVICES={}
-for i=0,1000 do
-  v=edcb.GetPrivateProfile('HIDE','hide'..i,false,ini)
-  if key=='0' then break end
-  HIDE_SERVICES[''..v]=true
-end
-
-a=edcb.GetServiceList() or {}
-ServiceList={}
-if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
-  GetServiceList={}
-  for i,v in ipairs(a) do
-    GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
-  end
-  for i=0,1000 do
-    key=edcb.GetPrivateProfile('SORT','sort'..i,false,ini)
-    if key=='0' then break end
-    v=GetServiceList[key]
-    if v and GetChDataList[key] then
-      v.hide=HIDE_SERVICES[key]
-      table.insert(ServiceList, v)
-    else
-      --TSID変更検出
-      for j,w in pairs(GetServiceList) do
-        change=key:match(w.onid..'-(%d+)-'..w.sid..'$')
-        if change and tonumber(change)~=w.tsid and GetChDataList[w.onid..'-'..w.tsid..'-'..w.sid] then
-          w.change=change
-          w.hide=HIDE_SERVICES[key]
-          table.insert(ServiceList, w)
-          GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid]=nil
-          break
-        end
-      end
-    end
-    GetServiceList[key]=nil
-  end
-  for i,v in ipairs(a) do
-    if GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(ServiceList, v) end
-  end
-else
-  ServiceList=a
-  table.sort(ServiceList, function(a,b) return
-    ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
-    ('%04X%04X'):format(b.remote_control_key_id, b.sid)
-  end)
-end
-
 ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div class="form-container">\n'
-  ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SaveSettings">\n'
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken('savesettings')..'">\n'
+  ..'<form id="set" method="POST" action="setting.html">\n'
+  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
 
   ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
 
---[=[
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-tkntrec">tkntrec氏版</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="tkntrec" class="mdl-switch mdl-js-switch"><input id="tkntrec" type="checkbox" class="mdl-switch__input" name="tkntrec" value="1"'..(tkntrec and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
-  ..'<span class="mdl-tooltip" for="tt-tkntrec">オフで使用するとオリジナル設定がデフォルトに変更されます</span></div>\n'
---]=]
+post=AssertPost()
+if post then
+  reset=mg.get_var(post,'reset')
+  if reset then
+    messege=format(reset) or '初期化できませんでした'
+  else
+    messege=save(post) or '保存できませんでした'
+  end
+  ct.js=ct.js..'<script>$(function(){$(".mdl-js-snackbar").on("mdl-componentupgraded", function() {this.MaterialSnackbar.showSnackbar({message: "'..messege..'",timeout:5000});});})</script>'
+end
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
+subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',false,ini))~=0
+
+ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
 
@@ -218,11 +175,52 @@ for i,v in ipairs(list) do
       ..'<div id="disk'..i..'" class="mdl-progress mdl-js-progress" data-free="'..(free and 100-(free/total*100) or 'false')..'"></div></div></div>\n'
   end
 end
+
+tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
+ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
+ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
+readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
+asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'readex.exe',ini)
+
 ct.main=ct.main..'</div></div>\n'
-  
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">動画変換用</div><div style="padding-left:16px;" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ffmpeg.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(ffmpeg, 1) and ffmpeg or '見つかりません')..'</div>\n</div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ffprobe.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(ffprobe, 1) and ffprobe or '見つかりません')..'</div>\n</div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">readex.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(readex, 1) and readex or '見つかりません')..'</div>\n</div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">asyncbuf.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(asyncbuf, 1) and asyncbuf or '見つかりません')..'</div>\n</div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ffmpeg変換オプション一覧</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-desktop mdl-grid mdl-grid--no-spacing">\n'
+list = edcb.GetPrivateProfile('set','quality','',ini)
+if list~='' then
+ct.main=ct.main..'<ul style="margin:0;">\n'
+  for v in list:gmatch('[^,]+') do
+    ct.main=ct.main..'<li><div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing" style="margin:0"><div class="mdl-cell mdl-cell--1-col mdl-cell--middle">'..v..'</div><div class="mdl-cell mdl-cell--6-col mdl-cell--11-col-desktop">'..edcb.GetPrivateProfile('MOVIE',v,'',ini)..'</div></div></li>\n'
+  end
+ct.main=ct.main..'</ul>\n'
+end
+ct.main=ct.main..'</div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">名前付きパイプを予想して開く</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="FIND_BY_OPEN" class="mdl-switch mdl-js-switch"><input id="FIND_BY_OPEN" type="checkbox" class="mdl-switch__input" name="FIND_BY_OPEN" value="1"'..(FIND_BY_OPEN and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'</div></div></div>\n'
+
   ..'</section>\n'
 
-  ..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
+oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
+hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,ini))~=0
+titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
+ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',ini)
+MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
+MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
+w_service=edcb.GetPrivateProfile('GUIDE','service','210',ini)
+w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
+w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',ini)
+w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',ini)
+CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
+subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
+
+ct.main=ct.main..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
@@ -265,6 +263,77 @@ ct.main=ct.main..'</div></div>\n'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">時間帯の幅</div>\n<div class="number mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid mdl-grid--no-spacing">'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour" value="'..w_hour..'" min="10" id="w_hour"><label class="mdl-textfield__label" for="w_hour">PC</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour_sp" value="'..w_hour_sp..'" min="10" id="w_hour_sp"><label class="mdl-textfield__label" for="w_hour_sp">スマホ</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div></div></div>\n'
+
+background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',ini)
+
+news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',ini)
+sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',ini)
+information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',ini)
+drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',ini)
+music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',ini)
+variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',ini)
+movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',ini)
+anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',ini)
+documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',ini)
+theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',ini)
+education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',ini)
+welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',ini)
+extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',ini)
+other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',ini)
+none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',ini)
+nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',ini)
+
+paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,ini))~=0
+reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',ini)
+disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',ini)
+partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
+partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',ini)
+shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',ini)
+
+CATEGORY={
+  'news',
+  'sports',
+  'information',
+  'drama',
+  'music',
+  'variety',
+  'movie',
+  'anime',
+  'documentary',
+  'theater',
+  'education',
+  'welfare',
+}
+
+ct.css='<style>\n'
+  ..'.news{background:'..news
+  ..';}.sports{background:'..sports
+  ..';}.information{background:'..information
+  ..';}.drama{background:'..drama
+  ..';}.music{background:'..music
+  ..';}.variety{background:'..variety
+  ..';}.movie{background:'..movie
+  ..';}.anime{background:'..anime
+  ..';}.documentary{background:'..documentary
+  ..';}.theater{background:'..theater
+  ..';}.education{background:'..education
+  ..';}.welfare{background:'..welfare
+  ..';}.extension{background:'..extension
+  ..';}.other{background:'..other
+  ..';}.none{background:'..none
+  ..';}.nothing{background:'..nothing
+  ..';}\n'
+
+  ..'.reserve{border: 3px dotted '..(paint and 'transparent' or reserve)..';}\n'
+  ..'.disabled{border-color:'..(paint and 'transparent' or disabled)..';}\n'
+  ..'.partially{background:'..partially..';border-color:'..partially_border..';}\n'
+  ..'.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
+
+  ..'.background{background:'..background..';}\n'
+
+  ..'#set .background>div{margin: 4px 8px;}\n'
+  ..'</style>\n'
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'
@@ -343,6 +412,53 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<div class="mdl-tabs mdl-js-tabs mdl-grid--no-spacing">\n'
   ..'<div class="mdl-tabs__tab-bar">\n'
 
+HIDE_SERVICES={}
+for i=0,1000 do
+  v=edcb.GetPrivateProfile('HIDE','hide'..i,false,ini)
+  if key=='0' then break end
+  HIDE_SERVICES[''..v]=true
+end
+
+a=edcb.GetServiceList() or {}
+ServiceList={}
+if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
+  GetServiceList={}
+  for i,v in ipairs(a) do
+    GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
+  end
+  for i=0,1000 do
+    key=edcb.GetPrivateProfile('SORT','sort'..i,false,ini)
+    if key=='0' then break end
+    v=GetServiceList[key]
+    if v and GetChDataList[key] then
+      v.hide=HIDE_SERVICES[key]
+      table.insert(ServiceList, v)
+    else
+      --TSID変更検出
+      for j,w in pairs(GetServiceList) do
+        change=key:match(w.onid..'-(%d+)-'..w.sid..'$')
+        if change and tonumber(change)~=w.tsid and GetChDataList[w.onid..'-'..w.tsid..'-'..w.sid] then
+          w.change=change
+          w.hide=HIDE_SERVICES[key]
+          table.insert(ServiceList, w)
+          GetServiceList[w.onid..'-'..w.tsid..'-'..w.sid]=nil
+          break
+        end
+      end
+    end
+    GetServiceList[key]=nil
+  end
+  for i,v in ipairs(a) do
+    if GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid] then table.insert(ServiceList, v) end
+  end
+else
+  ServiceList=a
+  table.sort(ServiceList, function(a,b) return
+    ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
+    ('%04X%04X'):format(b.remote_control_key_id, b.sid)
+  end)
+end
+
 NetworkList={}
 for i,v in ipairs(NetworkIndex()) do
   NetworkList[i]={}
@@ -379,9 +495,9 @@ ct.main=ct.main..'</div>\n'..table.concat(ctt)..[=[
 <button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
 <div class="mdl-layout-spacer"></div>
 <button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
-<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">保存</button>
+<button type="submit" class="mdl-button mdl-js-button mdl-button--primary" form="set">保存</button>
 </div>
-<form id="reset" class="reload" method="GET" action="]=]..PathToRoot()..[=[api/SaveSettings"><input type="hidden" name="ctok" value="]=]..CsrfToken('savesettings')..[=["><input type="hidden" name="reset"></form>
+<form id="reset" method="POST" action="setting.html"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
 </div>
 </div>
 ]=]
