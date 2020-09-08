@@ -32,6 +32,7 @@ end
 
 -- 設定読み込み
 XOPT=edcb.GetPrivateProfile('MOVIE',mg.get_var(post,'quality'),XOPT,ini)
+XBUF=tonumber(edcb.GetPrivateProfile('SET','XBUF',XBUF,ini))
 FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',FIND_BY_OPEN,ini))~=0
 -- mp4判定 (XOPTにmp4が含まれているはず)
 mp4=XOPT:match('mp4')
@@ -119,8 +120,10 @@ if debug>0 then
   ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'<EDCB>'
     ..(ok and 'OK' or 'NG')..'</EDCB><Pipe>'
     ..(ff and 'OK' or 'NG')..'</Pipe><ffmpeg>'
-    ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><asyncbuf>'
-    ..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf><XOPT>'
+    ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><buffer>'
+    ..XBUF..'bytes'
+    ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')
+    ..'</buffer><XOPT>'
     ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><audio2>'
     ..(audio2 or '')..'</audio2><dual>'
     ..(dual or '')..'</dual><FIND_BY_OPEN>'

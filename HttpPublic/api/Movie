@@ -23,10 +23,11 @@ tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
 ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
 readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
-asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'readex.exe',ini)
+asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'asyncbuf.exe',ini)
 
 -- 設定読み込み
 XOPT=edcb.GetPrivateProfile('MOVIE',mg.get_var(mg.request_info.query_string,'quality'),XOPT,ini)
+XBUF=tonumber(edcb.GetPrivateProfile('SET','XBUF',XBUF,ini))
 -- mp4判定 (XOPTにmp4が含まれているはず)
 mp4=XOPT:match('mp4')
 -- iosの場合強制的にmp4
@@ -142,8 +143,10 @@ if debug>0 then
     ..fpath..'</fpath>'
     ..(edcb.FindFile(fpath, 1) and '' or '<notfound>404</notfound>')..'<ffmpeg>'
     ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><ffprobe>'
-    ..(edcb.FindFile(ffprobe, 1) and 'OK' or 'NG')..'</ffprobe><asyncbuf>'
-    ..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf><XCODE>'
+    ..(edcb.FindFile(ffprobe, 1) and 'OK' or 'NG')..'</ffprobe><buffer>'
+    ..XBUF..'bytes'
+    ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')
+    ..'</buffer><XCODE>'
   if XCODE then
     ct=ct..'<XOPT>'
       ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><offset>'

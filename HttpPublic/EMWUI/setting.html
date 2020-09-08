@@ -26,6 +26,7 @@ function save(post)
   edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),ini)
   edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
   edcb.WritePrivateProfile('SET', 'FIND_BY_OPEN', GetVarInt(post,'FIND_BY_OPEN')==1,ini)
+  edcb.WritePrivateProfile('SET', 'XBUF', GetVarInt(post,'XBUF'),ini)
 
   edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,ini)
   edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,ini)
@@ -120,10 +121,10 @@ if post then
   ct.js=ct.js..'<script>$(function(){$(".mdl-js-snackbar").on("mdl-componentupgraded", function() {this.MaterialSnackbar.showSnackbar({message: "'..messege..'",timeout:5000});});})</script>'
 end
 
+sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
 Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
-FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',false,ini))~=0
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
@@ -180,7 +181,9 @@ tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
 ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
 readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
-asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'readex.exe',ini)
+asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'asyncbuf.exe',ini)
+XBUF=edcb.GetPrivateProfile('SET','XBUF',0,ini)
+FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',false,ini))~=0
 
 ct.main=ct.main..'</div></div>\n'
 
@@ -200,6 +203,9 @@ ct.main=ct.main..'<ul style="margin:0;">\n'
 ct.main=ct.main..'</ul>\n'
 end
 ct.main=ct.main..'</div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">出力バッファの量</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div class="number textfield-container"><div class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="XBUF" value="'..XBUF..'" min="0" id="XBUF"><label class="mdl-textfield__label" for="XBUF"></label></div>bytes</div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">名前付きパイプを予想して開く</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="FIND_BY_OPEN" class="mdl-switch mdl-js-switch"><input id="FIND_BY_OPEN" type="checkbox" class="mdl-switch__input" name="FIND_BY_OPEN" value="1"'..(FIND_BY_OPEN and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
