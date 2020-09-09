@@ -31,7 +31,7 @@ if not post then
 end
 
 -- 設定読み込み
-XOPT=edcb.GetPrivateProfile('MOVIE',mg.get_var(post,'quality'),XOPT,ini)
+XOPT=edcb.GetPrivateProfile('MOVIE',(mg.get_var(post,'quality') or ''),XOPT,ini)
 XBUF=tonumber(edcb.GetPrivateProfile('SET','XBUF',XBUF,ini))
 FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',FIND_BY_OPEN,ini))~=0
 -- mp4判定 (XOPTにmp4が含まれているはず)

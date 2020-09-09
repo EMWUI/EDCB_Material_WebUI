@@ -26,7 +26,7 @@ readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
 asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'asyncbuf.exe',ini)
 
 -- 設定読み込み
-XOPT=edcb.GetPrivateProfile('MOVIE',mg.get_var(mg.request_info.query_string,'quality'),XOPT,ini)
+XOPT=edcb.GetPrivateProfile('MOVIE',(mg.get_var(mg.request_info.query_string,'quality') or ''),XOPT,ini)
 XBUF=tonumber(edcb.GetPrivateProfile('SET','XBUF',XBUF,ini))
 -- mp4判定 (XOPTにmp4が含まれているはず)
 mp4=XOPT:match('mp4')
