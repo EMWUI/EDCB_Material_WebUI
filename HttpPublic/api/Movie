@@ -82,6 +82,7 @@ if fpath then
   filter=GetVarInt(mg.request_info.query_string,'cinema')==1 and XFILTER_CINEMA or XFILTER
 end
 
+debug=GetVarInt(mg.request_info.query_string,'debug',0,5) or 0
 f=nil
 if fpath then
   fname='xcode'..(fpath:match('%.[0-9A-Za-z]+$') or '')
@@ -119,7 +120,7 @@ if fpath then
           -- 容量確保の可能性があるときは周期188+同期語0x47(188*256+0x47=48199)で対象ファイルを終端判定する
           sync=edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
           f=edcb.io.popen('""'..readex..'" '..offset..(sync and ' 4p48199' or ' 4')..' "'..fpath..'" | "'
-            ..ffmpeg..'"'..dual..' -i pipe:0 -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)
+            ..ffmpeg..'"'..dual..' -i pipe:0 -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
             ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
           fname='xcode'..XEXT
         else
@@ -131,32 +132,41 @@ if fpath then
   end
 end
 
-debug=GetVarInt(mg.request_info.query_string,'debug',0,5) or 0
 if debug>0 then
-  if f then
-    ct='<success>変換成功</success><errorcode>'
-      ..({'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'})[debug]..'</errorcode>'
+  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><fpath>'
+    ..fpath..'</fpath><errorcode>'
+    ..({'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'})[debug]..'</errorcode>'
+  if not edcb.FindFile(fpath, 1) then
+    ct=ct..'<error>ファイルが見つかりませんでした</error>'
   else
-    ct='<error>変換失敗</error>'
+    if XCODE then
+      if not f then
+        ct=ct..'<error>変換できませんでした</error>'
+      else
+        log=f:read(512):match('(.*)\r\n.-$')
+        f:close()
+      end
+      if edcb.FindFile(ffmpeg, 1) then
+        ct=ct..'<ffmpeg><version>'
+          ..edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('ffmpeg version (.-)%s')..'</version>'
+          ..(log and '<errorlog>'..log..'</errorlog>' or '')
+          ..'<XOPT>'..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><offset>'
+          ..(offset or '')..'</offset><audio2>'
+          ..(audio2 or '')..'</audio2><dual>'
+          ..(dual or '')..'</dual>'
+          ..'</ffmpeg><ffprobe>'
+          ..(edcb.FindFile(ffprobe, 1) and 'OK' or 'NG')..'</ffprobe><buffer>'
+          ..XBUF..'bytes'
+          ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')
+          ..'</buffer>'
+      else
+        ct=ct..'<ffmpeg>NO</ffmpeg>'
+      end
+    else
+      ct=ct..'<XCODE>NO</XCODE>'
+    end
   end
-  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'<fpath>'
-    ..fpath..'</fpath>'
-    ..(edcb.FindFile(fpath, 1) and '' or '<notfound>404</notfound>')..'<ffmpeg>'
-    ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><ffprobe>'
-    ..(edcb.FindFile(ffprobe, 1) and 'OK' or 'NG')..'</ffprobe><buffer>'
-    ..XBUF..'bytes'
-    ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')
-    ..'</buffer><XCODE>'
-  if XCODE then
-    ct=ct..'<XOPT>'
-      ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><offset>'
-      ..(offset or '')..'</offset><audio2>'
-      ..(audio2 or '')..'</audio2><dual>'
-      ..(dual or '')..'</dual>'
-  else
-    ct=ct..'NO'
-  end
-  ct=ct..'</XCODE></entry>'
+  ct=ct..'</entry>'
   mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
 elseif meta then
   ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(type(meta)=='table' and (meta.duration~='N/A' and '<duration>'..meta.duration..'</duration>' or '')..'<audio>'..#meta.audio..'</audio>' or '<err>なし</err>')..'</entry>'

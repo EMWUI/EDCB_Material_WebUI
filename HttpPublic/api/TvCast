@@ -43,6 +43,7 @@ if Check_iOS() and not mp4 then
 end
 XEXT=mp4 and '.mp4' or '.webm'
 
+debug=GetVarInt(post,'debug',0,5) or 0
 if true then
   audio2=GetVarInt(post,'audio2',0,1) or 0
   dual=GetVarInt(post,'dual',0,2)
@@ -66,7 +67,7 @@ if true then
         for i=1,50 do
           ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_*_'..pid, 1)
           if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-            f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)
+            f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
               ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
             fname='view'..XEXT
             break
@@ -78,7 +79,7 @@ if true then
                 ff:close()
                 -- 再び開けるようになるまで少しラグがある
                 edcb.Sleep(4000)
-                f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)
+                f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
                   ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
                 fname='view'..XEXT
                 break
@@ -102,38 +103,39 @@ if true then
     -- 名前付きパイプがあれば開く
     ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
     if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-      f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)
+      f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
         ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
       fname='view'..XEXT
     end
   end
 end
 
-debug=GetVarInt(post,'debug',0,5) or 0
 if debug>0 then
-  if f then
-    ct='<success>変換成功</success><errorcode>'
-      ..({'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'})[debug]..'</errorcode>'
+  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><id>'
+    ..onid..'-'..tsid..'-'..sid..'</id><errorcode>'
+    ..({'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'})[debug]..'</errorcode>'
+  if not f then
+    ct=ct..'<error>変換できませんでした</error>'
   else
-    ct='<error>変換失敗</error>'
-  end
-  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry>'..ct..'<EDCB>'
-    ..(ok and 'OK' or 'NG')..'</EDCB><Pipe>'
-    ..(ff and 'OK' or 'NG')..'</Pipe><ffmpeg>'
-    ..(edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('(ffmpeg version .-)%s') or 'NG')..'</ffmpeg><buffer>'
-    ..XBUF..'bytes'
-    ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')
-    ..'</buffer><XOPT>'
-    ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><audio2>'
-    ..(audio2 or '')..'</audio2><dual>'
-    ..(dual or '')..'</dual><FIND_BY_OPEN>'
-    ..(FIND_BY_OPEN and 'ON' or 'OFF')..'</FIND_BY_OPEN><onid>'
-    ..onid..'</onid><tsid>'
-    ..tsid..'</tsid><sid>'
-    ..sid..'</sid></entry>'
-  if f then
+    log=f:read(512):match('(.*)\r\n.-$')
     f:close()
   end
+  if edcb.FindFile(ffmpeg, 1) then
+    ct=ct..'<ffmpeg><version>'
+      ..edcb.io.popen('""'..ffmpeg..'" -version"'):read('*a'):match('ffmpeg version (.-)%s')..'</version>'
+      ..(log and '<errorlog>'..log..'</errorlog>' or '')..'<XOPT>'
+      ..XOPT:gsub('$FILTER',(filter or ''))..'</XOPT><audio2>'
+      ..(audio2 or '')..'</audio2><dual>'
+      ..(dual or '')..'</dual>'
+  else
+    ct=ct..'<ffmpeg>NO'
+  end
+  ct=ct..'</ffmpeg><EDCB>'
+    ..(ok and 'OK' or 'NG')..'</EDCB><Pipe>'
+    ..(ff and 'OK' or 'NG')..'</Pipe><buffer>'
+    ..XBUF..'bytes'
+    ..(XBUF>0 and '<asyncbuf>'..(edcb.FindFile(asyncbuf, 1) and 'OK' or 'NG')..'</asyncbuf>' or '')..'</buffer><FIND_BY_OPEN>'
+    ..(FIND_BY_OPEN and 'ON' or 'OFF')..'</FIND_BY_OPEN></entry>'
   if onid then
     -- NetworkTVモードを終了
     edcb.CloseNetworkTV(n)
