@@ -15,11 +15,12 @@ EDCB Material WebUI
    * ffmpeg.exe [^2]
    * ffprobe.exe [^2] [^3]
    * readex.exe [^2]
+   * asyncbuf.exe [^2]
 
 [^1]: WebUIを表示に使用
 [^2]: 再生機能に使用  
 [^3]: ffmpegに同梱  
-1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/24efede96ae3c856c6419ee89b8fec6eeee8f8b6/Document/Readme_Mod.txt#L556-L660)をよく読む
+1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/a25b9a98f12f5bc5fd912eb3a646949973ebbc01/Document/Readme_Mod.txt#L631-L743)をよく読む
 1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
    * `EnableHttpSrv=1`
    * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
@@ -40,7 +41,8 @@ EDCB Material WebUI
         ├─ Tools/
         │   ├─ ffmpeg.exe
         │   ├─ ffprobe.exe
-        │   └─ readex.exe
+        │   ├─ readex.exe
+        │   └─ asyncbuf.exe
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
         ├─ EpgTimer.exe ＊
@@ -74,26 +76,25 @@ HttpPublic.iniは設定ページにて設定を保存すると作成されます
 
 #### 再生機能
 **ffmpeg.exe、ffprobe.exe、readex.exeが必要です**  
-`ffmpeg[=Tools\ffmpeg]`  
+`ffmpeg[=Tools\ffmpeg.exe]`  
 ffmpeg.exeのパス
 
-`ffprobe[=Tools\ffprobe]`  
+`ffprobe[=Tools\ffprobe.exe]`  
 ffprobe.exeのパス
 
-`readex[=Tools\readex]`  
+`readex[=Tools\readex.exe]`  
 readex.exeのパス
 
-`xprepare[=48128]`  
-転送開始前に変換しておく量(bytes)
+`asyncbuf[=Tools\asyncbuf.exe]`  
+asyncbuf.exeのパス
+\# 出力バッファの量(XBUF)を指定した場合に必要になります
+\# 変換負荷や通信のむらを吸収します
 
 #### 画質設定(ffmpegオプション)
-`mp4[=0]`  
-デフォルトでmp4にトランスコードする場合1に
-
 以下のような設定を書き込むとデフォルトと以下で指定した設定を読み込めるようになります
 
     [MOVIE]
-    HD=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    HD=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 $FILTER -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
 
 もしくは[MOVIE]に`画質名=ffmpegオプション`を[SET]のqualityに画質名をコンマ区切りで複数の設定を読み込むことができます  
 \# 例(オプションはものすごく適当です)
@@ -101,10 +102,12 @@ readex.exeのパス
     [SET]
     quality=720p,480p,360p
     [MOVIE]
-    720p=-vcodec libvpx -b:v 1800k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 1280x720 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-    480p=-vcodec libvpx -b:v 1500k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 720x480 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-    360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 -vf yadif=0:-1:1  -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    720p=-vcodec libvpx -b:v 1800k -quality realtime -cpu-used 2 $FILTER -s 1280x720 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    480p=-vcodec libvpx -b:v 1500k -quality realtime -cpu-used 2 $FILTER -s 720x480 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 $FILTER -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
+    NVENC=-vcodec h264_nvenc -profile:v main -level 31 -b:v 1408k -maxrate 8M -bufsize 8M -preset medium -g 120 $FILTER -s 1280x720 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -
 
+\# **$FILTERはフィルタオプション(インタレ解除:`-vf yadif=0:-1:1` 逆テレシネ:`-vf pullup -r 24000/1001`)に置換します**  
 \# -iは指定する必要ありません  
 \# -fのオプションを必ず指定するようにしてくださいmp4かどうか判定しています  
 \# リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する  
@@ -133,14 +136,13 @@ HttpPublicFolderのvideo\thumbsフォルダに`md5ハッシュ.jpg`があると�
 
 #### リモート視聴
 **EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
-※NwTV.ps1は使えなくなりました
 
 EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
 NetworkTVモードを使用している場合は注意してください  
 **音声が切り替わったタイミングで止まることがありますがその時は再読み込みしてください**
 
 ##### ファイル再生について
-* トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(99分率))を指定して再読み込み)  
+* トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(100分率))を指定して再読み込み)  
 * 録画結果ページ  
 録画結果(GetRecFileInfo())からファイルパスを取得してます  
 リネームや移動していると再生することが出来ません
@@ -153,9 +155,9 @@ WEBパネルに追加して使用してください
 
 ##### 局ロゴ
 TVTestの局ロゴを使用します  
-BMP形式のロゴを保存するにチェックを入れてください  
+TVTestの設定の「BMP形式のロゴを保存する」にチェックを入れてください  
 \# TVTestのフォルダはEDCBのフォルダと同じ階層にあることを想定しています  
-LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示  
+LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示(旧仕様互換)  
 TVTestのフォルダが想定規定と違う場合やLogoData.ini、Logoフォルダの設定を変更している場合設定ファイルにて指定してください  
 `LOGO_INI[=TVTestのフォルダ\LogoData.ini]`  
 LogoData.iniのパス  
@@ -183,7 +185,7 @@ Logoフォルダのパス
 サービス一覧でサブチャンネルを表示します  
 \# 番組表だけでなくサービス一覧があるページで有効です(放送中、magnezio等)
 
-以上をgetメゾットで取得しますurlに含めてください  
+以上をGETメゾットで取得しますURLに含めてください  
 chcountとshowは週間番組表では使えません
 
 ### お知らせ機能
@@ -205,8 +207,10 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
 - Android
   - Chrome
 
+-ffmpeg version 4.3.1
+
 ### その他
-**ios、スカパープレミアムの環境はありません。**  
+**iOS、スカパープレミアムの環境はありません。**  
 このプログラムを使用し不利益が生じても一切の責任を負いません  
 また改変・再配布などはご自由にどうぞ  
 バグ報告は詳細に、環境ない箇所の場合は特に、対処できません
