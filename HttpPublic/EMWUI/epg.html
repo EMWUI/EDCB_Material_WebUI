@@ -152,7 +152,8 @@ if minTime then
     ..'<div class="dividers navigation__item navigation__icon left_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '..next..'><i class="material-icons">chevron_right</i></a></div>\n'
 
   ct.menu=ct.menu..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
-    ..'<li><div class="mdl-menu__item"><form id="date_input" action="epg.html">'
+    ..(UserAgentSP() and '<li><div id ="forSP" class="mdl-menu__item">日付指定</div></li>\n<li style="opacity:0;position:absolute;">' or '<li>')  --無理やりだがスマホで動くように応急処置
+    ..'<div class="mdl-menu__item"><form id="date_input" action="epg.html">'
     ..(tab~=0 and '<input type="hidden" name="tab" value="'..tab..'">' or '')
     ..'<div class="has-icon mdl-textfield mdl-js-textfield"><i class="material-icons">calendar_today</i><input class="mdl-textfield__input" id="dateFormat" type="date" name="date" value="'..os.date('%Y-%m-%d', pageDate*24*3600)..'" min="'..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..'"><label class="mdl-textfield__label" for="dateFormat"></label></div>'
     ..'<input type="hidden" name="hour" value="4">'

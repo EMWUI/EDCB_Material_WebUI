@@ -1,4 +1,6 @@
 ﻿@media (pointer: fine) {
+  * {
+    scrollbar-width: thin; }
   ::-webkit-scrollbar {
     width: 7px;
     height: 7px;
@@ -13,7 +15,9 @@
     #tv-guide::-webkit-scrollbar,
     #tv-guide-header::-webkit-scrollbar,
     #tv-guide-container::-webkit-scrollbar {
-      display: none; } }
+      display: none; }
+    #tv-guide,#tv-guide-header,#tv-guide-container {
+      scrollbar-width: none; } }
 
 
 .mdl-layout__container {
@@ -47,9 +51,15 @@ input[type=date]::-webkit-calendar-picker-indicator {
     position: absolute;
     width: 100%;
     height: 100%;
-    padding: 0; }
+    opacity: 0;
+    margin-inline-start: 0; }
   input[type=date]::-webkit-calendar-picker-indicator:hover {
     background-color: transparent; }
+  .mdl-menu__item input[type=date]::-webkit-clear-button{
+    -webkit-appearance: none; }
+  @-moz-document url-prefix() {
+    #date_input .material-icons{
+      display: none;} }
 .mdl-textfield.has-icon .material-icons {
     position: absolute;
     font-size: 14px;

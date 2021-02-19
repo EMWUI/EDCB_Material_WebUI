@@ -138,12 +138,12 @@ $(function(){
 			}
 		},
 		'error': function(){
+			$(this).removeClass('is-loadding');
 			if ($('#video').attr('src') != ''){
 				var errorcode = this.error.code;
 				if (this.networkState == 3){
 					errorcode = 5;
 				}
-				$(this).removeClass('is-loadding');
 				var url = this.currentSrc;
 				var data = {
 					message: 'Error : ' + ['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode],

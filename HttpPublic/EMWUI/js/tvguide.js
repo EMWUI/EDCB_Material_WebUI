@@ -264,6 +264,9 @@ $(function(){
 	$('#date_input').change(function(){
 		$(this).submit();
 	});
+	$('#forSP').click(function(){  //無理やりだがスマホで動くように応急処置
+		$('#dateFormat').click();
+	});
 
 	//サービス絞り込み
 	$('.select').click(function(){
@@ -347,7 +350,7 @@ $(function(){
 	$('.suspend').click(function(){
 		var self = $(this);
 		$('#suspend .mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
-	    $('#suspend .ok').unbind('click').click(function(){
+		$('#suspend .ok').unbind('click').click(function(){
 			dialog.close();
 			$.get(root + 'api/Common', self.data(), function(result, textStatus, xhr){
 				var xml = $(xhr.responseXML);
