@@ -11,15 +11,15 @@ EDCB Material WebUI
 
 1. 必要なファイルのダウンロード (EDCBの[releases](https://github.com/xtne6f/EDCB/releases)と[ffmpeg.org](https://www.ffmpeg.org)から)
    * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)
-   * lua52.dll [^1]
-   * ffmpeg.exe [^2]
-   * ffprobe.exe [^2] [^3]
-   * readex.exe [^2]
-   * asyncbuf.exe [^2]
+   * lua52.dll <sup><a id="note_ref-1" href="#note-1">^1</a></sup>
+   * ffmpeg.exe <sup><a id="note_ref-2" href="#note-2">^2</a></sup>
+   * ffprobe.exe <sup><a href="#note-2">^2</a></sup><sup><a id="note_ref-3" href="#note-3">^3</a></sup>
+   * readex.exe <sup><a href="#note-2">^2</a></sup>
+   * asyncbuf.exe <sup><a href="#note-2">^2</a></sup>
 
-[^1]: WebUIを表示に使用
-[^2]: 再生機能に使用  
-[^3]: ffmpegに同梱  
+   <small><a id="note-1" href="#note_ref-1">^1:</a> WebUIの表示に使用
+   <a id="note-2" href="#note_ref-2">^2:</a> 再生機能に使用
+   <a id="note-3" href="#note_ref-3">^3:</a> ffmpegに同梱</small>
 1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/a25b9a98f12f5bc5fd912eb3a646949973ebbc01/Document/Readme_Mod.txt#L631-L743)をよく読む
 1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
    * `EnableHttpSrv=1`
@@ -35,8 +35,8 @@ EDCB Material WebUI
         │   ├─ api/ ＊
         │   ├─ EMWUI/
         │   ├─ legacy/
-        │   ├─ img/ *
-        │   │   └logo/ *
+        │   ├─ img/ ＊
+        │   │   └logo/ ＊
         │   └─ video/ ＊
         ├─ Tools/
         │   ├─ ffmpeg.exe
@@ -57,17 +57,17 @@ EDCB Material WebUI
 必要に応じて設定ファイル(Setting\HttpPublic.ini)のSETに以下のキー[=デフォルト]を指定してください  
 HttpPublic.iniは設定ページにて設定を保存すると作成されます
 
-`batPath[=EDCBのbatフォルダ]`  
+* `batPath[=EDCBのbatフォルダ]`  
 録画設定でこのフォルダの.batと.ps1が選択可能になります  
 \# 変更する場合必ずフルパスで設定  
-`batFileTag=`  
+* `batFileTag=`  
 録画タグの候補を表示できるようになります  
 カンマ区切りで指定ください
 
 #### テーマカラー
 テーマカラーを変えることが出来ます  
 [MDLのcustomize](http://www.getmdl.io/customize/index.html)で色を選択cssをダウンロードしmaterial.min.cssを置き換える  
-もしくは設定ファイルでキーcssに下部に表示されてる<LINK>タグを追加することでできます  
+もしくは設定ファイルでキーcssに下部に表示されてる\<LINK\>タグを追加することでできます  
 \# 例`css=<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-pink.min.css" />`  
 ※一部(border周り)が置き換えただけでは対応できない部分があります(.mark)  
 気になる方はcssをuser.cssに記述してください  
@@ -76,18 +76,15 @@ HttpPublic.iniは設定ページにて設定を保存すると作成されます
 
 #### 再生機能
 **ffmpeg.exe、ffprobe.exe、readex.exeが必要です**  
-`ffmpeg[=Tools\ffmpeg.exe]`  
+* `ffmpeg[=Tools\ffmpeg.exe]`  
 ffmpeg.exeのパス
-
-`ffprobe[=Tools\ffprobe.exe]`  
+* `ffprobe[=Tools\ffprobe.exe]`  
 ffprobe.exeのパス
-
-`readex[=Tools\readex.exe]`  
+* `readex[=Tools\readex.exe]`  
 readex.exeのパス
-
-`asyncbuf[=Tools\asyncbuf.exe]`  
-asyncbuf.exeのパス
-\# 出力バッファの量(XBUF)を指定した場合に必要になります
+* `asyncbuf[=Tools\asyncbuf.exe]`  
+asyncbuf.exeのパス  
+\# 出力バッファの量(XBUF)を指定した場合に必要になります  
 \# 変換負荷や通信のむらを吸収します
 
 #### 画質設定(ffmpegオプション)
@@ -107,11 +104,12 @@ asyncbuf.exeのパス
     360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 $FILTER -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
     NVENC=-vcodec h264_nvenc -profile:v main -level 31 -b:v 1408k -maxrate 8M -bufsize 8M -preset medium -g 120 $FILTER -s 1280x720 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -
 
-\# **$FILTERはフィルタオプション(インタレ解除:`-vf yadif=0:-1:1` 逆テレシネ:`-vf pullup -r 24000/1001`)に置換します**  
-\# -iは指定する必要ありません  
-\# -fのオプションを必ず指定するようにしてくださいmp4かどうか判定しています  
-\# リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する  
-\# オプションにてQSVなども有効なようです
+* **$FILTERはフィルタオプション(インタレ解除:`-vf yadif=0:-1:1` 逆テレシネ:`-vf pullup -r 24000/1001`)に置換します**
+* -iは指定する必要ありません
+* -fのオプションを必ず指定するようにしてください  
+mp4かどうか判定しています
+* リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する
+* オプションにてQSVなども有効なようです
 
 
 #### ライブラリ
@@ -119,16 +117,16 @@ asyncbuf.exeのパス
 Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が  
 また公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
 
-`LibraryPath=1`  
+* `LibraryPath=1`  
 ライブラリに表示するフォルダの読み込み設定を録画保存フォルダ(Common.ini)からHttpPublic.iniに変更します  
 \# Common.iniと同じ形式で指定してください  
 \# 例
 
-    [SET]
-    LibraryPath=1
-    RecFolderNum=2
-    RecFolderPath0=C:\DTV
-    RecFolderPath1=C:\hoge
+      [SET]
+      LibraryPath=1
+      RecFolderNum=2
+      RecFolderPath0=C:\DTV
+      RecFolderPath1=C:\hoge
 
 ##### サムネ
 HttpPublicFolderのvideo\thumbsフォルダに`md5ハッシュ.jpg`があるとサムネを表示できます  
@@ -150,38 +148,35 @@ NetworkTVモードを使用している場合は注意してください
 
 ##### 放送中一覧
 URLに`?webPanel=`を追加するとWEBパネル向けのデザインになります  
-WEBパネルに追加して使用してください
+VivaldiのWEBパネルに追加して使用してください
 
 
 ##### 局ロゴ
-TVTestの局ロゴを使用します  
-TVTestの設定の「BMP形式のロゴを保存する」にチェックを入れてください  
-\# TVTestのフォルダはEDCBのフォルダと同じ階層にあることを想定しています  
+EDCBのロゴに対応  
+ロゴフォルダにない場合TVTestのロゴを検索  
 LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示(旧仕様互換)  
-TVTestのフォルダが想定規定と違う場合やLogoData.ini、Logoフォルダの設定を変更している場合設定ファイルにて指定してください  
-`LOGO_INI[=TVTestのフォルダ\LogoData.ini]`  
+TVTestのフォルダが想定と違う場合やLogoData.ini、Logoフォルダの設定を変更している場合、設定ファイルにて指定してください  
+* `LOGO_INI[=TVTestのフォルダ\LogoData.ini]`  
 LogoData.iniのパス  
-`LOGO_DIR[=TVTestのフォルダ\Logo]`  
-Logoフォルダのパス  
+* `LOGO_DIR[=TVTestのフォルダ\Logo]`  
+Logoフォルダのパス
+
+\# TVTestのフォルダはEDCBのフォルダと同じ階層にあることを想定しています  
 
 ##### 番組表の隠しコマンド
-`hour=整数`  
+* `hour=整数`  
 開始時間を指定
-
-`interval=整数`  
+* `interval=整数`  
 表示間隔を指定  
-デフォルト値 `PC=25` `スマホ=8`
-
-`chcount=整数`  
+\# デフォルト値 `PC=25` `スマホ=8`
+* `chcount=整数`  
 読み込むチャンネル数を一時的に変更  
-デフォルト値 `PC=0(無制限)` `スマホ=15`  
+\# デフォルト値 `PC=0(無制限)` `スマホ=15`  
 \# showが有効時は非表示のチャンネルを含みます
-
-`show=`  
+* `show=`  
 非表示指定したチャンネルを読み込む(サイドバーで表示・非表示)  
 \# 値は指定する必要はありません
-
-`subch=`  
+* `subch=`  
 サービス一覧でサブチャンネルを表示します  
 \# 番組表だけでなくサービス一覧があるページで有効です(放送中、magnezio等)
 
@@ -206,8 +201,7 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
   - firefox
 - Android
   - Chrome
-
--ffmpeg version 4.3.1
+* ffmpeg version 4.3.1
 
 ### その他
 **iOS、スカパープレミアムの環境はありません。**  
