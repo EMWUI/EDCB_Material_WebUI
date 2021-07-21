@@ -128,7 +128,7 @@ end
 
 
 ct={
-  title='検索 ('..(preset or post and key.andKey:gsub('%^!{999}',''):gsub('C!{999}','') or 'オリンピック・FIFAワールドカップ')..')',
+  title=preset or post and '検索 ('..key.andKey:gsub('%^!{999}',''):gsub('C!{999}','')..')' or 'オリンピック・FIFAワールドカップ',
   css=epgcss(),
   js=epgjs(baseTime-timezone,'$(function(){$(".now").each(function(){end($(this));});setInterval("line()", 1000);});'),
   progres=true,
