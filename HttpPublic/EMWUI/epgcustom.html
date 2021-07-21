@@ -209,7 +209,7 @@ for i,v in ipairs(st) do
         service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or '',
         url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime+timezone or '&amp;eid='..w.eid)
       }
-      table.insert(ctt, epgcell(w, op, (i==1 and 'id="id'..j..'" ' or nil)))
+      table.insert(ctt, epgcell(w, op, (i==1 and 'id="id'..j..'" ' or nil), true))
 
       total=total+endPx-lastPx
       lastPx=endPx
