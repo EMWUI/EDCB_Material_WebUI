@@ -42,7 +42,7 @@ for i,v in ipairs(CustomServiceList()) do
   if (oneseg or not v.partialReceptionFlag) and not v.subCh then
     x={eid=0, startTime=os.date('*t',now)}
     y=x
-    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-12*3600), durationSecond=24*3600}) or {}
+    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-24*3600), durationSecond=48*3600}) or {}
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
     for j,w in ipairs(b) do
       if w.startTime then

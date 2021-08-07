@@ -75,9 +75,9 @@ for i,v in ipairs(CustomServiceList()) do
       maxTime=maxTime and os.time(mmt.maxTime)<maxTime and maxTime or os.time(mmt.maxTime)
     end
     --表示範囲の番組だけ取得する
-    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-6*3600), durationSecond=(interval+6)*3600}) or {}
+    st[#st].et=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-24*3600), durationSecond=(interval+24)*3600}) or {}
     for j,w in ipairs(edcb.EnumEventInfoArchive and
-        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-6*3600), durationSecond=(interval+6)*3600}) or {}) do
+        edcb.EnumEventInfoArchive({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',pageTime-24*3600), durationSecond=(interval+24)*3600}) or {}) do
       w.past=true
       table.insert(st[#st].et, w)
     end
