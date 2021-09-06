@@ -11,6 +11,7 @@ function template(temp)
   local css=edcb.GetPrivateProfile('SET','css',false,ini)
   local path = temp.path or ''
   local s=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
+  local Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
   s:Append([=[
 <!doctype html>
 <html lang="ja">
@@ -125,8 +126,8 @@ s:Append([=[
 -- サイドバー
 ..(temp.side or '')
 
+..(Olympic and '      <a class="mdl-navigation__link" href="'..path..'epgcustom.html?Olympic="><i class="material-icons">sports</i>オリンピック</a>' or '')
 ..[=[
-      <a class="mdl-navigation__link" href="]=]..path..[=[epgcustom.html"><i class="material-icons">sports</i>オリンピック</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">live_tv</i>放送中</a>

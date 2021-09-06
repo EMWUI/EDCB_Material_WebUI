@@ -27,6 +27,7 @@ function save(post)
   edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
   edcb.WritePrivateProfile('SET', 'FIND_BY_OPEN', GetVarInt(post,'FIND_BY_OPEN')==1,ini)
   edcb.WritePrivateProfile('SET', 'XBUF', GetVarInt(post,'XBUF'),ini)
+  edcb.WritePrivateProfile('SET', 'Olympic', GetVarInt(post,'Olympic')==1,ini)
 
   edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,ini)
   edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,ini)
@@ -125,10 +126,15 @@ sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
 Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
 subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Olympic">オリンピック・ワールドカップモード</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="Olympic-flag" class="mdl-switch mdl-js-switch"><input id="Olympic-flag" type="checkbox" class="mdl-switch__input" name="Olympic" value="1"'..(Olympic and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<span class="mdl-tooltip" for="tt-Olympic">番組表のリンクを一覧に表示</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Webフォント "Roboto"</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(Roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
