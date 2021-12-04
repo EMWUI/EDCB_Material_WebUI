@@ -14,7 +14,7 @@ EDCB Material WebUI
    * lua52.dll <sup><a id="note_ref-1" href="#note-1">^1</a></sup>
    * ffmpeg.exe <sup><a id="note_ref-2" href="#note-2">^2</a></sup>
    * ffprobe.exe <sup><a href="#note-2">^2</a></sup><sup><a id="note_ref-3" href="#note-3">^3</a></sup>
-   * readex.exe <sup><a href="#note-2">^2</a></sup>
+   * tsreadex.exe <sup><a href="#note-2">^2</a></sup>
    * asyncbuf.exe <sup><a href="#note-2">^2</a></sup>
 
    <small><a id="note-1" href="#note_ref-1">^1:</a> WebUIの表示に使用
@@ -41,7 +41,7 @@ EDCB Material WebUI
         ├─ Tools/
         │   ├─ ffmpeg.exe
         │   ├─ ffprobe.exe
-        │   ├─ readex.exe
+        │   ├─ tsreadex.exe
         │   └─ asyncbuf.exe
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
@@ -75,13 +75,13 @@ HttpPublic.iniは設定ページにて設定を保存すると作成されます
 .markのborderはA700を指定しています
 
 #### 再生機能
-**ffmpeg.exe、ffprobe.exe、readex.exeが必要です**  
+**ffmpeg.exe、ffprobe.exe、tsreadex.exeが必要です**  
 * `ffmpeg[=Tools\ffmpeg.exe]`  
 ffmpeg.exeのパス
 * `ffprobe[=Tools\ffprobe.exe]`  
 ffprobe.exeのパス
-* `readex[=Tools\readex.exe]`  
-readex.exeのパス
+* `tsreadex[=Tools\tsreadex.exe]`  
+tsreadex.exeのパス
 * `asyncbuf[=Tools\asyncbuf.exe]`  
 asyncbuf.exeのパス  
 \# 出力バッファの量(XBUF)を指定した場合に必要になります  

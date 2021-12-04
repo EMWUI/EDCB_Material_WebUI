@@ -186,7 +186,7 @@ end
 tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
 ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
-readex=edcb.GetPrivateProfile('SET','readex',tools..'readex.exe',ini)
+tsreadex=edcb.GetPrivateProfile('SET','tsreadex',tools..'tsreadex.exe',ini)
 asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'asyncbuf.exe',ini)
 XBUF=edcb.GetPrivateProfile('SET','XBUF',0,ini)
 FIND_BY_OPEN=tonumber(edcb.GetPrivateProfile('SET','FIND_BY_OPEN',false,ini))~=0
@@ -196,7 +196,7 @@ ct.main=ct.main..'</div></div>\n'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">動画変換用</div><div style="padding-left:16px;" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ffmpeg.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(ffmpeg, 1) and ffmpeg or '見つかりません')..'</div>\n</div>\n'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ffprobe.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(ffprobe, 1) and ffprobe or '見つかりません')..'</div>\n</div>\n'
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">readex.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(readex, 1) and readex or '見つかりません')..'</div>\n</div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">tsreadex.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(tsreadex, 1) and tsreadex or '見つかりません')..'</div>\n</div>\n'
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">asyncbuf.exe</div><div class="mdl-layout-spacer">'..(edcb.FindFile(asyncbuf, 1) and asyncbuf or '見つかりません')..'</div>\n</div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ffmpeg変換オプション一覧</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-desktop mdl-grid mdl-grid--no-spacing">\n'
