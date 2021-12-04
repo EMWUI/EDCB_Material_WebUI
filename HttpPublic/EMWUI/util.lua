@@ -900,24 +900,14 @@ function player(video, audio, xcode, live)
 end
 
 --タイトルのマークを装飾
-function mark(a)
- return '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">'..a..'</span>'
-end
 function ConvertTitle(title)
-  return title:gsub('%[(新)%]', mark('%1')):gsub('%[(終)%]', mark('%1')):gsub('%[(再)%]', mark('%1'))
-    :gsub('%[(交)%]', mark('%1')):gsub('%[(映)%]', mark('%1')):gsub('%[(手)%]', mark('%1'))
-    :gsub('%[(声)%]', mark('%1')):gsub('%[(多)%]', mark('%1')):gsub('%[(字)%]', mark('%1'))
-    :gsub('%[(二)%]', mark('%1')):gsub('%[(Ｓ)%]', mark('%1')):gsub('%[(Ｂ)%]', mark('%1'))
-    :gsub('%[(SS)%]', mark('%1')):gsub('%[(無)%]', mark('%1')):gsub('%[(Ｃ)%]', mark('%1'))
-    :gsub('%[(S1)%]', mark('%1')):gsub('%[(S2)%]', mark('%1')):gsub('%[(S3)%]', mark('%1'))
-    :gsub('%[(MV)%]', mark('%1')):gsub('%[(双)%]', mark('%1')):gsub('%[(デ)%]', mark('%1'))
-    :gsub('%[(Ｄ)%]', mark('%1')):gsub('%[(Ｎ)%]', mark('%1')):gsub('%[(Ｗ)%]', mark('%1'))
-    :gsub('%[(Ｐ)%]', mark('%1')):gsub('%[(HV)%]', mark('%1')):gsub('%[(SD)%]', mark('%1'))
-    :gsub('%[(天)%]', mark('%1')):gsub('%[(解)%]', mark('%1')):gsub('%[(料)%]', mark('%1'))
-    :gsub('%[(前)%]', mark('%1')):gsub('%[(後)%]', mark('%1')):gsub('%[(初)%]', mark('%1'))
-    :gsub('%[(生)%]', mark('%1')):gsub('%[(販)%]', mark('%1')):gsub('%[(吹)%]', mark('%1'))
-    :gsub('%[(PPV)%]', mark('%1')):gsub('%[(演)%]', mark('%1')):gsub('%[(移)%]', mark('%1'))
-    :gsub('%[(他)%]', mark('%1')):gsub('%[(収)%]', mark('%1')):gsub('　', ' ')
+  --2か3バイトの[]で囲われた文字列
+  return title:gsub('%[[^%]][^%]][^%]]?%]', function(a)
+    if ('[新][終][再][交][映][手][声][多][字][二][Ｓ][Ｂ][SS][無][Ｃ][S1][S2][S3][MV][双][デ][Ｄ][Ｎ][Ｗ][Ｐ][HV][SD][天][解][料][前][後][初][生][販][吹][PPV][演][移][他][収]'):find(a, 1, true) then
+      return '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">'..a:sub(2, #a-1)..'</span>'
+    end
+    return nil
+  end):gsub('　', ' ')
 end
 
 --検索等のリンクを派生
