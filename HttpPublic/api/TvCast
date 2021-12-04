@@ -140,28 +140,30 @@ if debug>0 then
     -- NetworkTVモードを終了
     edcb.CloseNetworkTV(n)
   end
-  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
 elseif not f then
   if ok or sid==0 then
     ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success></entry>'
-    mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+    mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
   else
     mg.write(Response(404,'text/html','utf-8')..'\r\n')
   end
 else
   mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
-  while true do
-    buf=f:read(48128)
-    if buf and #buf ~= 0 then
-      if not mg.write(buf) then
-        -- キャンセルされた
-        mg.cry('canceled')
+  if mg.request_info.request_method~='HEAD' then
+    while true do
+      buf=f:read(48128)
+      if buf and #buf ~= 0 then
+        if not mg.write(buf) then
+          -- キャンセルされた
+          mg.cry('canceled')
+          break
+        end
+      else
+        -- 終端に達した
+        mg.cry('end')
         break
       end
-    else
-      -- 終端に達した
-      mg.cry('end')
-      break
     end
   end
   f:close()

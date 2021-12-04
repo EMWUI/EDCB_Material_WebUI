@@ -93,27 +93,31 @@ if fpath then
     if f then
       meta=mg.get_var(mg.request_info.query_string,'meta')
       if meta then
+        fsec,fsize=GetDurationSec(f,fpath)
         ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
         if ff then
-          ff=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'"  -hide_banner -show_entries format 2>&1"', 'rb'):read('*a')
-          meta={duration=ff:match('duration=(.-)\r\n'), audio={}}
-          fsize=ff:match('size=(.-)\r\n')
+          meta={duration=fsec, audio={}}
           offset=math.floor(fsize*10/100/188)*188
-          ff=edcb.io.popen('""'..readex..'" '..offset..' 4 "'..fpath..'" | "'
-            ..ffprobe..'" -i pipe:0 -hide_banner -show_format 2>&1"', 'rb'):read('*a')
-          for v in ff:gmatch(':%sAudio:%s(.-)\r\n') do
-             table.insert(meta.audio,v)
+          local fp=edcb.io.popen('""'..readex..'" '..offset..' 4 "'..fpath..'" | "'
+            ..ffprobe..'" -i pipe:0 -hide_banner -show_format 2>&1"', 'rb')
+          if fp then
+            for v in (fp:read('*a') or ''):gmatch(':%sAudio:%s(.-)\r\n') do
+               table.insert(meta.audio,v)
+            end
+            fp:close()
           end
         else
-          meta={duration=GetDurationSec(f)}
+          meta={duration=fsec}
         end
         f:close()
       else
-        fsec,fsize=GetDurationSec(f,fpath)
-        if offset~=0 and offset~=100 and fsec>0 and SeekSec(f,fsec*offset/100) then
-          offset=f:seek('cur',0) or 0
-        else
-          offset=math.floor(fsize*offset/100/188)*188
+        if offset~=0 then
+          fsec,fsize=GetDurationSec(f,fpath)
+          if offset~=100 and SeekSec(f,fsec*offset/100,fsec,fsize) then
+            offset=f:seek('cur',0) or 0
+          else
+            offset=math.floor(fsize*offset/100/188)*188
+          end
         end
         if XCODE then
           f:close()
@@ -167,32 +171,34 @@ if debug>0 then
     end
   end
   ct=ct..'</entry>'
-  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
 elseif meta then
-  ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(type(meta)=='table' and (meta.duration~='N/A' and '<duration>'..meta.duration..'</duration>' or '')..'<audio>'..#meta.audio..'</audio>' or '<err>なし</err>')..'</entry>'
-  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+  ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(type(meta)=='table' and (meta.duration~=0 and '<duration>'..meta.duration..'</duration>' or '')..'<audio>'..#meta.audio..'</audio>' or '<err>なし</err>')..'</entry>'
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
 elseif not f then
   mg.write(Response(404,'text/html','utf-8')..'\r\n')
 else
   mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
-  retry=0
-  while true do
-    buf=f:read(48128)
-    if buf and #buf ~= 0 then
-      retry=0
-      if not mg.write(buf) then
-        -- キャンセルされた
-        mg.cry('canceled')
-        break
+  if mg.request_info.request_method~='HEAD' then
+    retry=0
+    while true do
+      buf=f:read(48128)
+      if buf and #buf ~= 0 then
+        retry=0
+        if not mg.write(buf) then
+          -- キャンセルされた
+          mg.cry('canceled')
+          break
+        end
+      else
+        -- 終端に達した。4秒間この状態が続けば対象ファイルへの追記が終息したとみなす
+        retry=retry+1
+        if XCODE or retry > 20 then
+          mg.cry('end')
+          break
+        end
+        edcb.Sleep(200)
       end
-    else
-      -- 終端に達した。4秒間この状態が続けば対象ファイルへの追記が終息したとみなす
-      retry=retry+1
-      if XCODE or retry > 20 then
-        mg.cry('end')
-        break
-      end
-      edcb.Sleep(200)
     end
   end
   f:close()

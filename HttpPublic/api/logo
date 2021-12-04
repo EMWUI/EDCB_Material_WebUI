@@ -84,8 +84,10 @@ elseif not logo then
 end
 
 if logo then
-  mg.write(Response(200,mg.get_mime_type(fname),nil,#logo)..'ETag: '..mg.md5(logo)..'\r\nCache-Control: max-age=3600\r\n\r\n'..logo)
+  mg.write(Response(200,mg.get_mime_type(fname),nil,#logo)..'ETag: '..mg.md5(logo)..'\r\nCache-Control: max-age=3600\r\n\r\n'
+    ..(mg.request_info.request_method~='HEAD' and logo or ''))
 else
   -- 1x1gif
-  mg.write(Response(200,'image/gif',nil,42)..'ETag: 0\r\nCache-Control: max-age=3600\r\n\r\nGIF89a\1\0\1\0\x80\0\0\0\0\0\xFF\xFF\xFF\x21\xF9\4\1\0\0\0\0\x2C\0\0\0\0\1\0\1\0\0\2\1\x44\0\x3B')
+  mg.write(Response(200,'image/gif',nil,42)..'ETag: 0\r\nCache-Control: max-age=3600\r\n\r\n'
+    ..(mg.request_info.request_method~='HEAD' and 'GIF89a\1\0\1\0\x80\0\0\0\0\0\xFF\xFF\xFF\x21\xF9\4\1\0\0\0\0\x2C\0\0\0\0\1\0\1\0\0\2\1\x44\0\x3B' or ''))
 end
