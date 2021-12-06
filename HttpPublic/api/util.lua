@@ -1,4 +1,7 @@
-﻿--録画設定をxmlに
+﻿--処理するPOSTリクエストボディの最大値
+POST_MAX_BYTE=1024*1024
+
+--録画設定をxmlに
 function xmlRecSetting(rs, rsdef)
   local s='<recsetting><recMode>'
     ..rs.recMode..'</recMode><priority>'
@@ -160,6 +163,7 @@ function AssertPost()
     repeat
       s=mg.read()
       post=post..(s or '')
+      assert(#post<POST_MAX_BYTE)
     until not s
     if #post~=mg.request_info.content_length then
       post=''
@@ -238,7 +242,7 @@ function Response(code,ctype,charset,cl)
     ..'\r\nDate: '..ImfFixdate(os.date('!*t'))
     ..'\r\nX-Frame-Options: SAMEORIGIN'
     ..(ctype and '\r\nX-Content-Type-Options: nosniff\r\nContent-Type: '..ctype..(charset and '; charset='..charset or '') or '')
-    ..(cl and '\r\nContent-Length: '..cl or '')
+    ..(cl and mg.request_info.request_method~='HEAD' and '\r\nContent-Length: '..cl or '')
     ..(mg.keep_alive(not not cl) and '\r\n' or '\r\nConnection: close\r\n')
 end
 
@@ -301,20 +305,26 @@ end
 
 --ファイルの長さを概算する
 function GetDurationSec(f,fpath)
-  local fsize=f:seek('end') or 0
   --ffprobeを使う(正確になるはず)
   if fpath then
     local tools=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
     local ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
     local ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
     if ff then
-      local dur=tonumber(edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration -of ini  2>&1"', 'rb'):read('*a'):match('=(.+)\r\n'))
-      if dur then
-        return dur,fsize
+      local fp=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration,size -of ini 2>&1"', 'rb')
+      if fp then
+        local a=fp:read('*a') or ''
+        fp:close()
+        local dur=tonumber(a:match('duration=(.-)\r\n'))
+        local fsize=tonumber(a:match('size=(.-)\r\n'))
+        if dur and fsize then
+          return dur,fsize
+        end
       end
     end
   end
   --PCRをもとに(少なめに報告するかもしれない)
+  local fsize=f:seek('end') or 0
   if fsize>1880000 and f:seek('set') then
     local pcr,pid=ReadToPcr(f)
     if pcr and f:seek('set',(math.floor(fsize/188)-10000)*188) then
@@ -322,14 +332,28 @@ function GetDurationSec(f,fpath)
       if pcr2 then
         return math.floor((pcr2+0x100000000-pcr)%0x100000000/45000),fsize
       end
+      --TSデータが存在する境目を見つける
+      local predicted,range=math.floor(fsize/2/188)*188,fsize
+      while range>1880000 and f:seek('set',predicted) do
+        local buf=f:read(189)
+        local valid=buf and #buf==189 and buf:byte(1)==0x47 and buf:byte(189)==0x47
+        predicted=math.floor((predicted+(valid and range/4 or -range/4))/188)*188
+        range=range/2
+      end
+      predicted=predicted-1880000
+      if predicted>0 and f:seek('set',predicted) then
+        pcr2=ReadToPcr(f,pid)
+        if pcr2 then
+          return math.floor((pcr2+0x100000000-pcr)%0x100000000/45000),predicted
+        end
+      end
     end
   end
   return 0,fsize
 end
 
 --ファイルの先頭からsec秒だけシークする
-function SeekSec(f,sec,fpath)
-  local dur,fsize=GetDurationSec(f,fpath)
+function SeekSec(f,sec,dur,fsize)
   if dur>0 and fsize>1880000 and f:seek('set') then
     local pcr,pid=ReadToPcr(f)
     if pcr then

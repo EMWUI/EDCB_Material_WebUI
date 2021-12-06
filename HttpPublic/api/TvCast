@@ -21,6 +21,7 @@ FIND_BY_OPEN=false
 ini='Setting\\HttpPublic.ini'
 tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
+tsreadex=edcb.GetPrivateProfile('SET','tsreadex',tools..'tsreadex.exe',ini)
 asyncbuf=edcb.GetPrivateProfile('SET','asyncbuf',tools..'asyncbuf.exe',ini)
 
 post=AssertPost()
@@ -51,11 +52,11 @@ if true then
   filter=GetVarInt(post,'cinema')==1 and XFILTER_CINEMA or XFILTER
   n=GetVarInt(post,'n') or 0
   onid,tsid,sid=GetVarInt(post,'onid'),GetVarInt(post,'tsid'),GetVarInt(post,'sid')
-  if sid then
-    onid=tonumber(onid) or 0
-    tsid=tonumber(tsid) or 0
-    sid=tonumber(sid) or 0
-    mode=tonumber(GetVarInt(post,'mode') or 2)
+  if not onid or not tsid or not sid then
+    onid,tsid,sid=nil,nil,nil
+  end
+  if onid then
+    mode=GetVarInt(post,'mode') or 2
     if sid==0 then
       -- NetworkTVモードを終了
       edcb.CloseNetworkTV(n)
@@ -64,12 +65,11 @@ if true then
       ok,pid=edcb.OpenNetworkTV(mode,onid,tsid,sid,n)
       if ok and bit32.band(mode,2)==2 then
         -- 名前付きパイプができるまで待つ
+        pipeName=nil
         for i=1,50 do
           ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_*_'..pid, 1)
-          if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-            f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
-              ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
-            fname='view'..XEXT
+          if ff and ff[1].name:find('^[A-Za-z]+_%d+_%d+$') then
+            pipeName='\\\\.\\pipe\\'..ff[1].name
             break
           elseif FIND_BY_OPEN then
             -- ポートを予想して開いてみる
@@ -78,16 +78,20 @@ if true then
               if ff then
                 ff:close()
                 -- 再び開けるようになるまで少しラグがある
-                edcb.Sleep(4000)
-                f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
-                  ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
-                fname='view'..XEXT
+                edcb.Sleep(2000)
+                pipeName='\\\\.\\pipe\\SendTSTCP_'..j..'_'..pid
                 break
               end
             end
             if ff then break end
           end
           edcb.Sleep(200)
+        end
+        if pipeName then
+          f=edcb.io.popen('""'..tsreadex..'" -z emwui-tvcast -t 10 -m 2 -x 18/38/39 -n '..sid..' -b 1 -c 2 -u 2 '..pipeName
+            ..' | "'..ffmpeg..'" -f mpegts'..dual..' -i - -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
+            ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
+          fname='view'..XEXT
         end
         if not f then
           edcb.CloseNetworkTV(n)
@@ -96,14 +100,15 @@ if true then
     end
   elseif n<0 then
     -- プロセスが残っていたらすべて終わらせる
-    edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]%%[_]%%\'" call terminate >nul')
+    edcb.os.execute('wmic process where "name=\'tsreadex.exe\' and commandline like \'% -z emwui-tvcast-%\'" call terminate >nul')
   elseif n<=65535 then
     -- 前回のプロセスが残っていたら終わらせる
-    edcb.os.execute('wmic process where "name=\'ffmpeg.exe\' and commandline like \'%%SendTSTCP[_]'..n..'[_]%%\'" call terminate >nul')
+    edcb.os.execute('wmic process where "name=\'tsreadex.exe\' and commandline like \'% -z emwui-tvcast-'..n..' %\'" call terminate >nul')
     -- 名前付きパイプがあれば開く
     ff=edcb.FindFile('\\\\.\\pipe\\SendTSTCP_'..n..'_*', 1)
-    if ff and ff[1].name:find('^[^_]+_%d+_%d+$') then
-      f=edcb.io.popen('""'..ffmpeg..'" -f mpegts'..dual..' -i "\\\\.\\pipe\\'..ff[1].name..'" -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
+    if ff and ff[1].name:find('^[A-Za-z]+_%d+_%d+$') then
+      f=edcb.io.popen('""'..tsreadex..'" -z emwui-tvcast-'..n..' -t 10 -m 2 -x 18/38/39 -n -1 -b 1 -c 2 -u 2 \\\\.\\pipe\\'..ff[1].name
+        ..' | "'..ffmpeg..'" -f mpegts'..dual..' -i - -map 0:v:0 -map 0:a:'..audio2..' '..XOPT:gsub('$FILTER',filter)..(debug>0 and ' -hide_banner -loglevel error 2>&1' or '')
         ..(XBUF>0 and ' | "'..asyncbuf..'" '..XBUF..' '..XPREPARE or '')..'"', 'rb')
       fname='view'..XEXT
     end
@@ -140,28 +145,30 @@ if debug>0 then
     -- NetworkTVモードを終了
     edcb.CloseNetworkTV(n)
   end
-  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
 elseif not f then
   if ok or sid==0 then
     ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><success>EpgDataCap_Bonを'..(ok and '起動' or '停止')..'</success></entry>'
-    mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+    mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
   else
     mg.write(Response(404,'text/html','utf-8')..'\r\n')
   end
 else
   mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
-  while true do
-    buf=f:read(48128)
-    if buf and #buf ~= 0 then
-      if not mg.write(buf) then
-        -- キャンセルされた
-        mg.cry('canceled')
+  if mg.request_info.request_method~='HEAD' then
+    while true do
+      buf=f:read(48128)
+      if buf and #buf ~= 0 then
+        if not mg.write(buf) then
+          -- キャンセルされた
+          mg.cry('canceled')
+          break
+        end
+      else
+        -- 終端に達した
+        mg.cry('end')
         break
       end
-    else
-      -- 終端に達した
-      mg.cry('end')
-      break
     end
   end
   f:close()

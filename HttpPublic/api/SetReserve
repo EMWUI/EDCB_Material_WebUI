@@ -191,4 +191,7 @@ end
 
 
 ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
-mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n', ct)
+mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
+if mg.request_info.request_method~='HEAD' then
+  mg.write(ct)
+end

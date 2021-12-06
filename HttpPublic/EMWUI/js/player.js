@@ -207,7 +207,7 @@ $(function(){
 					if (duration){
 						timeupdate(duration);
 					}else{
-						$.get(root + 'api/Movie?fname=' + $(this).data('path') + '&meta=', function(result, textStatus, xhr){
+						$.get(root + 'api/Movie?fname=' + $(this).data('path') + '&meta=' + ($(this).data('public') ? '&public=' : ''), function(result, textStatus, xhr){
 							var xml = $(xhr.responseXML);
 							if (xml.find('duration').length > 0){
 								duration = xml.find('duration').text();

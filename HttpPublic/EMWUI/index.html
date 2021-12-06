@@ -3,9 +3,4 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 ct=template({main='  <main class="mdl-layout__content">\n'})
 
-if not mg.request_info.uri:find('/$') and
-   not mg.request_info.uri:lower():find('%.html$') then
-  mg.write(Response(301, nil, nil, 0)..'Location: '..mg.request_info.uri..'/\r\n\r\n')
-else
-  mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
-end
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
