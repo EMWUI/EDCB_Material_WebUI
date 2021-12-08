@@ -78,6 +78,9 @@ if v then
       ..'</ul></section>'
   end
 
+  --検索等のリンクを生成
+  ct.js=(ct.js or '')..'<script>$(function(){createSearchLinks(document);});</script>\n'
+
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
     ..epgInfo

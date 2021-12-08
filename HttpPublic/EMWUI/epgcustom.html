@@ -240,15 +240,15 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
-  ..table.concat(ctt)
-  ..'</div>\n</div></div>\n'
-
+table.insert(ctt, '</div>\n</div></div>\n'
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
-  ..'</form>\n'
+  ..'</form>\n')
 
+ctt[1]=ct.main..ctt[1]
+ct.main=table.concat(ctt)
 
 ct=template(ct)
 

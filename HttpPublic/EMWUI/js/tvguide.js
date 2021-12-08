@@ -294,6 +294,7 @@ $(function(){
 						self.removeClass('clicked');
 					}else{
 						$('.cell').removeClass('clicked');
+						createSearchLinks(self);
 						self.addClass('clicked');
 					}
 				}
@@ -311,6 +312,7 @@ $(function(){
 	if (hover){
 		$('.cell').hover(
 			function(){
+				createSearchLinks(this);
 				$(this).addClass('clicked');
 			}, function(){
 				$(this).removeClass('clicked');
