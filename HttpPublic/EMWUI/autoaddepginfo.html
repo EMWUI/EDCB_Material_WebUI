@@ -22,7 +22,7 @@ post=AssertPost()
 aa={dataID=GetVarInt(mg.request_info.query_string,'id') or 0}
 if aa.dataID==0 then
   ct={title='EPG予約 新規追加'}
-  aa.searchInfo=getSearchKey()
+  aa.searchInfo=getSearchKeyKeyword(mg.request_info.query_string)
 else
   ct={title='EPG予約 条件変更'}
   for i,v in ipairs(edcb.EnumAutoAdd()) do
@@ -38,8 +38,6 @@ if aa.searchInfo then
   if post then
     si=getSearchKey(post)
   end
-  si.disableFlag=si.andKey:match('^^!{999}(.*)')
-  si.caseFlag=(si.disableFlag or si.andKey):match('^C!{999}(.*)')
 
   ct.macro=true
 
@@ -57,7 +55,7 @@ if aa.searchInfo then
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">自動予約無効</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
     ..'<input type="hidden" name="addchg" value="1">\n'
-    ..'<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag" '..(si.disableFlag and ' checked' or '')..'></label><span class="mdl-switch__label"></span></div></div>\n\n'
+    ..'<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag" '..(parseAndKey(si.andKey).disableFlag and ' checked' or '')..'></label><span class="mdl-switch__label"></span></div></div>\n\n'
     ..SerchTemplate(si)
 
     ..'</div></section>\n'

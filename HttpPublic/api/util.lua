@@ -89,24 +89,25 @@ function getRecSetting(rs,post)
 end
 
 --検索条件を取得
+--文字列返却値(andKeyとnotKey)の実体参照変換はedcb.htmlEscapeに従う
 function getSearchKey(post)
   local key={
     andKey=(mg.get_var(post, 'disableFlag') and '^!{999}' or '')
-      ..((mg.get_var(post, 'caseFlag') or mg.get_var(mg.request_info.query_string, 'caseFlag')) and 'C!{999}' or '')
-      ..(mg.get_var(post, 'andKey') or mg.get_var(mg.request_info.query_string, 'andKey') or ''),
-    notKey=mg.get_var(post, 'notKey') or '',
-    regExpFlag=mg.get_var(post, 'regExpFlag') or mg.get_var(mg.request_info.query_string, 'regExpFlag'),
-    titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag') or mg.get_var(mg.request_info.query_string, 'titleOnlyFlag'),
-    aimaiFlag=mg.get_var(post, 'aimaiFlag') or mg.get_var(mg.request_info.query_string, 'aimaiFlag'),
-    notContetFlag=mg.get_var(post, 'notContetFlag'),
-    notDateFlag=mg.get_var(post, 'notDateFlag'),
+      ..(mg.get_var(post, 'caseFlag') and 'C!{999}' or '')
+      ..EdcbHtmlEscape(mg.get_var(post, 'andKey') or ''),
+    notKey=EdcbHtmlEscape(mg.get_var(post, 'notKey') or ''),
+    regExpFlag=mg.get_var(post, 'regExpFlag')~=nil,
+    titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag')~=nil,
+    aimaiFlag=mg.get_var(post, 'aimaiFlag')~=nil,
+    notContetFlag=mg.get_var(post, 'notContetFlag')~=nil,
+    notDateFlag=mg.get_var(post, 'notDateFlag')~=nil,
     freeCAFlag=GetVarInt(post, 'freeCAFlag') or 0,
-    chkRecEnd=mg.get_var(post, 'chkRecEnd'),
-    chkRecDay=mg.get_var(post, 'chkRecDay') or 6,
-    chkRecNoService=mg.get_var(post, 'chkRecNoService'),
+    chkRecEnd=mg.get_var(post, 'chkRecEnd')~=nil,
+    chkRecDay=GetVarInt(post, 'chkRecDay') or 6,
+    chkRecNoService=mg.get_var(post, 'chkRecNoService')~=nil,
     chkDurationMin=GetVarInt(post, 'chkDurationMin') or 0,
     chkDurationMax=GetVarInt(post, 'chkDurationMax') or 0,
-    days=mg.get_var(post, 'days') or 0,
+    days=GetVarInt(post, 'days') or 0,
     contentList={},
     serviceList={},
     dateList={},
@@ -125,12 +126,6 @@ function getSearchKey(post)
       local m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
       if #m==3 then
         table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-      end
-    end
-  elseif not post then
-    for j,w in ipairs(edcb.GetChDataList()) do
-      if w.searchFlag then
-        table.insert(key.serviceList, w)
       end
     end
   end
@@ -153,6 +148,32 @@ function getSearchKey(post)
     end
   end
   return key
+end
+
+--検索条件(キーワードのみ)を取得
+--文字列返却値(andKey)の実体参照変換はedcb.htmlEscapeに従う
+function getSearchKeyKeyword(query)
+  local key=getSearchKey()
+  for i,v in ipairs(edcb.GetChDataList()) do
+    if v.searchFlag then
+      table.insert(key.serviceList, {onid=v.onid, tsid=v.tsid, sid=v.sid})
+    end
+  end
+  key.andKey=(mg.get_var(query, 'caseFlag') and 'C!{999}' or '')
+    ..EdcbHtmlEscape(mg.get_var(query, 'andKey') or '')
+  key.regExpFlag=mg.get_var(query, 'regExpFlag')~=nil
+  key.titleOnlyFlag=mg.get_var(query, 'titleOnlyFlag')~=nil
+  key.aimaiFlag=mg.get_var(query, 'aimaiFlag')~=nil
+  return key
+end
+
+--検索キーワードをフラグとキーワード自身に分解
+function parseAndKey(andKey)
+  local r={}
+  r.disableFlag=andKey:match('^^!{999}(.*)')
+  r.caseFlag=(r.disableFlag or andKey):match('^C!{999}(.*)')
+  r.andKey=r.caseFlag or r.disableFlag or andKey
+  return r
 end
 
 --POSTメッセージボディをすべて読む
@@ -244,6 +265,11 @@ function Response(code,ctype,charset,cl)
     ..(ctype and '\r\nX-Content-Type-Options: nosniff\r\nContent-Type: '..ctype..(charset and '; charset='..charset or '') or '')
     ..(cl and mg.request_info.request_method~='HEAD' and '\r\nContent-Length: '..cl or '')
     ..(mg.keep_alive(not not cl) and '\r\n' or '\r\nConnection: close\r\n')
+end
+
+--現在の変換モードでHTMLエスケープする
+function EdcbHtmlEscape(s)
+  return edcb.Convert('utf-8','utf-8',s)
 end
 
 -- ios判定

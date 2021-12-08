@@ -41,7 +41,7 @@ if sidePanel then
 <div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>
 <input type="hidden" name="addchg" value="1">
 <div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag"></label><span class="mdl-switch__label"></span></div></div>
-]=]..SerchTemplate(getSearchKey())..[=[
+]=]..SerchTemplate(getSearchKeyKeyword(mg.request_info.query_string))..[=[
 </div></section>
 <section class="panel-swipe mdl-tabs__panel" id="recset">
 <div class="form mdl-grid mdl-grid--no-spacing">
@@ -103,12 +103,10 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
       end
     end
   end
-  disAndKey=string.match(v.andKey, '^^!{999}(.*)')
-  caseAndKey=(disAndKey or v.andKey):match('^C!{999}(.*)')
-  table.insert(ctt, '<tr class="epginfo'..(disAndKey and ' disabled' or '')..' mdl-grid--no-spacing" '
+  table.insert(ctt, '<tr class="epginfo'..(parseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
     ..(sidePanel and 'data-id="'..a[i].dataID
                   or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">'
-    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(caseAndKey or disAndKey or v.andKey)
+    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..parseAndKey(v.andKey).andKey
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..v.notKey
     ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
     ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')

@@ -5,9 +5,6 @@ baseDate=math.floor((now+timezone-MARGIN_HOUR*3600)/24/3600)
 Hour=math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24
 baseTime=(baseDate*24+Hour)*3600
 
-
-edcb.htmlEscape=15
-
 post=AssertPost()
 
 rt={}
@@ -17,8 +14,21 @@ end
 
 preset=mg.get_var(mg.request_info.query_string, 'preset')
 Olympic=mg.get_var(mg.request_info.query_string, 'Olympic')
+
+_preset=nil
+presetList={}
+for v in edcb.GetPrivateProfile('search','list','',ini):gmatch('[^,]+') do
+  if v==preset then
+    _preset=preset..'_Search'
+  end
+  presetList[#presetList+1]=v
+end
+if not _preset then
+  --未登録
+  preset=nil
+end
+
 if preset then
-  _preset=preset..'_Search'
     key={
       andKey=edcb.GetPrivateProfile(_preset,'andKey','',ini),
       notKey=edcb.GetPrivateProfile(_preset,'notKey','',ini),
@@ -55,7 +65,7 @@ if preset then
       end
     end
 
-    for v in string.gmatch(edcb.GetPrivateProfile(preset_,'dateList','',ini), '[^,]+') do
+    for v in string.gmatch(edcb.GetPrivateProfile(_preset,'dateList','',ini), '[^,]+') do
       m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
       if #m==6 then
         dateInfo={
@@ -92,6 +102,8 @@ end
 if not key then
   key={}
 end
+
+edcb.htmlEscape=15
 
 b=edcb.SearchEpg(key)
 table.sort(b, function(a,b)
@@ -131,7 +143,7 @@ end
 
 
 ct={
-  title=preset or post and '検索 ('..key.andKey:gsub('%^!{999}',''):gsub('C!{999}','')..')' or Olympic and 'オリンピック・FIFAワールドカップ' or '',
+  title=EdcbHtmlEscape(preset or post and '検索 ('..parseAndKey(key.andKey).andKey..')' or Olympic and 'オリンピック・FIFAワールドカップ' or ''),
   css=epgcss(),
   js=epgjs(baseTime-timezone,'$(function(){$(".now").each(function(){end($(this));});setInterval("line()", 1000);});'),
   progres=true,
@@ -151,13 +163,13 @@ ct.subheader='<div id="subheader">\n'
   ..'<div class="navigation__item navigation__icon"><a id="prev" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_less</i></a></div>\n'
   ..'<div class="dividers navigation__item navigation__icon"><a id="next" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_more</i></a></div>\n'
 
-  ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..(preset or 'プリセット')..'</div>\n'
+  ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..EdcbHtmlEscape(preset or 'プリセット')..'</div>\n'
   ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
 
 ct.menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="preset">\n'
-for v in edcb.GetPrivateProfile('search','list','',ini):gmatch('[^,]+') do
-  ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..v..'</a></li>\n'
+for i,v in ipairs(presetList) do
+  ct.menu=ct.menu..'<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..EdcbHtmlEscape(v)..'</a></li>\n'
 end
 ct.menu=ct.menu..'</ul>'
 
