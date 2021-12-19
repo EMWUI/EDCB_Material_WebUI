@@ -360,12 +360,14 @@ s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notif
     ..'<li class="hidden mdl-menu__item" id="menu_apk"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>'
     ..'<button id="menu_quality" class="hidden mdl-menu__item" disabled><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button>'
     ..'</ul></div>\n'
-    ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality">\n</ul>\n' or '</div>\n')
+    ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality">\n</ul>\n' or '</div>\n'))
 
 -- メイン
-..(temp.main or '')
+if temp.main then
+  s:Append(temp.main)
+end
 
-..[=[
+s:Append([=[
   </main>
   <div class="mdl-snackbar mdl-js-snackbar">
     <div class="mdl-snackbar__text"></div>
@@ -389,6 +391,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
       s=s..'<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>'
     end
     s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..(v.startTime and FormatTimeAndDuration(v.startTime, v.durationSecond)..(v.durationSecond and '' or '～未定') or '未定')..'</span>'
+    local service_name=''
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         service_name=w.service_name
@@ -620,7 +623,7 @@ function SerchTemplate(si)
   local subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
   local oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
   local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..(si.caseFlag or si.disableFlag or si.andKey)..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
+    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..parseAndKey(si.andKey).andKey..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div class="mdl-cell--12-col mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="notKey" value="'..si.notKey..'" size="25" id="notKey"><label class="mdl-textfield__label" for="notKey"></label></div>\n'
@@ -628,7 +631,7 @@ function SerchTemplate(si)
     ..'<div><label for="reg" class="mdl-checkbox mdl-js-checkbox"><input id="reg" class="mdl-checkbox__input" type="checkbox" name="regExpFlag" value="1"'..(si.regExpFlag and ' checked' or '')..'><span class="mdl-checkbox__label">正規表現</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'<div><label for="aimai" class="mdl-checkbox mdl-js-checkbox"><input id="aimai" class="mdl-checkbox__input" type="checkbox" name="aimaiFlag" value="1"'..(si.aimaiFlag and ' checked' or '')..'><span class="mdl-checkbox__label">あいまい検索</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'<div><label for="titleOnly" class="mdl-checkbox mdl-js-checkbox"><input id="titleOnly" class="mdl-checkbox__input" type="checkbox" name="titleOnlyFlag" value="1"'..(si.titleOnlyFlag and ' checked' or '')..'><span class="mdl-checkbox__label">番組名のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" type="checkbox" name="caseFlag" value="1"'..(si.caseFlag and ' checked' or '')..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" type="checkbox" name="caseFlag" value="1"'..(parseAndKey(si.andKey).caseFlag and ' checked' or '')..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象ジャンル' or 'ジャンル絞り込み')..'</div>\n'
@@ -916,14 +919,16 @@ SearchConverter.Convert=function(v, service_name)
   local self=SearchConverter
   self.authuser=self.authuser or edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)
   self.details=self.details or edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
-  local title=mg.url_encode(v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or '')
+  local title=v.shortInfo and v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or ''
   local startTime=os.time(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
-  local text_char=v.shortInfo.text_char:gsub('%%', '%%%%')
-  return '<a class="mdl-button mdl-button--icon" href="search.html?andkey='..title..'"><i class="material-icons">search</i></a>'
-    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'" target="_blank"><img class="material-icons" src="'..(ct.path or '')..'img/google.png" alt="Google検索"></a>'
-    ..'<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q='..title..'&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
-    ..'<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text='..title..'&amp;location='..mg.url_encode(service_name)..'&amp;dates='..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)..'&amp;details='..mg.url_encode(self.details:gsub('%%text_char%%', text_char):gsub('%%br%%', '\n') or '')..'&amp;authuser='..self.authuser..'" target="_blank"><i class="material-icons">event</i></a>'
+  local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
+  --クライアントサイドで使う情報を置いておく
+  return '<span class="search-links hidden" data-title="'..title
+    ..'" data-service="'..service_name
+    ..'" data-dates="'..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)
+    ..'" data-details="'..self.details:gsub('%%text_char%%', text_char)
+    ..'" data-authuser="'..self.authuser..'"></span>'
 end
 
 function RecModeTextList()

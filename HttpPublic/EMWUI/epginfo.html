@@ -31,6 +31,9 @@ else
   epgInfo, audio, End = ConvertEpgInfoText2(onid, tsid, sid, eid)
 end
 
+--検索等のリンクを生成
+ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
+
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
@@ -38,7 +41,7 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n'
 
 if not End then
 
-  ct.js=(recording and '<script src="js/player.js"></script>\n' or '')
+  ct.js=ct.js..(recording and '<script src="js/player.js"></script>\n' or '')
 
   ct.progres=r or sidePanel
 

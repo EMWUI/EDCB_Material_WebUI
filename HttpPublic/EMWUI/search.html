@@ -1,8 +1,6 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-edcb.htmlEscape=15
-
 post=AssertPost()
 
 dataID=GetVarInt(mg.request_info.query_string, 'id') or 0
@@ -16,18 +14,31 @@ if dataID~=0 then
 end
 
 preset=mg.get_var(mg.request_info.query_string, 'preset')
+
+presetList={}
+for v in edcb.GetPrivateProfile('search','list','',ini):gmatch('[^,]+') do
+  presetList[#presetList+1]=v
+end
+
 if preset then
+  --区切り文字と空文字列は使えない
+  preset=preset:gsub(',', '_'):match('.+') or '_'
+  for i,v in ipairs(presetList) do
+    if v==preset then
+      presetIndex=i
+      break
+    end
+  end
   _preset=preset..'_Search'
   if GetVarInt(post, 'save')==1 then
-    list=edcb.GetPrivateProfile('search', 'list','',ini)
-    for v in string.gmatch(edcb.GetPrivateProfile('search','list','',ini), '[^,]+') do
-      if v==preset then  --上書き
-        edcb.WritePrivateProfile(_preset, nil, '',ini)
-        done=true
-        break
-      end
+    if presetIndex then
+      --上書き
+      edcb.WritePrivateProfile(_preset, nil, '', ini)
+    else
+      --追加
+      presetList[#presetList+1]=preset
+      edcb.WritePrivateProfile('search', 'list', table.concat(presetList, ',')..',', ini)
     end
-    if not done then edcb.WritePrivateProfile('search', 'list', list..preset..',',ini) end
 
     edcb.WritePrivateProfile(_preset, 'andKey', (GetVarInt(post,'caseFlag') and 'C!{999}' or '')..mg.get_var(post,'andKey'),ini)
     edcb.WritePrivateProfile(_preset, 'notKey', mg.get_var(post,'notKey'),ini)
@@ -56,8 +67,11 @@ if preset then
       edcb.WritePrivateProfile(_preset, 'serviceList'..i, v,ini)
     end
   elseif GetVarInt(post, 'del')==1 then
-    edcb.WritePrivateProfile(_preset, nil, '',ini)
-    edcb.WritePrivateProfile('search', 'list', edcb.GetPrivateProfile('search','list','',ini):gsub(preset..',',''),ini)
+    if presetIndex then
+      table.remove(presetList, presetIndex)
+      edcb.WritePrivateProfile(_preset, nil, '', ini)
+      edcb.WritePrivateProfile('search', 'list', #presetList~=0 and table.concat(presetList, ',')..',' or '', ini)
+    end
   else
     key={
       andKey=edcb.GetPrivateProfile(_preset,'andKey','',ini),
@@ -95,7 +109,7 @@ if preset then
       end
     end
 
-    for v in string.gmatch(edcb.GetPrivateProfile(preset_,'dateList','',ini), '[^,]+') do
+    for v in string.gmatch(edcb.GetPrivateProfile(_preset,'dateList','',ini), '[^,]+') do
       m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
       if #m==6 then
         dateInfo={
@@ -115,12 +129,12 @@ if preset then
 end
 
 if not key then
-  key=getSearchKey(post)
+  key=post and getSearchKey(post) or getSearchKeyKeyword(mg.request_info.query_string)
 end
 
 key.search=dataID==0 and not mg.get_var(post, 'id')
-key.disableFlag=key.andKey:match('^^!{999}(.*)')
-key.caseFlag=(key.disableFlag or key.andKey):match('^C!{999}(.*)')
+
+edcb.htmlEscape=15
 
 ct={
   title='検索',
@@ -130,7 +144,7 @@ ct={
 }
 
 ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-600"><div class="mdl-navigation">\n'
-  ..'<button class="mdl-button mdl-js-button mdl-button--icon" form="search"><i class="material-icons">search</i></button><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'"><label class="mdl-textfield__label"></label></div>\n'
+  ..'<button class="mdl-button mdl-js-button mdl-button--icon" form="search"><i class="material-icons">search</i></button><div class="mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" id="search-bar" form="search" value="'..EdcbHtmlEscape(parseAndKey(key.andKey).andKey)..'"><label class="mdl-textfield__label"></label></div>\n'
   ..'</div></div>\n'
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
@@ -143,25 +157,31 @@ if key.search then
   ct.dialog={{
     id='dialog_preset',
     content='<label class="icon mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="lock"><input type="checkbox" id="lock" class="mdl-icon-toggle__input"'..(key.lock and ' checked' or '')..'><i class="mdl-icon-toggle__label material-icons">lock</i></label>'
-      ..'登録名<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'..(preset or '')..'" id="preset_name"><label class="mdl-textfield__label" for="preset_name"></label></div>'
+      ..'登録名<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" value="'..EdcbHtmlEscape(preset or '')..'" id="preset_name"><label class="mdl-textfield__label" for="preset_name"></label></div>'
       ..'※同じ名前がある場合上書きします',
     button='<button id="save_preset" class="mdl-button" type="submit">保存</button>'
   }}
 
   ct.main=ct.main..'<div class="mdl-grid chip-container"><div>'
-  for v in edcb.GetPrivateProfile('search','list','',ini):gmatch('[^,]+') do
+  for i,v in ipairs(presetList) do
     lock=tonumber(edcb.GetPrivateProfile(v..'_Search','lock',false,ini))~=0
     ct.main=ct.main..'<a class="mdl-chip mdl-chip--contact'..(lock and '' or ' mdl-chip--deletable')..'" href="search.html?preset='..mg.url_encode(v)..'">'
-      ..'<span class="mdl-chip__contact mdl-color--teal mdl-color-text--white">'..v:sub(1,(v:match('^[%w%p]') and 1 or 3))..'</span>'
-      ..'<span class="mdl-chip__text">'..v..'</span>'
-      ..(lock and '' or '<button class="mdl-chip__action" type="submit" form="preset_'..v..'"><i class="material-icons">cancel</i></button>')
-      ..'<form id="preset_'..v..'" class="hidden" method="POST" action="search.html?preset='..mg.url_encode(v)..'">\n'
+      ..'<span class="mdl-chip__contact mdl-color--teal mdl-color-text--white">'..EdcbHtmlEscape(v:sub(1,(v:match('^[%w%p]') and 1 or 3)))..'</span>'
+      ..'<span class="mdl-chip__text">'..EdcbHtmlEscape(v)..'</span>'
+      ..(lock and '' or '<button class="mdl-chip__action" type="submit" form="preset_'..EdcbHtmlEscape(v)..'"><i class="material-icons">cancel</i></button>')
+      ..'<form id="preset_'..EdcbHtmlEscape(v)..'" class="hidden" method="POST" action="search.html?preset='..mg.url_encode(v)..'">\n'
       ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
       ..'<input type="hidden" name="del" value="1">\n'
       ..'</form></a>'
   end
   ct.main=ct.main..'<span></span></div></div>\n'
 end
+
+b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andKey')) and edcb.SearchEpg(key) or {}
+
+--ここからkeyはHTML出力用
+key.andKey=EdcbHtmlEscape(key.andKey)
+key.notKey=EdcbHtmlEscape(key.notKey)
 
 ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action="search.html">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
@@ -177,7 +197,7 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
 
   ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
 
-  ..(key.disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+  ..(parseAndKey(key.andKey).disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
  
   ..'</div></div>\n'
   ..'<div class="mdl-card__actions mdl-card--border">'
@@ -187,8 +207,6 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" type="submit">検索</button></div>\n'
   ..'</div></form>\n</div>\n'
 
-
-b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andKey')) and edcb.SearchEpg(key) or {}
 table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
 a={}
@@ -281,7 +299,7 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
     ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
-    ..'<input type="hidden" name="andKey" value="'..(key.caseFlag or key.disableFlag or key.andKey)..'">\n'
+    ..'<input type="hidden" name="andKey" value="'..parseAndKey(key.andKey).andKey..'">\n'
     ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
     ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
     ..(key.titleOnlyFlag and '<input type="hidden" name="titleOnlyFlag" value="1">\n' or '')
@@ -295,8 +313,8 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
     ..(key.chkDurationMax and '<input type="hidden" name="chkDurationMax" value="'..key.chkDurationMax..'">\n' or '')
     ..(key.chkRecEnd and '<input type="hidden" name="chkRecEnd" checked>\n' or '')
     ..(key.chkRecDay and '<input type="hidden" name="chkRecDay" value="'..key.chkRecDay..'">\n' or '')
-    ..(key.disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
-    ..(key.caseFlag and '<input type="hidden" name="caseFlag" checked>\n' or '')
+    ..(parseAndKey(key.andKey).disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
+    ..(parseAndKey(key.andKey).caseFlag and '<input type="hidden" name="caseFlag" checked>\n' or '')
 
   if key.contentList then
     for i,v in ipairs(key.contentList) do
@@ -324,7 +342,7 @@ end
 
 ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" type="submit" form="hidden" '
   ..(key.search and ((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
-                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(mg.get_var(mg.request_info.query_string,'autopage') and '&amp;page='..mg.get_var(mg.request_info.query_string,'autopage') or '')..'"><i class="material-icons">edit')..'</i></button>\n'
+                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(autopage~=0 and '&amp;page='..autopage or '')..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=template(ct)
 

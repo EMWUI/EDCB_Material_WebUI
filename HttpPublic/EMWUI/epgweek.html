@@ -185,15 +185,16 @@ ct.main=ct.main..'</div>\n'
     ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>'
   end
 ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n'
-  ..table.concat(ctt)
-  ..'</div>\n</div></div>\n'
 
+table.insert(ctt, '</div>\n</div></div>\n'
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
-  ..'</form>\n'
+  ..'</form>\n')
 
+ctt[1]=ct.main..ctt[1]
+ct.main=table.concat(ctt)
 
 ct=template(ct)
 

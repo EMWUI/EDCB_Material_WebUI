@@ -29,6 +29,24 @@ function saerchbar(){
 	});
 }
 
+//検索等のリンクを生成
+function createSearchLinks(obj){
+	var target = $(obj).find('.search-links');
+	if (target.length == 1 && !target.is('.search-links-created')){
+		var title = encodeURIComponent(target.attr('data-title'));
+		var service = encodeURIComponent(target.attr('data-service'));
+		var dates = encodeURIComponent(target.attr('data-dates'));
+		var details = encodeURIComponent(target.attr('data-details').replace(/%br%/g, '\n'));
+		var authuser = encodeURIComponent(target.attr('data-authuser'));
+		target.addClass('search-links-created');
+		target.after('<a class="mdl-button mdl-button--icon" href="search.html?andkey=' + title + '"><i class="material-icons">search</i></a>'
+			+ '<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=' + title + '" target="_blank"><img class="material-icons" src="img/google.png" alt="Google検索"></a>'
+			+ '<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=' + title + '&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
+			+ '<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text=' + title + '&amp;location=' + service
+				+ '&amp;dates=' + dates + '&amp;details=' + details + '&amp;authuser=' + authuser + '" target="_blank"><i class="material-icons">event</i></a>');
+	}
+}
+
 //タブ移動
 function tab(tab){
 	if (tab.length > 0 && !document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement){
@@ -1261,7 +1279,7 @@ $(function(){
 	//検索プリセット
 	$('#save_preset').click(function(){
 		if ($('#lock').prop('checked')) $('#search').append('<input type="hidden" name="lock" value="1">');
-		$('#search').append('<input type="hidden" name="save" value="1">').attr('action', 'search.html?preset='+$('#preset_name').val()).submit();
+		$('#search').append('<input type="hidden" name="save" value="1">').attr('action', 'search.html?preset='+encodeURIComponent($('#preset_name').val())).submit();
 	});
 
 
