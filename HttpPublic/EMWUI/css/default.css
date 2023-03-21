@@ -647,7 +647,9 @@ h4 .mdl-button--icon {
   display:         inline-flex; }
 
 
-
+.hour:not(.fixed) > tt,
+.cell:not(.fixed) .content  {
+  padding-top: unset!important; }
 .hour-container {
   position: -webkit-sticky;
   position:         sticky;

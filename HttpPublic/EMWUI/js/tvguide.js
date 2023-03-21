@@ -44,8 +44,12 @@ function jump(){
 	$('#tv-guide-container').animate({scrollTop: now() - marginmin * oneminpx}, 550, 'swing');
 }
 
+var guide_top;
+var guide_height;
 $(window).on('load resize', function(){
 	$('#line').width($('#tv-guide-container').width());
+	guide_top = $('#tv-guide-container').offset().top + $('#tv-guide-header').height();
+	guide_height = $('#tv-guide-container').height();
 });
 
 $(function(){
@@ -175,43 +179,42 @@ $(function(){
 
 	//番組名
 	if (!isTouch && titleControl&1 && titleControl&4 || isTouch && titleControl&2 && titleControl&16){
-		$('#tv-guide-container').on('scroll', function(){
-			var done;
-			var top = $('#tv-guide-container').offset().top + $('#tv-guide-header').height();
-			var left = $('.hour-container').width() - $('.station').width();
-			var width = $('#tv-guide-container').width();
-			var height = $('#tv-guide-container').height();
-			$('#tv-guide-main .station ').each(function(){
-			 	if (left <= $(this).position().left && $(this).position().left <= width){  //見えている範囲を絞る(各局で
-					done = true;
-					$(this).children().each(function(){
-						var _done;
-						$(this).children('.cell').each(function(){
-							if (top-$(this).height() <= $(this).offset().top && $(this).offset().top <= height){  //(各番組で
-								var base = top - $(this).offset().top;
-								var content = $(this).find('.content');
-								_done = true;
+		const observer = new IntersectionObserver((entries) => {
+			for(const e of entries) {
+				if (e.isIntersecting && ((e.intersectionRect.top <= e.rootBounds.top && e.intersectionRect.height < e.boundingClientRect.height) || e.rootBounds.height < e.boundingClientRect.height)){
+					$(e.target).addClass('fixed');
+				}else{
+					$(e.target).removeClass('fixed');
+				}
+			}
+		},{
+			root: document.querySelector('#tv-guide-container'),
+			rootMargin: -$('#tv-guide-header').height() +'px 10px 0px 10px',
+			threshold: [0,1]
+		});
 
-								if (base<=0){
-									content.css('padding-top', '');
-								}else if(base<height+$(this).height()){
-									if ($(this).children('.content-wrap').hasClass('reserve')){
-										content.css('padding-top', base-3);
-									}else{
-										content.css('padding-top', base);
-									}
-								}
-							}else if (_done){
-								return false;
-							}
-						});
-					});
-				}else if (done){
-					return false;
+		// 監視したい要素をobserveする。
+		$('.cell,.hour').each(function(){
+			observer.observe(this);
+		});
+
+		$('#tv-guide-container').on('scroll', function(){
+			$('.cell.fixed').each(function(){
+				var base = guide_top - $(this).offset().top;
+				var content = $(this).find('.content');
+
+				if (base <= 0){
+					content.css('padding-top', '');
+				}else if(base < guide_height + $(this).height()){
+					if ($(this).children('.content-wrap').hasClass('reserve')){
+						content.css('padding-top', base-3);
+					}else{
+						content.css('padding-top', base);
+					}
 				}
 			});
-			$('#tv-guide-main .hour').each(function(){
-				var base = top - $(this).offset().top;
+			$('.hour.fixed').each(function(){
+				var base = guide_top - $(this).offset().top;
 				if (base > 0 && base < $(this).innerHeight()){
 					$(this).find('tt').css('padding-top', base);
 				}else{
