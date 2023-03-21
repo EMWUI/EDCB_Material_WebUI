@@ -1,0 +1,25 @@
+{
+    "name": "EDCB Material WebUI",
+    "short_name": "EMWUI",
+    "start_url": "./onair.html",
+    "display": "standalone",
+    "background_color": "#EEEEEE",
+    "description": "EMWUI PWA App.",
+    "icons": [
+      {
+        "src": "./img/android-chrome-192x192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "./img/apple-touch-icon.png",
+        "type": "image/png",
+        "sizes": "256x256"
+      },
+      {
+        "src": "./img/android-chrome-512x512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ]
+  }

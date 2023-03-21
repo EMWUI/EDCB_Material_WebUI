@@ -27,6 +27,7 @@ function template(temp)
 <title>EpgTimer</title>
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
+<link rel="manifest" href="]=]..path..[=[manifest.json">
 ]=]
 ..(not css==0 and css or '<link rel="stylesheet" href="'..path..'css/material.min.css">')..'\n'
 ..((temp.dialog or temp.progres) and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[

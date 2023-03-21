@@ -975,6 +975,12 @@ $(window).on('load resize', function(){
 		$('.drawer-separator.mdl-cell--hide-desktop').show();
 	}
 });
+
+//サービスワーカーの登録
+if ("serviceWorker" in navigator) {
+	navigator.serviceWorker.register("serviceworker.js");
+}
+
 $(function(){
 	var notification = $('.mdl-js-snackbar').get(0);
 
