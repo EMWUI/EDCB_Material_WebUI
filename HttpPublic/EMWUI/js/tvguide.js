@@ -305,6 +305,7 @@ $(function(){
 	}).dblclick(function(){
 		clearTimeout(popup);
 		popup = false;
+		createSearchLinks($(this));
 		$(this).find('.open_info').click();
 	});
 

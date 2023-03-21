@@ -299,18 +299,19 @@ function librarySearch(key){
 		}
 }
 
+$(window).on('load', function(){
+	if ($(window).width() < 479){
+		$('#subheader').hide().addClass('scroll');
+		setInterval("$('#subheader').show()", 1000);
+	}
+});
+
 $(function(){
 	$(window).on('hashchange', function(){
 		if (location.hash.slice(0,8) != '#search@'){
 			folder();
 		}else{
 			librarySearch(location.hash.slice(8));
-		}
-	});
-	$(window).on('load', function(){
-		if ($(window).width() < 479){
-			$('#subheader').hide().addClass('scroll');
-			setInterval("$('#subheader').show()", 1000);
 		}
 	});
 

@@ -46,6 +46,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
+..(temp.calendar and '<script>var calendar_op="'..temp.calendar..'"</script>\n' or '')
 ..'<script>var path=\''..path..'\';var root=\''..PathToRoot()..'\';</script>\n'
 ..'<script src="'..path..'js/common.js"></script>\n'
 
@@ -401,7 +402,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     end
     s=s..'</span>\n'
       ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'" data-name="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
-      ..SearchConverter.Convert(v, service_name)..'</h4>\n'
+      ..SearchConverter(v, service_name)..'</h4>\n'
     if v.shortInfo then
       s=s..'<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'
     end
@@ -914,21 +915,18 @@ function ConvertTitle(title)
 end
 
 --検索等のリンクを派生
-SearchConverter={}
-SearchConverter.Convert=function(v, service_name)
-  local self=SearchConverter
-  self.authuser=self.authuser or edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)
-  self.details=self.details or edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
+calendar_details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
+SearchConverter=function(v, service_name)
   local title=v.shortInfo and v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or ''
   local startTime=os.time(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
+  if not ct.calendar then ct.calendar='&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',ini) end
   --クライアントサイドで使う情報を置いておく
   return '<span class="search-links hidden" data-title="'..title
     ..'" data-service="'..service_name
     ..'" data-dates="'..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)
-    ..'" data-details="'..self.details:gsub('%%text_char%%', text_char)
-    ..'" data-authuser="'..self.authuser..'"></span>'
+    ..'" data-details="'..calendar_details:gsub('%%text_char%%', text_char)..'"></span>'
 end
 
 function RecModeTextList()

@@ -9,7 +9,7 @@ DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
 
 local sp=UserAgentSP()
 DEF_CH_COUNT=sp and 15 or DEF_CH_COUNT
-DEF_interval=sp and  8 or 25
+DEF_interval=sp and 13 or 25
 
 now=os.time()
 timezone=now-os.time(os.date('!*t',now))
@@ -92,7 +92,7 @@ function epgcell(v, op, id ,custom)
   local category=v.contentInfoList and #v.contentInfoList>0 and CATEGORY[math.floor(v.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
   local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
   local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
-  local search=v.shortInfo and SearchConverter.Convert(v, op.service_name) or ''									--検索
+  local search=v.shortInfo and SearchConverter(v, op.service_name) or ''									--検索
 
   local r=nil
   local rid=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil

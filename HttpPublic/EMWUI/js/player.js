@@ -86,6 +86,10 @@ function playerResize() {
 	}
 }
 
+$(window).on('resize', function(){
+	playerResize();
+});
+
 $(function(){
 	var xcode, duration;
 	var notification = document.querySelector('.mdl-js-snackbar');
@@ -109,10 +113,6 @@ $(function(){
 		$('#popup').removeClass('is-visible');
 		video.pause();
 		video.playbackRate = 1;
-	});
-
-	$(window).on('resize', function(){
-		playerResize();
 	});
 
 	$('#video').on({

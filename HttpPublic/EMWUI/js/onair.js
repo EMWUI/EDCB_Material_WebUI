@@ -40,10 +40,10 @@ function getEPG(obj){
 			var data = {
 				audio: false,
 				eid: x.eid,
-		    	nexteid: y.eid,
+				nexteid: y.eid,
 				duration: x.duration,
-		    	start: x.start,
-		    	end: x.end
+				start: x.start,
+				end: x.end
 			};
 			if (obj.hasClass('is_cast')) {
 				audio(x.audio, true);
@@ -202,7 +202,7 @@ $(function(){
 		var data = obj.data();
 		if (data.eid!=0){
 			if (Magnezio){
-				$.get(root + 'api/TvCast?mode=1&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid')).done(function(xhr){
+				$.get(root + 'api/TvCast?mode=1&ctok=' + data.ctok + '&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid')).done(function(xhr){
 					if ($(xhr).find('success').length > 0){
 						location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 					}else{
@@ -212,7 +212,7 @@ $(function(){
 			}else{
 				if (data.audio){
 					if (apk){
-						location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+						location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + data.ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 					}else{
 						$('#popup,#playerUI').addClass('is-visible');
 						audio(data.audio);
@@ -231,7 +231,7 @@ $(function(){
 								}
 							});
 							if (apk){
-								location.href = 'intent:http://'+location.host+ '/api/TvCast?onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+								location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + data.ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 							}else{
 								$('#popup,#playerUI').addClass('is-visible');
 								audio(data.audio);

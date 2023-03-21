@@ -37,13 +37,12 @@ function createSearchLinks(obj){
 		var service = encodeURIComponent(target.attr('data-service'));
 		var dates = encodeURIComponent(target.attr('data-dates'));
 		var details = encodeURIComponent(target.attr('data-details').replace(/%br%/g, '\n'));
-		var authuser = encodeURIComponent(target.attr('data-authuser'));
 		target.addClass('search-links-created');
 		target.after('<a class="mdl-button mdl-button--icon" href="search.html?andkey=' + title + '"><i class="material-icons">search</i></a>'
 			+ '<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=' + title + '" target="_blank"><img class="material-icons" src="img/google.png" alt="Google検索"></a>'
 			+ '<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=' + title + '&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>'
 			+ '<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text=' + title + '&amp;location=' + service
-				+ '&amp;dates=' + dates + '&amp;details=' + details + '&amp;authuser=' + authuser + '" target="_blank"><i class="material-icons">event</i></a>');
+				+ '&amp;dates=' + dates + '&amp;details=' + details + calendar_op +'" target="_blank"><i class="material-icons">event</i></a>');
 	}
 }
 
@@ -105,7 +104,7 @@ function delNotify(notify, data, noSnack){
 }
 
 //通知登録
-var NotifySound = $('<audio src="' + root + 'video/notification.mp3">')[0];
+var NotifySound = new Audio( root + "video/notification.mp3");
 NotifySound.volume = 0.2;
 function creatNotify(notify, data, save){
 	var notification = $('.mdl-js-snackbar').get(0);
@@ -145,7 +144,7 @@ function creatNotify(notify, data, save){
 				notification.close();
 			};
 
-			NotifySound.play(); //Notification.soundはどこも未対応
+			NotifySound.play();
 
 			//通知を閉じる
 			setTimeout(function(){
@@ -959,6 +958,23 @@ function addMark(xml, target, content){
 	return messege;
 }
 
+$(window).on('load resize', function(){
+	if (window.innerWidth < 700 && !$('#dateList_edit').hasClass('is-visible')){
+		$('#add_dateList').prop('disabled', true);
+	}else{
+		$('#add_dateList').prop('disabled', false);
+	}
+	//マクロ補助
+	if ($(window).width() > 700){
+		$('.shrink-phone').show();
+		$('.check-shrink-phone').prop('checked', true);
+		$('.drawer-separator.mdl-cell--hide-desktop').hide();
+	}else{
+		$('.shrink-phone').hide();
+		$('.check-shrink-phone').prop('checked', false);
+		$('.drawer-separator.mdl-cell--hide-desktop').show();
+	}
+});
 $(function(){
 	var notification = $('.mdl-js-snackbar').get(0);
 
@@ -989,6 +1005,7 @@ $(function(){
 	$('tr.epginfo').click(function(e){
 		if (!$(e.target).is('.flag, .flag *, .count a')){
 			if ($(this).data('onid')){
+				createSearchLinks(this);
 				getEpgInfo($(this), $(this).data());
 			}else if($(this).data('id')){
 				setAutoAdd($(this));
@@ -1228,26 +1245,7 @@ $(function(){
 		}
 		$('#dateList_edit').toggleClass('is-visible');
 	});
-	$(window).on('load resize', function(){
-		if (window.innerWidth < 700 && !$('#dateList_edit').hasClass('is-visible')){
-			$('#add_dateList').prop('disabled', true);
-		}else{
-			$('#add_dateList').prop('disabled', false);
-		}
-	});
 
-	//マクロ補助
-	$(window).on('load resize', function(){
-		if ($(window).width() > 700){
-			$('.shrink-phone').show();
-			$('.check-shrink-phone').prop('checked', true);
-			$('.drawer-separator.mdl-cell--hide-desktop').hide();
-		}else{
-			$('.shrink-phone').hide();
-			$('.check-shrink-phone').prop('checked', false);
-			$('.drawer-separator.mdl-cell--hide-desktop').show();
-		}
-	});
 	$('.addmacro').click(function(){
 		macro(this);
 	});
