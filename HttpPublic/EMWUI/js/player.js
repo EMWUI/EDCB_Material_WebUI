@@ -1,4 +1,5 @@
-﻿function getVideoTime(Time){
+﻿var fullscreen;
+function getVideoTime(Time){
 	var h = Math.floor(Time / 3600);
 	var m = Math.floor((Time / 60 ) % 60);
 	var s = ('0'+ Math.floor(Time % 60)).slice(-2);
@@ -139,6 +140,7 @@ $(function(){
 		},
 		'error': function(){
 			$(this).removeClass('is-loadding');
+			$('.is_cast').removeClass('is_cast');
 			if ($('#video').attr('src') != ''){
 				var errorcode = this.error.code;
 				if (this.networkState == 3){
@@ -247,6 +249,13 @@ $(function(){
 			video.pause();
 		}
 	});
+	$('#stop').click(function(){
+		$('#video').attr('src', '').unbind('timeupdate');
+		$('.is_cast').removeClass('is_cast');
+		$('#seek').get(0).MaterialProgress.setProgress(0);
+		$('.currentTime,.duration').text('0:00');
+		$('.multi,.dual').attr('disabled', true);
+	});
 
 	$('#seek').on({
 		'touchstart mousedown': function(){
@@ -298,6 +307,7 @@ $(function(){
 			} else if (player.webkitRequestFullscreen) {
 				player.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
 			}
+			fullscreen = true;
 			screen.orientation.lock('landscape');
 			$('#fullscreen').text('fullscreen_exit');
 			$('.mdl-js-snackbar').appendTo('#player');
@@ -312,6 +322,7 @@ $(function(){
 			} else if (document.webkitExitFullscreen) {
 				document.webkitExitFullscreen();
 			}
+			fullscreen = false;
 			$('#fullscreen').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
 		}

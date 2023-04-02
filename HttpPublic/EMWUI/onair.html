@@ -39,7 +39,7 @@ end
 now=os.time()
 
 for i,v in ipairs(CustomServiceList()) do
-  if (oneseg or not v.partialReceptionFlag) and not v.subCh then
+  if (oneseg or not v.partialReceptionFlag) then
     x={eid=0, startTime=os.date('*t',now)}
     y=x
     b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-24*3600), durationSecond=48*3600}) or {}
@@ -74,7 +74,7 @@ for i,v in ipairs(CustomServiceList()) do
     y_endTime=y_endTime or (y.durationSecond and y_startTime+y.durationSecond)
 
     table.insert(NetworkList[NetworkIndex(v)],
-      '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line" data-onid="'..v.onid
+      '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line'..(v.subCh and ' subCH hidden' or '')..'" data-onid="'..v.onid
         ..'" data-name="'..v.service_name
         ..'" data-tsid="'..v.tsid
         ..'" data-sid="'..v.sid

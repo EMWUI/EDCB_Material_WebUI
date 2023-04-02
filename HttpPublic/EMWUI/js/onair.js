@@ -23,6 +23,7 @@ function getEvent(event){
  		audio: audio,
 		eid: event.children('eventID').text(),
 		title: event.children('event_name').text(),
+		event: event.children('event_text').text(),
 		start: (duration==0 ? Date.now() : start),
 		end: (duration==0 ? Date.now()+5*60*1000 : start+duration*1000) ,
 		startTime: startTime.match(/(\d+:\d+):\d+/)[1],
@@ -56,6 +57,7 @@ function getEPG(obj){
 			}
 			obj.data(data).find('.startTime').text(x.startTime).next('.endTime').text('～' + x.endTime);
 			obj.find('.title').html(ConvertTitle(x.title));
+			obj.find('.event_text').html(x.event);
 			obj.find('.nextstartTime').text(y.startTime).next('.nextendTime').text('～' + y.endTime);
 			obj.find('.nexttitle').html(y.title);
 		}
@@ -101,19 +103,18 @@ function audio(audio, update){
 
 var updateTimer;
 function SetInfo(data, play){
-	$.get(root + 'api/EnumEventInfo?onair=&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + (play ? '&basic=0' : '')).done(function(xhr){
+	$.get(root + 'api/EnumEventInfo?onair=&basic=0&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + (play ? '&basic=0' : '')).done(function(xhr){
 		if ($(xhr).find('eventinfo').length > 0){
 			var info = $($(xhr).find('eventinfo')[0]);
 			var event = getEvent( info );
+
+			setEpgInfo(info);
 			$('#epginfo').data('end', event.end).data('start', event.start).data('duration', event.duration);
-			$('#title').html(ConvertTitle(event.title));
-			$('#sidePanel_date').html(info.find('startDate').text() +'('+ week[info.find('startDayOfWeek').text()] +') '+ FormatTime(info.find('startTime').text(), event.end));
-			$('#service').html(info.find('service_name').text());
-			$('h4+p').html( ConvertTitle(info.find('event_text').text()) );
+
 			if (!updateTimer) update();
 			if (play) {
 				audio(event.audio);
-				if (play==2)loadMovie($('#serviceList option:selected'));
+				if (play==2)loadMovie($('.is_cast'));
 			}
 		}
 	}).fail(function(xhr){
@@ -129,10 +130,23 @@ function update(){
 	}, data.end-Date.now());
 }
 
+var theater;
+$(window).on('resize', function(){
+	if (!fullscreen){
+		setTimeout(function(){
+			if (theater || $('.mdl-layout').hasClass('is-small-screen')){
+				$('#player').prependTo('#movie-theater-contner');
+			}else{
+				$('#player').prependTo('#movie-contner');
+			}
+		},100);
+	}
+});
+
 $(function(){
 	$('.mdl-progress').first().on('mdl-componentupgraded', function() {
 		setInterval(function(){
-			$('.is-active>.onair').each(function(){
+			$('.onair:visible').each(function(){
 				var data = $(this).data();
 				if (data.end < Date.now()){
 					getEPG($(this));
@@ -142,6 +156,11 @@ $(function(){
 				}
 			});
 		},1000);
+	});
+	$('.mdl-layout').on('mdl-componentupgraded', function() {
+		if ($(this).hasClass('is-small-screen')){
+			$('#player').prependTo($('#movie-theater-contner'))
+		}
 	});
 
 	$('span.epginfo').click(function(){
@@ -182,6 +201,8 @@ $(function(){
 		if (apk){
 			$('[for=quality] li').appendTo('[for=menu_quality]');
 			$('#menu_quality').prop('disabled', false);
+			$('#open_popup').prop('disabled', true);
+			$('#menu_popup').attr('disabled', true);
 		}
 	}
 
@@ -191,11 +212,19 @@ $(function(){
 		if (apk){
 			$('[for=quality] li').appendTo('[for=menu_quality]');
 			$('#menu_quality').prop('disabled', false);
+			$('#open_popup').prop('disabled', true);
+			$('#menu_popup').attr('disabled', true);
 		}else{
 			$('[for=menu_quality] li').appendTo('[for=quality]');
 			$('#menu_quality').prop('disabled', true);
+			$('#open_popup').prop('disabled', false);
+			$('#menu_popup').attr('disabled', false);
 		}
 	});
+	$('#open_popup').change(function(){
+		localStorage.setItem('popup', $(this).prop('checked'));
+	});
+	$('#open_popup').prop('checked',localStorage.getItem('popup') == 'true');
 
 	$('.cast').click(function(){
 		var obj = $(this).parents('li').addClass('is_cast');
@@ -209,6 +238,8 @@ $(function(){
 						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '失敗'});
 					}
 				});
+			}else if (!apk && !$('#open_popup').prop('checked')){
+				location.href = 'tvcast.html?onid='+ data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid;
 			}else{
 				if (data.audio){
 					if (apk){
@@ -255,26 +286,50 @@ $(function(){
 	$('#playnext').click(function(){
 		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').next().find('.cast').click();
 	});
-
-	$('#serviceList option').not($('#category option:selected').data('val')).hide();
-	$('#category').change(function(){
-		$('#serviceList option').show().not($('#category option:selected').data('val')).hide();
+	$('#defult').click(function(){
+		theater = true;
+		$('#player').prependTo($('#movie-theater-contner'));
 	});
-	var tempTimer;
-	$('#serviceList').change(function(){
-		clearTimeout(tempTimer);
-		tempTimer = setTimeout(function(){SetInfo($('#epginfo').data());}, 3*1000);
-		SetInfo($('#serviceList option:selected').data());
+	$('#theater').click(function(){
+		theater = false;
+		$('#player').prependTo($('#movie-contner'));
 	});
 
-	$('#view').click(function(){
-		clearTimeout(tempTimer);
-		clearTimeout(updateTimer);
-		updateTimer = null;
+	$('#ServiceList .onair').click(function(){
+		if (!$(this).hasClass('is_cast')){
+			clearTimeout(updateTimer);
+			updateTimer = null;
 
-		var data = $('#serviceList option:selected').data();
-		$('#epginfo').data('onid', data.onid).data('tsid', data.tsid).data('sid', data.sid);
+			var data = $(this).data();
+			$('#epginfo').removeClass('hidden').data('onid', data.onid).data('tsid', data.tsid).data('sid', data.sid);
+			SetInfo(data, 2);
+			$('.is_cast').removeClass('is_cast');
+			$(this).addClass('is_cast');
+			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+		}
+	});
+	
+	if($('.onair.is_cast').length > 0){
+		var data = $('.onair.is_cast').data();
+		$('#epginfo').removeClass('hidden').data('onid', data.onid).data('tsid', data.tsid).data('sid', data.sid);
 		SetInfo(data, 2);
+	}
+	$('.toggle').click(function(){
+		var target = $(this).children();
+		$($(this).attr('for')).slideToggle(function(){
+			if ($(this).css('display') == 'none'){
+				target.text('expand_more');
+			}else{
+				target.text('expand_less');
+			}
+		});
+	});
+	$('#subCH').change(function(){
+		if ($(this).prop('checked')){
+			$('.subCH').removeClass('hidden');
+		}else{
+			$('.subCH').addClass('hidden');
+		}
 	});
 });
 

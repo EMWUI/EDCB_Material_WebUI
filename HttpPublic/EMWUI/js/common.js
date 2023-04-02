@@ -245,7 +245,7 @@ function setEpgInfo(info, past){
 		var start = new Date(startDate+' '+startTime);
 		if (info.find('duration').length != 0) endTime = new Date(start.getTime() + Number(info.find('duration').text())*1000);
 
-		$('#sidePanel_date').html(startDate +'('+ week[info.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
+		$('#info_date').html(startDate +'('+ week[info.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
 		progReserve(start, endTime, eid)
 
 		if (!endTime || Date.now()<endTime){
@@ -256,12 +256,12 @@ function setEpgInfo(info, past){
 			$('#sidePanel .mdl-dialog__actions').hide();
 		}
 	}else{
-		$('#sidePanel_date').html('未定');
+		$('#info_date').html('未定');
 		$('#sidePanel .mdl-tabs__tab-bar').show();
 		$('#sidePanel .mdl-dialog__actions').show();
 	}
 
-	$('#service').html(info.find('service_name').text());
+	$('#service,#service_hedder').html(info.find('service_name').text());
 	$('#links').html($('.open .links a').clone(true));
 	$('#summary p').html( ConvertText(info.find('event_text').text()) );
 	$('#ext').html( ConvertText(info.find('event_ext_text').text()) );
@@ -298,7 +298,7 @@ function setEpgInfo(info, past){
 	$('[name=sid]').val(sid);
 	$('[name=eid]').val(eid);
 
-	$('#epginfo').attr('href', 'epginfo.html?onid='+ onid +'&tsid='+ tsid +'&sid='+ sid + (past ? '&startTime='+ past : '&eid='+ eid));
+	$('#link_epginfo').attr('href', 'epginfo.html?onid='+ onid +'&tsid='+ tsid +'&sid='+ sid + (past ? '&startTime='+ past : '&eid='+ eid));
 	$('#set').data('onid', onid).data('tsid', tsid).data('sid', sid).data('eid', eid);
 }
 
@@ -394,7 +394,7 @@ function getEpgInfo(target, data, past){
 						if (Reserve){
 							setEpgInfo(Reserve);
 
-							$('#epginfo').attr('href', 'reserveinfo.html?id=' + id);
+							$('#link_epginfo').attr('href', 'reserveinfo.html?id=' + id);
 							$('[href="#detail"], #detail').removeClass('is-active');
 							$('[href="#recset"], #recset').addClass('is-active');
 
@@ -468,7 +468,7 @@ function setAutoAdd(target){
 		if (autoadd){
 			$('#set').attr('action', root + 'api/SetAutoAdd?id='+id);
 			$('#del').attr('action', root + 'api/SetAutoAdd?id='+id);
-			$('#epginfo').attr('href', 'autoaddepginfo.html?id='+id);
+			$('#link_epginfo').attr('href', 'autoaddepginfo.html?id='+id);
 
 			if (autoadd.find('disableFlag').text() == 1){
 				$('#disable').prop('checked', true).parent().addClass('is-checked');
@@ -607,7 +607,7 @@ function setRecInfo(target){
 			var endTime = new Date(new Date(startDate+' '+startTime).getTime() + Number(xml.find('duration').text())*1000);
 
 			$('#title').html( ConvertTitle(xml.find('title').text()) );
-			$('#sidePanel_date').html(startDate +'('+ week[xml.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
+			$('#info_date').html(startDate +'('+ week[xml.find('startDayOfWeek').text()] +') '+ FormatTime(startTime, endTime));
 			$('#service').html(xml.find('service_name').text());
 
 			$('#comment').text(xml.find('comment').text());
@@ -630,7 +630,7 @@ function setRecInfo(target){
 
 			var id = xml.find('ID').first().text();
 			$('#del').attr('action', root + 'api/SetRecInfo?id=' +id).next('button').prop('disabled', xml.find('protect').text()=='1');
-			$('#epginfo').attr('href', 'recinfodesc.html?id=' +id);
+			$('#link_epginfo').attr('href', 'recinfodesc.html?id=' +id);
 
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 			showSpinner();

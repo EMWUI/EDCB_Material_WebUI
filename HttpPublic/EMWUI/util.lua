@@ -137,7 +137,8 @@ s:Append([=[
 ..[=[
       <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">live_tv</i>放送中</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">tv</i>放送中</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[tvcast.html"><i class="material-icons">live_tv</i>リモート視聴</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html"><i class="material-icons">schedule</i>予約一覧</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html"><i class="material-icons">tune</i>チューナー別</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html"><i class="material-icons">update</i>EPG予約</a>
@@ -358,7 +359,8 @@ end
 s:Append('<div class="menu">\n'..(temp.menu and temp.menu or '')..'<ul id="notifylist" class="mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-list" for="notification">\n<li id="noNotify" class="mdl-list__item"></li>\n</ul>\n'
   ..(temp.video and
     '<ul class="ext submenu mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_video">\n'
-    ..'<li class="mdl-menu__item"><a class="mdl-menu__item" href="onair.html?subch=">サブチャンネルを表示</a></li>'
+    ..'<li class="mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
+    ..'<li class="mdl-menu__item" id="menu_popup"><label for="open_popup" class="mdl-layout-spacer">ポップアップ</label><span><label class="mdl-switch mdl-js-switch" for="open_popup"><input type="checkbox" id="open_popup" class="mdl-switch__input"></label></span></li>'
     ..'<li class="hidden mdl-menu__item" id="menu_apk"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>'
     ..'<button id="menu_quality" class="hidden mdl-menu__item" disabled><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button>'
     ..'</ul></div>\n'
@@ -797,9 +799,9 @@ end
 function sidePanelTemplate(reserve)
   local s=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
+<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
-<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
+<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
 <div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
 <section class="panel-swipe mdl-tabs__panel is-active" id="detail">
 <div id="ext" class="mdl-typography--body-1"></div>
@@ -852,12 +854,13 @@ end
 function player(video, audio, xcode, live)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
   local sp=UserAgentSP()
-  local s=[=[<div id="player" class="is-small"><div class="player-container">
+  local s=[=[<div id="player" class="is-small"><div class="player-container mdl-grid mdl-grid--no-spacing">
 <div id="playerUI" class="is-visible]=]
 ..(sp and ' sp"><div id="center"><i id="play" class="ctl-button material-icons">play_arrow</i></div>' or '">')..[=[
 <div></div>
 <div id="control" class="ext bar">
 <div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..'</div>'
+..'<i id="stop" class="ctl-button material-icons">stop</i>'
 ..(not sp and '<i id="play" class="ctl-button material-icons">play_arrow</i>' or '')..[=[
 <div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i>]=]..(not sp and '<p id="volume-container"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p>' or '')..[=[</div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
@@ -896,6 +899,8 @@ function player(video, audio, xcode, live)
   end
   s=s..[=[
 </ul>
+<i id="defult" class="player-mode ctl-button material-icons mdl-cell--hide-phone">crop_7_5</i><span class="mdl-tooltip" data-mdl-for="defult">シアターモード</span>
+<i id="theater" class="player-mode ctl-button material-icons mdl-cell--hide-phone">crop_landscape</i><span class="mdl-tooltip" data-mdl-for="theater">デフォルト表示</span>
 <i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
 </div>
 ]=]

@@ -36,37 +36,43 @@ for i,v in ipairs(a) do
   end
 end
 
-ct={title='リモート視聴'}
+ct={title='<span id="service_hedder">リモート視聴</span>'}
 
 ct.js='<script src="js/onair.js"></script>\n'
   ..'<script src="js/player.js"></script>\n'
-  ..'<script>$(function(){update();'..(onid and "loadMovie($('#epginfo'));" or '')..'});</script>'
 
-ct.main='<main id="tvcast" class="tab-swipe mdl-layout__content">\n'
+ct.main='<main id="tvcast" class="mdl-layout__content">\n'
+  ..'<div id="movie-theater-contner"></div>\n'
   ..'<div class="mdl-grid list">\n'
-  ..'<div class="mdl-cell mdl-cell--12-col">\n'
+  ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
-  ..'<div id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
+  ..'<div id="movie-contner">\n'
   ..player('<video id="video" data-cast="true"></video>\n', {multi=true, dual=true}, false, true)
-  ..'</div>\n</div>\n'
-
   ..'</div>\n'
-  
-  ..'<div class="info-card mdl-cell mdl-cell--8-col mdl-shadow--4dp"><div id="epginfo" class="open is_cast" data-onid="'..x.onid..'" data-tsid="'..x.tsid..'" data-sid="'..x.sid..'" data-start="'..(x.startTime and os.time(x.startTime)*1000 or '')..'" data-end="'..(x.startTime and x.durationSecond and (os.time(x.startTime)+x.durationSecond)*1000 or '')..'" data-duration="'..(x.durationSecond or 0)
-  ..'">\n<h4 class="mdl-typography--title"><span id="title" class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span>'
-  ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="sidePanel_date" class="date">'..(x.startTime and FormatTimeAndDuration(x.startTime, x.durationSecond)..(x.durationSecond and '' or '～未定') or '未定')
-  ..'</span><span id="service" class="service">'
-for i,v in ipairs(edcb.GetServiceList() or {}) do
-  if x.onid==v.onid and x.tsid==v.tsid and x.sid==v.sid then
-    ct.main=ct.main..v.service_name
-    break
-  end
-end
-ct.main=ct.main..'</span></span></h4>\n<p>'..(x.shortInfo and DecorateUri(x.shortInfo.text_char):gsub('\r?\n', '<br>\n') or '')
 
-  ..'</p>\n<div class="selecter">\n'
-  ..'<div class="pulldown">\n<select id="category">\n'
-  ..'<option data-val="option">すべて</option>\n'
+
+..[=[
+<div id="epginfo" class="mdl-cell mdl-cell--12-col mdl-shadow--4dp hidden">
+<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span></h4><p></p></div>
+<div id="ext-contner" class="mdl-layout--large-screen-only">
+<p id="ext" class="mdl-typography--body-1"></p>
+<!--
+<ul id="InfoList">
+<li>ジャンル<ul id="genreInfo"></ul></li>
+<li>映像<ul id="videoInfo"></ul></li>
+<li>音声<ul id="audioInfo"></ul></li>
+<li>その他<ul id="otherInfo"></ul></li></ul>
+<button for="#InfoList" class="toggle mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">expand_more</i></button>
+-->
+</div>
+<button for="#ext-contner" class="toggle mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon mdl-layout--small-screen-only"><i class="material-icons">expand_more</i></button>
+<div class="mdl-card__menu"><a id="link_epginfo" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" target="_blank"><i class="material-icons">open_in_new</i></a>
+</div></div></div>
+<div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
+<input type="radio" id="Network0" class="hidden" name="network">
+]=]
+
+
 
 NetworkList={}
 for i,v in ipairs(NetworkIndex()) do
@@ -74,25 +80,52 @@ for i,v in ipairs(NetworkIndex()) do
 end
 for i,v in ipairs(ServiceList) do
   if oneseg or not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<option class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"'..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' selected' or '')..' data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-ctok="'..CsrfToken('tvcast')..'">'..v.service_name..'</option>\n')
+    table.insert(NetworkList[NetworkIndex(v)],
+      '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
+        ..'" data-onid="'..v.onid
+        ..'" data-name="'..v.service_name
+        ..'" data-tsid="'..v.tsid
+        ..'" data-sid="'..v.sid
+        ..'" data-ctok="'..CsrfToken('tvcast')
+        ..'" data-end="0'
+
+        ..'">\n'
+
+        ..'<div class="mdl-grid">\n'
+        ..'<div class="logo-contener"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"></div>\n'
+        ..'<div class="title-contener"><h6 class="title""></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
+        ..'<div class="event_text"></div></div>\n'
+
+        ..'<div class="mdl-progress mdl-js-progress"></div>'
+        ..'</div>\n'
+    )
+    if onid==v.onid and tsid==v.tsid and sid==v.sid then
+      ct.title='<span id="service_hedder">'..v.service_name..'</span>';
+    end
   end
 end
 
 ctt={}
-NetworkName=NetworkIndex()[NetworkIndex(st)]
+label={}
+ct.css='<style>\n'
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.main=ct.main..'<option data-val=".network'..i..'"'..(NetworkIndex()[i]==NetworkName and ' selected' or  '')..'>'..NetworkIndex()[i]..'</option>\n'
+    ct.main=ct.main..'<input type="radio" id="Network'..i..'" class="hidden" name="network"'..(NetworkIndex()[i]==NetworkIndex()[NetworkIndex(st)] and ' checked' or '')..'>\n'
+    ct.css=ct.css..'#Network'..i..':checked~div .onair:not(.Network'..i..'){display:none;}#Network'..i..':checked~div [for="Network'..i..'"]{color:var(--tag-color);background:var(--tag-gb-color);}\n'
+    table.insert(label, '<label type="button" for="Network'..i..'" class="mdl-chip"><span class="mdl-chip__text">'..NetworkIndex()[i]..'</span></label>\n')
     table.insert(ctt, table.concat(v))
   end
 end
-ct.main=ct.main..'</select>\n</div>：'
+ct.css=ct.css..'</style>\n'
 
-  ..'<div class="pulldown">\n<select id="serviceList">\n'
-  ..table.concat(ctt)
-  ..'</select></div>\n<button id="view" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">視聴</button>\n'
+ct.main=ct.main..'<div id="network">\n'
+  ..'<label type="button" for="Network0" class="mdl-chip"><span class="mdl-chip__text">すべて</span></label>\n'..table.concat(label)
+  ..'</div>\n<div id="ServiceList" class="mdl-grid mdl-cell--12-col">\n'..table.concat(ctt)
+  ..'</div>\n</div>\n</div>\n'
 
-  ..'</div>\n</div>\n</div>'
+ct.menu='<ul class="ext mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
+  ..'<li class="mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
+  ..'</ul>\n'
 
 ct=template(ct)
 
