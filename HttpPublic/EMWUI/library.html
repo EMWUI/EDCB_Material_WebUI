@@ -19,7 +19,6 @@ ct=template({
 ]=],
 
   menu=[=[
-<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">
 <li class="view-grid mdl-menu__item" onclick="toggleView('grid');"><i class="material-icons">view_module</i>グリッド表示</li>
 <li class="view-list mdl-menu__item" onclick="toggleView('list');"><i class="material-icons">view_list</i>リスト表示</li>
 <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="$('#subheader').toggleClass('scroll');"><i class="material-icons">search</i>検索</li>
@@ -28,7 +27,6 @@ ct=template({
 <li id="sort" class="mdl-menu__item mdl-menu__item--full-bleed-divider"><i class="material-icons">sort</i><span id="asc">昇順</span><span id="des">降順</span></li>
 <li class="mdl-menu__item" onclick="refreshMovieList();"><i class="material-icons">refresh</i>ライブラリ更新</li>
 <li class="thumbs mdl-menu__item" data-thumbs="" data-ctok="]=]..CsrfToken('library')..[=["><i class="material-icons">photo</i>サムネ作成</li>
-</ul>
 ]=],
 
   main='<main class="lib-swipe mdl-layout__content">\n<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>\n'

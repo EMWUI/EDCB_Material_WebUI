@@ -36,10 +36,13 @@ for i,v in ipairs(a) do
   end
 end
 
-ct={title='<span id="service_hedder">リモート視聴</span>'}
-
-ct.js='<script src="js/onair.js"></script>\n'
-  ..'<script src="js/player.js"></script>\n'
+ct={
+  title='<span id="service_hedder">リモート視聴</span>',
+  js='<script>var ctok=\''..CsrfToken('tvcast')..'\';</script>\n'
+    ..'<script src="js/onair.js"></script>\n'
+    ..'<script src="js/player.js"></script>\n',
+  menu='<li class="ext mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
+}
 
 ct.main='<main id="tvcast" class="mdl-layout__content">\n'
   ..'<div id="movie-theater-contner"></div>\n'
@@ -47,7 +50,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
   ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
   ..'<div id="movie-contner">\n'
-  ..player('<video id="video" data-cast="true"></video>\n', {multi=true, dual=true}, false, true)
+  ..player('<video id="video" data-cast="true"></video>', {multi=true, dual=true}, true)
   ..'</div>\n'
 
 
@@ -83,11 +86,9 @@ for i,v in ipairs(ServiceList) do
     table.insert(NetworkList[NetworkIndex(v)],
       '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
         ..'" data-onid="'..v.onid
-        ..'" data-name="'..v.service_name
         ..'" data-tsid="'..v.tsid
         ..'" data-sid="'..v.sid
-        ..'" data-ctok="'..CsrfToken('tvcast')
-        ..'" data-end="0'
+        ..'" data-endTime="0'
 
         ..'">\n'
 
@@ -96,11 +97,11 @@ for i,v in ipairs(ServiceList) do
         ..'<div class="title-contener"><h6 class="title""></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
         ..'<div class="event_text"></div></div>\n'
 
-        ..'<div class="mdl-progress mdl-js-progress"></div>'
+        ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>'
         ..'</div>\n'
     )
     if onid==v.onid and tsid==v.tsid and sid==v.sid then
-      ct.title='<span id="service_hedder">'..v.service_name..'</span>';
+      ct.title='<span id="service_hedder">'..v.service_name..'</span>'
     end
   end
 end
@@ -123,9 +124,6 @@ ct.main=ct.main..'<div id="network">\n'
   ..'</div>\n<div id="ServiceList" class="mdl-grid mdl-cell--12-col">\n'..table.concat(ctt)
   ..'</div>\n</div>\n</div>\n'
 
-ct.menu='<ul class="ext mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
-  ..'<li class="mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
-  ..'</ul>\n'
 
 ct=template(ct)
 

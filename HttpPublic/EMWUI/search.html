@@ -138,7 +138,7 @@ edcb.htmlEscape=15
 
 ct={
   title='検索',
-  js='<script>$(function(){saerchbar();});</script>\n',
+  js='<script>var ctok=\''..CsrfToken('setreserve')..'\';$(function(){saerchbar();});</script>\n',
   progres=true,
   macro=sidePanel
 }
@@ -275,11 +275,11 @@ if #a>0 then
       rs=r.recSetting
     end
 
-    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-start="'..(os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-end="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
+    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-startTime="'..(os.time(r.startTime)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
       ..'" data-'..(sidePanel and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                                or 'href="epginfo.html?onid='..v.onid..'&amp;tsid='..v.tsid..'&amp;sid='..v.sid..'&amp;eid='..v.eid..(pageIndex~=0 and '&amp;page='..pageIndex or '')..(autopage~=0 and '&amp;autopage='..autopage or ''))..'">\n'
 
-      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-ctok="'..CsrfToken('setreserve')..'"><span'
+      ..' <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
       ..(r and os.time(v.startTime)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))
 

@@ -1,65 +1,30 @@
-﻿function getTime(time){
-	var date = new Date(time);
-	return ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2)
-}
-
-function getEvent(event){
-	var startTime = event.children('startTime').text();
-	var start = new Date(event.children('startDate').text()+' '+startTime).getTime();
-	var duration = Number(event.children('duration').text());
-	var audio;
-	if (event.children('audioInfo').length > 0){
-		audio = [];
-		event.children('audioInfo').each(function(i){
-			audio[i] = {
-				text: $(this).find('text').text(),
-				component_type: Number($(this).find('component_type').text()),
-				main_component_flag: $(this).find('main_component_flag').text() == '1'
-			}
-		});
-	}
-
- 	return {
- 		audio: audio,
-		eid: event.children('eventID').text(),
-		title: event.children('event_name').text(),
-		event: event.children('event_text').text(),
-		start: (duration==0 ? Date.now() : start),
-		end: (duration==0 ? Date.now()+5*60*1000 : start+duration*1000) ,
-		startTime: startTime.match(/(\d+:\d+):\d+/)[1],
-		endTime: (duration==0 ? '未定' : getTime(start+duration*1000)),
-		duration: (duration==0 ? 5*60 : duration)
-	}
-}
-
-function getEPG(obj){
-	var data = obj.data();
-	$.get(root + 'api/EnumEventInfo?onair=&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + (obj.hasClass('is_cast') ? '&basic=0' : '')).done(function(xhr){
+﻿function updateEPGtitle(obj){
+	var d = obj.data();
+	$.get(root + 'api/EnumEventInfo' + (obj.hasClass('is_cast') ? '?basic=0' : ''), {onair: 0, onid: d.onid, tsid: d.tsid, sid: d.sid}).done(function(xhr){
 		if ($(xhr).find('eventinfo').length > 0){
-			var x=getEvent( $($(xhr).find('eventinfo')[0]) );
-			var y=getEvent( $($(xhr).find('eventinfo')[1]) );
-			var data = {
-				audio: false,
-				eid: x.eid,
-				nexteid: y.eid,
-				duration: x.duration,
-				start: x.start,
-				end: x.end
-			};
+			var a = ConvertEpgInfo( $(xhr).find('eventinfo').first() );
+			var b = ConvertEpgInfo( $(xhr).find('eventinfo').eq(1) );
+			a.nexteid = b.eid;
+
 			if (obj.hasClass('is_cast')) {
-				audio(x.audio, true);
-				$('.duration').text(getVideoTime(x.duration));
-				$('#titlebar').html(obj.data('name') +' - '+ ConvertTitle(x.title)).addClass('is-visible');
+				setEpgInfo(a);
+				audio(a.audio, true);
+				$('.duration').text(getVideoTime(a.duration));
+				$('#titlebar').html(a.service +' - '+ ConvertTitle(a.title)).addClass('is-visible');
 				hideBar(2500);
-				var video = $('#video').data();
-				video.title = data.title = x.title;
-				video.audio = data.audio = x.audio;
+				$('#video').data(title, a.title).data(audio, a.audio);
 			}
-			obj.data(data).find('.startTime').text(x.startTime).next('.endTime').text('～' + x.endTime);
-			obj.find('.title').html(ConvertTitle(x.title));
-			obj.find('.event_text').html(x.event);
-			obj.find('.nextstartTime').text(y.startTime).next('.nextendTime').text('～' + y.endTime);
-			obj.find('.nexttitle').html(y.title);
+
+			var endtime = ConvertTime(a.endtime);
+			if (!a.duration){
+				a.duration = (Date.now() - a.starttime)/1000 + 5*60;
+				a.endtime = new Date(Date.now() + 5*60*1000).getTime();
+			}
+			obj.data(a).find('.startTime').text(ConvertTime(a.starttime)).next('.endTime').text('～' + endtime);
+			obj.find('.title').html(ConvertTitle(a.title));
+			obj.find('.event_text').html(a.text);
+			obj.find('.nextstartTime').text(ConvertTime(b.starttime)).next('.nextendTime').text('～' + ConvertTime(b.endtime));
+			obj.find('.nexttitle').html(ConvertTitle(b.title));
 		}
 	});
 }
@@ -67,13 +32,12 @@ function getEPG(obj){
 function audio(audio, update){
 	if (audio.length >= 2){
 		//多重音声
-		$('#audio').attr('disabled', false);
-		$('.multi').attr('disabled', false).show();
+		$('._audio,.multi').attr('disabled', false).show();
 		$('.dual').attr('disabled', true).hide();
 		$('#multi1~label:last').text(audio[0].text=='' ? '主音声' : audio[0].text);
 		$('#multi2~label:last').text(audio[1].text=='' ? '副音声' : audio[1].text);
 		if (!update){
-			if (audio[0].main_component_flag){
+			if (audio[0].main_component){
 				$('#multi1').prop('checked', true);
 			}else{
 				$('#multi2').prop('checked', true);
@@ -81,8 +45,7 @@ function audio(audio, update){
 		}
 	}else if (audio.length > 0 && audio[0].component_type == 2){
 		//デュアルモノ
-		$('#audio').attr('disabled', false);
-		$('.dual').attr('disabled', false).show();
+		$('._audio,.dual').attr('disabled', false).show();
 		$('.multi').attr('disabled', true).hide();
 		var text = audio[0].text.split('\n');
 		if (text.length<2) text = ['日本語','英語'];
@@ -90,152 +53,124 @@ function audio(audio, update){
 		$('#dual2~label:last').text('[二] '+ text[1]);
 		$('#RAW~label:last').text('[二] '+ text[0] +'+'+ text[1]);
 		if (!update){
-			if (audio[0].main_component_flag){
+			if (audio[0].main_component){
 				$('#dual1').prop('checked', true);
 			}else{
 				$('#dual2').prop('checked', true);
 			}
 		}
 	}else{
-		$('#audio,.multi,.dual').attr('disabled', true);
+		$('._audio,.multi,.dual').attr('disabled', true);
 	}
 }
 
-var updateTimer;
-function SetInfo(data, play){
-	$.get(root + 'api/EnumEventInfo?onair=&basic=0&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + (play ? '&basic=0' : '')).done(function(xhr){
+function updateEpgInfo(d, play){
+	$.get(root + 'api/EnumEventInfo', {onair: 0, basic: 0, onid: d.onid, tsid: d.tsid, sid: d.sid}).done(function(xhr){
 		if ($(xhr).find('eventinfo').length > 0){
-			var info = $($(xhr).find('eventinfo')[0]);
-			var event = getEvent( info );
+			var e = ConvertEpgInfo( $(xhr).find('eventinfo').first() );
 
-			setEpgInfo(info);
-			$('#epginfo').data('end', event.end).data('start', event.start).data('duration', event.duration);
+			setEpgInfo(e);
+			$('#epginfo').removeClass('hidden');
 
-			if (!updateTimer) update();
 			if (play) {
-				audio(event.audio);
+				audio(e.audio);
 				if (play==2)loadMovie($('.is_cast'));
 			}
 		}
 	}).fail(function(xhr){
-		setTimeout(function(){SetInfo(data, play);}, 5*1000);
+		setTimeout(function(){updateEpgInfo(d, play);}, 5*1000);
 	});
 }
-
-function update(){
-	var data = $('#epginfo').data();
-	updateTimer = setTimeout(function(){
-		updateTimer = null;
-		SetInfo(data, 1);
-	}, data.end-Date.now());
-}
-
-var theater;
-$(window).on('resize', function(){
-	if (!fullscreen){
-		setTimeout(function(){
-			if (theater || $('.mdl-layout').hasClass('is-small-screen')){
-				$('#player').prependTo('#movie-theater-contner');
-			}else{
-				$('#player').prependTo('#movie-contner');
-			}
-		},100);
-	}
-});
 
 $(function(){
-	$('.mdl-progress').first().on('mdl-componentupgraded', function() {
-		setInterval(function(){
-			$('.onair:visible').each(function(){
-				var data = $(this).data();
-				if (data.end < Date.now()){
-					getEPG($(this));
-				}else{
-					var progress = (Date.now() - data.start) / data.duration / 10;
-					$(this).children('.mdl-progress').get(0).MaterialProgress.setProgress(progress);
-				}
-			});
-		},1000);
-	});
-	$('.mdl-layout').on('mdl-componentupgraded', function() {
-		if ($(this).hasClass('is-small-screen')){
-			$('#player').prependTo($('#movie-theater-contner'))
-		}
-	});
+	setInterval(function(){
+		$('.onair:visible').each(function(){
+			var d = $(this).data();
+			var progress = $(this).children('.mdl-progress');
+			if (d.endtime < Date.now()){
+				if (progress.hasClass('is-upgraded')) progress.addClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress(0);
+				updateEPGtitle($(this));
+			}else{
+				if (progress.hasClass('is-upgraded')) progress.removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress((Date.now() - d.starttime) / d.duration / 10);
+			}
+		});
+	},500);
 
 	$('span.epginfo').click(function(){
-		var data = $(this).parents('li').clone(true).data();
+		var d = $(this).parents('li').data();
 		if ($(this).hasClass('next')){
-			data.next = true;
-			data.id = data.nextid;
-			data.eid = data.nexteid;
+			d.next = true;
+			d.id = d.nextid;
+			d.eid = d.nexteid;
 		}
 
-		if (data.eid!=0){
+		if (d.eid!=0){
 			if ($(this).hasClass('panel')){
-				getEpgInfo($(this).parents('li'), data);
+				getEpgInfo($(this).parents('li'), d);
 			}else{
-				window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');
+				window.open('epginfo.html?onid=' + d.onid + '&tsid=' + d.tsid + '&sid=' + d.sid + '&eid=' + d.eid, '_blank');
 			}
 		}else{
-			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: 'この時間帯の番組情報がありません'});
+			Snackbar.MaterialSnackbar.showSnackbar({message: 'この時間帯の番組情報がありません'});
 			$('#sidePanel, .open').removeClass('is-visible open');
 		}
 	});
 	
-	$('#seek,#autoplay').prop('disabled', true);
-	$('#menu_autoplay').attr('disabled', true);
 	$('#video').data('keepdisk', true).data('cast', true);
-	$('#popup .close').click(function(){
-		$('.is_cast').removeClass('is_cast');
-		$('.duration,.currentTime').text('0:00');
-		$('#seek').get(0).MaterialProgress.setProgress(0);
-		$('#video').attr('src', '').unbind('timeupdate');
-	});
 
 	var apk, Magnezio;
 	if (navigator.userAgent.indexOf('Android') > 0){
 		apk = localStorage.getItem('apk') == 'true';
 		//Magnezio = true;	//Magnezioで視聴
-		$('[for=menu_video] .mdl-menu__item').removeClass('hidden');
+		$('[for=menu] .mdl-menu__item').removeClass('hidden');
+		$('#open_popup').prop('disabled', apk);
+		$('#menu_popup').attr('disabled', apk);
+		$('#menu_quality').attr('disabled', !apk);
 		if (apk){
 			$('[for=quality] li').appendTo('[for=menu_quality]');
-			$('#menu_quality').prop('disabled', false);
-			$('#open_popup').prop('disabled', true);
-			$('#menu_popup').attr('disabled', true);
+			$('[for=apk]').addClass('is-checked');
 		}
 	}
 
 	$('#apk').change(function(){
 		apk = $(this).prop('checked');
 		localStorage.setItem('apk', apk);
+		$('#open_popup').prop('disabled', apk);
+		$('#menu_popup').attr('disabled', apk);
+		$('#menu_quality').attr('disabled', !apk);
 		if (apk){
 			$('[for=quality] li').appendTo('[for=menu_quality]');
-			$('#menu_quality').prop('disabled', false);
-			$('#open_popup').prop('disabled', true);
-			$('#menu_popup').attr('disabled', true);
+			$('[for=open_popup]').addClass('is-disabled');
 		}else{
 			$('[for=menu_quality] li').appendTo('[for=quality]');
-			$('#menu_quality').prop('disabled', true);
-			$('#open_popup').prop('disabled', false);
-			$('#menu_popup').attr('disabled', false);
+			$('[for=open_popup]').removeClass('is-disabled');
 		}
 	});
 	$('#open_popup').change(function(){
 		localStorage.setItem('popup', $(this).prop('checked'));
 	});
 	$('#open_popup').prop('checked',localStorage.getItem('popup') == 'true');
+	if (localStorage.getItem('popup') == 'true') $('[for=open_popup]').addClass('is-checked');
+	if (apk) $('[for=open_popup]').addClass('is-disabled');
 
+	$('#ServiceList .onair').click(function(){
+		if (!$(this).hasClass('is_cast')){
+			updateEpgInfo($(this).data(), 2);
+			$('.is_cast').removeClass('is_cast');
+			$(this).addClass('is_cast');
+			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+		}
+	});
 	$('.cast').click(function(){
 		var obj = $(this).parents('li').addClass('is_cast');
 		var data = obj.data();
 		if (data.eid!=0){
 			if (Magnezio){
-				$.get(root + 'api/TvCast?mode=1&ctok=' + data.ctok + '&onid=' + obj.data('onid') +'&tsid='+ obj.data('tsid') +'&sid='+ obj.data('sid')).done(function(xhr){
+				$.get(root + 'api/TvCast', {mode: 1, ctok: ctok, onid: data.onid, tsid: data.tsid, sid: data.sid}).done(function(xhr){
 					if ($(xhr).find('success').length > 0){
 						location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 					}else{
-						$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '失敗'});
+						Snackbar.MaterialSnackbar.showSnackbar({message: '失敗'});
 					}
 				});
 			}else if (!apk && !$('#open_popup').prop('checked')){
@@ -243,26 +178,18 @@ $(function(){
 			}else{
 				if (data.audio){
 					if (apk){
-						location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + data.ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+						location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 					}else{
 						$('#popup,#playerUI').addClass('is-visible');
 						audio(data.audio);
 						loadMovie(obj);
 					}
 				}else{
-					$.get(root + 'api/EnumEventInfo?basic=0&onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid).done(function(xhr){
+					$.get(root + 'api/EnumEventInfo', {basic: 0, onid: data.onid, tsid: data.tsid, sid: data.sid, eid: data.eid}).done(function(xhr){
 						if ($(xhr).find('eventinfo').length > 0){
-							data.title = $(xhr).find('event_name').text();
-							data.audio = [];
-							$(xhr).find('audioInfo').each(function(i){
-								data.audio[i] = {
-									text: $(this).find('text').text(),
-									component_type: Number($(this).find('component_type').text()),
-									main_component_flag: $(this).find('main_component_flag').text() == '1'
-								}
-							});
+							obj.data( ConvertEpgInfo( $(xhr).find('eventinfo').first() ) );
 							if (apk){
-								location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + data.ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+								location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
 							}else{
 								$('#popup,#playerUI').addClass('is-visible');
 								audio(data.audio);
@@ -273,18 +200,18 @@ $(function(){
 				}
 			}
 		}else{
-			$('#titlebar').text(data.name+' - 放送休止');
+			$('#titlebar').text(data.service+' - 放送休止');
 			$('.duration,.currentTime').text('0:00');
-			$('#seek').get(0).MaterialSlider.change(0);
 			$('#video').attr('src', '').unbind('timeupdate');
-			$('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: '放送休止'});
+			document.querySelector('#seek').MaterialSlider.change(0);
+			Snackbar.MaterialSnackbar.showSnackbar({message: '放送休止'});
 		}
 	});
 	$('#playprev').click(function(){
-		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').prev().find('.cast').click();
+		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click();
 	});
 	$('#playnext').click(function(){
-		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').next().find('.cast').click();
+		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click();
 	});
 	$('#defult').click(function(){
 		theater = true;
@@ -295,24 +222,9 @@ $(function(){
 		$('#player').prependTo($('#movie-contner'));
 	});
 
-	$('#ServiceList .onair').click(function(){
-		if (!$(this).hasClass('is_cast')){
-			clearTimeout(updateTimer);
-			updateTimer = null;
-
-			var data = $(this).data();
-			$('#epginfo').removeClass('hidden').data('onid', data.onid).data('tsid', data.tsid).data('sid', data.sid);
-			SetInfo(data, 2);
-			$('.is_cast').removeClass('is_cast');
-			$(this).addClass('is_cast');
-			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-		}
-	});
-	
 	if($('.onair.is_cast').length > 0){
 		var data = $('.onair.is_cast').data();
-		$('#epginfo').removeClass('hidden').data('onid', data.onid).data('tsid', data.tsid).data('sid', data.sid);
-		SetInfo(data, 2);
+		updateEpgInfo(data, 2);
 	}
 	$('.toggle').click(function(){
 		var target = $(this).children();

@@ -25,7 +25,7 @@ function getMovieList(Snack){
 				message = '更新に失敗しました';
 				showSpinner();
 			}
-			if (message) $('.mdl-js-snackbar').get(0).MaterialSnackbar.showSnackbar({message: message});
+			if (message) Snackbar.MaterialSnackbar.showSnackbar({message: message});
 		},
 		complete: function(){
 			loadingMovieList = false;
@@ -86,7 +86,6 @@ function folder(){
 
 	$('.mdl-layout__tab').removeClass('is-active');
 	$('#' + id).addClass('is-active');
-	var notification = $('.mdl-js-snackbar').get(0);
 	if (!loadingMovieList){
 		showSpinner(true);
 		$('.library').empty();
@@ -195,7 +194,7 @@ function folder(){
 		componentHandler.upgradeDom();
 		showSpinner();
 		if (!found){
-			notification.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
+			Snackbar.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
 			var data = {
 				message: 'ライブラリを更新しますか？',
 				actionHandler: function(event) {
@@ -203,10 +202,10 @@ function folder(){
 				},
 				actionText: '更新'
 			};
-			notification.MaterialSnackbar.showSnackbar(data);
+			Snackbar.MaterialSnackbar.showSnackbar(data);
 		}
 	}else{
-		notification.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新中です。', timeout: 1000});
+		Snackbar.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新中です。', timeout: 1000});
 	}
 }
 
@@ -333,6 +332,7 @@ $(function(){
 		$('.view-list').hide();
 	}
 
+	$('#menu_autoplay').removeClass('hidden');
 	$('#sort_'+order).addClass('mdl-color-text--accent');
 	$('#'+ (asc ? 'asc' : 'des')).hide();
 	$('[id^=sort_]').click(function(){
@@ -370,13 +370,12 @@ $(function(){
 
 	$('.thumbs').click(function(){
 		showSpinner(true);
-		var notification = $('.mdl-js-snackbar').get(0);
-		notification.MaterialSnackbar.showSnackbar({message: 'サムネの作成を開始します'});
+		Snackbar.MaterialSnackbar.showSnackbar({message: 'サムネの作成を開始します'});
 		$.get(root + 'api/Library', $(this).data(), function(result, textStatus, xhr){
 			var xml = $(xhr.responseXML);
 			showSpinner();
-			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
-			notification.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新します'});
+			Snackbar.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
+			Snackbar.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新します'});
 			getMovieList(true);
 		});
 	});

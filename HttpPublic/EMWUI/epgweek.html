@@ -42,12 +42,9 @@ ct={
   title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>',
   css=epgcss(),
   js=epgjs(Hour,'$(function(){end($($(".now")));setInterval("line()", 1000);});'),
+  menu=epgMenuTemplate(true),
   progres=true,
-  macro=sidePanel,
-  dialog={{
-    id='suspend',
-    button='<button class="ok mdl-button">OK</button>'
-  }}
+  macro=sidePanel
 }
 
 ct.subheader='<div id="subheader">\n'
@@ -61,7 +58,7 @@ ct.subheader='<div id="subheader">\n'
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
   ..'<div id="select_service" class="pulldown dividers navigation__item mdl-color-text--primary">'..(st and st.service_name or '')..'</div>\n'
 
-ct.menu='<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
+  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
   ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'
 
 NetworkList={}
@@ -77,42 +74,34 @@ end
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.menu=ct.menu..'<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n'
+    ct.subheader=ct.subheader..'<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n'
     table.insert(ctt, table.concat(v))
   end
 end
-ct.menu=ct.menu..'</ul>\n'
+ct.subheader=ct.subheader..'</ul>\n'
 
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'..table.concat(ctt)..'</ul>\n'
 
 if st then
   ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-  ct.menu=ct.menu..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+    ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
 
   n=interval>=25 and Hour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
     if Hour<=i and i<Hour+interval then
-      ct.menu=ct.menu..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.subheader=ct.subheader..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     else
-      ct.menu=ct.menu..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      ct.subheader=ct.subheader..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
     end
   end
-  ct.menu=ct.menu..'</ul>\n'
+  ct.subheader=ct.subheader..'</ul>\n'
 end
 
 ct.subheader=ct.subheader
   ..'<div class="space navigation__item"></div>\n'
   ..'</nav>\n</div>\n'
-
-ct.menu=ct.menu
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu">\n'
-  ..'<li class="api_tools mdl-menu__item" data-epg="epgcap" data-ctok="'..CsrfToken('common')..'">EPG取得</li>\n'
-  ..'<li class="api_tools mdl-menu__item mdl-menu__item--full-bleed-divider" data-epg="reload" data-ctok="'..CsrfToken('common')..'">EPG再読み込み</li>\n'
-  ..'<li class="suspend mdl-menu__item" data-suspend="standby" data-ctok="'..CsrfToken('common')..'">スタンバイ</li>\n'
-  --..'<li class="suspend mdl-menu__item" data-suspend="hibernation" data-ctok="'..CsrfToken('common')..'">休止</li>\n'
-  ..'</ul>\n'
 
 
 ct.side='<input type="checkbox" class="hidden" id="a">\n'
@@ -131,7 +120,7 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 ctt={}
 op={service_name=st.service_name}
 for i=0,7 do
-  table.insert(ctt, '<div class="station" data-name="'..st.service_name..'"><div>\n')
+  table.insert(ctt, '<div class="station" data-service_id="'..st.onid..'-'..st.tsid..'-'..st.sid..'" data-service="'..st.service_name..'"><div>\n')
   lastPx=0
   total=0
   b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',baseTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}

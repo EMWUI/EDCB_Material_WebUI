@@ -343,54 +343,21 @@ $(function(){
 		}
 	});
 
-	var notification = document.querySelector('.mdl-js-snackbar');
 	//EPG取得
 	$('.api_tools').click(function(){
-		$.get(root + 'api/Common', $(this).data(), function(result, textStatus, xhr){
-			var xml = $(xhr.responseXML);
-			notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
+		$.post(root + 'api/Common', $(this).data(), function(result, textStatus, xhr){
+			Snackbar.MaterialSnackbar.showSnackbar({message: $(xhr.responseXML).find('info').text()});
 		});
-	});
-	var dialog = document.querySelector('dialog#suspend');
-	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
-	$('.suspend').click(function(){
-		var self = $(this);
-		$('#suspend .mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
-		$('#suspend .ok').unbind('click').click(function(){
-			dialog.close();
-			$.get(root + 'api/Common', self.data(), function(result, textStatus, xhr){
-				var xml = $(xhr.responseXML);
-				notification.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
-			});
-		});
-	    dialog.showModal();
 	});
 
 	//EPG予約
 	$('.autoepg').click(function(){
 		$('#autoepg [name=andKey]').val( $(this).data('andkey') );
-		var service = $(this).parents('.station').data('service');
+		var service = $(this).parents('.station').data('service_id');
 		if (service){
 			$('#autoepg [name=serviceList]').val(service);
 		}
 		$('#autoepg').submit();
-	});
-
-	//通知
-	$('.cell .notify').click(function(){
-		var notify = $(this);
-		if (!notify.attr('disabled')){
-			var data = notify.data();
-			if (data.notification){
-				//登録済み通知削除
-				delNotify(notify, data);
-			}else{
-				data.title = notify.parents('.popup').prevAll('.mdl-typography--body-1-force-preferred-font').html();
-				data.name = notify.parents('.station').data('name');
-
-				creatNotify(notify, data, true);
-			}
-		}
 	});
 
 	//予約追加・有効・無効
@@ -398,6 +365,7 @@ $(function(){
 		showSpinner(true);
 		var target = $(this);
 		var data = target.data();
+		data.ctok = ctok;
 
 		$.ajax({
 			url: root + 'api/setReserve',
@@ -410,7 +378,7 @@ $(function(){
 					var message = addMark(xml, target, target.parents('.content-wrap')) + 'に';
 					if (add) message = '追加';
 
-					notification.MaterialSnackbar.showSnackbar({message: '予約を' + message + 'しました'});
+					Snackbar.MaterialSnackbar.showSnackbar({message: '予約を' + message + 'しました'});
 				}else{
 					errMessage(xml)
 				}

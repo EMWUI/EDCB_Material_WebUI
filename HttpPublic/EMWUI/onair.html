@@ -8,10 +8,15 @@ webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 ct={
   title='放送中',
   video='live',
-  js='<script src="js/onair.js"></script>\n'
+  js='<script>var ctok=\''..CsrfToken('tvcast')..'\';</script>\n'
+    ..'<script src="js/onair.js"></script>\n'
     ..'<script src="js/player.js"></script>\n',
   progres=true,
-  macro=sidePanel
+  macro=sidePanel,
+  menu='<li id="menu_apk" class="ext mdl-menu__item"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>\n'
+    ..'<li id="menu_popup" class="ext mdl-menu__item"><label for="open_popup" class="mdl-layout-spacer">ポップアップ</label><span><label class="mdl-switch mdl-js-switch" for="open_popup"><input type="checkbox" id="open_popup" class="mdl-switch__input"></label></span></li>\n'
+    ..'<li id="menu_apk" class="ext mdl-menu__item hidden"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>\n'
+    ..'<li id="menu_quality" class="ext mdl-menu__item hidden"><button><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button></li>\n'
 }
 
 if webPanel then
@@ -23,7 +28,8 @@ for i,v in ipairs(edcb.GetReserveData()) do
   rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
 end
 
-ct.main='  <main class="sidePanel-container mdl-layout__content">\n'
+ct.main='<div class="submenu"><ul class="ext mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality"></ul></div>\n'
+  ..'  <main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
@@ -37,6 +43,58 @@ for i,v in ipairs(NetworkIndex()) do
 end
 
 now=os.time()
+
+function Logo(onid,sid)
+  ddid=tonumber(edcb.GetPrivateProfile('LogoIDMap',('%04X%04X'):format(onid,sid),'','Setting\\LogoData.ini'))
+  if ddid then
+    dir=edcb.GetPrivateProfile('SET','DataSavePath','','Common.ini')
+    if dir=='' then
+      dir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Setting'
+    end
+    dir=dir..'\\LogoData\\'
+    ff=edcb.FindFile(dir..('%04X_%03X_*'):format(onid,ddid),6) or {}
+    -- ファイル名の末尾2桁はロゴタイプ(STD-B21)
+    for i,v in ipairs({'05%.png','02%.png','04%.png','01%.png','03%.png','00%.png'}) do
+      for j,w in ipairs(ff) do
+        if w.name:lower():find(v..'$') then
+          return true
+        end
+      end
+    end
+  end
+  if LOGO_DIR then
+    fname=nil
+    f=edcb.io.open(LOGO_INI,'rb')
+    if f then
+      -- ロゴ識別とServiceIDとの対応を調べる
+      ddid=tonumber(f:read('*a'):upper():match(('\n%04X%04X=(%%d+)'):format(onid,sid)))
+      f:close()
+      if ddid then
+        ff=edcb.FindFile(LOGO_DIR..('\\%04X_%03X_*'):format(onid,ddid),12) or {}
+        -- ファイル名の末尾2桁はロゴタイプ(STD-B21)であると期待
+        for i,v in ipairs({'05%.png','05%.bmp','02%.png','02%.bmp','04%.png','04%.bmp','01%.png','01%.bmp','03%.png','03%.bmp','00%.png','00%.bmp'}) do
+          for j,w in ipairs(ff) do
+            if w.name:lower():find(v..'$') then
+              return true
+            end
+          end
+        end
+      end
+    end
+  else
+    fname=('%04X%04X.png'):format(onid,sid)
+    f=edcb.io.open(DocumentToNativePath('img/logo/'..fname),'rb')
+    if not f then
+      fname=('%04X%04X.bmp'):format(onid,sid)
+      f=edcb.io.open(DocumentToNativePath('img/logo/'..fname),'rb')
+    end
+    if f then
+      return true
+    end
+  end
+  return false
+end
+
 
 for i,v in ipairs(CustomServiceList()) do
   if (oneseg or not v.partialReceptionFlag) then
@@ -66,8 +124,6 @@ for i,v in ipairs(CustomServiceList()) do
       end
     end
 
-    logo=true
-
     x_startTime=os.time(x.startTime)
     y_startTime=os.time(y.startTime)
     x_endTime=x.durationSecond and x_startTime+x.durationSecond or y_startTime
@@ -75,22 +131,20 @@ for i,v in ipairs(CustomServiceList()) do
 
     table.insert(NetworkList[NetworkIndex(v)],
       '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line'..(v.subCh and ' subCH hidden' or '')..'" data-onid="'..v.onid
-        ..'" data-name="'..v.service_name
         ..'" data-tsid="'..v.tsid
         ..'" data-sid="'..v.sid
         ..'" data-eid="'..x.eid
         ..'" data-nexteid="'..y.eid
         ..'" data-id="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..x.eid] or 'false')
         ..'" data-nextid="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..y.eid] or 'false')
-        ..'" data-start="'..x_startTime*1000
-        ..'" data-end="'..x_endTime*1000
+        ..'" data-startTime="'..x_startTime*1000
+        ..'" data-endTime="'..x_endTime*1000
         ..'" data-duration="'..(x.durationSecond or y_startTime-x_endTime)
-        ..'" data-ctok="'..CsrfToken('tvcast')
 
         ..'">\n'
 
         ..'<span class="mdl-list__item-primary-content">'
-        ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(logo and ' style="background-image:url('..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name
+        ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(Logo(v.onid,v.sid) and ' style="background-image:url('..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name
         ..'<span class="mdl-list__item-text-body">\n'
         ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', x_startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', x_endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
         ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', y_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(y_endTime and os.date('%H:%M', y_endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'

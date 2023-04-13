@@ -409,6 +409,10 @@ header {
   @media (max-width: 479px) {
     .widemenu {
       width: 233px; } }
+#nosuspend.y #y, #nosuspend.n #n {
+  display: inline; }
+#nosuspend.n #y, #nosuspend.y #n {
+  display: none; }
 
 .mdl-menu__item .mdl-textfield {
   width: auto;
@@ -1598,11 +1602,19 @@ h4 .mdl-button--icon {
   #popup.is-visible #playerUI.is-visible > div {
     opacity: 1;
     pointer-events: auto; }
-
-#movie-theater-contner #defult,
-#movie-contner #theater,
-.is-small-screen .player-mode { 
-  display: none; }
+  #popup #stop,
+  #popup .player-mode,
+  #movie .player-mode,
+  #movie #titlebar,
+  #movie #playprev,
+  #movie #playnext,
+  #tvcast #titlebar,
+  #tvcast #playprev,
+  #tvcast #playnext,
+  #movie-theater-contner #defult,
+  #movie-contner #theater,
+  .is-small-screen .player-mode { 
+    display: none; }
 
 #titlebar {
   top: 0;
@@ -1651,9 +1663,10 @@ h4 .mdl-button--icon {
     margin-right: 8px; }
   #control p {
     margin: 0; }
+  #control .mdl-menu {
+    min-width: auto; }
   #control .mdl-menu__item {
-    color: #EEEEEE; }
-  #control .mdl-menu__item {
+    color: #EEEEEE;
     height: 33px;
     line-height: 33px; }
     #control .mdl-menu__item:not([disabled]):hover,
@@ -1669,8 +1682,8 @@ h4 .mdl-button--icon {
       background: rgba(255,255,255,0.3); }
     #control .mdl-menu__outline {
       background: rgba(28,28,28,0.9); }
-    .quality,.audio,.rate {
-      display: none; }
+    input.quality,input.audio,input.rate {
+      display: none!important; }
     .quality:not(:checked)+label,.audio:not(:checked)+label,.rate:not(:checked)+label {
       color:rgba(0,0,0,0) }
       #settings+div~div {
@@ -1718,37 +1731,48 @@ h4 .mdl-button--icon {
   opacity: .5;
   cursor: default; }
 
-.ext .mdl-menu {
-  min-width: auto; }
-.ext .mdl-menu__item {
+.ext.mdl-menu__item,
+.ext.mdl-menu__item button {
   padding: 0px;
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex;
   width: 100%;
   align-items: center; }
-  .ext .mdl-menu__item > * {
+  .ext.mdl-menu__item button {
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: inherit }
+  .ext.mdl-menu__item .mdl-layout-spacer {
     padding: 0 16px; }
-  .ext #setting+div~div .mdl-menu__item > label {
+  .ext.mdl-menu__item .mdl-layout-spacer+* {
+    padding-right: 16px; }
+  #control .ext.mdl-menu__item .mdl-layout-spacer,
+  #control .ext.mdl-menu__item .mdl-layout-spacer+* {
+    padding-right: 8px; }
+  #settings+div~div .ext.mdl-menu__item > label {
     padding: 0 10px;
     font-size: 13px; }
-  .ext .mdl-menu__item > label:last-child {
+  .ext.mdl-menu__item > label:last-child {
     padding: 0 20px 0 0; }
-  .ext .mdl-menu__item > label .material-icons {
+  .ext.mdl-menu__item > label .material-icons {
     font-size: 16px;
     line-height: 2; }
-  .ext .mdl-menu__item .mdl-switch.is-upgraded {
+  .ext.mdl-menu__item .mdl-switch.is-upgraded {
     padding-left: 28px;
     padding-right: 8px; }
   .ext .mdl-switch:not(.is-checked) .mdl-switch__thumb {
     background: #E1E1E1; }
-  .ext .mdl-menu__item .material-icons {
+  .ext.mdl-menu__item .material-icons {
     margin-right: 0; }
-  .ext .mdl-menu__item label {
+  .ext.mdl-menu__item label {
     cursor: pointer; }
-  .ext .mdl-menu__item[disabled] label {
+  .ext.mdl-menu__item[disabled] label {
     cursor: auto; }
-    .menu+div {
+    .submenu .mdl-menu__container {
       margin-right: 50px; }
 
 #seek-container {
@@ -1756,7 +1780,7 @@ h4 .mdl-button--icon {
   #seek-container .mdl-progress {
     width: calc(100% - 24px);
     margin: 0 12px; }
-  #playerUI.sp #seek-container .mdl-progress {
+  #player.is-small #seek-container .mdl-progress {
     height: 2px; }
   .progress.mdl-slider__container {
      align-items: center; }
@@ -1775,7 +1799,7 @@ h4 .mdl-button--icon {
   #seek-container .mdl-slider__background-flex {
     width: calc(100% - 24px);
     margin: 0 12px; }
-  #playerUI:not(.sp) #seek-container .mdl-slider__background-flex {
+  #player:not(.is-small) #seek-container .mdl-slider__background-flex {
     height: 5px;
     -webkit-transform: translate(0, -2.5px);
             transform: translate(0, -2.5px); }

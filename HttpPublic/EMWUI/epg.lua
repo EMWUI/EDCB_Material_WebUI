@@ -83,8 +83,9 @@ function epgjs(baseTime,option,lastTime)
     ..';var lastTime'..(lastTime and '='..lastTime or '')
     ..';var titleControl='..titleControl
     ..';var marginmin='..MARGIN_MIN
-    ..';var hover='..(hover and 'true;' or 'false;')
-    ..(option or '')
+    ..';var hover='..(hover and 'true' or 'false')
+    ..';var ctok=\''..CsrfToken('setreserve')
+    ..'\';'..(option or '')
     ..'</script>\n<script src="js/tvguide.js"></script>\n'
 end
 
@@ -110,17 +111,22 @@ function epgcell(v, op, id ,custom)
     ..'<div class="sub_cont">'..(custom and '<img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'">' or '')..'<div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 
     ..'<div class="main_cont"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-start="'..startTime..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
+    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..(startTime*1000)..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
 
     ..'<p class="tool mdl-typography--caption-color-contrast">'
     ..'<a class="mdl-button mdl-button--raised'
       ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime+timezone or 'eid="'..v.eid)
                     or '" href="'..op.url)..'">番組詳細</a>'
-    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-ctok="'..CsrfToken('setreserve')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
+    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
       ..(r and '" data-toggle="1" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
             or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
     ..'<a class="autoepg mdl-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
     ..'</p>'
 
     ..'</div></div></div></div></div>\n'
+end
+
+function epgMenuTemplate()
+  return  '<li class="api_tools mdl-menu__item" data-epgcap="y" data-ctok="'..CsrfToken('common')..'">EPG取得</li>\n'
+    ..'<li class="api_tools mdl-menu__item" data-epgreload="y" data-ctok="'..CsrfToken('common')..'">EPG再読み込み</li>\n'
 end

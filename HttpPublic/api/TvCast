@@ -18,7 +18,6 @@ XPREPARE=0
 FIND_BY_OPEN=false
 
 -- コマンドはEDCBのToolsフォルダにあるものを優先する
-ini='Setting\\HttpPublic.ini'
 tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
 ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',tools..'ffmpeg.exe',ini)
 tsreadex=edcb.GetPrivateProfile('SET','tsreadex',tools..'tsreadex.exe',ini)
