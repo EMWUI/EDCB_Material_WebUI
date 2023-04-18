@@ -50,7 +50,7 @@ if true then
   dual=dual==1 and ' -dual_mono_mode main' or dual==2 and ' -dual_mono_mode sub' or ''
   filter=GetVarInt(post,'cinema')==1 and XFILTER_CINEMA or XFILTER
   n=GetVarInt(post,'n') or 0
-  onid,tsid,sid=GetVarInt(post,'onid'),GetVarInt(post,'tsid'),GetVarInt(post,'sid')
+  onid,tsid,sid=GetVarServiceID(post,'id')
   if not onid or not tsid or not sid then
     onid,tsid,sid=nil,nil,nil
   end

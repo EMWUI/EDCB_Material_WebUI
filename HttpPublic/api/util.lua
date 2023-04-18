@@ -480,10 +480,14 @@ end
 --クエリパラメータからサービスのIDを取得する
 function GetVarServiceID(qs,n,occ,leextra)
   local onid,tsid,sid,x=(mg.get_var(qs,n,occ) or ''):match('^([0-9]+)%-([0-9]+)%-([0-9]+)'..(leextra and '%-([0-9]+)' or '')..'$')
-  onid=tonumber(onid)
-  tsid=tonumber(tsid)
-  sid=tonumber(sid)
-  x=tonumber(x)
+  if onid then
+    onid=tonumber(onid)
+    tsid=tonumber(tsid)
+    sid=tonumber(sid)
+    x=tonumber(x)
+  else
+    onid,tsid,sid,x=GetVarInt(qs,'onid'), GetVarInt(qs,'tsid'), GetVarInt(qs,'sid'), (leextra and (GetVarInt(qs,'eid') or GetVarInt(qs,'startTime')) or nil)
+  end
   if onid and onid==math.floor(onid) and onid>=0 and onid<=65535 and
      tsid and tsid==math.floor(tsid) and tsid>=0 and tsid<=65535 and
      sid and sid==math.floor(sid) and sid>=0 and sid<=65535 then

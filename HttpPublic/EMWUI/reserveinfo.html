@@ -12,13 +12,12 @@ if r then
   recording=edcb.GetRecFilePath(r.reserveID)
 
   ct.js=(recording and '<script src="js/player.js"></script>\n'or '')
+    ..'<script>$(function(){createSearchLinks(document);});</script>\n'
 
   ct.progres=r
 
   ct.macro=true
-
-  --検索等のリンクを生成
-  ct.js=ct.js..'<script>$(function(){createSearchLinks(document);});</script>\n'
+  ct.searchlinks=true
 
   epgInfo, audio=ConvertEpgInfoText2(r.onid, r.tsid, r.sid, r.eid)
   ct.main='<main class="tab-swipe mdl-layout__content">\n'

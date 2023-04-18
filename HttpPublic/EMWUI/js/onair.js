@@ -84,7 +84,7 @@ function updateEpgInfo(d, play){
 
 $(function(){
 	setInterval(function(){
-		$('.onair:visible').each(function(){
+		$('.onair:visible,.onair.is_cast').each(function(){
 			var d = $(this).data();
 			var progress = $(this).children('.mdl-progress');
 			if (d.endtime < Date.now()){

@@ -1,12 +1,18 @@
 ﻿-- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-onid=GetVarInt(mg.request_info.query_string,'onid') or 0
-tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
-sid=GetVarInt(mg.request_info.query_string,'sid') or 0
-eid=GetVarInt(mg.request_info.query_string,'eid') or 0
-startTime=GetVarInt(mg.request_info.query_string,'startTime') or 0
+onid,tsid,sid,eid=GetVarEventID(mg.request_info.query_string,'id')
 presetID=GetVarInt(mg.request_info.query_string,'presetID') or 65535
+
+if eid>0 then
+  epgInfo, audio, End = ConvertEpgInfoText2(onid, tsid, sid, eid)
+else
+  onid,tsid,sid,startTime=GetVarPastEventID(mg.request_info.query_string,'id')
+  et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
+  if et and #et~=0 then
+    epgInfo, audio, End = ConvertEpgInfoText2(et[1])
+  end
+end
 
 r=nil
 edcb.htmlEscape=15
@@ -21,15 +27,10 @@ if not r and presetID==65535 then
   presetID=0
 end
 
-ct={title='番組情報'}
-
-et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
-
-if et and #et~=0 then
-  epgInfo, audio, End = ConvertEpgInfoText2(et[1])
-else
-  epgInfo, audio, End = ConvertEpgInfoText2(onid, tsid, sid, eid)
-end
+ct={
+  title='番組情報',
+  searchlinks=true
+}
 
 --検索等のリンクを生成
 ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
@@ -37,9 +38,9 @@ ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
-  ..(#epgInfo>0 and epgInfo or '')
+  ..(epgInfo or '')
 
-if not End then
+if not End and epgInfo then
 
   ct.js=ct.js..(recording and '<script src="js/player.js"></script>\n' or '')
 

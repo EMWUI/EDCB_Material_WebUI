@@ -92,7 +92,8 @@ ct={
   js=epgjs(pageTime-timezone,(NOW and '$(function(){$(".station>div>div:first-child").each(function(){'..(date==0 and 'end($(this), true);});jump();' or 'end($(this));});')..'setInterval("line()", 1000);});' or ''),(NOW and pageTime+(interval*3600)-timezone or false)),
   menu=epgMenuTemplate(true),
   progres=true,
-  macro=sidePanel
+  macro=sidePanel,
+  searchlinks=true
 }
 
 ct.subheader='<div id="subheader">\n'

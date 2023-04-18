@@ -56,7 +56,7 @@ function template(temp)
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
 ..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
-..'<script>var path=\''..path..'\';var root=\''..PathToRoot()..(temp.calendar and '\';var calendar_op=\''..temp.calendar or '')..'\';</script>\n'
+..'<script>var path=\''..path..'\';var root=\''..PathToRoot()..(temp.searchlinks and '\';var calendar_op=\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',ini) or '')..'\';</script>\n'
 ..(temp.js or '')
 ..'<script src="'..path..'js/common.js"></script>\n'
 
@@ -858,11 +858,10 @@ end
 --検索等のリンクを派生
 calendar_details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
 SearchConverter=function(v, service_name)
-  local title=v.shortInfo and v.shortInfo.event_name:gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '') or ''
+  local title=(v.shortInfo and v.shortInfo.event_name or v.title or ''):gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '')
   local startTime=os.time(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
-  if not ct.calendar then ct.calendar='&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',ini) end
   --クライアントサイドで使う情報を置いておく
   return '<span class="search-links hidden" data-title="'..title
     ..'" data-service="'..service_name

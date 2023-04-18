@@ -6,9 +6,7 @@ hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
 --hour=-1で現在時刻-MARGIN_HOUR時間を基準
 interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
 
-onid=GetVarInt(mg.request_info.query_string,'onid') or 0
-tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
-sid=GetVarInt(mg.request_info.query_string,'sid') or 0
+onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
 
 baseDate=math.floor((now+timezone-4*3600)/24/3600)
 Hour=hour<0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
@@ -44,7 +42,8 @@ ct={
   js=epgjs(Hour,'$(function(){end($($(".now")));setInterval("line()", 1000);});'),
   menu=epgMenuTemplate(true),
   progres=true,
-  macro=sidePanel
+  macro=sidePanel,
+  searchlinks=true
 }
 
 ct.subheader='<div id="subheader">\n'
