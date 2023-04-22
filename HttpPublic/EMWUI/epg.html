@@ -106,13 +106,13 @@ ct.subheader='<div id="subheader">\n'
 
   ..'<div id="onid" class="pulldown dividers navigation__item mdl-color-text--primary">'..(NetworkIndex()[tab+1] or '')..'</div>\n'
 
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'
+main={'<div class="menu"><ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="onid">\n'}  --メニューはサブヘッダーに入れたらダメゼッタイ
 for i,v in ipairs(NetworkList) do
   if v then
-    ct.subheader=ct.subheader..'<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..NetworkIndex()[i]..'</a></li>\n'
+    table.insert(main, '<li><a class="mdl-menu__item'..(tab==i-1 and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({tab=i-1,chpage=0}))..'">'..NetworkIndex()[i]..'</a></li>\n')
   end
 end
-ct.subheader=ct.subheader..'</ul>'
+table.insert(main, '</ul>')
 
 if 0<CH_COUNT then
   n=0
@@ -125,11 +125,11 @@ if 0<CH_COUNT then
   if CH_COUNT<n then
     ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
     
-      ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n'
+    table.insert(main, '<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n')
     for i=0, math.ceil(n/CH_COUNT-1) do
-      ct.subheader=ct.subheader..'<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n'
+      table.insert(main, '<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n')
     end
-    ct.subheader=ct.subheader..'</ul>\n'
+    table.insert(main, '</ul>\n')
   end
 end
 
@@ -149,7 +149,7 @@ if minTime then
     ..'<div id="date" class="pulldown navigation__item mdl-color-text--primary">'..Date.month..'/'..Date.day..'('..({'日','月','火','水','木','金','土'})[Date.wday]..')'..'</div>\n'
     ..'<div class="dividers navigation__item navigation__icon left_no_pad"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '..next..'><i class="material-icons">chevron_right</i></a></div>\n'
 
-    ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
+  table.insert(main, '<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="date">\n'
     ..(UserAgentSP() and '<li><div id ="forSP" class="mdl-menu__item">日付指定</div></li>\n<li style="opacity:0;position:absolute;">' or '<li>')  --無理やりだがスマホで動くように応急処置
     ..'<div class="mdl-menu__item"><form id="date_input" action="epg.html">'
     ..(tab~=0 and '<input type="hidden" name="tab" value="'..tab..'">' or '')
@@ -158,22 +158,20 @@ if minTime then
     ..(pageIndex~=0 and '<input type="hidden" name="page" value="'..pageIndex..'">' or '')
     ..(CH_COUNT~=DEF_CH_COUNT and '<input type="hidden" name="chcount" value="'..CH_COUNT..'">' or '')
     ..(interval~=DEF_interval and '<input type="hidden" name="interval" value="'..interval..'">' or '')
-    ..'</form></div></li>\n'
+    ..'</form></div></li>\n')
 
   minTime=math.min(math.max(minTime, minTime_-1*24*3600)+timezone, math.max(minTime+timezone, pageTime-2*24*3600))
   maxTime=math.min(maxTime+timezone, minTime+9*24*3600) -- 10日間
   for i=math.floor((minTime-4*3600)/24/3600),math.floor((maxTime-4*3600)/24/3600) do
     d=os.date('!*t', i*24*3600)
-    ct.subheader=ct.subheader..'<li><a class="mdl-menu__item'..(i*24*3600<minTime_ and ' past' or '')
+    table.insert(main, '<li><a class="mdl-menu__item'..(i*24*3600<minTime_ and ' past' or '')
       ..(i-baseDate==date and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({date=i-baseDate,hour=4}))
-      ..'">'..d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'..'</a></li>\n'
+      ..'">'..d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'..'</a></li>\n')
   end
 
-  ct.subheader=ct.subheader..'</ul>\n'
+  ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-    ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
-
-    ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  table.insert(main, '</ul>\n<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 
   n=interval>=25 and Hour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
@@ -181,13 +179,13 @@ if minTime then
     if j<4 then j=j+24 end
     if Hour<=i and i<Hour+interval then
       d=os.date('!*t', (pageDate*24+i)*3600)
-      ct.subheader=ct.subheader..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n'
+      table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n')
     else
-      ct.subheader=ct.subheader..'<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n'
+      table.insert(main, '<li><a class="mdl-menu__item" href="epg.html'..hrefGene({hour=i})..'">'..j..'時</a></li>\n')
     end
   end
 
-  ct.subheader=ct.subheader..'</ul>\n'
+  table.insert(main, '</ul>\n')
 end
 
 ct.subheader=ct.subheader
@@ -304,7 +302,7 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 
 
-ct.main='<main class="sidePanel-container mdl-layout__content">\n'
+table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
@@ -312,23 +310,22 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'..table.concat(Head)..'</div>\n'
 
   ..'<div id="tv-guide-main">\n'
-  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n')
   for i=Hour,Hour+interval-1 do
     j=i%24
     d=os.date('!*t', ((pageDate*24)+i)*3600)
-    ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n'
+    table.insert(main, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
   end
-ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n'
+ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
+  ..'</div>\n'
 
-table.insert(ctt, '</div>\n</div></div>\n'
+  ..table.concat(ctt)
+  ..'</div>\n</div></div>\n'
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?epg=&amp;tab='..tab..'&amp;date='..date..(hour>=0 and '&amp;hour='..hour or '')..(interval~=25 and '&amp;interval='..interval or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT~=DEF_CH_COUNT and '&amp;chcount='..CH_COUNT or '')..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
-  ..'</form>\n')
-
-ctt[1]=ct.main..ctt[1]
-ct.main=table.concat(ctt)
+  ..'</form>\n'
 
 ct=template(ct)
 

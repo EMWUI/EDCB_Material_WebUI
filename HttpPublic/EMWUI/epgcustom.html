@@ -165,30 +165,30 @@ ct.subheader='<div id="subheader">\n'
   ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
 
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="preset">\n'
+main={'<div class="menu"><ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="preset">\n'}
 for i,v in ipairs(presetList) do
-  ct.subheader=ct.subheader..'<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..EdcbHtmlEscape(v)..'</a></li>\n'
+  table.insert(main, '<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..EdcbHtmlEscape(v)..'</a></li>\n')
 end
-ct.subheader=ct.subheader..'</ul>'
+table.insert(main, '</ul>'
 
-  ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 if Hour<4 then
-  ct.subheader=ct.subheader..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
+  table.insert(main, '<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
     ..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
-    ..'<li class="scroller mdl-menu__item" data-scroll="0">'..(Hour+24)..'時</li>\n'
+    ..'<li class="scroller mdl-menu__item" data-scroll="0">'..(Hour+24)..'時</li>\n')
 end
 for i=4,Hour+interval,8 do
   j=i%24
   if i<=Hour-8  then
-      ct.subheader=ct.subheader..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
+      table.insert(main, '<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n')
   elseif i<Hour then
-      ct.subheader=ct.subheader..'<li><a class="scroller mdl-menu__item" href="#H'..Hour..'">'..Hour..'時</a></li>\n'
+      table.insert(main, '<li><a class="scroller mdl-menu__item" href="#H'..Hour..'">'..Hour..'時</a></li>\n')
   else
     d=os.date('!*t', ((baseDate*24)+i)*3600)
-    ct.subheader=ct.subheader..'<li><a class="scroller mdl-menu__item" href="#H'..i..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</a></li>\n'
+    table.insert(main, '<li><a class="scroller mdl-menu__item" href="#H'..i..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</a></li>\n')
   end
 end
-ct.subheader=ct.subheader..'</ul>\n'
+table.insert(main, '</ul>\n')
 
 ctt={'<div id="tv-guide-container"><div id="tv-guide">'
 
@@ -234,19 +234,16 @@ for i,v in ipairs(st) do
   table.insert(ctt, '</div></div>\n')
 end
 
-ct.main='<main class="sidePanel-container mdl-layout__content">\n'
-
+ct.main=table.concat(main)..'</div><main class="sidePanel-container mdl-layout__content">\n'
   ..(sidePanel and sidePanelTemplate() or '')
 
-table.insert(ctt, '</div>\n</div></div>\n'
+  ..table.concat(ctt)
+  ..'</div>\n</div></div>\n'
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
-  ..'</form>\n')
-
-ctt[1]=ct.main..ctt[1]
-ct.main=table.concat(ctt)
+  ..'</form>\n'
 
 ct=template(ct)
 

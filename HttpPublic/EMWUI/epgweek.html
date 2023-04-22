@@ -57,8 +57,8 @@ ct.subheader='<div id="subheader">\n'
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
   ..'<div id="select_service" class="pulldown dividers navigation__item mdl-color-text--primary">'..(st and st.service_name or '')..'</div>\n'
 
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
-  ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'
+main={'<div class="menu"><ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select">\n'
+  ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'}
 
 NetworkList={}
 for i,v in ipairs(NetworkIndex()) do
@@ -73,29 +73,29 @@ end
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.subheader=ct.subheader..'<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n'
+    table.insert(main, '<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n')
     table.insert(ctt, table.concat(v))
   end
 end
-ct.subheader=ct.subheader..'</ul>\n'
+table.insert(main, '</ul>\n'
 
-  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'..table.concat(ctt)..'</ul>\n'
+  ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'..table.concat(ctt)..'</ul>\n')
 
 if st then
   ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
-    ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n'
+  table.insert(main, '<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 
   n=interval>=25 and Hour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
     j=(interval==25 and Hour or 4)+i
     if Hour<=i and i<Hour+interval then
-      ct.subheader=ct.subheader..'<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     else
-      ct.subheader=ct.subheader..'<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n'
+      table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     end
   end
-  ct.subheader=ct.subheader..'</ul>\n'
+  table.insert(main, '</ul>\n')
 end
 
 ct.subheader=ct.subheader
@@ -153,36 +153,35 @@ for i=0,7 do
   table.insert(ctt, '</div></div>\n')
 end
 
-ct.main='<main class="sidePanel-container mdl-layout__content">\n'
+table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">\n'
 
   ..(sidePanel and sidePanelTemplate() or '')
 
   ..'<div id="tv-guide-container"><div id="tv-guide">'
-  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n'
+  ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n')
   for i=0,7 do
     d=os.date('!*t', ((i+baseDate)*24)*3600)
     d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
-    ct.main=ct.main..'<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n'
+    table.insert(main, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')
   end
-ct.main=ct.main..'</div>\n'
+table.insert(main, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
-  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'
+  ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n')
   for i=Hour,Hour+interval-1 do
     j=i%24
-    ct.main=ct.main..'<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>'
+    table.insert(main, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
   end
-ct.main=ct.main..(NOW and '<div id="line"><span></span></div>' or '')..'</div>\n'
+ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
+  ..'</div>\n'
 
-table.insert(ctt, '</div>\n</div></div>\n'
+  ..table.concat(ctt)
+  ..'</div>\n</div></div>\n'
   ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
-  ..'</form>\n')
-
-ctt[1]=ct.main..ctt[1]
-ct.main=table.concat(ctt)
+  ..'</form>\n'
 
 ct=template(ct)
 

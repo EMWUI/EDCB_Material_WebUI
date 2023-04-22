@@ -796,7 +796,7 @@ function player(video, audio, live)
   local s=[=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
 <div id="playerUI" class="is-visible">
-<div id="center"></div>
+<div id="center" class="hidden"></div>
 <div id="titlebar" class="bar"></div>
 <div></div>
 <div id="control" class="bar">

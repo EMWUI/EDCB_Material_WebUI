@@ -371,6 +371,7 @@ $(function(){
 		});
 	}else{
 		$('#ctl-button .ctl-button').prependTo('#center');
+		$('#center').removeClass('hidden');
 		$('#volume-container').addClass('hidden');
 		$('#player').click(function(){
 			$('#playerUI').addClass('is-visible');
