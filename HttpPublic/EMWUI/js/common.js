@@ -1170,18 +1170,20 @@ $(function(){
 	});
 	//スタンバイ
 	var suspend = document.querySelector('dialog#dialog');
-	if (!suspend.showModal) dialogPolyfill.registerDialog(suspend);
-	$('#suspend').click(function(){
-		var self = $(this);
-		$('#dialog .mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
-		$('#dialog .ok').unbind('click').click(function(){
-			suspend.close();
-			$.post(root + 'api/Common', self.data(), function(result, textStatus, xhr){
-				Snackbar.MaterialSnackbar.showSnackbar({message: $(xhr.responseXML).find('info').text()});
+	if (suspend){
+		if (!suspend.showModal) dialogPolyfill.registerDialog(suspend);
+		$('#suspend').click(function(){
+			var self = $(this);
+			$('#dialog .mdl-dialog__content').html('<span>' + self.text() + 'に移行します');
+			$('#dialog .ok').unbind('click').click(function(){
+				suspend.close();
+				$.post(root + 'api/Common', self.data(), function(result, textStatus, xhr){
+					Snackbar.MaterialSnackbar.showSnackbar({message: $(xhr.responseXML).find('info').text()});
+				});
 			});
+		    suspend.showModal();
 		});
-	    suspend.showModal();
-	});
+	}
 
 	//検索条件
 	//詳細検索
