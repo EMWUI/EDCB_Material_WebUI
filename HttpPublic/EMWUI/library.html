@@ -5,8 +5,7 @@ ct=template({
   title='ホーム',
   video=true,
   Scrollable=true,
-  js='<script src="js/player.js"></script>\n'
-    ..'<script src="js/library.js"></script>\n',
+  js='<script src="js/library.js"></script>\n',
 
   subheader=[=[
 <div class="path mdl-layout__tab-bar">
@@ -26,7 +25,8 @@ ct=template({
 <li id="sort_date" class="mdl-menu__item" data-val="date"><i class="material-icons">access_time</i>日付順</li>
 <li id="sort" class="mdl-menu__item mdl-menu__item--full-bleed-divider"><i class="material-icons">sort</i><span id="asc">昇順</span><span id="des">降順</span></li>
 <li class="mdl-menu__item" onclick="refreshMovieList();"><i class="material-icons">refresh</i>ライブラリ更新</li>
-<li class="thumbs mdl-menu__item" data-thumbs="" data-ctok="]=]..CsrfToken('library')..[=["><i class="material-icons">photo</i>サムネ作成</li>
+<li class="thumbs mdl-menu__item mdl-menu__item--full-bleed-divider" data-thumbs="" data-ctok="]=]..CsrfToken('library')..[=["><i class="material-icons">photo</i>サムネ作成</li>
+<li class="ext mdl-menu__item"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>
 ]=],
 
   main='<main class="lib-swipe mdl-layout__content">\n<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>\n'

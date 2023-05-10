@@ -32,35 +32,32 @@
 function audio(audio, update){
 	if (audio.length >= 2){
 		//多重音声
-		$('._audio,.multi').attr('disabled', false).show();
-		$('.dual').attr('disabled', true).hide();
-		$('#multi1~label:last').text(audio[0].text=='' ? '主音声' : audio[0].text);
-		$('#multi2~label:last').text(audio[1].text=='' ? '副音声' : audio[1].text);
+		$('.audio').attr('disabled', false);
+		$('#audio1~label:last').text(audio[0].text=='' ? '主音声' : audio[0].text);
+		$('#audio2~label:last').text(audio[1].text=='' ? '副音声' : audio[1].text);
 		if (!update){
 			if (audio[0].main_component){
-				$('#multi1').prop('checked', true);
+				$('#audio1').prop('checked', true);
 			}else{
-				$('#multi2').prop('checked', true);
+				$('#audio2').prop('checked', true);
 			}
 		}
 	}else if (audio.length > 0 && audio[0].component_type == 2){
 		//デュアルモノ
-		$('._audio,.dual').attr('disabled', false).show();
-		$('.multi').attr('disabled', true).hide();
+		$('.audio').attr('disabled', false);
 		var text = audio[0].text.split('\n');
 		if (text.length<2) text = ['日本語','英語'];
-		$('#dual1~label:last').text('[二] '+ text[0]);
-		$('#dual2~label:last').text('[二] '+ text[1]);
-		$('#RAW~label:last').text('[二] '+ text[0] +'+'+ text[1]);
+		$('#audio1~label:last').text('[二] '+ text[0]);
+		$('#audio2~label:last').text('[二] '+ text[1]);
 		if (!update){
 			if (audio[0].main_component){
-				$('#dual1').prop('checked', true);
+				$('#audio1').prop('checked', true);
 			}else{
-				$('#dual2').prop('checked', true);
+				$('#audio2').prop('checked', true);
 			}
 		}
 	}else{
-		$('._audio,.multi,.dual').attr('disabled', true);
+		$('.audio').attr('disabled', true);
 	}
 }
 
@@ -115,8 +112,6 @@ $(function(){
 			$('#sidePanel, .open').removeClass('is-visible open');
 		}
 	});
-	
-	$('#video').data('keepdisk', true).data('cast', true);
 
 	var apk, Magnezio;
 	if (navigator.userAgent.indexOf('Android') > 0){
@@ -155,18 +150,18 @@ $(function(){
 
 	$('#ServiceList .onair').click(function(){
 		if (!$(this).hasClass('is_cast')){
-			updateEpgInfo($(this).data(), 2);
 			$('.is_cast').removeClass('is_cast');
 			$(this).addClass('is_cast');
+			updateEpgInfo($(this).data(), 2);
 			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
 		}
 	});
 	$('.cast').click(function(){
 		var obj = $(this).parents('li').addClass('is_cast');
-		var data = obj.data();
-		if (data.eid!=0){
+		var d = obj.data();
+		if (d.eid!=0){
 			if (Magnezio){
-				$.get(root + 'api/TvCast', {mode: 1, ctok: ctok, onid: data.onid, tsid: data.tsid, sid: data.sid}).done(function(xhr){
+				$.get(root + 'api/TvCast', {mode: 1, ctok: ctok, onid: d.onid, tsid: d.tsid, sid: d.sid}).done(function(xhr){
 					if ($(xhr).find('success').length > 0){
 						location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 					}else{
@@ -174,27 +169,37 @@ $(function(){
 					}
 				});
 			}else if (!apk && !$('#open_popup').prop('checked')){
-				location.href = 'tvcast.html?onid='+ data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid;
+				location.href = 'tvcast.html?onid='+ d.onid +'&tsid='+ d.tsid +'&sid='+ d.sid;
 			}else{
-				if (data.audio){
+				function open(d){
 					if (apk){
-						location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
+						showSpinner(true);
+						Snackbar.MaterialSnackbar.showSnackbar({message: '準備中'});
+						var src = root + 'api/view?n=0&id=' +d.onid +'-'+ d.tsid +'-'+ d.sid +'&ctok=' +ctok +'&hls=' +(1+d.onid+d.tsid+d.sid) +hls4;
+
+						src += '&option=' + $('[name=quality]:checked').val();
+						src += $('#audio').attr('disabled') ? '' : '&audio2=' + $('[name=audio]:checked').val();
+						src += $('#cinema').prop('checked') ? '&cinema=1' : '';
+						waitForHlsStart(src,1000,2000,function(){
+							showSpinner();
+							Snackbar.MaterialSnackbar.showSnackbar({message: 'エラー'});
+						},function(src){
+							showSpinner();
+							location.href = 'intent:' + location.origin + src.replace(root, '\/')+'#Intent;type=video/*;end;';
+						});
 					}else{
 						$('#popup,#playerUI').addClass('is-visible');
-						audio(data.audio);
+						audio(d.audio);
 						loadMovie(obj);
 					}
+				}
+				if (d.audio){
+					open(d);
 				}else{
-					$.get(root + 'api/EnumEventInfo', {basic: 0, onid: data.onid, tsid: data.tsid, sid: data.sid, eid: data.eid}).done(function(xhr){
+					$.get(root + 'api/EnumEventInfo', {basic: 0, onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid}).done(function(xhr){
 						if ($(xhr).find('eventinfo').length > 0){
 							obj.data( ConvertEpgInfo( $(xhr).find('eventinfo').first() ) );
-							if (apk){
-								location.href = 'intent:' + location.origin + '/api/TvCast?ctok=' + ctok + '&onid=' + data.onid +'&tsid='+ data.tsid +'&sid='+ data.sid + (localStorage.getItem('quality') ? '&quality=' + localStorage.getItem('quality') : '') + (data.audio.length >= 2 ? '&audio=0' : (data.audio[0].component_type == 2 ? '&audio=10' : '')) + '#Intent;type=video/*;end;'
-							}else{
-								$('#popup,#playerUI').addClass('is-visible');
-								audio(data.audio);
-								loadMovie(obj);
-							}
+							open(d);
 						}
 					});
 				}
@@ -213,18 +218,9 @@ $(function(){
 	$('#playnext').click(function(){
 		if (!$(this).hasClass('is-disabled')) $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click();
 	});
-	$('#defult').click(function(){
-		theater = true;
-		$('#player').prependTo($('#movie-theater-contner'));
-	});
-	$('#theater').click(function(){
-		theater = false;
-		$('#player').prependTo($('#movie-contner'));
-	});
 
 	if($('.onair.is_cast').length > 0){
-		var data = $('.onair.is_cast').data();
-		updateEpgInfo(data, 2);
+		updateEpgInfo($('.onair.is_cast').data(), 2);
 	}
 	$('.toggle').click(function(){
 		var target = $(this).children();
@@ -242,6 +238,11 @@ $(function(){
 		}else{
 			$('.subCH').addClass('hidden');
 		}
+	});
+
+	$('#forced').click(function(){
+		$.post(root + 'api/view', {ctok: ctok, n: 0, id: '1-1-0'});
+		$('#stop').click();
 	});
 });
 

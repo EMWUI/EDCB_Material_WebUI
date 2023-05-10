@@ -1,34 +1,29 @@
 EDCB Material WebUI
 ===================
 
-**EDCBのWebUIをMaterial Design Lite使いマテリアルデザインに沿うよう表示します**  
-予約の追加確認、番組表の表示などの基本的な機能ほかリモート視聴、ファイル再生などができます  
-また[Legacy WebUI](https://github.com/xtne6f/EDCB/tree/work-plus-s/ini/HttpPublic/legacy)をベースとして作成しています  
-おかげさまでド素人にも作成することができましたxtne6f氏に感謝します
+**EDCBのWebUIをMaterial Design Lite使いマテリアルデザインに沿うように表示できます**  
+
+予約の追加確認、番組表の表示などの基本的な機能の他、リモート視聴・ファイル再生、PWAなどに対応しています  
+
+[Legacy WebUI](https://github.com/xtne6f/EDCB/tree/work-plus-s/ini/HttpPublic/legacy)をベースとして、多くの部分を流用し、作成しています  
+`view` `mp4init.lua` `segment.lua` `comment` `legacy.script.js` は一部ファイル名を変えて流用、  
+`logo`をTvTestの設定の読み込み部分など、 `xcode`を公開フォルダ外のファイルにアクセスできるよう変更し使わせて頂きました  
+
+おかげさまでド素人にも作成することができました。**xtne6f氏に感謝します**
 
 
-### 使い方
-
-1. 必要なファイルのダウンロード (EDCBの[releases](https://github.com/xtne6f/EDCB/releases)と[ffmpeg.org](https://www.ffmpeg.org)から)
-   * CivetWebの組み込んだEDCB一式 ([xtne6f氏](https://github.com/xtne6f/EDCB)の[work-plus-s-180529](https://github.com/xtne6f/EDCB/releases/tag/work-plus-s-180529)以降)
-   * lua52.dll <sup><a id="note_ref-1" href="#note-1">^1</a></sup>
-   * ffmpeg.exe <sup><a id="note_ref-2" href="#note-2">^2</a></sup>
-   * ffprobe.exe <sup><a href="#note-2">^2</a></sup><sup><a id="note_ref-3" href="#note-3">^3</a></sup>
-   * tsreadex.exe <sup><a href="#note-2">^2</a></sup>
-   * asyncbuf.exe <sup><a href="#note-2">^2</a></sup>
-
-   <small><a id="note-1" href="#note_ref-1">^1:</a> WebUIの表示に使用
-   <a id="note-2" href="#note_ref-2">^2:</a> 再生機能に使用
-   <a id="note-3" href="#note_ref-3">^3:</a> ffmpegに同梱</small>
-1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/a25b9a98f12f5bc5fd912eb3a646949973ebbc01/Document/Readme_Mod.txt#L631-L743)をよく読む
+# 導入
+最低限の動作に必要なファイルは、EDCBの[releases](https://github.com/xtne6f/EDCB/releases)の`EDCB-work-plus-s-bin.zip`で入手可能です  
+リモート視聴を行う場合は、別途使用するトランスコーダが必要です  
+1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)をよく読む
 1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
    * `EnableHttpSrv=1`
    * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
-1. http://localhost:5510/ にアクセス、サーバー機能が有効になったことを確認  
-\# ここでうまく行かない場合はEDCBの設定の問題だと思われます
+1. http://localhost:5510/ などにアクセス、サーバー機能が有効になったことを確認  
+※ ここでうまく行かない場合はEDCBの設定の問題だと思われます
 1. ファイルを適切に設置 (下記の配置例を参照)  
-   \# 解凍したEDCB-work-plus-s-bin.zipにこのEMWUIを放り込めばとりあえず動くはず  
-   \# 配置例 (＊があるものは必ずその場所に配置)
+   `HttpPublic`と`Setting`をEDCBフォルダに入れる  
+   ※ 配置例 (＊があるものは必ずその場所に配置)
 
        EDCB/
         ├─ HttpPublic/
@@ -40,176 +35,143 @@ EDCB Material WebUI
         │   └─ video/ ＊
         ├─ Tools/
         │   ├─ ffmpeg.exe
-        │   ├─ ffprobe.exe
-        │   ├─ tsreadex.exe
-        │   └─ asyncbuf.exe
+        │   ├─ ffprobe.exe ＊
+        │   ├─ tsreadex.exe ＊
+        │   ├─ asyncbuf.exe ＊
+        │   ├─ tsmemseg.exe ＊
+        │   └─ psisiarc.exe ＊
+        ├─ Setting/
+        │   ├─ XCODE_OPTIONS.lua ＊
+        │   └─ HttpPublic.ini ＊
         ├─ EpgDataCap_Bon.exe ＊
         ├─ EpgTimerSrv.exe ＊
         ├─ EpgTimer.exe ＊
         ├─ lua52.dll ＊
         └─ SendTSTCP.dll ＊
 
-1. リモート視聴する場合EpgDataCap_Bon.exeのネットワーク設定でTCP送信に0.0.0.1 ポート:0を設定
-1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ
+1. リモート視聴する場合EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
+1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ  
 
-### 設定
-基本的な設定は[設定ページ](http://localhost:5510/EMWUI/setting)にて行ってください  
-必要に応じて設定ファイル(Setting\HttpPublic.ini)のSETに以下のキー[=デフォルト]を指定してください  
-HttpPublic.iniは設定ページにて設定を保存すると作成されます
+* 更新の際は`HttpPublic`のみ上書きしてください  
+* PWAを使用する場合は追加の設定や別途ファイルが必要です
 
-* `batPath[=EDCBのbatフォルダ]`  
-録画設定でこのフォルダの.batと.ps1が選択可能になります  
-\# 変更する場合必ずフルパスで設定  
-* `batFileTag=`  
-録画タグの候補を表示できるようになります  
-カンマ区切りで指定ください
+
+# 設定
+番組表などの基本的な設定は[設定ページ](http://localhost:5510/EMWUI/setting)で  
+配信機能の設定などは`HttpPublic.ini`と`XCODE_OPTIONS.lua`を編集してください  
 
 #### テーマカラー
-テーマカラーを変えることが出来ます  
-[MDLのcustomize](http://www.getmdl.io/customize/index.html)で色を選択cssをダウンロードしmaterial.min.cssを置き換える  
-もしくは設定ファイルでキーcssに下部に表示されてる\<LINK\>タグを追加することでできます  
-\# 例`css=<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue_grey-pink.min.css" />`  
-※一部(border周り)が置き換えただけでは対応できない部分があります(.mark)  
-気になる方はcssをuser.cssに記述してください  
-色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)から選択することをお勧めします  
-.markのborderはA700を指定しています
-
-#### 再生機能
-**ffmpeg.exe、ffprobe.exe、tsreadex.exeが必要です**  
-* `ffmpeg[=Tools\ffmpeg.exe]`  
-ffmpeg.exeのパス
-* `ffprobe[=Tools\ffprobe.exe]`  
-ffprobe.exeのパス
-* `tsreadex[=Tools\tsreadex.exe]`  
-tsreadex.exeのパス
-* `asyncbuf[=Tools\asyncbuf.exe]`  
-asyncbuf.exeのパス  
-\# 出力バッファの量(XBUF)を指定した場合に必要になります  
-\# 変換負荷や通信のむらを吸収します
-
-#### 画質設定(ffmpegオプション)
-以下のような設定を書き込むとデフォルトと以下で指定した設定を読み込めるようになります
-
-    [MOVIE]
-    HD=-vcodec libvpx -b 1800k -quality realtime -cpu-used 2 $FILTER -s 960x540 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-
-もしくは[MOVIE]に`画質名=ffmpegオプション`を[SET]のqualityに画質名をコンマ区切りで複数の設定を読み込むことができます  
-\# 例(オプションはものすごく適当です)
-
-    [SET]
-    quality=720p,480p,360p
-    [MOVIE]
-    720p=-vcodec libvpx -b:v 1800k -quality realtime -cpu-used 2 $FILTER -s 1280x720 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-    480p=-vcodec libvpx -b:v 1500k -quality realtime -cpu-used 2 $FILTER -s 720x480 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-    360p=-vcodec libvpx -b:v 1200k -quality realtime -cpu-used 2 $FILTER -s 640x360 -r 30000/1001 -acodec libvorbis -ab 128k -f webm -
-    NVENC=-vcodec h264_nvenc -profile:v main -level 31 -b:v 1408k -maxrate 8M -bufsize 8M -preset medium -g 120 $FILTER -s 1280x720 -acodec aac -ab 128k -f mp4 -movflags frag_keyframe+empty_moov -
-
-* **$FILTERはフィルタオプション(インタレ解除:`-vf yadif=0:-1:1` 逆テレシネ:`-vf pullup -r 24000/1001`)に置換します**
-* -iは指定する必要ありません
-* -fのオプションを必ず指定するようにしてください  
-mp4かどうか判定しています
-* リアルタイム変換と画質が両立するようにビットレート-bと計算量-cpu-usedを調整する
-* オプションにてQSVなども有効なようです
+[MDL](http://www.getmdl.io/customize/index.html)で選択したテーマカラーに変更することができます  
+選んだテーマカラーの`css`をダウンロードし`material.min.css`を置き換えるか、`HttpPublic.ini`の`cssキー`を編集することで変更できます  
+* 一部(border周り)が置き換えただけでは対応できない部分があります(`.mark`)  
+気になる方はcssを`user.css`に記述してください  
+* 色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)から選択することをお勧めします  
+`.mark`のborderはA700を指定しています
 
 
-#### ライブラリ
-録画保存フォルダのビデオファイル(ts,mp4,webm等)を表示・再生します  
-Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が  
+# PWA
+PWA（プログレッシブウェブアプリ）に対応しアプリとしてインストールすることができます  
+* SSL/TLSによる通信が必須となります
+* [*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)を参照してSSL/TLSを有効にしてください
+
+
+# 視聴機能
+Legacy WebUIの配信機能を移植し、以下の事が可能となりました  
+* HLSでの配信
+* web-bmlによるデータ放送の表示
+* aribb24.jsによる字幕表示
+* 実況の表示
+
+過去の機能と仕様などが変わり互換性はありませんので再度設定をしてください
+[EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください  
+
+### 注意
+* トランスコードオプションは`XCODE_OPTIONS.lua`を編集してください
+* リモコン、コメントボタンを長押しすると各データの常時取得が有効になります
+* **データ放送がリセットできない**ため、一度データ放送を読み込みチャンネルを変更すると、リモコンボタンは無効化されます  
+上記の理由から常時取得有効中でも、リモコンボタンを一度押すまでデータ放送は読み込まれません
+* .pscファイルによる表示は現在非対応としています（要望があったら対応するかもしれません）  
+* プレイヤーの速度設定はブラウザ側の機能を使用しています  
+トランスコードオプションの`filterFast`は、UIが未実装です
+
+## リモート視聴
+* **EpgDataCap_BonなどのTCP送信先にSrvPipeが追加されている必要があります**  
+* NetworkTVモードでEpgDataCap_Bonなどを起動しています  
+他にNetworkTVモードを使用している場合は注意してください  
+
+## ファイル再生
+* 開始時間を指定し、再度トランスコードすることでシークっぽい動作をしています
+* 録画結果ページでは録画結果(`GetRecFileInfo()`)からファイパスを取得し、ファイルの確認をし表示します
+* `ffprobe.exe`がToolsフォルダにある場合、メタ情報が取得可能となり、より正確な処理ができます
+
+## ライブラリ
+* 録画保存フォルダのビデオファイル(`ts`,`mp4`,`webm`等)を表示・再生します  
+`HttpPublic.ini`でフォルダの変更が可能です  
+* Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が、
 また公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
 
-* `LibraryPath=1`  
-ライブラリに表示するフォルダの読み込み設定を録画保存フォルダ(Common.ini)からHttpPublic.iniに変更します  
-\# Common.iniと同じ形式で指定してください  
-\# 例
-
-      [SET]
-      LibraryPath=1
-      RecFolderNum=2
-      RecFolderPath0=C:\DTV
-      RecFolderPath1=C:\hoge
-
-##### サムネ
+* サムネ  
 HttpPublicFolderのvideo\thumbsフォルダに`md5ハッシュ.jpg`があるとサムネを表示できます  
 ライブラリページのメニューから作成することができます
 
-#### リモート視聴
-**EpgDataCap_Bon.exeの設定、SendTSTCP.dllが必要です**  
 
-EpgDataCap_Bon.exeはNetworkTVモードで起動しています  
-NetworkTVモードを使用している場合は注意してください  
-**音声が切り替わったタイミングで止まることがありますがその時は再読み込みしてください**
+# 補足
 
-##### ファイル再生について
-* トランスコードするファイル(ts)もシークっぽい動作を可能にしました(offset(転送開始位置(100分率))を指定して再読み込み)  
-* 録画結果ページ  
-録画結果(GetRecFileInfo())からファイルパスを取得してます  
-リネームや移動していると再生することが出来ません
+### 局ロゴ
+EDCBのロゴに対応しています  
+* ロゴフォルダにない場合、TVTestのロゴを検索するかどうか`HttpPublic.ini`で設定できます  
+* LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示(旧仕様互換)  
 
+### 放送中ページ
+URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインになります  
+* VivaldiのWEBパネルに追加して使用することを想定しています
 
-##### 放送中一覧
-URLに`?webPanel=`を追加するとWEBパネル向けのデザインになります  
-VivaldiのWEBパネルに追加して使用してください
-
-
-##### 局ロゴ
-EDCBのロゴに対応  
-ロゴフォルダにない場合TVTestのロゴを検索  
-LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示(旧仕様互換)  
-TVTestのフォルダが想定と違う場合やLogoData.ini、Logoフォルダの設定を変更している場合、設定ファイルにて指定してください  
-* `LOGO_INI[=TVTestのフォルダ\LogoData.ini]`  
-LogoData.iniのパス  
-* `LOGO_DIR[=TVTestのフォルダ\Logo]`  
-Logoフォルダのパス
-
-\# TVTestのフォルダはEDCBのフォルダと同じ階層にあることを想定しています  
-
-##### 番組表の隠しコマンド
+### 番組表の隠しコマンド
+以下をGETメゾットで取得しますのでURLに含めてください  
 * `hour=整数`  
 開始時間を指定
 * `interval=整数`  
 表示間隔を指定  
-\# デフォルト値 `PC=25` `スマホ=8`
+  * デフォルト値 `PC=25` `スマホ=13`
 * `chcount=整数`  
 読み込むチャンネル数を一時的に変更  
-\# デフォルト値 `PC=0(無制限)` `スマホ=15`  
-\# showが有効時は非表示のチャンネルを含みます
+  * デフォルト値 `PC=0(無制限)` `スマホ=15`  
+  * showが有効時は非表示のチャンネルを含みます
 * `show=`  
 非表示指定したチャンネルを読み込む(サイドバーで表示・非表示)  
-\# 値は指定する必要はありません
+  * 値は指定する必要はありません
 * `subch=`  
 サービス一覧でサブチャンネルを表示します  
-\# 番組表だけでなくサービス一覧があるページで有効です(放送中、magnezio等)
 
-以上をGETメゾットで取得しますURLに含めてください  
-chcountとshowは週間番組表では使えません
+`chcount`と`show`は週間番組表では使えません
 
 ### お知らせ機能
 ※PCでのみでの機能です  
-登録した番組の開始30秒前にデスクトップ通知します  
-videoフォルダにnotification.mp3を用意すると通知音が出ます  
+* 登録した番組の開始30秒前にデスクトップ通知します  
+* videoフォルダにnotification.mp3を用意すると通知音が出ます  
 各自で用意してください
 
 ### 注意
 チャンネルが増えたりしたら設定を保存しなおしてください(番組表に表示されません)  
-**スタンバイの機能を使うにはスクリプト(api/Common)のコメントアウトを解除する必要があります**  
 
-### 動作確認
 
+# 動作確認
 - Windows
   - Chrome
   - Vivaldi
   - firefox
 - Android
   - Chrome
-* ffmpeg version 4.3.1
 
-### その他
-**iOS、スカパープレミアムの環境はありません。**  
-このプログラムを使用し不利益が生じても一切の責任を負いません  
-また改変・再配布などはご自由にどうぞ  
-バグ報告は詳細に、環境ない箇所の場合は特に、対処できません
 
-#### Framework & JavaScriptライブラリ
+# その他
+* **iOS、スカパープレミアムの環境はありません。**  
+* バグ報告は詳細に、上記の環境ない箇所の場合は特に詳細に、対処できません  
+* [欲しい物リスト](https://www.amazon.co.jp/hz/wishlist/ls/1FFBR5ZLZK8EY?ref_=wl_share)を公開しました、ご支援の程よろしくお願いします  
+* このプログラムを使用し不利益が生じても一切の責任を負いません  
+* また改変・再配布などはご自由にどうぞ  
+
+### Framework & JavaScriptライブラリ
 
 * [Material Design Lite](http://www.getmdl.io)
 * [Material icons](https://design.google.com/icons/)
@@ -219,3 +181,9 @@ videoフォルダにnotification.mp3を用意すると通知音が出ます
 * [jQuery UI Touch Punch](http://touchpunch.furf.com)
 * [Hammer.JS](http://hammerjs.github.io)
 * [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
+* [hls.js](https://github.com/video-dev/hls.js)
+* [web_bml_play_ts.js](https://github.com/xtne6f/web-bml)
+* [aribb24.js](https://github.com/xtne6f/aribb24.js)
+* [danmaku.js](https://github.com/DIYgod/DPlayer)
+
+This software includes the work that is distributed in the Apache License 2.0.

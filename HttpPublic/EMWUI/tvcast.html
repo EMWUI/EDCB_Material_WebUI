@@ -36,10 +36,10 @@ end
 
 ct={
   title='<span id="service_hedder">リモート視聴</span>',
-  js='<script>var ctok=\''..CsrfToken('tvcast')..'\';</script>\n'
-    ..'<script src="js/onair.js"></script>\n'
-    ..'<script src="js/player.js"></script>\n',
-  menu='<li class="ext mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
+  js='<script src="js/onair.js"></script>\n',
+  menu='<li class="mdl-menu__item" id="forced">強制停止</li>'
+    ..'<li class="ext mdl-menu__item mdl-menu__item--full-bleed-divider"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>'
+    ..'<li class="ext mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
 }
 
 ct.main='<main id="tvcast" class="mdl-layout__content">\n'
@@ -48,7 +48,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
   ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
   ..'<div id="movie-contner">\n'
-  ..player('<video id="video" data-cast="true"></video>', {multi=true, dual=true}, true)
+  ..player('<video id="video"></video>', true)
   ..'</div>\n'
 
 
@@ -70,6 +70,10 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
 <div class="mdl-card__menu"><a id="link_epginfo" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect" target="_blank"><i class="material-icons">open_in_new</i></a>
 </div></div></div>
 <div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
+<div id="apps-contener">
+<input type="checkbox" id="apps" class="hidden">
+<div class="contener"><div class="contener">]=]..(USE_LIVEJK and '<div id="jk-comm" class="jikkyo-comments"></div>' or '')..[=[</div></div>
+<label type="button" for="apps" class="tag mdl-chip"><span class="mdl-chip__text"><span class="material-icons">apps</span></span></label></div>
 <input type="radio" id="Network0" class="hidden" name="network">
 ]=]
 
@@ -117,7 +121,7 @@ for i,v in ipairs(NetworkList) do
 end
 ct.css=ct.css..'</style>\n'
 
-ct.main=ct.main..'<div id="network">\n'
+ct.main=ct.main..'<div id="network" class="tag">\n'
   ..'<label type="button" for="Network0" class="mdl-chip"><span class="mdl-chip__text">すべて</span></label>\n'..table.concat(label)
   ..'</div>\n<div id="ServiceList" class="mdl-grid mdl-cell--12-col">\n'..table.concat(ctt)
   ..'</div>\n</div>\n</div>\n'

@@ -3,9 +3,11 @@
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
 
 function template(temp)
-  local Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
-  local css=edcb.GetPrivateProfile('SET','css',false,ini)
+  local esc=edcb.htmlEscape
+  edcb.htmlEscape=0
   local path=temp.path or ''
+  local Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
+  local css=edcb.GetPrivateProfile('SET','css','<link rel="stylesheet" href="'..path..'css/material.min.css">',ini)..'\n'
   local Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
   local suspend=''
   edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
@@ -23,6 +25,7 @@ function template(temp)
        suspend=suspend..'<li id="suspend" class="mdl-menu__item'..(temp.menu and ' mdl-menu__item--full-bleed-divider' or '')..'" data-suspend="y" data-ctok="'..CsrfToken('common')..'">スタンバイ</li>\n'
     end
   end
+  edcb.htmlEscape=esc
 
   local s=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
   s:Append([=[
@@ -37,7 +40,7 @@ function template(temp)
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
 <link rel="manifest" href="]=]..path..[=[manifest.json">
 ]=]
-..(not css==0 and css or '<link rel="stylesheet" href="'..path..'css/material.min.css">')..'\n'
+..css
 ..((temp.dialog or temp.progres) and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
 <link rel="stylesheet" href="]=]..path..[=[css/default.css">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
@@ -300,7 +303,7 @@ s:Append([=[
 ..(temp.video and [=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
-]=]..player('<video id="video"></video>', {multi=true, dual=true}, temp.video=='live')..[=[
+]=]..player('<video id="video"></video>', temp.video=='live')..[=[
       <span class="close stop icons mdl-badge" data-badge="&#xE5CD;"></span>
     </div>
   </div>
@@ -741,7 +744,7 @@ end
 function sidePanelTemplate(reserve)
   local s=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
+<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
 <div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
 <div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
@@ -791,43 +794,90 @@ function sidePanelTemplate(reserve)
 end
 
 --プレイヤー
-function player(video, audio, live)
+function player(video, live)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
   local s=[=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
+]=]..(USE_DATACAST and [=[<div class="remote-control hidden">
+  <span class="navi">
+    <span>
+      <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">north</span></button>
+    </span><span>
+      <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">west</span></button>
+      <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary"><span class="material-icons">circle</span></button>
+      <button id="key4" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">east</span></button>
+    </span><span>
+      <button id="key20" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">d</span></button>
+      <button id="key2" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">south</span></button>
+      <button id="key19" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">subdirectory_arrow_left</span></button>
+      <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="num"><input type="checkbox" id="num" class="mdl-icon-toggle__input"><i class="mdl-icon-toggle__label material-icons">123</i></label>
+    </span>
+  </span><span class="color">
+    <button id="key21" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
+    <button id="key22" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
+    <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
+    <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
+  </span>
+  <span class="num">
+    <span>
+      <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">1</button>
+      <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">2</button>
+      <button id="key8" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">3</button>
+    </span><span>
+      <button id="key9" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">4</button>
+      <button id="key10" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">5</button>
+      <button id="key11" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">6</button>
+    </span><span>
+      <button id="key12" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">7</button>
+      <button id="key13" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">8</button>
+      <button id="key14" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">9</button>
+    </span><span>
+      <button id="key15" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">10</button>
+      <button id="key16" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">11</button>
+      <button id="key17" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">12</button>
+    </span><span>
+      <button id="key5" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">0</button>
+    </span>
+  </span>
+  <div class="remote-control-indicator"></div>
+</div>
+<div class="remote-control-status-container">
+<div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
+<div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
+<div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
+]=] or '')..(live and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')..[=[
 <div id="playerUI" class="is-visible">
 <div id="center" class="hidden"></div>
 <div id="titlebar" class="bar"></div>
 <div></div>
 <div id="control" class="bar">
-<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="99" value="0" step="0.01">')..[=[</div>
-<i id="stop" class="stop ctl-button material-icons">stop</i><span id="ctl-button"><i id="playprev" class="ctl-button material-icons">skip_previous</i><i id="play" class="ctl-button material-icons">play_arrow</i><i id="playnext" class="ctl-button material-icons">skip_next</i></span>
-<div id="volume-wrap"><i id="volume-icon" class="ctl-button material-icons">volume_up</i><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
+<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" step="0.00001">')..[=[</div>
+<button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">skip_next</i></button></span>
+<div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
+]=]..(live and '<div id="live">&#8226;</div>' or '')..[=[
 <p class="mdl-layout-spacer"></p>
-<i id="settings" class="ctl-button material-icons">settings</i>
+]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">settings_remote</i></button>\n' or '')
+  ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">subtitles</i></button>\n' or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">chat</i></button>\n' or '')..[=[
+<button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
-<li class="ext mdl-menu__item _audio" id="audio"]=]..(not live and (audio.multi or audio.dual) and '' or ' disabled')..[=[><button class="_audio"]=]..(not live and (audio.multi or audio.dual) and '' or ' disabled')..[=[><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
+<li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
 <li class="ext mdl-menu__item quality" id="quality" disabled><button class="quality" disabled><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
 <li class="ext mdl-menu__item" id="rate"><button><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
-]=]..(audio.multi and [=[
-<li class="multi ext mdl-menu__item"><input type="radio" id="multi1" name="audio" class="audio" value="0" checked><label for="multi1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi1">主音声</label></li>
-<li class="multi ext mdl-menu__item"><input type="radio" id="multi2" name="audio" class="audio" value="1"><label for="multi2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="multi2">副音声</label></li>
-]=] or '')..(audio.dual and [=[
-<li class="dual ext mdl-menu__item"><input type="radio" id="dual1" name="audio" class="audio" value="1" checked><label for="dual1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual1">[二] 日本語</label></li>
-<li class="dual ext mdl-menu__item"><input type="radio" id="dual2" name="audio" class="audio" value="2"><label for="dual2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="dual2">[二] 英語</label></li>
-<li class="dual ext mdl-menu__item"><input type="radio" id="RAW" name="audio" class="audio" value="0"><label for="RAW" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="RAW">[二] 日本語+英語</label></li>
-]=] or '')..[=[
+<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>
+<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
 ]=]
-  if list=='' then
-    s=s..'<li class="ext mdl-menu__item"><input type="checkbox" id="HD" class="quality"><label for="HD" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="HD"><i class="material-icons">hd</i></label></span></li>\n'
-  else
-    for v in list:gmatch('[^,]+') do
-      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..v..'" name="quality" class="quality"><label for="'..v..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..v..'">'..v..'</label></li>\n'
+  local checked
+  for i,v in ipairs(XCODE_OPTIONS) do
+    if not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+      local id = 'q_'..mg.md5(v.name)
+      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(not checked and ' checked' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
+      checked = true
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
@@ -836,12 +886,30 @@ function player(video, audio, live)
   end
   return s..[=[
 </ul>
-<i id="defult" class="player-mode ctl-button material-icons mdl-cell--hide-phone">crop_7_5</i><span class="mdl-tooltip" data-mdl-for="defult">シアターモード</span>
-<i id="theater" class="player-mode ctl-button material-icons mdl-cell--hide-phone">crop_landscape</i><span class="mdl-tooltip" data-mdl-for="theater">デフォルト表示</span>
-<i id="fullscreen" class="ctl-button material-icons">fullscreen</i>
+<button id="defult" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_7_5</i><span class="mdl-tooltip" data-mdl-for="defult">シアターモード</span></button>
+<button id="theater" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_landscape</i><span class="mdl-tooltip" data-mdl-for="theater">デフォルト表示</span></button>
+<button id="fullscreen" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
 </div>
 </div>
-]=]..video..'\n</div></div>\n'
+<div class="arib-video-invisible-container"><div class="arib-video-container">]=]..video..[=[</div></div>
+</div></div>
+]=]
+  ..((ALLOW_HLS or live) and '<script>'..(ALLOW_HLS and 'ALLOW_HLS=true;' or '')..(live and 'var ctok=\''..CsrfToken('view')..'\';' or '')..'</script>\n' or '')
+  ..'<script src="js/legacy.script.js"></script>\n'
+  
+  ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<script src="js/datastream.js"></script>\n' or '')
+
+  ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js"></script>\n' or '')
+
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<link rel="stylesheet" href="css/jikkyo.css">\n'
+    ..'<script>var ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};var jk_comment_height='..JK_COMMENT_HEIGHT..';var jk_comment_durtion='..JK_COMMENT_DURATION..';</script>\n'
+    ..'<script src="js/danmaku.js"></script>\n' or '')
+
+  ..(ALLOW_HLS and '<script>var hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';var capRenderer=\''..(ARIBB24_USE_SVG and 'SVG' or 'Canvas')..'\';var capOption={'..ARIBB24_JS_OPTION..'};\n</script>\n'
+    ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js"></script>\n' or '')
+    ..'<script src="js/aribb24.js"></script>\n' or '')
+
+  ..'<script src="js/player.js"></script>\n'
 end
 
 --タイトルのマークを装飾

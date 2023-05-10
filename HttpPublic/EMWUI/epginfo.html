@@ -42,8 +42,6 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n'
 
 if not End and epgInfo then
 
-  ct.js=ct.js..(recording and '<script src="js/player.js"></script>\n' or '')
-
   ct.progres=r or sidePanel
 
   ct.macro=true
@@ -81,7 +79,7 @@ if not End and epgInfo then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n', audio)
+      ..player('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-duration="'..r.durationSecond..'" class="is_cast"></video>\n')
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 

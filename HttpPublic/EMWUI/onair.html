@@ -8,15 +8,15 @@ webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 ct={
   title='放送中',
   video='live',
-  js='<script>var ctok=\''..CsrfToken('tvcast')..'\';</script>\n'
-    ..'<script src="js/onair.js"></script>\n'
-    ..'<script src="js/player.js"></script>\n',
+  js='<script src="js/onair.js"></script>\n',
   progres=true,
   macro=sidePanel,
-  menu='<li id="menu_apk" class="ext mdl-menu__item"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>\n'
+  menu='<li class="mdl-menu__item" id="forced">強制停止</li>'
+    ..'<li class="ext mdl-menu__item mdl-menu__item--full-bleed-divider"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>'
     ..'<li id="menu_popup" class="ext mdl-menu__item"><label for="open_popup" class="mdl-layout-spacer">ポップアップ</label><span><label class="mdl-switch mdl-js-switch" for="open_popup"><input type="checkbox" id="open_popup" class="mdl-switch__input"></label></span></li>\n'
     ..'<li id="menu_apk" class="ext mdl-menu__item hidden"><label for="apk" class="mdl-layout-spacer">アプリで開く</label><span><label class="mdl-switch mdl-js-switch" for="apk"><input type="checkbox" id="apk" class="mdl-switch__input"></label></span></li>\n'
     ..'<li id="menu_quality" class="ext mdl-menu__item hidden"><button><span class="mdl-layout-spacer">画質</span><span><i class="material-icons">navigate_next</i></button></li>\n'
+    ..'<li id="menu_apk" class="ext mdl-menu__item"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>\n'
 }
 
 if webPanel then
@@ -30,6 +30,7 @@ end
 
 ct.main='<div class="submenu"><ul class="ext mdl-menu mdl-menu--bottom-right mdl-js-menu" for="menu_quality"></ul></div>\n'
   ..'  <main class="sidePanel-container mdl-layout__content">\n'
+  ..(USE_LIVEJK and '<div id="jk-comm" class="hidden jikkyo-comments"></div>\n' or '')
 
   ..(sidePanel and sidePanelTemplate() or '')
 

@@ -32,6 +32,11 @@ USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,ini))~=
 --倍速再生(fastボタン)の速度
 XCODE_FAST=tonumber(edcb.GetPrivateProfile('XCODE','FAST',1.25,ini))
 
+if edcb.FindFile(edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Setting\\XCODE_OPTIONS.lua', 1) then
+  dofile(edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Setting\\XCODE_OPTIONS.lua')
+end
+
+if not XCODE_OPTIONS then
 --トランスコードオプション
 --HLSのときはセグメント長約4秒、最大8MBytes(=1秒あたり16Mbits)を想定しているので、オプションもそれに合わせること
 --HLSでないときはフラグメントMP4などを使ったプログレッシブダウンロード。字幕は適当な重畳手法がまだないので未対応
@@ -120,27 +125,26 @@ XCODE_OPTIONS={
   },
 }
 
---フォーム上の各オプションのデフォルト選択状態を指定する
-XCODE_SELECT_OPTION=tonumber(edcb.GetPrivateProfile('XCODE','SELECT_OPTION',1,ini))
-XCODE_CHECK_CINEMA=tonumber(edcb.GetPrivateProfile('XCODE','CHECK_CINEMA',false,ini))~=0
-XCODE_CHECK_FAST=tonumber(edcb.GetPrivateProfile('XCODE','CHECK_FAST',false,ini))~=0
-XCODE_CHECK_CAPTION=tonumber(edcb.GetPrivateProfile('XCODE','CHECK_CAPTION',false,ini))~=0
+end
 
+if not ARIBB24_JS_OPTION then
 --字幕表示のオプション https://github.com/monyone/aribb24.js#options
 ARIBB24_JS_OPTION=[=[
   normalFont:'"Rounded M+ 1m for ARIB","Yu Gothic Medium",sans-serif',
   drcsReplacement:true
 ]=]
 
+end
+
 --字幕表示にSVGRendererを使うかどうか。描画品質が上がる(ただし一部ブラウザで背景に線が入る)。IE非対応
-ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('SET','ARIBB24_USE_SVG',false,ini))~=0
+ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,ini))~=0
 
 --データ放送表示機能を使うかどうか。トランスコード中に表示する場合はpsisiarc.exeを用意すること。IE非対応
 USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,ini))~=0
 
 --ライブ実況表示機能を使うかどうか
 --利用には実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
-USE_LIVEJK=tonumber(edcb.GetPrivateProfile('SET','LIVEJK',true,ini))~=0
+USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,ini))~=0
 
 --実況ログ表示機能を使う場合、jkrdlog.exeの絶対パス
 JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',ini)
@@ -152,6 +156,7 @@ JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,ini))
 --実況コメントの表示時間(秒)
 JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,ini))
 
+if not JK_CUSTOM_REPLACE then
 --chatタグ表示前の置換(JavaScript)
 JK_CUSTOM_REPLACE=[=[
   // 広告などを下コメにする
@@ -160,6 +165,8 @@ JK_CUSTOM_REPLACE=[=[
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/nicoad (\d*)\{[^<]*?"message":("[^<]*?")[,}][^<]*/, '<chat align="right"$1shita small yellow $2$4($3pt)');
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/spi /, '<chat align="right"$1shita small white2 $2');
 ]=]
+
+end
 
 --トランスコードするかどうか。する場合はtsreadex.exeとトランスコーダー(ffmpeg.exeなど)を用意すること
 XCODE=tonumber(edcb.GetPrivateProfile('XCODE','XCODE',true,ini))~=0
@@ -706,6 +713,34 @@ function parseAndKey(andKey)
   r.caseFlag=(r.disableFlag or andKey):match('^C!{999}(.*)')
   r.andKey=r.caseFlag or r.disableFlag or andKey
   return r
+end
+
+function GetFilePath(query)
+  local fpath=edcb.GetRecFilePath((GetVarInt(query,'reid') or 0))
+  if not fpath then
+    fpath=edcb.GetRecFileInfo((GetVarInt(query,'id') or 0))
+    if fpath then
+      fpath=fpath.recFilePath
+    else
+    local faddr=mg.get_var(query,'fname')
+    if faddr then
+      fpath=DocumentToNativePath(faddr)
+      if not fpath then
+        -- 冗長表現の可能性を潰す
+        faddr=edcb.Convert('utf-8','utf-8',faddr):gsub('[\\/]+','\\')
+        for i,v in ipairs(GetLibraryPathList()) do
+          -- ライブラリ配下にあるか＋禁止文字と正規化のチェック
+          v=(v..'\\'):gsub('[\\/]+','\\')
+          if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f:*?"<>|]') and not faddr:sub(#v+1):find('%.\\') then
+            fpath=faddr
+            break
+          end
+        end
+      end
+      end
+    end
+  end
+  return fpath
 end
 
 --ライブラリに表示するフォルダのリストを取得する

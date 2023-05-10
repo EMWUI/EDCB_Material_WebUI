@@ -11,8 +11,7 @@ ct={title='予約情報'}
 if r then
   recording=edcb.GetRecFilePath(r.reserveID)
 
-  ct.js=(recording and '<script src="js/player.js"></script>\n'or '')
-    ..'<script>$(function(){createSearchLinks(document);});</script>\n'
+  ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
 
   ct.progres=r
 
@@ -55,7 +54,7 @@ if r then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n', audio)
+      ..player('<video id="video" preload="none" data-path="'..PathToRoot()..'api/Movie?reid='..r.reserveID..'" data-rec="true" data-duration="'..r.durationSecond..'"></video>\n')
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
