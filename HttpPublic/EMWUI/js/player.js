@@ -88,6 +88,7 @@ function resetHls(){
 
 function reloadHls(){
 	var d = $('.is_cast').data();
+	if (!d) return;
 	d.paused = video.paused;
 	d.ofssec = Math.floor($('input#seek').val());
 	loadHls(d);
@@ -126,6 +127,7 @@ function loadHls(d){
 	VideoSrc += '&option=' + $('[name=quality]:checked').val();
 	VideoSrc += $('#audio').attr('disabled') ? '' : '&audio2=' + $('[name=audio]:checked').val();
 	VideoSrc += $('#cinema').prop('checked') ? '&cinema=1' : '';
+	VideoSrc += $('#fast').prop('checked') ? '&fast=1' : '';
 
 	if (window.Hls != undefined){
 		setTimeout(function(){
@@ -203,7 +205,7 @@ function playMovie(obj){
 		document.querySelector('#seek').MaterialSlider.change(0);
 		$('.currentTime,.duration').text('0:00');
 		$('.audio').attr('disabled', true);
-		$('playing').removeClass('is_cast playing');
+		$('.playing').removeClass('is_cast playing');
 		obj.addClass('is_cast playing');
 		loadMovie(obj);
 	}
@@ -457,7 +459,7 @@ $(function(){
 			reloadHls();
 		}
 	});
-	$('[name=audio],#cinema').change(function(){
+	$('[name=audio],#cinema,#load_subtitles,#fast').change(function(){
 		reloadHls();
 	});
 	$('.rate').change(function(){

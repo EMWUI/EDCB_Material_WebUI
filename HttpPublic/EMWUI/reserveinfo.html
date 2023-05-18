@@ -74,6 +74,8 @@ if r then
        ..(recording and '<a href="#movie" id="movie_tab" class="mdl-layout__tab">再生</a>\n' or '')
   end
 
+  if recording then ct.menu='<li class="ext mdl-menu__item"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>' end
+
 end
 
 ct=template(ct)

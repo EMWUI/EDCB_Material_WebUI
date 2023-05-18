@@ -235,13 +235,16 @@ function librarySwipe(obj){
 function librarySearch(key){
 		if (key.length > 0){
 			key = decodeURI(key);
-			$('#library').empty();
 			var found;
 			var file = [];
 			var xml = sessionStorage.getItem('movie');
 			var movie = new DOMParser().parseFromString(xml, 'text/xml');
 			$('.library').empty();
-			if (ViewMode == 'grid') $('.library').addClass('list');
+			if (ViewMode == 'grid'){
+				$('.library').addClass('list') ;
+			}else{
+				$('.library').removeClass('list');
+			}
 
 			$(movie).find('file').each(function(){
 				var name = $(this).children('name').text();

@@ -2297,7 +2297,7 @@ h4 .mdl-button--icon {
   transition-duration: .28s;
   transition-timing-function: cubic-bezier(.4,0,.2,1);
   transition-property: background-color; }
-  #library .mdl-list__item:hover {
+  .library .mdl-list__item:hover {
     background-color: #eee; }
 
 .library .mdl-card {
@@ -2355,7 +2355,7 @@ h4 .mdl-button--icon {
     .library .mdl-card > .mdl-card__actions {
       max-height: 38px;
       padding: 8px; }
-    .is-small-screen #library .mdl-card {
+    .is-small-screen.library  .mdl-card {
       min-height: 100px; }
       .library .mdl-card__title + .material-icons {
         font-size: 50px; } }
