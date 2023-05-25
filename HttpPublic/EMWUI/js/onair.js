@@ -241,7 +241,9 @@ $(function(){
 	});
 
 	$('#forced').click(function(){
-		$.post(root + 'api/view', {ctok: ctok, n: 0, id: '1-1-0'});
+		$.post(root + 'api/TvCast', {ctok: $(this).data('ctok'), n: 0, id: '1-1-0'}).done(function(xhr){
+			Snackbar.MaterialSnackbar.showSnackbar({message: $(xhr).find('success').text()});
+		});
 		$('#stop').click();
 	});
 });

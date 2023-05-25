@@ -153,8 +153,7 @@ function loadMovie(obj){
 		if (d.public){
 			path = root + d.path;
 		}else{
-			path = root + 'api/Movie?fname=' + d.path + '&xcode=0';
-			$('#seek').attr('disabled', true);
+			path = root + 'api/Movie?fname=' + d.path;
 		}
 		$('#video').addClass('is-loadding').attr('src', path);
 		$('.quality').attr('disabled', true);
@@ -175,10 +174,10 @@ function loadMovie(obj){
 					$('#seek').attr('max', duration);
 					$('.Time-wrap').removeClass('is-disabled');
 				}else{
-	        			$('.Time-wrap').addClass('is-disabled');
-	      			}
-	      			$('.audio').attr('disabled', xml.find('audio').length > 0);
-	    		});
+	        		$('.Time-wrap').addClass('is-disabled');
+	      		}
+	      		$('.audio').attr('disabled', Number(xml.find('audio').text()) == 1);
+	    	});
 	  	}
 	}
 

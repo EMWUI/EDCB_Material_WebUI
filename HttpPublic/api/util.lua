@@ -263,7 +263,7 @@ function GetDurationSec(f,fpath)
   --ffprobeを使う(正確になるはず)
   if fpath then
     local tools=edcb.GetPrivateProfile('SET', 'ModulePath', '', 'Common.ini')..'\\Tools\\'
-    local ffprobe=edcb.GetPrivateProfile('SET','ffprobe',tools..'ffprobe.exe',ini)
+    local ffprobe=(edcb.FindFile(tools..'\\ffprobe.exe',1) and tools..'\\' or '')..'ffprobe.exe'
     local ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
     if ff then
       local fp=edcb.io.popen('""'..ffprobe..'" -i "'..fpath..'" -v quiet -show_entries format=duration,size -of ini 2>&1"', 'rb')

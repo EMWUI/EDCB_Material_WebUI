@@ -210,7 +210,7 @@ function stop(auto){
   $('#top').addClass('is-visible');
   $('#info').removeClass('is-visible');
   hide(0);
-  $.get(']=]..PathToRoot()..[=[api/TvCast?onid=0&tsid=0&sid=0&ctok=]=]..CsrfToken('tvcast')..[=[').done(function(){
+  $.get(']=]..PathToRoot()..[=[api/TvCast?id=1-1-0&ctok=]=]..CsrfToken('tvcast')..[=[').done(function(){
     cast=false;
     $('#eventName,#title,#date,#text').text('');
     $('#top').removeClass('is-visible');
