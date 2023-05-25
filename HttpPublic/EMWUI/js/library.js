@@ -137,6 +137,7 @@ function folder(){
 							$('#popup').addClass('is-visible');
 							$('#playerUI').addClass('is-visible');
 							$('.audio').prop('checked', false);
+							$('#tvcast').animate({scrollTop:0}, 500, 'swing');
 							playMovie($(this));
 						});
 

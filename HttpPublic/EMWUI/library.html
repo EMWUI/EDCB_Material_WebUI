@@ -3,7 +3,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 ct=template({
   title='ホーム',
-  video=true,
+  --video=true,
   Scrollable=true,
   js='<script src="js/library.js"></script>\n',
 
@@ -30,7 +30,23 @@ ct=template({
 <li class="ext mdl-menu__item"><label for="fast" class="mdl-layout-spacer">倍速読み込み</label><span><label class="mdl-switch mdl-js-switch" for="fast"><input type="checkbox" id="fast" class="mdl-switch__input"></label></span></li>
 ]=],
 
-  main='<main class="lib-swipe mdl-layout__content">\n<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>\n'
+  main=[=[
+<main id="tvcast" class="mdl-layout__content">
+<div id="movie-theater-contner"></div>
+<div class="mdl-grid list">
+<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">
+<div id="movie-contner">]=]..player('<video id="video"></video>')..[=[</div>
+</div>
+<div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
+<div id="apps-contener">
+<input type="checkbox" id="apps" class="hidden">
+<div class="contener"><div class="contener">]=]..(JKRDLOG_PATH~='' and '<div id="jk-comm" class="jikkyo-comments"></div>' or '')..[=[</div></div>
+<label type="button" for="apps" class="tag mdl-chip"><span class="mdl-chip__text"><span class="material-icons">apps</span></span></label></div>
+</div>
+</div>
+<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>
+]=]
+
 })
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
