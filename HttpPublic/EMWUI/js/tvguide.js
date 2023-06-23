@@ -2,12 +2,14 @@
 	var SHOW_MIN;
 	var elapse;
 	var date = new Date();
-	var hour = date.getHours();
-	var min = date.getMinutes();
+	var hour = createViewDate(date).getUTCHours();
+	var min = createViewDate(date).getUTCMinutes();
 	//現時刻の位置
 	if (baseTime>27) {
+		//baseTimeはUTCの時刻
 		elapse = Math.floor((date-baseTime*1000)/1000/60/60);
 	}else{
+		//baseTimeはUTC+9の「時」
 		elapse = hour - baseTime;
 		if (hour<baseTime) elapse += 24;
 	}
