@@ -63,7 +63,7 @@ end
 
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?>'}
-if #a==0 then
+if not a or #a==0 then
   table.insert(ct, '<entry><err>EPGデータを読み込み中、または存在しません</err></entry>')
 else
   basic=(tonumber(mg.get_var(mg.request_info.query_string,'basic')) or 1)~=0
