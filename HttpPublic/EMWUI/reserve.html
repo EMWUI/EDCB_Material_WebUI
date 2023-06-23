@@ -79,12 +79,12 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   bg=v.recSetting.recMode==5 and ' disabled'
      or v.overlapMode==1 and ' partially'
      or v.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (os.time(v.startTime)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (os.time(v.startTime)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
+  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                   or 'data-href="reserveinfo.html?id='..v.reserveID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">\n'
 
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'"><span'
-    ..(os.time(v.startTime)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
+    ..(TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)

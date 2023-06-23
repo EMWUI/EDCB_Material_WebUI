@@ -11,8 +11,7 @@ local sp=UserAgentSP()
 DEF_CH_COUNT=sp and 15 or DEF_CH_COUNT
 DEF_interval=sp and 13 or 25
 
-now=os.time()
-timezone=now-os.time(os.date('!*t',now))
+utc9Now=os.time()+9*3600
 
 CATEGORY={
   'news',
@@ -105,19 +104,19 @@ function epgcell(v, op, id ,custom)
   local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<now and now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..endTime..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
-    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=now and ' end' or '')..'"><div class="content">\n'
+  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
+    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=utc9Now and ' end' or '')..'"><div class="content">\n'
 
     ..'<div class="sub_cont">'..(custom and '<img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'">' or '')..'<div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 
     ..'<div class="main_cont"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..(startTime*1000)..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
+    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..((startTime-9*3600)*1000)..'"'..(startTime-30<=utc9Now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=utc9Now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
 
     ..'<p class="tool mdl-typography--caption-color-contrast">'
     ..'<a class="mdl-button mdl-button--raised'
-      ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime+timezone or 'eid="'..v.eid)
+      ..(sidePanel and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime or 'eid="'..v.eid)
                     or '" href="'..op.url)..'">番組詳細</a>'
-    ..(endTime~=startTime and now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
+    ..(endTime~=startTime and utc9Now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
       ..(r and '" data-toggle="1" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
             or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
     ..'<a class="autoepg mdl-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'

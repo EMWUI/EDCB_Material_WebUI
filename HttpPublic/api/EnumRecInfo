@@ -30,10 +30,12 @@ else
       ..v.sid..'</SID><eventID>'
       ..v.eid..'</eventID><service_name>'
       ..v.serviceName..'</service_name>'
-      ..os.date('<startDate>%Y/%m/%d</startDate><startTime>%H:%M:%S</startTime><startDayOfWeek>', os.time(v.startTime))
+      ..string.format('<startDate>%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                      v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)
       ..(v.startTime.wday-1)..'</startDayOfWeek><duration>'
       ..v.durationSecond..'</duration>'
-      ..os.date('<startDateEpg>%Y/%m/%d</startDateEpg><startTimeEpg>%H:%M:%S</startTimeEpg><startDayOfWeekEpg>', os.time(v.startTimeEpg))
+      ..string.format('<startDateEpg>%d/%02d/%02d</startDateEpg><startTimeEpg>%02d:%02d:%02d</startTimeEpg><startDayOfWeekEpg>',
+                      v.startTimeEpg.year, v.startTimeEpg.month, v.startTimeEpg.day, v.startTimeEpg.hour, v.startTimeEpg.min, v.startTimeEpg.sec)
       ..(v.startTimeEpg.wday-1)..'</startDayOfWeekEpg><drops>'
       ..v.drops..'</drops><scrambles>'
       ..v.scrambles..'</scrambles><recStatus>'

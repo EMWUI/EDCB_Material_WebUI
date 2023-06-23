@@ -16,24 +16,6 @@ if onid and tsid and sid then
   end
 end
 
-now=os.time()
-a=edcb.EnumEventInfo({{onid=(onid or st.onid), tsid=(tsid or st.tsid), sid=(sid or st.sid)}}, {startTime=os.date('*t',now-6*3600), durationSecond=24*3600}) or {}
-table.sort(a, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
-x={eid=0, startTime=os.date('*t',now)}
-for i,v in ipairs(a) do
-  if v.startTime then
-    startTime=os.time(v.startTime)
-    endTime=v.durationSecond and startTime+v.durationSecond or (i<#a and os.time(a[i+1].startTime) or startTime)
-    if startTime<now and now<endTime then
-      x=v
-      break
-    elseif now<startTime then
-      x={eid=0, startTime=os.date('*t',endTime), durationSecond=(i<#a and os.time(a[i+1].startTime) or startTime)-endTime}
-      break
-    end
-  end
-end
-
 ct={
   title='<span id="service_hedder">リモート視聴</span>',
   js='<script src="js/onair.js"></script>\n',

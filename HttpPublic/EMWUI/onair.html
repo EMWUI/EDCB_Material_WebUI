@@ -43,7 +43,7 @@ for i,v in ipairs(NetworkIndex()) do
   NetworkList[i]={}
 end
 
-now=os.time()
+utc9Now=os.time()+9*3600
 
 function Logo(onid,sid)
   ddid=tonumber(edcb.GetPrivateProfile('LogoIDMap',('%04X%04X'):format(onid,sid),'','Setting\\LogoData.ini'))
@@ -99,34 +99,34 @@ end
 
 for i,v in ipairs(CustomServiceList()) do
   if (oneseg or not v.partialReceptionFlag) then
-    x={eid=0, startTime=os.date('*t',now)}
+    x={eid=0, startTime=os.date('!*t',utc9Now)}
     y=x
-    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('*t',now-24*3600), durationSecond=48*3600}) or {}
+    b=edcb.EnumEventInfo({{onid=v.onid, tsid=v.tsid, sid=v.sid}}, {startTime=os.date('!*t',utc9Now-24*3600), durationSecond=48*3600}) or {}
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
     for j,w in ipairs(b) do
       if w.startTime then
-        if now<os.time(w.startTime) then
+        if utc9Now<TimeWithZone(w.startTime) then
           x=b[j-1] or x
           y=w
-          x_startTime=os.time(x.startTime)
-          y_startTime=os.time(y.startTime)
+          x_startTime=TimeWithZone(x.startTime)
+          y_startTime=TimeWithZone(y.startTime)
           x_endTime=x.durationSecond and x_startTime+x.durationSecond or y_startTime
           if x_endTime~=y_startTime then
-            if x_endTime<now then
-              x={eid=0, startTime=os.date('*t',x_endTime), durationSecond=y_startTime-x_endTime}
+            if x_endTime<utc9Now then
+              x={eid=0, startTime=os.date('!*t',x_endTime), durationSecond=y_startTime-x_endTime}
             else
-              y={eid=0, startTime=os.date('*t',x_endTime), durationSecond=y_startTime-x_endTime}
+              y={eid=0, startTime=os.date('!*t',x_endTime), durationSecond=y_startTime-x_endTime}
               y_startTime=x_endTime
             end
           end
-          y_endTime=y.durationSecond and y_startTime+y.durationSecond or (j<#b and os.time(b[j+1].startTime))
+          y_endTime=y.durationSecond and y_startTime+y.durationSecond or (j<#b and TimeWithZone(b[j+1].startTime))
           break
         end
       end
     end
 
-    x_startTime=os.time(x.startTime)
-    y_startTime=os.time(y.startTime)
+    x_startTime=TimeWithZone(x.startTime)
+    y_startTime=TimeWithZone(y.startTime)
     x_endTime=x.durationSecond and x_startTime+x.durationSecond or y_startTime
     y_endTime=y_endTime or (y.durationSecond and y_startTime+y.durationSecond)
 
@@ -138,8 +138,8 @@ for i,v in ipairs(CustomServiceList()) do
         ..'" data-nexteid="'..y.eid
         ..'" data-id="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..x.eid] or 'false')
         ..'" data-nextid="'..(rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..y.eid] or 'false')
-        ..'" data-startTime="'..x_startTime*1000
-        ..'" data-endTime="'..x_endTime*1000
+        ..'" data-startTime="'..(x_startTime-9*3600)*1000
+        ..'" data-endTime="'..(x_endTime-9*3600)*1000
         ..'" data-duration="'..(x.durationSecond or y_startTime-x_endTime)
 
         ..'">\n'
@@ -147,8 +147,8 @@ for i,v in ipairs(CustomServiceList()) do
         ..'<span class="mdl-list__item-primary-content">'
         ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(Logo(v.onid,v.sid) and ' style="background-image:url('..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name
         ..'<span class="mdl-list__item-text-body">\n'
-        ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('%H:%M', x_startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('%H:%M', x_endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
-        ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('%H:%M', y_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(y_endTime and os.date('%H:%M', y_endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
+        ..'<span class="epginfo'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="startTime">'..os.date('!%H:%M', x_startTime)..'</span><span class="endTime mdl-cell--hide-phone">～'..os.date('!%H:%M', x_endTime)..'</span></span><span class="title">'..(x.shortInfo and ConvertTitle(x.shortInfo.event_name) or '')..'</span></span>\n'
+        ..'<span class="epginfo next'..(sidePanel and ' panel' or '')..'"><span class="date"><span class="nextstartTime">'..os.date('!%H:%M', y_startTime)..'</span><span class="nextendTime mdl-cell--hide-phone">～'..(y_endTime and os.date('!%H:%M', y_endTime) or '未定')..'</span></span><span class="nexttitle">'..(y.shortInfo and ConvertTitle(y.shortInfo.event_name) or '')..'</span></span>\n'
         ..'</span></span>'
         ..(webPanel and '' or '<span class="mdl-list__item-secondary-content"><button class="cast mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">cast</i></button></span>\n')
 

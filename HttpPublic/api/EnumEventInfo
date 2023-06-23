@@ -9,9 +9,9 @@ if onair then
   --放送中
   onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
   key={onid=onid, tsid=tsid, sid=sid}
-  now=os.time()
+  utc9Now=os.time()+9*3600
   if not startTime then
-    startTime=os.date('*t',now-24*3600)
+    startTime=os.date('!*t',utc9Now-24*3600)
   end
   durationSecond=mg.get_var(mg.request_info.query_string,'duration') or 48*3600
 
@@ -23,16 +23,16 @@ if onair then
     table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
     for j,v in ipairs(b) do
       if v.startTime then
-        if now<os.time(v.startTime) then
+        if utc9Now<TimeWithZone(v.startTime) then
           if j>1 then a[1]=b[j-1] end
           a[2]=v
-          _startTime=os.time(v.startTime)
-          endTime=a[1].durationSecond and os.time(a[1].startTime)+a[1].durationSecond or _startTime
+          _startTime=TimeWithZone(v.startTime)
+          endTime=a[1].durationSecond and TimeWithZone(a[1].startTime)+a[1].durationSecond or _startTime
           if endTime~=_startTime then
-            if endTime<now then
-              a[1]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+            if endTime<utc9Now then
+              a[1]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('!*t',endTime), durationSecond=_startTime-endTime}
             else
-              a[2]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('*t',endTime), durationSecond=_startTime-endTime}
+              a[2]={onid=key.onid, tsid=key.tsid, sid=key.sid, eid=0, startTime=os.date('!*t',endTime), durationSecond=_startTime-endTime}
             end
           end
           break
