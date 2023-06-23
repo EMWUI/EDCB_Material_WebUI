@@ -10,9 +10,9 @@ function template(temp)
   local css=edcb.GetPrivateProfile('SET','css','<link rel="stylesheet" href="'..path..'css/material.min.css">',ini)..'\n'
   local Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
   local suspend=''
-  edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
+  local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
   if edcb.FindFile(edcbnosuspend,1) then
-    onstat,stat,code=edcb.os.execute('wmic process where "name=\'edcbnosuspend.exe\'" get processid 2>nul | findstr /b [1-9]')
+    local onstat,stat,code=edcb.os.execute('wmic process where "name=\'edcbnosuspend.exe\'" get processid 2>nul | findstr /b [1-9]')
     onstat=onstat and stat=='exit' and code==0 and 'y'
     suspend=suspend..'<li id="nosuspend" class="mdl-menu__item'..(not INDEX_ENABLE_SUSPEND and temp.menu and ' mdl-menu__item--full-bleed-divider' or '')..(onstat=='y' and ' n' or ' y')..'" data-nosuspend="'..(onstat=='y' and 'n' or 'y')..'" data-ctok="'..CsrfToken('common')..'">録画後動作<span id="n">の抑制を*解除*</span><span id="y">を抑制</span></li>\n'
   end
