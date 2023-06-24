@@ -333,7 +333,7 @@ end
 function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
   local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)), true
   if v then
-    local now, startTime = os.time(), os.time(v.startTime)
+    local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
     End=v.durationSecond and startTime+v.durationSecond<now
     s='<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     if v.shortInfo then
@@ -927,13 +927,13 @@ end
 calendar_details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
 SearchConverter=function(v, service_name)
   local title=(v.shortInfo and v.shortInfo.event_name or v.title or ''):gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '')
-  local startTime=os.time(v.startTime)
+  local startTime=TimeWithZone(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
   --クライアントサイドで使う情報を置いておく
   return '<span class="search-links hidden" data-title="'..title
     ..'" data-service="'..service_name
-    ..'" data-dates="'..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)
+    ..'" data-dates="'..os.date('!%Y%m%dT%H%M%S', startTime)..'/'..os.date('!%Y%m%dT%H%M%S', endTime)
     ..'" data-details="'..calendar_details:gsub('%%text_char%%', text_char)..'"></span>'
 end
 
