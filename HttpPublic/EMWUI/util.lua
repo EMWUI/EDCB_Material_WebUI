@@ -10,9 +10,9 @@ function template(temp)
   local css=edcb.GetPrivateProfile('SET','css','<link rel="stylesheet" href="'..path..'css/material.min.css">',ini)..'\n'
   local Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
   local suspend=''
-  edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
+  local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
   if edcb.FindFile(edcbnosuspend,1) then
-    onstat,stat,code=edcb.os.execute('wmic process where "name=\'edcbnosuspend.exe\'" get processid 2>nul | findstr /b [1-9]')
+    local onstat,stat,code=edcb.os.execute('wmic process where "name=\'edcbnosuspend.exe\'" get processid 2>nul | findstr /b [1-9]')
     onstat=onstat and stat=='exit' and code==0 and 'y'
     suspend=suspend..'<li id="nosuspend" class="mdl-menu__item'..(not INDEX_ENABLE_SUSPEND and temp.menu and ' mdl-menu__item--full-bleed-divider' or '')..(onstat=='y' and ' n' or ' y')..'" data-nosuspend="'..(onstat=='y' and 'n' or 'y')..'" data-ctok="'..CsrfToken('common')..'">録画後動作<span id="n">の抑制を*解除*</span><span id="y">を抑制</span></li>\n'
   end
@@ -333,7 +333,7 @@ end
 function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
   local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)), true
   if v then
-    local now, startTime = os.time(), os.time(v.startTime)
+    local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
     End=v.durationSecond and startTime+v.durationSecond<now
     s='<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     if v.shortInfo then
@@ -927,13 +927,13 @@ end
 calendar_details=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',ini)
 SearchConverter=function(v, service_name)
   local title=(v.shortInfo and v.shortInfo.event_name or v.title or ''):gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '')
-  local startTime=os.time(v.startTime)
+  local startTime=TimeWithZone(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
   --クライアントサイドで使う情報を置いておく
   return '<span class="search-links hidden" data-title="'..title
     ..'" data-service="'..service_name
-    ..'" data-dates="'..os.date('%Y%m%dT%H%M%S', startTime)..'/'..os.date('%Y%m%dT%H%M%S', endTime)
+    ..'" data-dates="'..os.date('!%Y%m%dT%H%M%S', startTime)..'/'..os.date('!%Y%m%dT%H%M%S', endTime)
     ..'" data-details="'..calendar_details:gsub('%%text_char%%', text_char)..'"></span>'
 end
 

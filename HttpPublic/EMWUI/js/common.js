@@ -144,8 +144,8 @@ function creatNotify(data, save){
 	$('.eid_' + data.eid + ' .startTime').after($('<div class="notify_icon"><i class="material-icons">notifications_active</i></div>'));
 	$('.notify_'+data.eid).data('notification', true).children().text('notifications_off');
 
-	var date = new Date(data.starttime);
-	date = ('0'+(date.getMonth()+1)).slice(-2) + '/' + ('0'+date.getDate()).slice(-2) + '(' + week[date.getDay()] + ') ' + ('0'+date.getHours()).slice(-2) + ':' + ('0'+date.getMinutes()).slice(-2);
+	var date = createViewDate(data.starttime);
+	date = ('0'+(date.getUTCMonth()+1)).slice(-2) + '/' + ('0'+date.getUTCDate()).slice(-2) + '(' + week[date.getUTCDay()] + ') ' + ('0'+date.getUTCHours()).slice(-2) + ':' + ('0'+date.getUTCMinutes()).slice(-2);
 
 	var notifyList = $('<li>', {id: 'notify_' + data.eid, class: 'mdl-list__item mdl-list__item--two-line', data: {start: data.starttime}, append: [
 		$('<span>', {class: 'mdl-list__item-primary-content', click: function(){window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');}, append: [
@@ -177,10 +177,18 @@ function macro(obj){
 	$('#macro').addClass('is-visible');
 }
 
-function ConvertTime(t, s){
+//表示用に時間シフトしたDateオブジェクトを生成
+function createViewDate(value){
+	if (value === undefined) value = new Date();
+	if (typeof value !== 'object') value = new Date(value);
+	return new Date(value.getTime() + 9 * 3600000);
+}
+
+function ConvertTime(t, show_sec, show_ymd){
 	if (!t)	return '未定';
-	t = new Date(t);
-	return ('0'+ t.getHours()).slice(-2) +':'+ ('0'+ t.getMinutes()).slice(-2) + ((s && t.getSeconds() != 0) ? '<small>:'+ ('0' + t.getSeconds()).slice(-2) +'</small>' : '');
+	t = createViewDate(t);
+	return (show_ymd ? t.getUTCFullYear() + '/' + ('0'+(t.getUTCMonth()+1)).slice(-2) + '/' + ('0'+t.getUTCDate()).slice(-2) + '(' + week[t.getUTCDay()] + ') ' : '') +
+	       ('0'+ t.getUTCHours()).slice(-2) +':'+ ('0'+ t.getUTCMinutes()).slice(-2) + ((show_sec && t.getUTCSeconds() != 0) ? '<small>:'+ ('0' + t.getUTCSeconds()).slice(-2) +'</small>' : '');
 }
 function ConvertText(a){
 	return a.replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');
@@ -191,11 +199,11 @@ function ConvertTitle(a){
 
 //プログラム予約
 function progReserve(start, end, eid){
-	start = new Date(start);
-	end = end ? new Date(end) : start;
-	$('#startdate').val(start.getFullYear() +'-'+ ('0'+(start.getMonth()+1)).slice(-2) +'-'+ ('0'+start.getDate()).slice(-2));
-	$('#starttime').val(('0'+start.getHours()).slice(-2) +':'+ ('0'+start.getMinutes()).slice(-2) +':'+ ('0'+start.getSeconds()).slice(-2));
-	$('#endtime').val(('0'+end.getHours()).slice(-2) +':'+ ('0'+ end.getMinutes()).slice(-2) +':'+ ('0'+ end.getSeconds()).slice(-2));
+	start = createViewDate(start);
+	end = end ? createViewDate(end) : start;
+	$('#startdate').val(start.getUTCFullYear() +'-'+ ('0'+(start.getUTCMonth()+1)).slice(-2) +'-'+ ('0'+start.getUTCDate()).slice(-2));
+	$('#starttime').val(('0'+start.getUTCHours()).slice(-2) +':'+ ('0'+start.getUTCMinutes()).slice(-2) +':'+ ('0'+start.getUTCSeconds()).slice(-2));
+	$('#endtime').val(('0'+end.getUTCHours()).slice(-2) +':'+ ('0'+ end.getUTCMinutes()).slice(-2) +':'+ ('0'+ end.getUTCSeconds()).slice(-2));
 
 	if (eid==65535){
 	  $('#toprogres').text('プログラム予約');
@@ -215,8 +223,6 @@ function ConvertEpgInfo(e){
 		eid:  Number(e.children('eventID').text()),
 		service: e.children('service_name').text(),
 
-		startDate: e.children('startDate').text(),
-		startDayOfWeek: Number(e.children('startDayOfWeek').text()),
 		duration: Number(e.children('duration').text()),
 
 		title: e.children('event_name').length > 0 ? e.children('event_name').text() : e.children('title').text(),
@@ -225,7 +231,7 @@ function ConvertEpgInfo(e){
 
 		freeCAFlag: e.children('freeCAFlag').first().text() == 1
 	}
-	d.starttime = new Date(d.startDate +' '+ e.children('startTime').text()).getTime();
+	d.starttime = new Date(e.children('startDate').text().replace(/\//g,'-')+'T'+e.children('startTime').text()+'+09:00').getTime();
 	if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 
 	if (e.children('contentInfo').length > 0){
@@ -280,8 +286,8 @@ function setEpgInfo(e, past){
 	$('#title').html( ConvertTitle(e.title) );
 
 	if (e.starttime){
-		$('#info_date').html(e.startDate +'('+ week[e.startDayOfWeek] +') '+ ConvertTime(e.starttime, true) +'～'+ ConvertTime(e.endtime, true));
-		progReserve(e.starttime, e.end, e.eid)
+		$('#info_date').html(ConvertTime(e.starttime, true, true) +'～'+ ConvertTime(e.endtime, true));
+		progReserve(e.starttime, e.endtime, e.eid)
 
 		if (!e.end || Date.now()<e.end || e.recinfoid){
 			$('#sidePanel .mdl-tabs__tab-bar').show();
@@ -905,7 +911,7 @@ function reserve(obj){
 		success: function(result, textStatus, xhr) {
 			var xml = $(xhr.responseXML);
 			if (xml.find('success').length > 0){
-				var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
+				var start = new Date(xml.find('startDate').text().replace(/\//g,'-')+'T'+xml.find('startTime').text()+'+09:00');
 				var recmode = xml.find('recMode').text();
 				var overlapmode = xml.find('overlapMode').text();
 				var id = xml.find('ID').text();
@@ -1551,7 +1557,7 @@ $(function(){
 
 							addMark(xml, $('.open .addreserve'), $('.open .content-wrap'));
 
-							var start = new Date(xml.find('startDate').text()+' '+xml.find('startTime').text());
+							var start = new Date(xml.find('startDate').text().replace(/\//g,'-')+'T'+xml.find('startTime').text()+'+09:00');
 							var end = new Date(start.getTime() + Number(xml.find('duration').text())*1000);
 							progReserve(start, end, xml.find('eventID').text());
 

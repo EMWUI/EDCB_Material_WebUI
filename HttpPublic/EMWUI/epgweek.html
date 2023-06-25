@@ -8,13 +8,13 @@ interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
 
 onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
 
-baseDate=math.floor((now+timezone-4*3600)/24/3600)
-Hour=hour<0 and math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
+baseDate=math.floor((utc9Now-4*3600)/24/3600)
+Hour=hour<0 and math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 Hour=Hour+interval>29 and 29-interval or Hour
 baseTime=(baseDate*24+Hour)*3600
 
-NOW=baseTime<now+timezone and now+timezone<baseTime+interval*3600
+NOW=baseTime<utc9Now and utc9Now<baseTime+interval*3600
 
 hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_interval and '&amp;interval='..interval or '')
 
@@ -130,17 +130,17 @@ for i=0,7 do
   end
   table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   for j,w in ipairs(b) do
-    startTime=os.time(w.startTime)
-    startPx=math.min(math.floor((startTime+timezone-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startTime=TimeWithZone(w.startTime)
+    startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime+timezone-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
     if endPx-lastPx>2 then
-      op.url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime+timezone or '&amp;eid='..w.eid)..'&amp;week='..hrefGene
+      op.url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime or '&amp;eid='..w.eid)..'&amp;week='..hrefGene
       table.insert(ctt, epgcell(w, op))
 
       total=total+endPx-lastPx

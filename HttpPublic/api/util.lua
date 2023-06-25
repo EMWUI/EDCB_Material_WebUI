@@ -207,6 +207,11 @@ function ConstructTranscodeQueries(xq)
     ..(xq.caption and '&amp;caption=1' or '')
 end
 
+--システムのタイムゾーンに影響されずに時間のテーブルを数値表現にする (timezone=0のとき概ねos.date('!*t')の逆関数)
+function TimeWithZone(t,timezone)
+  return os.time(t)+90000-os.time(os.date('!*t',90000))-(timezone or 0)
+end
+
 --ドキュメントルートへの相対パスを取得する
 function PathToRoot()
   return ('../'):rep(#mg.script_name:gsub('[^\\/]*[\\/]+[^\\/]*','N')-#(mg.document_root..'/'):gsub('[^\\/]*[\\/]+','N'))

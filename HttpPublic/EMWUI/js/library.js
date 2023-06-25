@@ -152,7 +152,7 @@ function folder(){
 							obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 						}else{
 							var avatar;
-							var date = new Date(data.date);
+							var date = createViewDate(data.date);
 							if (thumbs != 0){
 								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 							}else{
@@ -162,7 +162,7 @@ function folder(){
 								$('<span>', {class: 'mdl-list__item-primary-content', append: [
 									avatar,
 									$('<span>', {text: name}),
-									$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getFullYear() +'/'+ ('0'+(date.getMonth()+1)).slice(-2) +'/'+ ('0'+date.getDate()).slice(-2) +' '+ ('0'+date.getHours()).slice(-2) +':'+ ('0'+date.getMinutes()).slice(-2) +':'+ ('0'+date.getSeconds()).slice(-2)}) ]}) );
+									$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getUTCFullYear() +'/'+ ('0'+(date.getUTCMonth()+1)).slice(-2) +'/'+ ('0'+date.getUTCDate()).slice(-2) +' '+ ('0'+date.getUTCHours()).slice(-2) +':'+ ('0'+date.getUTCMinutes()).slice(-2) +':'+ ('0'+date.getUTCSeconds()).slice(-2)}) ]}) );
 						}
 						file.push(obj);
 					}
@@ -275,7 +275,7 @@ function librarySearch(key){
 						obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
 					}else{
 						var avatar;
-						var date = new Date(data.date);
+						var date = createViewDate(data.date);
 						if (thumbs != 0){
 							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
 						}else{
@@ -285,7 +285,7 @@ function librarySearch(key){
 							$('<span>', {class: 'mdl-list__item-primary-content', append: [
 								avatar,
 								$('<span>', {text: name}),
-								$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getFullYear() +'/'+ ('0'+(date.getMonth()+1)).slice(-2) +'/'+ ('0'+date.getDate()).slice(-2) +' '+ ('0'+date.getHours()).slice(-2) +':'+ ('0'+date.getMinutes()).slice(-2) +':'+ ('0'+date.getSeconds()).slice(-2)}) ]}) );
+								$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getUTCFullYear() +'/'+ ('0'+(date.getUTCMonth()+1)).slice(-2) +'/'+ ('0'+date.getUTCDate()).slice(-2) +' '+ ('0'+date.getUTCHours()).slice(-2) +':'+ ('0'+date.getUTCMinutes()).slice(-2) +':'+ ('0'+date.getUTCSeconds()).slice(-2)}) ]}) );
 					}
 					file.push(obj);
 				}

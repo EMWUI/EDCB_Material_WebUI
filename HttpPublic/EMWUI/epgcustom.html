@@ -1,8 +1,8 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
-baseDate=math.floor((now+timezone-MARGIN_HOUR*3600)/24/3600)
-Hour=math.floor((((now+timezone)%(24*3600))/3600)-MARGIN_HOUR)%24
+baseDate=math.floor((utc9Now-MARGIN_HOUR*3600)/24/3600)
+Hour=math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24
 baseTime=(baseDate*24+Hour)*3600
 
 post=AssertPost()
@@ -116,25 +116,25 @@ end)
 
 st={}
 for i,v in ipairs(b)do
-  _endTime=os.time(v.startTime)+(v.durationSecond or 0)
-  if baseTime-timezone<_endTime and (i==1 or v.eid~=b[i-1].eid) then
+  _endTime=TimeWithZone(v.startTime)+(v.durationSecond or 0)
+  if baseTime<_endTime and (i==1 or v.eid~=b[i-1].eid) then
     if not lastendTime or lastendTime<_endTime then lastendTime=_endTime end
     for j=1, #st+1 do
       if st[j] then
         w=st[j][#st[j]]
-        startTime=os.time(w.startTime)
+        startTime=TimeWithZone(w.startTime)
         endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600
       else
         st[j]={}
       end
-      if #st[j]==0 or startTime<os.time(v.startTime) and endTime<=os.time(v.startTime) then
+      if #st[j]==0 or startTime<TimeWithZone(v.startTime) and endTime<=TimeWithZone(v.startTime) then
         table.insert(st[j], v)
         break
       end
     end
   end
 end
-interval=lastendTime and math.ceil((lastendTime+timezone-baseTime)/60/60) or MARGIN_HOUR+1
+interval=lastendTime and math.ceil((lastendTime-baseTime)/60/60) or MARGIN_HOUR+1
 
 SERVICE={}
 for i,v in ipairs(edcb.GetServiceList() or {}) do
@@ -145,7 +145,7 @@ end
 ct={
   title=EdcbHtmlEscape(preset or post and '検索 ('..parseAndKey(key.andKey).andKey..')' or Olympic and 'オリンピック・FIFAワールドカップ' or ''),
   css=epgcss(),
-  js=epgjs(baseTime-timezone,'$(function(){$(".now").each(function(){end($(this));});setInterval("line()", 1000);});'),
+  js=epgjs(baseTime-9*3600,'$(function(){$(".now").each(function(){end($(this));});setInterval("line()", 1000);});'),
   menu=epgMenuTemplate(true),
   progres=true,
   macro=sidePanel,
@@ -208,19 +208,19 @@ for i,v in ipairs(st) do
   lastPx=0
   total=0
   for j,w in ipairs(v) do
-    startTime=os.time(w.startTime)
-    startPx=math.min(math.floor((startTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startTime=TimeWithZone(w.startTime)
+    startPx=math.min(math.floor((startTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600 --終了時間未定
-    endPx=math.min(math.floor((endTime+timezone-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..startTime..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
     if endPx-lastPx>2 then
       op={
         service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or '',
-        url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime+timezone or '&amp;eid='..w.eid)
+        url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime or '&amp;eid='..w.eid)
       }
       table.insert(ctt, epgcell(w, op, (i==1 and 'id="id'..j..'" ' or nil), true))
 
