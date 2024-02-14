@@ -156,6 +156,19 @@ JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,ini))
 --実況コメントの表示時間(秒)
 JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,ini))
 
+if not JK_CHANNELS then
+--実況ログ表示機能のデジタル放送のサービスIDと、実況の番号(jk?)
+--キーの下4桁の16進数にサービスID、上1桁にネットワークID(ただし地上波は15=0xF)を指定
+--指定しないサービスにはjkrdlogの既定値が使われる
+JK_CHANNELS={
+  --例:テレビ東京(0x0430)をjk7と対応づけたいとき
+  --[0xF0430]=7,
+  --例:NHKBS1(0x0065)とデフォルト(jk101)との対応付けを解除したいとき
+  --[0x40065]=-1,
+}
+
+end
+
 if not JK_CUSTOM_REPLACE then
 --chatタグ表示前の置換(JavaScript)
 JK_CUSTOM_REPLACE=[=[
@@ -385,6 +398,26 @@ function GetTotAndServiceID(f)
   return nil
 end
 
+--ライブ実況やjkrdlogの出力のチャンクを1つだけ読み取る
+function ReadJikkyoChunk(f)
+  local head=f:read(80)
+  if not head or #head~=80 then return nil end
+  local payload=''
+  local payloadSize=tonumber(head:match('L=([0-9]+)'))
+  if not payloadSize then return nil end
+  if payloadSize>0 then
+    payload=f:read(payloadSize)
+    if not payload or #payload~=payloadSize then return nil end
+  end
+  return head..payload
+end
+
+--jkrdlogに渡す実況のIDを取得する
+function GetJikkyoID(nid,sid)
+  --地上波のサービス種別とサービス番号はマスクする
+  local id=0x7880<=nid and nid<=0x7fe8 and 0xf0000+bit32.band(sid,0xfe78) or nid*65536+sid
+  return not JK_CHANNELS[id] and 'ns'..id or JK_CHANNELS[id]>0 and 'jk'..JK_CHANNELS[id]
+end
 
 --リトルエンディアンの値を取得する
 function GetLeNumber(buf,pos,len)
