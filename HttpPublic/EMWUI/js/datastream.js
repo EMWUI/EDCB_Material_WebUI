@@ -73,7 +73,9 @@ function toggleDataStream(off){
   if (!VideoSrc) return;
   setbmlBrowserSize();
   bmlBrowserSetInvisible(false);
-  onDataStream=function(psiTS,pcr){bmlBrowserPlayTS(psiTS,pcr);};
+  onDataStream=function(pid,dict,code,pcr){
+    dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
+  };
   onDataStreamError=function(status,readCount){
     document.querySelector(".remote-control-indicator").innerText="Error! ("+status+"|"+readCount+"Bytes)";
   };
