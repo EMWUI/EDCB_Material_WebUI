@@ -17,7 +17,7 @@ if fpath then
   f=edcb.io.open(fpath, 'rb')
   if f then
     if mg.get_var(query,'meta') then
-      fsec,fsize=GetDurationSec(f,fpath)
+      fsec,fsize=GetDurationSec(f)
       ff=edcb.FindFile and edcb.FindFile(ffprobe, 1)
       meta={duration=fsec, audio={}}
       if ff then
@@ -35,7 +35,7 @@ if fpath then
     else
       offset=tonumber(mg.get_var(query,'offset')) or 0
       if offset~=0 then
-        fsec,fsize=GetDurationSec(f,fpath)
+        fsec,fsize=GetDurationSec(f)
         if offset~=100 and SeekSec(f,fsec*offset/100,fsec,fsize) then
           offset=f:seek('cur',0) or 0
         else

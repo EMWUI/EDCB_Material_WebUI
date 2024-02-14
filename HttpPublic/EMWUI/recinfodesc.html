@@ -21,7 +21,6 @@ if v then
     f=edcb.io.open(mg.document_root..'\\video\\'..fname..ext, 'rb')
     if f then
       video=PathToRoot()..'video/'..mg.url_encode(fname)..ext
-      fpath=mg.document_root..'\\video\\'..fname..ext
       break
     end
   end
@@ -29,13 +28,12 @@ if v then
     f=edcb.io.open(w.recFilePath, 'rb')
     if f then
       video=v.id
-      fpath=w.recFilePath
       ori=true
     end
   end
 
   if video then
-    dur,fsize=GetDurationSec(f, fpath)
+    dur,fsize=GetDurationSec(f)
     f:close()
   end
 
