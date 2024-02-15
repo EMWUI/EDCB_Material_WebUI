@@ -5,7 +5,7 @@ edcb.htmlEscape=15
 
 post=AssertPost()
 
-edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
+edcbnosuspend=EdcbModulePath()..'\\Tools\\edcbnosuspend.exe'
 
 if post then
   if mg.get_var(post,'suspend') or mg.get_var(post,'hibernate') then

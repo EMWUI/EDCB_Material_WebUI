@@ -1,9 +1,14 @@
 ﻿ini='Setting\\HttpPublic.ini'
 
+--EDCBフォルダのパス
+function EdcbModulePath()
+  return edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
+end
+
 --EDCBのロゴフォルダにロゴがないときにTvTestのロゴを検索するかどうか
 LOGO_DIR=tonumber(edcb.GetPrivateProfile('SET','TVTest_LOGO',false,ini))~=0
 if LOGO_DIR then
-  TVTest=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini'):gsub('[^\\/]*$','')..'TVTest'
+  TVTest=EdcbModulePath():gsub('[^\\/]*$','')..'TVTest'
   --LogoData.iniとLogoフォルダの絶対パス
   LOGO_INI=edcb.GetPrivateProfile('SET','LOGO_INI',TVTest..'\\LogoData.ini',ini)
   LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',ini)
@@ -32,8 +37,8 @@ USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,ini))~=
 --倍速再生(fastボタン)の速度
 XCODE_FAST=tonumber(edcb.GetPrivateProfile('XCODE','FAST',1.25,ini))
 
-if edcb.FindFile(edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Setting\\XCODE_OPTIONS.lua', 1) then
-  dofile(edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Setting\\XCODE_OPTIONS.lua')
+if edcb.FindFile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua', 1) then
+  dofile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua')
 end
 
 if not XCODE_OPTIONS then
@@ -261,6 +266,30 @@ function DocumentToNativePath(path)
     return mg.document_root..'\\'..path:gsub('/','\\')
   end
   return nil
+end
+
+--設定関係保存フォルダのパス
+function EdcbSettingPath()
+  local dir=edcb.GetPrivateProfile('SET','DataSavePath','','Common.ini')
+  return dir~='' and dir or EdcbModulePath()..'\\Setting'
+end
+
+--録画保存フォルダのパスのリスト
+function EdcbRecFolderPathList()
+  local n=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,'Common.ini')) or 0
+  local r={n>0 and edcb.GetPrivateProfile('SET','RecFolderPath0','','Common.ini') or ''}
+  if r[1]=='' then
+    --必ず返す
+    r[1]=EdcbSettingPath()
+  end
+  for i=2,n do
+    local dir=edcb.GetPrivateProfile('SET','RecFolderPath'..(i-1),'','Common.ini')
+    --空要素は詰める
+    if dir~='' then
+      r[#r+1]=dir
+    end
+  end
+  return r
 end
 
 --現在の変換モードでHTMLエスケープする

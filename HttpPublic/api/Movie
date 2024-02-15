@@ -4,7 +4,7 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 -- コマンドはEDCBのToolsフォルダにあるものを優先する
-tools=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\'
+tools=EdcbModulePath()..'\\Tools\\'
 ffprobe=(edcb.FindFile(tools..'\\ffprobe.exe',1) and tools..'\\' or '')..'ffprobe.exe'
 tsreadex=(edcb.FindFile(tools..'\\tsreadex.exe',1) and tools..'\\' or '')..'tsreadex.exe'
 
