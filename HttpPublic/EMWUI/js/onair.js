@@ -180,7 +180,7 @@ $(function(){
 						src += '&option=' + $('[name=quality]:checked').val();
 						src += $('#audio').attr('disabled') ? '' : '&audio2=' + $('[name=audio]:checked').val();
 						src += $('#cinema').prop('checked') ? '&cinema=1' : '';
-						waitForHlsStart(src,1000,2000,function(){
+						waitForHlsStart(src,1000,1000,function(){
 							showSpinner();
 							Snackbar.MaterialSnackbar.showSnackbar({message: 'エラー'});
 						},function(src){

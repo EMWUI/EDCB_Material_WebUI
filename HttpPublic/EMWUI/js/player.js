@@ -91,10 +91,11 @@ function reloadHls(){
 	if (!d) return;
 	d.paused = video.paused;
 	d.ofssec = Math.floor($('input#seek').val());
-	loadHls(d);
+	var matchReload = (VideoSrc || '').match(/&(?:re)?load=([0-9]+)/);
+	loadHls(d, matchReload && matchReload[1]);
 }
 
-function loadHls(d){
+function loadHls(d, reload){
 	$('#video').addClass('is-loadding');
 
 	var interval = 0;
@@ -111,8 +112,8 @@ function loadHls(d){
 		hls1 = '&hls=' +(1+d.onid+d.tsid+d.sid);
 		VideoSrc += 'view?n=0&id='+ d.onid +'-'+ d.tsid +'-'+ d.sid +'&ctok='+ ctok;
 	}else{
-		hls1 = new Date();
-		hls1 = '&hls=' +(1+(hls1.getHours()*60+hls1.getMinutes())*60+hls1.getSeconds());
+		var dateNow = new Date();
+		hls1 = '&hls=' +(1+(dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds());
 		VideoSrc += 'xcode?'
 		if (d.path){
 			VideoSrc += 'fname=' +d.path;
@@ -122,6 +123,8 @@ function loadHls(d){
 			VideoSrc += 'reid=' +d.reid;
 		}
 		VideoSrc += (d.ofssec > 0 ? '&ofssec=' +d.ofssec : '');
+		//最初にユニークな値をつくりリロード時に値を引きつぐ
+		VideoSrc += (reload ? '&reload=' +reload : '&load=' +((dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds()));
 	}
 
 	VideoSrc += '&option=' + $('[name=quality]:checked').val();
@@ -132,13 +135,13 @@ function loadHls(d){
 	if (window.Hls != undefined){
 		setTimeout(function(){
 			//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-			waitForHlsStart(VideoSrc +hls1 +(/Android.+Firefox/i.test(navigator.userAgent)?'':hls4) + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,2000,function(){errorHLS()},function(src){startHLS(src)})
+			waitForHlsStart(VideoSrc +hls1 +(/Android.+Firefox/i.test(navigator.userAgent)?'':hls4) + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,1000,function(){errorHLS()},function(src){startHLS(src)})
 		}, interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&video.canPlayType('application/vnd.apple.mpegurl')){
 		setTimeout(function(){
 			//環境がないためテスト出来ず
-			waitForHlsStart(VideoSrc +hls1 +hls4 + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,2000,function(){errorHLS()},function(src){video.src=src;})
+			waitForHlsStart(VideoSrc +hls1 +hls4 + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,1000,function(){errorHLS()},function(src){video.src=src;})
 		}, interval);
 	}else{
 		video.src = VideoSrc;
