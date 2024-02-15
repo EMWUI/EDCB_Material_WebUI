@@ -161,7 +161,7 @@ if minTime then
     ..(interval~=DEF_interval and '<input type="hidden" name="interval" value="'..interval..'">' or '')
     ..'</form></div></li>\n')
 
-  minTime=math.min(math.max(minTime, minTime_-1*24*3600), math.max(minTime, pageTime-2*24*3600))
+  minTime=math.max(minTime, pageTime-2*24*3600)
   maxTime=math.min(maxTime, minTime+9*24*3600) -- 10日間
   for i=math.floor((minTime-4*3600)/24/3600),math.floor((maxTime-4*3600)/24/3600) do
     d=os.date('!*t', i*24*3600)
