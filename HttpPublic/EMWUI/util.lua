@@ -12,7 +12,7 @@ function template(temp)
   local suspend=''
   local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
   if edcb.FindFile(edcbnosuspend,1) then
-    local onstat,stat,code=edcb.os.execute('wmic process where "name=\'edcbnosuspend.exe\'" get processid 2>nul | findstr /b [1-9]')
+    local onstat,stat,code=edcb.os.execute('tasklist /fi "imagename eq edcbnosuspend.exe" /fo csv /nh | find /i "edcbnosuspend.exe"')
     onstat=onstat and stat=='exit' and code==0 and 'y'
     suspend=suspend..'<li id="nosuspend" class="mdl-menu__item'..(not INDEX_ENABLE_SUSPEND and temp.menu and ' mdl-menu__item--full-bleed-divider' or '')..(onstat=='y' and ' n' or ' y')..'" data-nosuspend="'..(onstat=='y' and 'n' or 'y')..'" data-ctok="'..CsrfToken('common')..'">録画後動作<span id="n">の抑制を*解除*</span><span id="y">を抑制</span></li>\n'
   end

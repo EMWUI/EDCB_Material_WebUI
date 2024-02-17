@@ -159,7 +159,7 @@ for i,v in ipairs(EdcbRecFolderPathList()) do
     free=nil
     f=edcb.io.popen('fsutil volume diskfree '..v)
     if f then
-      free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).*:(%d+).*:(%d+)')
+      free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).-:(%d+).-:(%d+)')
       f:close()
     end
     ct.main=ct.main..'<div class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
