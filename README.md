@@ -1,7 +1,7 @@
 EDCB Material WebUI
 ===================
 
-**EDCBのWebUIをMaterial Design Lite使いマテリアルデザインに沿うように表示できます**  
+**EDCBのWebUIを、Material Design Liteを使いマテリアルデザインに沿うように表示できます**  
 
 予約の追加確認、番組表の表示などの基本的な機能の他、リモート視聴・ファイル再生、PWAなどに対応しています  
 
@@ -22,37 +22,39 @@ EDCB Material WebUI
 1. http://localhost:5510/ などにアクセス、サーバー機能が有効になったことを確認  
 ※ ここでうまく行かない場合はEDCBの設定の問題だと思われます
 1. ファイルを適切に設置 (下記の配置例を参照)  
-   `HttpPublic`と`Setting`をEDCBフォルダに入れる  
-   ※ 配置例 (＊があるものは必ずその場所に配置)
+   `HttpPublic`と`Setting`のフォルダをEDCBフォルダに入れる  
+   ※ 配置例 (EMWUI、legacyは任意にリネーム等化)
 
        EDCB/
         ├─ HttpPublic/
-        │   ├─ api/ ＊
+        │   ├─ api/
         │   ├─ EMWUI/
         │   ├─ legacy/
-        │   ├─ img/ ＊
-        │   │   └logo/ ＊
-        │   └─ video/ ＊
+        │   ├─ img/
+        │   │   └─logo/
+        │   ├─ video/
+        │   └─ index.html
         ├─ Tools/
         │   ├─ ffmpeg.exe
-        │   ├─ ffprobe.exe ＊
-        │   ├─ tsreadex.exe ＊
-        │   ├─ asyncbuf.exe ＊
-        │   ├─ tsmemseg.exe ＊
-        │   └─ psisiarc.exe ＊
+        │   ├─ ffprobe.exe
+        │   ├─ tsreadex.exe
+        │   ├─ asyncbuf.exe
+        │   ├─ tsmemseg.exe
+        │   ├─ psisiarc.exe
+        │   └─ edcbnosuspend.exe
         ├─ Setting/
-        │   ├─ XCODE_OPTIONS.lua ＊
-        │   └─ HttpPublic.ini ＊
-        ├─ EpgDataCap_Bon.exe ＊
-        ├─ EpgTimerSrv.exe ＊
-        ├─ EpgTimer.exe ＊
-        ├─ lua52.dll ＊
-        └─ SendTSTCP.dll ＊
+        │   ├─ XCODE_OPTIONS.lua
+        │   └─ HttpPublic.ini
+        ├─ EpgDataCap_Bon.exe
+        ├─ EpgTimerSrv.exe
+        ├─ EpgTimer.exe
+        ├─ lua52.dll
+        └─ SendTSTCP.dll
 
 1. リモート視聴する場合EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
 1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ  
 
-* 更新の際は`HttpPublic`のみ上書きしてください  
+* 更新の際は`HttpPublic`のフォルダのみを上書きしてください  
 * PWAを使用する場合は追加の設定や別途ファイルが必要です
 
 
@@ -80,9 +82,9 @@ Legacy WebUIの配信機能を移植し、以下の事が可能となりまし�
 * HLSでの配信
 * web-bmlによるデータ放送の表示
 * aribb24.jsによる字幕表示
-* 実況の表示
+* 実況の表示 (録画用アプリにTvTestの使用時のみ)
 
-過去の機能と仕様などが変わり互換性はありませんので再度設定をしてください
+過去の機能と仕様などが変わり互換性はありませんので再度設定をしてください  
 [EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください  
 
 ### 注意
@@ -90,8 +92,8 @@ Legacy WebUIの配信機能を移植し、以下の事が可能となりまし�
 * リモコン、コメントボタンを長押しすると各データの常時取得が有効になります
 * **データ放送がリセットできない**ため、一度データ放送を読み込みチャンネルを変更すると、リモコンボタンは無効化されます  
 上記の理由から常時取得有効中でも、リモコンボタンを一度押すまでデータ放送は読み込まれません
-* データ放送のNVRAM設定はLegacy WebUIと共通です、今のところ[Legacy WebUIのNVRAM設定](http://localhost:5510/legacy/nvram.html)でできます
-* .pscファイルによる表示は現在非対応としています（要望があったら対応するかもしれません）  
+* データ放送のNVRAM設定はLegacy WebUIと共通です、今のところ Legacy WebUI の[NVRAM設定](http://localhost:5510/legacy/nvram.html)でできます
+* Legacy WebUIで可能な`.pscファイル`による表示は現在非対応としています（要望があったら対応するかもしれません）  
 * プレイヤーの速度設定はブラウザ側の機能を使用しています  
 倍速読み込みはトランスコードオプションの`filterFast`を有効にします
 
@@ -108,7 +110,7 @@ Legacy WebUIの配信機能を移植し、以下の事が可能となりまし�
 
 ## ライブラリ
 * 録画保存フォルダのビデオファイル(`ts`,`mp4`,`webm`等)を表示・再生します  
-`HttpPublic.ini`でフォルダの変更が可能です  
+`HttpPublic.ini`で任意のフォルダ指定が可能です  
 * Chrome系ブラウザでmp4を再生しようとするとエラーで再生できないことがありますが`-movflags faststart`オプションを付けエンコすることで再生できる場合が、
 また公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
 
@@ -169,7 +171,7 @@ URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインに�
 # その他
 * **iOS、スカパープレミアムの環境はありません。**  
 * バグ報告は詳細に、上記の環境ない箇所の場合は特に詳細に、対処できません  
-* [欲しい物リスト](https://www.amazon.co.jp/hz/wishlist/ls/1FFBR5ZLZK8EY?ref_=wl_share)を公開しました、ご支援の程よろしくお願いします  
+* [欲しい物リスト](https://www.amazon.co.jp/hz/wishlist/ls/1FFBR5ZLZK8EY?ref_=wl_share)を公開しておりますので気に入ったらよろしくお願いします 
 * このプログラムを使用し不利益が生じても一切の責任を負いません  
 * また改変・再配布などはご自由にどうぞ  
 
