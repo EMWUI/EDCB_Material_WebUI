@@ -23,7 +23,7 @@ EDCB Material WebUI
 ※ ここでうまく行かない場合はEDCBの設定の問題だと思われます
 1. ファイルを適切に設置 (下記の配置例を参照)  
    `HttpPublic`と`Setting`のフォルダをEDCBフォルダに入れる  
-   ※ 配置例 (EMWUI、legacyは任意にリネーム等化)
+   ※ 配置例 (EMWUI、legacyは任意にリネーム等可)
 
        EDCB/
         ├─ HttpPublic/
@@ -178,7 +178,7 @@ URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインに�
 ### Framework & JavaScriptライブラリ
 
 * [Material Design Lite](http://www.getmdl.io)
-* [Material icons](https://design.google.com/icons/)
+* [Material Symbols](https://github.com/google/material-design-icons)
 * [dialog-polyfill](https://github.com/GoogleChrome/dialog-polyfill)
 * [jQuery](https://jquery.com)
 * [jQuery UI](https://jqueryui.com)

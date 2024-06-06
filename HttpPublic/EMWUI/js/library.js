@@ -115,7 +115,7 @@ function folder(){
 
 						if (ViewMode == 'grid'){
 							obj.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
-								$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons', text: 'folder'}) }),
+								$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
 								$('<div>', {class: 'foldername', text: name }) );
 						}else{
 							obj.addClass('mdl-list__item mdl-list__item--two-line').append(

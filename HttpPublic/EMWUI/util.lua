@@ -44,7 +44,6 @@ function template(temp)
 ..((temp.dialog or temp.progres) and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
 <link rel="stylesheet" href="]=]..path..[=[css/default.css">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 ]=]
 ..(Roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 
@@ -149,8 +148,8 @@ s:Append([=[
       <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html"><i class="material-icons">schedule</i>予約一覧</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html"><i class="material-icons">tune</i>チューナー別</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html"><i class="material-icons">update</i>EPG予約</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[library.html"><i class="material-icons">video_library</i>ライブラリ</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">assignment</i>録画結果</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[library.html"><i class="material-icons">storage</i>ライブラリ</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">history</i>録画結果</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[search.html"><i class="material-icons">search</i>検索</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
       <div class="mdl-layout-spacer"></div>
@@ -744,7 +743,7 @@ end
 function sidePanelTemplate(reserve)
   local s=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info_outline</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
+<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
 <div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
 <div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
@@ -852,15 +851,15 @@ function player(video, live)
 <div></div>
 <div id="control" class="bar">
 <div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" step="0.00001">')..[=[</div>
-<button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">skip_next</i></button></span>
-<div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
+<button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
+<div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon fill"><i class="material-icons fill">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span> / </span><span class="duration videoTime">0:00</span></div>
 ]=]..(live and '<div id="live">&#8226;</div>' or '')..[=[
 <p class="mdl-layout-spacer"></p>
-]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">settings_remote</i></button>\n' or '')
-  ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">subtitles</i></button>\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">chat</i></button>\n' or '')..[=[
-<button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">settings</i></button>
+]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
+  ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">subtitles</i></button>\n' or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">chat</i></button>\n' or '')..[=[
+<button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
 <li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
