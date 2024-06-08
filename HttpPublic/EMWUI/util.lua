@@ -1,4 +1,4 @@
-﻿dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.document_root..'\\api\\util.lua')
 
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
 
@@ -893,7 +893,7 @@ function player(video, live)
 <div class="arib-video-invisible-container"><div class="arib-video-container">]=]..video..[=[</div></div>
 </div></div>
 ]=]
-  ..((ALLOW_HLS or live) and '<script>'..(ALLOW_HLS and 'ALLOW_HLS=true;' or '')..(live and 'var ctok=\''..CsrfToken('view')..'\';' or '')..'</script>\n' or '')
+  ..((ALLOW_HLS or live) and '<script>'..(ALLOW_HLS and 'ALLOW_HLS=true;' or '')..'var ctok=\''..(live and CsrfToken('view') or CsrfToken('xcode'))..'\';'..'</script>\n' or '')
   ..'<script src="js/legacy.script.js"></script>\n'
   
   ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<script src="js/datastream.js"></script>\n' or '')

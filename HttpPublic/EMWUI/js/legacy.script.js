@@ -237,10 +237,13 @@ function decodeB24CaptionFromCueText(text,work){
   return ret;
 }
 
-function waitForHlsStart(src,interval,delay,onerror,onstart){
+function waitForHlsStart(src,postQuery,interval,delay,onerror,onstart){
+  var method="POST";
   (function poll(){
     var xhr=new XMLHttpRequest();
-    xhr.open("GET",src);
+    xhr.open(method,src);
+    if(method=="POST")xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+    method="GET";
     xhr.onload=function(){
       if(xhr.status==200&&xhr.response){
         if(xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:')<0)setTimeout(poll,interval);
@@ -249,7 +252,7 @@ function waitForHlsStart(src,interval,delay,onerror,onstart){
         onerror();
       }
     }
-    xhr.send();
+    xhr.send(postQuery);
   })();
 }
 
