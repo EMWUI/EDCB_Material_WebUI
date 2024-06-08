@@ -12,28 +12,10 @@ end
 
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry>'}
 
-if edcb.FindFile then
-  function finddir(path)
-    local i=0
-    local t=edcb.FindFile(path..'\\*', 0) or {}
-    return function() i=i+1 return t[i] end
-  end
-else
-  local status, lfs=pcall(require, 'lfs')
-  if status then
-    function finddir(path)
-      path=edcb.Convert('cp932', 'utf-8', path)
-      local f, s, fname=lfs.dir(path)
-      return function()
-        fname=f(s, fname)
-        if fname then
-          local attr=lfs.attributes(path..'\\'..fname)
-          return {name=edcb.Convert('utf-8', 'cp932', fname), iserr=not attr, isdir=(attr and attr.mode=='directory'), mtime=(attr and os.date('!*t', attr.modification+9*3600))}
-        end
-        return nil
-      end
-    end
-  end
+function finddir(path)
+  local i=0
+  local t=edcb.FindFile(path..'\\*', 0) or {}
+  return function() i=i+1 return t[i] end
 end
 
 if finddir then
@@ -59,9 +41,9 @@ if finddir then
             end
           elseif mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
             thumbHash=mg.md5(fpath:lower())
-            thumbs=edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\thumbs\\'..thumbHash..'.jpg', 1)
+            thumbs=edcb.FindFile(mg.document_root..'\\video\\thumbs\\'..thumbHash..'.jpg', 1)
             if MakeThumbs then
-              if not thumbs and edcb.FindFile then
+              if not thumbs then
                 edcb.os.execute('""'..ffmpeg..'" -ss 5 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\video\\thumbs\\'..thumbHash..'.jpg'..'""')
               end
               thumbsUsing[thumbHash]=true
@@ -97,7 +79,7 @@ if finddir then
 
   if MakeThumbs then
     -- 未使用サムネを掃除
-    for i,v in ipairs(edcb.FindFile and edcb.FindFile(mg.document_root..'\\video\\thumbs\\????????????????????????????????.jpg', 0) or {}) do
+    for i,v in ipairs(edcb.FindFile(mg.document_root..'\\video\\thumbs\\????????????????????????????????.jpg', 0)) do
       if v.name:match('^%x+%.[Jj][Pp][Gg]$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
         edcb.os.remove(mg.document_root..'\\video\\thumbs\\'..v.name)
       end
