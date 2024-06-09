@@ -111,4 +111,4 @@ ct.main=ct.main..'<div id="network" class="tag">\n'
 
 ct=template(ct)
 
-mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

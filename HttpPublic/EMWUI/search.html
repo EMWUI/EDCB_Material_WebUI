@@ -346,4 +346,4 @@ ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--f
 
 ct=template(ct)
 
-mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..(ct.gzip and 'Content-Encoding: gzip\r\n' or '')..'\r\n'))
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
