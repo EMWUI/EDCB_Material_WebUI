@@ -1,18 +1,4 @@
-﻿ini='Setting\\HttpPublic.ini'
-
---EDCBフォルダのパス
-function EdcbModulePath()
-  return edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
-end
-
---EDCBのロゴフォルダにロゴがないときにTvTestのロゴを検索するかどうか
-LOGO_DIR=tonumber(edcb.GetPrivateProfile('SET','TVTest_LOGO',false,ini))~=0
-if LOGO_DIR then
-  TVTest=EdcbModulePath():gsub('[^\\/]*$','')..'TVTest'
-  --LogoData.iniとLogoフォルダの絶対パス
-  LOGO_INI=edcb.GetPrivateProfile('SET','LOGO_INI',TVTest..'\\LogoData.ini',ini)
-  LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',ini)
-end
+ini='Setting\\HttpPublic.ini'
 
 --情報通知ログの表示を許可するかどうか
 SHOW_NOTIFY_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,ini))~=0
@@ -37,11 +23,6 @@ USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,ini))~=
 --倍速再生(fastボタン)の速度
 XCODE_FAST=tonumber(edcb.GetPrivateProfile('XCODE','FAST',1.25,ini))
 
-if edcb.FindFile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua', 1) then
-  dofile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua')
-end
-
-if not XCODE_OPTIONS then
 --トランスコードオプション
 --HLSのときはセグメント長約4秒、最大8MBytes(=1秒あたり16Mbits)を想定しているので、オプションもそれに合わせること
 --HLSでないときはフラグメントMP4などを使ったプログレッシブダウンロード。字幕は適当な重畳手法がまだないので未対応
@@ -140,16 +121,11 @@ XCODE_OPTIONS={
   },
 }
 
-end
-
-if not ARIBB24_JS_OPTION then
 --字幕表示のオプション https://github.com/monyone/aribb24.js#options
 ARIBB24_JS_OPTION=[=[
   normalFont:'"Rounded M+ 1m for ARIB","Yu Gothic Medium",sans-serif',
   drcsReplacement:true
 ]=]
-
-end
 
 --字幕表示にSVGRendererを使うかどうか。描画品質が上がる(ただし一部ブラウザで背景に線が入る)。IE非対応
 ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,ini))~=0
@@ -171,7 +147,6 @@ JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,ini))
 --実況コメントの表示時間(秒)
 JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,ini))
 
-if not JK_CHANNELS then
 --実況ログ表示機能のデジタル放送のサービスIDと、実況の番号(jk?)
 --キーの下4桁の16進数にサービスID、上1桁にネットワークID(ただし地上波は15=0xF)を指定
 --指定しないサービスにはjkrdlogの既定値が使われる
@@ -182,9 +157,6 @@ JK_CHANNELS={
   --[0x40065]=-1,
 }
 
-end
-
-if not JK_CUSTOM_REPLACE then
 --chatタグ表示前の置換(JavaScript)
 JK_CUSTOM_REPLACE=[=[
   // 広告などを下コメにする
@@ -193,8 +165,6 @@ JK_CUSTOM_REPLACE=[=[
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/nicoad (\d*)\{[^<]*?"message":("[^<]*?")[,}][^<]*/, '<chat align="right"$1shita small yellow $2$4($3pt)');
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/spi /, '<chat align="right"$1shita small white2 $2');
 ]=]
-
-end
 
 --トランスコードするかどうか。する場合はtsreadex.exeとトランスコーダー(ffmpeg.exeなど)を用意すること
 XCODE=tonumber(edcb.GetPrivateProfile('XCODE','XCODE',true,ini))~=0
@@ -266,6 +236,11 @@ function DocumentToNativePath(path)
     return mg.document_root..'\\'..path:gsub('/','\\')
   end
   return nil
+end
+
+--EDCBフォルダのパス
+function EdcbModulePath()
+  return edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
 end
 
 --設定関係保存フォルダのパス
@@ -642,7 +617,24 @@ function AssertCsrf(qs)
   assert(mg.get_var(qs,'ctok')==CsrfToken() or mg.get_var(qs,'ctok')==CsrfToken(nil,-1) or mg.get_var(qs,'ctok',1)==CsrfToken() or mg.get_var(qs,'ctok',1)==CsrfToken(nil,-1))
 end
 
+
+
+
+
 ----------ここまでLegacy WebUIから----------
+
+if edcb.FindFile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua', 1) then
+  dofile(EdcbModulePath()..'\\Setting\\XCODE_OPTIONS.lua')
+end
+
+--EDCBのロゴフォルダにロゴがないときにTvTestのロゴを検索するかどうか
+LOGO_DIR=tonumber(edcb.GetPrivateProfile('SET','TVTest_LOGO',false,ini))~=0
+if LOGO_DIR then
+  TVTest=EdcbModulePath():gsub('[^\\/]*$','')..'TVTest'
+  --LogoData.iniとLogoフォルダの絶対パス
+  LOGO_INI=edcb.GetPrivateProfile('SET','LOGO_INI',TVTest..'\\LogoData.ini',ini)
+  LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',ini)
+end
 
 --録画設定をxmlに
 function xmlRecSetting(rs, rsdef)

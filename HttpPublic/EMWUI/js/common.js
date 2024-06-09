@@ -1,4 +1,4 @@
-﻿var PresetList, ReserveAutoaddList, Snackbar;
+var PresetList, ReserveAutoaddList, Snackbar;
 var isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in window);
 var week = ['日', '月', '火', '水', '木', '金', '土'];
 

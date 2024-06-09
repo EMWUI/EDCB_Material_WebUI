@@ -5,8 +5,8 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 -- コマンドはEDCBのToolsフォルダにあるものを優先する
 tools=EdcbModulePath()..'\\Tools\\'
-ffprobe=(edcb.FindFile(tools..'\\ffprobe.exe',1) and tools..'\\' or '')..'ffprobe.exe'
-tsreadex=(edcb.FindFile(tools..'\\tsreadex.exe',1) and tools..'\\' or '')..'tsreadex.exe'
+ffprobe='"'..(edcb.FindFile(tools..'\\ffprobe.exe',1) and tools..'\\' or '')..'ffprobe.exe"'
+tsreadex='"'..(edcb.FindFile(tools..'\\tsreadex.exe',1) and tools..'\\' or '')..'tsreadex.exe"'
 
 query=mg.request_info.query_string
 fpath=GetFilePath(query)
@@ -22,8 +22,8 @@ if fpath then
       meta={duration=fsec, audio={}}
       if ff then
         offset=math.floor(fsize*10/100/188)*188
-        local fp=edcb.io.popen('""'..tsreadex..'" -s '..offset..' "'..fpath..'" | "'
-          ..ffprobe..'" -i pipe:0 -hide_banner 2>&1"', 'rb')
+        local fp=edcb.io.popen(tsreadex..' -s '..offset..' "'..fpath..'" | '
+          ..ffprobe..' -i pipe:0 -hide_banner 2>&1"', 'rb')
         if fp then
           for v in (fp:read('*a') or ''):gmatch(':%sAudio:%s(.-)\r\n') do
             table.insert(meta.audio,v)

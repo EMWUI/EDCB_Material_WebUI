@@ -1,4 +1,4 @@
-﻿var fullscreen, theater;
+var fullscreen, theater;
 var VideoSrc;
 var ALLOW_HLS;
 var hls, cap;

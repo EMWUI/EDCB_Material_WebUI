@@ -1,4 +1,4 @@
-﻿function updateEPGtitle(obj){
+function updateEPGtitle(obj){
 	var d = obj.data();
 	$.get(root + 'api/EnumEventInfo' + (obj.hasClass('is_cast') ? '?basic=0' : ''), {onair: 0, onid: d.onid, tsid: d.tsid, sid: d.sid}).done(function(xhr){
 		if ($(xhr).find('eventinfo').length > 0){

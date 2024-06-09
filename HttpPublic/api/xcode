@@ -1,3 +1,4 @@
+-- vim:set ft=lua:
 -- ファイルを転送するスクリプト
 -- ファイルをタイムシフト再生できる: http://localhost:5510/xcode.lua?fname=video/foo.ts
 

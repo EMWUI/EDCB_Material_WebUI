@@ -1,4 +1,4 @@
-﻿// キャッシュ名とキャッシュファイルの指定
+// キャッシュ名とキャッシュファイルの指定
 var CACHE_NAME = 'v1';
 var cacheList = [
 	'./css/dialog-polyfill.css',

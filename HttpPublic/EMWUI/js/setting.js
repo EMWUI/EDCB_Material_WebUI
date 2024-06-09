@@ -1,4 +1,4 @@
-﻿$(function(){
+$(function(){
 	$('.mdl-progress').on('mdl-componentupgraded', function() {
 		this.MaterialProgress.setProgress($(this).data().free);
 	});

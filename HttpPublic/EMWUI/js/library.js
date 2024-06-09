@@ -1,4 +1,4 @@
-﻿var loadingMovieList;
+var loadingMovieList;
 //ライブラリ一覧取得
 function getMovieList(Snack){
 	loadingMovieList = true;

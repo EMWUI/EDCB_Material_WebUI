@@ -1,4 +1,4 @@
-﻿-- vim:set ft=lua:
+-- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
 edcb.htmlEscape=15

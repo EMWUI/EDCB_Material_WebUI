@@ -1,4 +1,4 @@
-﻿function now(text){
+function now(text){
 	var SHOW_MIN;
 	var elapse;
 	var date = new Date();

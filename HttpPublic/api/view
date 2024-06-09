@@ -1,3 +1,4 @@
+-- vim:set ft=lua:
 -- 名前付きパイプ(SendTSTCPの送信先:0.0.0.1 ポート:0～65535)を転送するスクリプト
 
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')

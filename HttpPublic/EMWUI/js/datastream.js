@@ -1,4 +1,4 @@
-﻿//データ取得
+//データ取得
 var setSendComment;
 var openSubStream;
 var onDataStreamError=null;
