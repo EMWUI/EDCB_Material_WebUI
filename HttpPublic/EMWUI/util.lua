@@ -11,7 +11,7 @@ function template(temp)
   local Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
   local suspend=''
   local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
-  if edcb.FindFile(edcbnosuspend,1) then
+  if WIN32 and EdcbFindFilePlain(edcbnosuspend) then
     local onstat,stat,code=edcb.os.execute('tasklist /fi "imagename eq edcbnosuspend.exe" /fo csv /nh | find /i "edcbnosuspend.exe"')
     onstat=onstat and stat=='exit' and code==0 and 'y'
     suspend=suspend..'<li id="nosuspend" class="mdl-menu__item'..(not INDEX_ENABLE_SUSPEND and temp.menu and ' mdl-menu__item--full-bleed-divider' or '')..(onstat=='y' and ' n' or ' y')..'" data-nosuspend="'..(onstat=='y' and 'n' or 'y')..'" data-ctok="'..CsrfToken('common')..'">録画後動作<span id="n">の抑制を*解除*</span><span id="y">を抑制</span></li>\n'
@@ -444,8 +444,6 @@ function RecSettingTemplate(rs)
 
 
   local CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
-  local WriteDir=edcb.FindFile(CurrentDir..'\\Write\\*.dll', 0) or {}
-  local RecNameDir=edcb.FindFile(CurrentDir..'\\RecName\\*.dll', 0) or {}
   s=s..'</div>\n<div id="preset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
   if #rs.recFolderList>0 then
     for i,v in ipairs(rs.recFolderList) do
@@ -455,14 +453,14 @@ function RecSettingTemplate(rs)
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell">フォルダ</div><div class="mdl-cell">'..v.recFolder..'</div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">出力PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="writePlugIn">\n'
-      for j,w in ipairs(WriteDir) do
-        s=s..'<option value="'..w.name..'"'..(v.writePlugIn==w.name and ' selected' or '')..'>'..w.name..'\n'
+      for j,w in ipairs(EnumPlugInFileName('Write')) do
+        s=s..'<option value="'..w..'"'..(IsEqualPath(v.writePlugIn,w) and ' selected' or '')..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">ファイル名PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="recNamePlugIn">\n<option value=""'..((recNameDll or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
-      for j,w in ipairs(RecNameDir) do
-        s=s..'<option value="'..w.name..'"'..((recNameDll or v.recNamePlugIn)==w.name and ' selected' or '')..'>'..w.name..'\n'
+      for j,w in ipairs(EnumPlugInFileName('RecName')) do
+        s=s..'<option value="'..w..'"'..(IsEqualPath((recNameDll or v.recNamePlugIn),w) and ' selected' or '')..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">オプション</div>\n'
@@ -489,14 +487,14 @@ function RecSettingTemplate(rs)
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell">フォルダ</div><div class="mdl-cell">'..v.recFolder..'</div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">出力PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialwritePlugIn">\n'
-      for j,w in ipairs(WriteDir) do
-        s=s..'<option value="'..w.name..'"'..(v.writePlugIn==w.name and ' selected' or '')..'>'..w.name..'\n'
+      for j,w in ipairs(EnumPlugInFileName('Write')) do
+        s=s..'<option value="'..w..'"'..(IsEqualPath(v.writePlugIn,w) and ' selected' or '')..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">ファイル名PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialrecNamePlugIn">\n<option value=""'..((recNameDll or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
-      for j,w in ipairs(RecNameDir) do
-        s=s..'<option value="'..w.name..'"'..((recNameDll or v.recNamePlugIn)==w.name and ' selected' or '')..'>'..w.name..'\n'
+      for j,w in ipairs(EnumPlugInFileName('RecName')) do
+        s=s..'<option value="'..w..'"'..(IsEqualPath((recNameDll or v.recNamePlugIn),w) and ' selected' or '')..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">オプション</div>\n'
@@ -509,12 +507,12 @@ function RecSettingTemplate(rs)
     ..'</div>'
 
     ..'<select id="Write" class="hidden">\n'
-  for j,w in ipairs(WriteDir) do
-    s=s..'<option value="'..w.name..'">'..w.name..'\n'
+  for j,w in ipairs(EnumPlugInFileName('Write')) do
+    s=s..'<option value="'..w..'">'..w..'\n'
   end
   s=s..'</select>\n<select id="RecName" class="hidden">\n<option value="">なし\n'
-  for j,w in ipairs(RecNameDir) do
-    s=s..'<option value="'..w.name..'">'..w.name..'\n'
+  for j,w in ipairs(EnumPlugInFileName('RecName')) do
+    s=s..'<option value="'..w..'">'..w..'\n'
   end
   s=s..'</select>\n'
 
@@ -543,7 +541,7 @@ function RecSettingTemplate(rs)
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(batFilePath=='' and ' selected' or '')..'>なし\n'
 
   local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',ini)..'\\'
-  for j,w in ipairs(edcb.FindFile(batPath..'*', 0) or {}) do
+  for j,w in ipairs(edcb.FindFile(PathAppend(batPath,'*'), 0) or {}) do
     if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$') or w.name:find('%.[Ll][Uu][Aa]$')) then
       s=s..'<option value="'..batPath..w.name..'"'..(batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
       batFilePath=(batFilePath==batPath..w.name and '' or batFilePath)

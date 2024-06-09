@@ -153,19 +153,37 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
 
 checked={}
 for i,v in ipairs(EdcbRecFolderPathList()) do
-  v=v:match('^%a:\\')
-  if v and not checked[v:upper()] then
-    checked[v:upper()]=true
-    free=nil
-    f=edcb.io.popen('fsutil volume diskfree '..v)
+  if WIN32 then
+    v=v:match('^%a:\\')
+    if v and not checked[v:upper()] then
+      checked[v:upper()]=true
+      free=nil
+      f=edcb.io.popen('fsutil volume diskfree '..v)
+      if f then
+        --最近のfsutilは数値に桁区切りがつく。さらに最近のものは項目が増えた。
+        free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).-:(%d+).-:(%d+)')
+        f:close()
+      end
+      ct.main=ct.main..'<div class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
+        ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..v..'</div><div class="mdl-layout-spacer"></div><div>'
+        ..(free and ('%.3f GiB / %.3f GiB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</div></div>\n'
+        ..'<div id="disk'..i..'" class="mdl-progress mdl-js-progress" data-free="'..(free and 100-(free/total*100) or 'false')..'"></div></div></div>\n'
+    end
+  else
+    total=nil
+    f=edcb.io.popen('df -P -BM '..QuoteCommandArgForPath(v)..' 2>/dev/null | sed "s/  */ /g" | cut -f2-4 -d" "')
     if f then
-      free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).-:(%d+).-:(%d+)')
+      total,used,avail=f:read('*a'):match('(%d+)M (%d+)M (%d+)M')
       f:close()
     end
-    ct.main=ct.main..'<div class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
-      ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..v..'</div><div class="mdl-layout-spacer"></div><div>'
-      ..(free and ('%.3f GiB / %.3f GiB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</div></div>\n'
-      ..'<div id="disk'..i..'" class="mdl-progress mdl-js-progress" data-free="'..(free and 100-(free/total*100) or 'false')..'"></div></div></div>\n'
+    if total then
+      edcb.htmlEscape=15
+      ct.main=ct.main..'<div class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
+        ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..v..'</div><div class="mdl-layout-spacer"></div><div>'
+        ..('%.3f GiB (avail: %.3f GiB) / %.3f GiB'):format((total-used)/1024,avail/1024,total/1024)..'</div></div>\n'
+        ..'<div id="disk'..i..'" class="mdl-progress mdl-js-progress" data-free="'..100-((total-used)/total*100)..'"></div></div></div>\n'
+      edcb.htmlEscape=0
+    end
   end
 end
 

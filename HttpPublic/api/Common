@@ -34,7 +34,7 @@ if post then
     edcb.os.execute('start "" /b "'..edcbnosuspend..'" -')
     messege='edcbnosuspend.exeを起動しました'
   elseif mg.get_var(post,'nosuspend')=='n' then
-    TerminateCommandlineLike('edcbnosuspend.exe','%')
+    TerminateCommandlineLike('edcbnosuspend','%')
     messege='edcbnosuspend.exeを停止しました'
   end
 elseif mg.get_var(mg.request_info.query_string,'notify') then
