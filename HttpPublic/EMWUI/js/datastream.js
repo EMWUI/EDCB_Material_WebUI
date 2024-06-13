@@ -63,6 +63,8 @@ var onJikkyoStreamError=null;
 })();
 
 //データ放送
+const $remocon = document.querySelector('#remote');
+const $indicator = document.querySelector(".remote-control-indicator")
 function toggleDataStream(off){
   if (off || onDataStream){
     onDataStream=null;
@@ -77,10 +79,10 @@ function toggleDataStream(off){
     dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
   };
   onDataStreamError=function(status,readCount){
-    document.querySelector(".remote-control-indicator").innerText="Error! ("+status+"|"+readCount+"Bytes)";
+    $indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
   };
-  document.querySelector(".remote-control-indicator").innerText="接続中...";
-  document.querySelector('#remote').classList.add('done');
+  $indicator.innerText="接続中...";
+  $remocon.classList.add('done');
   openSubStream();
 }
 
@@ -221,6 +223,7 @@ function toggleJikkyo(off){
 };
 
 //BMLブラウザのサイズ指定 要改善
+const $playerUI_ = document.querySelector('#playerUI');
 function setbmlBrowserSize(){
 	var width = window.innerWidth;
 	var height = width * (9/16);
@@ -233,7 +236,7 @@ function setbmlBrowserSize(){
 		height = window.innerHeight * 0.85 - 70;
 		width = height * (16/9);
 	}else if (!fullscreen){
-		width = document.querySelector('#player').clientWidth;
+		width = $playerUI_.clientWidth;
 		height = width * (9/16);
 	}
 	bmlBrowserSetVisibleSize(width,height);

@@ -3,7 +3,8 @@
   font-style: normal;
   font-weight: 100 700;
   font-display: block;
-  src: url(../material-symbols-outlined.woff2) format('woff2');
+  src: url(../material-symbols-outlined.woff2) format('woff2'),
+    url(material-symbols-outlined.woff2) format('woff2'); /*PIPのウィンドウ用*/
 }
 .material-icons,
 .material-symbols-outlined {
@@ -1520,6 +1521,15 @@ h4 .mdl-button--icon {
 
 
 /*動画*/
+@media all and (display-mode: picture-in-picture) {
+  .hide-pip {
+    display: none !important; }
+}
+@media all and (not (display-mode: picture-in-picture)) {
+  .only-pip {
+    display: none !important; }
+}
+
 #video {
   background-color: #000;
   max-width: 100%;
@@ -1527,6 +1537,9 @@ h4 .mdl-button--icon {
   min-height: 176px; }
   #video.is-loadding {
     background: #000 center / cover no-repeat url('../img/noise.gif'); }
+    @media all and (display-mode: picture-in-picture) {
+      #video.is-loadding {
+        background-image: url('img/noise.gif'); } }
   @media (min-width: 700px) {
     #video {
       min-width: 480px;
@@ -1634,6 +1647,8 @@ h4 .mdl-button--icon {
     opacity: 1;
     pointer-events: auto; }
   #popup #stop,
+  #popup:not(.window) #playprev,
+  #popup:not(.window) #playnext,
   #popup .player-mode,
   #movie .player-mode,
   #movie #titlebar,

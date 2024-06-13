@@ -883,9 +883,11 @@ function player(video, live)
   end
   return s..[=[
 </ul>
+<button id="PIP" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">picture_in_picture</i><span class="mdl-tooltip" data-mdl-for="PIP">ピクチャーインピクチャー</span></button>
+<button id="PIP_exit" class="only-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">pip_exit</i><span class="mdl-tooltip" data-mdl-for="PIP_exit">タブに戻る</span></button>
 <button id="defult" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_7_5</i><span class="mdl-tooltip" data-mdl-for="defult">シアターモード</span></button>
 <button id="theater" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_landscape</i><span class="mdl-tooltip" data-mdl-for="theater">デフォルト表示</span></button>
-<button id="fullscreen" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
+<button id="fullscreen" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
 </div>
 </div>
 <div class="arib-video-invisible-container"><div class="arib-video-container">]=]..video..[=[</div></div>
