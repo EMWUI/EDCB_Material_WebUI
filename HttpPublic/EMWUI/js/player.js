@@ -135,13 +135,13 @@ function loadHls(d, reload){
 	if (window.Hls != undefined){
 		setTimeout(function(){
 			//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-			waitForHlsStart(VideoSrc +hls1 +(/Android.+Firefox/i.test(navigator.userAgent)?'':hls4) + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,1000,function(){errorHLS()},function(src){startHLS(src)})
+			waitForHlsStart(VideoSrc +hls1 +(/Android.+Firefox/i.test(navigator.userAgent)?'':hls4) + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),'ctok='+ ctok +'&open=1',1000,1000,function(){errorHLS()},function(src){startHLS(src)})
 		}, interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&video.canPlayType('application/vnd.apple.mpegurl')){
 		setTimeout(function(){
 			//環境がないためテスト出来ず
-			waitForHlsStart(VideoSrc +hls1 +hls4 + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),1000,1000,function(){errorHLS()},function(src){video.src=src;})
+			waitForHlsStart(VideoSrc +hls1 +hls4 + ($('#load_subtitles').prop('checked') ? '&caption=1' : ''),'ctok='+ ctok +'&open=1',1000,1000,function(){errorHLS()},function(src){video.src=src;})
 		}, interval);
 	}else{
 		video.src = VideoSrc;
