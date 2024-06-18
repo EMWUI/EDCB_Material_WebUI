@@ -1,305 +1,188 @@
-var loadingMovieList;
-//ライブラリ一覧取得
-function getMovieList(Snack){
-	loadingMovieList = true;
+//ライブラリ取得
+function getMovieList(){
 	showSpinner(true);
 	$.ajax({
 		url: root + 'api/Library',
+		data: location.hash.slice(1),
 		success: function(result, textStatus, xhr){
 			var message;
 			if (xhr.responseXML){
-				var xml = xhr.responseXML;
-				if ($(xml).find('error').length > 0){
-					message = $(xml).find('error').text();
+				const xml = $(xhr.responseXML);
+				if (xml.find('error').length > 0){
+					message = xml.find('error').text();
 					showSpinner();
 				}else{
-					xml = new XMLSerializer().serializeToString(xml);
-					sessionStorage.setItem('movie', xml);
-					sessionStorage.setItem('movie_expires', new Date().getTime() + 24*60*60*1000);
-					loadingMovieList = false;
-					refreshPath = true;
-					folder();
-					if (Snack) message = '更新しました';
+					generateLibrary(xml);
 				}
 			}else{
-				message = '更新に失敗しました';
+				message = '取得に失敗しました';
 				showSpinner();
 			}
 			if (message) Snackbar.MaterialSnackbar.showSnackbar({message: message});
-		},
-		complete: function(){
-			loadingMovieList = false;
 		}
 	});
 }
 
-//ライブラリ一覧再取得
-function refreshMovieList(){
-	location.hash = '';
-	getMovieList(true);
-}
+const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
 
-var order = localStorage.getItem('sortOrder') ? localStorage.getItem('sortOrder') : 'name';
-var asc = localStorage.getItem('ascending') ? localStorage.getItem('ascending') == 'true' : true;
-function sort(a){
-	var list;
-	if (typeof a == 'object'){
-		list = a;
-	}else{
-		list = $('.item').clone(true);
-		$('.item').remove();
-
-		if (typeof a == 'string'){
-			order = a;
-			localStorage.setItem('sortOrder', order);
-		}else if (a === true){
-			asc = !asc;
-			localStorage.setItem('ascending', asc);
-		}
-	}
-	list.sort(function(a,b){
+let order = localStorage.getItem('sortOrder') ?? 'name';
+let asc = localStorage.getItem('ascending') == 'true';
+const sortLibrary = d => {
+	const list = d.file ?? $('.item').clone(true);
+	order = d.order ?? order
+	asc = d.asc ? !asc : asc
 		if (order == 'date'){
-			if (asc){
-				return $(a).data().date - $(b).data().date;
-			}else{
-				return $(b).data().date - $(a).data().date;
-			}
+		list.sort((a,b) => asc ? $(a).data().date - $(b).data().date : $(b).data().date - $(a).data().date);
 		}else if (order == 'name'){
-			if (asc){
-				return $(a).data().name > $(b).data().name ? 1 : -1;
-			}else{
-				return $(a).data().name > $(b).data().name ? -1 : 1;
+		list.sort((a,b) => asc ? $(a).data().name > $(b).data().name ? 1 : -1 : $(a).data().name > $(b).data().name ? -1 : 1);
 			}
-		}
-	});
-	if (ViewMode == 'grid') {
-		$('#file').append(list);
-	}else{
-		$('#file ul').append(list);
-	}
+	$('.item').remove();
+	isGrid() ? $('#file').append(list) : $('#file ul').append(list);
+	localStorage.setItem('sortOrder', order);
+	localStorage.setItem('ascending', asc);
 }
 
 //ライブラリ表示
-function folder(){
-	id = location.hash == '' ? 'home' : location.hash.slice(1);
-	if ($('#' + id).length == 0) refreshPath = true;
+const generateLibrary = xml => {
+	showSpinner(true);
+	$('.library').empty();
+	$('#folder').hide();
+	isGrid() ? $('.library').addClass('list') : $('.library').removeClass('list');
 
-	$('.mdl-layout__tab').removeClass('is-active');
-	$('#' + id).addClass('is-active');
-	if (!loadingMovieList){
-		showSpinner(true);
-		$('.library').empty();
-		$('#folder').hide();
-		if (ViewMode == 'grid'){
-			$('.library').addClass('list');
-		}else{
-			$('.library').removeClass('list');
-		}
-		var found;
-		var folder = [];
-		var file = [];
-		var xml = sessionStorage.getItem('movie');
-		var movie = new DOMParser().parseFromString(xml, 'text/xml');
-		$(movie).find('dir').each(function(){
-			if ($(this).children('id').text() == id){
-				found = true;
-				$(this).children('dir, file').each(function(){
-					var name = $(this).children('name').text();
-					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'));
-					if ($(this).prop('tagName') == 'dir'){
-						obj.addClass('folder').data('id', $(this).children('id').text());
-			 			$(obj).click(function(){
-							refreshPath = true;
-			 				location.hash = '#'+$(this).data('id');
-						});
-
-						if (ViewMode == 'grid'){
-							obj.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
-								$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
-								$('<div>', {class: 'foldername', text: name }) );
-						}else{
-							obj.addClass('mdl-list__item mdl-list__item--two-line').append(
-								$('<span>', {class: 'mdl-list__item-primary-content', append: [
-									$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
-									$('<span>', {text: name}),
-									$('<span>', {class: 'mdl-list__item-sub-title', text: $(this).children('dir').length +'フォルダ, '+$(this).children('file').length +'ファイル'}) ]}) );
-						}
-						folder.push(obj);
-					}else{
-						var data = {
-							name: name,
-							path: $(this).children('path').text(),
-							date: $(this).children('date').text()*1000,
-							public: $(this).children('public').length > 0
-						};
-						obj.addClass('item').data(data);
-						$(obj).click(function(){
-							$('#popup').addClass('is-visible');
-							$('#playerUI').addClass('is-visible');
-							$('.audio').prop('checked', false);
-							$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-							playMovie($(this));
-						});
-
-						var thumbs = $(this).children('thumbs').text();
-						if (ViewMode == 'grid'){
-							obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-							if (thumbs != 0){
-								obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
-							}else{
-								obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-							}
-							obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
-						}else{
-							var avatar;
-							var date = createViewDate(data.date);
-							if (thumbs != 0){
-								avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
-							}else{
-								avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
-							}
-							obj.addClass('mdl-list__item mdl-list__item--two-line').append(
-								$('<span>', {class: 'mdl-list__item-primary-content', append: [
-									avatar,
-									$('<span>', {text: name}),
-									$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getUTCFullYear() +'/'+ ('0'+(date.getUTCMonth()+1)).slice(-2) +'/'+ ('0'+date.getUTCDate()).slice(-2) +' '+ ('0'+date.getUTCHours()).slice(-2) +':'+ ('0'+date.getUTCMinutes()).slice(-2) +':'+ ('0'+date.getUTCSeconds()).slice(-2)}) ]}) );
-						}
-						file.push(obj);
-					}
-				});
-
-				if (ViewMode == 'grid') {
-					$('#folder').show().append(folder);
-				}else{
-					$('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
-				}
-				sort(file);
-
-				var name = $(this).children('name').text();
-				$('.mdl-layout__header-row .mdl-layout-title').text(name);
-				if (refreshPath){
-					var obj = $(this);
-					var i = $(this).children('id').text();
-
-					$('.path').html($('<span>', {id: i, class: 'mdl-layout__tab is-active', text: name, data: {id: i}, click: function(){location.hash = '#'+$(this).data('id');} }) );
-					while (i.match(/\d+/g)){
-						i = obj.siblings('id').text();
-						$('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend($('<span>', {id: i, class: 'mdl-layout__tab', text: obj.siblings('name').text(), data: {id: i}, click: function(){location.hash = '#'+$(this).data('id');} }) );
-						obj = obj.parent();
-					}
-					if (i != 'home') $('.path').prepend('<i class="mdl-layout__tab material-icons">chevron_right').prepend($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) );
-					refreshPath = false;
-				}
-			}
-		});
-		componentHandler.upgradeDom();
-		showSpinner();
-		if (!found){
-			Snackbar.MaterialSnackbar.showSnackbar({message: 'フォルダが見つかりませんでした。', timeout: 1000});
-			var data = {
-				message: 'ライブラリを更新しますか？',
-				actionHandler: function(event) {
-					getMovieList(true);
-				},
-				actionText: '更新'
-			};
-			Snackbar.MaterialSnackbar.showSnackbar(data);
-		}
-	}else{
-		Snackbar.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新中です。', timeout: 1000});
+	const folder = [];
+	const file = [];
+	const baseHash = [];
+	let index;
+	if (xml.find('entry').children('index').length > 0){
+		index = xml.find('entry').children('index').text();
+		baseHash.push({name: 'i', value: index});
 	}
+	const path = $.extend(true,[],baseHash);
+	if (xml.find('entry').children('pathhash').length > 0)
+		xml.find('pathhash').text().split(',').forEach((e) => baseHash.push({name: 'p', value: e}) );
+
+	xml.find('dir, file').each((i, e) => {
+		const name = $(e).children('name').text();
+		const $elem = $((isGrid() ? '<div>' : '<li>'));
+		const hash = $.extend(true,[],baseHash);
+		if ($(e).find('index').length > 0) hash.push({name: 'i', value: $(e).find('index').text()});
+		if ($(e).prop('tagName') == 'dir'){
+			if (xml.find('entry').find('dirhash').length > 0) hash.push({name: 'p', value: xml.find('entry').find('dirhash').text()});
+			if ($(e).find('hash').length > 0) hash.push({name: 'd', value: $(e).find('hash').text()});
+
+			$elem.addClass('folder').click(() => location.hash = '#'+$.param(hash));
+			isGrid()
+				? $elem.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+					$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
+					$('<div>', {class: 'foldername', text: name }) )
+				: $elem.addClass('mdl-list__item').append(
+					$('<span>', {class: 'mdl-list__item-primary-content', append: [
+						$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
+						$('<span>', {text: name}) ]}) );
+			folder.push($elem);
+		}else{
+			if (xml.find('entry').find('dirhash').length > 0) hash.push({name: 'd', value: xml.find('entry').find('dirhash').text()});
+			hash.push({name: 'h', value: $(e).find('hash').text()});
+
+			$elem.addClass('item').data({
+				name: name,
+				date: $(e).children('date').text()*1000,
+				public: $(e).children('public').length > 0,
+			}).click(() => {
+				showSpinner(true);
+				$('#popup').addClass('is-visible');
+				$('#playerUI').addClass('is-visible');
+				$audios.prop('checked', false);
+				$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+				$.get(root + 'api/Library', hash, (result, textStatus, xhr) => {
+					showSpinner();
+					var xml = $(xhr.responseXML);
+					$elem.data('path', xml.find('path').text())
+						.data('public', Number(xml.find('public').text()==1))
+						.data('duration', Number(xml.find('duration').text()))
+						.data('audio', Number(xml.find('audio').text()));
+					playMovie($elem);
+				});
+			});
+
+			var thumb = $(e).children('thumb').text();
+			if (isGrid()){
+				$elem.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
+				(thumb != 0) 
+					? $elem.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumb +'.jpg'+ '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) )
+					: $elem.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
+				$elem.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
+			}else{
+				var date = createViewDate($elem.data('date'));
+				const avatar = (thumb != 0)
+					? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumb +'.jpg'+ '\');'})
+					: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
+				$elem.addClass('mdl-list__item mdl-list__item--two-line').append(
+					$('<span>', {class: 'mdl-list__item-primary-content', append: [
+						avatar,
+						$('<span>', {text: name}),
+						$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: $(e).find('size').text() +'MB '+ date.getUTCFullYear() +'/'+ ('0'+(date.getUTCMonth()+1)).slice(-2) +'/'+ ('0'+date.getUTCDate()).slice(-2) +' '+ ('0'+date.getUTCHours()).slice(-2) +':'+ ('0'+date.getUTCMinutes()).slice(-2) +':'+ ('0'+date.getUTCSeconds()).slice(-2)}) ]}) );
+			}
+			file.push($elem);
+		}
+	});
+
+	isGrid()
+		? $('#folder').show().append(folder)
+		: $('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
+	sortLibrary({file: file});
+
+	let id;
+	location.hash.split('&').forEach((e) => {
+		if (e.match(/i=.*/)) id = 'index'+ index;
+		if (e.match(/d=.*/)) {
+			id = e.match(/d=(.*)/)[1];
+			return;
+		}
+	});
+	id = id ?? 'home';
+
+	const dirname = xml.find('dirname').text();
+	$('.mdl-layout__header-row .mdl-layout-title').text(dirname);
+	if ($('#l_'+ id).length == 0){
+		$('.path').html($('<span>', {id: 'l_home', class: 'mdl-layout__tab' +(dirname == 'ホーム' ? ' is-active' : ''), text: 'ホーム', data: {hash: ''}, click: () => location.hash = ''}) );
+
+		if (xml.find('pathname').text().length > 0){
+			xml.find('pathname').text().split('/').forEach((e, i) => {
+				const dir = $.extend(true,[],path);
+				let pathhash = 'index'+ index;
+				if (xml.find('pathhash').text().length > 0){
+					if (i >= 1){
+						pathhash = xml.find('pathhash').text().split(',')[i-1];
+						path.push({name: 'p', value: pathhash});
+						dir.push({name: 'd', value: pathhash});
+					}
+				}
+				$('.path').append('<i class="mdl-layout__tab material-icons">chevron_right').append($('<span>', {id: 'l_'+ pathhash, class: 'mdl-layout__tab', text: e, data: {hash: $.param(dir)}, click: () => location.hash = '#'+$.param(dir)}) );
+			});
+		}
+
+		let dirhash = 'index'+ index;
+		if (xml.find('dirhash').text().length > 0){
+			dirhash = xml.find('dirhash').text();
+			path.push({name: 'd', value: dirhash});
+		}
+		if (dirname != 'ホーム')
+			$('.path').append('<i class="mdl-layout__tab material-icons">chevron_right').append($('<span>', {id: 'l_'+ dirhash, class: 'mdl-layout__tab is-active', text: dirname, data: {hash: $.param(path)}, click: () => location.hash = '#'+$.param(path)}) );
+	}else{
+		$('.mdl-layout__tab').removeClass('is-active');
+		$('#l_' + id).addClass('is-active');
+	}
+	componentHandler.upgradeDom();
+	showSpinner();
 }
 
 //表示切替
 function toggleView(view){
-	ViewMode = view;
 	localStorage.setItem('ViewMode', view);
-	if (ViewMode == 'grid'){
-		$('.view-list').show();
-		$('.view-grid').hide();
-	}else{
-		$('.view-grid').show();
-		$('.view-list').hide();
-	}
-	if (location.hash.slice(0,8) != '#search@'){
-		folder();
-	}else{
-		librarySearch(location.hash.slice(8));
-	}
-}
-
-//スワイプ処理
-function librarySwipe(obj){
-	if (obj.length > 0) location.hash = '#' + obj.data('id');
-}
-
-function librarySearch(key){
-		if (key.length > 0){
-			key = decodeURI(key);
-			var found;
-			var file = [];
-			var xml = sessionStorage.getItem('movie');
-			var movie = new DOMParser().parseFromString(xml, 'text/xml');
-			$('.library').empty();
-			if (ViewMode == 'grid'){
-				$('.library').addClass('list') ;
-			}else{
-				$('.library').removeClass('list');
-			}
-
-			$(movie).find('file').each(function(){
-				var name = $(this).children('name').text();
-				if (name.match(key)){
-					var data = {
-						name: name,
-						path: $(this).children('path').text(),
-						date: $(this).children('date').text()*1000,
-						public: $(this).children('public').length > 0
-					};
-					var event = function(){
-						$('#popup').addClass('is-visible');
-						$('#playerUI').addClass('is-visible');
-						$('.audio').prop('checked', false);
-						playMovie($(this));
-					};
-					var obj = $((ViewMode == 'grid' ? '<div>' : '<li>'), {class: 'item', data: data, click: event });
-
-					var thumbs = $(this).children('thumbs').text();
-					if (ViewMode == 'grid'){
-						obj.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-						if (thumbs != 0){
-							obj.css('background-image', 'url(\'' + root + 'video/thumbs/' + thumbs + '\')').append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
-						}else{
-							obj.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-						}
-						obj.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
-					}else{
-						var avatar;
-						var date = createViewDate(data.date);
-						if (thumbs != 0){
-							avatar = $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: 'background-image:url(\'' + root + 'video/thumbs/' + thumbs + '\');'});
-						}else{
-							avatar = $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
-						}
-						obj.addClass('mdl-list__item mdl-list__item--two-line').append(
-							$('<span>', {class: 'mdl-list__item-primary-content', append: [
-								avatar,
-								$('<span>', {text: name}),
-								$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: date.getUTCFullYear() +'/'+ ('0'+(date.getUTCMonth()+1)).slice(-2) +'/'+ ('0'+date.getUTCDate()).slice(-2) +' '+ ('0'+date.getUTCHours()).slice(-2) +':'+ ('0'+date.getUTCMinutes()).slice(-2) +':'+ ('0'+date.getUTCSeconds()).slice(-2)}) ]}) );
-					}
-					file.push(obj);
-				}
-			});
-
-			if (ViewMode != 'grid') $('#file').append('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">');
-			sort(file);
-
-			$('.mdl-layout__header-row .mdl-layout-title').text('検索 (' + key + ')');
-			$('.path').html($('<span>', {id: 'home', class: 'mdl-layout__tab', text: 'ホーム', data: {id: 'home'}, click: function(){location.hash = '#home';} }) ).append(
-				$('<i>', {class: 'mdl-layout__tab material-icons', text: 'chevron_right'}),
-				$('<span>', {id: 'search_', class: 'mdl-layout__tab is-active', text: '検索', data: {id: 'search'}, click: function(){location.hash = '#search@'+ key;} }) );
-			showSpinner();
-		}
+	$(isGrid() ? '.view-list' : '.view-grid').show();
+	$(isGrid() ? '.view-grid' : '.view-list').hide();
+	getMovieList();
 }
 
 $(window).on('load', function(){
@@ -311,47 +194,30 @@ $(window).on('load', function(){
 
 $(function(){
 	$(window).on('hashchange', function(){
-		if (location.hash.slice(0,8) != '#search@'){
-			folder();
-		}else{
-			librarySearch(location.hash.slice(8));
-		}
-	});
-
-	//ライブラリ一覧有無確認
-	ViewMode = localStorage.getItem('ViewMode') ? localStorage.getItem('ViewMode') : 'grid';
-	if (!sessionStorage.getItem('movie') || sessionStorage.getItem('movie_expires') - new Date().getTime() < 0){
 		getMovieList();
-	}else{
-		refreshPath = true;
-		if (location.hash.slice(0,8) != '#search@'){
-			folder();
-		}else{
-			librarySearch(location.hash.slice(8));
-		}
-	}
-	if (ViewMode == 'grid'){
-		$('.view-grid').hide();
-	}else{
-		$('.view-list').hide();
-	}
+	});
+	getMovieList();
 
 	$('#menu_autoplay').removeClass('hidden');
 	$('#sort_'+order).addClass('mdl-color-text--accent');
-	$('#'+ (asc ? 'asc' : 'des')).hide();
+	$(isGrid() ? '.view-grid' : '.view-list').hide();
+	$(asc ? '#asc' : '#des').hide();
 	$('[id^=sort_]').click(function(){
 		$('[id^=sort_]').removeClass('mdl-color-text--accent');
 		$(this).addClass('mdl-color-text--accent');
-		sort($(this).data('val'));
+		sortLibrary($(this).data('val'));
 	});
 	$('#sort').click(function(){
-		sort(true);
+		sortLibrary({asc: true});
 		$('#sort span').toggle();
 	});
 	//スワイプ
 	if (isTouch){
 		delete Hammer.defaults.cssProps.userSelect;
 
+		function librarySwipe(obj){
+			if (obj.length > 0) location.hash = '#' + obj.data('hash');
+		}
 		$('.lib-swipe').hammer().on('swiperight', function(){
 			librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') );
 		});
@@ -366,21 +232,18 @@ $(function(){
 	});
 
 	$('#playprev').click(function(){
-		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').prev());
+		if (!$(this).hasClass('is-disabled')) $('.playing').prev().click();
 	});
 	$('#playnext').click(function(){
-		if (!$(this).hasClass('is-disabled')) playMovie($('.playing').next());
+		if (!$(this).hasClass('is-disabled')) $('.playing').next().click();
 	});
 
 	$('.thumbs').click(function(){
 		showSpinner(true);
 		Snackbar.MaterialSnackbar.showSnackbar({message: 'サムネの作成を開始します'});
 		$.get(root + 'api/Library', $(this).data(), function(result, textStatus, xhr){
-			var xml = $(xhr.responseXML);
 			showSpinner();
-			Snackbar.MaterialSnackbar.showSnackbar({message: xml.find('info').text()});
-			Snackbar.MaterialSnackbar.showSnackbar({message: 'ライブラリを更新します'});
-			getMovieList(true);
+			Snackbar.MaterialSnackbar.showSnackbar({message: $(xhr.responseXML).find('info').text()});
 		});
 	});
 });

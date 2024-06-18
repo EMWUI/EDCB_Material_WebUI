@@ -184,22 +184,11 @@ function loadMovie(obj){
 		if (d.duration){
 			$duration.text(getVideoTime(d.duration));
 			$seek.attr('max', d.duration);
-		}else if (d.path){
-			$.get(root + 'api/Movie?fname=' + d.path + '&meta=' + (d.public ? '&public=' : ''), function(result, textStatus, xhr){
-				var xml = $(xhr.responseXML);
-				if (xml.find('duration').length > 0){
-					var duration = Number(xml.find('duration').text());
-					$('.is_cast').data('duration', duration);
-					$duration.text(getVideoTime(duration));
-					$seek.attr('max', duration);
-					$Time-wrap.removeClass('is-disabled');
-				}else{
-	        		$Time-wrap.addClass('is-disabled');
-	      		}
-	      		$audios.attr('disabled', Number(xml.find('audio').text()) == 1);
-	    	});
+			$Time_wrap.removeClass('is-disabled');
+		}else{
+			$Time_wrap.addClass('is-disabled');
 	  	}
-	    $audios.attr('disabled', d.audio == 1);
+	    if (d.audio) $audios.attr('disabled', d.audio == 1);
 	}
 
 	$titlebar.html(d.name || (d.service +' - '+ (d.title ? ConvertTitle(d.title) : '')));
@@ -227,7 +216,7 @@ function playMovie(obj){
 		$seek.get(0).MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$audios.attr('disabled', true);
-		$playing.removeClass('is_cast playing');
+		$('.playing').removeClass('is_cast playing');
 		obj.addClass('is_cast playing');
 		loadMovie(obj);
 	}
@@ -290,11 +279,11 @@ $(function(){
 		},
 		'ended': function(){
 			var autoplay = sessionStorage.getItem('autoplay') == 'true';
-			if (autoplay && !$playing.is('.item:last')){
-				playMovie($playing.next());
+			if (autoplay && !$('.playing').is('.item:last')){
+				$('.playing').next().click();
 				$titlebar.addClass('is-visible');
 			}else{
-				if (autoplay && $playing.is('.item:last')){
+				if (autoplay && $('.playing').is('.item:last')){
 					Snackbar.MaterialSnackbar.showSnackbar({message: '最後のファイルを再生しました'});
 				}
 				$playerUI.addClass('is-visible');
@@ -376,7 +365,7 @@ $(function(){
 		$video.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
-		$playing.removeClass('playing');
+		$('.playing').removeClass('playing');
 		if ($seek.hasClass('mdl-progress')) $seek.get(0).MaterialProgress.setProgress(0);
 		$currentTime_duration.text('0:00');
 		$quality_audio.attr('disabled', true);

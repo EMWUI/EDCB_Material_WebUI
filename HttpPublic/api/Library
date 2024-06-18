@@ -1,95 +1,230 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-MakeThumbs=mg.get_var(mg.request_info.query_string,'thumbs')
-
-if MakeThumbs then
-  AssertCsrf(mg.request_info.query_string)
-
-  dir=PathAppend(EdcbModulePath(),'Tools')
-  ffmpeg=edcb.GetPrivateProfile('SET','ffmpeg',dir..'ffmpeg.exe',ini)
-end
-
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry>'}
 
-function finddir(path)
-  local i=0
-  local t=edcb.FindFile(PathAppend(path,'*'), 0) or {}
-  return function() i=i+1 return t[i] end
+LIBRARY_LIST=GetLibraryPathList()
+MEDIA_EXTENSION_LIST={}
+for v in edcb.GetPrivateProfile('SET','MEDIA_EXTENSION_LIST','.mp4,.webm',ini):gmatch('[^,]+') do
+  MEDIA_EXTENSION_LIST[#MEDIA_EXTENSION_LIST+1]=v
+end
+HIDE_DIR_LIST={}
+for v in edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',ini):gmatch('[^,]+') do
+  HIDE_DIR_LIST[#HIDE_DIR_LIST+1]=v
 end
 
-if finddir then
+
+ffmpeg=FindToolsCommand('ffmpeg')
+autoMakeThumbs=ffmpeg and true
+thumbsDir=PathAppend(PathAppend(mg.document_root,'video'),'thumbs')
+function MakeThumbs(fpath)
+  local thumbHash=mg.md5(fpath:lower())
+  local thumbPath=PathAppend(thumbsDir,thumbHash..'.jpg')
+  if not EdcbFindFilePlain(thumbPath) then
+    local cmd=ffmpeg..' -ss 30 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 '..QuoteCommandArgForPath(thumbPath)
+    edcb.os.execute(WIN32 and '"'..cmd..'"' or cmd)
+  end
+  return thumbHash
+end
+
+tsx=edcb.GetPrivateProfile('SET','TSExt','.ts','EpgTimerSrv.ini')
+xlist={tsx,table.unpack(MEDIA_EXTENSION_LIST)}
+
+if mg.get_var(mg.request_info.query_string,'thumbs') then
+  AssertCsrf(mg.request_info.query_string)
+
   thumbsUsing={}
-  id=0
+
+  function finddir(path)
+    local i=0
+    local t=edcb.FindFile(PathAppend(path,'*'),0) or {}
+    return function() i=i+1 return t[i] end
+  end
+
   function attrdir(path)
-    local filelist={}
     for v in finddir(path) do
       local fname=v.name
       if fname ~= '.' and fname ~= '..' then
         fpath=PathAppend(path,fname)
         if not v.iserr then
           if v.isdir then
-            if fname ~= 'chapters' and not fpath:find('\\video\\thumbs$') then
-              if MakeThumbs then
-                attrdir(fpath)
-              else
-                id=id+1
-                table.insert(ct, '<dir><name>'..fname:gsub('&', '&amp;')..'</name><id>'..id..'</id>')
-                attrdir(fpath)
-                table.insert(ct, '</dir>')
-              end
+            local hide
+            for i,v in ipairs(HIDE_DIR_LIST) do
+              if fname == v then hide=true end
             end
-          elseif mg.get_mime_type(fname):find('^video/') or fname:lower():find('%.ts$') or fname:lower():find('%.m2ts$') then
-            thumbHash=mg.md5(fpath:lower())
-            thumbs=edcb.FindFile(mg.document_root..'\\video\\thumbs\\'..thumbHash..'.jpg', 1)
-            if MakeThumbs then
-              if not thumbs then
-                edcb.os.execute('""'..ffmpeg..'" -ss 5 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 "'..mg.document_root..'\\video\\thumbs\\'..thumbHash..'.jpg'..'""')
+            if not hide and not fpath:find(PathAppend('video','thumbs$')) then
+              attrdir(fpath)
+            end
+          else
+            for i,ext in ipairs(xlist) do
+              if #fname>#ext and IsEqualPath(fname:sub(-#ext),ext) then
+                thumbHash=MakeThumbs(fpath)
+                thumbsUsing[thumbHash]=true
+                break
               end
-              thumbsUsing[thumbHash]=true
-            else
-              table.insert(filelist, '<file><name>'..fname:gsub('&', '&amp;')..'</name><path>'
-                ..(NativeToDocumentPath(fpath) and mg.url_encode(NativeToDocumentPath(fpath)):gsub('%%2f', '/')..'</path><public>1</public>'
-                                                or mg.url_encode(fpath):gsub('%%2f', '/')..'</path>')
-                ..(v.mtime and '<date>'..TimeWithZone(v.mtime, 9*3600)..'</date>' or '')
-                ..(thumbs and '<thumbs>'..thumbHash..'.jpg'..'</thumbs>' or '')
-                ..'</file>')
             end
           end
-        else
-          table.insert(ct, '<err>'..fpath:gsub('&', '&amp;')..'</err>')
         end
       end
     end
-    table.insert(ct, table.concat(filelist))
   end
 
-  if not MakeThumbs then table.insert(ct, '<dir><name>ホーム</name><id>home</id>') end
+  if not EdcbFindFilePlain(thumbsDir) then
+    edcb.os.execute('mkdir '..QuoteCommandArgForPath(thumbsDir))
+  end
+  for i,v in ipairs(LIBRARY_LIST) do
+    attrdir(v)
+  end
 
-  for i,v in ipairs(GetLibraryPathList()) do
-    if MakeThumbs then
-      attrdir(v)
-    else
-      id=id+1
-      table.insert(ct, '<dir><name>'..(NativeToDocumentPath(v) or v):gsub('&', '&amp;')..'</name><id>'..id..'</id>')
-      attrdir(v)
-      table.insert(ct, '</dir>')
+  -- 未使用サムネを掃除
+  for i,v in ipairs(edcb.FindFile(PathAppend(thumbsDir,'????????????????????????????????.jpg'), 0)) do
+    if v.name:match('^%x+%.[Jj][Pp][Gg]$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
+      edcb.os.remove(PathAppend(thumbsDir,v.name))
     end
   end
 
-  if MakeThumbs then
-    -- 未使用サムネを掃除
-    for i,v in ipairs(edcb.FindFile(mg.document_root..'\\video\\thumbs\\????????????????????????????????.jpg', 0)) do
-      if v.name:match('^%x+%.[Jj][Pp][Gg]$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
-        edcb.os.remove(mg.document_root..'\\video\\thumbs\\'..v.name)
+  table.insert(ct, '<info>サムネを作成しました</info></entry>')
+else
+  dirname=nil
+  index=GetVarInt(mg.request_info.query_string,'i',1,#LIBRARY_LIST)
+  if index then
+    dir=LIBRARY_LIST[index]
+    if dir then
+      dirhash=mg.get_var(mg.request_info.query_string,'d')
+      if dirhash then
+        pathname=LIBRARY_LIST[index]
+        for j=0,10000 do
+          local w=mg.get_var(mg.request_info.query_string, 'p', j)
+          if not w then break end
+          pathhash=(pathhash and pathhash..',' or '')..w
+          for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
+            if v.isdir and mg.md5(v.name)==w then
+              dir=PathAppend(dir,v.name)
+              pathname=pathname..'/'..v.name
+              break
+            end
+          end
+        end
+        for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
+          if v.isdir and mg.md5(v.name)==dirhash then
+            dir=PathAppend(dir,v.name)
+            dirname=v.name
+            break
+          end
+        end
+      else
+        dirname=LIBRARY_LIST[index]
       end
     end
-    table.insert(ct, '<info>サムネを作成しました</info></entry>')
-  else
-    table.insert(ct, '</dir></entry>')
   end
-else
-  table.insert(ct, '<error>EDCBが非対応です</error></entry>')
+
+  if not dirname then
+    table.insert(ct, '<dirname>ホーム</dirname>')
+    for i,v in ipairs(LIBRARY_LIST) do
+      table.insert(ct, '<dir><index>'
+        ..i..'</index><name>'
+        ..EdcbHtmlEscape(NativeToDocumentPath(v) or v)..'</name></dir>\n'
+      )
+    end
+  else
+    hash=mg.get_var(mg.request_info.query_string,'h')
+    if not hash then
+      table.insert(ct, '<index>'
+        ..index..'</index><dirname>'
+        ..EdcbHtmlEscape(NativeToDocumentPath(dirname) or dirname)..'</dirname>'
+        ..(dirhash and '<dirhash>'..dirhash..'</dirhash>' or '')
+        ..(pathname and '<pathname>'..pathname..'</pathname>' or '')
+        ..(pathhash and '<pathhash>'..pathhash..'</pathhash>' or '')
+        ..(NativeToDocumentPath(dir) and '<public>1</public>' or '')
+        ..'\n'
+      )
+      ff={}
+      for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
+        if not v.isdir then
+          for j,ext in ipairs(xlist) do
+            if #v.name>#ext and IsEqualPath(v.name:sub(-#ext),ext) then
+              ff[#ff+1]=v
+              break
+            end
+          end
+        elseif not v.name:find('^%.') then
+          local hide
+          for j,w in ipairs(HIDE_DIR_LIST) do
+            if v.name == w then
+              hide=true
+              break
+            end
+          end
+          if not hide and not PathAppend(dir,v.name):find(PathAppend('video','thumbs$')) then ff[#ff+1]=v end
+        end
+      end
+      for i,v in ipairs(ff) do
+        local thumbHash
+        if not v.isdir then
+          local fpath=PathAppend(dir,v.name)
+          thumbHash=autoMakeThumbs and MakeThumbs(fpath) or mg.md5(fpath:lower())
+          thumbHash=EdcbFindFilePlain(PathAppend(thumbsDir,thumbHash..'.jpg')) and thumbHash
+        end 
+        table.insert(ct, (v.isdir and '<dir>' or '<file>')..'<name>'
+          ..EdcbHtmlEscape(v.name:gsub('&', '&amp;'))..'</name><hash>'
+          ..mg.md5(v.name)..'</hash><date>'
+          ..TimeWithZone(v.mtime, 9*3600)..'</date><size>'
+          ..(v.isdir and '' or math.floor(v.size/1048576))..'</size>'
+          ..(thumbHash and '<thumb>'..thumbHash..'</thumb>' or '')
+          ..(v.isdir and '</dir>' or '</file>\n')
+       )
+      end
+    else
+      info=nil
+      for i,v in ipairs(xlist) do
+        for j,w in ipairs(edcb.FindFile(PathAppend(dir,'*'..v),0) or {}) do
+          if not w.isdir and mg.md5(w.name)==hash then
+            info=w
+            info.ists=v==tsx
+            break
+          end
+        end
+        if info then
+          break
+        end
+      end
+      if info then
+        ref=PathAppend(dir,info.name)
+        table.insert(ct, '<file><path>'
+            ..(NativeToDocumentPath(ref) and mg.url_encode(NativeToDocumentPath(ref)):gsub('%%2f', '/')..'</path><public>1</public>'
+                                            or mg.url_encode(ref):gsub('%%2f', '/')..'</path>')..'<hash>'
+          ..mg.md5(info.name)..'</hash><date>'
+          ..TimeWithZone(info.mtime, 9*3600)..'</date><size>'
+          ..math.floor(info.size/1048576)..'</size>'
+        )
+          
+        if info.ists then
+          local tsreadex=FindToolsCommand('tsreadex')
+          local ffprobe=FindToolsCommand('ffprobe')
+          f=edcb.io.open(ref, 'rb')
+          if f then
+            audio=0
+            fsec,fsize=GetDurationSec(f)
+            f:close()
+            if ffprobe then
+              offset=math.floor(fsize*10/100/188)*188
+              cmd=ffprobe..' -i pipe:0 -hide_banner 2>&1'
+              cmd=tsreadex..' -s '..offset..' "'..ref..'" | '..cmd
+              local fp=edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd,'r'..POPEN_BINARY)
+              if fp then
+                for v in fp:read('*a'):gmatch(':%sAudio:%s(.-)\r\n') do
+                  audio=audio+1
+                end
+              end
+            end
+            table.insert(ct, '<meta>'..(fsec~=0 and '<duration>'..fsec..'</duration>' or '')..'<audio>'..audio..'</audio></meta>')
+          end
+        end
+        table.insert(ct, '</file>\n')
+      end
+    end
+  end
+  table.insert(ct, '</entry>')
 end
 
 cl=0
