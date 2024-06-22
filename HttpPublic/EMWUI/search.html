@@ -183,15 +183,14 @@ b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andK
 key.andKey=EdcbHtmlEscape(key.andKey)
 key.notKey=EdcbHtmlEscape(key.notKey)
 
-ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action="search.html">\n'
+ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   ..'<div class="form-container"><div class="mdl-grid mdl-grid--no-spacing form">\n'
 
   ..(key.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input" type="checkbox"'..(mg.get_var(post, 'advanced') and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n' or '')
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
-  ..'<input type="hidden" name="ctok" value="'..CsrfToken('epgcustom.html')..'">\n'
+  ..'<input type="hidden" name="ctok" id="ctok">\n'
 
   ..SerchTemplate(key)
 
@@ -203,8 +202,8 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'<div class="mdl-card__actions mdl-card--border">'
   ..(key.search and '<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" type="button" data-dialog="#dialog_preset">プリセット保存</button>\n' or '')
   ..'<div class="mdl-layout-spacer"></div>\n'
-  ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" formaction="epgcustom.html" type="submit">番組表</button>\n'
-  ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="search" type="submit">検索</button></div>\n'
+  ..'<button class="doSearch mdl-button mdl-js-button mdl-button--primary" type="button" data-action="epgcustom.html" data-ctok="'..CsrfToken('epgcustom.html')..'">番組表</button>\n'
+  ..'<button class="doSearch mdl-button mdl-js-button mdl-button--primary" type="button" data-action="search.html" data-ctok="'..CsrfToken()..'">検索</button></div>\n'
   ..'</div></form>\n</div>\n'
 
 table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)

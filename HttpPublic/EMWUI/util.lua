@@ -154,7 +154,13 @@ s:Append([=[
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
       <div class="mdl-layout-spacer"></div>
       <div class="navigation__footer">
-        <p>by EMWUI<small> - <a href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank">GitHub<i class="material-icons">launch</i></a></small></p>
+        <p>
+          <i class="material-icons">copyright</i>
+          <span class="">EMWUI</span>
+          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank"><i class="material-icons">feedback</i></a>
+          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/P4DSM5GQILMI" target="_blank"><i class="material-icons">thumb_down</i></a>
+          <a class="mdl-color-text--accent mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank"><i class="material-icons">heart_plus</i></a>
+        </p>
         <ul>
           <li><a class="mdl-color-text--cyan" href="]=]..PathToRoot()..[=[api/showlog?c=8192">情報通知ログ</a></li>
           <li><a class="mdl-color-text--cyan" href="]=]..PathToRoot()..[=[api/showlog?c=8192&amp;t=d">デバッグ出力</a></li>
@@ -394,8 +400,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
       ..'</ul></li>\n</ul>\n'
       ..'</section>\n'
   end
-  local multi=v and v.audioInfoList and #v.audioInfoList>=2
-  return s, {multi=multi, dual=multi and v.audioInfoList[1].component_type==2}, End
+  return s, v and v.audioInfoList, End
 end
 
 --録画設定フォームのテンプレート
@@ -419,7 +424,7 @@ function RecSettingTemplate(rs)
       s=s..'\n<option value="'..i..'"'..(rs.priority==i and ' selected' or '')..'>'..i
     end
     s=s..'\n</select></div></div>\n'
-    
+
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ぴったり（？）録画</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
     ..'<div><label for="pittariFlag" class="mdl-switch mdl-js-switch"><input id="pittariFlag" class="mdl-switch__input" type="checkbox" name="pittariFlag" value="1"'..(rs.pittariFlag and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
@@ -741,7 +746,7 @@ end
 function sidePanelTemplate(reserve)
   local s=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon" target="_blank"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
+<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
 <div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
 <div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
@@ -791,49 +796,51 @@ function sidePanelTemplate(reserve)
 end
 
 --プレイヤー
-function player(video, live)
+function player(video, liveOrAudio)
   local list = edcb.GetPrivateProfile('set','quality','',ini)
+  local live = type(liveOrAudio)=='boolean' and liveOrAudio
+  local audio = type(liveOrAudio)=='table' and liveOrAudio
   local s=[=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
-]=]..(USE_DATACAST and [=[<div class="remote-control hidden">
+]=]..(USE_DATACAST and [=[<div class="remote-control disabled">
   <span class="navi">
     <span>
-      <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">north</span></button>
+      <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">north</span></button>
     </span><span>
-      <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">west</span></button>
-      <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary"><span class="material-icons">circle</span></button>
-      <button id="key4" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">east</span></button>
+      <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">west</span></button>
+      <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary" disabled><span class="fill material-icons">circle</span></button>
+      <button id="key4" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">east</span></button>
     </span><span>
-      <button id="key20" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">d</span></button>
-      <button id="key2" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">south</span></button>
-      <button id="key19" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"><span class="material-icons">subdirectory_arrow_left</span></button>
+      <button id="key20" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">d</span></button>
+      <button id="key2" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">south</span></button>
+      <button id="key19" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">subdirectory_arrow_left</span></button>
       <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="num"><input type="checkbox" id="num" class="mdl-icon-toggle__input"><i class="mdl-icon-toggle__label material-icons">123</i></label>
     </span>
   </span><span class="color">
-    <button id="key21" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
-    <button id="key22" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
-    <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
-    <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab"></button>
+    <button id="key21" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key22" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
   </span>
   <span class="num">
     <span>
-      <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">1</button>
-      <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">2</button>
-      <button id="key8" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">3</button>
+      <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>1</button>
+      <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>2</button>
+      <button id="key8" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>3</button>
     </span><span>
-      <button id="key9" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">4</button>
-      <button id="key10" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">5</button>
-      <button id="key11" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">6</button>
+      <button id="key9" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>4</button>
+      <button id="key10" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>5</button>
+      <button id="key11" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>6</button>
     </span><span>
-      <button id="key12" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">7</button>
-      <button id="key13" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">8</button>
-      <button id="key14" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">9</button>
+      <button id="key12" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>7</button>
+      <button id="key13" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>8</button>
+      <button id="key14" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>9</button>
     </span><span>
-      <button id="key15" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">10</button>
-      <button id="key16" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">11</button>
-      <button id="key17" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">12</button>
+      <button id="key15" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>10</button>
+      <button id="key16" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>11</button>
+      <button id="key17" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>12</button>
     </span><span>
-      <button id="key5" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab">0</button>
+      <button id="key5" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>0</button>
     </span>
   </span>
   <div class="remote-control-indicator"></div>
@@ -864,8 +871,20 @@ function player(video, live)
 <li class="ext mdl-menu__item quality" id="quality" disabled><button class="quality" disabled><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
 <li class="ext mdl-menu__item" id="rate"><button><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+]=]
+
+if audio then
+  for i,v in ipairs(audio) do
+    s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio'..i..'" name="audio" value="0"'..(i==1 and ' checked' or '')..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
+  end
+else
+  s=s..[=[
 <li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>
 <li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>
+]=]
+end
+
+s=s..[=[
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
 ]=]
@@ -895,7 +914,7 @@ function player(video, live)
 ]=]
   ..((ALLOW_HLS or live) and '<script>'..(ALLOW_HLS and 'ALLOW_HLS=true;' or '')..'var ctok=\''..(live and CsrfToken('view') or CsrfToken('xcode'))..'\';'..'</script>\n' or '')
   ..'<script src="js/legacy.script.js"></script>\n'
-  
+
   ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<script src="js/datastream.js"></script>\n' or '')
 
   ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js"></script>\n' or '')
@@ -904,7 +923,7 @@ function player(video, live)
     ..'<script>var ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};var jk_comment_height='..JK_COMMENT_HEIGHT..';var jk_comment_durtion='..JK_COMMENT_DURATION..';</script>\n'
     ..'<script src="js/danmaku.js"></script>\n' or '')
 
-  ..(ALLOW_HLS and '<script>var hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';var capRenderer=\''..(ARIBB24_USE_SVG and 'SVG' or 'Canvas')..'\';var capOption={'..ARIBB24_JS_OPTION..'};\n</script>\n'
+  ..(ALLOW_HLS and '<script>var hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';var aribb24UseSvg=\''..(ARIBB24_USE_SVG and 'true' or 'false')..'\';var aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
     ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js"></script>\n' or '')
     ..'<script src="js/aribb24.js"></script>\n' or '')
 

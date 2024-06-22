@@ -105,7 +105,7 @@ $(function(){
 			if ($(this).hasClass('panel')){
 				getEpgInfo($(this).parents('li'), d);
 			}else{
-				window.open('epginfo.html?onid=' + d.onid + '&tsid=' + d.tsid + '&sid=' + d.sid + '&eid=' + d.eid, '_blank');
+				location.href = 'epginfo.html?onid=' + d.onid + '&tsid=' + d.tsid + '&sid=' + d.sid + '&eid=' + d.eid;
 			}
 		}else{
 			Snackbar.MaterialSnackbar.showSnackbar({message: 'この時間帯の番組情報がありません'});

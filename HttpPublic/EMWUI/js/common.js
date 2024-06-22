@@ -128,7 +128,7 @@ function creatNotify(data, save){
 
 			notification.onclick = function(event){
 				event.preventDefault();
-				window.open('epginfo.html?onid=' + e.onid + '&tsid=' + e.tsid + '&sid=' + e.sid + '&eid=' + e.eid, '_blank');
+				location.local = 'epginfo.html?onid=' + e.onid + '&tsid=' + e.tsid + '&sid=' + e.sid + '&eid=' + e.eid;
 				notification.close();
 			};
 
@@ -148,7 +148,7 @@ function creatNotify(data, save){
 	date = ('0'+(date.getUTCMonth()+1)).slice(-2) + '/' + ('0'+date.getUTCDate()).slice(-2) + '(' + week[date.getUTCDay()] + ') ' + ('0'+date.getUTCHours()).slice(-2) + ':' + ('0'+date.getUTCMinutes()).slice(-2);
 
 	var notifyList = $('<li>', {id: 'notify_' + data.eid, class: 'mdl-list__item mdl-list__item--two-line', data: {start: data.starttime}, append: [
-		$('<span>', {class: 'mdl-list__item-primary-content', click: function(){window.open('epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid, '_blank');}, append: [
+		$('<span>', {class: 'mdl-list__item-primary-content', click: function(){location.local='epginfo.html?onid=' + data.onid + '&tsid=' + data.tsid + '&sid=' + data.sid + '&eid=' + data.eid;}, append: [
 			$('<span>', {html: data.title}),
 			$('<span>', {class: 'mdl-list__item-sub-title', text: date + ' ' + data.service}) ]}),
 		$('<span>', {class: 'mdl-list__item-secondary-content', append: [
@@ -1515,6 +1515,11 @@ $(function(){
 		if (obj.data('starttime')) setTimeout(function(){obj.addClass('start').children('.flag').children('span').addClass('recmark').empty();}, obj.data('starttime')-Date.now())
 		setTimeout(function (){obj.children('.flag').data('id', false).children('span').remove();}, obj.data('endtime')-Date.now());
 	});
+	$('.doSearch').click(e => {
+		const d = $$(e).data();
+		$('#ctok').val(d.ctok);
+		$('#search').attr('action', d.action).submit();
+	})
 
 	//サブミット
 	$('.submit').click(function(){

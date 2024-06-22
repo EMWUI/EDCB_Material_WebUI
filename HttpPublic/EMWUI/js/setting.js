@@ -1,6 +1,10 @@
 $(function(){
-	$('.mdl-progress').on('mdl-componentupgraded', function() {
-		this.MaterialProgress.setProgress($(this).data().free);
+	$.get(root+ 'api/Common', {storage: 1}).done(xml => {
+		$(xml).find('storage').each((i, e) => {
+			const id = $(e).children('id').text();
+			$(`#d_${id} .text`).text($(e).children('text').text());
+			$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).children('free').text());
+		})
 	});
 	//背景色連動
 	$('.bgset').change(function(){

@@ -39,6 +39,41 @@ if post then
   end
 elseif mg.get_var(mg.request_info.query_string,'notify') then
     messege=edcb.GetNotifyUpdateCount(mg.get_var(mg.request_info.query_string,'notify'))
+elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ容量を得る
+  checked={}
+  messege=''
+  for i,v in ipairs(EdcbRecFolderPathList()) do
+    if WIN32 then
+      v=v:match('^%a:\\')
+      if v and not checked[v:upper()] then
+        checked[v:upper()]=true
+        free=nil
+        f=edcb.io.popen('fsutil volume diskfree '..v)
+        if f then
+          --最近のfsutilは数値に桁区切りがつく。さらに最近のものは項目が増えた。
+          free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).-:(%d+).-:(%d+)')
+          f:close()
+          messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
+            ..v..'</name><text>'
+            ..(free and ('%.3f GiB / %.3f GiB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</text><free>'
+            ..(free and 100-(free/total*100) or 0)..'</free></storage>'
+        end
+      end
+    else
+      total=nil
+      f=edcb.io.popen('df -P -BM '..QuoteCommandArgForPath(v)..' 2>/dev/null | sed "s/  */ /g" | cut -f2-4 -d" "')
+      if f then
+        total,used,avail=f:read('*a'):match('(%d+)M (%d+)M (%d+)M')
+        f:close()
+      end
+      if total then
+        messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
+        ..EdcbHtmlEscape(v)..'</name><text>'
+        ..('%.3f GiB (avail: %.3f GiB) / %.3f GiB'):format((total-used)/1024,avail/1024,total/1024)..'</text><free>'
+        ..(100-((total-used)/total*100))..'</free></storage>'
+      end
+    end
+  end
 end
 
 ct='<?xml version="1.0" encoding="UTF-8" ?><entry><info>'

@@ -40,18 +40,8 @@ function stopTimer(){
 }
 
 function caption(){
-	if (window.Hls != undefined){
-		capOption.enableAutoInBandMetadataTextTrackDetection = !Hls.isSupported();
-	}else{
-		capOption.enableAutoInBandMetadataTextTrackDetection = true;
-	}
-
-	switch(capRenderer){
-		case 'SVG':
-			cap = new aribb24js.CanvasRenderer(capOption);
-		case 'Canvas':
-			cap = new aribb24js.SVGRenderer(capOption);
-	}
+	aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
+	cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
 	cap.attachMedia(video);
 }
 
@@ -68,7 +58,7 @@ function startHLS(src){
 		hls.attachMedia(video);
 		hls.on(Hls.Events.MANIFEST_PARSED,function(){
 			var _DataStream; //一度しか読み込めないため常時読み込みはオミット
-			if (_DataStream || !$('.remote-control').hasClass('hidden')) toggleDataStream();
+			if (_DataStream || !$('.remote-control').hasClass('disabled')) toggleDataStream();
 			if ($('#subtitles').hasClass('checked')) caption();
 			if (Jikkyo || $('#danmaku').hasClass('checked')) toggleJikkyo();
 			if (!$('#danmaku').hasClass('checked')) danmaku.hide();
@@ -451,56 +441,56 @@ $(function(){
 
 		}
 	});
-	document.getElementById('PIP').addEventListener('click', async () => {
-		if ('documentPictureInPicture' in window) {
-			$('.remote-control,#comment-control').prependTo('.player-container');
-			const content = document.getElementById('player');
-			const pipWindow = await documentPictureInPicture.requestWindow();
+	if (document.pictureInPictureEnabled){
+		document.getElementById('PIP').addEventListener('click', async () => {
+			if ('documentPictureInPicture' in window) {
+				$('.remote-control,#comment-control').prependTo('.player-container');
+				const content = document.getElementById('player');
+				const pipWindow = await documentPictureInPicture.requestWindow();
 
-			// Copy style sheets over from the initial document
-			// so that the player looks the same.
-			[...document.styleSheets].forEach((styleSheet) => {
-				try {
-					const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-					const style = document.createElement('style');
+				// Copy style sheets over from the initial document
+				// so that the player looks the same.
+				[...document.styleSheets].forEach((styleSheet) => {
+					try {
+						const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+						const style = document.createElement('style');
 
-					style.textContent = cssRules;
-					pipWindow.document.head.appendChild(style);
-				} catch (e) {
-					const link = document.createElement('link');
+						style.textContent = cssRules;
+						pipWindow.document.head.appendChild(style);
+					} catch (e) {
+						const link = document.createElement('link');
 
-					link.rel = 'stylesheet';
+						link.rel = 'stylesheet';
 
-					link.type = styleSheet.type;
-					link.media = styleSheet.media;
-					link.href = styleSheet.href;
-					pipWindow.document.head.appendChild(link);
-				}
-			});
-			pipWindow.document.body.setAttribute('id','popup');
-			pipWindow.document.body.setAttribute('class','is-visible');
-			pipWindow.document.body.append(content);
-			
-			pipWindow.addEventListener("pagehide", (event) => {
-				const container = document.getElementById((theater ? "movie-theater-contner" : "movie-contner"));
-				const pipContent = event.target.getElementById("player");
-				container.append(pipContent);
-				if(theater){
-					$('.remote-control').prependTo('#main-column');
-					$('.remote-control .num').addClass('hidden');
-				}else{
-					$('#comment-control').insertAfter('#apps-contener>.contener');
-					$('.remote-control').prependTo('#apps-contener>.contener>.contener');
-				}
-			});
-		}else{
-			video.requestPictureInPicture();
-		}
-	});
-	$('#PIP_exit').click(function(){
-		documentPictureInPicture.window.close();
-	})
-	
+						link.type = styleSheet.type;
+						link.media = styleSheet.media;
+						link.href = styleSheet.href;
+						pipWindow.document.head.appendChild(link);
+					}
+				});
+				pipWindow.document.body.setAttribute('id','popup');
+				pipWindow.document.body.setAttribute('class','is-visible');
+				pipWindow.document.body.append(content);
+				
+				pipWindow.addEventListener("pagehide", (event) => {
+					const container = document.getElementById((theater ? "movie-theater-contner" : "movie-contner"));
+					const pipContent = event.target.getElementById("player");
+					container.append(pipContent);
+					if(theater){
+						$('.remote-control').prependTo('#main-column');
+						$('.remote-control .num').addClass('hidden');
+					}else{
+						$('#comment-control').insertAfter('#apps-contener>.contener');
+						$('.remote-control').prependTo('#apps-contener>.contener>.contener');
+					}
+				});
+			}else 
+				video.requestPictureInPicture();
+		});
+		$('#PIP_exit').click(() => documentPictureInPicture.window.close())
+	}else{
+		$('#PIP,#PIP_exit').hide();
+	}
 	$('#defult').click(function(){
 		theater = true;
 		$('#player').prependTo($('#movie-theater-contner'));
@@ -601,13 +591,14 @@ $(function(){
 		'click': function(e){
 			if($(this).data('click')){
 				clearTimeout($(this).data('click'));
-				if(!$remote_control.hasClass('hidden')){
+				const enable = !$remote_control.hasClass('disabled');
+				if (enable){
 					if (!DataStream) toggleDataStream(true);
 				}else{
 					if (!onDataStream) toggleDataStream();
 					if (!theater)$('#apps').prop('checked', true);
 				}
-				$remote_control.toggleClass('hidden', !$remote_control.hasClass('hidden'));
+				$remote_control.toggleClass('disabled', enable).find('button').prop('disabled', enable);
 			}
 			$(this).data('click', false);
 		},
@@ -621,7 +612,7 @@ $(function(){
 					if (!onDataStream) toggleDataStream();
 					$remote.addClass('mdl-button--accent');
 				}else{
-					if ($remote.hasClass('hidden')) toggleDataStream(true);
+					if ($remote_control.hasClass('disabled')) toggleDataStream(true);
 					$remote.removeClass('mdl-button--accent');
 				}
 			}, 1000));

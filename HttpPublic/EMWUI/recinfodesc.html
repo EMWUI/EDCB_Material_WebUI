@@ -62,7 +62,7 @@ if v then
     else
       info,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\nジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
     end
-    audio={multi=audioInfo and audioInfo:find('ステレオ.*ステレオ'), dual=audioInfo and audioInfo:find('デュアルモノ')}
+    audio={multi=audioInfo and audioInfo:find('（ステレオ）.*（ステレオ）'), dual=audioInfo and audioInfo:find('デュアルモノ')}
     
     epgInfo='<div>\n<h4 class="mdl-typography--title">'
       ..ConvertTitle(v.title)..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
@@ -83,7 +83,7 @@ if v then
     ..epgInfo
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" class="is_cast"></video>\n')
+      ..player('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-audio="'..((audio.multi or audio.dual) and '2' or '1')..'" class="is_cast"></video>\n')
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

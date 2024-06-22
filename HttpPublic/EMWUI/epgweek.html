@@ -177,7 +177,7 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
 
   ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
-  ..'<form id="autoepg" method="POST" target="_blank" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
+  ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'

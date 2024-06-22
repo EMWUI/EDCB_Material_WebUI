@@ -8,6 +8,7 @@
 }
 .material-icons,
 .material-symbols-outlined {
+  user-select: none;
   font-family: "Material Symbols Outlined";
   font-weight: normal;
   font-style: normal;
@@ -25,7 +26,13 @@
   font-feature-settings: "liga";
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-.fill {font-variation-settings: 'FILL' 1; }
+.material-icons.fill {
+  font-variation-settings: 'FILL' 1; }
+
+.mdl-button,
+*:not(#ext):not(#summary p)>a {
+  user-select: none; }
+
 
 @media (pointer: fine) {
   * {
@@ -618,8 +625,22 @@ h4 .mdl-button--icon {
     padding: 16px 24px;
     border-top: 1px solid #e0e0e0; }
     .navigation__footer p {
-      margin: 0;
-      font-size: 13px; }
+      margin: 0; }
+      .navigation__footer p>* {
+        display: inline-block;
+        vertical-align: middle; }
+      .navigation__footer p>i {
+        width: 24px;
+        height: 24px; }
+      .navigation__footer p>span {
+        margin-right:8px; }
+      .navigation__footer p>a {
+        height:20px;
+        min-width:20px;
+        width:20px; }
+      .navigation__footer a>.material-icons {
+        font-size:18px;
+        font-variation-settings: 'wght' 300,'GRAD' -25; }
     .navigation__footer ul {
       margin: 0;
       padding: 0; }
@@ -629,7 +650,6 @@ h4 .mdl-button--icon {
     .navigation__footer li:not(:last-child) {
       padding: 0 10px 0 0; }
     .navigation__footer a {
-      color: #757575;
       text-decoration: none; }
 
 
@@ -1921,6 +1941,8 @@ h4 .mdl-button--icon {
   display:         flex;
   flex-direction: column;
   overflow: auto; }
+  .is-small-screen .remote-control.disabled {
+    display: none; }
   div:not(#main-column)>.remote-control {
     width: 200px; }
   .color,
@@ -1954,6 +1976,8 @@ h4 .mdl-button--icon {
   bottom: min(15%, 80px);
   right: min(10%, 20px);
   z-index: 5; }
+  #player .remote-control.disabled {
+    display: none; }
 
 #player [for=num],
 #player .num,
@@ -1974,12 +1998,20 @@ h4 .mdl-button--icon {
   text-transform: none; }
 #key21 {
   background-color: rgb(0, 114, 214); }
+  #key21[disabled][disabled] {
+    background-color: rgba(0, 114, 214, .26);}
 #key22 {
   background-color: rgb(201, 0, 0); }
+  #key22[disabled][disabled] {
+    background-color: rgba(201, 0, 0, .26);}
 #key23 {
   background-color: rgb(27, 135, 0); }
+  #key23[disabled][disabled] {
+    background-color: rgba(27, 135, 0, .26);}
 #key24 {
   background-color: rgb(227, 178, 0); }
+  #key24[disabled][disabled] {
+    background-color: rgba(227, 178, 0, .26);}
 
 .navi {
   position: relative; }
