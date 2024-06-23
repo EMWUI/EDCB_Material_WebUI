@@ -157,11 +157,15 @@ for i,v in ipairs(EdcbRecFolderPathList()) do
     v=v:match('^%a:\\')
     if v and not checked[v:upper()] then
       checked[v:upper()]=true
+    else
+      v=nil
     end
   end
-  ct.main=ct.main..'<div id="d_'..mg.md5(v)..'" class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
-    ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..EdcbHtmlEscape(v)..'</div><div class="mdl-layout-spacer"></div><div class="text"></div></div>\n'
-    ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div></div></div>\n'
+  if v then
+    ct.main=ct.main..'<div id="d_'..mg.md5(v)..'" class="storage mdl-cell mdl-cell--4-col"><i class="material-icons">storage</i>\n'
+      ..'<div class="primary-content"><div class="storage_detail"><div class="disk">'..EdcbHtmlEscape(v)..'</div><div class="mdl-layout-spacer"></div><div class="text"></div></div>\n'
+      ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div></div></div>\n'
+  end
 end
 
 ct.main=ct.main..'</div></div>\n'
