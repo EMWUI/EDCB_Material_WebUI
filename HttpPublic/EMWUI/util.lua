@@ -1,3 +1,15 @@
+cssVer='240623'
+jsVer={
+  common='240623',
+  legacy='240623',
+  datastream='240623',
+  player='240623',
+  tvguide='240623',
+  onair='240623',
+  library='240623',
+  setting='240623',
+}
+
 dofile(mg.document_root..'\\api\\util.lua')
 
 sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
@@ -42,7 +54,7 @@ function template(temp)
 ]=]
 ..css
 ..((temp.dialog or temp.progres) and '<link rel="stylesheet" href="'..path..'css/dialog-polyfill.css">\n' or '')..[=[
-<link rel="stylesheet" href="]=]..path..[=[css/default.css">
+<link rel="stylesheet" href="]=]..path..[=[css/default.css?ver=]=]..cssVer..[=[">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
 ]=]
 ..(Roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
@@ -60,7 +72,7 @@ function template(temp)
 ..((temp.dialog or temp.progres) and '<script src="'..path..'js/dialog-polyfill.js"></script>\n' or '')
 ..'<script>var path=\''..path..'\';var root=\''..PathToRoot()..(temp.searchlinks and '\';var calendar_op=\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',ini)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',ini) or '')..'\';</script>\n'
 ..(temp.js or '')
-..'<script src="'..path..'js/common.js"></script>\n'
+..'<script src="'..path..'js/common.js?ver='..jsVer.common..'"></script>\n'
 
 ..[=[
 </head>
@@ -913,9 +925,9 @@ s=s..[=[
 </div></div>
 ]=]
   ..((ALLOW_HLS or live) and '<script>'..(ALLOW_HLS and 'ALLOW_HLS=true;' or '')..'var ctok=\''..(live and CsrfToken('view') or CsrfToken('xcode'))..'\';'..'</script>\n' or '')
-  ..'<script src="js/legacy.script.js"></script>\n'
+  ..'<script src="js/legacy.script.js?ver='..jsVer.legacy..'"></script>\n'
 
-  ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<script src="js/datastream.js"></script>\n' or '')
+  ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH~='') and '<script src="js/datastream.js?ver='..jsVer.datastream..'"></script>\n' or '')
 
   ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js"></script>\n' or '')
 
@@ -927,7 +939,7 @@ s=s..[=[
     ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js"></script>\n' or '')
     ..'<script src="js/aribb24.js"></script>\n' or '')
 
-  ..'<script src="js/player.js"></script>\n'
+  ..'<script src="js/player.js?ver='..jsVer.player..'"></script>\n'
 end
 
 --タイトルのマークを装飾

@@ -8,7 +8,7 @@ webPanel=mg.get_var(mg.request_info.query_string,'webpanel')
 ct={
   title='放送中',
   video='live',
-  js='<script src="js/onair.js"></script>\n',
+  js='<script src="js/onair.js?ver='..jsVer.onair..'"></script>\n',
   progres=true,
   macro=sidePanel,
   menu='<li class="mdl-menu__item" id="forced" data-ctok="'..CsrfToken('tvcast')..'">強制停止</li>'
