@@ -17,12 +17,16 @@ end
 ffmpeg=FindToolsCommand('ffmpeg')
 autoMakeThumbs=ffmpeg and true
 thumbsDir=PathAppend(PathAppend(mg.document_root,'video'),'thumbs')
-function MakeThumbs(fpath)
+count=0
+function MakeThumbs(fpath, auto)
   local thumbHash=mg.md5(fpath:lower())
   local thumbPath=PathAppend(thumbsDir,thumbHash..'.jpg')
   if not EdcbFindFilePlain(thumbPath) then
-    local cmd=ffmpeg..' -ss 30 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 '..QuoteCommandArgForPath(thumbPath)
-    edcb.os.execute(WIN32 and '"'..cmd..'"' or cmd)
+    if not auto or count < 3 then
+      count=count+1
+      local cmd=ffmpeg..' -ss 30 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 '..QuoteCommandArgForPath(thumbPath)
+      edcb.os.execute(WIN32 and '"'..cmd..'"' or cmd)
+    end
   end
   return thumbHash
 end
@@ -119,12 +123,16 @@ else
   end
 
   if not dirname then
-    table.insert(ct, '<dirname>ホーム</dirname>')
-    for i,v in ipairs(LIBRARY_LIST) do
-      table.insert(ct, '<dir><index>'
-        ..i..'</index><name>'
-        ..EdcbHtmlEscape(NativeToDocumentPath(v) or v)..'</name></dir>\n'
-      )
+    if dirhash then
+      table.insert(ct, '<error>見つかりませんでした</error>')
+    else
+      table.insert(ct, '<dirname>ホーム</dirname>')
+      for i,v in ipairs(LIBRARY_LIST) do
+        table.insert(ct, '<dir><index>'
+          ..i..'</index><name>'
+          ..EdcbHtmlEscape(NativeToDocumentPath(v) or v)..'</name></dir>\n'
+        )
+      end
     end
   else
     hash=mg.get_var(mg.request_info.query_string,'h')
@@ -162,7 +170,7 @@ else
         local thumbHash
         if not v.isdir then
           local fpath=PathAppend(dir,v.name)
-          thumbHash=autoMakeThumbs and MakeThumbs(fpath) or mg.md5(fpath:lower())
+          thumbHash=autoMakeThumbs and MakeThumbs(fpath, true) or mg.md5(fpath:lower())
           thumbHash=EdcbFindFilePlain(PathAppend(thumbsDir,thumbHash..'.jpg')) and thumbHash
         end 
         table.insert(ct, (v.isdir and '<dir>' or '<file>')..'<name>'
@@ -221,6 +229,8 @@ else
           end
         end
         table.insert(ct, '</file>\n')
+      else
+        table.insert(ct, '<error>見つかりませんでした</error>')
       end
     end
   end
