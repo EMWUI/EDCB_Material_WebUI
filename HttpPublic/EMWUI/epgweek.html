@@ -2,6 +2,7 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
 show=mg.get_var(mg.request_info.query_string,'show')
+date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
 --hour=-1で現在時刻-MARGIN_HOUR時間を基準
 interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
@@ -9,6 +10,13 @@ interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
 onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
 
 baseDate=math.floor((utc9Now-4*3600)/24/3600)
+if date==0 then
+  m={(mg.get_var(mg.request_info.query_string,'date') or ''):match('^(%d%d%d%d)%-(%d?%d)%-(%d?%d)$')}
+  if #m==3 then
+    date=math.floor(TimeWithZone({year=m[1],month=m[2],day=m[3]})/24/3600)-baseDate
+  end
+end
+baseDate=baseDate+date
 Hour=hour<0 and math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
 Hour=Hour+interval>29 and 29-interval or Hour
@@ -16,7 +24,7 @@ baseTime=(baseDate*24+Hour)*3600
 
 NOW=baseTime<utc9Now and utc9Now<baseTime+interval*3600
 
-hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_interval and '&amp;interval='..interval or '')
+hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_interval and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')
 
 
 edcb.htmlEscape=15
@@ -82,7 +90,26 @@ table.insert(main, '</ul>\n'
   ..'<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="select_service">\n'..table.concat(ctt)..'</ul>\n')
 
 if st then
-  ct.subheader=ct.subheader..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
+  mmt=edcb.GetEventMinMaxTime(st.onid, st.tsid, st.sid)
+  if mmt then
+    maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
+    minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
+  end
+  mmt=edcb.GetEventMinMaxTimeArchive and edcb.GetEventMinMaxTimeArchive(st.onid, st.tsid, st.sid)
+  if mmt then
+    maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
+    minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
+  end
+  ct.subheader=ct.subheader..'<div class="dividers navigation__item mdl-color-text--primary"><form id="date_input" action="epgweek.html">'
+    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" id="dateFormat" type="date" name="date" value="'..os.date('%Y-%m-%d', baseDate*24*3600)..(minTime and '" min="'..os.date('%Y-%m-%d', minTime) or '')..(maxTime and '" max="'..os.date('%Y-%m-%d', maxTime-7*24*3600) or '')..'"><label class="mdl-textfield__label" for="dateFormat"></label></div>'
+    ..'<input type="hidden" name="onid" value="'..st.onid..'">'
+    ..'<input type="hidden" name="tsid" value="'..st.tsid..'">'
+    ..'<input type="hidden" name="sid" value="'..st.sid..'">'
+    ..(hour~=4 and '<input type="hidden" name="hour" value="'..hour..'">' or '')
+    ..(interval~=DEF_interval and '<input type="hidden" name="interval" value="'..interval..'">' or '')
+    ..'</form></div>\n'
+
+    ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
   table.insert(main, '<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 
@@ -92,7 +119,7 @@ if st then
     if Hour<=i and i<Hour+interval then
       table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     else
-      table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
+      table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     end
   end
   table.insert(main, '</ul>\n')
@@ -118,7 +145,7 @@ ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'
 
 ctt={}
 op={service_name=st.service_name}
-for i=0,7 do
+for i=0,6 do
   table.insert(ctt, '<div class="station" data-service_id="'..st.onid..'-'..st.tsid..'-'..st.sid..'" data-service="'..st.service_name..'"><div>\n')
   lastPx=0
   total=0
@@ -159,7 +186,7 @@ table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">
 
   ..'<div id="tv-guide-container"><div id="tv-guide">'
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n')
-  for i=0,7 do
+  for i=0,6 do
     d=os.date('!*t', ((i+baseDate)*24)*3600)
     d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
     table.insert(main, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')

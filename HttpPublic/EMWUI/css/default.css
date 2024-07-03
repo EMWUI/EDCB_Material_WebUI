@@ -400,7 +400,12 @@ header {
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
     height: 32px;
-    line-height: 32px; }
+    line-height: 32px;
+    &:has(>*>.mdl-textfield) {
+      padding: 0 12px; }
+    .mdl-textfield {
+      width: auto; }
+  }
   .navigation__item.pulldown {
     padding: 0 24px 0 12px;
     min-width: 115px;

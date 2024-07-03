@@ -1516,7 +1516,7 @@ $(function(){
 		setTimeout(function (){obj.children('.flag').data('id', false).children('span').remove();}, obj.data('endtime')-Date.now());
 	});
 	$('.doSearch').click(e => {
-		const d = $$(e).data();
+		const d = $(e.currentTarget).data();
 		$('#ctok').val(d.ctok);
 		$('#search').attr('action', d.action).submit();
 	})
