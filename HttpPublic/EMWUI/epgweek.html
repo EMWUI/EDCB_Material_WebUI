@@ -5,7 +5,7 @@ show=mg.get_var(mg.request_info.query_string,'show')
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
 --hour=-1で現在時刻-MARGIN_HOUR時間を基準
-interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_interval
+interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_INTERVAL
 
 onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
 
@@ -24,7 +24,7 @@ baseTime=(baseDate*24+Hour)*3600
 
 NOW=baseTime<utc9Now and utc9Now<baseTime+interval*3600
 
-hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_interval and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')
+hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')
 
 
 edcb.htmlEscape=15
@@ -46,9 +46,9 @@ end
 
 ct={
   title='週間番組表 <span class="mdl-typography--subhead mdl-cell--hide-phone">('..(st and st.service_name or '')..')</span>',
-  css=epgcss(),
-  js=epgjs(Hour,'$(function(){end($($(".now")));setInterval("line()", 1000);});'),
-  menu=epgMenuTemplate(true),
+  css=EpgCssTemplate(),
+  js=EpgJsTemplate(Hour,NOW),
+  menu=EpgMenuTemplate(true),
   progres=true,
   macro=sidePanel,
   searchlinks=true
@@ -59,7 +59,7 @@ ct.subheader='<div id="subheader">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" '
-  ..(NOW and 'id="now' or 'href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour=-1'..(interval~=DEF_interval and '&amp;interval='..interval or '')..'"')
+  ..(NOW and 'id="now' or 'href="epgweek.html?id='..st.onid..'-'..st.tsid..'-'..st.sid..'&amp;hour=-1'..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')..'"')
   ..'"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div id="select" class="pulldown dividers navigation__item mdl-color-text--primary">絞り込む</div>\n'
@@ -73,8 +73,8 @@ for i,v in ipairs(NetworkIndex()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(ServiceList) do
-  if oneseg or not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?onid='..v.onid..'&amp;tsid='..v.tsid..'&amp;sid='..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
+  if ONESEG or not v.partialReceptionFlag then
+    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
   end
 end
 
@@ -106,7 +106,7 @@ if st then
     ..'<input type="hidden" name="tsid" value="'..st.tsid..'">'
     ..'<input type="hidden" name="sid" value="'..st.sid..'">'
     ..(hour~=4 and '<input type="hidden" name="hour" value="'..hour..'">' or '')
-    ..(interval~=DEF_interval and '<input type="hidden" name="interval" value="'..interval..'">' or '')
+    ..(interval~=DEF_INTERVAL and '<input type="hidden" name="interval" value="'..interval..'">' or '')
     ..'</form></div>\n'
 
     ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
@@ -119,7 +119,7 @@ if st then
     if Hour<=i and i<Hour+interval then
       table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     else
-      table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?onid='..st.onid..'&amp;tsid='..st.tsid..'&amp;sid='..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_interval and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
+      table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?id='..st.onid..'-'..st.tsid..'-'..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     end
   end
   table.insert(main, '</ul>\n')
@@ -167,8 +167,8 @@ for i=0,6 do
       lastPx=startPx
     end
     if endPx-lastPx>2 then
-      op.url='epginfo.html?onid='..w.onid..'&amp;tsid='..w.tsid..'&amp;sid='..w.sid..(w.past and '&amp;startTime='..startTime or '&amp;eid='..w.eid)..'&amp;week='..hrefGene
-      table.insert(ctt, epgcell(w, op))
+      op.url='epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..(w.past and startTime or w.eid)..'&amp;week='..hrefGene
+      table.insert(ctt, CellTemplate(w, op))
 
       total=total+endPx-lastPx
       lastPx=endPx
@@ -182,7 +182,7 @@ end
 
 table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">\n'
 
-  ..(sidePanel and sidePanelTemplate() or '')
+  .. SidePanelTemplate()
 
   ..'<div id="tv-guide-container"><div id="tv-guide">'
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n')
@@ -204,12 +204,12 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
 
   ..table.concat(ctt)
   ..'</div>\n</div></div>\n'
-  ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&amp;onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..'">\n'
+  ..'<form id="autoepg" method="POST" action="autoaddepginfo.html?week=&amp;id='..onid..'-'..tsid..'-'..sid..'">\n'
   ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
   ..'</form>\n'
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

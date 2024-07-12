@@ -7,7 +7,7 @@ edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
 
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if math.ceil((#a/PAGE_COUNT)-1)>0 then
@@ -27,7 +27,7 @@ end
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-if sidePanel then
+if SIDE_PANEL then
   ct.macro=true
 
   ct.main=ct.main..[=[
@@ -41,7 +41,7 @@ if sidePanel then
 <div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>
 <input type="hidden" name="addchg" value="1">
 <div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag"></label><span class="mdl-switch__label"></span></div></div>
-]=]..SerchTemplate(getSearchKeyKeyword(mg.request_info.query_string))..[=[
+]=]..SerchTemplate(GetSearchKeyKeyword(mg.request_info.query_string))..[=[
 </div></section>
 <section class="panel-swipe mdl-tabs__panel" id="recset">
 <div class="form mdl-grid mdl-grid--no-spacing">
@@ -66,11 +66,9 @@ if sidePanel then
     ..'<div class="mdl-card__actions">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
 
-  if mg.get_var(mg.request_info.query_string,'del') then
-    ct.main=ct.main..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-  end
+    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
 
-  ct.main=ct.main..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
+    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
     ..'</div>\n'
 
     ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
@@ -103,10 +101,10 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
       end
     end
   end
-  table.insert(ctt, '<tr class="epginfo'..(parseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
-    ..(sidePanel and 'data-id="'..a[i].dataID
+  table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
+    ..(SIDE_PANEL and 'data-id="'..a[i].dataID
                   or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">'
-    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..parseAndKey(v.andKey).andKey
+    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..v.notKey
     ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
     ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
@@ -118,6 +116,6 @@ end
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
      ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..'"><i class="material-icons">add</i></a>'
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

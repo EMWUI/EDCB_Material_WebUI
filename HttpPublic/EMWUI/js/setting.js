@@ -1,96 +1,62 @@
 $(function(){
-	$.get(root+ 'api/Common', {storage: 1}).done(xml => {
+	$.get(`${ROOT}api/Common`, {storage: 1}).done(xml => {
 		$(xml).find('storage').each((i, e) => {
-			const id = $(e).children('id').text();
-			$(`#d_${id} .text`).text($(e).children('text').text());
-			$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).children('free').text());
+			const id = $(e).txt('id');
+			$(`#d_${id} .text`).text($(e).txt('text'));
+			$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).txt('free'));
 		})
 	});
 	//背景色連動
-	$('.bgset').change(function(){
-		$($(this).attr('for')).not('.paint').css('background', $(this).val());
-	});
+	$('.bgset').change(e => $($(e.currentTarget).attr('for')).not('.paint').css('background', $(e.currentTarget).val()));
 	//予約済み
-	$('.reserveset').change(function(){
-		if ($('#paint').prop('checked')){
-			$($(this).attr('for')).css('background', $(this).val());
-		}else{
-			$($(this).attr('for')).css('border-color', $(this).val());
-		}
-	});
+	$('.reserveset').change(e => $($(e.currentTarget).attr('for')).css($('#paint').prop('checked') ? 'background' : 'border-color', $(e.currentTarget).val()));
 	//一部録画・チューナー不足枠
-	$('.border').change(function(){
-			$($(this).attr('for')).css('border-color', $(this).val());
-	});
+	$('.border').change(e => $($(e.currentTarget).attr('for')).css('border-color', $(e.currentTarget).val()));
 	//塗潰し
-	$('#paint').change(function(){
-		if ($(this).prop('checked')){
-			$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val()).css('border-color', 'transparent');
-			$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val()).css('border-color', 'transparent');
-		}else{
-			$('#reserve').removeClass('paint').css('background', '').css('border-color', $('#reserve .reserveset').val());
-			$('#disabled').removeClass('paint').css('background', '').css('border-color', $('#disabled .reserveset').val());
-		}
+	$('#paint').change(e => {
+		$('#reserve').toggleClass('paint', $(e.currentTarget).prop('checked')).css('background', $(e.currentTarget).prop('checked') ? $('#reserve .reserveset').val() : '').css('border-color', $(e.currentTarget).prop('checked') ? 'transparent' : $('#reserve .reserveset').val());
+		$('#disabled').toggleClass('paint', $(e.currentTarget).prop('checked')).css('background', $(e.currentTarget).prop('checked') ? $('#disabled .reserveset').val() : '').css('border-color', $(e.currentTarget).prop('checked') ? 'transparent' : $('#disabled .reserveset').val());
 	});
 	if ($('#paint').prop('checked')){
-			$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
-			$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
+		$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
+		$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
 	}
 
 	//並び替え
 	$('#sort ul').sortable({handle: '.handle'});
 	//初期値保存
-	$('#sort .mdl-list').each(function(){
-		$(this).data('sort', $(this).sortable('toArray').join(','));
-	});
+	$('#sort .mdl-list').each((i, e) => $(e).data('sort', $(e).sortable('toArray').join(',')));
 
-	$('.switch').change(function(){
-		if ($(this).prop('checked')){
-			$($(this).attr('for')).prop('checked', false);
-		}else{
-			$($(this).attr('for')).prop('checked', true);
-		}
-	});
+	$('.switch').change(e => $($(e.currentTarget).attr('for')).prop('checked', !$(e.currentTarget).prop('checked')));
 
 	//元に戻す
-	$('#reinstate').click(function(){
+	$('#reinstate').click(e => {
 		//設定
 		$('#set')[0].reset();
 		//見た目
 		$('.mdl-cell').css('background', '').css('border-color', '');
 		if ($('#paint').prop('checked')){
-				$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
-				$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
+			$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
+			$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
 		}
-		$('input').each(function(){
-			if ($(this).prop('checked')){
-				$(this).not('.hidden').parent().addClass('is-checked');
-			}else{
-				$(this).not('.hidden').parent().removeClass('is-checked');
-			}
-		});
+		$('#set input').not('.hidden').each((i, e) => $(e).parent().toggleClass('is-checked', $(e).prop('checked')));
 		//並び替え
-		$('#sort .mdl-list').each(function(){
-			var obj = $(this);
-			$.each(obj.data('sort').split(','), function(index, value){
-				$('#'+value).appendTo(obj);
-			});
-		});
-		document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar({message: '元に戻しました'});
+		$('#sort .mdl-list').each((i, e) => $(e).data('sort').split(',').forEach(v => $(`#${v}`).appendTo(e)) );
+		Snackbar({message: '元に戻しました'});
 	});
 
-	$('.mdl-layout__tab').click(function(){
-		var val = $(this).data('val');
-		$('.init').hide().data('text', $(this).text());
-		$('.'+val).show();
+	$('.mdl-layout__tab').click(e => {
+		const val = $(e.currentTarget).data('val');
+		$('.init').hide().data('text', $(e.currentTarget).text());
+		$(`.${val}`).show();
 		$('[name=reset]').val(val);
 	});
 
 	//初期化
-	var dialog = document.querySelector('dialog');
+	const dialog = document.querySelector('dialog');
 	if (!dialog.showModal) dialogPolyfill.registerDialog(dialog);
-	$('.init').click(function(){
-		$('.mdl-dialog__content').text('"' + $(this).data('text') + '"を初期化しますか?');
+	$('.init').click(e => {
+		$('.mdl-dialog__content').text(`"${$(e.currentTarget).data('text')}"を初期化しますか?`);
 	    dialog.showModal();
 	});
 });

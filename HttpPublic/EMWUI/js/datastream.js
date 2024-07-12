@@ -1,8 +1,31 @@
-//データ取得
+const remocon = document.querySelector('#remote');
+const indicator = document.querySelector(".remote-control-indicator")
+//BMLブラウザのサイズ指定 要改善
+const playerUI = document.querySelector('#playerUI');
+const setbmlBrowserSize = () => {
+	var width = window.innerWidth;
+	var height = width * (9/16);
+	if (fullscreen){
+		if (window.innerHeight < width * (9/16)){
+			height = window.innerHeight;
+			width = height * (16/9);
+		}
+	}else if (theater && window.innerHeight * 0.85 - 70 < width * (9/16)){
+		height = window.innerHeight * 0.85 - 70;
+		width = height * (16/9);
+	}else if (!fullscreen){
+		width = playerUI.clientWidth;
+		height = width * (9/16);
+	}
+	bmlBrowserSetVisibleSize(width,height);
+}
+window.addEventListener('resize', setbmlBrowserSize());
+
+
+
+
+//コメント送信
 var setSendComment;
-var openSubStream;
-var onDataStreamError=null;
-var onJikkyoStreamError=null;
 (function(){
   var bcomm=document.querySelector("#comment-control");
   var commInput=document.querySelector("#comm");
@@ -26,71 +49,18 @@ var onJikkyoStreamError=null;
     if (bcomm) bcomm.style.display=f?null:"none";
     commSend=f;
   };
-
-  var reopen=false;
-  var xhr=null;
-  openSubStream=function(){
-    if(reopen)return;
-    if(xhr){
-      xhr.abort();
-      xhr=null;
-      if(onDataStream||onJikkyoStream){
-        reopen=true;
-        setTimeout(function(){reopen=false;openSubStream();},7000);
-      }
-      return;
-    }
-    if(!onDataStream&&!onJikkyoStream)return;
-    var readCount=0;
-    var ctx={};
-    xhr=new XMLHttpRequest();
-    xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+(onJikkyoStream?"&jikkyo=1":"")+
-             "&ofssec="+Math.floor(($('.is_cast').data('ofssec') ? $('.is_cast').data('ofssec') : 0)+video.currentTime));
-    xhr.onloadend=function(){
-      if(xhr&&(readCount==0||xhr.status!=0)){
-        if(onDataStream&&onDataStreamError)onDataStreamError(xhr.status,readCount);
-        if(onJikkyoStream&&onJikkyoStreamError)onJikkyoStreamError(xhr.status,readCount);
-      }
-      xhr=null;
-    };
-    xhr.onprogress=function(){
-      if(xhr&&xhr.status==200&&xhr.response){
-        readCount=progressPsiDataChatMixedStream(readCount,xhr.response,onDataStream,onJikkyoStream,ctx);
-      }
-    };
-    xhr.send();
-  };
 })();
 
-//データ放送
-const $remocon = document.querySelector('#remote');
-const $indicator = document.querySelector(".remote-control-indicator")
-function toggleDataStream(off){
-  if (off || onDataStream){
-    onDataStream=null;
-    openSubStream();
-    bmlBrowserSetInvisible(true);
-    return
-  }
-  if (!VideoSrc) return;
-  setbmlBrowserSize();
-  bmlBrowserSetInvisible(false);
-  onDataStream=function(pid,dict,code,pcr){
-    dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
-  };
-  onDataStreamError=function(status,readCount){
-    $indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
-  };
-  $indicator.innerText="接続中...";
-  $remocon.classList.add('done');
-  openSubStream();
-}
+
 
 //実況
 var danmaku=null;
-function toggleJikkyo(off){
-  if(off || onJikkyoStream){
+var onJikkyoStream=null;
+var onJikkyoStreamError=null;
+toggleJikkyo=function(enabled){
+  if(enabled===false||enabled===undefined&&onJikkyoStream){
     onJikkyoStream=null;
+    onJikkyoStreamError=null;
     openSubStream();
     setSendComment(null);
     $('#jk-comm').empty();
@@ -130,7 +100,7 @@ function toggleJikkyo(off){
       }
     };
     var d=document.querySelector(".is_cast").dataset;
-    xhr.send("ctok="+ctokC+"&n=0&id="+d.onid+"-"+d.tsid+"-"+d.sid+"&comm="+encodeURIComponent(value).replace(/%20/g,"+"));
+    xhr.send(`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}&comm=`+encodeURIComponent(value).replace(/%20/g,"+"));
   });
   var commHide=true;
   setInterval(function(){
@@ -147,7 +117,7 @@ function toggleJikkyo(off){
   var scatterInterval=200;
   var closed=false;
   onJikkyoStream=function(tag){
-    if(tag.substring(0,6)=="<chat "){
+      if(/^<chat /.test(tag)){
       var c=parseChatTag(replaceTag(tag));
       if(c){
         if(c.yourpost)c.border="2px solid #c00";
@@ -173,15 +143,15 @@ function toggleJikkyo(off){
         fragment.appendChild(div);
       }
       return;
-    }else if(tag.substring(0,13)=="<chat_result "){
+      }else if(/^<chat_result /.test(tag)){
       var m=tag.match(/^[^>]*? status="(\d+)"/);
       if(m&&m[1]!="0")addMessage("Error! (chat_result="+m[1]+")");
       return;
-    }else if(tag.substring(0,7)=="<!-- M="){
+      }else if(/^<!-- M=/.test(tag)){
       if(tag.substring(7,22)=="Closed logfile.")closed=true;
       else if(tag.substring(7,31)!="Started reading logfile:")addMessage(tag.substring(7,tag.length-4));
       return;
-    }else if(tag.substring(0,7)!="<!-- J="){
+      }else if(!/^<!-- J=/.test(tag)){
       return;
     }
     if(tag.indexOf(";T=")<0)scatterInterval=90;
@@ -218,28 +188,68 @@ function toggleJikkyo(off){
   onJikkyoStreamError=function(status,readCount){
     addMessage("Error! ("+status+"|"+readCount+"Bytes)");
   };
-  addMessage('接続開始');
   openSubStream();
+  addMessage('接続開始');
 };
 
-//BMLブラウザのサイズ指定 要改善
-const $playerUI_ = document.querySelector('#playerUI');
-function setbmlBrowserSize(){
-	var width = window.innerWidth;
-	var height = width * (9/16);
-	if (fullscreen){
-		if (window.innerHeight < width * (9/16)){
-			height = window.innerHeight;
-			width = height * (16/9);
-		}
-	}else if (theater && window.innerHeight * 0.85 - 70 < width * (9/16)){
-		height = window.innerHeight * 0.85 - 70;
-		width = height * (16/9);
-	}else if (!fullscreen){
-		width = $playerUI_.clientWidth;
-		height = width * (9/16);
-	}
-	bmlBrowserSetVisibleSize(width,height);
-}
+var openSubStream;
+var onDataStream=null;
+var onDataStreamError=null;
+(function(){
+  var reopen=false;
+  var xhr=null;
+  openSubStream=function(){
+    if(reopen)return;
+    if(xhr){
+      xhr.abort();
+      xhr=null;
+      if(onDataStream||onJikkyoStream){
+        reopen=true;
+        setTimeout(function(){reopen=false;openSubStream();},5000);
+      }
+      return;
+    }
+    if(!onDataStream&&!onJikkyoStream)return;
+    var readCount=0;
+    var ctx={};
+    xhr=new XMLHttpRequest();
+    xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+
+             (onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
+    xhr.onloadend=function(){
+      if(xhr&&(readCount==0||xhr.status!=0)){
+        if(onDataStreamError)onDataStreamError(xhr.status,readCount);
+        if(onJikkyoStreamError)onJikkyoStreamError(xhr.status,readCount);
+      }
+      xhr=null;
+    };
+    xhr.onprogress=function(){
+      if(xhr&&xhr.status==200&&xhr.response){
+        readCount=progressPsiDataChatMixedStream(readCount,xhr.response,onDataStream,onJikkyoStream,ctx);
+      }
+    };
+    xhr.send();
+  };
+})();
 
-window.addEventListener('resize', setbmlBrowserSize);
+//データ放送
+toggleDataStream=function(enabled){
+  if (enabled===false||enabled===undefined&&onDataStream){
+    onDataStream=null;
+    onDataStreamError=null;
+    openSubStream();
+    bmlBrowserSetInvisible(true);
+    return;
+  }
+  if (!VideoSrc) return;
+  setbmlBrowserSize();
+  bmlBrowserSetInvisible(false);
+  onDataStream=function(pid,dict,code,pcr){
+    dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
+  };
+  onDataStreamError=function(status,readCount){
+    indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
+  };
+  openSubStream();
+  indicator.innerText="接続中...";
+  remocon.classList.add('done');
+}

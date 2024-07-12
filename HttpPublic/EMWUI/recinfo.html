@@ -8,7 +8,7 @@ a=edcb.GetRecFileInfoBasic()
 table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
 
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if math.ceil((#a/PAGE_COUNT)-1)>0 then
@@ -28,7 +28,7 @@ end
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-if sidePanel then
+if SIDE_PANEL then
   ct.main=ct.main..[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">録画結果</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
@@ -82,7 +82,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   bg=v.drops>0 and ' drops'
      or v.scrambles>0 and ' scrambles' or ''
   table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" '
-    ..(sidePanel and 'data-recinfoid="'..v.id
+    ..(SIDE_PANEL and 'data-recinfoid="'..v.id
                   or 'data-href="recinfodesc.html?id='..v.id ..'&amp;page='..pageIndex)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
@@ -95,6 +95,6 @@ end
 
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

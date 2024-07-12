@@ -296,7 +296,7 @@ for i,v in ipairs(NetworkIndex()) do
 end
 for i,v in ipairs(CustomServiceList()) do
   if not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<div class="channel'..(v.subCh and ' subCH hidden' or '')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</span></div>')
+    table.insert(NetworkList[NetworkIndex(v)], '<div class="channel'..(v.subCh and ' subCH hidden' or '')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</span></div>')
   end
 end
 

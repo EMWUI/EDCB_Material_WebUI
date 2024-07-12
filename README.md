@@ -179,7 +179,6 @@ URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインに�
 
 * [Material Design Lite](http://www.getmdl.io)
 * [Material Symbols](https://github.com/google/material-design-icons)
-* [dialog-polyfill](https://github.com/GoogleChrome/dialog-polyfill)
 * [jQuery](https://jquery.com)
 * [jQuery UI](https://jqueryui.com)
 * [jQuery UI Touch Punch](http://touchpunch.furf.com)

@@ -3,12 +3,12 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 function format(reset)
   if reset=='tvguide' then
-    edcb.WritePrivateProfile('GUIDE', nil, '',ini)
-    edcb.WritePrivateProfile('BACKGROUND', nil, '',ini)
+    edcb.WritePrivateProfile('GUIDE', nil, '',INI)
+    edcb.WritePrivateProfile('BACKGROUND', nil, '',INI)
     return '番組表設定を初期化しました'
   elseif reset=='sort' then
-    edcb.WritePrivateProfile('SORT', nil, '',ini)
-    edcb.WritePrivateProfile('HIDE', nil, '',ini)
+    edcb.WritePrivateProfile('SORT', nil, '',INI)
+    edcb.WritePrivateProfile('HIDE', nil, '',INI)
     return '並び替え設定を初期化しました'
   end
 end
@@ -21,65 +21,65 @@ function save(post)
     titleControl=titleControl+v
   end
 
-  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1,ini)
-  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1,ini)
-  edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),ini)
-  edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),ini)
-  edcb.WritePrivateProfile('SET', 'Olympic', GetVarInt(post,'Olympic')==1,ini)
+  --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1,INI)
+  edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1,INI)
+  edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),INI)
+  edcb.WritePrivateProfile('SET', 'PAGE_COUNT', GetVarInt(post,'PAGE_COUNT',0,100000),INI)
+  edcb.WritePrivateProfile('SET', 'Olympic', GetVarInt(post,'Olympic')==1,INI)
 
-  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,ini)
-  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,ini)
-  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl,ini)
-  edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23),ini)
-  edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000),ini)
-  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1,ini)
-  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1,ini)
+  edcb.WritePrivateProfile('GUIDE', 'oneseg', GetVarInt(post,'oneseg')==1,INI)
+  edcb.WritePrivateProfile('GUIDE', 'hover', GetVarInt(post,'hover')==1,INI)
+  edcb.WritePrivateProfile('GUIDE', 'titleControl', titleControl,INI)
+  edcb.WritePrivateProfile('GUIDE', 'ONE_MIN_PX', GetVarInt(post,'ONE_MIN_PX',1,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_HOUR', GetVarInt(post,'MARGIN_HOUR',0,23),INI)
+  edcb.WritePrivateProfile('GUIDE', 'MARGIN_MIN', GetVarInt(post,'MARGIN_MIN',1,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'service', GetVarInt(post,'w_service',10,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'service_sp', GetVarInt(post,'w_service_sp',10,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'hour', GetVarInt(post,'w_hour',10,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'hour_sp', GetVarInt(post,'w_hour_sp',10,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'CH_COUNT', GetVarInt(post,'CH_COUNT',0,100000),INI)
+  edcb.WritePrivateProfile('GUIDE', 'sidePanel', GetVarInt(post,'sidePanel')==1,INI)
+  edcb.WritePrivateProfile('GUIDE', 'subChConcat', GetVarInt(post,'subChConcat')==1,INI)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'background', mg.get_var(post, 'background'),INI)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'news', mg.get_var(post, 'news'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'sports', mg.get_var(post, 'sports'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'information', mg.get_var(post, 'information'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'drama', mg.get_var(post, 'drama'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'music', mg.get_var(post, 'music'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'variety', mg.get_var(post, 'variety'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'movie', mg.get_var(post, 'movie' or ''),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'anime', mg.get_var(post, 'anime'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'documentary', mg.get_var(post, 'documentary'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'theater', mg.get_var(post, 'theater'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'education', mg.get_var(post, 'education'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'news', mg.get_var(post, 'news'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'sports', mg.get_var(post, 'sports'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'information', mg.get_var(post, 'information'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'drama', mg.get_var(post, 'drama'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'music', mg.get_var(post, 'music'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'variety', mg.get_var(post, 'variety'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'movie', mg.get_var(post, 'movie' or ''),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'anime', mg.get_var(post, 'anime'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'documentary', mg.get_var(post, 'documentary'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'theater', mg.get_var(post, 'theater'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'education', mg.get_var(post, 'education'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),INI)
 
-  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'partially_border', mg.get_var(post, 'partially_border'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'shortage', mg.get_var(post, 'shortage'),ini)
-  edcb.WritePrivateProfile('BACKGROUND', 'shortage_border', mg.get_var(post, 'shortage_border'),ini)
+  edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'partially_border', mg.get_var(post, 'partially_border'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage', mg.get_var(post, 'shortage'),INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'shortage_border', mg.get_var(post, 'shortage_border'),INI)
 
-  edcb.WritePrivateProfile('SORT', nil, '',ini)
+  edcb.WritePrivateProfile('SORT', nil, '',INI)
   for i=0,10000 do
     local v=mg.get_var(post, 'sort', i)
     if not v then break end
-    edcb.WritePrivateProfile('SORT', 'sort'..i, v,ini)
+    edcb.WritePrivateProfile('SORT', 'sort'..i, v,INI)
   end
 
-  edcb.WritePrivateProfile('HIDE', nil, '',ini)
+  edcb.WritePrivateProfile('HIDE', nil, '',INI)
   for i=0,10000 do
     local v=mg.get_var(post, 'hide', i)
     if not v then break end
-    edcb.WritePrivateProfile('HIDE', 'hide'..i, v,ini)
+    edcb.WritePrivateProfile('HIDE', 'hide'..i, v,INI)
   end
 
   return '保存しました'
@@ -89,7 +89,7 @@ ct={
   title='設定',
   js='<script src="js/jquery-ui.min.js"></script>\n'
     ..'<script src="js/jquery.ui.touch-punch.min.js"></script>\n'
-    ..'<script src="js/setting.js?ver='..jsVer.setting..'"></script>\n',
+    ..'<script src="js/setting.js'..Version('setting')..'"></script>\n',
   tab='<a href="#whole" class="mdl-layout__tab is-active">全般</a>\n'
     ..'<a href="#guide" class="mdl-layout__tab" data-val="tvguide">番組表</a>\n'
     ..'<a href="#sort" class="mdl-layout__tab" data-val="sort">並び替え</a>\n',
@@ -117,25 +117,24 @@ if post then
   else
     messege=save(post) or '保存できませんでした'
   end
-  ct.js=ct.js..'<script>$(function(){$(".mdl-js-snackbar").on("mdl-componentupgraded", function() {this.MaterialSnackbar.showSnackbar({message: "'..messege..'",timeout:5000});});})</script>'
+  ct.js=ct.js..'<script>Snackbar({message: "'..messege..'", timeout:5000});</script>'
 end
 
-sidePanel=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,ini))~=0
-Roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,ini))~=0
-subGenreoption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',ini)
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
-Olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,ini))~=0
+roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,INI))~=0
+subGenreOption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',INI)
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,INI))~=0
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(sidePanel and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(SIDE_PANEL and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Olympic">オリンピック・ワールドカップモード</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="Olympic-flag" class="mdl-switch mdl-js-switch"><input id="Olympic-flag" type="checkbox" class="mdl-switch__input" name="Olympic" value="1"'..(Olympic and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="Olympic-flag" class="mdl-switch mdl-js-switch"><input id="Olympic-flag" type="checkbox" class="mdl-switch__input" name="Olympic" value="1"'..(olympic and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Olympic">番組表のリンクを一覧に表示</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Webフォント "Roboto"</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(Roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Roboto">Material Design推奨フォント</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-count">一覧表示数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -143,9 +142,9 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<span class="mdl-tooltip" for="tt-count">0で無制限</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">サブジャンル表示</div>\n<div class="radio_button mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
-  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreoption"><input type="radio" id="subGenreoption" class="mdl-radio__button" name="subGenreoption" value="ALL"'..(subGenreoption=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示する</span></label></div><div class="mdl-layout-spacer"></div>\n'
-  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreEPG"><input type="radio" id="subGenreEPG" class="mdl-radio__button" name="subGenreoption" value="EPG"'..(subGenreoption=='EPG' and ' checked="checked"' or '')..'><span class="mdl-radio__label">EPG予約のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
-  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreNever"><input type="radio" id="subGenreNever" class="mdl-radio__button" name="subGenreoption" value="Never"'..(subGenreoption=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示しない</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreoption"><input type="radio" id="subGenreoption" class="mdl-radio__button" name="subGenreoption" value="ALL"'..(subGenreOption=='ALL' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示する</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreEPG"><input type="radio" id="subGenreEPG" class="mdl-radio__button" name="subGenreoption" value="EPG"'..(subGenreOption=='EPG' and ' checked="checked"' or '')..'><span class="mdl-radio__label">EPG予約のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="subGenreNever"><input type="radio" id="subGenreNever" class="mdl-radio__button" name="subGenreoption" value="Never"'..(subGenreOption=='Never' and ' checked="checked"' or '')..'><span class="mdl-radio__label">表示しない</span></label></div><div class="mdl-layout-spacer"></div>\n'
   ..'</div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">ストレージ</div>'
@@ -172,26 +171,26 @@ ct.main=ct.main..'</div></div>\n'
 
   ..'</section>\n'
 
-oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,ini))~=0
-hover=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,ini))~=0
-titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,ini))
-ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',ini)
-MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',ini)
-MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',ini)
-w_service=edcb.GetPrivateProfile('GUIDE','service','210',ini)
-w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',ini)
-w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',ini)
-w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',ini)
-CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',ini))
-subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,ini))~=0
+ONESEG=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,INI))~=0
+HOVER=tonumber(edcb.GetPrivateProfile('GUIDE','hover',false,INI))~=0
+titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,INI))
+ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',INI)
+MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',INI)
+MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',INI)
+w_service=edcb.GetPrivateProfile('GUIDE','service','210',INI)
+w_service_sp=edcb.GetPrivateProfile('GUIDE','service_sp','125',INI)
+w_hour=edcb.GetPrivateProfile('GUIDE','hour','22',INI)
+w_hour_sp=edcb.GetPrivateProfile('GUIDE','hour_sp','16',INI)
+CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',INI))
+subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,INI))~=0
 
 ct.main=ct.main..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(oneseg and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+  ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(ONESEG and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(hover and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(HOVER and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-subChConcat">サブチャンネル結合</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -229,32 +228,32 @@ ct.main=ct.main..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-sp
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour" value="'..w_hour..'" min="10" id="w_hour"><label class="mdl-textfield__label" for="w_hour">PC</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="mdl-textfield__input" type="number" name="w_hour_sp" value="'..w_hour_sp..'" min="10" id="w_hour_sp"><label class="mdl-textfield__label" for="w_hour_sp">スマホ</label><span class="mdl-textfield__error">10以上で入力してください</span></div>px</div></div></div>\n'
 
-background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',ini)
+background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
 
-news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',ini)
-sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',ini)
-information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',ini)
-drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',ini)
-music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',ini)
-variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',ini)
-movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',ini)
-anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',ini)
-documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',ini)
-theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',ini)
-education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',ini)
-welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',ini)
-extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',ini)
-other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',ini)
-none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',ini)
-nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',ini)
+news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',INI)
+sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',INI)
+information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',INI)
+drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',INI)
+music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',INI)
+variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',INI)
+movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',INI)
+anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',INI)
+documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',INI)
+theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',INI)
+education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',INI)
+welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',INI)
+extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',INI)
+other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',INI)
+none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',INI)
+nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)
 
-paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,ini))~=0
-reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',ini)
-disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',ini)
-partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
-partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',ini)
-shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
-shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',ini)
+paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
+reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',INI)
+disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',INI)
+partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
+partially_border=edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',INI)
+shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
+shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',INI)
 
 CATEGORY={
   'news',
@@ -377,24 +376,19 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<div class="mdl-tabs mdl-js-tabs mdl-grid--no-spacing">\n'
   ..'<div class="mdl-tabs__tab-bar">\n'
 
-HIDE_SERVICES={}
-for i=0,1000 do
-  v=edcb.GetPrivateProfile('HIDE','hide'..i,false,ini)
-  if key=='0' then break end
-  HIDE_SERVICES[''..v]=true
-end
 
 a=edcb.GetServiceList() or {}
 ServiceList={}
-if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
+HIDE_SERVICES=HideServiceList()
+if edcb.GetPrivateProfile('SORT','sort0',false,INI)~='0' then
   GetServiceList={}
   for i,v in ipairs(a) do
     GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
   end
   for i=0,1000 do
-    key=edcb.GetPrivateProfile('SORT','sort'..i,false,ini)
+    local key=edcb.GetPrivateProfile('SORT','sort'..i,false,INI)
     if key=='0' then break end
-    v=GetServiceList[key]
+    local v=GetServiceList[key]
     if v and GetChDataList[key] then
       v.hide=HIDE_SERVICES[key]
       table.insert(ServiceList, v)
@@ -418,10 +412,7 @@ if edcb.GetPrivateProfile('SORT','sort0',false,ini)~='0' then
   end
 else
   ServiceList=a
-  table.sort(ServiceList, function(a,b) return
-    ('%04X%04X'):format(a.remote_control_key_id, a.sid)<
-    ('%04X%04X'):format(b.remote_control_key_id, b.sid)
-  end)
+  SortServiceListInplace(ServiceList)
 end
 
 NetworkList={}
@@ -467,6 +458,6 @@ ct.main=ct.main..'</div>\n'..table.concat(ctt)..[=[
 </div>
 ]=]
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

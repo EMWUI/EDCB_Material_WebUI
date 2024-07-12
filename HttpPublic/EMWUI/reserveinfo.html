@@ -54,14 +54,14 @@ if r then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-duration="'..r.durationSecond..'" data-audio="'..#audio..'" class="is_cast"></video>\n', audio)
+      ..PlayerTemplate('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-duration="'..r.durationSecond..'" data-audio="'..#audio..'" class="is_cast"></video>\n', audio)
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
     ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約'..(r.eid==65535 and '' or '化')..'</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID..'" data-'..(sidePanel and 'action="close' or 'redirect="reserve.html'..(page~=0 and '?page='..page or ''))..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n'
+    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID..'" data-redirect="reserve.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n'
     ..'<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
     ..'</div>\n'
@@ -78,6 +78,6 @@ if r then
 
 end
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

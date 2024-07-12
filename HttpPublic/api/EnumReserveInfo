@@ -19,7 +19,7 @@ for i,v in ipairs(a) do
     ..v.eid..'</eventID><comment>'
     ..v.comment..'</comment><overlapMode>'
     ..v.overlapMode..'</overlapMode>'
-    ..xmlRecSetting(v.recSetting, rsdef)
+    ..XmlRecSetting(v.recSetting, rsdef)
     ..'<recFileNameList>')
   for j,w in ipairs(v.recFileNameList) do
     table.insert(ct, '<name>'..w..'</name>')

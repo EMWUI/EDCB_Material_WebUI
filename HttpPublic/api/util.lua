@@ -1,27 +1,27 @@
-ini='Setting\\HttpPublic.ini'
+INI='Setting\\HttpPublic.ini'
 
 --情報通知ログの表示を許可するかどうか
-SHOW_NOTIFY_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,ini))~=0
+SHOW_NOTIFY_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,INI))~=0
 --デバッグ出力の表示を許可するかどうか
-SHOW_DEBUG_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_DEBUG_LOG',false,ini))~=0
+SHOW_DEBUG_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_DEBUG_LOG',false,INI))~=0
 
 --メニューに「システムスタンバイ」ボタンを表示するかどうか(Windows専用)
-INDEX_ENABLE_SUSPEND=tonumber(edcb.GetPrivateProfile('SET','SUSPEND',false,ini))~=0
+INDEX_ENABLE_SUSPEND=tonumber(edcb.GetPrivateProfile('SET','SUSPEND',false,INI))~=0
 --メニューの「システムスタンバイ」ボタンを「システム休止」にするかどうか
-INDEX_SUSPEND_USE_HIBERNATE=tonumber(edcb.GetPrivateProfile('SET','HIBERNATE',false,ini))~=0
+INDEX_SUSPEND_USE_HIBERNATE=tonumber(edcb.GetPrivateProfile('SET','HIBERNATE',false,INI))~=0
 
 --HLS(HTTP Live Streaming)を許可するかどうか。する場合はtsmemseg.exeを用意すること。IE非対応
-ALLOW_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALLOW_HLS',true,ini))~=0
+ALLOW_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALLOW_HLS',true,INI))~=0
 --ネイティブHLS非対応環境でもhls.jsを使ってHLS再生するかどうか
-ALWAYS_USE_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALWAYS_USE_HLS',true,ini))~=0
+ALWAYS_USE_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALWAYS_USE_HLS',true,INI))~=0
 --HLS再生時にトランスコーダーから受け取ったMPEG2-TSをMP4に変換するかどうか。有効時はHEVCトランスコードに対応
 --※Android版Firefoxでは不具合があるため無効扱いになる
-USE_MP4_HLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_HLS',true,ini))~=0
+USE_MP4_HLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_HLS',true,INI))~=0
 --視聴機能(viewボタン)でLowLatencyHLSにするかどうか。再生遅延が小さくなる。ネイティブHLS環境ではHTTP/2が要求されるためhls.js使用時のみ有用
-USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,ini))~=0
+USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,INI))~=0
 
 --倍速再生(fastボタン)の速度
-XCODE_FAST=tonumber(edcb.GetPrivateProfile('XCODE','FAST',1.25,ini))
+XCODE_FAST=tonumber(edcb.GetPrivateProfile('XCODE','FAST',1.25,INI))
 
 --トランスコードオプション
 --HLSのときはセグメント長約4秒、最大8MBytes(=1秒あたり16Mbits)を想定しているので、オプションもそれに合わせること
@@ -129,24 +129,24 @@ ARIBB24_JS_OPTION=[=[
 ]=]
 
 --字幕表示にSVGRendererを使うかどうか。描画品質が上がる(ただし一部ブラウザで背景に線が入る)。IE非対応
-ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,ini))~=0
+ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,INI))~=0
 
 --データ放送表示機能を使うかどうか。トランスコード中に表示する場合はpsisiarc.exeを用意すること。IE非対応
-USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,ini))~=0
+USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,INI))~=0
 
 --ライブ実況表示機能を使うかどうか
 --利用には実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
-USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,ini))~=0
+USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
 
 --実況ログ表示機能を使う場合、jkrdlog.exeの絶対パス
-JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',ini)
+JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH',nil,INI)
 --JKRDLOG_PATH='C:\\Path\\to\\jkrdlog.exe'
 
 --実況コメントの文字の高さ(px)
-JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,ini))
+JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,INI))
 
 --実況コメントの表示時間(秒)
-JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,ini))
+JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,INI))
 
 --実況ログ表示機能のデジタル放送のサービスIDと、実況の番号(jk?)
 --キーの下4桁の16進数にサービスID、上1桁にネットワークID(ただし地上波は15=0xF)を指定
@@ -168,15 +168,15 @@ JK_CUSTOM_REPLACE=[=[
 ]=]
 
 --トランスコードするかどうか。する場合はtsreadex.exeとトランスコーダー(ffmpeg.exeなど)を用意すること
-XCODE=tonumber(edcb.GetPrivateProfile('XCODE','XCODE',true,ini))~=0
+XCODE=tonumber(edcb.GetPrivateProfile('XCODE','XCODE',true,INI))~=0
 --トランスコードするプロセスを1つだけに制限するかどうか(並列処理できる余裕がシステムにない場合など)
-XCODE_SINGLE=tonumber(edcb.GetPrivateProfile('XCODE','SINGLE',false,ini))~=0
+XCODE_SINGLE=tonumber(edcb.GetPrivateProfile('XCODE','SINGLE',false,INI))~=0
 --ログを"log"フォルダに保存するかどうか
-XCODE_LOG=tonumber(edcb.GetPrivateProfile('XCODE','LOG',false,ini))~=0
+XCODE_LOG=tonumber(edcb.GetPrivateProfile('XCODE','LOG',false,INI))~=0
 --出力バッファの量(bytes)。asyncbuf.exeを用意すること。変換負荷や通信のむらを吸収する
-XCODE_BUF=tonumber(edcb.GetPrivateProfile('XCODE','BUF',0,ini))
+XCODE_BUF=tonumber(edcb.GetPrivateProfile('XCODE','BUF',0,INI))
 --転送開始前に変換しておく量(bytes)
-XCODE_PREPARE=tonumber(edcb.GetPrivateProfile('XCODE','PREPARE',0,ini))
+XCODE_PREPARE=tonumber(edcb.GetPrivateProfile('XCODE','PREPARE',0,INI))
 
 --このサイズ以上のときページ圧縮する(nilのとき常に非圧縮)
 GZIP_THRESHOLD_BYTE=4096
@@ -185,6 +185,8 @@ GZIP_THRESHOLD_BYTE=4096
 POST_MAX_BYTE=1024*1024
 
 ----------定数定義ここまで----------
+
+--以下、関数名はパスカルケース、定数名はアッパースネークケースとし、変数は関数スコープに閉じ込めること
 
 function GetTranscodeQueries(qs)
   local reload=(mg.get_var(qs,'reload') or ''):match('^'..('[0-9a-f]'):rep(16,'?')..'$')
@@ -209,6 +211,116 @@ function ConstructTranscodeQueries(xq)
     ..(xq.cinema and '&amp;cinema=1' or '')
     ..(xq.fast and '&amp;fast=1' or '')
     ..(xq.loadKey and '&amp;'..(xq.reload and 're' or '')..'load='..xq.loadKey or '')
+end
+
+
+function RecModeTextList()
+  return {'全サービス','指定サービス','全サービス（デコード処理なし）','指定サービス（デコード処理なし）','視聴','無効'}
+end
+
+function NetworkType(onid)
+  return not onid and {'地デジ','BS','110CS1','110CS2','124/128CS','その他'}
+    or NetworkType()[0x7880<=onid and onid<=0x7FE8 and 1 or onid==4 and 2 or onid==6 and 3 or onid==7 and 4 or onid==10 and 5 or 6]
+end
+
+function NetworkIndex(v)
+  return not v and {'地デジ','ワンセグ','BS','CS','124/128度CS','その他'}
+    or NetworkType(v.onid)=='地デジ' and ((v.service_type or v.serviceType)==0x01 and 1 or (v.partialReceptionFlag or v.partialFlag) and 2) or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/128CS'and 5 or 6
+end
+
+--表示するサービスを選択する
+function SelectChDataList(a)
+  local r={}
+  for i,v in ipairs(a) do
+    --EPG取得対象サービスのみ
+    if v.epgCapFlag then
+      r[#r+1]=v
+      end
+    end
+  return r
+end
+
+--サービスをソートする
+function SortServiceListInplace(r)
+  local bsmin={}
+  for i,v in ipairs(r) do
+    if NetworkType(v.onid)=='BS' and (bsmin[v.tsid] or 65536)>v.sid then
+      bsmin[v.tsid]=v.sid
+    end
+  end
+  table.sort(r,function(a,b) return
+    ('%04X%04X%04X%04X'):format((NetworkType(a.onid)~='地デジ' and 65535 or a.remote_control_key_id or 0),
+                                a.onid,(NetworkType(a.onid)=='BS' and bsmin[a.tsid] or a.tsid),a.sid)<
+    ('%04X%04X%04X%04X'):format((NetworkType(b.onid)~='地デジ' and 65535 or b.remote_control_key_id or 0),
+                                b.onid,(NetworkType(b.onid)=='BS' and bsmin[b.tsid] or b.tsid),b.sid) end)
+  return r
+end
+
+--URIをタグ装飾する
+function DecorateUri(s)
+  local hwhost='-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  local hw='!#$%&()*+/:;=?@_~~'..hwhost
+  local fwhost='－．０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ'
+  local fw='！＃＄％＆（）＊＋／：；＝？＠＿～￣'..fwhost
+  --sを半角置換
+  local r,i={},1
+  while i<=#s do
+    local j=fw:find(s:sub(i,i+2),1,true)
+    if i+2<=#s and j and j%3==1 then
+      r[#r+1]=hw:sub((j+2)/3,(j+2)/3)
+      i=i+2
+    else
+      r[#r+1]=s:sub(i,i)
+    end
+    i=i+1
+  end
+  r=table.concat(r)
+
+  --置換後nにある文字がsのどこにあるか
+  local spos=function(n)
+    local i=1
+    while i<=#s and n>1 do
+      n=n-1
+      local j=fw:find(s:sub(i,i+2),1,true)
+      if i+2<=#s and j and j%3==1 then
+        i=i+2
+      end
+      i=i+1
+    end
+    return i
+  end
+
+  local t,n,i='',1,1
+  while i<=#r do
+    --特定のTLDっぽい文字列があればホスト部分をさかのぼる
+    local h=0
+    if r:find('^%.com/',i) or r:find('^%.jp/',i) or r:find('^%.tv/',i) then
+      while i-h>1 and hwhost:find(r:sub(i-h-1,i-h-1),1,true) do
+        h=h+1
+      end
+    end
+    if (h>0 and (i-h==1 or r:find('^[^/]',i-h-1))) or r:find('^https?://',i) then
+      local j=i
+      while j<=#r and hw:find(r:sub(j,j),1,true) do
+        j=j+1
+      end
+      t=t..s:sub(spos(n),spos(i-h)-1)..'<a href="'..(h>0 and 'https://' or '')
+        ..r:sub(i-h,j-1):gsub('&amp;','&'):gsub('&','&amp;')..'" target="_blank">'..s:sub(spos(i-h),spos(j)-1)..'</a>'
+      n=j
+      i=j-1
+    end
+    i=i+1
+  end
+  t=t..s:sub(spos(n))
+  return t
+end
+
+--時間の文字列を取得する
+function FormatTimeAndDuration(t,dur)
+  dur=dur and (t.hour*3600+t.min*60+t.sec+dur)
+  return ('%d/%02d/%02d(%s) %02d:%02d'):format(t.year,t.month,t.day,({'日','月','火','水','木','金','土',})[t.wday],t.hour,t.min)
+    ..(t.sec~=0 and ('<small>:%02d</small>'):format(t.sec) or '')
+    ..(dur and ('～%02d:%02d'):format(math.floor(dur/3600)%24,math.floor(dur/60)%60)..(dur%60~=0 and ('<small>:%02d</small>'):format(dur%60) or '') or '')
 end
 
 --システムのタイムゾーンに影響されずに時間のテーブルを数値表現にする (timezone=0のとき概ねos.date('!*t')の逆関数)
@@ -716,8 +828,6 @@ function GetVarServiceID(qs,n,occ,leextra)
     tsid=tonumber(tsid)
     sid=tonumber(sid)
     x=tonumber(x)
-  else
-    onid,tsid,sid,x=GetVarInt(qs,'onid'), GetVarInt(qs,'tsid'), GetVarInt(qs,'sid'), (leextra and (GetVarInt(qs,'eid') or GetVarInt(qs,'startTime')) or nil)
   end
   if onid and onid==math.floor(onid) and onid>=0 and onid<=65535 and
      tsid and tsid==math.floor(tsid) and tsid>=0 and tsid<=65535 and
@@ -767,28 +877,86 @@ if not WIN32 then
   USE_LIVEJK=false
 end
 
-
-
-
-
 ----------ここまでLegacy WebUIから----------
 
-local XCODE_OPTIONS_lua=PathAppend(EdcbModulePath(),'Setting'..DIR_SEP..'XCODE_OPTIONS.lua')
-if edcb.FindFile(XCODE_OPTIONS_lua, 1) then
-  dofile(XCODE_OPTIONS_lua)
+
+
+
+
+local XCODE_OPTIONS_LUA=PathAppend(EdcbModulePath(),'Setting'..DIR_SEP..'XCODE_OPTIONS.lua')
+if edcb.FindFile(XCODE_OPTIONS_LUA, 1) then
+  dofile(XCODE_OPTIONS_LUA)
 end
 
 --EDCBのロゴフォルダにロゴがないときにTvTestのロゴを検索するかどうか
-LOGO_DIR=tonumber(edcb.GetPrivateProfile('SET','TVTest_LOGO',false,ini))~=0
+LOGO_DIR=tonumber(edcb.GetPrivateProfile('SET','TVTest_LOGO',false,INI))~=0
 if LOGO_DIR then
   TVTest=EdcbModulePath():gsub('[^\\/]*$','')..'TVTest'
   --LogoData.iniとLogoフォルダの絶対パス
-  LOGO_INI=edcb.GetPrivateProfile('SET','LOGO_INI',TVTest..'\\LogoData.ini',ini)
-  LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',ini)
+  LOGO_INI=edcb.GetPrivateProfile('SET','LOGO_INI',TVTest..'\\LogoData.ini',INI)
+  LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',INI)
+end
+
+function HideServiceList()
+  local st={}
+  for i=0,1000 do
+    local key=edcb.GetPrivateProfile('HIDE','hide'..i,false,INI)
+    if key=='0' then break end
+    st[key]=true
+  end
+  return st
+end
+
+function CustomServiceList()
+  local subch=mg.get_var(mg.request_info.query_string,'subch')
+  local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,INI))~=0
+  local NOT_SUBCH={
+    --サブチャンネルでない、結合させないものを指定
+    ['4-16626-202']=true, --スターチャンネル3
+  }
+
+  local function SubChanel(a,b)
+    return not subch and SubChConcat and not NOT_SUBCH[a.onid..'-'..a.tsid..'-'..a.sid] and (NetworkType(a.onid)=='地デジ' or NetworkType(a.onid)=='BS') and b and a.onid==b.onid and a.tsid==b.tsid
+  end
+
+  local a=edcb.GetServiceList() or {}
+  local ServiceList={}
+  if edcb.GetPrivateProfile('SORT','sort0',false,INI)~='0' then
+    local GetServiceList={}
+    local HIDE_SERVICES=HideServiceList()
+    for i,v in ipairs(a) do
+      GetServiceList[v.onid..'-'..v.tsid..'-'..v.sid]=v
+    end
+    for i=0,1000 do
+      local key=edcb.GetPrivateProfile('SORT','sort'..i,false,INI)
+      if key=='0' then break end
+      local v=GetServiceList[key]
+      if v then
+        v.hide=HIDE_SERVICES[key]
+        if show or not v.hide then
+          v.subCh=SubChanel(v, ServiceList[#ServiceList])
+          table.insert(ServiceList, v)
+        end
+      end
+    end
+  else
+    local showServices={}
+    for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
+      showServices[v.onid..'-'..v.tsid..'-'..v.sid]=true
+    end
+    for i,v in ipairs(a) do
+      if showServices[v.onid..'-'..v.tsid..'-'..v.sid] and v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD then
+        v.subCh=SubChanel(v, ServiceList[#ServiceList])
+        table.insert(ServiceList,v)
+      end
+    end
+    SortServiceListInplace(ServiceList)
+  end
+  return ServiceList
 end
 
 --録画設定をxmlに
-function xmlRecSetting(rs, rsdef)
+function XmlRecSetting(rs, rsdef)
   local s='<recsetting><recMode>'
     ..rs.recMode..'</recMode><priority>'
     ..rs.priority..'</priority><tuijyuuFlag>'
@@ -822,7 +990,7 @@ function xmlRecSetting(rs, rsdef)
 end
 
 --録画設定を取得
-function getRecSetting(rs,post)
+function GetRecSetting(rs,post)
   if rs then
     local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
     rs={
@@ -876,7 +1044,7 @@ end
 
 --検索条件を取得
 --文字列返却値(andKeyとnotKey)の実体参照変換はedcb.htmlEscapeに従う
-function getSearchKey(post)
+function GetSearchKey(post)
   local key={
     andKey=(mg.get_var(post, 'disableFlag') and '^!{999}' or '')
       ..(mg.get_var(post, 'caseFlag') and 'C!{999}' or '')
@@ -938,8 +1106,8 @@ end
 
 --検索条件(キーワードのみ)を取得
 --文字列返却値(andKey)の実体参照変換はedcb.htmlEscapeに従う
-function getSearchKeyKeyword(query)
-  local key=getSearchKey()
+function GetSearchKeyKeyword(query)
+  local key=GetSearchKey()
   for i,v in ipairs(edcb.GetChDataList()) do
     if v.searchFlag then
       table.insert(key.serviceList, {onid=v.onid, tsid=v.tsid, sid=v.sid})
@@ -954,7 +1122,7 @@ function getSearchKeyKeyword(query)
 end
 
 --検索キーワードをフラグとキーワード自身に分解
-function parseAndKey(andKey)
+function ParseAndKey(andKey)
   local r={}
   r.disableFlag=andKey:match('^^!{999}(.*)')
   r.caseFlag=(r.disableFlag or andKey):match('^C!{999}(.*)')
@@ -969,21 +1137,21 @@ function GetFilePath(query)
     if fpath then
       fpath=fpath.recFilePath
     else
-    local faddr=mg.get_var(query,'fname')
-    if faddr then
-      fpath=DocumentToNativePath(faddr)
-      if not fpath then
-        -- 冗長表現の可能性を潰す
-        faddr=edcb.Convert('utf-8','utf-8',faddr):gsub('[\\/]+','\\')
-        for i,v in ipairs(GetLibraryPathList()) do
-          -- ライブラリ配下にあるか＋禁止文字と正規化のチェック
-          v=(v..'\\'):gsub('[\\/]+','\\')
-          if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f:*?"<>|]') and not faddr:sub(#v+1):find('%.\\') then
-            fpath=faddr
-            break
+      local faddr=mg.get_var(query,'fname')
+      if faddr then
+        fpath=DocumentToNativePath(faddr)
+        if not fpath then
+          -- 冗長表現の可能性を潰す
+          faddr=edcb.Convert('utf-8','utf-8',faddr):gsub('/+','/')
+          for i,v in ipairs(GetLibraryPathList()) do
+            -- ライブラリ配下にあるか＋禁止文字と正規化のチェック
+            v=(v..'\\'):gsub('/+','/')
+            if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f'..(WIN32 and ':*?"<>|' or '')..']') and not faddr:sub(#v+1):find('%./') and not faddr:sub(#v+1):find('%.$') then
+                fpath=faddr
+              break
+            end
           end
         end
-      end
       end
     end
   end
@@ -996,17 +1164,17 @@ function GetLibraryPathList()
   local esc=edcb.htmlEscape
   edcb.htmlEscape=0
   local ini='Setting\\HttpPublic.ini'
-  ini=edcb.GetPrivateProfile('SET','LibraryPath',0,ini)=='0' and 'Common.ini' or ini
-  local n=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,ini))
+  ini=edcb.GetPrivateProfile('SET','LibraryPath',0,INI)=='0' and 'Common.ini' or ini
+  local n=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,INI))
   if n<=0 and ini=='Common.ini' then
     --録画保存フォルダが未設定のときは設定関係保存フォルダになる
-    list[1]=edcb.GetPrivateProfile('SET','DataSavePath','',ini)
+    list[1]=edcb.GetPrivateProfile('SET','DataSavePath','',INI)
     if list[1]=='' then
-      list[1]=edcb.GetPrivateProfile('SET','ModulePath','',ini)..'\\Setting'
+      list[1]=edcb.GetPrivateProfile('SET','ModulePath','',INI)..'\\Setting'
     end
   end
   for i=0,n-1 do
-    local path=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',ini)
+    local path=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',INI)
     if path~='' then
       list[#list+1]=path
     end

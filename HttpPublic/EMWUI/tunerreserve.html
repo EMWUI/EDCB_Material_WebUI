@@ -8,10 +8,10 @@ pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 ct={
   title='チューナー別',
-  css='<style>\n.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
-    ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+  css='<style>\n.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
+    ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
     ..';}\n</style>\n',
-  js='<script>var ctok=\''..CsrfToken('setreserve')..'\';$(function(){rec();});</script>\n',
+  js='<script>const ctok=\''..CsrfToken('setreserve')..'\';$(function(){rec();});</script>\n',
   progres=true,
   macro=sidePanel
 }
@@ -22,7 +22,7 @@ table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) e
 
 ct.main='<main class="tab-swipe sidePanel-container mdl-layout__content">\n'
 
-  ..(sidePanel and sidePanelTemplate(true) or '')
+  ..SidePanelTemplate(true)
 
   ..'<div class="mdl-layout__content">\n'
   ..'<div class="list mdl-grid">\n'
@@ -81,7 +81,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
        or w.overlapMode==1 and ' partially'
        or w.overlapMode==2 and ' shortage' or nil
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
-    ..(sidePanel and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
+    ..(SIDE_PANEL and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
                   or 'data-href="reserveinfo.html?id='..w.reserveID..'&amp;tuner=&amp;page='..pageIndex)..'">\n'
     ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..w.reserveID..'"><span'
     ..(TimeWithZone(w.startTime,9*3600)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..w.reserveID..'" class="mdl-switch__input"'..(w.recSetting.recMode~=5 and ' checked' or '')..'></label>'
@@ -101,6 +101,6 @@ end
 
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n</div>\n'
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

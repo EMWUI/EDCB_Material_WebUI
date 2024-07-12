@@ -1,7 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.document_root..'\\api\\util.lua')
 
-onair=mg.get_var(mg.request_info.query_string,'onair')
+onair=GetVarInt(mg.request_info.query_string,'onair',0,1)==1
 
 
 edcb.htmlEscape=15

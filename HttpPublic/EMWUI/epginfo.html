@@ -63,7 +63,7 @@ if not End and epgInfo then
       ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
     end
   end
-  if sidePanel or r then
+  if SIDE_PANEL or r then
     ct.main=ct.main..'<option id="reserved" value="65535"'..(preset and '' or ' selected')..(r and '' or ' style="display:none;"')..'>予約時'
   end
   ct.main=ct.main..'</select></div></div>\n'
@@ -79,7 +79,7 @@ if not End and epgInfo then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-duration="'..r.durationSecond..'" data-audio="'..#audio..'" class="is_cast"></video>\n', audio)
+      ..PlayerTemplate('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-duration="'..r.durationSecond..'" data-audio="'..#audio..'" class="is_cast"></video>\n', audio)
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
@@ -100,6 +100,6 @@ end
 
 ct.main=ct.main..'</div>\n</div>\n'..(hidden and hidden or '')
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

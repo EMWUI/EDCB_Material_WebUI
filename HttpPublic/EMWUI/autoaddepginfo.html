@@ -22,7 +22,7 @@ post=AssertPost()
 aa={dataID=GetVarInt(mg.request_info.query_string,'id') or 0}
 if aa.dataID==0 then
   ct={title='EPG予約 新規追加'}
-  aa.searchInfo=getSearchKeyKeyword(mg.request_info.query_string)
+  aa.searchInfo=GetSearchKeyKeyword(mg.request_info.query_string)
 else
   ct={title='EPG予約 条件変更'}
   for i,v in ipairs(edcb.EnumAutoAdd()) do
@@ -36,7 +36,7 @@ end
 if aa.searchInfo then
   si=aa.searchInfo
   if post then
-    si=getSearchKey(post)
+    si=GetSearchKey(post)
   end
 
   ct.macro=true
@@ -44,7 +44,7 @@ if aa.searchInfo then
   if aa.dataID==0 then redirect='autoaddepg.html'..(page~=0 and '?page='..page or '') end
 
   --コメントアウトを外すと追加後このURLに移動、ここで生成したURLはメンテナンスしてなく一部データが抜けてるかも
-  --redirect=(week and 'epgweek.html?onid='..onid..'&amp;tsid='..tsid..'&amp;sid='..sid..(hour~=4 and '&amp;hour='..hour or '') or epg and 'epg.html?tab='..tab..'&amp;date='..date..(hour~=0 and '&amp;hour='..hour or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT and '&amp;chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&amp;interval='..interval or '')
+  --redirect=(week and 'epgweek.html?id='..onid..'-'..tsid..'-'..sid..(hour~=4 and '&amp;hour='..hour or '') or epg and 'epg.html?tab='..tab..'&amp;date='..date..(hour~=0 and '&amp;hour='..hour or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT and '&amp;chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&amp;interval='..interval or '')
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
@@ -55,7 +55,7 @@ if aa.searchInfo then
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">自動予約無効</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
     ..'<input type="hidden" name="addchg" value="1">\n'
-    ..'<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag" '..(parseAndKey(si.andKey).disableFlag and ' checked' or '')..'></label><span class="mdl-switch__label"></span></div></div>\n\n'
+    ..'<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag" '..(ParseAndKey(si.andKey).disableFlag and ' checked' or '')..'></label><span class="mdl-switch__label"></span></div></div>\n\n'
     ..SerchTemplate(si)
 
     ..'</div></section>\n'
@@ -93,7 +93,7 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-'..(sidePanel and 'action="close' or 'redirect="autoaddepg.html'..(page~=0 and '?page='..page or ''))..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n'
+    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n'
   end
 
   ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
@@ -106,6 +106,6 @@ if aa.searchInfo then
        ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
 end
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

@@ -25,9 +25,9 @@
   text-rendering: optimizeLegibility;
   font-feature-settings: "liga";
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  &.fill {
+    font-variation-settings: 'FILL' 1; }
 }
-.material-icons.fill {
-  font-variation-settings: 'FILL' 1; }
 
 .mdl-button,
 *:not(#ext):not(#summary p)>a {
@@ -268,7 +268,7 @@ dialog {
   transition: transform .25s cubic-bezier(.4,0,1,1);
   transition: transform .25s cubic-bezier(.4,0,1,1),-webkit-transform .25s cubic-bezier(.4,0,1,1);
   z-index: 99; }
-  #spinner.is-visible {
+  #spinner:has(>.is-active) {
     -webkit-transform: scale(1,1);
             transform: scale(1,1); }
 
@@ -1181,7 +1181,7 @@ h4 .mdl-button--icon {
 .radio_button {
   align-items: center; }
 
-.recmargin.is-disabled {
+.is-disabled+span {
   color: rgba(0,0,0,.26);
   cursor: auto; }
 
@@ -1840,12 +1840,16 @@ h4 .mdl-button--icon {
 
 #live {
   padding: 0px 5px;
-  font-weight: bold;
+  font-weight: 100;
   font-size: 109%; }
   #live:not(.live) {
     cursor: pointer; }
-  #live.live {
+  #live.live span {
     color: red; }
+  #live small {
+    margin-left: 6px; }
+    .is-small-screen #live small {
+      display: none; }
 
 .ext.mdl-menu__item,
 .ext.mdl-menu__item button {

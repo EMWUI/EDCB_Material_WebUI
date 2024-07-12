@@ -5,11 +5,11 @@ ct={'<?xml version="1.0" encoding="UTF-8" ?><entry>'}
 
 LIBRARY_LIST=GetLibraryPathList()
 MEDIA_EXTENSION_LIST={}
-for v in edcb.GetPrivateProfile('SET','MEDIA_EXTENSION_LIST','.mp4,.webm',ini):gmatch('[^,]+') do
+for v in edcb.GetPrivateProfile('SET','MEDIA_EXTENSION_LIST','.mp4,.webm',INI):gmatch('[^,]+') do
   MEDIA_EXTENSION_LIST[#MEDIA_EXTENSION_LIST+1]=v
 end
 HIDE_DIR_LIST={}
-for v in edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',ini):gmatch('[^,]+') do
+for v in edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',INI):gmatch('[^,]+') do
   HIDE_DIR_LIST[#HIDE_DIR_LIST+1]=v
 end
 

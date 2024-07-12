@@ -18,7 +18,7 @@ end
 
 ct={
   title='<span id="service_hedder">リモート視聴</span>',
-  js='<script src="js/onair.js?ver='..jsVer.onair..'"></script>\n',
+  js='<script src="js/onair.js'..Version('onair')..'"></script>\n',
   menu='<li class="mdl-menu__item" id="forced" data-ctok="'..CsrfToken('tvcast')..'">強制停止</li>'
     ..'<li class="ext mdl-menu__item mdl-menu__item--full-bleed-divider"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>'
     ..'<li class="ext mdl-menu__item" id="menu_apk"><label for="subCH" class="mdl-layout-spacer">サブチャンネル</label><span><label class="mdl-switch mdl-js-switch" for="subCH"><input type="checkbox" id="subCH" class="mdl-switch__input"></label></span></li>'
@@ -30,7 +30,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
   ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
   ..'<div id="movie-contner">\n'
-  ..player('<video id="video"></video>', true)
+  ..PlayerTemplate('<video id="video"></video>', true)
   ..'</div>\n'
 
 
@@ -66,13 +66,12 @@ for i,v in ipairs(NetworkIndex()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(ServiceList) do
-  if oneseg or not v.partialReceptionFlag then
+  if not v.partialReceptionFlag then
     table.insert(NetworkList[NetworkIndex(v)],
       '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
         ..'" data-onid="'..v.onid
         ..'" data-tsid="'..v.tsid
         ..'" data-sid="'..v.sid
-        ..'" data-endTime="0'
 
         ..'">\n'
 
@@ -109,6 +108,6 @@ ct.main=ct.main..'<div id="network" class="tag">\n'
   ..'</div>\n</div>\n</div>\n'
 
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

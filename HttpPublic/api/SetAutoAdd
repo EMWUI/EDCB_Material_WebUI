@@ -22,9 +22,9 @@ if post then
         end
       end
     end
-    aa.recSetting=getRecSetting(aa.recSetting, post)
+    aa.recSetting=GetRecSetting(aa.recSetting, post)
     if aa.recSetting then
-      aa.searchInfo=getSearchKey(post)
+      aa.searchInfo=GetSearchKey(post)
       done=edcb.AddOrChgAutoAdd(aa)
       if done then
         messege='<success>EPG自動予約を'..(aa.dataID==0 and '追加' or '変更')..'しました</success>'

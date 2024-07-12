@@ -3,10 +3,10 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 ct={
   title='予約一覧',
-  css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',ini)
-  ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',ini)
+  css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
+  ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
   ..';}</style>\n',
-  js='<script>var ctok=\''..CsrfToken('setreserve')..'\';</script>\n',
+  js='<script>const ctok=\''..CsrfToken('setreserve')..'\';</script>\n',
   progres=true,
   macro=sidePanel,
   searchlinks=true
@@ -17,7 +17,7 @@ a=edcb.GetReserveData()
 table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',ini))
+PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 if PAGE_COUNT==0 then PAGE_COUNT=#a end
 
 if math.ceil((#a/PAGE_COUNT)-1)>0 then
@@ -37,7 +37,7 @@ end
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-  ..(sidePanel and sidePanelTemplate(true) or '')
+  ..SidePanelTemplate(true)
 
   ..'<div class="mdl-layout__content">'
 
@@ -80,10 +80,10 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
      or v.overlapMode==1 and ' partially'
      or v.overlapMode==2 and ' shortage' or nil
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
-    ..(sidePanel and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
+    ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                   or 'data-href="reserveinfo.html?id='..v.reserveID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">\n'
 
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..v.reserveID..'"><span'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span'
     ..(TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
                                        or ' class="recmark">')
     ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
@@ -99,6 +99,6 @@ end
 
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>\n'
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

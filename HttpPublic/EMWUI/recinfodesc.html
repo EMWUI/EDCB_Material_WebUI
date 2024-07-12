@@ -83,7 +83,7 @@ if v then
     ..epgInfo
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..player('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-audio="'..((audio.multi or audio.dual) and '2' or '1')..'" class="is_cast"></video>\n')
+      ..PlayerTemplate('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-audio="'..((audio.multi or audio.dual) and '2' or '1')..'" class="is_cast"></video>\n')
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
@@ -91,7 +91,7 @@ if v then
 
     ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/SetRecInfo?id='..v.id..'" data-'..(sidePanel and 'action="close' or 'redirect="recinfo.html'..(page~=0 and '?page='..page or ''))..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
+    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/SetRecInfo?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del"'..(v.protectFlag and 'disabled' or '')..'>削除</button>\n'
     ..'</div>\n'
 
@@ -108,6 +108,6 @@ if v then
 end
 
 
-ct=template(ct)
+ct=Template(ct)
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
