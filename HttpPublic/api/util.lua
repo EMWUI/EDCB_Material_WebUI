@@ -139,8 +139,9 @@ USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,INI))~=0
 USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
 
 --実況ログ表示機能を使う場合、jkrdlog.exeの絶対パス
-JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH',nil,INI)
+JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',INI)
 --JKRDLOG_PATH='C:\\Path\\to\\jkrdlog.exe'
+if JKRDLOG_PATH=='' then JKRDLOG_PATH=nil end
 
 --実況コメントの文字の高さ(px)
 JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,INI))

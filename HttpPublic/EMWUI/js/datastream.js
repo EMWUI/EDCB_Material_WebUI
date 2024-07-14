@@ -1,4 +1,5 @@
 const remocon = document.querySelector('#remote');
+const $danmaku = $('#danmaku');
 const indicator = document.querySelector(".remote-control-indicator")
 //BMLブラウザのサイズ指定 要改善
 const playerUI = document.querySelector('#playerUI');
@@ -92,7 +93,7 @@ toggleJikkyo=function(enabled){
   }
   setSendComment(function(value){
     var xhr=new XMLHttpRequest();
-    xhr.open("POST", root +"api/comment");
+    xhr.open("POST", `${ROOT}api/comment`);
     xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
     xhr.onloadend=function(){
       if(xhr.status!=200){
@@ -191,6 +192,142 @@ toggleJikkyo=function(enabled){
   openSubStream();
   addMessage('接続開始');
 };
+
+const $subtitles = $('#subtitles');
+var vidMeta=document.getElementById("vid-meta");
+loadVtt=function(){
+  var work=[];
+  var dataList=[];
+  var cues=vidMeta.track.cues;
+  for(var i=0;i<cues.length;i++){
+    var ret=decodeB24CaptionFromCueText(cues[i].text,work);
+    if(!ret){return;}
+    for(var j=0;j<ret.length;j++){dataList.push({pts:cues[i].startTime,pes:ret[j]});}
+  }
+  creatCap();
+  if(!$subtitles.hasClass('checked')){cap.hide();}
+  dataList.reverse();
+  (function pushCap(){
+    for(var i=0;i<100;i++){
+      var data=dataList.pop();
+      if(!data){return;}
+      cap.pushRawData(data.pts,data.pes);
+    }
+    setTimeout(pushCap,0);
+  })();
+};
+
+var cbDatacast;
+(function(){
+  var psiData=null;
+  var readTimer=null;
+  var videoLastSec=0;
+  function startRead(){
+    clearTimeout(readTimer);
+    var startSec=vid.currentTime;
+    videoLastSec=startSec;
+    var ctx={};
+    function read(){
+      var videoSec=vid.currentTime;
+      if(videoSec<videoLastSec||videoLastSec+10<videoSec){
+        startRead();
+        return;
+      }
+      videoLastSec=videoSec;
+      if(psiData&&readPsiData(psiData,function(sec,dict,code,pid){
+          dict[code]=bmlBrowserPlayTSSection(pid,dict[code],Math.floor(sec*90000))||dict[code];
+          return sec<videoSec;
+        },startSec,ctx)!==false){
+        startRead();
+        return;
+      }
+      readTimer=setTimeout(read,500);
+    }
+    readTimer=setTimeout(read,500);
+  }
+  var xhr=null;
+  cbDatacast=function(){
+    if(!$remote_control.hasClass('disabled')){
+      clearTimeout(readTimer);
+      readTimer=null;
+      bmlBrowserSetInvisible(true);
+      return;
+    }
+    startRead();
+    setbmlBrowserSize();
+    bmlBrowserSetInvisible(false);
+    if(xhr)return;
+    xhr=new XMLHttpRequest();
+    xhr.open("GET",vid.getAttribute("src").replace(/\.[0-9A-Za-z]+$/,"")+".psc");
+    xhr.responseType="arraybuffer";
+    xhr.overrideMimeType("application/octet-stream");
+    xhr.onloadend=function(){
+      if(!psiData){
+        indicator.innerText="Error! ("+xhr.status+")";
+      }
+    };
+    xhr.onload=function(){
+      if(xhr.status!=200||!xhr.response)return;
+      psiData=xhr.response;
+    };
+    xhr.send();
+    indicator.innerText="接続中...";
+    remocon.classList.add('done');
+  };
+})();
+
+var Jikkyolog;    
+(function(){
+  var logText=null;
+  var readTimer=null;
+  var videoLastSec=0;
+  function startRead(){
+    clearTimeout(readTimer);
+    var startSec=vid.currentTime;
+    videoLastSec=startSec;
+    var ctx={};
+    function read(){
+      var videoSec=vid.currentTime;
+      if(videoSec<videoLastSec||videoLastSec+10<videoSec){
+        startRead();
+        return;
+      }
+      videoLastSec=videoSec;
+      if(logText){
+        readJikkyoLog(logText,function(sec,tag){
+          if(onJikkyoStream)onJikkyoStream(tag);
+          return sec<videoSec;
+        },startSec,ctx);
+      }
+      readTimer=setTimeout(read,200);
+    }
+    readTimer=setTimeout(read,200);
+  }
+  var xhr=null;
+  Jikkyolog=function(){
+    if($danmaku.hasClass('checked')){
+      toggleJikkyo(false);
+      clearTimeout(readTimer);
+      readTimer=null;
+      return;
+    }
+    toggleJikkyo(true);
+    startRead();
+    if(xhr)return;
+    xhr=new XMLHttpRequest();
+    xhr.open("GET",`${ROOT}api/jklog?fname=${$('.is_cast').data('path').replace(/^(?:\.\.\/)+/,"")}`);
+    xhr.onloadend=function(){
+      if(!logText){
+        if(onJikkyoStreamError)onJikkyoStreamError(xhr.status,0);
+      }
+    };
+    xhr.onload=function(){
+      if(xhr.status!=200||!xhr.response)return;
+      logText=xhr.response;
+    };
+    xhr.send();
+  }
+})();
 
 var openSubStream;
 var onDataStream=null;

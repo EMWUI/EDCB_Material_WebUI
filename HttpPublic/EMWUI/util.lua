@@ -3,11 +3,11 @@ function Version(a)
     css='240707',
     common='240710',
     tvguide='240708',
-    player='240708',
+    player='240713',
     onair='240708',
     library='240706',
     setting='240705',
-    datastream='240625',
+    datastream='240713',
     legacy='20240430',
   }
   return '?ver='..ver[a]
@@ -876,7 +876,7 @@ function PlayerTemplate(video, liveOrAudio)
 <p class="mdl-layout-spacer"></p>
 ]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
   ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">subtitles</i></button>\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="danmaku" class="'..(JKRDLOG_PATH and 'log ' or '')..'ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
 <button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>

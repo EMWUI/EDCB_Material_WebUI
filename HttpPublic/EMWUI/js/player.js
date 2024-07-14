@@ -54,8 +54,8 @@ const startHLS= src => {
 		hls.on(Hls.Events.MANIFEST_PARSED,function(){
 			if (DataStream && false || !$('.remote-control').hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 			if ($('#subtitles').hasClass('checked')) creatCap();
-			if (Jikkyo || $('#danmaku').hasClass('checked')) toggleJikkyo();
-			if (danmaku && !$('#danmaku').hasClass('checked')) danmaku.hide();
+			if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
+			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 		});
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {
 			for(var i=0;i<data.samples.length;i++){cap.pushID3v2Data(data.samples[i].pts,data.samples[i].data);}
@@ -65,12 +65,12 @@ const startHLS= src => {
 	}
 }
 
-const resetHls = () => {
+const resetVid = () => {
 	if (hls) hls.destroy();
 	if (cap) cap.detachMedia();
 	toggleDataStream(false);
 	toggleJikkyo(false);
-	$('#subtitles').toggleClass('hidden', !$('#load_subtitles').prop('checked'));
+	$('#vid-meta').attr('src', '');
 	VideoSrc = null;
 }
 
@@ -80,6 +80,9 @@ const reloadHls = () => {
 
 	d.paused = vid.paused;
 	d.ofssec = Math.floor($('input#seek').val());
+	$vid.addClass('is-loadding');
+	resetVid();
+
 	const matchReload = (VideoSrc || '').match(/&(?:re)?load=([0-9]+)/);
 	loadHls(d, matchReload && matchReload[1]);
 }
@@ -92,14 +95,6 @@ const $remote_control = $('.remote-control');
 let quality
 let audioVal = 0;
 const loadHls = (d, reload) => {
-	$vid.addClass('is-loadding');
-	resetHls();
-
-	if ($remote.hasClass('done')){	//一度読み込んだら最後、無効化
-		$remote.prop('disabled', true);
-		$remote_control.addClass('hidden');
-	}
-
 	let dateNow = new Date();
 	dateNow =(dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
 	const hls1 = d.onid ? `&hls=${1+d.onid+d.tsid+d.sid}` : `&hls=${1+dateNow}`;
@@ -137,14 +132,25 @@ const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const loadMovie = $e => {
 	const d = $e.data();
+
+	resetVid();
+	$vid.addClass('is-loadding');
+	if ($remote.hasClass('done')){	//一度読み込んだら最後、無効化
+		$remote.prop('disabled', true);
+		$remote_control.addClass('disabled').find('button').prop('disabled', true);
+	}
+
 	if (d.path) d.canPlay = vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0;
 	$seek.attr('disabled', false);
+	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
-		$vid.attr('src', `${ROOT}${(!d.public ? 'api/Movie?fname=' : '')}${d.path}`);
-		$quality.attr('disabled', true);
+		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${d.path}`;
+		$vid.attr('src', path);
+		if ($('#load_subtitles').prop('checked')) $('#vid-meta').attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
+		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
+		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		loadHls(d);
-		$quality.attr('disabled', false);
 
 		if (d.info.duration){
 			$duration.text(getVideoTime(d.info.duration));
@@ -257,6 +263,7 @@ $(function(){
 			if (!d.paused) vid.play();
 			if (!d.canPlay) return;
 
+			if ($('#subtitles').hasClass('checked')) loadVtt();
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
 		},
@@ -284,7 +291,7 @@ $(function(){
 	const $stop = $('.stop');
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
-		resetHls();
+		resetVid();
 		vid.src = '';
 		$vid.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
@@ -448,7 +455,7 @@ $(function(){
 		audioVal = $(e.currentTarget).val();
 		reloadHls();
 	});
-	$('#cinema,#load_subtitles,#fast').change(() => reloadHls());
+	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
 	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
 
@@ -478,11 +485,30 @@ $(function(){
 
 	$('#live:not(.live)').click(() => vid.currentTime = vid.duration);
 
-	const $load_subtitles = $('#load_subtitles');
-	$load_subtitles.change(() => localStorage.setItem('load_subtitles', $load_subtitles.prop('checked')));
-	if (localStorage.getItem('load_subtitles')) $('#load_subtitles').prop('checked', localStorage.getItem('load_subtitles') == 'true');
+	$('#load_subtitles').change(e => {
+		const enable = $(e.currentTarget).prop('checked');
+		$('#subtitles').toggleClass('hidden', !enable);
+		localStorage.setItem('load_subtitles', enable);
 
-	const $subtitles = $('#subtitles');
+		const d = $('.is_cast').data();
+		if (!d) return;
+
+		if (d.canPlay){
+			if (cap) cap.detachMedia();
+			if (enable){
+				const path = `${ROOT}${d.public ? '' : 'api/Movie?fname='}${d.path}`;
+				$('#vid-meta').attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,"")}.vtt`);
+				setTimeout(() => loadVtt(), 1000);
+			}else{
+				$('#vid-meta').attr('src', '');
+			}
+		}else{
+			reloadHls();
+		};
+	});
+	$('#subtitles').toggleClass('hidden', localStorage.getItem('load_subtitles') != 'true');
+	$('#load_subtitles').prop('checked', localStorage.getItem('load_subtitles') == 'true');
+
 	$subtitles.click(() => {
 		if (!$subtitles.hasClass('checked')){
 			if (!cap) creatCap();
@@ -505,6 +531,11 @@ $(function(){
 			const disabled = !$remote_control.hasClass('disabled');
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
+			if ($('.is_cast').data('canPlay')){
+				cbDatacast();
+				return;
+			}
+
 			if (disabled){
 				if (!DataStream) toggleDataStream(false);
 			}else{
@@ -519,22 +550,27 @@ $(function(){
 				$remote.data('click', false);
 				DataStream = !DataStream;
 				localStorage.setItem('DataStream', DataStream);
+				$remote.toggleClass('mdl-button--accent', DataStream);
+
+				if ($('.is_cast').data('canPlay')){
+					cbDatacast();
+					return;
+				}
+	
 				if (DataStream){
 					if (!onDataStream) toggleDataStream(true);
 				}else{
 					if ($remote_control.hasClass('disabled')) toggleDataStream(false);
 				}
-				$remote.toggleClass('mdl-button--accent', DataStream);
 			}, 1000));
 		}
 	});
 
 	$('#num').change(e => $('.remote-control .num').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
 
-	if (localStorage.getItem('danmaku') == 'true') $('#danmaku').addClass('checked');
-	if (Jikkyo) $('#danmaku').addClass('mdl-button--accent');
+	if (localStorage.getItem('danmaku') == 'true') $danmaku.addClass('checked');
+	if (Jikkyo) $danmaku.addClass('mdl-button--accent');
 
-	const $danmaku = $('#danmaku');
 	$danmaku.on({
 		'click': () => {
 			if (!$danmaku.data('click')) return;
@@ -542,6 +578,12 @@ $(function(){
 			clearTimeout($danmaku.data('click'));
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
+
+			if ($danmaku.data('log')){
+				if (!$('.is_cast').data('path')) return;
+				Jikkyolog();
+				return;
+			}
 
 			if($danmaku.hasClass('checked')){
 				if (!onJikkyoStream) toggleJikkyo(true);
@@ -558,6 +600,7 @@ $(function(){
 				$danmaku.data('click', false);
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
+				if (!$('.is_cast').data('path')) return;
 				if (Jikkyo){
 					if (!onJikkyoStream) toggleJikkyo();
 					$danmaku.addClass('mdl-button--accent');
