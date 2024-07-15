@@ -140,7 +140,7 @@ const loadMovie = $e => {
 		$remote_control.addClass('disabled').find('button').prop('disabled', true);
 	}
 
-	if (d.path) d.canPlay = vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0;
+	d.canPlay = d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
