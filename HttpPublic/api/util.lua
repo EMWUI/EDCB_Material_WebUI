@@ -1164,18 +1164,17 @@ function GetLibraryPathList()
   local list={}
   local esc=edcb.htmlEscape
   edcb.htmlEscape=0
-  local ini='Setting\\HttpPublic.ini'
-  ini=edcb.GetPrivateProfile('SET','LibraryPath',0,INI)=='0' and 'Common.ini' or ini
-  local n=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,INI))
+  local ini=edcb.GetPrivateProfile('SET','LibraryPath',0,INI)=='0' and 'Common.ini' or INI
+  local n=tonumber(edcb.GetPrivateProfile('SET','RecFolderNum',0,ini))
   if n<=0 and ini=='Common.ini' then
     --録画保存フォルダが未設定のときは設定関係保存フォルダになる
-    list[1]=edcb.GetPrivateProfile('SET','DataSavePath','',INI)
+    list[1]=edcb.GetPrivateProfile('SET','DataSavePath','',ini)
     if list[1]=='' then
-      list[1]=edcb.GetPrivateProfile('SET','ModulePath','',INI)..'\\Setting'
+      list[1]=edcb.GetPrivateProfile('SET','ModulePath','',ini)..'\\Setting'
     end
   end
   for i=0,n-1 do
-    local path=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',INI)
+    local path=edcb.GetPrivateProfile('SET','RecFolderPath'..i,'',ini)
     if path~='' then
       list[#list+1]=path
     end
