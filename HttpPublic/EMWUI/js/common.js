@@ -3,7 +3,7 @@ const isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in wi
 const week = ['日', '月', '火', '水', '木', '金', '土'];
 
 const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Constant_.MAX_WIDTH).matches;
-const showSpinner = visible => $('#spinner .mdl-spinner').toggleClass('is-active', visible||false);
+const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
 const errMessage = xml => xml.find('err').each((i, e) => Snackbar({message: `${i==0 ? 'Error : ' : ''}${$(e).text()}`}));
 const zero = (e, n) => (Array(n ? n : 2).join('0')+e).slice(-(n ? n : 2));
 let Snackbar = d => setTimeout(() => Snackbar(d), 1000);
@@ -157,7 +157,7 @@ const toObj = {
 			starttime: new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime(),
 			duration: e.num('duration'),
 
-			title: e.children('event_name').length > 0 ? e.txt('event_name') : e.txt('title'),
+			title: e.children('event_name').length ? e.txt('event_name') : e.txt('title'),
 			text: e.txt('event_text'),
 			text_ext: e.txt('event_ext_text'),
 
@@ -199,7 +199,7 @@ const toObj = {
 
 		if (recinfo){
 			d.recinfoid = e.num('ID');
-			if (e.children('programInfo').length > 0){
+			if (e.children('programInfo').length){
 				const programInfo=e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
 				d.text = programInfo[1];
 				d.text_ext = programInfo[2];
@@ -252,10 +252,10 @@ const toObj = {
 			}),
 		}
 
-		if (e.children('name').length > 0){ 										//プリセット
-			d.name = e.num('name');
+		if (e.children('name').length){ 										//プリセット
+			d.name = e.txt('name');
 			PresetList[d.id] = d;
-		}else if (e.txt('eventID') == 65535 || e.children('ONID').length > 0){ 		//予約
+		}else if (e.txt('eventID') == 65535 || e.children('ONID').length){ 		//予約
 			d.title = e.txt('title');
 			d.starttime = new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime(),
 			d.duration = e.num('duration');
@@ -382,7 +382,7 @@ const setEpgInfo = d => {
 	}else{
 		$('#info_date').html('未定');
 	}
-	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.starttime && !d.endtime || Date.now() < d.endtime || d.recinfoid && true);
+	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.recinfoid && true || d.starttime && !d.endtime || Date.now() < d.endtime);
 
 	$('#service,#service_hedder').html(d.service);
 	$('#links').html($('.open .links a').clone(true));
@@ -505,7 +505,7 @@ const setRecSettting = r => {
 
 	//録画後実行bat
 	const batFilePath = r.batFilePath.match(/^([^*]*)\*?([\s\S]*)$/);
-	if ($(`[name="batFilePath"] option[value="${batFilePath[1].replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&')}"]`).length == 0)
+	if (!$(`[name="batFilePath"] option[value="${batFilePath[1].replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&')}"]`).length)
 		$('[name="batFilePath"]').append($('<option>', {value: batFilePath[1], text: batFilePath[1]}));
 	$('[name="batFilePath"]').val(batFilePath[1]);
 	$('[name="batFileTag"]').val(batFilePath[2]);
@@ -562,7 +562,7 @@ const setAutoAdd = $e => {
 
 	getList.AutoAdd(() => {
 		const id = $e.data('id');
-		let d = ReserveAutoaddList[id];
+		const d = ReserveAutoaddList[id];
 		if (d){
 			$('#set,#del').attr('action', `${ROOT}api/SetAutoAdd?id=${id}`);
 			$('#link_epginfo').attr('href', `autoaddepginfo.html?id=${id}`);
@@ -604,7 +604,7 @@ const setRecInfo = $e => {
 	}else{
 		showSpinner(true);
 		$.get(`${ROOT}api/EnumRecInfo?id=${$e.data('recinfoid')}`).done(xml => {
-			if ($(xml).find('recinfo').length > 0){
+			if ($(xml).find('recinfo').length){
 				$e.data('info', toObj.EpgInfo($(xml).find('recinfo').first(), true));
 				setRecInfo($e);
 			}else{
@@ -616,8 +616,8 @@ const setRecInfo = $e => {
 }
 
 //予約を反映
-const setReserve = (id, fn) => {
-	if (!fn) id = setRecSettting(id).id;
+const setReserve = (r, fn) => {
+	const id = r.id ?? setRecSettting(r).id;
 
 	$('#set').attr('action', `${ROOT}api/setReserve?id=${id}`);
 	$('#del').attr('action', `${ROOT}api/setReserve?id=${id}`);
@@ -676,8 +676,7 @@ const addRecMark = (r, $target, $content) => {
 }
 
 //一覧の録画トグル
-const fixRecToggleSW = (d, $e) => {
-	if (!$e) $e = $('.open');
+const fixRecToggleSW = (d, $e = $('.open')) => {
 	if ($e.hasClass('cell')) return;
 
 	if (!d.recMode) d = toObj.RecSet(d);
@@ -747,70 +746,66 @@ const checkReserve = ($e, d) => {
 			fixRecToggleSW(r);
 		}
 		setReserve(r);
-	}else{
-		if (id){															//削除されてた
-			if ($e.hasClass('reserve')){
-				$e.remove();
-			}else{
-				if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
-
-				getList.Preset(() => setDefault(true));
-				$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-			}
-			if (!$e.hasClass('onair')) Snackbar({message: '予約が見つかりませんでした'});
+	}else if (id){															//削除されてた
+		if ($e.hasClass('reserve')){
+			$e.remove();
 		}else{
-			getList.Preset(() => setDefault());
+			if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
 
+			getList.Preset(() => setDefault(true));
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 		}
+		if (!$e.hasClass('onair')) Snackbar({message: '予約が見つかりませんでした'});
+	}else{
+		getList.Preset(() => setDefault());
+		$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 	}
 }
 
 //番組詳細を取得
-const getEpgInfo = ($e, d) => {
+const getEpgInfo = ($e, d = $e.data()) => {
 	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
 	$('[href="#recset"], #recset, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
 	$('[href="#detail"], #detail').addClass('is-active');
 	$e.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
 
-	d = d || $e.data();
 	const info = d.next ? d.nextinfo : d.info;
-	
 	if (info){
 		setEpgInfo(info);
 		getList.Reserve(() => checkReserve($e, d));
-	}else{
-		showSpinner(true);
-		$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`}).done(xml => {
-			if ($(xml).find('eventinfo').length > 0){
-				d.info = setEpgInfo($(xml).find('eventinfo').first());
-				getList.Reserve(() => checkReserve($e, d));
-			}else{
-				const id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
-				if (id){													//プログラム予約または番組変更でなくなった
-					getList.Reserve(() => {
-						const key = d.eid == 65535 ? id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`
-						const Reserve = ReserveAutoaddList[key];
-						if (Reserve){
-							setEpgInfo(Reserve);
-							setReserve(Reserve);
-
-							$('#link_epginfo').attr('href', `reserveinfo.html?id=${id}`);
-							$('[href="#detail"], #detail').removeClass('is-active');
-							$('[href="#recset"], #recset').addClass('is-active');
-						}else{
-							$e.remove();
-							Snackbar({message: '予約が見つかりませんでした'});
-						}
-					});
-				}else{
-					errMessage($(xml));
-				}
-			}
-			showSpinner();
-		});
+		return;
 	}
+
+	showSpinner(true);
+	$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`}).done(xml => {
+		if ($(xml).find('eventinfo').length){
+			d.info = setEpgInfo($(xml).find('eventinfo').first());
+			getList.Reserve(() => checkReserve($e, d));
+		}else{
+			const id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
+			if (id){													//プログラム予約または番組変更でなくなった
+				getList.Reserve(() => {
+					const key = d.eid == 65535 ? id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`
+					const r = ReserveAutoaddList[key];
+					if (r){
+						setEpgInfo(r);
+						setReserve(r);
+
+						$('#link_epginfo').attr('href', `reserveinfo.html?id=${id}`);
+						$('[href="#detail"], #detail').removeClass('is-active');
+						$('[href="#recset"], #recset').addClass('is-active');
+					}else{
+						$e.remove();
+						Snackbar({message: '予約が見つかりませんでした'});
+					}
+				});
+			}else{
+				errMessage($(xml));
+			}
+		}
+		showSpinner();
+	});
 }
 
 //予約送信
@@ -818,7 +813,7 @@ const sendReserve = (d, fn) => {
 	d.ctok = ctok;
 	showSpinner(true);
 	$.get(`${ROOT}api/setReserve`, d).done(xml => {
-		if ($(xml).find('success').length > 0){
+		if ($(xml).find('success').length){
 			fn.success($(xml).find('reserveinfo'));
 		}else{
 			fn.err();
@@ -860,7 +855,7 @@ $(function(){
 
 		//タブ移動
 		const moveTab = $e => {
-			if ($e.length == 0 || document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement | document.msFullscreenElement) return
+			if (!$e.length || document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement | document.msFullscreenElement) return
 			const panel = $e.attr('href');
 			if ($e.hasClass('mdl-layout__tab')){
 				$('.mdl-layout__tab, .mdl-layout__tab-panel').removeClass('is-active');
@@ -871,15 +866,15 @@ $(function(){
 			$e.addClass('is-active');
 			$(panel).addClass('is-active');
 
-			if (panel != '#movie' && $('#video').data('load')) return;
+			if (panel != '#movie' || $('#video').data('load')) return;
 
 			if (!$('#video').data('public')) loadMovie($('#video'));
 			$('#video').trigger('load').data('load', true);
 		}
 		$('.tab-swipe'  ).hammer().on('swiperight', () => moveTab($('.mdl-layout__tab.is-active').prev()));
-		$('.tab-swipe'  ).hammer().on( 'swipeleft', () => moveTab($('.mdl-layout__tab.is-active').next()));
+		$('.tab-swipe'  ).hammer().on('swipeleft' , () => moveTab($('.mdl-layout__tab.is-active').next()));
 		$('.panel-swipe').hammer().on('swiperight', () => moveTab($('.mdl-tabs__tab.is-active').prev()));
-		$('.panel-swipe').hammer().on( 'swipeleft', () => moveTab($('.mdl-tabs__tab.is-active').next()));
+		$('.panel-swipe').hammer().on('swipeleft' , () => moveTab($('.mdl-tabs__tab.is-active').next()));
 	}
 
 	//一覧の行をリンクに
@@ -931,7 +926,7 @@ $(function(){
 			Notification.requestPermission(result => {if (result == 'granted') $('.notification').removeClass('hidden');});
 		}
 	}
-	if ($('h4 .notify').length > 0 && !$('h4 .notify').attr('disabled')){
+	if ($('h4 .notify').length && !$('h4 .notify').attr('disabled')){
 		const interval = $('.notify').data('starttime') - Date.now();
 		setTimeout(() => $('.notify').attr('disabled', true).children().text('notifications'), interval);
 	}
@@ -970,7 +965,6 @@ $(function(){
 	//スタンバイ
 	const suspend = document.querySelector('dialog#dialog');
 	if (suspend){
-		if (!suspend.showModal) dialogPolyfill.registerDialog(suspend);
 		$('#suspend').click(e => {
 			$('#dialog .mdl-dialog__content').html(`<span>${$(e.currentTarget).text()}に移行します`);
 			$('#dialog .ok').unbind('click').click(() => {
@@ -1016,11 +1010,9 @@ $(function(){
 	//ネットワーク表示
 	$('.extraction').change(e => {
 		const $e = $(e.currentTarget);
-		if ($e.prop('checked')){
-			$('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hide') : $( $e.val() ).removeClass('hide');
-		}else{
-			$($e.val()).addClass('hide').prop('selected', false);
-		}
+		$e.prop('checked')
+			? $('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hide') : $( $e.val() ).removeClass('hide')
+			: $($e.val()).addClass('hide').prop('selected', false);
 	});
 	//時間絞り込み
 	//切替
@@ -1116,13 +1108,13 @@ $(function(){
 	//録画設定
 	//プリセット読み込み
 	const setPreset = (list, id) => {
-		let messege;
+		let messege = 'プリセットの読み込に失敗しました';
 		const preset = list[id];
 		if (preset){
 			const name = setRecSettting(preset).name ?? $('[name=presetID] option:selected').text();
 			messege = `"${name}" を読み込みました`;
 		}
-		Snackbar({message: messege || 'プリセットの読み込に失敗しました'});
+		Snackbar({message: messege});
 	}
 	$('[name=presetID]').change(e => {
 		const $e = $(e.currentTarget);
@@ -1193,7 +1185,7 @@ $(function(){
 
 			success: (result, textStatus, xhr) => {
 				const xml = $(xhr.responseXML);
-				if (xml.find('success').length > 0){
+				if (xml.find('success').length){
 					Snackbar({message: xml.find('success').text(), timeout: 1500});
 					if (d.redirect){
 						setTimeout(() => location.href=d.redirect, 1500);
@@ -1206,7 +1198,7 @@ $(function(){
 						if (d.action == 'add' || d.action == 'reserve'){
 							const r = toObj.RecSet(xml.find('reserveinfo'));
 
-							setReserve(r.id, () => {
+							setReserve(r, () => {
 								addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
 								progReserve(r);
 

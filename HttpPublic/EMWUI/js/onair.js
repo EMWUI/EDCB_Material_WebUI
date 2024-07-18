@@ -6,7 +6,7 @@ $(function(){
 			$('#audio1~label:last').text(audio[0].text == '' ? '主音声' : audio[0].text);
 			$('#audio2~label:last').text(audio[1].text == '' ? '副音声' : audio[1].text);
 			if (!update) $(`#audio${audio[0].main_component ? '1' : '2'}`).prop('checked', true);
-		}else if (audio.length > 0 && audio[0].component_type == 2){
+		}else if (audio.length && audio[0].component_type == 2){
 			//デュアルモノ
 			$('.audio').attr('disabled', false);
 			const text = audio[0].text.split('\n');
@@ -26,7 +26,7 @@ $(function(){
 		d.update = true; 
 		$.get(`${ROOT}api/EnumEventInfo`, {onair: 1, basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml => {
 			d.update = false;
-			if ($(xml).find('eventinfo').length == 0) return;
+			if (!$(xml).find('eventinfo').length) return;
 
 			d.info = toObj.EpgInfo( $(xml).find('eventinfo').first() );
 			d.nextinfo = toObj.EpgInfo( $(xml).find('eventinfo').eq(1) );
@@ -50,22 +50,6 @@ $(function(){
 			$e.find('.nextstartTime').text(ConvertTime(d.nextinfo.starttime)).next('.nextendTime').text(`～${ConvertTime(d.nextinfo.endtime)}`);
 			$e.find('.nexttitle').html(ConvertTitle(d.nextinfo.title));
 		}).fail(() => d.update = false);
-	}
-
-	const updateEpgInfo = (d, play) => {
-		$.get(`${ROOT}api/EnumEventInfo`, {onair: 1, basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml => {
-			if ($(xml).find('eventinfo').length == 0) return;
-
-			const e = toObj.EpgInfo( $(xml).find('eventinfo').first() );
-
-			setEpgInfo(e);
-			$('#epginfo').removeClass('hidden');
-
-			if (!play) return;
-
-			audioMemu(e.audio);
-			if (play == 2) loadMovie($('.is_cast'));
-		}).fail(() => setTimeout(() => updateEpgInfo(d, play), 5*1000));
 	}
 
 	setInterval(() => {
@@ -128,7 +112,9 @@ $(function(){
 
 		$('.is_cast').removeClass('is_cast');
 		$e.addClass('is_cast');
-		updateEpgInfo($e.data(), 2);
+		loadMovie($e);
+		setEpgInfo($e.data().info);
+		$('#epginfo').removeClass('hidden');
 		$('#tvcast').animate({scrollTop:0}, 500, 'swing');
 	});
 	$('.cast').click(e => {
@@ -143,9 +129,7 @@ $(function(){
 		}else{
 			if (Magnezio){
 				$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
-					$(xml).find('success').length > 0
-						? location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
-						: Snackbar({message: '失敗'})
+					!$(xml).find('success').length ? Snackbar({message: '失敗'}) : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 				);
 			}else if (!apk && !$('#open_popup').prop('checked')){
 				location.href = `tvcast.html?id=${d.onid}-${d.tsid}-${d.sid}`;
@@ -175,7 +159,7 @@ $(function(){
 					open(d);
 				}else{
 					$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`}).done(xml => {
-						if ($(xml).find('eventinfo').length == 0) return;
+						if (!$(xml).find('eventinfo').length) return;
 
 						$e.data( toObj.EpgInfo( $(xml).find('eventinfo').first() ) );
 						open(d);
@@ -187,7 +171,7 @@ $(function(){
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
 
-	if ($('.onair.is_cast').length > 0) updateEpgInfo($('.onair.is_cast').data(), 2);
+	if ($('.onair.is_cast').length) loadMovie($('.is_cast'));
 	$('.toggle').click(e => {
 		const $e = $(e.currentTarget).children();
 		const flag = $e.hasClass('flag');

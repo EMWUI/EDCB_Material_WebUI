@@ -234,7 +234,7 @@ $(function(){
 			if ($(e).offset().top < -$('#tv-guide-container').height()) return true;
 
 			if ($(e).offset().top > marginmin*oneminpx){
-				if ($(e).prevAll('[id^=id]').length > 0) $('#tv-guide-container').animate({scrollTop: $(e).prevAll('[id^=id]').position().top-marginmin*oneminpx}, 550, 'swing');
+				if ($(e).prevAll('[id^=id]').length) $('#tv-guide-container').animate({scrollTop: $(e).prevAll('[id^=id]').position().top-marginmin*oneminpx}, 550, 'swing');
 			}else{
 				$('#tv-guide-container').animate({scrollTop: $(e).position().top-marginmin*oneminpx}, 550, 'swing');
 			}

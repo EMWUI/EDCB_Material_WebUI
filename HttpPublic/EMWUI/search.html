@@ -140,7 +140,8 @@ ct={
   title='検索',
   js='<script>const ctok=\''..CsrfToken('setreserve')..'\';$(function(){saerchbar();});</script>\n',
   progres=true,
-  macro=sidePanel
+  macro=sidePanel,
+  searchlinks=true
 }
 
 ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-600"><div class="mdl-navigation">\n'
@@ -305,6 +306,7 @@ if #a>0 then
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
       ..'\n <td class="service mdl-data-table__cell--non-numeric">'..service_name
       ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')
+      ..'\n <td class="links hidden">'..SearchConverter(v, service_name)
       ..'\n')
   end
 

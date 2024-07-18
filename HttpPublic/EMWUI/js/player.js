@@ -9,11 +9,11 @@ vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
 
 const getVideoTime = t => {
-	if (!t) return '--:--'
+	if (!t && t != 0) return '--:--'
 	const h = Math.floor(t / 3600);
-	const m = zero(Math.floor((t / 60) % 60));
+	const m = Math.floor((t / 60) % 60);
 	const s = zero(Math.floor(t % 60));
-	return `${h>0 ? `${h}:` : ''}${m}:${s}`;
+	return `${h > 0 ? `${h}:` : ''}${zero(m, h > 0 || m > 9 ? 2 : 1)}:${s}`;
 }
 
 const $player = $('#player');
@@ -45,7 +45,7 @@ const errorHLS = () => {
 }
 
 const startHLS= src => {
-	if ($('.is_cast').length == 0) return;
+	if (!$('.is_cast').length) return;
 
 	if (Hls.isSupported()){
 		hls = new Hls();
@@ -151,6 +151,7 @@ const loadMovie = $e => {
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		loadHls(d);
+		if (!d.info) return;
 
 		if (d.info.duration){
 			$duration.text(getVideoTime(d.info.duration));
@@ -299,6 +300,8 @@ $(function(){
 		$('.playing').removeClass('playing');
 		if ($seek.hasClass('mdl-progress')) seek.MaterialProgress.setProgress(0);
 		$currentTime_duration.text('0:00');
+		seek.MaterialSlider.change(0);
+		$seek.attr('disabled', true);
 		$quality_audio.attr('disabled', true);
 	});
 

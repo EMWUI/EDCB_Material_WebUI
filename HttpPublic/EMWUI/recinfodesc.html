@@ -83,7 +83,7 @@ if v then
     ..epgInfo
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..PlayerTemplate('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-duration="'..(dur or v.durationSecond) or 'src="'..video..'" data-public="true')..'" data-audio="'..((audio.multi or audio.dual) and '2' or '1')..'" class="is_cast"></video>\n')
+      ..PlayerTemplate('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-info=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-info=\'{')..'"audio":'..((audio.multi or audio.dual) and '2' or '1')..'}\' class="is_cast"></video>\n')
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

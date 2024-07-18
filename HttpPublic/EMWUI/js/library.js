@@ -5,7 +5,7 @@ $(function(){
 	const getLibrary = () => {
 		showSpinner(true);
 		$.get(`${ROOT}api/Library`, location.hash.slice(1)).done(xml => {
-			if ($(xml).find('error').length > 0){
+			if ($(xml).find('error').length){
 				Snackbar({message: $(xml).find('error').text()});
 				showSpinner();
 				history.back();
@@ -47,22 +47,22 @@ $(function(){
 		const file = [];
 		const baseHash = [];
 		let index;
-		if (xml.children('index').length > 0){
+		if (xml.children('index').length){
 			index = xml.num('index');
 			baseHash.push({name: 'i', value: index});
 		}
 		const path = [...baseHash];
-		if (xml.children('pathhash').length > 0)
+		if (xml.children('pathhash').length)
 			xml.txt('pathhash').split(',').forEach(e => baseHash.push({name: 'p', value: e}) );
 
 		xml.children('dir, file').each((i, e) => {
 			const name = $(e).txt('name');
 			const $e = $((isGrid() ? '<div>' : '<li>'));
 			const hash = [...baseHash];
-			if ($(e).children('index').length > 0) hash.push({name: 'i', value: $(e).txt('index')});
+			if ($(e).children('index').length) hash.push({name: 'i', value: $(e).txt('index')});
 			if ($(e).prop('tagName') == 'dir'){
-				if (xml.children('dirhash').length > 0) hash.push({name: 'p', value: xml.txt('dirhash')});
-				if ($(e).children('hash').length > 0) hash.push({name: 'd', value: $(e).txt('hash')});
+				if (xml.children('dirhash').length) hash.push({name: 'p', value: xml.txt('dirhash')});
+				if ($(e).children('hash').length) hash.push({name: 'd', value: $(e).txt('hash')});
 
 				$e.addClass('folder').click(() => location.hash = `#${$.param(hash)}`);
 				isGrid()
@@ -75,7 +75,7 @@ $(function(){
 							$('<span>', {text: name}) ]}) );
 				folder.push($e);
 			}else{
-				if (xml.children('dirhash').length > 0) hash.push({name: 'd', value: xml.txt('dirhash')});
+				if (xml.children('dirhash').length) hash.push({name: 'd', value: xml.txt('dirhash')});
 				hash.push({name: 'h', value: $(e).txt('hash')});
 
 				$e.addClass('item').data({
@@ -144,26 +144,24 @@ $(function(){
 
 		const dirname = xml.txt('dirname');
 		$('.mdl-layout__header-row .mdl-layout-title').text(dirname);
-		if ($(`#l_${id}`).length == 0){
+		if (!$(`#l_${id}`).length){
 			$('.path').html(createTab('home', 'ホーム', '', dirname == 'ホーム'));
 
-			if (xml.children('pathname').length > 0){
+			if (xml.children('pathname').length){
 				xml.txt('pathname').split('/').forEach((e, i) => {
 					const dir = [...path];
 					let pathhash = `index${index}`;
-					if (xml.children('pathhash').length > 0){
-						if (i >= 1){
-							pathhash = xml.txt('pathhash').split(',')[i-1];
-							path.push({name: 'p', value: pathhash});
-							dir.push({name: 'd', value: pathhash});
-						}
+					if (xml.children('pathhash').length && i > 0){
+						pathhash = xml.txt('pathhash').split(',')[i-1];
+						path.push({name: 'p', value: pathhash});
+						dir.push({name: 'd', value: pathhash});
 					}
 					$('.path').append(chevron_right).append(createTab(pathhash, e, dir));
 				});
 			}
 
 			let dirhash = `index${index}`;
-			if (xml.children('dirhash').length > 0){
+			if (xml.children('dirhash').length){
 				dirhash = xml.txt('dirhash');
 				path.push({name: 'd', value: dirhash});
 			}
@@ -202,11 +200,9 @@ $(function(){
 	});
 	//スワイプ
 	if (isTouch){
-		delete Hammer.defaults.cssProps.userSelect;
-
-		const librarySwipe = $e => {if ($e.length > 0) location.hash = `#${$e.data('hash')}`;}
-		$('.lib-swipe').hammer().on('swiperight', () => librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') ));
-		$('.lib-swipe').hammer().on('swipeleft', () => librarySwipe( $('.mdl-layout__tab.is-active').nextAll('span:first') ));
+		const librarySwipe = $e => {if ($e.length) location.hash = `#${$e.data('hash')}`;};
+		$('.lib-swipe,.lib-swipe *').hammer().on('swiperight', () => librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') ));
+		$('.lib-swipe,.lib-swipe *').hammer().on('swipeleft' , () => librarySwipe( $('.mdl-layout__tab.is-active').nextAll('span:first') ));
 	}
 
 	$('#library-search').submit(() => location.hash = `#search@${$('#Key').val()}`);
