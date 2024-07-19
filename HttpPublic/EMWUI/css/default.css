@@ -524,6 +524,9 @@ main {
   .main-content>.mdl-card__actions>button:last-child {
     margin-right: 0; }
   @media (max-width: 479px) {
+    .main-content.mdl-cell {
+      margin: 8px 0;
+      width: 100%; }
     .main-content>div:not(.mdl-card__actions) {
       padding: 16px 16px 0; } }
 
@@ -1229,6 +1232,8 @@ h4 .mdl-button--icon {
       margin-left: 16px; }
     .preset>div>div.mdl-cell {
       width: calc(75% + 16px); }
+    .preset>.delPreset+div>div.mdl-cell {
+      width: calc(75% - 12px); }
     .preset>div>div.mdl-cell:first-child {
       width: calc(25% - 16px); } }
 .addPreset {
@@ -1422,6 +1427,9 @@ h4 .mdl-button--icon {
       max-width: 200px; }
     .info {
       max-width: 300px; } }
+  @media (max-width: 479px) {
+    .list.mdl-grid {
+      padding: 8px 0; } }
 
 /* カード化 */
 @media (max-width: 479px) {

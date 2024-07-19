@@ -882,16 +882,12 @@ $(function(){
 		const $e = $(e.currentTarget);
 		if ($(e.target).is('.flag, .flag *, .count a')) return;
 
-		if ($e.data('onid')){
-			createSearchLinks(e.currentTarget);
-			getEpgInfo($e);
-		}else if($e.data('id')){
-			setAutoAdd($e);
-		}else if($e.data('recinfoid')){
-			setRecInfo($e);
-		}else{
-			location.href = $e.data('href');
-		}
+		if ($e.data('onid') || $e.data('recinfoid')) createSearchLinks(e.currentTarget);
+
+		$e.data('onid') ? getEpgInfo($e) :
+		$e.data('id') ? setAutoAdd($e) :
+		$e.data('recinfoid') ? setRecInfo($e) : 
+		location.href = $e.data('href');
 	});
 	$('.close_info').click(() => $('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open'));
 
