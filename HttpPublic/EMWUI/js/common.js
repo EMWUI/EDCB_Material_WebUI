@@ -282,6 +282,7 @@ const toObj = {
 			disableFlag: e.num('disableFlag') == 1,
 			andKey: e.txt('andKey'),
 			notKey: e.txt('notKey'),
+			note: e.txt('note'),
 			regExpFlag: e.num('regExpFlag') == 1,
 			aimaiFlag: e.num('aimaiFlag') == 1,
 			titleOnlyFlag: e.num('titleOnlyFlag') == 1,
@@ -525,6 +526,7 @@ const setSerchSetting = s => {
 	$('#disable').mdl_prop('checked', s.disableFlag);
 	$('#andKey').val(s.andKey);
 	$('#notKey').val(s.notKey);
+	$('#note').val(s.note);
 	$('#reg').mdl_prop('checked', s.regExpFlag);
 	$('#aimai').mdl_prop('checked', s.aimaiFlag);
 	$('#titleOnly').mdl_prop('checked', s.titleOnlyFlag);

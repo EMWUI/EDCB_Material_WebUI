@@ -1046,11 +1046,16 @@ end
 --検索条件を取得
 --文字列返却値(andKeyとnotKey)の実体参照変換はedcb.htmlEscapeに従う
 function GetSearchKey(post)
+  local notKey=mg.get_var(post,'notKey') or ''
+  local note=mg.get_var(post,'note') or ''
+  if #note>0 or notKey:find('^:note:') then
+    notKey=':note:'..note:gsub('\\','\\\\'):gsub(' ','\\s'):gsub('　','\\m')..(#notKey>0 and ' '..notKey or '')
+  end
   local key={
     andKey=(mg.get_var(post, 'disableFlag') and '^!{999}' or '')
       ..(mg.get_var(post, 'caseFlag') and 'C!{999}' or '')
       ..EdcbHtmlEscape(mg.get_var(post, 'andKey') or ''),
-    notKey=EdcbHtmlEscape(mg.get_var(post, 'notKey') or ''),
+    notKey=EdcbHtmlEscape(notKey:gsub('%c','')),
     regExpFlag=mg.get_var(post, 'regExpFlag')~=nil,
     titleOnlyFlag=mg.get_var(post, 'titleOnlyFlag')~=nil,
     aimaiFlag=mg.get_var(post, 'aimaiFlag')~=nil,
@@ -1128,6 +1133,14 @@ function ParseAndKey(andKey)
   r.disableFlag=andKey:match('^^!{999}(.*)')
   r.caseFlag=(r.disableFlag or andKey):match('^C!{999}(.*)')
   r.andKey=r.caseFlag or r.disableFlag or andKey
+  return r
+end
+
+function ParseNotKey(notKey)
+  local r={}
+  r.note=notKey:match('^:note:(.-　)') or notKey:match('^:note:([^ ]* ?)')
+  r.notKey=notKey:sub(r.note and #r.note+7 or 1)
+  r.note=(r.note or ''):gsub('　',''):gsub(' ',''):gsub('\\s',' '):gsub('\\m','　'):gsub('\\\\','\\')
   return r
 end
 
