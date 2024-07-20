@@ -19,6 +19,8 @@ const getVideoTime = t => {
 const $player = $('#player');
 const $playerUI_titlebar = $('#playerUI,#titlebar');
 const $contral = $('#control .mdl-menu__container');
+const $subtitles = $('#subtitles');
+const $vid_meta = $('#vid-meta');
 const hideBar = t => {
 	hoverID = setTimeout(() => {
 		if (vid.paused) return;
@@ -52,8 +54,8 @@ const startHLS= src => {
 		hls.loadSource(src);
 		hls.attachMedia(vid);
 		hls.on(Hls.Events.MANIFEST_PARSED,function(){
-			if (DataStream && false || !$('.remote-control').hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-			if ($('#subtitles').hasClass('checked')) creatCap();
+			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
+			if ($subtitles.hasClass('checked')) creatCap();
 			if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
 			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 		});
@@ -70,7 +72,7 @@ const resetVid = () => {
 	if (cap) cap.detachMedia();
 	toggleDataStream(false);
 	toggleJikkyo(false);
-	$('#vid-meta').attr('src', '');
+	$vid_meta.attr('src', '');
 	VideoSrc = null;
 }
 
@@ -92,6 +94,7 @@ const $cinema = $('#cinema');
 const $fast = $('#fast');
 const $remote = $('#remote');
 const $remote_control = $('.remote-control');
+const $danmaku = $('#danmaku');
 let quality
 let audioVal = 0;
 const loadHls = (d, reload) => {
@@ -146,7 +149,7 @@ const loadMovie = $e => {
 	if (d.canPlay){
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${d.path}`;
 		$vid.attr('src', path);
-		if ($('#load_subtitles').prop('checked')) $('#vid-meta').attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
+		if ($('#load_subtitles').prop('checked')) $vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
@@ -161,7 +164,7 @@ const loadMovie = $e => {
 	    if (d.info.audio) $audios.attr('disabled', d.info.audio == 1);
 	}
 
-	$titlebar.html(d.name || (`${d.service} - ${ConvertTitle(d.title)}`));
+	$titlebar.html(d.name || `${d.info.service} - ${ConvertTitle(d.info.title)}`);
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -190,15 +193,15 @@ const playMovie = $e => {
 }
 
 $(window).on('load resize', () => {
-	if (!fullscreen){
-		if (theater || isSmallScreen()){
-			theater = true;
-			$('#movie-contner #player').prependTo('#movie-theater-contner');
-		}else{
-			$('#movie-theater-contner #player').prependTo('#movie-contner');
-		}
+	$player.toggleClass('is-small', $vid.width() < 800);
+	if (fullscreen) return;
+
+	if (theater || isSmallScreen()){
+		theater = true;
+		$('#movie-contner #player').prependTo('#movie-theater-contner');
+	}else{
+		$('#movie-theater-contner #player').prependTo('#movie-contner');
 	}
-	$('#player').toggleClass('is-small', $vid.width() < 800);
 });
 
 $(function(){
@@ -208,7 +211,7 @@ $(function(){
 	const $volume = $('#volume');
 	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
 	if (!isSmallScreen()){
-		$('.remote-control').prependTo('#apps-contener>.contener>.contener');
+		$remote_control.prependTo('#apps-contener>.contener>.contener');
 	}else{
 		$('.remote-control .num').addClass('hidden');
 		$('.remote-control,#apps-contener').prependTo('#main-column');
@@ -264,7 +267,7 @@ $(function(){
 			if (!d.paused) vid.play();
 			if (!d.canPlay) return;
 
-			if ($('#subtitles').hasClass('checked')) loadVtt();
+			if ($subtitles.hasClass('checked')) loadVtt();
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
 		},
@@ -298,9 +301,8 @@ $(function(){
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
 		$('.playing').removeClass('playing');
-		if ($seek.hasClass('mdl-progress')) seek.MaterialProgress.setProgress(0);
+		$seek.hasClass('mdl-progress') ? seek.MaterialProgress.setProgress(0) : seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
-		seek.MaterialSlider.change(0);
 		$seek.attr('disabled', true);
 		$quality_audio.attr('disabled', true);
 	});
@@ -363,11 +365,11 @@ $(function(){
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
 			if(theater || isSmallScreen()){
-				$('.remote-control').prependTo('#main-column');
+				$remote_control.prependTo('#main-column');
 				$('.remote-control .num').addClass('hidden');
 			}else{
 				$('#comment-control').insertAfter('#apps-contener>.contener');
-				$('.remote-control').prependTo('#apps-contener>.contener>.contener');
+				$remote_control.prependTo('#apps-contener>.contener>.contener');
 			}
 
 		}
@@ -408,11 +410,11 @@ $(function(){
 					const pipContent = event.target.getElementById("player");
 					container.append(pipContent);
 					if(theater){
-						$('.remote-control').prependTo('#main-column');
+						$remote_control.prependTo('#main-column');
 						$('.remote-control .num').addClass('hidden');
 					}else{
 						$('#comment-control').insertAfter('#apps-contener>.contener');
-						$('.remote-control').prependTo('#apps-contener>.contener>.contener');
+						$remote_control.prependTo('#apps-contener>.contener>.contener');
 					}
 				});
 			}else 
@@ -424,15 +426,15 @@ $(function(){
 	}
 	$('#defult').click(() => {
 		theater = true;
-		$('#player').prependTo($('#movie-theater-contner'));
-		$('.remote-control').prependTo('#main-column');
+		$player.prependTo($('#movie-theater-contner'));
+		$remote_control.prependTo('#main-column');
 		$('.remote-control .num').addClass('hidden');
 		setbmlBrowserSize();
 	});
 	$('#theater').click(() => {
 		theater = false;
-		$('#player').prependTo($('#movie-contner'));
-		$('.remote-control').prependTo('#apps-contener>.contener>.contener');
+		$player.prependTo($('#movie-contner'));
+		$remote_control.prependTo('#apps-contener>.contener>.contener');
 		$('.remote-control .num').removeClass('hidden');
 		setbmlBrowserSize();
 	});
@@ -490,7 +492,7 @@ $(function(){
 
 	$('#load_subtitles').change(e => {
 		const enable = $(e.currentTarget).prop('checked');
-		$('#subtitles').toggleClass('hidden', !enable);
+		$subtitles.toggleClass('hidden', !enable);
 		localStorage.setItem('load_subtitles', enable);
 
 		const d = $('.is_cast').data();
@@ -500,16 +502,16 @@ $(function(){
 			if (cap) cap.detachMedia();
 			if (enable){
 				const path = `${ROOT}${d.public ? '' : 'api/Movie?fname='}${d.path}`;
-				$('#vid-meta').attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,"")}.vtt`);
+				$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,"")}.vtt`);
 				setTimeout(() => loadVtt(), 1000);
 			}else{
-				$('#vid-meta').attr('src', '');
+				$vid_meta.attr('src', '');
 			}
 		}else{
 			reloadHls();
 		};
 	});
-	$('#subtitles').toggleClass('hidden', localStorage.getItem('load_subtitles') != 'true');
+	$subtitles.toggleClass('hidden', localStorage.getItem('load_subtitles') != 'true');
 	$('#load_subtitles').prop('checked', localStorage.getItem('load_subtitles') == 'true');
 
 	$subtitles.click(() => {
@@ -522,7 +524,7 @@ $(function(){
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
 	});
-	if (localStorage.getItem('subtitles') == 'true') $('#subtitles').addClass('checked');
+	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
 
 	if (DataStream) $remote.addClass('mdl-button--accent');
 	$remote.on({

@@ -1,21 +1,25 @@
 $(function(){
+	const $audio1 = $('#audio1');
+	const $audio2 = $('#audio2');
+	const $audioText1 = $('#audio1~label:last');
+	const $audioText2 = $('#audio2~label:last');
 	const audioMemu = (audio, update) => {
 		if (audio.length >= 2){
 			//多重音声
-			$('.audio').attr('disabled', false);
-			$('#audio1~label:last').text(audio[0].text == '' ? '主音声' : audio[0].text);
-			$('#audio2~label:last').text(audio[1].text == '' ? '副音声' : audio[1].text);
-			if (!update) $(`#audio${audio[0].main_component ? '1' : '2'}`).prop('checked', true);
+			$audios.attr('disabled', false);
+			$audioText1.text(audio[0].text == '' ? '主音声' : audio[0].text);
+			$audioText2.text(audio[1].text == '' ? '副音声' : audio[1].text);
+			if (!update) audio[0].main_component ? $audio1.prop('checked', true) : $audio2.prop('checked', true);
 		}else if (audio.length && audio[0].component_type == 2){
 			//デュアルモノ
-			$('.audio').attr('disabled', false);
+			$audios.attr('disabled', false);
 			const text = audio[0].text.split('\n');
 			if (text.length < 2) text = ['日本語','英語'];
-			$('#audio1~label:last').text(`[二] ${text[0]}`);
-			$('#audio2~label:last').text(`[二] ${text[1]}`);
-			if (!update) $(`#audio${audio[0].main_component ? '1' : '2'}`).prop('checked', true);
+			$audioText1.text(`[二] ${text[0]}`);
+			$audioText2.text(`[二] ${text[1]}`);
+			if (!update) audio[0].main_component ? $audio1.prop('checked', true) : $audio2.prop('checked', true);
 		}else{
-			$('.audio').attr('disabled', true);
+			$audios.attr('disabled', true);
 		}
 	}
 
@@ -34,10 +38,10 @@ $(function(){
 			if ($e.hasClass('is_cast')){
 				setEpgInfo(d.info);
 				audioMemu(d.info.audio, true);
-				$('.duration').text(getVideoTime(d.info.duration));
-				$('#titlebar').html(`${d.info.service} - ${ConvertTitle(d.info.title)}`).addClass('is-visible');
+				$duration.text(getVideoTime(d.info.duration));
+				$titlebar.html(`${d.info.service} - ${ConvertTitle(d.info.title)}`).addClass('is-visible');
 				hideBar(2500);
-				$('#video').data('title', d.info.title).data('audio', d.info.audio);
+				$vid.data('title', d.info.title).data('audio', d.info.audio);
 			}
 
 			if (!d.info.duration){
@@ -113,6 +117,7 @@ $(function(){
 		$('.is_cast').removeClass('is_cast');
 		$e.addClass('is_cast');
 		loadMovie($e);
+		audioMemu($e.data().info.audio);
 		setEpgInfo($e.data().info);
 		$('#epginfo').removeClass('hidden');
 		$('#tvcast').animate({scrollTop:0}, 500, 'swing');
@@ -121,51 +126,35 @@ $(function(){
 		const $e = $(e.currentTarget).parents('li').addClass('is_cast');
 		const d = $e.data();
 		if (d.eid == 0){
-			$('#titlebar').text(`${data.service} - 放送休止`);
-			$('.duration,.currentTime').text('0:00');
-			$('#video').attr('src', '').unbind('timeupdate');
+			$titlebar.text(`${data.info.service} - 放送休止`);
+			$currentTime_duration.text('0:00');
+			$vid.attr('src', '');
 			seek.MaterialSlider.change(0);
 			Snackbar({message: '放送休止'});
+		}else if (Magnezio){
+			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
+				!$(xml).find('success').length ? Snackbar({message: '失敗'}) : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
+			);
+		}else if (apk){
+			showSpinner(true);
+			Snackbar({message: '準備中'});
+			const src = `${ROOT}api/view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}&hls=${1+d.onid+d.tsid+d.sid}${hls4}&option=${quality}${
+				!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${$cinema.prop('checked') ? '&cinema=1' : ''
+			}`;
+
+			waitForHlsStart(src, `ctok=${ctok}&open=1`, 1000, 1000, () => {
+				showSpinner();
+				Snackbar({message: 'エラー'});
+			}, src => {
+				showSpinner();
+				location.href = `intent:${new URL(src, document.baseURI).href}#Intent;type=video/*;end;`;
+			});
+		}else if ($('#open_popup').prop('checked')){
+			$('#popup,#playerUI').addClass('is-visible');
+			loadMovie($e);
+			audioMemu(d.info.audio);
 		}else{
-			if (Magnezio){
-				$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
-					!$(xml).find('success').length ? Snackbar({message: '失敗'}) : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
-				);
-			}else if (!apk && !$('#open_popup').prop('checked')){
-				location.href = `tvcast.html?id=${d.onid}-${d.tsid}-${d.sid}`;
-			}else{
-				const open = d => {
-					if (apk){
-						showSpinner(true);
-						Snackbar({message: '準備中'});
-						const src = `${ROOT}api/view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}&hls=${1+d.onid+d.tsid+d.sid}${hls4}&option=${quality}${
-							!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${$cinema.prop('checked') ? '&cinema=1' : ''
-						}`;
-
-						waitForHlsStart(src, `ctok=${ctok}&open=1`, 1000, 1000, () => {
-							showSpinner();
-							Snackbar({message: 'エラー'});
-						}, src => {
-							showSpinner();
-							location.href = `intent:${new URL(src, document.baseURI).href}#Intent;type=video/*;end;`;
-						});
-					}else{
-						$('#popup,#playerUI').addClass('is-visible');
-						audioMemu(d.audio);
-						loadMovie($e);
-					}
-				}
-				if (d.audio){
-					open(d);
-				}else{
-					$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`}).done(xml => {
-						if (!$(xml).find('eventinfo').length) return;
-
-						$e.data( toObj.EpgInfo( $(xml).find('eventinfo').first() ) );
-						open(d);
-					});
-				}
-			}
+			location.href = `tvcast.html?id=${d.onid}-${d.tsid}-${d.sid}`;
 		}
 	});
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());

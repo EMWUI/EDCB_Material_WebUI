@@ -3,11 +3,11 @@ function Version(a)
     css='240718',
     common='240719',
     tvguide='240717',
-    player='240717',
-    onair='240717',
+    player='240720',
+    onair='240720',
     library='240717',
     setting='240705',
-    datastream='240713',
+    datastream='240719',
     legacy='20240430',
   }
   return '?ver='..ver[a]

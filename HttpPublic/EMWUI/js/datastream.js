@@ -1,5 +1,4 @@
 const remocon = document.querySelector('#remote');
-const $danmaku = $('#danmaku');
 const indicator = document.querySelector(".remote-control-indicator")
 //BMLブラウザのサイズ指定 要改善
 const playerUI = document.querySelector('#playerUI');
@@ -193,7 +192,6 @@ toggleJikkyo=function(enabled){
   addMessage('接続開始');
 };
 
-const $subtitles = $('#subtitles');
 var vidMeta=document.getElementById("vid-meta");
 loadVtt=function(){
   var work=[];
