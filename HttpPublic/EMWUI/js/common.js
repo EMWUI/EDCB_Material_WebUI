@@ -835,12 +835,11 @@ const addReserve = $e => {
 }
 
 $(window).on('load resize', () => {
-	const MAX_WIDTH = window.matchMedia('(max-width: 700px)').matches;
-	$('#add_dateList').prop('disabled', MAX_WIDTH && !$('#dateList_edit').hasClass('is-visible'));
+	const OVER700 = !window.matchMedia('(max-width: 700px)').matches;
 	//マクロ補助
-	$('.shrink-phone').toggle(MAX_WIDTH);
-	$('.check-shrink-phone').prop('checked', MAX_WIDTH);
-	$('.drawer-separator.mdl-cell--hide-desktop').toggle(!MAX_WIDTH);
+	$('.shrink-phone').toggle(OVER700);
+	$('.check-shrink-phone').prop('checked', OVER700);
+	$('.drawer-separator.mdl-cell--hide-desktop').toggle(!OVER700);
 });
 
 //サービスワーカーの登録
