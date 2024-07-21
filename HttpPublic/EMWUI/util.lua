@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
     css='240718',
-    common='240720',
+    common='240721',
     tvguide='240717',
     player='240720',
     onair='240720',
@@ -332,7 +332,7 @@ function RecSettingTemplate(rs)
   s=s..'</div>\n<div id="preset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
   if #rs.recFolderList>0 then
     for i,v in ipairs(rs.recFolderList) do
-      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
+      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.'..(WIN32 and 'dll' or 'so')..')%?(.*)')
       s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
         ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">フォルダ</div>\n'
@@ -367,7 +367,7 @@ function RecSettingTemplate(rs)
 
   if #rs.partialRecFolder>0 then
     for i,v in ipairs(rs.partialRecFolder) do
-      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.dll)%?(.*)')
+      local recNameDll, recNameOp=v.recNamePlugIn:match('^(.+%.'..(WIN32 and 'dll' or 'so')..')%?(.*)')
       s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
         ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">フォルダ</div>\n'

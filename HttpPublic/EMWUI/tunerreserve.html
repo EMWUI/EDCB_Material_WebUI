@@ -44,7 +44,7 @@ rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
 rate={}
 for i,v in ipairs(edcb.GetTunerReserveAll()) do
 
-  ct.tab=ct.tab..'<a href="#dll_'..i..'" class="mdl-layout__tab'..(i==tab and ' is-active' or '')..'">'..i..':'..v.tunerName:gsub( "BonDriver_(.*).dll", "%1")..' ('..#v.reserveList..')</a>\n'
+  ct.tab=ct.tab..'<a href="#dll_'..i..'" class="mdl-layout__tab'..(i==tab and ' is-active' or '')..'">'..i..':'..v.tunerName:gsub( "BonDriver_(.*).'..(WIN32 and 'dll' or 'so')..'", "%1")..' ('..#v.reserveList..')</a>\n'
 
   table.insert(ctt, '<tbody class="mdl-layout__tab-panel'..(i==tab and ' is-active' or '')..'" id="dll_'..i..'">\n')
 

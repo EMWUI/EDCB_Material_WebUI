@@ -424,15 +424,14 @@ const openMacro = $e => {
 
 //録画フォルダパス
 const recFolder = {
-	create: (e, i, partial) => {
+	create: (d, i, partial) => {
 		const div = '<div>';
-		const cell = 'mdl-cell';
 		const container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
 		const select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
 		const textfield = 'mdl-cell mdl-textfield mdl-js-textfield';
 		const delbtn = 'delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button';
 		const middle = 'mdl-cell mdl-cell--middle';
-		const recNamePlugIn = e.recNamePlugIn.match(/^(.*\.dll)?(?:\?(.*))?/);
+		const recNamePlugIn = d.recNamePlugIn.match(/^(.*\.(?:dll|so))?(?:\?(.*))?/);
 		partial = partial ? 'partial' : '';
 		return $(div, {class: `preset ${container}`, append: [
 					$(div, {class: delbtn, click: e => recFolder.del($(e.currentTarget)), html:
@@ -440,13 +439,13 @@ const recFolder = {
 					$(div, {class: container, append: [
 						$(div, {class: middle, text: 'フォルダ'}),
 						$(div, {class: textfield, append: [
-							$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: `${partial}recFolder`, id: `${partial}recFolder${i}`, val: e.recFolder}),
+							$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: `${partial}recFolder`, id: `${partial}recFolder${i}`, val: d.recFolder}),
 							$('<label>', {class: 'mdl-textfield__label', for: `${partial}recFolder${i}`, text: '!Default'}) ]}) ]}),
 					$(div, {class: container, append: [
 						$(div, {class: middle, text: '出力PlugIn'}),
 						$(div, {class: select, html:
 							$('<select>', {name: `${partial}writePlugIn`, html:
-								$('#Write').html(), val: e.writePlugIn }) }) ]}),
+								$('#Write').html(), val: d.writePlugIn }) }) ]}),
 					$(div, {class: container, append: [
 						$(div, {class: middle, text: 'ファイル名PlugIn'}),
 						$(div, {class: select, html:
@@ -1227,7 +1226,7 @@ $(function(){
 
 	$('.delPreset').click(e => recFolder.del($(e.currentTarget)));
 	$('.addPreset').click(e => {
-		$(e.currentTarget).before(recFolder.create({recFolder: '', writePlugIn: 'Write_Default.dll', recNamePlugIn: ''}, $(e.currentTarget).prevAll().length+1, $(e.currentTarget).hasClass('partial')));
+		$(e.currentTarget).before(recFolder.create({recFolder: '', writePlugIn: $('#Write option').first().val(), recNamePlugIn: ''}, $(e.currentTarget).prevAll().length+1, $(e.currentTarget).hasClass('partial')));
 		componentHandler.upgradeDom();
 	});
 
