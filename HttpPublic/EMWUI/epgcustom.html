@@ -128,6 +128,8 @@ for i,v in ipairs(b)do
   end
 end
 interval=lastendTime and math.ceil((lastendTime-baseTime)/60/60) or MARGIN_HOUR+1
+MAX_ONE_MIN_PX=math.floor(ONE_MIN_PX*1.5+0.5)
+if interval>48 then ONE_MIN_PX=math.max(math.floor(ONE_MIN_PX/4),1) end
 
 SERVICE={}
 for i,v in ipairs(edcb.GetServiceList() or {}) do
@@ -148,6 +150,8 @@ ct.subheader='<div id="subheader">\n'
   ..'<nav class="mdl-navigation">\n'
   ..'<div class="mdl-layout-spacer"></div>\n'
 
+  ..'<div class="dividers navigation__item mdl-color-text--primary"><input class="ONE_MIN_PX mdl-slider mdl-js-slider" type="range" min="1" max="'..MAX_ONE_MIN_PX..'" value="'..ONE_MIN_PX..'" step="0.5" id="ONE_MIN_PX_S">'
+  ..'<div class="number"><div class="text-right mdl-textfield mdl-js-textfield"><input class="ONE_MIN_PX mdl-textfield__input" type="number" name="ONE_MIN_PX" value="'..ONE_MIN_PX..'" min="0.1" step="0.1" id="ONE_MIN_PX" style="width:1.5em"><label class="mdl-textfield__label" for="ONE_MIN_PX"></label></div>px</div></div>'
   ..'<div class="dividers navigation__item navigation__icon"><a class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" id="now"><i class="material-icons">radio_button_checked</i></a></div>\n'
 
   ..'<div class="navigation__item navigation__icon"><a id="prev" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_less</i></a></div>\n'
@@ -201,11 +205,11 @@ for i,v in ipairs(st) do
   total=0
   for j,w in ipairs(v) do
     startTime=TimeWithZone(w.startTime)
-    startPx=math.min(math.floor((startTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startPx=math.min(math.floor(startTime-baseTime)/60, 60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or startTime+10*3600 --終了時間未定
-    endPx=math.min(math.floor((endTime-baseTime)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor(endTime-baseTime)/60, 60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -220,8 +224,8 @@ for i,v in ipairs(st) do
       lastPx=endPx
     end
   end
-  if total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+  if total<interval*60 then
+    table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
   end
   table.insert(ctt, '</div></div>\n')
 end

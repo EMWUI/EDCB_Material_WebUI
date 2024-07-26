@@ -42,8 +42,8 @@ function EpgCssTemplate()
     ..'main{background:'..edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
     ..';}.station{--width:'..edcb.GetPrivateProfile('GUIDE','service','210',INI)
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour','22',INI)
-    ..'px;}.hour{height:'..(ONE_MIN_PX*60)
-    ..'px;}'
+    ..'px;}#tv-guide{--ONE_MIN_PX:'..ONE_MIN_PX
+    ..';}'
 
     ..Background('news', '#B3E5FC')
     ..Background('sports', '#FFF9C4')
@@ -78,7 +78,7 @@ function EpgJsTemplate(baseTime,NOW,date,lastTime)
   local titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,INI))
   return '<script>'
     ..'const SHOW_MIN='..(SHOW_MIN and 'true' or 'false')
-    ..';const oneminpx='..ONE_MIN_PX
+    ..';let oneminpx='..ONE_MIN_PX
     ..';const baseTime='..baseTime
     ..';const lastTime='..(lastTime and lastTime or 'null')
     ..';const titleControl='..titleControl
@@ -106,7 +106,7 @@ function CellTemplate(v, op, id ,custom)
   local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and 'left:calc(100%*'..(left..'/'..column)..');top:'..lastPx..'px;' or '')..'height:'..(endPx-lastPx)..'px;'..(width~=column and 'width:calc(100%*'..width..'/'..column..');' or '')..'">\n'
+  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and '--l:'..(left..'/'..column)..';--t:'..lastPx..';' or '')..'--h:'..(endPx-lastPx)..';'..(width~=column and '--w:'..width..'/'..column..';' or '')..'">\n'
     ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=utc9Now and ' end' or '')..'"><div class="content">\n'
 
     ..'<div class="sub_cont">'..(custom and '<img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'">' or '')..'<div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'

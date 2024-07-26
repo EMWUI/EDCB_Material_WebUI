@@ -1,8 +1,8 @@
 function Version(a)
   local ver={
-    css='240725',
+    css='240726',
     common='240725',
-    tvguide='240725',
+    tvguide='240726',
     player='240725',
     onair='240725',
     library='240725',

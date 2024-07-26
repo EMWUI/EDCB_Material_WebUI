@@ -226,6 +226,13 @@ $(function(){
 		}
 	});
 
+	$('.ONE_MIN_PX').change(e => {
+		oneminpx = $(e.currentTarget).val();
+		$('#tv-guide').css('--ONE_MIN_PX', String(oneminpx));
+		$('.ONE_MIN_PX').val(oneminpx);
+		document.querySelector('#ONE_MIN_PX_S').MaterialSlider.change(oneminpx);
+	});
+
 	//指定時間にスクロール
 	$('.scroller').click(e => $('#tv-guide-container').animate({scrollTop: $($(e.currentTarget).attr('href')).position().top-marginmin*oneminpx}, 550, 'swing'));
 	

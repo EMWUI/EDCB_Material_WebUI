@@ -157,11 +157,11 @@ for i=0,6 do
   table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   for j,w in ipairs(b) do
     startTime=TimeWithZone(w.startTime)
-    startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60), 60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60)*ONE_MIN_PX, ONE_MIN_PX*60*interval)
+    endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60), 60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="height:'..(startPx-lastPx)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -173,8 +173,8 @@ for i=0,6 do
       lastPx=endPx
     end
   end
-  if total<interval*60*ONE_MIN_PX then
-    table.insert(ctt, '<div class="cell" style="height:'..(interval*60*ONE_MIN_PX-total)..'px"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+  if total<interval*60 then
+    table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
   end
   table.insert(ctt, '</div></div>\n')
 end
