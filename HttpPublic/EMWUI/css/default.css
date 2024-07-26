@@ -122,8 +122,10 @@ select {
   -moz-appearance: none;
   appearance: none;
   background: transparent; }
-  select[multiple]{
-    padding: 8px 0; }
+  select[multiple] option {
+    padding: 4px;
+    &.subGenre {
+      padding: 2px 4px; } }
   .pulldown {
     padding: 4px 0;
     position: relative;
@@ -211,6 +213,16 @@ dialog {
   .custom .sub_cont .mark {
     margin: 6px; }
 
+*:has(>.logo) {
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex;
+  align-items: center; }
+  .logo {
+    max-height: 1em;
+    margin-right: 2px;
+  +span+span{
+    margin-left: 8px; } }
 
 /*録画中ボタン*/
 .recmark {
@@ -621,6 +633,11 @@ h4 .mdl-button--icon {
   left: 0;
   z-index: 99; }
 
+.mdl-layout__drawer .mdl-navigation .mdl-navigation__link:has(>.material-icons) {
+  display: -webkit-inline-flex;
+  display:     -ms-inline-flexbox;
+  display:         inline-flex;
+  align-items: center; }
 .mdl-navigation__link .material-icons {
   font-size: 24px;
   margin-right: 32px; }
@@ -699,12 +716,17 @@ h4 .mdl-button--icon {
   top: 0;
   z-index: 3; }
   #tv-guide-header a {
+    padding: 0 6px;
+    justify-content: center;
     border-right: solid 1px #FFF;
     border-left: solid 1px #FFF;
     text-decoration: none;
     text-align: center;
     overflow: hidden;
-    box-sizing: border-box; }
+    box-sizing: border-box;
+    white-space: nowrap;
+    span {
+      min-width: 0; } }
 
 #tv-guide-main {
   display: -webkit-inline-flex;
@@ -809,9 +831,6 @@ h4 .mdl-button--icon {
           flex-shrink: 0;
   position: relative;
   box-sizing: border-box; }
-  .station>img {
-    height: 0.8em;
-    vertical-align: baseline; }
   #tv-guide-main .station:last-child:before {
     top: 0;
     right: 0;
@@ -1319,7 +1338,8 @@ h4 .mdl-button--icon {
       #sidePanel #dateList {
         flex-wrap: wrap; }
     #dateList_select {
-      width: 160px; }
+      width: auto;
+      min-width: 164px; }
     #dateList_touch {
       width: 175px; }
     #dateList_edit {
@@ -1653,21 +1673,16 @@ h4 .mdl-button--icon {
 
 
 #playerUI {
-  display: -webkit-flex;
-  display:     -ms-flexbox;
-  display:         flex;
   width: 100%;
-  height: 100%;
-  position: absolute;
-  top: 0;
   color: #EEEEEE;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
-          user-select: none; }
+          user-select: none;
+  .bar {
+    position: absolute;
+    width: 100%;
+    box-sizing: border-box; } }
   [id^="movie"] #playerUI > div,
   #popup.is-visible #playerUI > div {
     opacity: 0;

@@ -17,7 +17,7 @@ if onid and tsid and sid then
 end
 
 ct={
-  title='<span id="service_hedder">リモート視聴</span>',
+  title='リモート視聴',
   js='<script src="js/onair.js'..Version('onair')..'"></script>\n',
   menu='<li class="mdl-menu__item" id="forced" data-ctok="'..CsrfToken('tvcast')..'">強制停止</li>'
     ..'<li class="ext mdl-menu__item mdl-menu__item--full-bleed-divider"><label for="load_subtitles" class="mdl-layout-spacer">字幕の読み込み</label><span><label class="mdl-switch mdl-js-switch" for="load_subtitles"><input type="checkbox" id="load_subtitles" class="mdl-switch__input" checked></label></span></li>'
@@ -83,9 +83,6 @@ for i,v in ipairs(ServiceList) do
         ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>'
         ..'</div>\n'
     )
-    if onid==v.onid and tsid==v.tsid and sid==v.sid then
-      ct.title='<span id="service_hedder">'..v.service_name..'</span>'
-    end
   end
 end
 

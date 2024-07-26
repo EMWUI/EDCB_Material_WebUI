@@ -95,12 +95,12 @@ const $fast = $('#fast');
 const $remote = $('#remote');
 const $remote_control = $('.remote-control');
 const $danmaku = $('#danmaku');
-let quality
+let quality = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1;
 let audioVal = 0;
 const loadHls = (d, reload) => {
 	let dateNow = new Date();
-	dateNow =(dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
-	const hls1 = d.onid ? `&hls=${1+d.onid+d.tsid+d.sid}` : `&hls=${1+dateNow}`;
+	dateNow = (dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
+	const hls1 = `&hls=${1+dateNow}`;
 
 	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
 		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&${
@@ -164,7 +164,7 @@ const loadMovie = $e => {
 	    if (d.info.audio) $audios.attr('disabled', d.info.audio == 1);
 	}
 
-	$titlebar.html(d.name || `${d.info.service} - ${ConvertTitle(d.info.title)}`);
+	$titlebar.html(d.name || `${ConvertService(d.info)}<span>${ConvertTitle(d.info.title)}</span>`);
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -264,7 +264,20 @@ $(function(){
 			$vid.removeClass('is-loadding');
 
 			const d = $('.is_cast').data();
-			if (!d.paused) vid.play();
+			if (!d.paused) {
+				const promise = vid.play();
+				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
+				if (promise !== undefined) {
+					promise.catch(error => {
+						vid.muted = true;
+						vid.play();
+						$(document).one('click', () => {
+							vid.muted = false;
+							document.querySelector('#volume').MaterialSlider.change(vid.volume);
+						});			
+					});
+				}
+			}
 			if (!d.canPlay) return;
 
 			if ($subtitles.hasClass('checked')) loadVtt();
@@ -297,10 +310,12 @@ $(function(){
 	$stop.click(() => {
 		resetVid();
 		vid.src = '';
+		if (location.search.match(/id=\d*-\d*-\d*/)) history.replaceState(null,null,'?');
 		$vid.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
 		$('.playing').removeClass('playing');
+		$titlebar.empty();
 		$seek.hasClass('mdl-progress') ? seek.MaterialProgress.setProgress(0) : seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$seek.attr('disabled', true);
@@ -444,8 +459,7 @@ $(function(){
 		//video.defaultPlaybackRate = $(e.currentTarget).prop('checked') ? video.playbackRate : 1;
 	});
 
-	$(`#${localStorage.getItem('quality')}`).prop('checked', true);
-	quality = $('[name=quality]:checked').val();
+	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
 		if ($e.prop('checked')){
@@ -466,7 +480,7 @@ $(function(){
 
 	hideBar(0);
 	$player_container = $('.player-container>*').not('.remote-control');
-	if (!isTouch){
+	if (!isMobile && !isTouch){
 		$player_container.hover(() => {
 			stopTimer();
 			$playerUI.addClass('is-visible');
@@ -478,8 +492,8 @@ $(function(){
 			$playerUI.addClass('is-visible');
 		});
 	}else{
+		$('#playerUI').prepend('<div id="center">');
 		$('#ctl-button .ctl-button').prependTo('#center');
-		$('#center').removeClass('hidden');
 		$('#volume-container').addClass('hidden');
 		$('.player-container>*').not('.remote-control').click(() => {
 			$('#playerUI').addClass('is-visible');

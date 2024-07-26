@@ -37,9 +37,10 @@ $(function(){
 
 			if ($e.hasClass('is_cast')){
 				setEpgInfo(d.info);
+				$('#epginfo').removeClass('hidden');
 				audioMemu(d.info.audio, true);
 				$duration.text(getVideoTime(d.info.duration));
-				$titlebar.html(`${d.info.service} - ${ConvertTitle(d.info.title)}`).addClass('is-visible');
+				$titlebar.html(`${ConvertService(d.info)}<span>${ConvertTitle(d.info.title)}</span>`).addClass('is-visible');
 				hideBar(2500);
 				$vid.data('title', d.info.title).data('audio', d.info.audio);
 			}
@@ -112,25 +113,30 @@ $(function(){
 
 	$('#ServiceList .onair').click(e => {
 		const $e = $(e.currentTarget);
-		if ($e.hasClass('is_cast')) return;
+		const d = $e.data().info;
+		const fn = () => {
+			$('.is_cast').removeClass('is_cast');
+			$e.addClass('is_cast');
+			history.replaceState(null,null,`?id=${d.onid}-${d.tsid}-${d.sid}`)
+			loadMovie($e);
+			audioMemu(d.audio);
+			setEpgInfo(d);
+			$('#epginfo').removeClass('hidden');
+			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+		}
 
-		$('.is_cast').removeClass('is_cast');
-		$e.addClass('is_cast');
-		loadMovie($e);
-		audioMemu($e.data().info.audio);
-		setEpgInfo($e.data().info);
-		$('#epginfo').removeClass('hidden');
-		$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+		if ($e.hasClass('is_cast') || d.eid == 0){
+			if (d.eid == 0) Snackbar({message: '番組情報がありませんが、視聴リクエストしますか？', actionHandler: fn, actionText: 'はい'});
+			return;
+		}
+
+		fn();
 	});
 	$('.cast').click(e => {
 		const $e = $(e.currentTarget).parents('li').addClass('is_cast');
 		const d = $e.data();
-		if (d.eid == 0){
-			$titlebar.text(`${data.info.service} - 放送休止`);
-			$currentTime_duration.text('0:00');
-			$vid.attr('src', '');
-			seek.MaterialSlider.change(0);
-			Snackbar({message: '放送休止'});
+		if (d.info.eid == 0){
+			Snackbar({message: '番組情報がありません'});
 		}else if (Magnezio){
 			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
 				!$(xml).find('success').length ? Snackbar({message: '失敗'}) : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'

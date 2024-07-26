@@ -425,8 +425,8 @@ for i,v in ipairs(ServiceList) do
       '<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">'
         ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>'
         ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' checked' or '')..'>'
-        ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'..v.service_name..'</label></span>'
-        ..'<span class="mdl-list__item-sub-title">'..v.sid..(v.change and ' <span class="mdl-color-text--accent">※TSID変更を検出 '..v.change..'→'..v.tsid..'</span>' or '')..'</span></span>' -- SID表示サブチャネル判別用
+        ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</label></span>'
+        ..'<span class="mdl-list__item-sub-title">'..v.onid..'-'..v.tsid..'-'..v.sid..(v.change and ' <span class="mdl-color-text--accent">※TSID変更を検出 '..v.change..'→'..v.tsid..'</span>' or '')..'</span></span>' -- SID表示サブチャネル判別用
         ..'<span class="mdl-list__item-secondary-action">'
         ..'<label class="mdl-switch mdl-js-switch" for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
         ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'>'

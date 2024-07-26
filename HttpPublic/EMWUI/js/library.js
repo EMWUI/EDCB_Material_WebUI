@@ -2,9 +2,10 @@ $(function(){
 	const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
 
 	//ライブラリ取得
-	const getLibrary = () => {
+	const getLibrary = hash => {
+		if (hash) history.pushState(null, null, `?${$.param(hash)}`);
 		showSpinner(true);
-		$.get(`${ROOT}api/Library`, location.hash.slice(1)).done(xml => {
+		$.get(`${ROOT}api/Library${location.search}`).done(xml => {
 			if ($(xml).find('error').length){
 				Snackbar({message: $(xml).find('error').text()});
 				showSpinner();
@@ -46,14 +47,10 @@ $(function(){
 		const folder = [];
 		const file = [];
 		const baseHash = [];
-		let index;
-		if (xml.children('index').length){
-			index = xml.num('index');
-			baseHash.push({name: 'i', value: index});
-		}
+		const index = xml.num('index');
+		if (index) baseHash.push({name: 'i', value: index});
 		const path = [...baseHash];
-		if (xml.children('pathhash').length)
-			xml.txt('pathhash').split(',').forEach(e => baseHash.push({name: 'p', value: e}) );
+		if (xml.children('pathhash').length) xml.txt('pathhash').split(',').forEach(e => baseHash.push({name: 'p', value: e}) );
 
 		xml.children('dir, file').each((i, e) => {
 			const name = $(e).txt('name');
@@ -64,7 +61,7 @@ $(function(){
 				if (xml.children('dirhash').length) hash.push({name: 'p', value: xml.txt('dirhash')});
 				if ($(e).children('hash').length) hash.push({name: 'd', value: $(e).txt('hash')});
 
-				$e.addClass('folder').click(() => location.hash = `#${$.param(hash)}`);
+				$e.addClass('folder').click(() => getLibrary(hash));
 				isGrid()
 					? $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
 						$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
@@ -131,21 +128,22 @@ $(function(){
 		sortLibrary({file: file});
 
 		let id = 'home';
-		location.hash.split('&').forEach(e => {
-			if (e.match(/i=.*/)) id = `index${index}`;
-			if (e.match(/d=.*/)) {
-				id = e.match(/d=(.*)/)[1];
+		location.search.slice(1).split('&').forEach(e => {
+			e = e.split('=');
+			if (e[0] == 'i') id = `index${e[1]}`;
+			if (e[0] == 'd') {
+				id = e[1];
 				return;
 			}
 		});
 
-		const createTab = (id, text, hash, active) => $('<span>', {id: `l_${id}`, class: `mdl-layout__tab${active ? ' is-active' : ''}`, text: text, data: {hash: $.param(hash)}, click: () => location.hash = `#${$.param(hash)}`});
+		const createTab = (id, text, hash, active) => $('<span>', {id: `l_${id}`, class: `mdl-layout__tab${active ? ' is-active' : ''}`, text: text, data: {hash: hash}, click: () => getLibrary(hash)});
 		const chevron_right = '<i class="mdl-layout__tab material-icons">chevron_right'
 
 		const dirname = xml.txt('dirname');
 		$('.mdl-layout__header-row .mdl-layout-title').text(dirname);
 		if (!$(`#l_${id}`).length){
-			$('.path').html(createTab('home', 'ホーム', '', dirname == 'ホーム'));
+			$('.path').html(createTab('home', 'ホーム', {}, dirname == 'ホーム'));
 
 			if (xml.children('pathname').length){
 				xml.txt('pathname').split('/').forEach((e, i) => {
@@ -182,7 +180,7 @@ $(function(){
 		getLibrary();
 	}
 
-	$(window).on('hashchange', () => getLibrary());
+	$(window).on('popstate', () => getLibrary());
 	toggleView(true);
 
 	$('#menu_autoplay').removeClass('hidden');
@@ -200,7 +198,7 @@ $(function(){
 	});
 	//スワイプ
 	if (isTouch){
-		const librarySwipe = $e => {if ($e.length) location.hash = `#${$e.data('hash')}`;};
+		const librarySwipe = $e => {if ($e.length) getLibrary($e.data('hash'));};
 		$('.lib-swipe,.lib-swipe *').hammer().on('swiperight', () => librarySwipe( $('.mdl-layout__tab.is-active').prevAll('span:first') ));
 		$('.lib-swipe,.lib-swipe *').hammer().on('swipeleft' , () => librarySwipe( $('.mdl-layout__tab.is-active').nextAll('span:first') ));
 	}

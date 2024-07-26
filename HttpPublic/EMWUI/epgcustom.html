@@ -29,83 +29,76 @@ if not _preset then
 end
 
 if preset then
-    key={
-      andKey=edcb.GetPrivateProfile(_preset,'andKey','',INI),
-      notKey=edcb.GetPrivateProfile(_preset,'notKey','',INI),
-      regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,INI))~=0,
-      titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,INI))~=0,
-      aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,INI))~=0,
-      notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,INI))~=0,
-      notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,INI))~=0,
-      freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,INI)),
-      chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,INI))~=0,
-      chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,INI)),
-      chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,INI))~=0,
-      chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,INI)),
-      chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,INI)),
-      days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,INI)),
-      contentList={},
-      serviceList={},
-      dateList={},
-      lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,INI))~=0,
-    }
+  key={
+    andKey=edcb.GetPrivateProfile(_preset,'andKey','',INI),
+    notKey=edcb.GetPrivateProfile(_preset,'notKey','',INI),
+    regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,INI))~=0,
+    titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,INI))~=0,
+    aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,INI))~=0,
+    notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,INI))~=0,
+    notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,INI))~=0,
+    freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,INI)),
+    chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,INI))~=0,
+    chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,INI)),
+    chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,INI))~=0,
+    chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,INI)),
+    chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,INI)),
+    days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,INI)),
+    contentList={},
+    serviceList={},
+    dateList={},
+    lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,INI))~=0,
+  }
 
-    for i=0,1000 do
-      v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,INI))
-      if v==0 then break end
-      table.insert(key.contentList, {content_nibble=v})
+  for i=0,1000 do
+    v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,INI))
+    if v==0 then break end
+    table.insert(key.contentList, {content_nibble=v})
+  end
+
+  for i=0,1000 do
+    v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,INI)
+    if v==0 then break end
+    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+    if #m==3 then
+      table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
     end
+  end
 
-    for i=0,1000 do
-      v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,INI)
-      if v==0 then break end
-      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-      if #m==3 then
-        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+  for v in string.gmatch(edcb.GetPrivateProfile(_preset,'dateList','',INI), '[^,]+') do
+    m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+    if #m==6 then
+      dateInfo={
+        startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+        endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+      }
+      if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+        dateInfo.startHour=0+m[2]
+        dateInfo.startMin=0+m[3]
+        dateInfo.endHour=0+m[5]
+        dateInfo.endMin=0+m[6]
+        table.insert(key.dateList, dateInfo)
       end
     end
-
-    for v in string.gmatch(edcb.GetPrivateProfile(_preset,'dateList','',INI), '[^,]+') do
-      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-      if #m==6 then
-        dateInfo={
-          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
-        }
-        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
-          dateInfo.startHour=0+m[2]
-          dateInfo.startMin=0+m[3]
-          dateInfo.endHour=0+m[5]
-          dateInfo.endMin=0+m[6]
-          table.insert(key.dateList, dateInfo)
-        end
-      end
-    end
+  end
 elseif post then
   key=GetSearchKey(post)
 elseif olympic then
-  key={
-    andKey='(オ|パラ)リンピック|五輪|FIFAワールドカップ',
-    notKey='',
-    regExpFlag=true,
-    titleOnlyFlag=true,
-    chkDurationMin=10,
-    contentList={{content_nibble=262}},
-    serviceList={},
-    days=3
-  }
+  key=GetSearchKey()
+  key.andKey='(オ|パラ)リンピック|五輪|FIFAワールドカップ'
+  key.regExpFlag=true
+  key.titleOnlyFlag=true
+  key.chkDurationMin=10
+  key.contentList={{content_nibble=262}}
+  key.days=3
   for i,v in ipairs(edcb.GetChDataList()) do
     if v.searchFlag then table.insert(key.serviceList, v) end
   end
 end
 
-if not key then
-  key={}
-end
-
 edcb.htmlEscape=15
 
-b=edcb.SearchEpg(key)
+b=edcb.SearchEpg(key or {})
 table.sort(b, function(a,b)
   if os.time(a.startTime)==os.time(b.startTime) then
     return a.sid < b.sid

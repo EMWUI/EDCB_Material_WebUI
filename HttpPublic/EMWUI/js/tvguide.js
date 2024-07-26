@@ -52,7 +52,7 @@ $(function(){
 	});
 
 	const $tvGuideContainer = $('#tv-guide-container');
-	if ($('.station:last-child').offset().left+$('.station:last-child').width() < $tvGuideContainer.width()) $('#tv-guide').addClass('grow');
+	if ($('.station').length && $('.station:last-child').offset().left+$('.station:last-child').width() < $tvGuideContainer.width()) $('#tv-guide').addClass('grow');
 
 	let HIDE_SUBHEADER;
 	let speedX, speedY;
@@ -180,7 +180,7 @@ $(function(){
 		setInterval(() => tvGide.line(), 1000);
 	}
 	//番組名
-	if (!isTouch && titleControl&1 && titleControl&4 || isTouch && titleControl&2 && titleControl&16){
+	if (!isMobile && titleControl&1 && titleControl&4 || isMobile && titleControl&2 && titleControl&16){
 		const observer = new IntersectionObserver((entries) => {
 			for(const e of entries) {
 				const fixed = e.isIntersecting && ((e.intersectionRect.top <= e.rootBounds.top && e.intersectionRect.height < e.boundingClientRect.height) || e.rootBounds.height < e.boundingClientRect.height)
@@ -211,9 +211,9 @@ $(function(){
 				base > 0 && base < $(e).innerHeight() ? $(e).find('tt').css('padding-top', base) : $(e).find('tt').css('padding-top', '');
 			});
 		});
-	}else if (!isTouch && titleControl&1 && titleControl&8 || isTouch && titleControl&2 && titleControl&32){
-	  $('main').addClass('titlescroll');
-	  $('head').append('<style>.titlescroll .content,.titlescroll .hour tt{top:'+ $('#tv-guide-header').height()+'px;}</style>')
+	}else if (!isMobile && titleControl&1 && titleControl&8 || isMobile && titleControl&2 && titleControl&32){
+		$('main').addClass('titlescroll');
+		$('head').append('<style>.titlescroll .content,.titlescroll .hour tt{top:'+ $('#tv-guide-header').height()+'px;}</style>')
 	}
 
 	//現時間にスクロール

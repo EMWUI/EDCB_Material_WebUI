@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
-    css='240718',
-    common='240721',
-    tvguide='240717',
-    player='240720',
-    onair='240720',
-    library='240717',
+    css='240725',
+    common='240725',
+    tvguide='240725',
+    player='240725',
+    onair='240725',
+    library='240725',
     setting='240705',
     datastream='240719',
     legacy='20240430',
@@ -229,7 +229,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         service_name=w.service_name
-        s=s..'<span class="service">'..service_name..'</span>'
+        s=s..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span class="service">'..service_name..'</span></span>'
         break
       end
     end
@@ -735,11 +735,9 @@ function PlayerTemplate(video, liveOrAudio)
 <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
 <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
 <div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
-]=] or '')..(live and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')..[=[
+]=] or '')..(live and USE_LIVEJK and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')..[=[
 <div id="playerUI" class="is-visible">
-<div id="center" class="hidden"></div>
 <div id="titlebar" class="bar"></div>
-<div></div>
 <div id="control" class="bar">
 <div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" step="0.00001">')..[=[</div>
 <button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
@@ -764,22 +762,18 @@ if audio then
     s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio'..i..'" name="audio" value="0"'..(i==1 and ' checked' or '')..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
   end
 else
-  s=s..[=[
-<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>
-<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>
-]=]
+  s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
+    ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
 end
 
 s=s..[=[
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
 ]=]
-  local checked
   for i,v in ipairs(XCODE_OPTIONS) do
     if not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
       local id = 'q_'..mg.md5(v.name)
-      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(not checked and ' checked' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
-      checked = true
+      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
@@ -841,7 +835,6 @@ function MacroTemplate()
               <label class="drop-down " for="macro-start28">28時間表記</label>
               <ul>
                 ]=].. Create({
-                  {'$SDYYYY28$','年 4桁'},
                   {'$SDYYYY28$','年 4桁'},
                   {'$SDYY28$',  '年 2桁'},
                   {'$SDM28$',   '月'},

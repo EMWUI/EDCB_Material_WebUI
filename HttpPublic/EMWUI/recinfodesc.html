@@ -66,8 +66,8 @@ if v then
     
     epgInfo='<div>\n<h4 class="mdl-typography--title">'
       ..ConvertTitle(v.title)..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
-      ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service">'
-      ..v.serviceName..'</span></span>'..SearchConverter(v, v.serviceName)..'</h4>\n<p>'
+      ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'
+      ..v.serviceName..'</span></span></span></span>'..SearchConverter(v, v.serviceName)..'</h4>\n<p>'
       ..(info or '')..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
       ..(extInfo and '<div class="mdl-typography--body-1">'..DecorateUri(extInfo):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
       ..'<ul>'..RecInfo

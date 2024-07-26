@@ -1,6 +1,7 @@
 let PresetList, ReserveAutoaddList;
-const isTouch = navigator.platform.indexOf("Win") != 0  && ('ontouchstart' in window);
-const week = ['日', '月', '火', '水', '木', '金', '土'];
+const isMobile = navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/);
+const isTouch = 'ontouchstart' in window;
+const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
 const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Constant_.MAX_WIDTH).matches;
 const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
@@ -56,11 +57,12 @@ const createViewDate = value => {
 const ConvertTime = (t, show_sec, show_ymd) => {
 	if (!t)	return '未定';
 	t = createViewDate(t);
-	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${week[t.getUTCDay()]}) ` : ''
+	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${WEEK[t.getUTCDay()]}) ` : ''
 		}${zero(t.getUTCHours())}:${zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${zero(t.getUTCSeconds())}</small>` : ''}`;
 }
 const ConvertText = a => a.replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');
 const ConvertTitle = a => !a ? '' : a.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
+const ConvertService = d => `<img class="logo" src="${ROOT}api/logo?onid=${d.onid}&sid=${d.sid}"><span>${d.service}</span>`;
 
 const Notify = {
 	sound: new Audio(`${ROOT}video/notification.mp3`),
@@ -122,7 +124,7 @@ const Notify = {
 		const $notifyList = $('<li>', {id: `notify_${d.eid}`, class: 'mdl-list__item mdl-list__item--two-line', data: {start: d.starttime}, append: [
 			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = `epginfo.html?onid=${d.onid}&tsid=${d.tsid}&sid=${d.sid}&eid=${d.eid}`, append: [
 				$('<span>', {html: d.title}),
-				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${week[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
+				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${WEEK[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
 			$('<span>', {class: 'mdl-list__item-secondary-content', append: [
 				$('<button>', {
 					class: 'mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon',
@@ -385,7 +387,7 @@ const setEpgInfo = d => {
 	}
 	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.recinfoid && true || d.starttime && !d.endtime || Date.now() < d.endtime);
 
-	$('#service,#service_hedder').html(d.service);
+	$('#service').html(ConvertService(d));
 	$('#links').html($('.open .links a').clone(true));
 	$('#summary p').html( ConvertText(d.text) );
 	$('#ext').html( ConvertText(d.text_ext) );
@@ -518,6 +520,29 @@ const setRecSettting = r => {
 	return r;
 }
 
+//時間絞り込み
+const dateList = {
+	click: e => {
+		$(e.currentTarget).toggleClass('mdl-color--accent mdl-color-text--accent-contrast');
+		const $e = $('#dateList_select option').eq( $(e.currentTarget).data('count') );
+		$e.prop('selected', !$e.prop('selected'));
+	},
+	create: () => {
+		$("#dateList_touch").empty();
+		$('[name=dateList]').val(
+			$('#dateList_select option').get().map((e, i) => {
+				dateList.add.touch(i, $(e).text());
+				return $(e).val();
+			})
+		);
+	},
+	//追加
+	add: {
+		select: (t, text) => $('#dateList_select').append(`<option value="${text ? `${t}">${text}` : `${t.startDayOfWeek}-${t.startTime}-${t.endDayOfWeek}-${t.endTime}">${t.startDayOfWeek} ${t.startTime} ～ ${t.endDayOfWeek} ${t.endTime}`}`),
+		touch: (i, text) => $("#dateList_touch").append($('<li>', {class: 'mdl-list__item', data: {count: i}, click: e => dateList.click(e), html: `<span class="mdl-list__item-primary-content">${text}</span>`}))
+	}
+}
+
 //検索条件を反映
 const setSerchSetting = s => {
 	if (s.SearchSettting) s = s.SearchSettting;
@@ -536,10 +561,10 @@ const setSerchSetting = s => {
 	$('#dateList_select,#dateList_touch').empty();
 	$('[name=dateList]').val(
 		s.dateList.map((e, i) => {
-			const val = `${week[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${week[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`;
-			const txt = `${week[e.startDayOfWeek]} ${zero(e.startHour)}:${zero(e.startMin)} ～ ${week[e.endDayOfWeek]} ${zero(e.endHour)}:${zero(e.endMin)}`
-			$('#dateList_select').append(`<option value="${val}">${txt}</otion>`);
-			$('#dateList_touch').append(`<li class="mdl-list__item" data-count="${i}"><span class="mdl-list__item-primary-content">${txt}</span></li>`);
+			const val = `${WEEK[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${WEEK[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`;
+			const txt = `${WEEK[e.startDayOfWeek]} ${zero(e.startHour)}:${zero(e.startMin)} ～ ${WEEK[e.endDayOfWeek]} ${zero(e.endHour)}:${zero(e.endMin)}`
+			dateList.add.select(val, txt);
+			dateList.add.touch(i, txt);
 			return val;
 		}
 	));
@@ -909,7 +934,7 @@ $(function(){
 	});
 
 	//通知
-	if (!isTouch && window.Notification){
+	if (!isMobile && !isTouch && window.Notification){
 		if (Notification.permission == 'granted'){
 			$('.notification').removeClass('hidden');
 			//通知リスト読み込み
@@ -1018,20 +1043,7 @@ $(function(){
 			$(e).next().find('input').mdl_prop('disabled', !$(e).prop('checked'));
 		});
 	});
-	//[name=dateList]
-	const dateList = {
-		create: () => {
-			$("#dateList_touch").empty();
-			$('[name=dateList]').val(
-				$('#dateList_select option').get().map((e, i) => {
-					$("#dateList_touch").append(`<li class="mdl-list__item" data-count="${i}"><span class="mdl-list__item-primary-content">${$(e).text()}</span></li>`);
-					return $(e).val();
-				})
-			);
-		},
-		//追加
-		add: t => $('#dateList_select').append(`<option value="${t.startDayOfWeek}-${t.startTime}-${t.endDayOfWeek}-${t.endTime}">${t.startDayOfWeek} ${t.startTime} ～ ${t.endDayOfWeek} ${t.endTime}</otion>`)
-	}
+	//追加
 	$('#add_dateList').click(() => {
 		const date = {
 			startTime: $('#startTime').val(),
@@ -1041,12 +1053,15 @@ $(function(){
 		if ($('#dayList').prop('checked')){
 			date.startDayOfWeek = $('#startDayOfWeek').val();
 			date.endDayOfWeek = $('#endDayOfWeek').val();
-			dateList.add(date);
+			dateList.add.select(date);
+		}else if(date.startTime > date.endTime){
+			Snackbar({message: '開始 > 終了です'});
+			return;
 		}else{
 			$('.DayOfWeek:checked').each((i, e) => {
 				date.startDayOfWeek = $(e).val();
 				date.endDayOfWeek = $(e).val();
-				dateList.add(date);
+				dateList.add.select(date);
 			});
 		}
 		dateList.create();
@@ -1057,12 +1072,9 @@ $(function(){
 		dateList.create();
 	});
 	//選択
-	$(document).on('click', '#dateList_touch .mdl-list__item', e => {
-		$(e.currentTarget).toggleClass('mdl-color--accent mdl-color-text--accent-contrast');
-		const $e = $('#dateList_select option').eq( $(e.currentTarget).data('count') );
-		$e.prop('selected', !$e.prop('selected'));
-	});
+	$('#dateList_touch .mdl-list__item').click(e => dateList.click(e));
 	//編集表示
+	$('#add_dateList').prop('disabled', $('#dateList_edit').is(':hidden'));
 	$('#edit_dateList').click(() => {
 		const visible = $('#dateList_edit').hasClass('is-visible');
 		$('#edit_dateList .material-icons').text(`expand_${visible ? 'more' : 'less'}`);

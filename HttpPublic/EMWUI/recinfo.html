@@ -89,7 +89,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
                   or 'data-href="recinfodesc.html?id='..v.id ..'&amp;page='..pageIndex)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
-    ..'\n <td class="service mdl-data-table__cell--non-numeric">'..v.serviceName
+    ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..v.comment
     ..'\n <td class="drop mdl-cell--2-col-phone"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drop:</span>'..v.drops
     ..'\n <td class="scramble mdl-cell--2-col-phone"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>'..v.scrambles
