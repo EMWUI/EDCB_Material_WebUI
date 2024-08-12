@@ -60,7 +60,7 @@ const ConvertTime = (t, show_sec, show_ymd) => {
 	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${WEEK[t.getUTCDay()]}) ` : ''
 		}${zero(t.getUTCHours())}:${zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${zero(t.getUTCSeconds())}</small>` : ''}`;
 }
-const ConvertText = a => a.replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');
+const ConvertText = a => !a ? '' : a.replace(/(https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>))/g, '<a href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');
 const ConvertTitle = a => !a ? '' : a.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
 const ConvertService = d => `<img class="logo" src="${ROOT}api/logo?onid=${d.onid}&sid=${d.sid}"><span>${d.service}</span>`;
 
@@ -201,8 +201,8 @@ const toObj = {
 
 		if (recinfo){
 			d.recinfoid = e.num('ID');
-			if (e.children('programInfo').length){
-				const programInfo=e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
+			const programInfo = e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
+			if (programInfo){
 				d.text = programInfo[1];
 				d.text_ext = programInfo[2];
 				d.genre = programInfo[3];
@@ -262,7 +262,7 @@ const toObj = {
 			d.starttime = new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime(),
 			d.duration = e.num('duration');
 			if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
-			d.service_name = e.txt('service_name');
+			d.service = e.txt('service_name');
 			d.onid = e.num('ONID');
 			d.tsid = e.num('TSID');
 			d.sid = e.num('SID');
@@ -392,9 +392,9 @@ const setEpgInfo = d => {
 	$('#summary p').html( ConvertText(d.text) );
 	$('#ext').html( ConvertText(d.text_ext) );
 
-	$('#genreInfo').html(() => typeof d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`).join(''));
-	$('#videoInfo').html(() => typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`).join(''));
-	$('#audioInfo').html(() => typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text} : ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`).join(''));
+	$('#genreInfo').html(() => typeof !d.genre ? '' : d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`).join(''));
+	$('#videoInfo').html(() => typeof !d.video ? '' : d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`).join(''));
+	$('#audioInfo').html(() => typeof !d.audio ? '' : d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text} : ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`).join(''));
 
 	if (d.recinfoid){
 		$('#otherInfo').html(d.other ? `<li>${d.other.replace(/\n/g,'<li>')}` : '');
