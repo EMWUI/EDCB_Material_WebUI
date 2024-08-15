@@ -101,9 +101,7 @@ if st then
   end
   ct.subheader=ct.subheader..'<div class="dividers navigation__item mdl-color-text--primary"><form id="date_input" action="epgweek.html">'
     ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" id="dateFormat" type="date" name="date" value="'..os.date('%Y-%m-%d', baseDate*24*3600)..(minTime and '" min="'..os.date('%Y-%m-%d', minTime) or '')..(maxTime and '" max="'..os.date('%Y-%m-%d', maxTime-7*24*3600) or '')..'"><label class="mdl-textfield__label" for="dateFormat"></label></div>'
-    ..'<input type="hidden" name="onid" value="'..st.onid..'">'
-    ..'<input type="hidden" name="tsid" value="'..st.tsid..'">'
-    ..'<input type="hidden" name="sid" value="'..st.sid..'">'
+    ..'<input type="hidden" name="id" value="'..st.onid..'-'..st.tsid..'-'..st.sid..'">'
     ..(hour~=4 and '<input type="hidden" name="hour" value="'..hour..'">' or '')
     ..(interval~=DEF_INTERVAL and '<input type="hidden" name="interval" value="'..interval..'">' or '')
     ..'</form></div>\n'
@@ -165,7 +163,7 @@ for i=0,6 do
       total=total+startPx-lastPx
       lastPx=startPx
     end
-    if endPx-lastPx>2 then
+    if endPx-lastPx>0 then
       op.url='epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..(w.past and startTime or w.eid)..'&amp;week='..hrefGene
       table.insert(ctt, CellTemplate(w, op))
 

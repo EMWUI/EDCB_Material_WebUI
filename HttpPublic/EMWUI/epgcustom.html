@@ -213,7 +213,7 @@ for i,v in ipairs(st) do
       total=total+startPx-lastPx
       lastPx=startPx
     end
-    if endPx-lastPx>2 then
+    if endPx-lastPx>0 then
       op={
         service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or '',
         url='epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..(w.past and startTime or w.eid)

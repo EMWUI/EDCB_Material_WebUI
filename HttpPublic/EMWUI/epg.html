@@ -242,7 +242,7 @@ for i,v in ipairs(st) do
         total=total+startPx-lastPx
         lastPx=startPx
       end
-      if endPx-lastPx>2 then
+      if endPx-lastPx>0 then
         --イベントグループのサブでないか
         if not w.eventGroupInfo or #w.eventGroupInfo.eventDataList~=1 or
            w.eventGroupInfo.eventDataList[1].onid==w.onid and
