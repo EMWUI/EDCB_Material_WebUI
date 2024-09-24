@@ -122,7 +122,7 @@ const Notify = {
 		const date = createViewDate(d.starttime);
 
 		const $notifyList = $('<li>', {id: `notify_${d.eid}`, class: 'mdl-list__item mdl-list__item--two-line', data: {start: d.starttime}, append: [
-			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = `epginfo.html?onid=${d.onid}&tsid=${d.tsid}&sid=${d.sid}&eid=${d.eid}`, append: [
+			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, append: [
 				$('<span>', {html: d.title}),
 				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${WEEK[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
 			$('<span>', {class: 'mdl-list__item-secondary-content', append: [

@@ -829,6 +829,8 @@ function GetVarServiceID(qs,n,occ,leextra)
     tsid=tonumber(tsid)
     sid=tonumber(sid)
     x=tonumber(x)
+  else
+    onid,tsid,sid,x=GetVarInt(qs,'onid'), GetVarInt(qs,'tsid'), GetVarInt(qs,'sid'), (leextra and (GetVarInt(qs,'eid') or GetVarInt(qs,'startTime')) or nil)
   end
   if onid and onid==math.floor(onid) and onid>=0 and onid<=65535 and
      tsid and tsid==math.floor(tsid) and tsid>=0 and tsid<=65535 and
