@@ -13,7 +13,16 @@ function Version(a)
   return '?ver='..ver[a]
 end
 
-dofile(mg.document_root..'\\api\\util.lua')
+--Windowsかどうか
+WIN32=not package.config:find('^/')
+
+--OSのディレクトリ区切りとなる文字集合
+DIR_SEPS=WIN32 and '\\/' or '/'
+
+--OSの標準ディレクトリ区切り
+DIR_SEP=WIN32 and '\\' or '/'
+
+dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
 SIDE_PANEL=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,INI))~=0
 
