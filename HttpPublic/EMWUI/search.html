@@ -33,11 +33,11 @@ if preset then
   if GetVarInt(post, 'save')==1 then
     if presetIndex then
       --上書き
-      edcb.WritePrivateProfile(_preset, nil, '', ini)
+      edcb.WritePrivateProfile(_preset, nil, '', INI)
     else
       --追加
       presetList[#presetList+1]=preset
-      edcb.WritePrivateProfile('search', 'list', table.concat(presetList, ',')..',', ini)
+      edcb.WritePrivateProfile('search', 'list', table.concat(presetList, ',')..',', INI)
     end
 
     edcb.WritePrivateProfile(_preset, 'andKey', (GetVarInt(post,'caseFlag') and 'C!{999}' or '')..mg.get_var(post,'andKey'),INI)
@@ -69,8 +69,8 @@ if preset then
   elseif GetVarInt(post, 'del')==1 then
     if presetIndex then
       table.remove(presetList, presetIndex)
-      edcb.WritePrivateProfile(_preset, nil, '', ini)
-      edcb.WritePrivateProfile('search', 'list', #presetList~=0 and table.concat(presetList, ',')..',' or '', ini)
+      edcb.WritePrivateProfile(_preset, nil, '', INI)
+      edcb.WritePrivateProfile('search', 'list', #presetList~=0 and table.concat(presetList, ',')..',' or '', INI)
     end
   else
     key={
@@ -195,14 +195,14 @@ b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andK
 key.andKey=EdcbHtmlEscape(key.andKey)
 key.notKey=EdcbHtmlEscape(key.notKey)
 
-ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST">\n'
+ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action="search.html">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   ..'<div class="form-container"><div class="mdl-grid mdl-grid--no-spacing form">\n'
 
   ..(key.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
   ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input" type="checkbox"'..(mg.get_var(post, 'advanced') and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n' or '')
-  ..'<input type="hidden" name="ctok" id="ctok" value="'..CsrfToken()..'">\n'
+  ..'<input type="hidden" name="ctok" class="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="past" value="0">\n' --"1"で過去番組検索
   ..'<input type="hidden" name="startDate" value="">\n' --"yyyy-mm-dd" 開始日時の範囲を指定（開始） ※過去番組が対象の場合、取得対象が月～年単位になりうるので、時間指定のない呼び出しは控えるべき
   ..'<input type="hidden" name="endDate" value="">\n' --"yyyy-mm-dd" (終了)
@@ -217,8 +217,8 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST">\n'
   ..'<div class="mdl-card__actions mdl-card--border">'
   ..(key.search and '<button class="show_dialog mdl-button mdl-js-button mdl-button--primary" type="button" data-dialog="#dialog_preset">プリセット保存</button>\n' or '')
   ..'<div class="mdl-layout-spacer"></div>\n'
-  ..'<button class="doSearch mdl-button mdl-js-button mdl-button--primary" type="button" data-action="epgcustom.html" data-ctok="'..CsrfToken('epgcustom.html')..'">番組表</button>\n'
-  ..'<button class="doSearch mdl-button mdl-js-button mdl-button--primary" type="button" data-action="search.html" data-ctok="'..CsrfToken()..'">検索</button></div>\n'
+  ..'<button class="submitEX mdl-button mdl-js-button mdl-button--primary" type="button" data-form="search" data-action="epgcustom.html" data-ctok="'..CsrfToken('epgcustom.html')..'">番組表</button>\n'
+  ..'<button type="submit" class="mdl-button mdl-js-button mdl-button--primary" type="button">検索</button></div>\n'
   ..'</div></form>\n</div>\n'
 
 table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
@@ -297,7 +297,7 @@ if #a>0 then
       ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(past and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)
                                or 'href="epginfo.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..'&amp;eid='..v.eid..(pageIndex~=0 and '&amp;page='..pageIndex or '')..(autopage~=0 and '&amp;autopage='..autopage or ''))..'">'
 
-      ..(not past and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-oneclick="1"><span'
+      ..(not past and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
       ..(r and TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..(rs.recMode~=5 and ' checked' or '')..'></label>'
                                                              or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))..'</span>' or '')
 
@@ -316,7 +316,7 @@ ct.main=ct.main..'\n</div>\n'
 if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKey') then
   ct.main=ct.main..'<form id="hidden" method="POST">\n'
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken('autoaddepginfo.html')..'">\n'
+    ..'<input type="hidden" class="ctok" name="ctok" value="'..CsrfToken()..'">\n'
     ..(past and '<input type="hidden" name="past" value="1">\n' or '')
     ..(interval and '<input type="hidden" name="startDate" value="'..mg.get_var(post, 'startDate')..'">\n' or '')
     ..(interval and '<input type="hidden" name="endDate" value="'..mg.get_var(post, 'endDate')..'">\n' or '')
@@ -361,9 +361,9 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
   ct.main=ct.main..'</form>\n'
 end
 
-ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" type="submit" form="hidden" '
-  ..(key.search and ((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
-                 or 'formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(autopage~=0 and '&amp;page='..autopage or '')..'"><i class="material-icons">edit')..'</i></button>\n'
+ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored submitEX" data-form="hidden" data-ctok="'..CsrfToken('autoaddepginfo.html')
+  ..(key.search and '" '..((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'data-action="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
+                 or '" data-action="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(autopage~=0 and '&amp;page='..autopage or '')..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=Template(ct)
 

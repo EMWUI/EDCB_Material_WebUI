@@ -643,7 +643,7 @@ const setRecInfo = $e => {
 
 //予約を反映
 const setReserve = (r, fn) => {
-	const id = r.id ?? setRecSettting(r).id;
+	const id = setRecSettting(r).id;
 
 	$('#set').attr('action', `${ROOT}api/setReserve?id=${id}`);
 	$('#del').attr('action', `${ROOT}api/setReserve?id=${id}`);
@@ -725,12 +725,12 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 					type: 'checkbox',
 					checked: d.recMode != 5,
 					change: e => {
-						$(e.currentTarget).data(toggle, $(e.currentTarget).prop('checked') ? 1 : 0);
+						$e.data('toggle', d.recMode == 5 ? 1 : 0);
 						addReserve($(e.currentTarget))} }) });
 			componentHandler.upgradeElement($switch.get(0));
 
 			const $mark = $('<span>').html($switch);
-			$e.data('oneclick', 0).html($mark);
+			$e.removeData('oneclick').html($mark);
 			setTimeout(() => {
 				$e.parent('tr').addClass('start');
 				$mark.addClass('recmark').empty();
@@ -1172,10 +1172,10 @@ $(function(){
 		if ($(e).data('starttime')) setTimeout(() => $(e).addClass('start').children('.flag').children('span').addClass('recmark').empty(), $(e).data('starttime')-Date.now())
 		setTimeout(() => $(e).children('.flag').data('id', false).children('span').remove(), $(e).data('endtime')-Date.now());
 	});
-	$('.doSearch').click(e => {
+	$('.submitEX').click(e => {
 		const d = $(e.currentTarget).data();
-		$('#ctok').val(d.ctok);
-		$('#search').attr('action', d.action).submit();
+		$(`#${d.form} .ctok`).val(d.ctok);
+		$(`#${d.form}`).attr('action', d.action).submit();
 	});
 
 	//サブミット
