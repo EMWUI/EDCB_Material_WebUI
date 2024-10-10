@@ -645,9 +645,9 @@ const setRecInfo = $e => {
 const setReserve = (r, fn) => {
 	const id = r.id ?? setRecSettting(r).id;
 
-	$('#set').attr('action', `${ROOT}api/setReserve?id=${id}`);
-	$('#del').attr('action', `${ROOT}api/setReserve?id=${id}`);
-	$('#progres').attr('action', `${ROOT}api/setReserve?id=${id}`);
+	$('#set').attr('action', `${ROOT}api/SetReserve?id=${id}`);
+	$('#del').attr('action', `${ROOT}api/SetReserve?id=${id}`);
+	$('#progres').attr('action', `${ROOT}api/SetReserve?id=${id}`);
 	$('#action').attr('name', 'change');
 	$('#reserved, #delreseved, #toprogres').show();
 	$('[name=presetID]').data('reseveid', id).val(65535);
@@ -665,7 +665,7 @@ const setReserve = (r, fn) => {
 const setDefault = mark => {
 	setRecSettting(PresetList['0']);
 
-	$('#set').attr('action', `${ROOT}api/setReserve`);
+	$('#set').attr('action', `${ROOT}api/SetReserve`);
 	$('#action').attr('name', 'add');
 	$('#reserved, #delreseved, #toprogres').hide();
 	$('[name=presetID]').val(0);
@@ -838,7 +838,7 @@ const getEpgInfo = ($e, d = $e.data()) => {
 const sendReserve = (d, fn) => {
 	d.ctok = ctok;
 	showSpinner(true);
-	$.get(`${ROOT}api/setReserve`, d).done(xml => {
+	$.get(`${ROOT}api/SetReserve`, d).done(xml => {
 		if ($(xml).find('success').length){
 			fn.success($(xml).find('reserveinfo'));
 		}else{

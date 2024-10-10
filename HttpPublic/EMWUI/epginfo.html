@@ -46,7 +46,7 @@ if not End and epgInfo then
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
-    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/setReserve'..(r and '?id='..r.reserveID or '')..'" data-action="add" data-onid="'..onid..'" data-tsid="'..tsid..'" data-sid="'..sid..'" data-eid="'..eid..'">\n'
+    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SetReserve'..(r and '?id='..r.reserveID or '')..'" data-action="add" data-onid="'..onid..'" data-tsid="'..tsid..'" data-sid="'..sid..'" data-eid="'..eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reseveid="'..r.reserveID..'"' or '')..'>\n'
@@ -84,7 +84,7 @@ if not End and epgInfo then
     ..'<div class="mdl-card__actions">\n'
     ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres"'..(r and '' or ' style="display:none;"')..'>プログラム予約'..(r and r.eid==65535 and '' or '化')..'</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')..'" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del"'..(r and '' or ' style="display:none;"')..'>削除</button>\n'
+    ..'<form id="del" method="POST'..(r and '" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID or '')..'" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del"'..(r and '' or ' style="display:none;"')..'>削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">'..(r and '変更' or '予約追加')..'</button>\n'
     ..'</div>\n'
 

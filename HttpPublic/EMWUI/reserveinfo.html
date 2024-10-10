@@ -26,7 +26,7 @@ if r then
         ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
         ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
-    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID..'" data-onid="'..r.onid..'" data-tsid="'..r.tsid..'" data-sid="'..r.sid..'" data-eid="'..r.eid..'">\n'
+    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID..'" data-onid="'..r.onid..'" data-tsid="'..r.tsid..'" data-sid="'..r.sid..'" data-eid="'..r.eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
@@ -60,7 +60,7 @@ if r then
     ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<button id="toprogres" class="show_dialog mdl-button mdl-js-button mdl-button--primary" data-dialog="#dialog_progres">プログラム予約'..(r.eid==65535 and '' or '化')..'</button>\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID..'" data-redirect="reserve.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n'
+    ..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID..'" data-redirect="reserve.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setreserve')..'"></form>\n'
     ..'<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
     ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">予約変更</button>\n'
     ..'</div>\n'
