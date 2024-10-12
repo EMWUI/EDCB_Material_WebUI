@@ -10,15 +10,18 @@
   border-top: 1px dotted #aaa;
 }
 
-.jikkyo-comments > div > b {
-  background-color: #fff;
-  color: #00c;
-  font-weight: normal;
+.jikkyo-comments > div > .nico {
+  background: #fff;
+  color: #00a;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
 }
 
-.jikkyo-comments > div > strong {
-  background-color: #fff;
-  color: #c00;
+.jikkyo-comments > div > .refuge {
+  background: #fff;
+  color: #900;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
 }
 
 .jikkyo-comments .dark {
@@ -27,6 +30,14 @@
 
 .jikkyo-comments .light {
   color: #000;
+}
+
+.video-full-container:fullscreen .jikkyo-comments {
+  display: none;
+}
+
+.video-full-container:-webkit-full-screen .jikkyo-comments {
+  display: none;
 }
 
 .dplayer-danmaku-item {

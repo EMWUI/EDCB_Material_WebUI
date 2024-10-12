@@ -8,7 +8,7 @@ function Version(a)
     library='240725',
     setting='240705',
     datastream='240719',
-    legacy='20240430',
+    legacy='20241007',
   }
   return '?ver='..ver[a]
 end
