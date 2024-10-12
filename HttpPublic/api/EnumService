@@ -23,7 +23,7 @@ else
 end
 cl=0
 for i,v in ipairs(ct) do cl=cl+#v end
-dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
 if mg.request_info.request_method~='HEAD' then
   for i,v in ipairs(ct) do mg.write(v) end

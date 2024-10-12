@@ -1,5 +1,5 @@
 -- vim:set ft=lua:
-dofile(mg.document_root..'\\api\\util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 post=AssertPost()
 if post then
@@ -15,19 +15,23 @@ if post then
     end
   elseif mg.get_var(post,'ren') then
     ren=mg.get_var(post,'ren')
-    if ri and edcb.FindFile(ren, 1) then
+    if ri and EdcbFindFilePlain(ri.recFilePath) then
       RecInfoFolder=edcb.GetPrivateProfile('SET','RecInfoFolder','','Common.ini')
       if RecInfoFolder == '' then
         ori=ri.recFilePath
         chg=ren
       else
-        ori=RecInfoFolder..'\\'..ri.recFilePath:match('[^\\/]-$')
-        chg=RecInfoFolder..'\\'..ren:match('[^\\/]-$')
+        ori=PathAppend(RecInfoFolder, ri.recFilePath:match('[^'..DIR_SEPS..']-$'))
+        chg=PathAppend(RecInfoFolder, ren:match('[^'..DIR_SEPS..']-$'))
       end
-      edcb.os.rename(ori..'.program.txt', chg..'.program.txt')
-      edcb.os.rename(ori..'.err', chg..'.err')
-      edcb.ChgPathRecFileInfo(ri.id, ren)
-      messege='<success>録画ファイルパスを変更しました</success>'
+      if edcb.os.rename(ri.recFilePath, ren) then
+        edcb.os.rename(ori..'.program.txt', chg..'.program.txt')
+        edcb.os.rename(ori..'.err', chg..'.err')
+        edcb.ChgPathRecFileInfo(ri.id, ren)
+        messege='<success>録画ファイルパスを変更しました</success>'
+      else
+        messege='<err>ファイルを移動できませんでした</err>'
+      end
     else
       messege='<err>'..(ri and 'ファイル' or '録画情報')..'がみつかりませんでした</err>'
     end

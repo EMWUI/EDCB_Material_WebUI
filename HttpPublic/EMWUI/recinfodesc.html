@@ -16,9 +16,9 @@ edcb.htmlEscape=15
 v=edcb.GetRecFileInfo(id)
 if v then
   -- トランスコード済みのファイルがvideoフォルダにあればそっち使う
-  fname=string.match(w.recFilePath, '[^\\]*$') or ''
+  fname=string.match(w.recFilePath, '[^'..DIR_SEPS..']*$') or ''
   for i,ext in ipairs({'.mp4','.webm'}) do
-    f=edcb.io.open(mg.document_root..'\\video\\'..fname..ext, 'rb')
+    f=edcb.io.open(PathAppend(mg.document_root, 'video'..DIR_SEP..fname..ext), 'rb')
     if f then
       video=PathToRoot()..'video/'..mg.url_encode(fname)..ext
       break

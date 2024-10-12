@@ -13,7 +13,16 @@ function Version(a)
   return '?ver='..ver[a]
 end
 
-dofile(mg.document_root..'\\api\\util.lua')
+--Windowsかどうか
+WIN32=not package.config:find('^/')
+
+--OSのディレクトリ区切りとなる文字集合
+DIR_SEPS=WIN32 and '\\/' or '/'
+
+--OSの標準ディレクトリ区切り
+DIR_SEP=WIN32 and '\\' or '/'
+
+dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
 SIDE_PANEL=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,INI))~=0
 
@@ -93,7 +102,7 @@ if temp.progres then
   local r=type(temp.progres)=='table' and temp.progres or nil
   local dur=r and r.startTime.hour*3600+r.startTime.min*60+r.startTime.sec+r.durationSecond or nil
   s:Append('<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
-    ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/setReserve?id='..r.reserveID or '')
+    ..'<form id="progres" class="api" method="POST'..(r and '" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID or '')
     ..'"><div>\n'..(r and r.eid==65535 and '' or '<p>プログラム予約化は元に戻せません<br>番組を特定できなくなるため追従もできません。</p>\n')
     ..'予約日時\n<div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="date" name="startdate" id="startdate" min="1900-01-01" max="2999-12-31" value="'..(r and string.format('%d-%02d-%02d', r.startTime.year,r.startTime.month,r.startTime.day) or '2018-01-01')
     ..'"><label class="mdl-textfield__label" for="startdate"></label></div></div>\n<div class="textfield-container"><div class="textfield-container"><div class="mdl-textfield mdl-js-textfield"><input required class="mdl-textfield__input" type="time" name="starttime" step="1" id="starttime" value="'..(r and string.format('%02d:%02d:%02d', r.startTime.hour,r.startTime.min,r.startTime.sec) or '00:00:00')
