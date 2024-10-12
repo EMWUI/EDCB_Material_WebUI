@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
     css='240726',
-    common='2401010',
+    common='2401012',
     tvguide='240726',
     player='240725',
     onair='240725',

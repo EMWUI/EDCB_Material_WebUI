@@ -1,4 +1,7 @@
-INI='Setting\\HttpPublic.ini'
+--Windowsかどうか
+WIN32=not package.config:find('^/')
+
+INI='Setting'..(WIN32 and '\\/' or '/')..'HttpPublic.ini'
 
 --情報通知ログの表示を許可するかどうか
 SHOW_NOTIFY_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,INI))~=0
@@ -1185,7 +1188,7 @@ function GetLibraryPathList()
     --録画保存フォルダが未設定のときは設定関係保存フォルダになる
     list[1]=edcb.GetPrivateProfile('SET','DataSavePath','',ini)
     if list[1]=='' then
-      list[1]=edcb.GetPrivateProfile('SET','ModulePath','',ini)..'\\Setting'
+      list[1]=PathAppend(edcb.GetPrivateProfile('SET','ModulePath','',ini),'Setting')
     end
   end
   for i=0,n-1 do
