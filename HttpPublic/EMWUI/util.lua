@@ -435,11 +435,12 @@ function RecSettingTemplate(rs)
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(batFilePath=='' and ' selected' or '')..'>なし\n'
 
-  local batPath=edcb.GetPrivateProfile('SET','batPath',CurrentDir..'\\bat',INI)..'\\'
-  for j,w in ipairs(edcb.FindFile(PathAppend(batPath,'*'), 0) or {}) do
-    if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$') or w.name:find('%.[Ll][Uu][Aa]$')) then
-      s=s..'<option value="'..batPath..w.name..'"'..(batFilePath==batPath..w.name and ' selected' or '')..'>'..w.name..'\n'
-      batFilePath=(batFilePath==batPath..w.name and '' or batFilePath)
+  local batDir=edcb.GetPrivateProfile('SET','batPath',PathAppend(CurrentDir,'bat'),INI)
+  for j,w in ipairs(edcb.FindFile(PathAppend(batDir,'*'), 0) or {}) do
+    if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$') or w.name:find('%.[Ll][Uu][Aa]$')) or w.name:find('%.[Ss][Hh]$') then
+      local batPath=PathAppend(batDir,w.name)
+      s=s..'<option value="'..batPath..'"'..(batFilePath:lower()==batPath:lower() and ' selected' or '')..'>'..w.name..'\n'
+      batFilePath=batFilePath:lower()==batPath:lower() and '' or batFilePath
     end
   end
   if batFilePath~='' then
