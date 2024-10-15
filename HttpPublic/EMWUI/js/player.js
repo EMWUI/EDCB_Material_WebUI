@@ -619,7 +619,6 @@ $(function(){
 				$danmaku.data('click', false);
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
-				if (!$('.is_cast').data('path')) return;
 				if (Jikkyo){
 					if (!onJikkyoStream) toggleJikkyo();
 					$danmaku.addClass('mdl-button--accent');

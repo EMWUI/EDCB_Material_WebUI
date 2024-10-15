@@ -19,7 +19,7 @@ const setbmlBrowserSize = () => {
 	}
 	bmlBrowserSetVisibleSize(width,height);
 }
-window.addEventListener('resize', setbmlBrowserSize());
+window.addEventListener('resize', () => setbmlBrowserSize());
 
 
 
@@ -33,14 +33,14 @@ var setSendComment;
     var commSend=null;
     commInput.onkeydown=function(e){
       if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter"){
-        if(commSend&&commInput.value)commSend(commInput.value);
+        if(commSend&&commInput.value)commSend(commInput);
         commInput.value="";
         bcomm.classList.remove("is-dirty");
       }
     };
     var btn=document.querySelector("#commSend");
     btn.onclick=function(){
-      if(commSend&&commInput.value)commSend(commInput.value);
+      if(commSend&&commInput.value)commSend(commInput);
         commInput.value="";
         bcomm.classList.remove("is-dirty");
     };
@@ -70,7 +70,7 @@ toggleJikkyo=function(enabled){
   var comm=document.getElementById("jk-comm");
   if(!danmaku){
     danmaku=new Danmaku({
-      container:document.getElementById("playerUI"),
+      container:document.getElementById("danmaku-container"),
       opacity:1,
       callback:function(){},
       error:function(msg){},
@@ -90,7 +90,13 @@ toggleJikkyo=function(enabled){
     div.appendChild(b);
     comm.appendChild(div);
   }
-  setSendComment(function(value){
+  setSendComment(function(commInput){
+    if(/^@/.test(commInput.value)){
+      if(commInput.value=="@sw"){
+        commInput.className=commInput.className=="refuge"?"nico":"refuge";
+      }
+      return;
+    }
     var xhr=new XMLHttpRequest();
     xhr.open("POST", `${ROOT}api/comment`);
     xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
@@ -100,7 +106,8 @@ toggleJikkyo=function(enabled){
       }
     };
     var d=document.querySelector(".is_cast").dataset;
-    xhr.send(`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}&comm=`+encodeURIComponent(value).replace(/%20/g,"+"));
+    var postCommentQuery=`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}`;
+    xhr.send(postCommentQuery+(commInput.className=="refuge"?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
   });
   var commHide=true;
   setInterval(function(){
@@ -108,6 +115,7 @@ toggleJikkyo=function(enabled){
       commHide=true;
     }else{
       var scroll=Math.abs(comm.scrollTop+comm.clientHeight-comm.scrollHeight)<comm.clientHeight/4;
+      //comm.style.height=vid.clientHeight+"px";
       if(commHide||scroll)comm.scrollTop=comm.scrollHeight;
       commHide=false;
     }
@@ -122,10 +130,13 @@ toggleJikkyo=function(enabled){
       if(c){
         if(c.yourpost)c.border="2px solid #c00";
         scatter.push(c);
-        var b=document.createElement(c.yourpost?"strong":"b");
-        b.innerText=String(100+(Math.floor(c.date/3600)+9)%24).substring(1)+":"+
+        var dateSpan=document.createElement("span");
+        dateSpan.innerText=String(100+(Math.floor(c.date/3600)+9)%24).substring(1)+":"+
                     String(100+Math.floor(c.date/60)%60).substring(1)+":"+
-                    String(100+c.date%60).substring(1)+" ("+c.user.substring(0,3)+") ";
+                    String(100+c.date%60).substring(1);
+        var userSpan=document.createElement(c.yourpost?"b":"span");
+        userSpan.innerText="("+c.user.substring(c.user.substring(0,2)=="a:"?2:0).substring(0,3)+")";
+        userSpan.className=c.refuge?"refuge":"nico";
         var span=document.createElement("span");
         span.innerText=c.text;
         if(c.color!=0xffffff){
@@ -137,7 +148,8 @@ toggleJikkyo=function(enabled){
           div.className="closed";
           closed=false;
         }
-        div.appendChild(b);
+        div.appendChild(dateSpan);
+        div.appendChild(userSpan);
         div.appendChild(span);
         if(!fragment)fragment=document.createDocumentFragment();
         fragment.appendChild(div);
