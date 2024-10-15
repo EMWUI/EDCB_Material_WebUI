@@ -15,7 +15,7 @@ if post then
     end
   elseif mg.get_var(post,'ren') then
     ren=mg.get_var(post,'ren')
-    if ri and EdcbFindFilePlain(ri.recFilePath) then
+    if ri and EdcbFindFilePlain(ren) or EdcbFindFilePlain(ri.recFilePath) then
       RecInfoFolder=edcb.GetPrivateProfile('SET','RecInfoFolder','','Common.ini')
       if RecInfoFolder == '' then
         ori=ri.recFilePath
@@ -24,7 +24,7 @@ if post then
         ori=PathAppend(RecInfoFolder, ri.recFilePath:match('[^'..DIR_SEPS..']-$'))
         chg=PathAppend(RecInfoFolder, ren:match('[^'..DIR_SEPS..']-$'))
       end
-      if edcb.os.rename(ri.recFilePath, ren) then
+      if EdcbFindFilePlain(ren) or edcb.os.rename(ri.recFilePath, ren) then
         edcb.os.rename(ori..'.program.txt', chg..'.program.txt')
         edcb.os.rename(ori..'.err', chg..'.err')
         edcb.ChgPathRecFileInfo(ri.id, ren)
