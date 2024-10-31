@@ -15,7 +15,7 @@ if post then
     end
   elseif mg.get_var(post,'ren') then
     ren=mg.get_var(post,'ren')
-    if ri and EdcbFindFilePlain(ren) or EdcbFindFilePlain(ri.recFilePath) then
+    if ri and (EdcbFindFilePlain(ren) or EdcbFindFilePlain(ri.recFilePath)) then
       RecInfoFolder=edcb.GetPrivateProfile('SET','RecInfoFolder','','Common.ini')
       if RecInfoFolder == '' then
         ori=ri.recFilePath

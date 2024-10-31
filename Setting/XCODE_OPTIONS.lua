@@ -1,13 +1,9 @@
 --[[
-トランスコードオプション、字幕表示のオプション、実況ログ表示機能のIDの対応づけ、chatタグ表示前の置換の設定用のファイルです
-コメントアウトを外して使用してください
-デフォルト設定が記載されています
-
-以下にスペースを入れてコメントアウトを外します
---[[
- ↓
--- [[
-
+以下の設定用のファイルです
+・トランスコードオプション
+・字幕表示のオプション
+・実況ログ表示機能のIDの対応づけ
+・chatタグ表示前の置換
 --]]
 
 --トランスコードオプション
@@ -15,11 +11,11 @@
 --HLSでないときはフラグメントMP4などを使ったプログレッシブダウンロード。字幕は適当な重畳手法がまだないので未対応
 --name:表示名
 --xcoder:トランスコーダーのToolsフォルダからの相対パス。'|'で複数候補を指定可。見つからなければ最終候補にパスが通っているとみなす
+--       Windows以外では".exe"が除去されて最終候補のみ参照される
 --option:$OUTPUTは必須、再生時に適宜置換される。標準入力からMPEG2-TSを受け取るようにオプションを指定する
 --filter*Fast:倍速再生用、未定義でもよい
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
 --editorOptionFast:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを指定する
---[[
 XCODE_OPTIONS={
   {
     --ffmpegの例。-b:vでおおよその最大ビットレートを決め、-qminで動きの少ないシーンのデータ量を節約する
@@ -108,36 +104,30 @@ XCODE_OPTIONS={
     outputHls={'m2t','-f mpegts -o -'},
   },
 }
---]]
 
 
 
 --字幕表示のオプション https://github.com/monyone/aribb24.js#options
---[[
 ARIBB24_JS_OPTION=[=[
   normalFont:'"Rounded M+ 1m for ARIB","Yu Gothic Medium",sans-serif',
   drcsReplacement:true
 ]=]
---]]
 
 
 
 --実況ログ表示機能のデジタル放送のサービスIDと、実況の番号(jk?)
 --キーの下4桁の16進数にサービスID、上1桁にネットワークID(ただし地上波は15=0xF)を指定
 --指定しないサービスにはjkrdlogの既定値が使われる
---[[
 JK_CHANNELS={
   --例:テレビ東京(0x0430)をjk7と対応づけたいとき
   --[0xF0430]=7,
   --例:NHKBS1(0x0065)とデフォルト(jk101)との対応付けを解除したいとき
   --[0x40065]=-1,
 }
---]]
 
 
 
 --chatタグ表示前の置換(JavaScript)
---[[
 JK_CUSTOM_REPLACE=[=[
   // 広告などを下コメにする
   tag = tag.replace(/^<chat(?![^>]*? mail=)/, '<chat mail=""');
@@ -145,4 +135,3 @@ JK_CUSTOM_REPLACE=[=[
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/nicoad (\d*)\{[^<]*?"message":("[^<]*?")[,}][^<]*/, '<chat align="right"$1shita small yellow $2$4($3pt)');
   tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/spi /, '<chat align="right"$1shita small white2 $2');
 ]=]
---]]
