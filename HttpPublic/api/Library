@@ -81,7 +81,7 @@ if mg.get_var(mg.request_info.query_string,'thumbs') then
   end
 
   -- 未使用サムネを掃除
-  for i,v in ipairs(edcb.FindFile(PathAppend(thumbsDir,'????????????????????????????????.jpg'), 0)) do
+  for i,v in ipairs(edcb.FindFile(PathAppend(thumbsDir,'????????????????????????????????.jpg'), 0) or {}) do
     if v.name:match('^%x+%.[Jj][Pp][Gg]$') and not thumbsUsing[v.name:match('^%x+'):lower()] then
       edcb.os.remove(PathAppend(thumbsDir,v.name))
     end
@@ -127,6 +127,8 @@ else
       table.insert(ct, '<error>見つかりませんでした</error>')
     else
       table.insert(ct, '<dirname>ホーム</dirname>')
+
+      edcb.htmlEscape=15
       for i,v in ipairs(LIBRARY_LIST) do
         table.insert(ct, '<dir><index>'
           ..i..'</index><name>'
@@ -137,15 +139,6 @@ else
   else
     hash=mg.get_var(mg.request_info.query_string,'h')
     if not hash then
-      table.insert(ct, '<index>'
-        ..index..'</index><dirname>'
-        ..EdcbHtmlEscape(NativeToDocumentPath(dirname) or dirname)..'</dirname>'
-        ..(dirhash and '<dirhash>'..dirhash..'</dirhash>' or '')
-        ..(pathname and '<pathname>'..pathname..'</pathname>' or '')
-        ..(pathhash and '<pathhash>'..pathhash..'</pathhash>' or '')
-        ..(NativeToDocumentPath(dir) and '<public>1</public>' or '')
-        ..'\n'
-      )
       ff={}
       for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
         if not v.isdir then
@@ -166,6 +159,17 @@ else
           if not hide and not PathAppend(dir,v.name):find(PathAppend('video','thumbs$')) then ff[#ff+1]=v end
         end
       end
+
+      edcb.htmlEscape=15
+      table.insert(ct, '<index>'
+        ..index..'</index><dirname>'
+        ..EdcbHtmlEscape(NativeToDocumentPath(dirname) or dirname)..'</dirname>'
+        ..(dirhash and '<dirhash>'..dirhash..'</dirhash>' or '')
+        ..(pathname and '<pathname>'..EdcbHtmlEscape(pathname)..'</pathname>' or '')
+        ..(pathhash and '<pathhash>'..EdcbHtmlEscape(pathhash)..'</pathhash>' or '')
+        ..(NativeToDocumentPath(dir) and '<public>1</public>' or '')
+        ..'\n'
+      )
       for i,v in ipairs(ff) do
         local thumbHash
         if not v.isdir then
@@ -174,7 +178,7 @@ else
           thumbHash=EdcbFindFilePlain(PathAppend(thumbsDir,thumbHash..'.jpg')) and thumbHash
         end 
         table.insert(ct, (v.isdir and '<dir>' or '<file>')..'<name>'
-          ..EdcbHtmlEscape(v.name:gsub('&', '&amp;'))..'</name><hash>'
+          ..EdcbHtmlEscape(v.name)..'</name><hash>'
           ..mg.md5(v.name)..'</hash><date>'
           ..TimeWithZone(v.mtime, 9*3600)..'</date><size>'
           ..(v.isdir and '' or math.floor(v.size/1048576))..'</size>'
