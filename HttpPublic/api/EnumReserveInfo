@@ -7,7 +7,7 @@ ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index
 for i,v in ipairs(a) do
   table.insert(ct, '<reserveinfo><ID>'
     ..v.reserveID..'</ID><title>'
-    ..v.title..'</title><startDate>'
+    ..EdcbHtmlEscape(v.title)..'</title><startDate>'
     ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
                     v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)
     ..(v.startTime.wday-1)..'</startDayOfWeek><duration>'
