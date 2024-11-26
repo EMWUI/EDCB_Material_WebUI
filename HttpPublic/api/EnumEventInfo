@@ -95,8 +95,8 @@ else
     end
     if v.shortInfo then
       table.insert(ct, '<event_name>'
-        ..EdcbHtmlEscape(v.shortInfo.event_name)..'</event_name><event_text>'
-        ..EdcbHtmlEscape(v.shortInfo.text_char)..'</event_text>')
+        ..v.shortInfo.event_name..'</event_name><event_text>'
+        ..v.shortInfo.text_char..'</event_text>')
     end
     if v.contentInfoList then
       for j,w in ipairs(v.contentInfoList) do
@@ -120,7 +120,7 @@ else
     table.insert(ct, '<freeCAFlag>'..(v.freeCAFlag and 1 or 0)..'</freeCAFlag>')
     if not basic then
       if v.extInfo then
-        table.insert(ct, '<event_ext_text>'..EdcbHtmlEscape(v.extInfo.text_char)..'</event_ext_text>')
+        table.insert(ct, '<event_ext_text>'..v.extInfo.text_char..'</event_ext_text>')
       end
       if v.componentInfo then
         table.insert(ct, '<videoInfo><stream_content>'
