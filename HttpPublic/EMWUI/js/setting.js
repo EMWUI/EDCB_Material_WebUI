@@ -1,10 +1,13 @@
 $(function(){
-	$.get(`${ROOT}api/Common`, {storage: 1}).done(xml => {
-		$(xml).find('storage').each((i, e) => {
-			const id = $(e).txt('id');
-			$(`#d_${id} .text`).text($(e).txt('text'));
-			$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).txt('free'));
-		})
+	//ストレージ容量
+	$('.mdl-js-progress:first').on('mdl-componentupgraded', () => {
+		$.get(`${ROOT}api/Common`, {storage: 1}).done(xml => {
+			$(xml).find('storage').each((i, e) => {
+				const id = $(e).txt('id');
+				$(`#d_${id} .text`).text($(e).txt('text'));
+				$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).txt('free'));
+			})
+		});
 	});
 	//背景色連動
 	$('.bgset').change(e => $($(e.currentTarget).attr('for')).not('.paint').css('background', $(e.currentTarget).val()));

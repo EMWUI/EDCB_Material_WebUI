@@ -214,7 +214,7 @@ function CreateHlsPlaylist(f)
             a[#a+1]='#EXT-X-PROGRAM-DATE-TIME:'..timeTag..'\n'
             timeTag=nil
           end
-          a[#a+1]='#EXT-X-PART:DURATION='..fragDuration..',URI="segment.lua?c='..hlsKey..('_%02d_%d_%d"'):format(segIndex,segCount,j)
+          a[#a+1]='#EXT-X-PART:DURATION='..fragDuration..',URI="segment?c='..hlsKey..('_%02d_%d_%d"'):format(segIndex,segCount,j)
             ..(j==1 and ',INDEPENDENT=YES' or '')..'\n'
         end
         xbuf=xbuf:sub(17)
@@ -224,14 +224,14 @@ function CreateHlsPlaylist(f)
       if segAvailable and (endList or nextSegAvailable) then
         if not hasSeg then
           a[#a+1]='#EXT-X-MEDIA-SEQUENCE:'..segCount..'\n'
-            ..(isMp4 and '#EXT-X-MAP:URI="mp4init.lua?c='..hlsKey..'"\n' or '')
+            ..(isMp4 and '#EXT-X-MAP:URI="mp4init?c='..hlsKey..'"\n' or '')
             ..(endList and '#EXT-X-ENDLIST\n' or '')
           hasSeg=true
         end
         if isMp4 and hls4>1 and timeTag then
           a[#a+1]='#EXT-X-PROGRAM-DATE-TIME:'..timeTag..'\n'
         end
-        a[#a+1]='#EXTINF:'..segDuration..',\nsegment.lua?c='..hlsKey..('_%02d_%d\n'):format(segIndex,segCount)
+        a[#a+1]='#EXTINF:'..segDuration..',\nsegment?c='..hlsKey..('_%02d_%d\n'):format(segIndex,segCount)
       end
       buf=buf:sub(17)
     end

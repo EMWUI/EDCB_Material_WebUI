@@ -214,11 +214,11 @@ function CreateHlsPlaylist(f)
       if segAvailable and (not segIncomplete or nextSegAvailable) then
         if not hasSeg then
           a[#a+1]='#EXT-X-MEDIA-SEQUENCE:'..segCount..'\n'
-            ..(isMp4 and '#EXT-X-MAP:URI="mp4init.lua?c='..hlsKey..'"\n' or '')
+            ..(isMp4 and '#EXT-X-MAP:URI="mp4init?c='..hlsKey..'"\n' or '')
             ..(endList and '#EXT-X-ENDLIST\n' or '')
           hasSeg=true
         end
-        a[#a+1]='#EXTINF:'..segDuration..',\nsegment.lua?c='..hlsKey..('_%02d_%d\n'):format(segIndex,segCount)
+        a[#a+1]='#EXTINF:'..segDuration..',\nsegment?c='..hlsKey..('_%02d_%d\n'):format(segIndex,segCount)
       end
       buf=buf:sub(17)
     end
