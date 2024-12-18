@@ -335,8 +335,20 @@ elseif psidata or jikkyo then
   if f.jk then f.jk:close() end
 elseif hlsKey then
   -- インデックスファイルを返す
-  m3u=CreateHlsPlaylist(f)
-  f:close()
+  i=1
+  repeat
+    m3u=CreateHlsPlaylist(f)
+    f:close()
+    if not m3u:find('#EXT%-X%-MEDIA%-SEQUENCE:') then
+      -- 最初のセグメントができるまでは2秒だけ応答保留する
+      if i>10 then break end
+    else
+      break
+    end
+    edcb.Sleep(200)
+    f=OpenTsmemsegPipe(hlsKey..'_','00')
+    i=i+1
+  until not f
   ct=CreateContentBuilder()
   ct:Append(m3u)
   ct:Finish()

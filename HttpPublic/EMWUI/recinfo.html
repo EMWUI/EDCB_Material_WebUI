@@ -6,25 +6,45 @@ ct={
   searchlinks=true
 }
 
+focus=nil
+post=AssertPost()
+if post then
+  focus=edcb.GetRecFileInfoBasic(GetVarInt(post,'del') or 0)
+  if focus then
+    edcb.DelRecFileInfo(focus.id)
+    ct.js=ct.js..'<script>Snackbar({message: "削除しました"});</script>'
+  end
+end
+
 edcb.htmlEscape=15
 a=edcb.GetRecFileInfoBasic()
+if not focus then
+  focus=GetVarInt(mg.request_info.query_string,'id')
+  focus=focus and BinarySearch(a,{id=focus},CompareFields('id'))
+end
+
 table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
+pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+if pageCount==0 then pageCount=#a end
+if focus then
+  --focusの行を含むページを探す
+  focusIndex=BinarySearchBound(a,focus,function(a,b) return os.time(a.startTime)>os.time(b.startTime) end)
+  page=math.floor(math.max(math.min(focusIndex-1,#a-1),0)/pageCount)
+else
+  page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
+end
 
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
-if PAGE_COUNT==0 then PAGE_COUNT=#a end
+if math.ceil((#a/pageCount)-1)>0 then
+  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href=\"recinfo.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href=\"recinfo.html?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
 
-if math.ceil((#a/PAGE_COUNT)-1)>0 then
-  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href=\"recinfo.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href=\"recinfo.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
-
-  n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
   for i=n, n+4 do
-    pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
+    pg=pg..(i>=0 and i<#a/pageCount and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
   end
 
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"recinfo.html?page='..(pageIndex+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"recinfo.html?page='..math.ceil((#a/PAGE_COUNT)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"recinfo.html?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"recinfo.html?page='..math.ceil((#a/pageCount)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
 
   pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
 end
@@ -68,7 +88,7 @@ end
   ct.main=ct.main..'<div class="mdl-layout__content">'..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
 
   ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
   ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
@@ -80,13 +100,13 @@ end
   ..'<tbody>\n'
 
 ctt={}
-for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   bg=v.drops>0 and ' drops'
      or v.scrambles>0 and ' scrambles' or ''
   table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" '
     ..(SIDE_PANEL and 'data-recinfoid="'..v.id
-                  or 'data-href="recinfodesc.html?id='..v.id ..'&amp;page='..pageIndex)..'">\n'
+                  or 'data-href="recinfodesc.html?id='..v.id)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName

@@ -3,24 +3,40 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 ct={title='EPG予約'}
 
+focusID=nil
+post=AssertPost()
+if post then
+  focusID=GetVarInt(post,'del')
+  if focusID then
+    edcb.DelAutoAdd(focusID)
+    ct.js=ct.js..'<script>Snackbar({message: "削除しました"});</script>'
+  end
+end
+
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
+pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+if pageCount==0 then pageCount=#a end
+focusID=focusID or GetVarInt(mg.request_info.query_string,'id')
+if focusID then
+  --focusIDの行を含むページを探す
+  focusIndex=BinarySearchBound(a,{dataID=focusID},CompareFields('dataID'))
+  page=math.floor(math.max(math.min(focusIndex-1,#a-1),0)/pageCount)
+else
+  page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
+end
 
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
-if PAGE_COUNT==0 then PAGE_COUNT=#a end
+if math.ceil((#a/pageCount)-1)>0 then
+  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="autoaddepg.html"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="autoaddepg.html?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
 
-if math.ceil((#a/PAGE_COUNT)-1)>0 then
-  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex>0 and 'href="autoaddepg.html?page='..(pageIndex-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
-
-  n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
+  n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
   for i=n, n+4 do
-    pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="autoaddepg.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
+    pg=pg..(i>=0 and i<#a/pageCount and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="autoaddepg.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
   end
 
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"autoaddepg.html?page='..(pageIndex+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(pageIndex<(#a/PAGE_COUNT-1) and 'href=\"autoaddepg.html?page='..math.ceil((#a/PAGE_COUNT)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
+  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"autoaddepg.html?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
+    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"autoaddepg.html?page='..math.ceil((#a/pageCount)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
 
   pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
 end
@@ -76,7 +92,7 @@ ct.main=ct.main..'<div class="mdl-layout__content">'
   ..(pg or '')..'<div class="list mdl-grid">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
 
   ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
   ..' <th class="keyword mdl-data-table__cell--non-numeric">キーワード\n'
@@ -89,7 +105,7 @@ ct.main=ct.main..'<div class="mdl-layout__content">'
   ..'<tbody>\n'
 
 ctt={}
-for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i].searchInfo
   serviceName='なし'
   if #v.serviceList>0 then
@@ -102,11 +118,11 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
   end
   table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
     ..(SIDE_PANEL and 'data-id="'..a[i].dataID
-                  or 'data-href="autoaddepginfo.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;page='..pageIndex or ''))..'">'
+                  or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--3-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..ParseNotKey(v.notKey).notKey
     ..'\n <td class="note mdl-data-table__cell--non-numeric mdl-cell--1-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">note</i></span>'..ParseNotKey(v.notKey).note
-    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..(pageIndex~=0 and '&amp;autopage='..pageIndex or '')..'">'..a[i].addCount..'</a>'
+    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..'">'..a[i].addCount..'</a>'
     ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.serviceList[1].onid..'&amp;sid='..v.serviceList[1].sid..'"><span>'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
     ..'\n <td class="category mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(#v.contentList>0 and (v.notContetFlag and '<span class=header>否:</span>' or '')..edcb.GetGenreName(v.contentList[1].content_nibble)..(#v.contentList>1 and '<small>.他'..(#v.contentList-1)..'</small>' or '') or '全ジャンル')
     ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(RecModeTextList()[a[i].recSetting.recMode+1] or '')
@@ -114,7 +130,7 @@ for i=pageIndex*PAGE_COUNT+1,math.min(#a,(pageIndex+1)*PAGE_COUNT) do
 end
 
 ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
-     ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html'..(pageIndex~=0 and '?page='..pageIndex or '')..'"><i class="material-icons">add</i></a>'
+     ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html"><i class="material-icons">add</i></a>'
 
 ct=Template(ct)
 

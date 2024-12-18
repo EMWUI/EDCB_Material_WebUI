@@ -424,7 +424,7 @@ const setEpgInfo = d => {
 		$('[name=sid]').val(d.sid);
 		$('[name=eid]').val(d.eid);
 
-		$('#link_epginfo').attr('href', `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`);
+		$('#link_epginfo').attr('href', /reserve.html/.test(location.pathname) ? `reserveinfo.html?id=${$('.open .flag').data('id')}` : `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`);
 		$('#set').data('onid', d.onid).data('tsid', d.tsid).data('sid', d.sid).data('eid', d.eid);
 	}
 	return d;

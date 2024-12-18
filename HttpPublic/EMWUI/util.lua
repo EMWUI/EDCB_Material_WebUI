@@ -1,14 +1,14 @@
 function Version(a)
   local ver={
     css='240726',
-    common='2401126',
+    common='241217',
     tvguide='240726',
     player='2401014',
     onair='240725',
     library='240725',
     setting='241217',
-    datastream='241014',
-    legacy='20241007',
+    datastream='241217',
+    legacy='20241023',
   }
   return '?ver='..ver[a]
 end

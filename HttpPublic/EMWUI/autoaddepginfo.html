@@ -8,7 +8,6 @@ tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
 sid=GetVarInt(mg.request_info.query_string,'sid') or 0
 eid=GetVarInt(mg.request_info.query_string,'eid') or 0
 tab=GetVarInt(mg.request_info.query_string,'tab',0,4) or 0
-page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',0,25) or week and 4 or 0
 interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or 25
@@ -39,7 +38,7 @@ if aa.searchInfo then
     si=GetSearchKey(post)
   end
 
-  if aa.dataID==0 then redirect='autoaddepg.html'..(page~=0 and '?page='..page or '') end
+  if aa.dataID==0 then redirect='autoaddepg.html?id='..aa.dataID end
 
   --コメントアウトを外すと追加後このURLに移動、ここで生成したURLはメンテナンスしてなく一部データが抜けてるかも
   --redirect=(week and 'epgweek.html?id='..onid..'-'..tsid..'-'..sid..(hour~=4 and '&amp;hour='..hour or '') or epg and 'epg.html?tab='..tab..'&amp;date='..date..(hour~=0 and '&amp;hour='..hour or '')..(pageIndex~=0 and '&amp;chpage='..pageIndex or '')..(CH_COUNT and '&amp;chcount='..CH_COUNT or '') or redirect)..(interval~=25 and '&amp;interval='..interval or '')
@@ -91,12 +90,12 @@ if aa.searchInfo then
   ct.main=ct.main..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
-    ct.main=ct.main..'<form id="del" class="api" method="POST" action="'..PathToRoot()..'api/SetAutoAdd?id='..aa.dataID..'" data-redirect="autoaddepg.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n'
+    ct.main=ct.main..'<form id="del" method="POST" action="autoaddepg.html"><input type="hidden" name="del" value="'..aa.dataID..'"><input type="hidden" name="ctok" value="'..CsrfToken('autoaddepg.html')..'"></form>\n'
   end
 
   ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..(aa.dataID~=0 and '<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n' or '')
+    ..(aa.dataID~=0 and '<button class="mdl-button mdl-js-button mdl-button--primary" form="del">削除</button>\n' or '')
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
     ..'</div>\n</div>\n</div>\n'
 

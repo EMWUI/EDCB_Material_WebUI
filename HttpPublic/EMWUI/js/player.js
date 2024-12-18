@@ -3,7 +3,7 @@ let VideoSrc;
 let hls, cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
-const vid = document.querySelector('#video');
+vid = document.querySelector('#video');
 const $vid = $(vid);
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
@@ -116,11 +116,11 @@ const loadHls = (d, reload) => {
 	const caption = $('#load_subtitles').prop('checked') ? '&caption=1' : '';
 	if (window.Hls != undefined){
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}${caption}`, `ctok=${ctok}&open=1`, 1000, 1000, () => errorHLS(), src => startHLS(src)), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}${caption}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}${caption}`, `ctok=${ctok}&open=1`, 1000, 1000, () => errorHLS(), src => vid.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}${caption}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
 		vid.src = VideoSrc;
 	}

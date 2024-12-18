@@ -25,7 +25,6 @@ window.addEventListener('resize', () => setbmlBrowserSize());
 
 
 //コメント送信
-var setSendComment;
 (function(){
   var bcomm=document.querySelector("#comment-control");
   var commInput=document.querySelector("#comm");

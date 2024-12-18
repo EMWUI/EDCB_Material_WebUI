@@ -7,8 +7,6 @@ ct={
   searchlinks=true
 }
 
-page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-
 id=GetVarInt(mg.request_info.query_string,'id') or 0
 w=edcb.GetRecFileInfo(id)
 edcb.htmlEscape=15
@@ -90,8 +88,8 @@ if v then
 
     ..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
     ..'<div class="mdl-layout-spacer"></div>\n'
-    ..'<form id="del" method="POST" action="'..PathToRoot()..'api/SetRecInfo?id='..v.id..'" data-redirect="recinfo.html'..(page~=0 and '?page='..page or '')..'"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
-    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del"'..(v.protectFlag and 'disabled' or '')..'>削除</button>\n'
+    ..'<form id="del" method="POST" action="recinfo.html"><input type="hidden" name="del" value="'..v.id..'"><input type="hidden" name="ctok" value="'..CsrfToken('recinfo.html')..'"></form>\n'
+    ..'<button class="mdl-button mdl-js-button mdl-button--primary" form="del"'..(v.protectFlag and 'disabled' or '')..'>削除</button>\n'
     ..'</div>\n'
 
     ..'</div></div>\n'
