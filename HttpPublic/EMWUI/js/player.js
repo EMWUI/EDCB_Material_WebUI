@@ -113,14 +113,13 @@ const loadHls = (d, reload) => {
 	}`;
 
 	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？
-	const caption = $('#load_subtitles').prop('checked') ? '&caption=1' : '';
 	if (window.Hls != undefined){
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}${caption}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}${caption}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
 		vid.src = VideoSrc;
 	}
@@ -149,7 +148,7 @@ const loadMovie = $e => {
 	if (d.canPlay){
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${d.path}`;
 		$vid.attr('src', path);
-		if ($('#load_subtitles').prop('checked')) $vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
+		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
@@ -503,30 +502,6 @@ $(function(){
 	}
 
 	$('#live:not(.live)').click(() => vid.currentTime = vid.duration);
-
-	$('#load_subtitles').change(e => {
-		const enable = $(e.currentTarget).prop('checked');
-		$subtitles.toggleClass('hidden', !enable);
-		localStorage.setItem('load_subtitles', enable);
-
-		const d = $('.is_cast').data();
-		if (!d) return;
-
-		if (d.canPlay){
-			if (cap) cap.detachMedia();
-			if (enable){
-				const path = `${ROOT}${d.public ? '' : 'api/Movie?fname='}${d.path}`;
-				$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,"")}.vtt`);
-				setTimeout(() => loadVtt(), 1000);
-			}else{
-				$vid_meta.attr('src', '');
-			}
-		}else{
-			reloadHls();
-		};
-	});
-	$subtitles.toggleClass('hidden', localStorage.getItem('load_subtitles') != 'true');
-	$('#load_subtitles').prop('checked', localStorage.getItem('load_subtitles') == 'true');
 
 	$subtitles.click(() => {
 		if (!$subtitles.hasClass('checked')){
