@@ -3,12 +3,16 @@ function Version(a)
     css='240726',
     common='241217',
     tvguide='240726',
-    player='241218',
+    player='241219',
     onair='240725',
     library='240725',
     setting='241217',
     datastream='241217',
-    legacy='20241023',
+    legacy='20241127',
+    hls='v1.5.15',
+    aribb24='v1.11.5',
+    bml='f3c89c9',
+    danmaku='6c13364',
   }
   return '?ver='..ver[a]
 end
@@ -197,7 +201,7 @@ s:Append([=[
 ..(temp.video and [=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
-]=]..PlayerTemplate('<video id="video"></video>', temp.video=='live')..[=[
+]=]..PlayerTemplate('', temp.video=='live')..[=[
       <span class="close stop icons mdl-badge" data-badge="&#xE5CD;"></span>
     </div>
   </div>
@@ -693,6 +697,7 @@ end
 
 --プレイヤー
 function PlayerTemplate(video, liveOrAudio)
+  local tslive = GetVarInt(mg.request_info.query_string,'tslive')==1
   local list = edcb.GetPrivateProfile('set','quality','',INI)
   local live = type(liveOrAudio)=='boolean' and liveOrAudio
   local audio = type(liveOrAudio)=='table' and liveOrAudio
@@ -782,9 +787,9 @@ s=s..[=[
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
 ]=]
   for i,v in ipairs(XCODE_OPTIONS) do
-    if not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+    if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
       local id = 'q_'..mg.md5(v.name)
-      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
+      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..(v.tslive and ' data-tslive="true"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
@@ -800,20 +805,26 @@ s=s..[=[
 <button id="fullscreen" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
 </div>
 </div>
-<div class="arib-video-invisible-container"><div class="arib-video-container">]=]..video..[=[</div></div>
+<div class="arib-video-invisible-container" id="vid-cont"><div class="arib-video-container">
+<]=]..(tslive and 'canvas' or 'video')..' id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
+</div></div>
 </div></div>
 ]=]
-  ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js"></script>\n' or '')
+  ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'"></script>\n' or '')
 
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n'
     ..'<script>const ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};const jk_comment_height='..JK_COMMENT_HEIGHT..';const jk_comment_durtion='..JK_COMMENT_DURATION..';</script>\n'
-    ..'<script src="js/danmaku.js"></script>\n' or '')
+    ..'<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
-  ..(ALLOW_HLS and '<script>const hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
-    ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js"></script>\n' or '')
-    ..'<script src="js/aribb24.js"></script>\n' or '')
+  ..(tslive and '<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
+        ..'<script src="js/ts-live.lua?t=.js"></script>\n'
+        ..'<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};</script>\n'
+      or (ALLOW_HLS and '<script>const hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
+        ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
+        ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n' or '')
 
-  ..((ALLOW_HLS or live) and '<script>const ALLOW_HLS'..(ALLOW_HLS and '=true' or '')..';const ctok=\''..(live and CsrfToken('view') or CsrfToken('xcode'))..'\';'..'</script>\n' or '')
+        ..((ALLOW_HLS or live) and '<script>const ALLOW_HLS='..(ALLOW_HLS and 'true' or 'false')..';const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';</script>\n' or '')
+  )
   ..'<script src="js/legacy.script.js'..Version('legacy')..'"></script>\n'
 
   ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<script src="js/datastream.js'..Version('datastream')..'"></script>\n' or '')

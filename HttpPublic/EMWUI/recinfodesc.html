@@ -80,7 +80,7 @@ if v then
     ..epgInfo
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..PlayerTemplate('<video id="video" preload="none" '..(ori and 'data-id="'..video..'" data-info=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-info=\'{')..'"audio":'..((audio.multi or audio.dual) and '2' or '1')..'}\' class="is_cast"></video>\n')
+      ..PlayerTemplate('preload="none" '..(ori and 'data-id="'..video..'" data-info=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-info=\'{')..'"audio":'..((audio.multi or audio.dual) and '2' or '1')..'}\' class="is_cast"')
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')
@@ -106,4 +106,7 @@ end
 
 ct=Template(ct)
 
-mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)
+  ..'Cross-Origin-Embedder-Policy: require-corp\r\n'
+  ..'Cross-Origin-Opener-Policy: same-origin\r\n'
+  ..'\r\n'))

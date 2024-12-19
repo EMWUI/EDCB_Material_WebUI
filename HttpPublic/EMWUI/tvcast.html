@@ -29,7 +29,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
   ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
   ..'<div id="movie-contner">\n'
-  ..PlayerTemplate('<video id="video"></video>', true)
+  ..PlayerTemplate('', true)
   ..'</div>\n'
 
 
@@ -106,4 +106,7 @@ ct.main=ct.main..'<div id="network" class="tag">\n'
 
 ct=Template(ct)
 
-mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)
+  ..'Cross-Origin-Embedder-Policy: require-corp\r\n'
+  ..'Cross-Origin-Opener-Policy: same-origin\r\n'
+  ..'\r\n'))

@@ -120,6 +120,16 @@ XCODE_OPTIONS={
     output={'mp4','-f mp4 --no-mp4opt -m movflags:frag_keyframe+empty_moov -o -'},
     outputHls={'m2t','-f mpegts -o -'},
   },
+  {
+    --TS-Live!方式の例。映像はそのまま転送。倍速再生にはffmpegも必要
+    name='tslive',
+    tslive=true,
+    xcoder='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
+    option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec copy $FILTER -map 0:a:$AUDIO -map 0:s? -scodec copy -max_interleave_delta 300k $OUTPUT',
+    filter=':',
+    filterFast='-bsf:v setts=ts=TS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -acodec aac -ac 2 -b:a 160k',
+    output={'m2t','-f mpegts -'},
+  },
 }
 
 

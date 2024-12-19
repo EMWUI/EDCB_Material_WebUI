@@ -3,10 +3,18 @@ let VideoSrc;
 let hls, cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
-vid = document.querySelector('#video');
-const $vid = $(vid);
-vid.muted = localStorage.getItem('muted') == 'true';
-vid.volume = localStorage.getItem('volume') || 1;
+vid = {e:document.getElementById("video")};
+const $vid = $(vid.e);
+vid.e.muted = localStorage.getItem('muted') == 'true';
+vid.e.volume = localStorage.getItem('volume') || 1;
+const canvas = vid.e.tagName=="CANVAS";
+if(canvas){
+    //Behave like HTMLMediaElement.
+    vid.currentTime=0;
+    vid.muted=vid.e.muted;
+    vid.volume=vid.e.volume;
+    vid.c=vid;
+}
 
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
@@ -23,7 +31,7 @@ const $subtitles = $('#subtitles');
 const $vid_meta = $('#vid-meta');
 const hideBar = t => {
 	hoverID = setTimeout(() => {
-		if (vid.paused) return;
+		if (vid.e.paused) return;
 
 		$playerUI_titlebar.removeClass('is-visible');
 		$contral.removeClass('is-visible');
@@ -35,10 +43,15 @@ const stopTimer = () => {
 	$player.css('cursor', 'default');
 }
 
+vcont = document.getElementById("vid-cont");
 const creatCap = () => {
-	aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
 	cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
-	cap.attachMedia(vid);
+	if (canvas){
+		cap.attachMedia(null,vcont);
+	}else{
+		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
+		cap.attachMedia(vid.e);
+	}
 }
 
 const errorHLS = () => {
@@ -52,7 +65,7 @@ const startHLS= src => {
 	if (Hls.isSupported()){
 		hls = new Hls();
 		hls.loadSource(src);
-		hls.attachMedia(vid);
+		hls.attachMedia(vid.e);
 		hls.on(Hls.Events.MANIFEST_PARSED,function(){
 			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 			if ($subtitles.hasClass('checked')) creatCap();
@@ -62,8 +75,8 @@ const startHLS= src => {
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {
 			for(var i=0;i<data.samples.length;i++){cap.pushID3v2Data(data.samples[i].pts,data.samples[i].data);}
 		});
-	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
-		vid.src = src;
+	}else if(vid.e.canPlayType('application/vnd.apple.mpegurl')){
+		vid.e.src = src;
 	}
 }
 
@@ -80,13 +93,153 @@ const reloadHls = () => {
 	const d = $('.is_cast').data();
 	if (!d) return;
 
-	d.paused = vid.paused;
+	d.paused = vid.e.paused;
 	d.ofssec = Math.floor($('input#seek').val());
 	$vid.addClass('is-loadding');
 	resetVid();
 
 	const matchReload = (VideoSrc || '').match(/&(?:re)?load=([0-9]+)/);
 	loadHls(d, matchReload && matchReload[1]);
+}
+
+const loadTslive = d => {
+	const setVolumeIcon = () => {
+		$('#volume-icon i').text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
+		localStorage.setItem('volume', vid.volume);
+		localStorage.setItem('muted', vid.muted);
+	}
+	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
+		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&`}&option=${quality}${
+		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
+		$cinema.prop('checked') ? '&cinema=1' : ''}${
+		$fast.prop('checked') ? '&fast=1' : ''
+	}`;
+
+	var wakeLock=null;
+	var modBufferSize=0;
+	var seekParam="";
+	function readNext(mod,reader,ret){
+		if(ret&&ret.value){
+			var inputLen=Math.min(ret.value.length,1e6);
+			//Limit input amount to reduce "Buffer overflow" console output.
+			var buffer=modBufferSize<14&&mod.getNextInputBuffer(inputLen);
+			if(!buffer){
+			  setTimeout(function(){readNext(mod,reader,ret);},1000);
+			  return;
+			}
+			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
+			mod.commitInputData(ret.value.length);
+			if(inputLen<ret.value.length){
+				//Input the rest.
+				setTimeout(function(){readNext(mod,reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)});},0);
+				return;
+			}
+		}
+		reader.read().then(function(r){
+			if(r.done){
+				if(wakeLock)wakeLock.release();
+				vid.seekWithoutTransition=null;
+				if(seekParam){
+					mod.reset();
+					startRead(mod);
+				}
+			}else{
+				setTimeout(function(){readNext(mod,reader,r);},0);
+			}
+		}).catch(function(e){
+			if(wakeLock)wakeLock.release();
+			vid.seekWithoutTransition=null;
+			if(seekParam){
+				mod.reset();
+				startRead(mod);
+			}
+			throw e;
+		});
+	}
+	if ($subtitles.hasClass('checked')) creatCap();
+	function startRead(mod){
+		var ctrl=new AbortController();
+		var uri=VideoSrc+seekParam;
+		seekParam="";
+		if(uri.indexOf("&audio2=1")>=0){
+			//2nd audio channel
+			mod.setDualMonoMode(1);
+		}
+		fetch(uri,{signal:ctrl.signal}).then(function(response){
+			if(!response.ok)return;
+			//Reset caption
+			if(cap)cap.attachMedia(null,vcont);
+			vid.currentTime=0;
+			vid.seekWithoutTransition=function(ofssec){
+				vid.seekWithoutTransition=null;
+				seekParam="&ofssec="+ofssec;
+				ctrl.abort();
+			};
+			readNext(mod,response.body.getReader(),null);
+			//Prevent screen sleep
+			navigator.wakeLock.request("screen").then(function(lock){wakeLock=lock;});
+		});
+	}
+	function notify(s){
+		var ctx=vid.e.getContext("2d");
+		ctx.fillStyle="black";
+		ctx.fillText(s,10,30);
+		ctx.fillStyle="white";
+		ctx.fillText(s,10,50);
+	}
+	if(!window.createWasmModule){
+		notify("Error! Probably ts-live.js not found.");
+		return;
+	}
+	if(!navigator.gpu){
+		notify("Error! WebGPU not available.");
+		return;
+	}
+	navigator.gpu.requestAdapter().then(function(adapter){
+		adapter.requestDevice().then(function(device){
+			createWasmModule({preinitializedWebGPUDevice:device}).then(function(mod){
+				var statsTime=0;
+				mod.setCaptionCallback(function(pts,ts,data){
+					console.log('Callback');
+					if(cap)cap.pushRawData(statsTime+ts,data.slice());
+				});
+				var rangeVolume=document.getElementById("volume");
+				mod.setAudioGain(vid.muted?0:vid.volume);
+				setVolumeIcon();
+				document.getElementById("volume-icon").onclick = () => {
+					vid.muted = !vid.muted;
+					rangeVolume.MaterialSlider.change(vid.muted ? 0 : vid.volume);
+					mod.setAudioGain(vid.muted?0:vid.volume);
+					setVolumeIcon();
+				};
+				document.getElementById("stop").onclick = () => {
+					mod.reset();
+				};
+				rangeVolume.onchange=function(){
+					vid.muted=false;
+					vid.volume=rangeVolume.value;
+					mod.setAudioGain(vid.volume);
+					setVolumeIcon();
+				};
+				mod.setStatsCallback(function(stats){
+					modBufferSize=stats[stats.length-1].InputBufferSize;
+					if(statsTime!=stats[stats.length-1].time){
+					vid.currentTime+=stats[stats.length-1].time-statsTime;
+					statsTime=stats[stats.length-1].time;
+					if(vid.ontimeupdate)vid.ontimeupdate();
+					if(cap)cap.onTimeupdate(statsTime);
+					}
+				});
+				setTimeout(function(){
+					//vbitrate.innerText="|?Mbps";
+					startRead(mod);
+				},500);
+			});
+		});
+	}).catch(function(e){
+		notify(e.message);
+		throw e;
+	});
 }
 
 const $audio = $('#audio');
@@ -117,13 +270,25 @@ const loadHls = (d, reload) => {
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
 		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
-	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
+	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.e.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.e.src=src), interval);
 	}else{
-		vid.src = VideoSrc;
+		vid.e.src = VideoSrc;
 	}
 }
+
+const checkTslive = () => {
+	const url = new URL(location.href);
+	const tslive = $(`#${localStorage.getItem('quality')}`).data('tslive');
+	if (tslive && !canvas){
+		url.searchParams.append('tslive', 1);
+		location.replace(url);
+	}else if (!tslive && canvas){
+		url.searchParams.delete('tslive');
+		location.replace(url);
+	}
+};
 
 const seek = document.querySelector('#seek');
 const $seek = $(seek);
@@ -133,6 +298,7 @@ const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const loadMovie = $e => {
+	checkTslive();
 	const d = $e.data();
 
 	resetVid();
@@ -142,7 +308,7 @@ const loadMovie = $e => {
 		$remote_control.addClass('disabled').find('button').prop('disabled', true);
 	}
 
-	d.canPlay = d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
+	d.canPlay = !canvas && d.path ? (vid.c||vid.e).canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
@@ -152,7 +318,11 @@ const loadMovie = $e => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		loadHls(d);
+		if (canvas){
+			loadTslive(d);
+		}else{
+			loadHls(d);
+		}
 		if (!d.info) return;
 
 		if (d.info.duration){
@@ -179,9 +349,9 @@ const $currentTime_duration = $('.currentTime,.duration');
 const playMovie = $e => {
 	if ($e.hasClass('playing')){
 		hideBar(2000);
-		vid.play();
+		vid.e.play();
 	}else{
-		vid.src = '';
+		vid.e.src = '';
 		seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$audios.attr('disabled', true);
@@ -208,7 +378,7 @@ $(function(){
 	$('#apk').prop('checked', localStorage.getItem('apk') == 'true');
 
 	const $volume = $('#volume');
-	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
+	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.e.muted ? 0 : vid.e.volume));
 	if (!isSmallScreen()){
 		$remote_control.prependTo('#apps-contener>.contener>.contener');
 	}else{
@@ -220,8 +390,8 @@ $(function(){
 	//閉じる
 	$('.close.mdl-badge').click(() => {
 		$('#popup').removeClass('is-visible');
-		vid.pause();
-		vid.playbackRate = 1;
+		vid.e.pause();
+		vid.e.playbackRate = 1;
 	});
 
 	const $play_icon = $('#play i');
@@ -247,15 +417,15 @@ $(function(){
 
 			$vid.removeClass('is-loadding');
 			$('.is_cast').removeClass('is_cast');
-			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
+			const errorcode = vid.e.networkState == 3  ? 5 : vid.e.error.code;
 			Snackbar({message: `Error : ${
 				['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]
 			}`});
 		},
 		'volumechange': () => {
-			$volume_icon_i.text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
-			localStorage.setItem('volume', vid.volume);
-			localStorage.setItem('muted', vid.muted);
+			$volume_icon_i.text(`volume_${vid.e.muted ? 'off' : vid.e.volume == 0 ? 'mute' : vid.e.volume > 0.5 ? 'up' : 'down'}`);
+			localStorage.setItem('volume', vid.e.volume);
+			localStorage.setItem('muted', vid.e.muted);
 		},
 		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = this.playbackRate;},
 		'canplay': () => {
@@ -264,15 +434,15 @@ $(function(){
 
 			const d = $('.is_cast').data();
 			if (!d.paused) {
-				const promise = vid.play();
+				const promise = vid.e.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
 				if (promise !== undefined) {
 					promise.catch(error => {
-						vid.muted = true;
-						vid.play();
+						vid.e.muted = true;
+						vid.e.play();
 						$(document).one('click', () => {
-							vid.muted = false;
-							document.querySelector('#volume').MaterialSlider.change(vid.volume);
+							vid.e.muted = false;
+							document.querySelector('#volume').MaterialSlider.change(vid.e.volume);
 						});			
 					});
 				}
@@ -280,8 +450,8 @@ $(function(){
 			if (!d.canPlay) return;
 
 			if ($subtitles.hasClass('checked')) loadVtt();
-			$duration.text(getVideoTime(vid.duration));
-			$seek.attr('max', vid.duration);
+			$duration.text(getVideoTime(vid.e.duration));
+			$seek.attr('max', vid.e.duration);
 		},
 		'timeupdate': () => {
 			const d = $('.is_cast').data();
@@ -291,24 +461,42 @@ $(function(){
 			if (d.onid){
 				currentTime = (Date.now() - d.info.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
-				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
+				$live.toggleClass('live', vid.e.duration - vid.e.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;
 
-				currentTime = vid.currentTime + (d.ofssec || 0);
+				currentTime = vid.e.currentTime + (d.ofssec || 0);
 				seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		}
 	});
 
-	$('#play').click(() => vid.paused ? vid.play() : vid.pause());
+	vid.ontimeupdate = () => {
+		const d = $('.is_cast').data();
+		if (!d) return;
+
+		let currentTime;
+		if (d.onid){
+			currentTime = (Date.now() - d.info.starttime) / 1000;
+			seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
+			$live.toggleClass('live', (vid.c||vid.e).duration - (vid.c||vid.e).currentTime < 2);
+		}else if (d.path || d.id || d.reid){
+			if ($seek.data('touched')) return;
+
+			currentTime = (vid.c||vid.e).currentTime + (d.ofssec || 0);
+			seek.MaterialSlider.change(currentTime);
+		}
+		$currentTime.text(getVideoTime(currentTime));
+	}
+
+	$('#play').click(() => vid.e.paused ? vid.e.play() : vid.e.pause());
 	const $quality_audio = $('.quality,.audio');
 	const $stop = $('.stop');
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
 		resetVid();
-		vid.src = '';
+		vid.e.src = '';
 		if (location.search.match(/id=\d*-\d*-\d*/)) history.replaceState(null,null,'?');
 		$vid.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
@@ -326,25 +514,30 @@ $(function(){
 		'touchend mouseup': () => $seek.data('touched', false),
 		'change': () => {
 			const d = $('.is_cast').data();
-			if (d.canPlay) return
+			if (canvas){
+				d.ofssec = Math.floor($seek.val());
+				vid.seekWithoutTransition(d.ofssec);
+			}else{
+				if (d.canPlay) return
 
-			d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration ? vid.currentTime = $seek.val() - d.ofssec : reloadHls();
+				d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.e.duration ? vid.e.currentTime = $seek.val() - d.ofssec : reloadHls();
+			}
 		},
 		'input': () => {
 			$currentTime.text(getVideoTime($seek.val()));
-			if ($('.is_cast').data('canPlay'))vid.currentTime = $seek.val();
+			if ($('.is_cast').data('canPlay'))vid.e.currentTime = $seek.val();
 		}
 	});
 
 	$volume.on('input', () => {
-		vid.muted = false;
-		vid.volume = $volume.val();
+		vid.e.muted = false;
+		vid.e.volume = $volume.val();
 	});
 
 	const $volume_icon = $('#volume-icon');
 	$volume_icon.click(() => {
-		vid.muted = !vid.muted;
-		$volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume);
+		vid.e.muted = !vid.e.muted;
+		$volume.get(0).MaterialSlider.change(vid.e.muted ? 0 : vid.e.volume);
 	});
 
 	$('#fullscreen').click(() => {
@@ -432,7 +625,7 @@ $(function(){
 					}
 				});
 			}else 
-				vid.requestPictureInPicture();
+				vid.e.requestPictureInPicture();
 		});
 		$('#PIP_exit').click(() => documentPictureInPicture.window.close())
 	}else{
@@ -467,15 +660,22 @@ $(function(){
 		}else{
 			localStorage.removeItem('quality');
 		}
+
+		checkTslive();
+
 		if (!$vid.data('cast') || localStorage.getItem('apk') != 'true') reloadHls();
 	});
 	$('[name=audio]').change(e => {
 		audioVal = $(e.currentTarget).val();
-		reloadHls();
+		if (canvas){
+			loadTslive($('.is_cast').data());
+		}else{
+			reloadHls();
+		}
 	});
 	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
-	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
+	$rate.change(e => vid.e.playbackRate = $(e.currentTarget).val());
 
 	hideBar(0);
 	$player_container = $('.player-container>*').not('.remote-control');
@@ -501,7 +701,7 @@ $(function(){
 		});
 	}
 
-	$('#live:not(.live)').click(() => vid.currentTime = vid.duration);
+	$('#live:not(.live)').click(() => vid.e.currentTime = vid.e.duration);
 
 	$subtitles.click(() => {
 		if (!$subtitles.hasClass('checked')){

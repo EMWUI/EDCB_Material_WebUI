@@ -77,7 +77,7 @@ if not End and epgInfo then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..PlayerTemplate('<video id="video" preload="none" data-reid="'..r.reserveID..'" data-info=\'{"duration":'..r.durationSecond..',\'audio\':'..#audio..'}\' class="is_cast"></video>\n', audio)
+      ..PlayerTemplate('preload="none" data-reid="'..r.reserveID..'" data-info=\'{"duration":'..r.durationSecond..',\'audio\':'..#audio..'}\' class="is_cast"', audio)
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 
@@ -97,4 +97,7 @@ ct.main=ct.main..'</div>\n</div>\n'..(hidden and hidden or '')
 
 ct=Template(ct)
 
-mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)
+  ..'Cross-Origin-Embedder-Policy: require-corp\r\n'
+  ..'Cross-Origin-Opener-Policy: same-origin\r\n'
+  ..'\r\n'))

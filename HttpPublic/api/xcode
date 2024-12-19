@@ -36,6 +36,7 @@ loadKey=reload or mg.get_var(query,'load') or ''
 -- クエリのハッシュをキーとし、同一キーアクセスは出力中のインデックスファイルを返す
 hlsKey=hlsKey and mg.md5('xcode:'..hlsKey..':'..fpath..':'..option.xcoder..':'..option.option..':'..offset..':'..audio2..':'..filter..':'..caption..':'..output[2])
 
+-- トランスコードを開始し、HLSの場合はインデックスファイルの情報、それ以外はMP4などのストリーム自体を返す
 function OpenTranscoder()
   local searchName='xcode-'..mg.md5(fpath..':'..loadKey):sub(17)
   if XCODE_SINGLE then
@@ -71,26 +72,29 @@ function OpenTranscoder()
   local tsreadex=FindToolsCommand('tsreadex')
   local asyncbuf=FindToolsCommand('asyncbuf')
   local tsmemseg=FindToolsCommand('tsmemseg')
-  local xcoder=''
-  if WIN32 then
-    for s in option.xcoder:gmatch('[^|]+') do
-      xcoder=PathAppend(tools,s)
-      if EdcbFindFilePlain(xcoder) then break end
-      xcoder=s
+  local cmd=''
+  if filter~=':' then
+    local xcoder=''
+    if WIN32 then
+      for s in option.xcoder:gmatch('[^|]+') do
+        xcoder=PathAppend(tools,s)
+        if EdcbFindFilePlain(xcoder) then break end
+        xcoder=s
+      end
+      xcoder='"'..xcoder..'"'
+    else
+      xcoder=('|'..option.xcoder:gsub('%.exe$','')):match('[\\/|]([0-9A-Za-z._-]+)$')
+      xcoder=xcoder and FindToolsCommand(xcoder) or ':'
     end
-    xcoder='"'..xcoder..'"'
-  else
-    xcoder=('|'..option.xcoder:gsub('%.exe$','')):match('[\\/|]([0-9A-Za-z._-]+)$')
-    xcoder=xcoder and FindToolsCommand(xcoder) or ':'
+    cmd=' | '..xcoder..' '..option.option
+      :gsub('$SRC','-')
+      :gsub('$AUDIO',audio2)
+      :gsub('$DUAL','')
+      :gsub('$FILTER',(filter:gsub('%%',WIN32 and '%%%%' or '%%')))
+      :gsub('$CAPTION',(caption:gsub('%%',WIN32 and '%%%%' or '%%')))
+      :gsub('$OUTPUT',(output[2]:gsub('%%',WIN32 and '%%%%' or '%%')))
   end
 
-  local cmd=xcoder..' '..option.option
-    :gsub('$SRC','-')
-    :gsub('$AUDIO',audio2)
-    :gsub('$DUAL','')
-    :gsub('$FILTER',(filter:gsub('%%',WIN32 and '%%%%' or '%%')))
-    :gsub('$CAPTION',(caption:gsub('%%',WIN32 and '%%%%' or '%%')))
-    :gsub('$OUTPUT',(output[2]:gsub('%%',WIN32 and '%%%%' or '%%')))
   if fastRate~=1 and option.editorFast then
     local editor=''
     if WIN32 then
@@ -103,9 +107,9 @@ function OpenTranscoder()
     else
       editor=('|'..option.editorFast:gsub('%.exe$','')):match('[\\/|]([0-9A-Za-z._-]+)$') or ':'
     end
-    cmd=editor..' '..option.editorOptionFast..' | '..cmd
+    cmd=' | '..editor..' '..option.editorOptionFast..cmd
   end
-  if XCODE_LOG then
+  if XCODE_LOG and cmd~='' then
     local log=mg.script_name:gsub('[^\\/]*$','')..'log'
     if not EdcbFindFilePlain(log) then
       edcb.os.execute('mkdir '..QuoteCommandArgForPath(log))
@@ -114,7 +118,7 @@ function OpenTranscoder()
     log=PathAppend(log,'xcode-'..os.time()..'-'..mg.md5(cmd):sub(29)..'.txt')
     local f=edcb.io.open(log,'w')
     if f then
-      f:write(cmd..'\n\n')
+      f:write(cmd:sub(4)..'\n\n')
       f:close()
       cmd=cmd..' 2>>'..QuoteCommandArgForPath(log)
     end
@@ -129,7 +133,7 @@ function OpenTranscoder()
   local sync=WIN32 and edcb.GetPrivateProfile('SET','KeepDisk',0,'EpgTimerSrv.ini')~='0'
 
   -- "-z"はプロセス検索用
-  cmd=tsreadex..' -z edcb-legacy-'..searchName..' -s '..offset..' -l 16384 -t 6'..(sync and ' -m 1' or '')..' -x 18/38/39 -n -1 -a 9 -b 1 -c 5 -u 2 '..QuoteCommandArgForPath(fpath)..' | '..cmd
+  cmd=tsreadex..' -z edcb-legacy-'..searchName..' -s '..offset..' -l 16384 -t 6'..(sync and ' -m 1' or '')..' -x 18/38/39 -n -1 -a 9 -b 1 -c 5 -u 2 '..QuoteCommandArgForPath(fpath)..cmd
   if hlsKey then
     -- 極端に多く開けないようにする
     local indexCount=#(edcb.FindFile(TsmemsegPipePath('*_','00'),10) or {})
@@ -279,17 +283,10 @@ if fpath then
             end
           end
           fname='xcode.psc.txt'
-        elseif XCODE then
+        else
           f:close()
           f=OpenTranscoder()
           fname='xcode.'..output[1]
-        elseif hlsKey then
-          -- トランスコードなしのライブストリーミングには未対応
-          f:close()
-          f=nil
-        else
-          -- 容量確保には未対応
-          f:seek('set',offset)
         end
       end
     end
@@ -356,24 +353,18 @@ elseif hlsKey then
 else
   mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
   if mg.request_info.request_method~='HEAD' then
-    retry=0
     while true do
       buf=f:read(188*128)
       if buf and #buf~=0 then
-        retry=0
         if not mg.write(buf) then
           -- キャンセルされた
           mg.cry('canceled')
           break
         end
       else
-        -- 終端に達した。4秒間この状態が続けば対象ファイルへの追記が終息したとみなす
-        retry=retry+1
-        if XCODE or retry > 20 then
-          mg.cry('end')
-          break
-        end
-        edcb.Sleep(200)
+        -- 終端に達した
+        mg.cry('end')
+        break
       end
     end
   end
