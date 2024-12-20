@@ -3,7 +3,13 @@ $(function(){
 
 	//ライブラリ取得
 	const getLibrary = hash => {
-		if (hash) history.pushState(null, null, `?${$.param(hash)}`);
+		if (hash) {
+			const params = new URLSearchParams(location.search);
+			params.delete('i');
+			params.delete('d');
+			params.delete('p');
+			history.pushState(null, null, `?${$.param(hash)}${params.size>0?`&${params.toString()}`:''}`);
+		}
 		showSpinner(true);
 		$.get(`${ROOT}api/Library${location.search}`).done(xml => {
 			if ($(xml).find('error').length){
@@ -18,6 +24,22 @@ $(function(){
 			showSpinner();
 		});
 	}
+
+	const getMetadata = ($e, hash) => {
+		$.get(`${ROOT}api/Library`, hash).done(xml => {
+			showSpinner();
+			xml = $(xml).find('file');
+			$e.data({
+				path: xml.txt('path'),
+				public: xml.num('public') == 1,
+				info: {
+					duration: xml.children('meta').num('duration'),
+					audio: xml.children('meta').num('audio')
+				}
+			});
+			playMovie($e);
+		});
+}
 
 	let order = localStorage.getItem('sortOrder') ?? 'name';
 	let asc = localStorage.getItem('ascending') == 'true';
@@ -81,23 +103,12 @@ $(function(){
 					public: $(e).children('public').length > 0,
 				}).click(() => {
 					showSpinner(true);
+					history.pushState(null, null, `?${$.param(path)}&play=${$.param(hash).replaceAll('&','%26')}`);
 					$('#popup').addClass('is-visible');
 					$('#playerUI').addClass('is-visible');
 					$audios.prop('checked', false);
 					$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-					$.get(`${ROOT}api/Library`, hash).done(xml => {
-						showSpinner();
-						xml = $(xml).find('file');
-						$e.data({
-							path: xml.txt('path'),
-							public: xml.num('public') == 1,
-							info: {
-								duration: xml.children('meta').num('duration'),
-								audio: xml.children('meta').num('audio')
-							}
-						});
-						playMovie($e);
-					});
+					getMetadata($e, hash);
 				});
 
 				const thumb = $(e).txt('thumb');
@@ -182,6 +193,12 @@ $(function(){
 
 	$(window).on('popstate', () => getLibrary());
 	toggleView(true);
+	const play = new URLSearchParams(location.search).get('play');
+	if (play){
+		const $e = $('<div class="hidden is_cast">');
+		$('#tvcast').append($e);
+		getMetadata($e, play);
+	}
 
 	$('#menu_autoplay').removeClass('hidden');
 	$('#toggleView').click(() => toggleView());

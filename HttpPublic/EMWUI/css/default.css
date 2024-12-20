@@ -1659,8 +1659,10 @@ h4 .mdl-button--icon {
     background-size: contain;
     padding: 0!important;
     width: 100vw;
-    height: 100vh;
     max-height: none; }
+    #player:-webkit-full-screen,
+    #player:-webkit-full-screen video#video {
+    height: 100vh; }
   #player:-moz-full-screen,
   #player:-moz-full-screen #video {
     background-size: contain;

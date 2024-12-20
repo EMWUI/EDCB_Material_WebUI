@@ -117,7 +117,10 @@ $(function(){
 		const fn = () => {
 			$('.is_cast').removeClass('is_cast');
 			$e.addClass('is_cast');
-			history.replaceState(null,null,`?id=${d.onid}-${d.tsid}-${d.sid}`)
+
+			const params = new URLSearchParams(location.search);
+			params.set('id', `${d.onid}-${d.tsid}-${d.sid}`);
+			history.replaceState(null,null,`?${params.toString()}`);
 			loadMovie($e);
 			audioMemu(d.audio);
 			setEpgInfo(d);
@@ -166,7 +169,7 @@ $(function(){
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
 
-	if ($('.onair.is_cast').length) loadMovie($('.is_cast'));
+	if ($('.onair.is_cast').length) loadMovie();
 	$('.toggle').click(e => {
 		const $e = $(e.currentTarget).children();
 		const flag = $e.hasClass('flag');

@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
-    css='240726',
+    css='241220',
     common='241217',
     tvguide='240726',
-    player='241219',
-    onair='240725',
-    library='240725',
+    player='241220',
+    onair='241220',
+    library='241220',
     setting='241217',
     datastream='241217',
     legacy='20241127',

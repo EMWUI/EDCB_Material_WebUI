@@ -83,14 +83,15 @@ const startHLS= src => {
 const resetVid = () => {
 	if (hls) hls.destroy();
 	if (cap) cap.detachMedia();
+	if (vid.pause) vid.pause();
 	toggleDataStream(false);
 	toggleJikkyo(false);
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
 }
 
-const reloadHls = () => {
-	const d = $('.is_cast').data();
+const reloadHls = ($e = $('.is_cast')) => {
+	const d = $e.data();
 	if (!d) return;
 
 	d.paused = vid.e.paused;
@@ -99,15 +100,11 @@ const reloadHls = () => {
 	resetVid();
 
 	const matchReload = (VideoSrc || '').match(/&(?:re)?load=([0-9]+)/);
-	loadHls(d, matchReload && matchReload[1]);
+	loadHls($e, matchReload && matchReload[1]);
 }
 
-const loadTslive = d => {
-	const setVolumeIcon = () => {
-		$('#volume-icon i').text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
-		localStorage.setItem('volume', vid.volume);
-		localStorage.setItem('muted', vid.muted);
-	}
+const loadTslive = ($e = $('.is_cast')) => {
+	const d = $e.data();
 	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
 		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&`}&option=${quality}${
 		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
@@ -200,36 +197,43 @@ const loadTslive = d => {
 			createWasmModule({preinitializedWebGPUDevice:device}).then(function(mod){
 				var statsTime=0;
 				mod.setCaptionCallback(function(pts,ts,data){
-					console.log('Callback');
 					if(cap)cap.pushRawData(statsTime+ts,data.slice());
 				});
 				var rangeVolume=document.getElementById("volume");
 				mod.setAudioGain(vid.muted?0:vid.volume);
-				setVolumeIcon();
+				$vid.trigger('volumechange');
 				document.getElementById("volume-icon").onclick = () => {
-					vid.muted = !vid.muted;
-					rangeVolume.MaterialSlider.change(vid.muted ? 0 : vid.volume);
 					mod.setAudioGain(vid.muted?0:vid.volume);
-					setVolumeIcon();
-				};
-				document.getElementById("stop").onclick = () => {
-					mod.reset();
+					$vid.trigger('volumechange');
 				};
 				rangeVolume.onchange=function(){
 					vid.muted=false;
 					vid.volume=rangeVolume.value;
 					mod.setAudioGain(vid.volume);
-					setVolumeIcon();
+					$vid.trigger('volumechange');
 				};
 				mod.setStatsCallback(function(stats){
 					modBufferSize=stats[stats.length-1].InputBufferSize;
 					if(statsTime!=stats[stats.length-1].time){
 					vid.currentTime+=stats[stats.length-1].time-statsTime;
 					statsTime=stats[stats.length-1].time;
-					if(vid.ontimeupdate)vid.ontimeupdate();
+					$vid.trigger('timeupdate');
 					if(cap)cap.onTimeupdate(statsTime);
 					}
 				});
+				vid.stop = () => mod.pauseMainLoop();
+				vid.pause = () => {
+					$vid.trigger('pause');
+					vid.e.paused = true;
+					mod.pauseMainLoop();
+				};
+				vid.play = () => {
+					$vid.trigger('play');
+					vid.e.paused = false;
+					mod.resumeMainLoop();
+				};
+				$vid.trigger('play');
+				vid.e.paused = false;
 				setTimeout(function(){
 					//vbitrate.innerText="|?Mbps";
 					startRead(mod);
@@ -250,7 +254,9 @@ const $remote_control = $('.remote-control');
 const $danmaku = $('#danmaku');
 let quality = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1;
 let audioVal = 0;
-const loadHls = (d, reload) => {
+const loadHls = ($e, reload) => {
+	const d = $e.data();
+
 	let dateNow = new Date();
 	dateNow = (dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
 	const hls1 = `&hls=${1+dateNow}`;
@@ -284,9 +290,11 @@ const checkTslive = () => {
 	if (tslive && !canvas){
 		url.searchParams.append('tslive', 1);
 		location.replace(url);
+		return true;
 	}else if (!tslive && canvas){
 		url.searchParams.delete('tslive');
 		location.replace(url);
+		return true;
 	}
 };
 
@@ -297,8 +305,8 @@ const $quality = $('.quality');
 const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
-const loadMovie = $e => {
-	checkTslive();
+const loadMovie = ($e = $('.is_cast')) => {
+	if (checkTslive()) return;
 	const d = $e.data();
 
 	resetVid();
@@ -319,9 +327,9 @@ const loadMovie = $e => {
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		if (canvas){
-			loadTslive(d);
+			loadTslive($e);
 		}else{
-			loadHls(d);
+			loadHls($e);
 		}
 		if (!d.info) return;
 
@@ -423,9 +431,9 @@ $(function(){
 			}`});
 		},
 		'volumechange': () => {
-			$volume_icon_i.text(`volume_${vid.e.muted ? 'off' : vid.e.volume == 0 ? 'mute' : vid.e.volume > 0.5 ? 'up' : 'down'}`);
-			localStorage.setItem('volume', vid.e.volume);
-			localStorage.setItem('muted', vid.e.muted);
+			$volume_icon_i.text(`volume_${(vid.c||vid.e).muted ? 'off' : (vid.c||vid.e).volume == 0 ? 'mute' : (vid.c||vid.e).volume > 0.5 ? 'up' : 'down'}`);
+			localStorage.setItem('volume', (vid.c||vid.e).volume);
+			localStorage.setItem('muted', (vid.c||vid.e).muted);
 		},
 		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = this.playbackRate;},
 		'canplay': () => {
@@ -461,43 +469,29 @@ $(function(){
 			if (d.onid){
 				currentTime = (Date.now() - d.info.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
-				$live.toggleClass('live', vid.e.duration - vid.e.currentTime < 2);
+				$live.toggleClass('live', (vid.c||vid.e).duration - (vid.c||vid.e).currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;
 
-				currentTime = vid.e.currentTime + (d.ofssec || 0);
+				currentTime = (vid.c||vid.e).currentTime + (d.ofssec || 0);
 				seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		}
 	});
 
-	vid.ontimeupdate = () => {
-		const d = $('.is_cast').data();
-		if (!d) return;
-
-		let currentTime;
-		if (d.onid){
-			currentTime = (Date.now() - d.info.starttime) / 1000;
-			seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
-			$live.toggleClass('live', (vid.c||vid.e).duration - (vid.c||vid.e).currentTime < 2);
-		}else if (d.path || d.id || d.reid){
-			if ($seek.data('touched')) return;
-
-			currentTime = (vid.c||vid.e).currentTime + (d.ofssec || 0);
-			seek.MaterialSlider.change(currentTime);
-		}
-		$currentTime.text(getVideoTime(currentTime));
-	}
-
-	$('#play').click(() => vid.e.paused ? vid.e.play() : vid.e.pause());
+	$('#play').click(() => vid.e.paused ? (vid.c||vid.e).play() : (vid.c||vid.e).pause());
+	
 	const $quality_audio = $('.quality,.audio');
 	const $stop = $('.stop');
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
 		resetVid();
 		vid.e.src = '';
-		if (location.search.match(/id=\d*-\d*-\d*/)) history.replaceState(null,null,'?');
+		const params = new URLSearchParams(location.search);
+		params.delete('id');
+		params.delete('play');
+		history.replaceState(null,null,`${params.size>0?`?${params.toString()}`:location.pathname}`);
 		$vid.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
@@ -536,8 +530,9 @@ $(function(){
 
 	const $volume_icon = $('#volume-icon');
 	$volume_icon.click(() => {
-		vid.e.muted = !vid.e.muted;
-		$volume.get(0).MaterialSlider.change(vid.e.muted ? 0 : vid.e.volume);
+		e = vid.c ?? vid.e;
+		e.muted = !e.muted;
+		$volume.get(0).MaterialSlider.change(e.muted ? 0 : e.volume);
 	});
 
 	$('#fullscreen').click(() => {
@@ -668,7 +663,7 @@ $(function(){
 	$('[name=audio]').change(e => {
 		audioVal = $(e.currentTarget).val();
 		if (canvas){
-			loadTslive($('.is_cast').data());
+			loadTslive();
 		}else{
 			reloadHls();
 		}
