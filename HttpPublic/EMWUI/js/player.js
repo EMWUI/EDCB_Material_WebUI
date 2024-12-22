@@ -83,7 +83,7 @@ const startHLS= src => {
 const resetVid = () => {
 	if (hls) hls.destroy();
 	if (cap) cap.detachMedia();
-	if (vid.pause) vid.pause();
+	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
 	$vid_meta.attr('src', '');
@@ -154,6 +154,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 		});
 	}
 	if ($subtitles.hasClass('checked')) creatCap();
+
 	function startRead(mod){
 		var ctrl=new AbortController();
 		var uri=VideoSrc+seekParam;
@@ -172,6 +173,10 @@ const loadTslive = ($e = $('.is_cast')) => {
 				seekParam="&ofssec="+ofssec;
 				ctrl.abort();
 			};
+			vid.stop = () => {
+				mod.pauseMainLoop();
+				ctrl.abort();
+			};
 			readNext(mod,response.body.getReader(),null);
 			//Prevent screen sleep
 			navigator.wakeLock.request("screen").then(function(lock){wakeLock=lock;});
@@ -185,11 +190,11 @@ const loadTslive = ($e = $('.is_cast')) => {
 		ctx.fillText(s,10,50);
 	}
 	if(!window.createWasmModule){
-		notify("Error! Probably ts-live.js not found.");
+		Snackbar({message: "Error! Probably ts-live.js not found."});
 		return;
 	}
 	if(!navigator.gpu){
-		notify("Error! WebGPU not available.");
+		Snackbar({message: "Error! WebGPU not available."});
 		return;
 	}
 	navigator.gpu.requestAdapter().then(function(adapter){
@@ -221,7 +226,6 @@ const loadTslive = ($e = $('.is_cast')) => {
 					if(cap)cap.onTimeupdate(statsTime);
 					}
 				});
-				vid.stop = () => mod.pauseMainLoop();
 				vid.pause = () => {
 					$vid.trigger('pause');
 					vid.e.paused = true;
