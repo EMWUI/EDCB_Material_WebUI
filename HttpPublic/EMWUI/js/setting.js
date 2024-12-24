@@ -45,7 +45,7 @@ $(function(){
 		$('#set input').not('.hidden').each((i, e) => $(e).parent().toggleClass('is-checked', $(e).prop('checked')));
 		//並び替え
 		$('#sort .mdl-list').each((i, e) => $(e).data('sort').split(',').forEach(v => $(`#${v}`).appendTo(e)) );
-		Snackbar({message: '元に戻しました'});
+		Snackbar('元に戻しました');
 	});
 
 	$('.mdl-layout__tab').click(e => {

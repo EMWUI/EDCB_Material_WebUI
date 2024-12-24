@@ -13,14 +13,14 @@ $(function(){
 		showSpinner(true);
 		$.get(`${ROOT}api/Library${location.search}`).done(xml => {
 			if ($(xml).find('error').length){
-				Snackbar({message: $(xml).find('error').text()});
+				Snackbar($(xml).find('error').text());
 				showSpinner();
 				history.back();
 			}else{
 				generateLibrary($(xml));
 			}
 		}).fail(() => {
-			Snackbar({message: '取得に失敗しました'});
+			Snackbar('取得に失敗しました');
 			showSpinner();
 		});
 	}
@@ -227,10 +227,10 @@ $(function(){
 
 	$('.thumbs').click(e => {
 		showSpinner(true);
-		Snackbar({message: 'サムネの作成を開始します'});
+		Snackbar('サムネの作成を開始します');
 		$.get(`${ROOT}api/Library`, $(e.currentTarget).data()).done(xml => {
 			showSpinner();
-			Snackbar({message: $(xml).find('info').text()});
+			Snackbar($(xml).find('info').text());
 		});
 	});
 });

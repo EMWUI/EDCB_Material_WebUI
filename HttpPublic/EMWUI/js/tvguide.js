@@ -330,7 +330,7 @@ $(function(){
 	});
 
 	//EPG取得
-	$('.api_tools').click(e => $.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => Snackbar({message: $(xml).find('info').text()})));
+	$('.api_tools').click(e => $.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => Snackbar($(xml).find('info').text())));
 
 	//EPG予約
 	$('.autoepg').click(e => {
@@ -348,7 +348,7 @@ $(function(){
 			success: xml => {
 					const add = d.oneclick == 1;
 					const messege = addRecMark(xml, $e, $e.parents('.content-wrap'));
-					Snackbar({message: `予約を${add ? '追加' : `${messege}に`}しました`});
+					Snackbar(`予約を${add ? '追加' : `${messege}に`}しました`);
 			},
 			end: () => $e.parents('.cell').removeClass('clicked')
 		});

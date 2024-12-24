@@ -29,7 +29,7 @@ const $playerUI_titlebar = $('#playerUI,#titlebar');
 const $contral = $('#control .mdl-menu__container');
 const $subtitles = $('#subtitles');
 const $vid_meta = $('#vid-meta');
-const hideBar = t => {
+const hideBar = (t = 0) => {
 	hoverID = setTimeout(() => {
 		if (vid.e.paused) return;
 
@@ -56,7 +56,7 @@ const creatCap = () => {
 
 const errorHLS = () => {
 	$vid.removeClass('is-loadding');
-	Snackbar({message: 'HLSエラー'});
+	Snackbar('HLSエラー');
 }
 
 const startHLS= src => {
@@ -420,7 +420,7 @@ $(function(){
 				$('.playing').next().click();
 				$titlebar.addClass('is-visible');
 			}else{
-				if (autoplay && $('.playing').is('.item:last')) Snackbar({message: '最後のファイルを再生しました'});
+				if (autoplay && $('.playing').is('.item:last')) Snackbar('最後のファイルを再生しました');
 				$playerUI.addClass('is-visible');
 			}
 		},
@@ -429,10 +429,8 @@ $(function(){
 
 			$vid.removeClass('is-loadding');
 			$('.is_cast').removeClass('is_cast');
-			const errorcode = vid.e.networkState == 3  ? 5 : vid.e.error.code;
-			Snackbar({message: `Error : ${
-				['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]
-			}`});
+			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
+			Snackbar(`Error : ${['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
 		'volumechange': () => {
 			$volume_icon_i.text(`volume_${(vid.c||vid.e).muted ? 'off' : (vid.c||vid.e).volume == 0 ? 'mute' : (vid.c||vid.e).volume > 0.5 ? 'up' : 'down'}`);

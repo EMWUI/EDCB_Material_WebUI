@@ -78,7 +78,7 @@ $(function(){
 		if (eid != 0){
 			$e.hasClass('panel') ? getEpgInfo($e.parents('li'), d) : location.href = `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${eid}`;
 		}else{
-			Snackbar({message: 'この時間帯の番組情報がありません'});
+			Snackbar('この時間帯の番組情報がありません');
 			$('#sidePanel, .open').removeClass('is-visible open');
 		}
 	});
@@ -139,21 +139,21 @@ $(function(){
 		const $e = $(e.currentTarget).parents('li').addClass('is_cast');
 		const d = $e.data();
 		if (d.info.eid == 0){
-			Snackbar({message: '番組情報がありません'});
+			Snackbar('番組情報がありません');
 		}else if (Magnezio){
 			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
-				!$(xml).find('success').length ? Snackbar({message: '失敗'}) : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
+				!$(xml).find('success').length ? Snackbar('失敗') : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 			);
 		}else if (apk){
 			showSpinner(true);
-			Snackbar({message: '準備中'});
+			Snackbar('準備中');
 			const src = `${ROOT}api/view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}&hls=${1+d.onid+d.tsid+d.sid}${hls4}&option=${quality}${
 				!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${$cinema.prop('checked') ? '&cinema=1' : ''
 			}`;
 
 			waitForHlsStart(src, `ctok=${ctok}&open=1`, 1000, 1000, () => {
 				showSpinner();
-				Snackbar({message: 'エラー'});
+				Snackbar('エラー');
 			}, src => {
 				showSpinner();
 				location.href = `intent:${new URL(src, document.baseURI).href}#Intent;type=video/*;end;`;
@@ -178,7 +178,7 @@ $(function(){
 	$('#subCH').change(e => $('.subCH').toggle('hidden', !$(e.currentTarget).prop('checked')));
 
 	$('#forced').click(e => {
-		$.post(`${ROOT}api/TvCast`, {ctok: $(e.currentTarget).data('ctok'), n: 0, id: '1-1-0'}).done(xhr => Snackbar({message: $(xhr).find('success').text()}));
+		$.post(`${ROOT}api/TvCast`, {ctok: $(e.currentTarget).data('ctok'), n: 0, id: '1-1-0'}).done(xhr => Snackbar($(xhr).find('success').text()));
 		$('#stop').click();
 	});
 });

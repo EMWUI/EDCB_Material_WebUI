@@ -5,8 +5,8 @@ const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
 const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Constant_.MAX_WIDTH).matches;
 const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
-const errMessage = xml => xml.find('err').each((i, e) => Snackbar({message: `${i==0 ? 'Error : ' : ''}${$(e).text()}`}));
-const zero = (e, n) => (Array(n ? n : 2).join('0')+e).slice(-(n ? n : 2));
+const errMessage = xml => xml.find('err').each((i, e) => Snackbar(`${i==0 ? 'Error : ' : ''}${$(e).text()}`));
+const zero = (e, n = 2) => (Array(n).join('0')+e).slice(-n);
 let Snackbar = d => setTimeout(() => Snackbar(d), 1000);
 
 $.fn.extend({
@@ -96,12 +96,12 @@ const Notify = {
 		$(`.notify_${d.eid}`).data('notification', false).children().text('add_alert');
 
 		Notify.badge();
-		if (!noSnack) Snackbar({message: '削除しました'});
+		if (!noSnack) Snackbar('削除しました');
 	},
 	create: (d, save) => {		//通知登録
 		if (save){
 			Notify.save(d);
-			Snackbar({message: '追加しました'});
+			Snackbar('追加しました');
 		}
 
 		d.timer = setTimeout(() => {
@@ -482,7 +482,7 @@ const recFolder = {
 			timeout: 2000,
 			actionHandler: () => {
 				$clone.insertBefore($elem);
-				Snackbar({message: '元に戻しました'});
+				Snackbar('元に戻しました');
 			},
 			actionText: '元に戻す'
 		};
@@ -610,7 +610,7 @@ const setAutoAdd = $e => {
 
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 		}else{
-			Snackbar({message: 'Error : 自動予約が見つかりませんでした'});
+			Snackbar('Error : 自動予約が見つかりませんでした');
 		}
 		showSpinner();
 	});
@@ -793,7 +793,7 @@ const checkReserve = ($e, d) => {
 			getList.Preset(() => setDefault(true));
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 		}
-		if (!$e.hasClass('onair')) Snackbar({message: '予約が見つかりませんでした'});
+		if (!$e.hasClass('onair')) Snackbar('予約が見つかりませんでした');
 	}else{
 		getList.Preset(() => setDefault());
 		$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
@@ -835,7 +835,7 @@ const getEpgInfo = ($e, d = $e.data()) => {
 						$('[href="#recset"], #recset').addClass('is-active');
 					}else{
 						$e.remove();
-						Snackbar({message: '予約が見つかりませんでした'});
+						Snackbar('予約が見つかりませんでした');
 					}
 				});
 			}else{
@@ -882,7 +882,7 @@ $(window).on('load resize', () => {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("serviceworker.js");
 
 $(function(){
-	$('.mdl-js-snackbar').on('mdl-componentupgraded', () => Snackbar = d => document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar(d));
+	$('.mdl-js-snackbar').on('mdl-componentupgraded', () => Snackbar = d => document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar(typeof d === 'string' ? {message: d} : d));
 
 	//スワイプ
 	if (isTouch){
@@ -987,7 +987,7 @@ $(function(){
 	$('#nosuspend').click(e => {
 		$.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => {
 			const message = $(xml).find('info').text();
-			Snackbar({message: message});
+			Snackbar(message);
 			if (message.match('起動')){
 				$('#nosuspend').data('nosuspend', 'n').addClass('n').removeClass('y');
 			}else if (message.match('停止')){
@@ -1002,7 +1002,7 @@ $(function(){
 			$('#dialog .mdl-dialog__content').html(`<span>${$(e.currentTarget).text()}に移行します`);
 			$('#dialog .ok').unbind('click').click(() => {
 				suspend.close();
-				$.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => Snackbar({message: $(xml).find('info').text()}));
+				$.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => Snackbar($(xml).find('info').text()));
 			});
 		    suspend.showModal();
 		});
@@ -1067,7 +1067,7 @@ $(function(){
 			date.endDayOfWeek = $('#endDayOfWeek').val();
 			dateList.add.select(date);
 		}else if(date.startTime > date.endTime){
-			Snackbar({message: '開始 > 終了です'});
+			Snackbar('開始 > 終了です');
 			return;
 		}else{
 			$('.DayOfWeek:checked').each((i, e) => {
@@ -1134,7 +1134,7 @@ $(function(){
 			const name = setRecSettting(preset).name ?? $('[name=presetID] option:selected').text();
 			messege = `"${name}" を読み込みました`;
 		}
-		Snackbar({message: messege});
+		Snackbar(messege);
 	}
 	$('[name=presetID]').change(e => {
 		const $e = $(e.currentTarget);
@@ -1170,7 +1170,7 @@ $(function(){
 	//通信エラー
 	$(document).ajaxError((e, xhr, textStatus) => {
 		showSpinner();
-		Snackbar({message: xhr.status!=0 ? `${xhr.status}Error : ${xhr.statusText}` : `Error : ${textStatus.url.match('api/set') ? 'トークン認証失敗' : '通信エラー'}`});
+		Snackbar(xhr.status!=0 ? `${xhr.status}Error : ${xhr.statusText}` : `Error : ${textStatus.url.match('api/set') ? 'トークン認証失敗' : '通信エラー'}`);
 	});
 
 	//予約一覧マーク等処理
