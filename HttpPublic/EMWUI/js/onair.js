@@ -169,13 +169,13 @@ $(function(){
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
 
-	if ($('.onair.is_cast').length) loadMovie();
+	if ($('.onair.is_cast').length) readyToAutoPlay = loadMovie;
 	$('.toggle').click(e => {
 		const $e = $(e.currentTarget).children();
 		const flag = $e.hasClass('flag');
 		$($(e.currentTarget).attr('for')).slideToggle(() => $e.text(`expand_${flag ? 'more' : 'less'}`).toggleClass('flag', !flag));
 	});
-	$('#subCH').change(e => $('.subCH').toggle('hidden', !$(e.currentTarget).prop('checked')));
+	$('#subCH').change(e => $('.subCH').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
 
 	$('#forced').click(e => {
 		$.post(`${ROOT}api/TvCast`, {ctok: $(e.currentTarget).data('ctok'), n: 0, id: '1-1-0'}).done(xhr => Snackbar($(xhr).find('success').text()));

@@ -233,11 +233,11 @@ var cbDatacast;
   var videoLastSec=0;
   function startRead(){
     clearTimeout(readTimer);
-    var startSec=vid.e.currentTime;
+    var startSec=vid.currentTime;
     videoLastSec=startSec;
     var ctx={};
     function read(){
-      var videoSec=vid.e.currentTime;
+      var videoSec=vid.currentTime;
       if(videoSec<videoLastSec||videoLastSec+10<videoSec){
         startRead();
         return;
@@ -267,7 +267,7 @@ var cbDatacast;
     bmlBrowserSetInvisible(false);
     if(xhr)return;
     xhr=new XMLHttpRequest();
-    xhr.open("GET",vid.e.getAttribute("src").replace(/\.[0-9A-Za-z]+$/,"")+".psc");
+    xhr.open("GET",vid.getAttribute("src").replace(/\.[0-9A-Za-z]+$/,"")+".psc");
     xhr.responseType="arraybuffer";
     xhr.overrideMimeType("application/octet-stream");
     xhr.onloadend=function(){
@@ -292,11 +292,11 @@ var Jikkyolog;
   var videoLastSec=0;
   function startRead(){
     clearTimeout(readTimer);
-    var startSec=vid.e.currentTime;
+    var startSec=vid.currentTime;
     videoLastSec=startSec;
     var ctx={};
     function read(){
-      var videoSec=vid.e.currentTime;
+      var videoSec=vid.currentTime;
       if(videoSec<videoLastSec||videoLastSec+10<videoSec){
         startRead();
         return;
@@ -360,7 +360,7 @@ var onDataStreamError=null;
     var ctx={};
     xhr=new XMLHttpRequest();
     xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+
-             (onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor((vid.c||vid.e).currentTime)));
+             (onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
     xhr.onloadend=function(){
       if(xhr&&(readCount==0||xhr.status!=0)){
         if(onDataStreamError)onDataStreamError(xhr.status,readCount);

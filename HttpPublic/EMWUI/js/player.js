@@ -1,19 +1,24 @@
 let fullscreen, theater;
+let readyToAutoPlay;
 let VideoSrc;
 let hls, cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
-vid = {e:document.getElementById("video")};
-const $vid = $(vid.e);
-vid.e.muted = localStorage.getItem('muted') == 'true';
-vid.e.volume = localStorage.getItem('volume') || 1;
-const canvas = vid.e.tagName=="CANVAS";
-if(canvas){
-    //Behave like HTMLMediaElement.
-    vid.currentTime=0;
-    vid.muted=vid.e.muted;
-    vid.volume=vid.e.volume;
-    vid.c=vid;
+vid = document.getElementById("video");
+const $vid = $(vid);
+vid.muted = localStorage.getItem('muted') == 'true';
+vid.volume = localStorage.getItem('volume') || 1;
+vid.tslive = vid.tagName == "CANVAS";
+if (vid.tslive){
+	vid.currentTime = 0;
+	//自動再生ポリシー対策
+	vid._muted = vid.muted;
+	vid.muted = true;
+	$(document).one('click', () => {
+		vid.muted = vid._muted;
+		vid.volumeIcon();
+		if (vid.autoplay) vid.autoplay();
+	});	
 }
 
 const getVideoTime = t => {
@@ -31,7 +36,7 @@ const $subtitles = $('#subtitles');
 const $vid_meta = $('#vid-meta');
 const hideBar = (t = 0) => {
 	hoverID = setTimeout(() => {
-		if (vid.e.paused) return;
+		if (vid.paused) return;
 
 		$playerUI_titlebar.removeClass('is-visible');
 		$contral.removeClass('is-visible');
@@ -46,11 +51,11 @@ const stopTimer = () => {
 vcont = document.getElementById("vid-cont");
 const creatCap = () => {
 	cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
-	if (canvas){
+	if (vid.tslive){
 		cap.attachMedia(null,vcont);
 	}else{
 		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
-		cap.attachMedia(vid.e);
+		cap.attachMedia(vid);
 	}
 }
 
@@ -65,7 +70,7 @@ const startHLS= src => {
 	if (Hls.isSupported()){
 		hls = new Hls();
 		hls.loadSource(src);
-		hls.attachMedia(vid.e);
+		hls.attachMedia(vid);
 		hls.on(Hls.Events.MANIFEST_PARSED,function(){
 			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 			if ($subtitles.hasClass('checked')) creatCap();
@@ -75,8 +80,8 @@ const startHLS= src => {
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {
 			for(var i=0;i<data.samples.length;i++){cap.pushID3v2Data(data.samples[i].pts,data.samples[i].data);}
 		});
-	}else if(vid.e.canPlayType('application/vnd.apple.mpegurl')){
-		vid.e.src = src;
+	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
+		vid.src = src;
 	}
 }
 
@@ -94,7 +99,7 @@ const reloadHls = ($e = $('.is_cast')) => {
 	const d = $e.data();
 	if (!d) return;
 
-	d.paused = vid.e.paused;
+	d.paused = vid.paused;
 	d.ofssec = Math.floor($('input#seek').val());
 	$vid.addClass('is-loadding');
 	resetVid();
@@ -182,19 +187,14 @@ const loadTslive = ($e = $('.is_cast')) => {
 			navigator.wakeLock.request("screen").then(function(lock){wakeLock=lock;});
 		});
 	}
-	function notify(s){
-		var ctx=vid.e.getContext("2d");
-		ctx.fillStyle="black";
-		ctx.fillText(s,10,30);
-		ctx.fillStyle="white";
-		ctx.fillText(s,10,50);
-	}
 	if(!window.createWasmModule){
-		Snackbar({message: "Error! Probably ts-live.js not found."});
+		Snackbar('Error : Probably ts-live.js not found.');
+		$vid.removeClass('is-loadding');
 		return;
 	}
 	if(!navigator.gpu){
-		Snackbar({message: "Error! WebGPU not available."});
+		Snackbar('Error : WebGPU not available.');
+		$vid.removeClass('is-loadding');
 		return;
 	}
 	navigator.gpu.requestAdapter().then(function(adapter){
@@ -206,46 +206,48 @@ const loadTslive = ($e = $('.is_cast')) => {
 				});
 				var rangeVolume=document.getElementById("volume");
 				mod.setAudioGain(vid.muted?0:vid.volume);
-				$vid.trigger('volumechange');
+				vid.volumeIcon();
 				document.getElementById("volume-icon").onclick = () => {
 					mod.setAudioGain(vid.muted?0:vid.volume);
 					$vid.trigger('volumechange');
 				};
-				rangeVolume.onchange=function(){
-					vid.muted=false;
-					vid.volume=rangeVolume.value;
+				rangeVolume.oninput=function(){
 					mod.setAudioGain(vid.volume);
 					$vid.trigger('volumechange');
 				};
 				mod.setStatsCallback(function(stats){
 					modBufferSize=stats[stats.length-1].InputBufferSize;
 					if(statsTime!=stats[stats.length-1].time){
-					vid.currentTime+=stats[stats.length-1].time-statsTime;
-					statsTime=stats[stats.length-1].time;
-					$vid.trigger('timeupdate');
-					if(cap)cap.onTimeupdate(statsTime);
+						vid.currentTime+=stats[stats.length-1].time-statsTime;
+						statsTime=stats[stats.length-1].time;
+						$vid.trigger('timeupdate');
+						if(cap)cap.onTimeupdate(statsTime);
 					}
 				});
+				vid.autoplay= () => {
+					mod.setAudioGain(vid.muted?0:vid.volume);
+					document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
+					vid.volumeIcon();
+				}
 				vid.pause = () => {
-					$vid.trigger('pause');
-					vid.e.paused = true;
+					vid.paused = true;
 					mod.pauseMainLoop();
+					vid.dispatchEvent(new Event('pause'));
 				};
 				vid.play = () => {
-					$vid.trigger('play');
-					vid.e.paused = false;
+					vid.paused = false;
 					mod.resumeMainLoop();
+					vid.dispatchEvent(new Event('play'));
 				};
 				$vid.trigger('play');
-				vid.e.paused = false;
+				vid.paused = false;
 				setTimeout(function(){
-					//vbitrate.innerText="|?Mbps";
 					startRead(mod);
 				},500);
 			});
 		});
 	}).catch(function(e){
-		notify(e.message);
+		Snackbar(e.message);
 		throw e;
 	});
 }
@@ -280,22 +282,22 @@ const loadHls = ($e, reload) => {
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
 		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
-	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.e.canPlayType('application/vnd.apple.mpegurl')){
+	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.e.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
-		vid.e.src = VideoSrc;
+		vid.src = VideoSrc;
 	}
 }
 
 const checkTslive = () => {
 	const url = new URL(location.href);
 	const tslive = $(`#${localStorage.getItem('quality')}`).data('tslive');
-	if (tslive && !canvas){
+	if (tslive && !vid.tslive){
 		url.searchParams.append('tslive', 1);
 		location.replace(url);
 		return true;
-	}else if (!tslive && canvas){
+	}else if (!tslive && vid.tslive){
 		url.searchParams.delete('tslive');
 		location.replace(url);
 		return true;
@@ -320,7 +322,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$remote_control.addClass('disabled').find('button').prop('disabled', true);
 	}
 
-	d.canPlay = !canvas && d.path ? (vid.c||vid.e).canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
+	d.canPlay = !vid.tslive && d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
@@ -330,11 +332,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		if (canvas){
-			loadTslive($e);
-		}else{
-			loadHls($e);
-		}
+		vid.tslive ? loadTslive($e) : loadHls($e);
 		if (!d.info) return;
 
 		if (d.info.duration){
@@ -361,9 +359,9 @@ const $currentTime_duration = $('.currentTime,.duration');
 const playMovie = $e => {
 	if ($e.hasClass('playing')){
 		hideBar(2000);
-		vid.e.play();
+		vid.play();
 	}else{
-		vid.e.src = '';
+		vid.src = '';
 		seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$audios.attr('disabled', true);
@@ -390,7 +388,7 @@ $(function(){
 	$('#apk').prop('checked', localStorage.getItem('apk') == 'true');
 
 	const $volume = $('#volume');
-	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.e.muted ? 0 : vid.e.volume));
+	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
 	if (!isSmallScreen()){
 		$remote_control.prependTo('#apps-contener>.contener>.contener');
 	}else{
@@ -402,12 +400,11 @@ $(function(){
 	//閉じる
 	$('.close.mdl-badge').click(() => {
 		$('#popup').removeClass('is-visible');
-		vid.e.pause();
-		vid.e.playbackRate = 1;
+		vid.pause();
+		vid.playbackRate = 1;
 	});
 
 	const $play_icon = $('#play i');
-	const $volume_icon_i = $('#volume-icon i');
 	const $currentTime = $('.currentTime');
 	const $playerUI = $('#playerUI');
 	const $live = $('#live');
@@ -433,9 +430,9 @@ $(function(){
 			Snackbar(`Error : ${['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
 		'volumechange': () => {
-			$volume_icon_i.text(`volume_${(vid.c||vid.e).muted ? 'off' : (vid.c||vid.e).volume == 0 ? 'mute' : (vid.c||vid.e).volume > 0.5 ? 'up' : 'down'}`);
-			localStorage.setItem('volume', (vid.c||vid.e).volume);
-			localStorage.setItem('muted', (vid.c||vid.e).muted);
+			vid.volumeIcon();
+			localStorage.setItem('volume', vid.volume);
+			localStorage.setItem('muted', vid.muted);
 		},
 		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = this.playbackRate;},
 		'canplay': () => {
@@ -444,15 +441,17 @@ $(function(){
 
 			const d = $('.is_cast').data();
 			if (!d.paused) {
-				const promise = vid.e.play();
+				const promise = vid.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
 				if (promise !== undefined) {
 					promise.catch(error => {
-						vid.e.muted = true;
-						vid.e.play();
+						vid.muted = true;
+						vid.play();
+						vid.volumeIcon();
+						document.querySelector('#volume').MaterialSlider.change(0);
 						$(document).one('click', () => {
-							vid.e.muted = false;
-							document.querySelector('#volume').MaterialSlider.change(vid.e.volume);
+							vid.muted = false;
+							document.querySelector('#volume').MaterialSlider.change(vid.volume);
 						});			
 					});
 				}
@@ -460,8 +459,8 @@ $(function(){
 			if (!d.canPlay) return;
 
 			if ($subtitles.hasClass('checked')) loadVtt();
-			$duration.text(getVideoTime(vid.e.duration));
-			$seek.attr('max', vid.e.duration);
+			$duration.text(getVideoTime(vid.duration));
+			$seek.attr('max', vid.duration);
 		},
 		'timeupdate': () => {
 			const d = $('.is_cast').data();
@@ -471,25 +470,25 @@ $(function(){
 			if (d.onid){
 				currentTime = (Date.now() - d.info.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
-				$live.toggleClass('live', (vid.c||vid.e).duration - (vid.c||vid.e).currentTime < 2);
+				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;
 
-				currentTime = (vid.c||vid.e).currentTime + (d.ofssec || 0);
+				currentTime = vid.currentTime + (d.ofssec || 0);
 				seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		}
 	});
 
-	$('#play').click(() => vid.e.paused ? (vid.c||vid.e).play() : (vid.c||vid.e).pause());
+	$('#play').click(() => vid.paused ? vid.play() : vid.pause());
 	
 	const $quality_audio = $('.quality,.audio');
 	const $stop = $('.stop');
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
 		resetVid();
-		vid.e.src = '';
+		vid.src = '';
 		const params = new URLSearchParams(location.search);
 		params.delete('id');
 		params.delete('play');
@@ -510,32 +509,34 @@ $(function(){
 		'touchend mouseup': () => $seek.data('touched', false),
 		'change': () => {
 			const d = $('.is_cast').data();
-			if (canvas){
+			if (vid.tslive){
 				d.ofssec = Math.floor($seek.val());
 				vid.seekWithoutTransition(d.ofssec);
 			}else{
 				if (d.canPlay) return
 
-				d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.e.duration ? vid.e.currentTime = $seek.val() - d.ofssec : reloadHls();
+				d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration ? vid.currentTime = $seek.val() - d.ofssec : reloadHls();
 			}
 		},
 		'input': () => {
 			$currentTime.text(getVideoTime($seek.val()));
-			if ($('.is_cast').data('canPlay'))vid.e.currentTime = $seek.val();
+			if ($('.is_cast').data('canPlay'))vid.currentTime = $seek.val();
 		}
 	});
 
 	$volume.on('input', () => {
-		vid.e.muted = false;
-		vid.e.volume = $volume.val();
+		vid.muted = false;
+		vid.volume = $volume.val();
 	});
 
 	const $volume_icon = $('#volume-icon');
+	const $volume_icon_i = $('#volume-icon i');
 	$volume_icon.click(() => {
-		e = vid.c ?? vid.e;
-		e.muted = !e.muted;
-		$volume.get(0).MaterialSlider.change(e.muted ? 0 : e.volume);
+		vid.muted = !vid.muted;
+		$volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume);
 	});
+	vid.volumeIcon = () => $volume_icon_i.text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
+	vid.volumeIcon();
 
 	$('#fullscreen').click(() => {
 		const player = document.querySelector('#player');
@@ -622,7 +623,7 @@ $(function(){
 					}
 				});
 			}else 
-				vid.e.requestPictureInPicture();
+				vid.requestPictureInPicture();
 		});
 		$('#PIP_exit').click(() => documentPictureInPicture.window.close())
 	}else{
@@ -664,7 +665,7 @@ $(function(){
 	});
 	$('[name=audio]').change(e => {
 		audioVal = $(e.currentTarget).val();
-		if (canvas){
+		if (vid.tslive){
 			loadTslive();
 		}else{
 			reloadHls();
@@ -672,15 +673,15 @@ $(function(){
 	});
 	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
-	$rate.change(e => vid.e.playbackRate = $(e.currentTarget).val());
+	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
 
-	hideBar(0);
+	hideBar();
 	$player_container = $('.player-container>*').not('.remote-control');
 	if (!isMobile && !isTouch){
 		$player_container.hover(() => {
 			stopTimer();
 			$playerUI.addClass('is-visible');
-		}, () => hideBar(0));
+		}, () => hideBar());
 
 		$player_container.mousemove(() => {
 			stopTimer();
@@ -698,17 +699,17 @@ $(function(){
 		});
 	}
 
-	$('#live:not(.live)').click(() => vid.e.currentTime = vid.e.duration);
+	$('#live:not(.live)').click(() => vid.currentTime = vid.duration);
 
 	$subtitles.click(() => {
-		if (!$subtitles.hasClass('checked')){
+		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
+		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
+		if ($subtitles.hasClass('checked')){
 			if (!cap) creatCap();
 			cap.show();
 		}else if (cap){
 			cap.hide();
 		}
-		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
-		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
 	});
 	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
 
@@ -816,4 +817,7 @@ $(function(){
 		).blur(() => $('#comment-control').removeClass('is-focused')
 		).change(e => $('#comment-control').toggleClass('is-dirty', $(e.currentTarget).val()!='')
 	);
+
+	//準備できてから再生開始
+	if (readyToAutoPlay) readyToAutoPlay();
 });

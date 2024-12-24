@@ -197,7 +197,7 @@ $(function(){
 	if (play){
 		const $e = $('<div class="hidden is_cast">');
 		$('#tvcast').append($e);
-		getMetadata($e, play);
+		readyToAutoPlay = getMetadata($e, play);
 	}
 
 	$('#menu_autoplay').removeClass('hidden');
