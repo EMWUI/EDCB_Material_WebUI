@@ -3,7 +3,7 @@ function Version(a)
     css='241220',
     common='241224',
     tvguide='241224',
-    player='241224',
+    player='241228',
     onair='241224',
     library='241224',
     setting='241224',
@@ -769,7 +769,7 @@ function PlayerTemplate(video, liveOrAudio)
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
 <li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
 <li class="ext mdl-menu__item quality" id="quality" disabled><button class="quality" disabled><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
-<li class="ext mdl-menu__item" id="rate"><button><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
+<li class="ext mdl-menu__item rate" id="rate"><button class="rate"><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
 ]=]
 
@@ -789,7 +789,7 @@ s=s..[=[
   for i,v in ipairs(XCODE_OPTIONS) do
     if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
       local id = 'q_'..mg.md5(v.name)
-      s=s..'<li class="ext mdl-menu__item"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..(v.tslive and ' data-tslive="true"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
+      s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'

@@ -292,7 +292,7 @@ const loadHls = ($e, reload) => {
 
 const checkTslive = () => {
 	const url = new URL(location.href);
-	const tslive = $(`#${localStorage.getItem('quality')}`).data('tslive');
+	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
 	if (tslive && !vid.tslive){
 		url.searchParams.append('tslive', 1);
 		location.replace(url);
@@ -665,15 +665,16 @@ $(function(){
 	});
 	$('[name=audio]').change(e => {
 		audioVal = $(e.currentTarget).val();
-		if (vid.tslive){
-			loadTslive();
-		}else{
-			reloadHls();
-		}
+		vid.tslive ? loadTslive() : reloadHls();
 	});
 	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
 	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
+
+	//TS-Live!有効時、速度の選択無効＆非対応端末は画質選択無効
+	$('.rate').attr('disabled', vid.tslive);
+	$('.tslive').attr('disabled', !window.isSecureContext && !navigator.gpu);
+
 
 	hideBar();
 	$player_container = $('.player-container>*').not('.remote-control');
