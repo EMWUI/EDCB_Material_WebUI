@@ -29,6 +29,9 @@ EDCB Material WebUI
         ├─ HttpPublic/
         │   ├─ api/
         │   ├─ EMWUI/
+        │   │   ├─js/
+        │   │   :  ├─ts-live.js
+        │   │      └─ts-live.wasm
         │   ├─ legacy/
         │   ├─ img/
         │   │   └─logo/
@@ -80,12 +83,14 @@ PWA（プログレッシブウェブアプリ）に対応しアプリとして�
 # 視聴機能
 Legacy WebUIの配信機能を移植し、以下の事が可能となりました  
 * HLSでの配信
+* TS-Live!モジュールでMPEG2を直接再生
 * web-bmlによるデータ放送の表示
 * aribb24.jsによる字幕表示
 * 実況の表示 (録画用アプリにTvTestの使用時のみ)
 
 過去の機能と仕様などが変わり互換性はありませんので再度設定をしてください  
-[EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください  
+[EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください
+`ts-live.js`と`ts-live.wasm`はjsフォルダに配置してください  
 
 ### 注意
 * トランスコードオプションは`XCODE_OPTIONS.lua`を編集してください
