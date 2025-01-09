@@ -114,8 +114,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
 		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&`}&option=${quality}${
 		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
-		$cinema.prop('checked') ? '&cinema=1' : ''}${
-		$fast.prop('checked') ? '&fast=1' : ''
+		$cinema.prop('checked') ? '&cinema=1' : ''
 	}`;
 
 	var wakeLock=null;
@@ -254,7 +253,6 @@ const loadTslive = ($e = $('.is_cast')) => {
 
 const $audio = $('#audio');
 const $cinema = $('#cinema');
-const $fast = $('#fast');
 const $remote = $('#remote');
 const $remote_control = $('.remote-control');
 const $danmaku = $('#danmaku');
@@ -273,8 +271,7 @@ const loadHls = ($e, reload) => {
 		reload ? `reload=${reload}` : `load=${dateNow}`	//最初にユニークな値をつくりリロード時に値を引きつぐ
 	}`}&option=${quality}${
 		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
-		$cinema.prop('checked') ? '&cinema=1' : ''}${
-		$fast.prop('checked') ? '&fast=1' : ''
+		$cinema.prop('checked') ? '&cinema=1' : ''
 	}`;
 
 	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？

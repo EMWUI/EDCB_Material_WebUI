@@ -17,8 +17,11 @@ offset=GetVarInt(query,'offset',0,100) or 0
 ofssec=GetVarInt(query,'ofssec',0,100000)
 option=XCODE_OPTIONS[GetVarInt(query,'option',1,#XCODE_OPTIONS) or 1]
 audio2=(GetVarInt(query,'audio2',0,1) or 0)+(option.audioStartAt or 0)
-filter=GetVarInt(query,'fast')==1 and (GetVarInt(query,'cinema')==1 and option.filterCinemaFast or option.filterFast)
-fastRate=filter and XCODE_FAST or 1
+fastRate=GetVarInt(query,'fast',1,#XCODE_FAST_RATES)
+fastRate=fastRate and XCODE_FAST_RATES[fastRate] or 1
+filter=fastRate~=1 and (GetVarInt(query,'cinema')==1 and option.filterCinemaFastFunc and option.filterCinemaFastFunc(fastRate) or
+                        option.filterFastFunc and option.filterFastFunc(fastRate))
+fastRate=filter and fastRate or 1
 filter=filter or (GetVarInt(query,'cinema')==1 and option.filterCinema or option.filter or '')
 hlsKey=mg.get_var(query,'hls')
 hls4=GetVarInt(query,'hls4',0) or 0
@@ -95,7 +98,7 @@ function OpenTranscoder()
       :gsub('$OUTPUT',(output[2]:gsub('%%',WIN32 and '%%%%' or '%%')))
   end
 
-  if fastRate~=1 and option.editorFast then
+  if fastRate~=1 and option.editorFast and option.editorOptionFastFunc then
     local editor=''
     if WIN32 then
       for s in option.editorFast:gmatch('[^|]+') do
@@ -107,7 +110,7 @@ function OpenTranscoder()
     else
       editor=('|'..option.editorFast:gsub('%.exe$','')):match('[\\/|]([0-9A-Za-z._-]+)$') or ':'
     end
-    cmd=' | '..editor..' '..option.editorOptionFast..cmd
+    cmd=' | '..editor..' '..option.editorOptionFastFunc(fastRate)..cmd
   end
   if XCODE_LOG and cmd~='' then
     local log=mg.script_name:gsub('[^\\/]*$','')..'log'

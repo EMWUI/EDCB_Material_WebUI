@@ -3,7 +3,7 @@ function Version(a)
     css='241220',
     common='241224',
     tvguide='241224',
-    player='250108',
+    player='250109',
     onair='241224',
     library='241224',
     setting='241224',
@@ -793,7 +793,7 @@ s=s..[=[
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
-  for i,v in pairs({0.25, 0.5, 0.75, 1, 1.25, 1.5, 2}) do
+  for i,v in pairs(XCODE_FAST_RATES) do
     s=s..'<li class="ext mdl-menu__item"><input type="radio" id="rate'..i..'" name="rate" class="rate" value="'..v..'"'..(v==1 and ' checked' or '')..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n'
   end
   return s..[=[

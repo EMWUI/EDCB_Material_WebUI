@@ -13,9 +13,11 @@
 --xcoder:トランスコーダーのToolsフォルダからの相対パス。'|'で複数候補を指定可。見つからなければ最終候補にパスが通っているとみなす
 --       Windows以外では".exe"が除去されて最終候補のみ参照される
 --option:$OUTPUTは必須、再生時に適宜置換される。標準入力からMPEG2-TSを受け取るようにオプションを指定する
---filter*Fast:倍速再生用、未定義でもよい
+--※EMWUIでの倍速再生はHTMLMediaElement APIを使用しているため以下の設定は直接パラメータを指定等しない限り呼び出されない
+--filter(Cinema):等速再生用、filterCinemaは未定義でもよい。特別に':'とするとトランスコードを省略してそのまま出力する
+--filter*FastFunc:倍速再生用、未定義でもよい。倍率に応じたオプションを返す関数を指定する
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
---editorOptionFast:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを指定する
+--editorOptionFastFunc:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを返す関数を指定する
 XCODE_OPTIONS={
   {
     --ffmpegの例。-b:vでおおよその最大ビットレートを決め、-qminで動きの少ないシーンのデータ量を節約する
@@ -24,8 +26,8 @@ XCODE_OPTIONS={
     option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec libx264 -flags:v +cgop -profile:v main -level 31 -b:v 1888k -qmin 23 -maxrate 4M -bufsize 4M -preset veryfast $FILTER -s 640x360 -map 0:a:$AUDIO -acodec aac -ac 2 -b:a 160k $CAPTION -max_interleave_delta 500k $OUTPUT',
     filter='-g 120 -vf yadif=0:-1:1',
     filterCinema='-g 96 -vf pullup -r 24000/1001',
-    filterFast='-g 120 -vf yadif=0:-1:1,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST,
-    filterCinemaFast='-g 96 -vf pullup,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -r 24000/1001',
+    filterFastFunc=function(rate) return '-g 120 -vf yadif=0:-1:1,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate end,
+    filterCinemaFastFunc=function(rate) return '-g 96 -vf pullup,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -r 24000/1001' end,
     captionNone='-sn',
     captionHls='-map 0:s? -scodec copy',
     output={'mp4','-f mp4 -movflags frag_keyframe+empty_moov -'},
@@ -37,8 +39,8 @@ XCODE_OPTIONS={
     option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec h264_nvenc -profile:v main -level 41 -b:v 3936k -qmin 23 -maxrate 8M -bufsize 8M -preset medium $FILTER -s 1280x720 -map 0:a:$AUDIO -acodec aac -ac 2 -b:a 160k $CAPTION -max_interleave_delta 500k $OUTPUT',
     filter='-g 120 -vf yadif=0:-1:1',
     filterCinema='-g 96 -vf pullup -r 24000/1001',
-    filterFast='-g 120 -vf yadif=0:-1:1,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST,
-    filterCinemaFast='-g 96 -vf pullup,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -r 24000/1001',
+    filterFastFunc=function(rate) return '-g 120 -vf yadif=0:-1:1,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate end,
+    filterCinemaFastFunc=function(rate) return '-g 96 -vf pullup,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -r 24000/1001' end,
     captionNone='-sn',
     captionHls='-map 0:s? -scodec copy',
     output={'mp4','-f mp4 -movflags frag_keyframe+empty_moov -'},
@@ -51,8 +53,8 @@ XCODE_OPTIONS={
     option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec h264_qsv -profile:v main -level 41 -b:v 3936k -min_qp_i 23 -min_qp_p 26 -min_qp_b 30 -maxrate 8M -bufsize 8M -preset medium $FILTER -s 1280x720 -map 0:a:$AUDIO -acodec aac -ac 2 -b:a 160k $CAPTION -max_interleave_delta 500k $OUTPUT',
     filter='-g 120 -vf yadif=0:-1:1',
     filterCinema='-g 96 -vf pullup -r 24000/1001',
-    filterFast='-g 120 -vf yadif=0:-1:1,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST,
-    filterCinemaFast='-g 96 -vf pullup,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -r 24000/1001',
+    filterFastFunc=function(rate) return '-g 120 -vf yadif=0:-1:1,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate end,
+    filterCinemaFastFunc=function(rate) return '-g 96 -vf pullup,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -r 24000/1001' end,
     captionNone='-sn',
     captionHls='-map 0:s? -scodec copy',
     output={'mp4','-f mp4 -movflags frag_keyframe+empty_moov -'},
@@ -64,8 +66,8 @@ XCODE_OPTIONS={
     option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec libvpx -b:v 1888k -quality realtime -cpu-used 1 $FILTER -s 640x360 -map 0:a:$AUDIO -acodec libvorbis -ac 2 -b:a 160k $CAPTION -max_interleave_delta 500k $OUTPUT',
     filter='-vf yadif=0:-1:1',
     filterCinema='-vf pullup -r 24000/1001',
-    filterFast='-vf yadif=0:-1:1,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST,
-    filterCinemaFast='-vf pullup,setpts=PTS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -r 24000/1001',
+    filterFastFunc=function(rate) return '-vf yadif=0:-1:1,setpts=PTS/'..rate..' -af atempo='..rate end,
+    filterCinemaFastFunc=function(rate) return '-vf pullup,setpts=PTS/'..rate..' -af atempo='..rate..' -r 24000/1001' end,
     captionNone='-sn',
     output={'webm','-f webm -'},
   },
@@ -77,10 +79,10 @@ XCODE_OPTIONS={
     audioStartAt=1,
     filter='--gop-len 120 --interlace tff --vpp-deinterlace normal',
     filterCinema='--gop-len 96 --interlace tff --vpp-deinterlace normal --vpp-decimate',
-    filterFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(120*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal',
-    filterCinemaFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(96*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal --vpp-decimate',
+    filterFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(120*rate)..' --interlace tff --vpp-deinterlace normal' end,
+    filterCinemaFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(96*rate)..' --interlace tff --vpp-deinterlace normal --vpp-decimate' end,
     editorFast='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
-    editorOptionFast='-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..XCODE_FAST..' -map 0:v:0? -vcodec copy -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -',
+    editorOptionFastFunc=function(rate) return '-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..rate..' -map 0:v:0? -vcodec copy -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -' end,
     captionNone='',
     captionHls='--sub-copy',
     output={'mp4','-f mp4 --no-mp4opt -m movflags:frag_keyframe+empty_moov -o -'},
@@ -94,10 +96,10 @@ XCODE_OPTIONS={
     audioStartAt=1,
     filter='--gop-len 120 --interlace tff --vpp-deinterlace normal',
     filterCinema='--gop-len 96 --interlace tff --vpp-deinterlace normal --vpp-decimate',
-    filterFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(120*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal',
-    filterCinemaFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(96*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal --vpp-decimate',
+    filterFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(120*rate)..' --interlace tff --vpp-deinterlace normal' end,
+    filterCinemaFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(96*rate)..' --interlace tff --vpp-deinterlace normal --vpp-decimate' end,
     editorFast='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
-    editorOptionFast='-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..XCODE_FAST..' -map 0:v:0? -vcodec copy -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -',
+    editorOptionFastFunc=function(rate) return '-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..rate..' -map 0:v:0? -vcodec copy -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -' end,
     captionNone='',
     captionHls='--sub-copy',
     output={'mp4','-f mp4 --no-mp4opt -m movflags:frag_keyframe+empty_moov -o -'},
@@ -111,24 +113,24 @@ XCODE_OPTIONS={
     audioStartAt=1,
     filter='--gop-len 120 --interlace tff --vpp-deinterlace normal',
     filterCinema='--gop-len 96 --interlace tff --vpp-deinterlace normal --vpp-decimate',
-    filterFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(120*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal',
-    filterCinemaFast='--fps '..math.floor(30000*XCODE_FAST+0.5)..'/1001 --gop-len '..math.floor(96*XCODE_FAST)..' --interlace tff --vpp-deinterlace normal --vpp-decimate',
+    filterFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(120*rate)..' --interlace tff --vpp-deinterlace normal' end,
+    filterCinemaFastFunc=function(rate) return '--fps '..math.floor(30000*rate+0.5)..'/1001 --gop-len '..math.floor(96*rate)..' --interlace tff --vpp-deinterlace normal --vpp-decimate' end,
     editorFast='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
-    editorOptionFast='-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..XCODE_FAST..' -map 0:v:0? -vcodec copy -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -',
+    editorOptionFastFunc=function(rate) return '-f mpegts -analyzeduration 1M -i - -bsf:v setts=ts=TS/'..rate..' -map 0:v:0? -vcodec copy -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate..' -map 0:a -acodec ac3 -ac 2 -b:a 640k -map 0:s? -scodec copy -max_interleave_delta 300k -f mpegts -' end,
     captionNone='',
     captionHls='--sub-copy',
     output={'mp4','-f mp4 --no-mp4opt -m movflags:frag_keyframe+empty_moov -o -'},
     outputHls={'m2t','-f mpegts -o -'},
   },
   {
-    --TS-Live!方式の例。映像はそのまま転送。倍速再生にはffmpegも必要
+    --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)
     name='tslive',
     tslive=true,
-    xcoder='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
-    option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec copy $FILTER -map 0:a:$AUDIO -map 0:s? -scodec copy -max_interleave_delta 300k $OUTPUT',
+    xcoder='',
+    option='',
     filter=':',
-    filterFast='-bsf:v setts=ts=TS/'..XCODE_FAST..' -af atempo='..XCODE_FAST..' -bsf:s setts=ts=TS/'..XCODE_FAST..' -acodec aac -ac 2 -b:a 160k',
-    output={'m2t','-f mpegts -'},
+    filterFastFunc=function() return ':' end,
+    output={'m2t',''},
   },
 }
 

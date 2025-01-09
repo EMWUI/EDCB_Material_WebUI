@@ -97,10 +97,6 @@ if v then
   ct.tab='<a href="#detail" class="mdl-layout__tab is-active">番組詳細</a>\n'
     ..(video and '<a href="#movie" id="movie_tab" class="mdl-layout__tab">再生</a>\n' or '')
     ..(#v.errInfo>0 and '<a href="#error" class="mdl-layout__tab">エラーログ</a>\n' or '')
-
-  if video then
-    ct.menu='<li class="ext mdl-menu__item"><label for="fast" class="mdl-layout-spacer">倍速読み込み</label><span><label class="mdl-switch mdl-js-switch" for="fast"><input type="checkbox" id="fast" class="mdl-switch__input"></label></span></li>'
-  end
 end
 
 
