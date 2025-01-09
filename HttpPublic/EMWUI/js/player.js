@@ -11,6 +11,7 @@ vid.volume = localStorage.getItem('volume') || 1;
 vid.tslive = vid.tagName == "CANVAS";
 if (vid.tslive){
 	vid.currentTime = 0;
+	vid.playbackRate = 1;
 	//自動再生ポリシー対策
 	vid._muted = vid.muted;
 	vid.muted = true;
@@ -118,13 +119,11 @@ const loadTslive = ($e = $('.is_cast')) => {
 	}`;
 
 	var wakeLock=null;
-	var modBufferSize=0;
 	var seekParam="";
 	function readNext(mod,reader,ret){
 		if(ret&&ret.value){
 			var inputLen=Math.min(ret.value.length,1e6);
-			//Limit input amount to reduce "Buffer overflow" console output.
-			var buffer=modBufferSize<14&&mod.getNextInputBuffer(inputLen);
+			var buffer=mod.getNextInputBuffer(inputLen);
 			if(!buffer){
 			  setTimeout(function(){readNext(mod,reader,ret);},1000);
 			  return;
@@ -216,7 +215,6 @@ const loadTslive = ($e = $('.is_cast')) => {
 					$vid.trigger('volumechange');
 				};
 				mod.setStatsCallback(function(stats){
-					modBufferSize=stats[stats.length-1].InputBufferSize;
 					if(statsTime!=stats[stats.length-1].time){
 						vid.currentTime+=stats[stats.length-1].time-statsTime;
 						statsTime=stats[stats.length-1].time;
@@ -224,6 +222,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 						if(cap)cap.onTimeupdate(statsTime);
 					}
 				});
+				if(vid.playbackRate != 1) mod.setPlaybackRate(vid.playbackRate);
 				vid.autoplay= () => {
 					mod.setAudioGain(vid.muted?0:vid.volume);
 					document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
@@ -239,6 +238,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 					mod.resumeMainLoop();
 					vid.dispatchEvent(new Event('play'));
 				};
+				vid.setPlaybackRate = () => mod.setPlaybackRate(vid.playbackRate);
 				$vid.trigger('play');
 				vid.paused = false;
 				setTimeout(function(){
@@ -669,11 +669,13 @@ $(function(){
 	});
 	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
-	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
+	$rate.change(e => {
+		vid.playbackRate = $(e.currentTarget).val();
+		if (vid.tslive) vid.setPlaybackRate();
+	});
 
-	//TS-Live!有効時、速度の選択無効＆非対応端末は画質選択無効
-	$('.rate').attr('disabled', vid.tslive);
-	$('.tslive').attr('disabled', !window.isSecureContext && !navigator.gpu);
+	//TS-Live!有効時、非対応端末は画質選択無効
+	$('.tslive').attr('disabled', !window.isSecureContext || !navigator.gpu);
 
 
 	hideBar();

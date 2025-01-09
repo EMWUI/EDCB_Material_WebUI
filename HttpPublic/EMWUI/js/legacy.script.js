@@ -791,6 +791,11 @@ function runVideoScript(aribb24UseSvg,aribb24Option,useDatacast,useJikkyoLog){
 }
 
 function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,postCommentQuery){
+  if(vid.c){
+    //Playback rate is controlled on client-side.
+    vid.fast=fast;
+    fast=1;
+  }
   var openSubStream=function(){};
   if(useDatacast||useLiveJikkyo||useJikkyoLog){
     var onDataStream=null;
@@ -1037,13 +1042,11 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
   var lastWidth=vid.e.width;
   var lastHeight=vid.e.height;
   var wakeLock=null;
-  var modBufferSize=0;
   var seekParam="";
   function readNext(mod,reader,ret){
     if(ret&&ret.value){
       var inputLen=Math.min(ret.value.length,1e6);
-      //Limit input amount to reduce "Buffer overflow" console output.
-      var buffer=modBufferSize<14&&mod.getNextInputBuffer(inputLen);
+      var buffer=mod.getNextInputBuffer(inputLen);
       if(!buffer){
         setTimeout(function(){readNext(mod,reader,ret);},1000);
         return;
@@ -1170,7 +1173,6 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
           mod.setAudioGain(vid.volume);
         };
         mod.setStatsCallback(function(stats){
-          modBufferSize=stats[stats.length-1].InputBufferSize;
           if(statsTime!=stats[stats.length-1].time){
             vid.currentTime+=stats[stats.length-1].time-statsTime;
             statsTime=stats[stats.length-1].time;
@@ -1178,6 +1180,7 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
             if(cap)cap.onTimeupdate(statsTime);
           }
         });
+        if(vid.fast!=1)mod.setPlaybackRate(vid.fast);
         setTimeout(function(){
           vbitrate.innerText="|?Mbps";
           startRead(mod);
