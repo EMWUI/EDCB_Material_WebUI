@@ -345,7 +345,7 @@ function DecorateUri(s)
             not r:find('^&[lg]t;',j) and not r:find('^&quot;',j) do
         j=j+1
       end
-      t=t..s:sub(spos(n),spos(i-h)-1)..'<a href="'..(h>0 and 'https://' or '')
+      t=t..s:sub(spos(n),spos(i-h)-1)..'<a rel="noreferrer" href="'..(h>0 and 'https://' or '')
         ..r:sub(i-h,j-1):gsub('&amp;','&'):gsub('&','&amp;')..'" target="_blank">'..s:sub(spos(i-h),spos(j)-1)..'</a>'
       n=j
       i=j-1

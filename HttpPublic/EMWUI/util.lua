@@ -182,9 +182,9 @@ s:Append([=[
         <p>
           <i class="material-icons">copyright</i>
           <span class="">EMWUI</span>
-          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank"><i class="material-icons">feedback</i></a>
-          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/P4DSM5GQILMI" target="_blank"><i class="material-icons">thumb_down</i></a>
-          <a class="mdl-color-text--accent mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank"><i class="material-icons">heart_plus</i></a>
+          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank" rel="noreferrer"><i class="material-icons">feedback</i></a>
+          <a class="mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/P4DSM5GQILMI" target="_blank" rel="noreferrer"><i class="material-icons">thumb_down</i></a>
+          <a class="mdl-color-text--accent mdl-button mdl-js-button mdl-button--icon" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank" rel="noreferrer"><i class="material-icons">heart_plus</i></a>
         </p>
         <ul>
           <li><a class="mdl-color-text--cyan" href="]=]..PathToRoot()..[=[api/showlog?c=8192">情報通知ログ</a></li>

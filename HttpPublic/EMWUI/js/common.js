@@ -68,7 +68,7 @@ const ConvertText = a => {
 	let i = 0;
 	for (let m; m = re.exec(a); i = re.lastIndex) {
 		s += $('<p>').text(a.substring(i, re.lastIndex - m[0].length)).html();
-		s += $('<p>').html($('<a>', {href: m[0], target: '_blank', text: m[0]})).html();
+		s += $('<p>').html($('<a>', {href: m[0], target: '_blank', text: m[0], rel:'noreferrer'})).html();
 	}
 	s += $('<p>').text(a.substring(i)).html();
 	return s.replace(/\n/g,'<br>');
