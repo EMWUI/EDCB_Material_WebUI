@@ -30,21 +30,35 @@ const saerchbar = () => $('main>.mdl-layout__content').scroll(() => {
 });
 
 //検索等のリンクを生成
+class SearchLinks {
+	#d;
+	#defaults = [
+		//{href : d => `${d.title}`, class: '', external: true, icon: '', src: ''},
+		{href: d => `search.html?andkey=${d._title}`, icon: 'search'},
+		{href: d => `https://www.google.co.jp/search?q=${d._title}`, external: true, src:'img/google.png'},
+		{href: d => `https://www.google.co.jp/search?q=${d._title}&btnI=Im+Feeling+Lucky`, external: true, icon: 'sentiment_satisfied'},
+		{href: d => `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(d.title)}&location=${encodeURIComponent(d.service)}&dates=${d.dates}&details=${d.details}${Links.calendar.op}`, class: "mdl-cell--hide-phone mdl-cell--hide-tablet", external: true, icon: 'event'},
+	];
+	constructor(d){
+		this.#d = {...d};
+		this.#d._title = encodeURIComponent(d.title.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, ''));
+		this.#d.dates = encodeURIComponent(d.dates??`${ConvertTime(d.starttime, 'ISO')}/${ConvertTime(d.endtime, 'ISO')}`);
+		this.#d.details = encodeURIComponent((d.details??Links.calendar.details.replace(/%text_char%/g, d.text)).replace(/%br%/g, '\n'));
+	}
+
+	#link = d => $('<a>', {class: `mdl-button mdl-button--icon ${d.class??''}`, href: d.href(this.#d), target: d.external&&'_blank', rel: d.external&&'noreferrer', append: $(`<${d.icon?'i':'img'}>`, {class: 'material-icons', src: d.src, alt: d.alt, text: d.icon})})
+	get html(){return this.#defaults.map(d => this.#link(d));}		//番組表向け
+	get htmlEX(){													//サイドパネル向け
+		const a = this.#defaults.concat(Links.custom??[]).map(d => this.#link(d));
+		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]; $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
+		return a;
+	 }
+}
 const createSearchLinks = e => {
 	const $e = $(e).find('.search-links');
 	if ($e.length != 1 || $e.is('.search-links-created')) return;
 
-	const d = $e.data();
-	const title = encodeURIComponent(d.title);
-	const service = encodeURIComponent(d.service);
-	const dates = encodeURIComponent(d.dates);
-	const details = encodeURIComponent(d.details.replace(/%br%/g, '\n'));
-	$e.addClass('search-links-created').after(`
-		<a class="mdl-button mdl-button--icon" href="search.html?andkey=${title}"><i class="material-icons">search</i></a>
-		<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=${title}" target="_blank"><img class="material-icons" src="img/google.png" alt="Google検索"></a>
-		<a class="mdl-button mdl-button--icon" href="https://www.google.co.jp/search?q=${title}&amp;btnI=Im+Feeling+Lucky" target="_blank"><i class="material-icons">sentiment_satisfied</i></a>
-		<a class="mdl-button mdl-button--icon mdl-cell--hide-phone mdl-cell--hide-tablet" href="https://www.google.com/calendar/render?action=TEMPLATE&amp;text=${title}&amp;location=${service}&amp;dates=${dates}&amp;details=${details}${calendar_op}" target="_blank"><i class="material-icons">event</i></a>
-	`);
+	$e.addClass('search-links-created').after(new SearchLinks($e.data()).html);
 }
 
 
@@ -57,10 +71,10 @@ const createViewDate = value => {
 const ConvertTime = (t, show_sec, show_ymd) => {
 	if (!t)	return '未定';
 	t = createViewDate(t);
+	if (show_sec == 'ISO') return `${t.getUTCFullYear()}${zero(t.getUTCMonth()+1)}${zero(t.getUTCDate())}T${zero(t.getUTCHours())}${zero(t.getUTCMinutes())}${zero(t.getUTCSeconds())}`;
 	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${WEEK[t.getUTCDay()]}) ` : ''
 		}${zero(t.getUTCHours())}:${zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${zero(t.getUTCSeconds())}</small>` : ''}`;
 }
-
 const ConvertText = a => {
 	if (!a) return '';
 	const re = /https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>)/g;
@@ -400,7 +414,7 @@ const setEpgInfo = d => {
 	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.recinfoid && true || d.starttime && !d.endtime || Date.now() < d.endtime);
 
 	$('#service').html(ConvertService(d));
-	$('#links').html($('.open .links a').clone(true));
+	$('#links').html(new SearchLinks(d).htmlEX);
 	$('#summary p').html( ConvertText(d.text) );
 	$('#ext').html( ConvertText(d.text_ext) );
 
@@ -918,8 +932,6 @@ $(function(){
 	$('tr.epginfo').click(e => {
 		const $e = $(e.currentTarget);
 		if ($(e.target).is('.flag, .flag *, .count a')) return;
-
-		if ($e.data('onid') || $e.data('recinfoid')) createSearchLinks(e.currentTarget);
 
 		$e.data('onid') ? getEpgInfo($e) :
 		$e.data('id') ? setAutoAdd($e) :

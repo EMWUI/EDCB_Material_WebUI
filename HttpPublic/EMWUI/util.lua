@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
     css='241220',
-    common='241224',
+    common='250306',
     tvguide='241224',
     player='250109',
     onair='241224',
@@ -83,7 +83,7 @@ function Template(temp)
 <script src="]=]..path..[=[js/hammer.min.js"></script>
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
-..'<script>const ROOT=\''..PathToRoot()..(temp.searchlinks and '\';const calendar_op=\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',INI) or '')..'\';</script>\n'
+..'<script>const ROOT=\''..PathToRoot()..'\''..(temp.searchlinks and ';const Links={calendar:{details:\''..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)..'\',op:\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',INI)..'\'}}' or '')..';</script>\n'
 ..'<script src="'..path..'js/common.js'..Version('common')..'"></script>\n'
 ..(temp.js or '')
 
@@ -1012,12 +1012,11 @@ end
 --検索等のリンクを派生
 CALENDAR_DETAILS=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)
 SearchConverter=function(v, service_name)
-  local title=(v.shortInfo and v.shortInfo.event_name or v.title or ''):gsub('＜.-＞', ''):gsub('【.-】', ''):gsub('%[.-%]', ''):gsub('（.-版）', '')
   local startTime=TimeWithZone(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
   --クライアントサイドで使う情報を置いておく
-  return '<span class="search-links hidden" data-title="'..title
+  return '<span class="search-links hidden" data-title="'..(v.shortInfo and v.shortInfo.event_name or v.title or '')
     ..'" data-service="'..service_name
     ..'" data-dates="'..os.date('!%Y%m%dT%H%M%S', startTime)..'/'..os.date('!%Y%m%dT%H%M%S', endTime)
     ..'" data-details="'..CALENDAR_DETAILS:gsub('%%text_char%%', text_char)..'"></span>'

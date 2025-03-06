@@ -17,7 +17,7 @@ if post then
   focus=edcb.GetReserveData(GetVarInt(post,'del') or 0)
   if focus then
     edcb.DelReserveData(focus.reserveID)
-    ct.js=ct.js..'<script>Snackbar({message: "削除しました"});</script>'
+    ct.js=ct.js..'<script>Snackbar("削除しました");</script>'
   end
 end
 
@@ -111,7 +111,6 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
     ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
     ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..v.recSetting.priority
-    ..'\n <td class="links hidden">'..SearchConverter((edcb.SearchEpg(v.onid, v.tsid, v.sid, v.eid) or {shortInfo={event_name=v.title,text_char=''},startTime=v.startTime,durationSecond=v.durationSecond}), v.stationName)
     ..'\n')
 
 end
