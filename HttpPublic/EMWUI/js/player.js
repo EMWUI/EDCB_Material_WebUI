@@ -312,6 +312,15 @@ const loadMovie = ($e = $('.is_cast')) => {
 	if (checkTslive()) return;
 	const d = $e.data();
 
+	if ($e.hasClass('item')){
+		$('#playprev').prop('disabled', $e.is('.item:first'));
+		$('#playnext').prop('disabled', $e.is('.item:last' ));
+	}
+	if ($e.hasClass('onair')){
+		$('#playprev').prop('disabled', $e.is('.is-active>.onair:first'));
+		$('#playnext').prop('disabled', $e.is('.is-active>.onair:last'));
+	}
+
 	resetVid();
 	$vid.addClass('is-loadding');
 	if ($remote.hasClass('done')){	//一度読み込んだら最後、無効化
@@ -330,26 +339,17 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		vid.tslive ? loadTslive($e) : loadHls($e);
-		if (!d.info) return;
+		if (!d.meta) return;
 
-		if (d.info.duration){
-			$duration.text(getVideoTime(d.info.duration));
-			$seek.attr('max', d.info.duration);
+		if (d.meta.duration){
+			$duration.text(getVideoTime(d.meta.duration));
+			$seek.attr('max', d.meta.duration);
 		}
-		$Time_wrap.toggleClass('is-disabled', !d.info.duration);
-	    if (d.info.audio) $audios.attr('disabled', d.info.audio == 1);
+		$Time_wrap.toggleClass('is-disabled', !d.meta.duration);
+	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
-	$titlebar.html(d.name || `${ConvertService(d.info)}<span>${ConvertTitle(d.info.title)}</span>`);
-
-	if ($e.hasClass('item')){
-		$('#playprev').prop('disabled', $e.is('.item:first'));
-		$('#playnext').prop('disabled', $e.is('.item:last' ));
-	}
-	if ($e.hasClass('onair')){
-		$('#playprev').prop('disabled', $e.is('.is-active>.onair:first'));
-		$('#playnext').prop('disabled', $e.is('.is-active>.onair:last'));
-	}
+	$titlebar.html(d.name || `${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`);
 }
 
 const $currentTime_duration = $('.currentTime,.duration');
@@ -461,12 +461,12 @@ $(function(){
 		},
 		'timeupdate': () => {
 			const d = $('.is_cast').data();
-			if (!d) return;
+			if (!d.meta) return;
 
 			let currentTime;
 			if (d.onid){
-				currentTime = (Date.now() - d.info.starttime) / 1000;
-				seek.MaterialProgress.setProgress(currentTime / d.info.duration * 100);
+				currentTime = (Date.now() - d.meta.starttime) / 1000;
+				seek.MaterialProgress.setProgress(currentTime / d.meta.duration * 100);
 				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;

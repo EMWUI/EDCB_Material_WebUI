@@ -32,34 +32,43 @@ $(function(){
 			d.update = false;
 			if (!$(xml).find('eventinfo').length) return;
 
-			d.info = toObj.EpgInfo( $(xml).find('eventinfo').first() );
-			d.nextinfo = toObj.EpgInfo( $(xml).find('eventinfo').eq(1) );
+			$.map($(xml).find('eventinfo'), e => toObj.EpgInfo($(e))).map((_d, i) => {
+				Info.EventInfo[`${_d.onid}-${_d.tsid}-${_d.sid}-${_d.eid}`] = _d;
+				if (i>0){
+					d._eid = _d.eid;
+					$e.find('.nextstartTime').text(ConvertTime(_d.starttime)).next('.nextendTime').text(`～${ConvertTime(_d.endtime)}`);
+					$e.find('.nexttitle').html(ConvertTitle(_d.title));
+					return;
+				}
 
-			if ($e.hasClass('is_cast')){
-				setEpgInfo(d.info);
-				$('#epginfo').removeClass('hidden');
-				audioMemu(d.info.audio, true);
-				$duration.text(getVideoTime(d.info.duration));
-				$titlebar.html(`${ConvertService(d.info)}<span>${ConvertTitle(d.info.title)}</span>`).addClass('is-visible');
-				hideBar(2500);
-				$vid.data('title', d.info.title).data('audio', d.info.audio);
-			}
+				d.eid = _d.eid;
+				if ($e.hasClass('is_cast')){
+					setEpgInfo(_d);
+					$('#epginfo').removeClass('hidden');
+					audioMemu(_d.audio, true);
+					$duration.text(getVideoTime(_d.duration));
+					$titlebar.html(`${ConvertService(_d)}<span>${ConvertTitle(_d.title)}</span>`).addClass('is-visible');
+					hideBar(2500);
+					$vid.data('title', _d.title).data('audio', _d.audio);
+				}
 
-			if (!d.info.duration){
-				d.info.duration = (Date.now() - d.info.starttime)/1000 + 5*60;
-				d.info.endtime = new Date(Date.now() + 5*60*1000).getTime();
-			}
-			$e.find('.startTime').text(ConvertTime(d.info.starttime)).next('.endTime').text(`～${ConvertTime(d.info.endtime)}`);
-			$e.find('.title').html(ConvertTitle(d.info.title));
-			$e.find('.event_text').html(d.info.text);
-			$e.find('.nextstartTime').text(ConvertTime(d.nextinfo.starttime)).next('.nextendTime').text(`～${ConvertTime(d.nextinfo.endtime)}`);
-			$e.find('.nexttitle').html(ConvertTitle(d.nextinfo.title));
+				d.meta = {
+					starttime: _d.starttime,
+					endtime: _d.endtime ?? new Date(Date.now() + 5*60*1000).getTime(),
+					duration: _d.duration ?? (Date.now() - d.starttime)/1000 + 5*60,
+					audio: _d.audio
+				}
+
+				$e.find('.startTime').text(ConvertTime(_d.starttime)).next('.endTime').text(`～${ConvertTime(_d.endtime)}`);
+				$e.find('.title').html(ConvertTitle(_d.title));
+				$e.find('.event_text').html(_d.text);
+			});
 		}).fail(() => d.update = false);
 	}
 
 	setInterval(() => {
 		$('.onair:visible,.onair.is_cast').each((i, e) => {
-			const d = $(e).data().info;
+			const d = $(e).data('meta');
 			const $progress = $(e).children('.mdl-progress');
 			const end = !d || d.endtime < Date.now();
 			if (end) updateEPGtitle($(e));
@@ -73,7 +82,7 @@ $(function(){
 		const $e = $(e.currentTarget);
 		const d = $e.parents('li').data();
 		d.next = $e.hasClass('next');
-		const eid = d.next ? d.nextinfo.eid : d.info.eid
+		const eid = d.next ? d._eid : d.eid;
 
 		if (eid != 0){
 			$e.hasClass('panel') ? getEpgInfo($e.parents('li'), d) : location.href = `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${eid}`;
@@ -113,7 +122,7 @@ $(function(){
 
 	$('#ServiceList .onair').click(e => {
 		const $e = $(e.currentTarget);
-		const d = $e.data().info;
+		const d = $e.data();
 		const fn = () => {
 			$('.is_cast').removeClass('is_cast');
 			$e.addClass('is_cast');
@@ -122,14 +131,14 @@ $(function(){
 			params.set('id', `${d.onid}-${d.tsid}-${d.sid}`);
 			history.replaceState(null,null,`?${params.toString()}`);
 			loadMovie($e);
-			audioMemu(d.audio);
-			setEpgInfo(d);
+			audioMemu(d.meta.audio);
+			setEpgInfo(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`]);
 			$('#epginfo').removeClass('hidden');
 			$('#tvcast').animate({scrollTop:0}, 500, 'swing');
 		}
 
-		if ($e.hasClass('is_cast') || d.eid == 0){
-			if (d.eid == 0) Snackbar({message: '番組情報がありませんが、視聴リクエストしますか？', actionHandler: fn, actionText: 'はい'});
+		if ($e.hasClass('is_cast') || !d.eid){
+			if (!d.eid) Snackbar({message: '番組情報がありませんが、視聴リクエストしますか？', actionHandler: fn, actionText: 'はい'});
 			return;
 		}
 
@@ -138,7 +147,7 @@ $(function(){
 	$('.cast').click(e => {
 		const $e = $(e.currentTarget).parents('li').addClass('is_cast');
 		const d = $e.data();
-		if (d.info.eid == 0){
+		if (!d.eid){
 			Snackbar('番組情報がありません');
 		}else if (Magnezio){
 			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
@@ -161,7 +170,7 @@ $(function(){
 		}else if ($('#open_popup').prop('checked')){
 			$('#popup,#playerUI').addClass('is-visible');
 			loadMovie($e);
-			audioMemu(d.info.audio);
+			audioMemu(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].audio);
 		}else{
 			location.href = `tvcast.html?id=${d.onid}-${d.tsid}-${d.sid}`;
 		}

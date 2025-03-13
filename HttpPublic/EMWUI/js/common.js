@@ -1,7 +1,5 @@
-let PresetList, ReserveAutoaddList;
 const isMobile = navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/);
 const isTouch = 'ontouchstart' in window;
-const WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
 const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Constant_.MAX_WIDTH).matches;
 const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
@@ -22,6 +20,11 @@ $.fn.extend({
 	},
 });
 
+const Info = {
+	day: ['日', '月', '火', '水', '木', '金', '土'],
+	EventInfo: {},
+	recinfo: {},
+}
 
 //検索バー表示
 const saerchbar = () => $('main>.mdl-layout__content').scroll(() => {
@@ -72,7 +75,7 @@ const ConvertTime = (t, show_sec, show_ymd) => {
 	if (!t)	return '未定';
 	t = createViewDate(t);
 	if (show_sec == 'ISO') return `${t.getUTCFullYear()}${zero(t.getUTCMonth()+1)}${zero(t.getUTCDate())}T${zero(t.getUTCHours())}${zero(t.getUTCMinutes())}${zero(t.getUTCSeconds())}`;
-	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${WEEK[t.getUTCDay()]}) ` : ''
+	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${Info.day[t.getUTCDay()]}) ` : ''
 		}${zero(t.getUTCHours())}:${zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${zero(t.getUTCSeconds())}</small>` : ''}`;
 }
 const ConvertText = a => {
@@ -118,28 +121,28 @@ const Notify = {
 			Snackbar('追加しました');
 		}
 
-		d.timer = setTimeout(() => {
+		d.timer = setTimeout(async () => {
 			Notify.del(d, true);
 			$(`.notify_${d.eid}`).children().text('notifications');
 
-			$.get(`${ROOT}api/EnumEventInfo`, {id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`}).done(xml => {
-				const d = toObj.EpgInfo($(xml).find('eventinfo').first());
-				const notification = new Notification(d.title, {
-					body: `${ConvertTime(d.starttime)}～ ${d.service}\n${d.text}`,
-					tag: `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`,
-					icon: 'img/apple-touch-icon.png'
-				});
+			const id = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
 
-				notification.onclick = e => {
-					e.preventDefault();
-					location.href=`epginfo.html?onid=${d.onid}&tsid=${d.tsid}&sid=${d.sid}&eid=${d.eid}`;
-					notification.close();
-				};
+			const _d = Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {id: id}).then(xml => toObj.EpgInfo($(xml).find('eventinfo').first()));
+			const notification = new Notification(_d.title, {
+				body: `${ConvertTime(_d.starttime)}～ ${_d.service}\n${_d.text}`,
+				tag: id,
+				icon: 'img/apple-touch-icon.png'
+			});
+
+			notification.onclick = e => {
+				e.preventDefault();
+				location.href=`epginfo.html?id=${id}`;
+				notification.close();
+			};
 
 				Notify.sound.play();
 
-				setTimeout(() => notification.close(), 15*1000);	//通知を閉じる
-			});
+			setTimeout(() => notification.close(), 15*1000);	//通知を閉じる
 		}, d.starttime - Date.now() - 30*1000);
 
 		$(`.eid_${d.eid}.startTime`).after($('<div class="notify_icon"><i class="material-icons">notifications_active</i></div>'));
@@ -150,7 +153,7 @@ const Notify = {
 		const $notifyList = $('<li>', {id: `notify_${d.eid}`, class: 'mdl-list__item mdl-list__item--two-line', data: {start: d.starttime}, append: [
 			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, append: [
 				$('<span>', {html: d.title}),
-				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${WEEK[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
+				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${Info.day[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
 			$('<span>', {class: 'mdl-list__item-secondary-content', append: [
 				$('<button>', {
 					class: 'mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon',
@@ -174,7 +177,7 @@ Notify.sound.volume = 0.2;
 
 //XMLをオブジェクト化
 const toObj = {
-	EpgInfo: (e, recinfo) => {
+	EpgInfo: e => {
 		const d = {
 			onid: e.num('ONID'),
 			tsid: e.num('TSID'),
@@ -225,7 +228,7 @@ const toObj = {
 		}
 		if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 
-		if (recinfo){
+		if (e.num('ID')){
 			d.recinfoid = e.num('ID');
 			const programInfo = e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
 			if (programInfo){
@@ -238,8 +241,8 @@ const toObj = {
 			}
 			d.recFilePath = e.txt('recFilePath');
 			d.comment = e.txt('comment');
-			d.drops = e.txt('drops');
-			d.scrambles = e.txt('scrambles');
+			d.drops = e.num('drops');
+			d.scrambles = e.num('scrambles');
 			d.errInfo = e.txt('errInfo');
 			d.protect = e.num('protect') == 1;
 		}
@@ -250,40 +253,41 @@ const toObj = {
 		r = e.children('recsetting');
 		const d = {
 			id: e.num('ID') || e.num('id'),
-			recMode: r.num('recMode'),
-			priority: r.num('priority'),
-			tuijyuuFlag: r.num('tuijyuuFlag') == 1,
-			serviceMode: r.num('serviceMode'),
-			pittariFlag: r.num('pittariFlag') == 1,
-			batFilePath: r.txt('batFilePath'),
-			suspendMode: r.num('suspendMode'),
-			rebootFlag: r.num('rebootFlag') == 1,
-			useMargineFlag: r.num('useMargineFlag') == 1,
-			startMargine: r.num('startMargine'),
-			endMargine: r.num('endMargine'),
-			continueRecFlag: r.num('continueRecFlag') == 1,
-			partialRecFlag: r.num('partialRecFlag') == 1,
-			tunerID: r.num('tunerID'),
-			recFolderList: r.children('recFolderList').children('recFolderInfo').get().map(e => {
-				return {
-					recFolder: $(e).txt('recFolder'),
-					writePlugIn: $(e).txt('writePlugIn'),
-					recNamePlugIn: $(e).txt('recNamePlugIn')
-				}
-			}),
-			partialRecFolder: r.children('partialRecFolder').children('recFolderInfo').get().map(e => {
-				return {
-					recFolder: $(e).txt('recFolder'),
-					writePlugIn: $(e).txt('writePlugIn'),
-					recNamePlugIn: $(e).txt('recNamePlugIn')
-				}
-			}),
+			recSetting: {
+				recMode: r.num('recMode'),
+				priority: r.num('priority'),
+				tuijyuuFlag: r.num('tuijyuuFlag') == 1,
+				serviceMode: r.num('serviceMode'),
+				pittariFlag: r.num('pittariFlag') == 1,
+				batFilePath: r.txt('batFilePath'),
+				suspendMode: r.num('suspendMode'),
+				rebootFlag: r.num('rebootFlag') == 1,
+				useMargineFlag: r.num('useMargineFlag') == 1,
+				startMargine: r.num('startMargine'),
+				endMargine: r.num('endMargine'),
+				continueRecFlag: r.num('continueRecFlag') == 1,
+				partialRecFlag: r.num('partialRecFlag') == 1,
+				tunerID: r.num('tunerID'),
+				recFolderList: r.children('recFolderList').children('recFolderInfo').get().map(e => {
+					return {
+						recFolder: $(e).txt('recFolder'),
+						writePlugIn: $(e).txt('writePlugIn'),
+						recNamePlugIn: $(e).txt('recNamePlugIn')
+					}
+				}),
+				partialRecFolder: r.children('partialRecFolder').children('recFolderInfo').get().map(e => {
+					return {
+						recFolder: $(e).txt('recFolder'),
+						writePlugIn: $(e).txt('writePlugIn'),
+						recNamePlugIn: $(e).txt('recNamePlugIn')
+					}
+				}),
+			}
 		}
 
-		if (e.children('name').length){ 										//プリセット
+		if (e.children('name').length){											//プリセット
 			d.name = e.txt('name');
-			PresetList[d.id] = d;
-		}else if (e.txt('eventID') == 65535 || e.children('ONID').length){ 		//予約
+		}else if (e.txt('eventID') == 65535 || e.children('ONID').length){		//予約
 			d.title = e.txt('title');
 			d.starttime = new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime(),
 			d.duration = e.num('duration');
@@ -293,20 +297,15 @@ const toObj = {
 			d.tsid = e.num('TSID');
 			d.sid = e.num('SID');
 			d.eid = e.num('eventID');
-			d.commen = e.txt('commen');
+			d.comment = e.txt('comment');
 			d.overlapMode = e.num('overlapMode');
-			const id = e.num('eventID') == 65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
-			if (ReserveAutoaddList) ReserveAutoaddList[id] = d;
-		}else{
-			ReserveAutoaddList[d.id].recSetting = d;
 		}
 
 		return d
 	},
 	Search: e => {
-		const id = $(e).num('ID');
 		e = $(e).children('searchsetting');
-		const d = {
+		return {searchSetting: {
 			disableFlag: e.num('disableFlag') == 1,
 			andKey: e.txt('andKey'),
 			notKey: e.txt('notKey'),
@@ -348,52 +347,36 @@ const toObj = {
 			chkRecEnd: e.num('chkRecEnd') == 1,
 			chkRecNoService: e.num('chkRecNoService') == 1,
 			chkRecDay: e.num('chkRecDay')
-		}
-
-		ReserveAutoaddList[id].SearchSettting = d;
-
-		return d;
+		} }
 	}
 }
 
 //各リストを取得
-const getList = {
-	fetch: (url, n, fn, addList) => {
+const getList = new class {
+	#notify = {};
+	fetch = (key, url, n, fn = e=>e, toArray = e=>e) => {
 		$.get(`${ROOT}api/Common`, {notify: n}).done(xml => {
-			const Count = $(xml).find('info').text();
-			if (ReserveAutoaddList && Count == Notify.count){
-				fn();
+			const notify = $(xml).num();
+			if (notify == this.#notify[key]){
+				fn(Info[key]);
 			}else{
-				Notify.count = Count;
-				$.get(url).done(xml => addList($(xml)));
+				this.#notify[key] = notify;
+				$.get(url).done(xml => {
+					Info[key] = new Map(toArray($(xml)));
+					fn(Info[key]);
+				});
 			}
 		});
-	},
-	Reserve: fn => {
-		getList.fetch(`${ROOT}api/EnumReserveInfo`, 2, fn, xml => {
-			ReserveAutoaddList = {};
-			xml.find('reserveinfo').each((i, e) => {
-				const id = $(e).num('eventID') == 65535 ? $(e).num('ID') : `${$(e).num('ONID')}-${$(e).num('TSID')}-${$(e).num('SID')}-${$(e).num('eventID')}`;
-				ReserveAutoaddList[id] = $(e);
-			});
-			fn();
-		});
-	},
-	AutoAdd: fn => {
-		getList.fetch(`${ROOT}api/EnumAutoAdd`, 4, fn, xml => {
-			ReserveAutoaddList = {};
-			xml.find('autoaddinfo').each((i, e) => ReserveAutoaddList[$(e).num('ID')] = $(e));
-			fn();
-		});
-	},
-	Preset: fn => {
-		if (PresetList){
-			fn();
+	}
+	reserve = fn => this.fetch('reserve', `${ROOT}api/EnumReserveInfo`, 2, fn, $xml => $.map($xml.find('reserveinfo'), e => toObj.RecSet($(e))).map(d => [d.id == 65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, d]));
+	autoaddepg = fn => this.fetch('autoaddepg', `${ROOT}api/EnumAutoAdd`, 4, fn, $xml => $.map($xml.find('autoaddinfo'), e => Object.assign(toObj.RecSet($(e)), toObj.Search($(e)))).map(d=>[d.id, d]));
+	recpreset = fn => {
+		if (Info.preset){
+			fn(Info.preset);
 		}else{
 			$.get(`${ROOT}api/EnumRecPreset`).done(xml => {
-				PresetList = {};
-				$(xml).find('recpresetinfo').each((i, e) => PresetList[$(e).num('id')] = $(e));
-				fn();
+				Info.preset = new Map($.map($(xml).find('recpresetinfo'), e => toObj.RecSet($(e))).map(d=>[d.id, d]));
+				fn(Info.preset);
 			});
 		}
 	}
@@ -505,10 +488,9 @@ const recFolder = {
 }
 
 //録画設定を反映
-const setRecSettting = r => {
-	if (r.recSetting) r = r.recSetting;
-	if (!r.recMode) r = toObj.RecSet(r);
-	
+const setRecSettting = d => {
+	const r = d.recSetting;
+
 	$('[name=recMode]').val(r.recMode);										//録画モード
 	$('[name=tuijyuuFlag]').mdl_prop('checked', r.tuijyuuFlag);				//追従
 	$('[name=priority]').val(r.priority);									//優先度
@@ -543,7 +525,7 @@ const setRecSettting = r => {
 	$('[name=partialRecFlag]').mdl_prop('checked', r.partialRecFlag);		//部分受信サービス
 	$('#partialpreset').toggle(r.partialRecFlag);
 
-	return r;
+	return d;
 }
 
 //時間絞り込み
@@ -571,8 +553,7 @@ const dateList = {
 
 //検索条件を反映
 const setSerchSetting = s => {
-	if (s.SearchSettting) s = s.SearchSettting;
-	if (!s.andKey) s = toObj.Search(s);
+	if (s.searchSetting) s = s.searchSetting;
 	$('#disable').mdl_prop('checked', s.disableFlag);
 	$('#andKey').val(s.andKey);
 	$('#notKey').val(s.notKey);
@@ -587,8 +568,8 @@ const setSerchSetting = s => {
 	$('#dateList_select,#dateList_touch').empty();
 	$('[name=dateList]').val(
 		s.dateList.map((e, i) => {
-			const val = `${WEEK[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${WEEK[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`;
-			const txt = `${WEEK[e.startDayOfWeek]} ${zero(e.startHour)}:${zero(e.startMin)} ～ ${WEEK[e.endDayOfWeek]} ${zero(e.endHour)}:${zero(e.endMin)}`
+			const val = `${Info.day[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${Info.day[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`;
+			const txt = `${Info.day[e.startDayOfWeek]} ${zero(e.startHour)}:${zero(e.startMin)} ～ ${Info.day[e.endDayOfWeek]} ${zero(e.endHour)}:${zero(e.endMin)}`
 			dateList.add.select(val, txt);
 			dateList.add.touch(i, txt);
 			return val;
@@ -612,9 +593,9 @@ const setAutoAdd = $e => {
 	$e.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
 
-	getList.AutoAdd(() => {
+	getList.autoaddepg(d => {
 		const id = $e.data('id');
-		const d = ReserveAutoaddList[id];
+		d = d.get(id);
 		if (d){
 			$('#set,#del').attr('action', `${ROOT}api/SetAutoAdd?id=${id}`);
 			$('#link_epginfo').attr('href', `autoaddepginfo.html?id=${id}`);
@@ -632,14 +613,8 @@ const setAutoAdd = $e => {
 
 //録画結果を反映
 const setRecInfo = $e => {
-	if ($e.data('info')){
-		$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
-		$('[href="#error"], #error, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
-		$('[href="#detail"], #detail').addClass('is-active');
-		$e.addClass('open');
-		$('.sidePanel-content').scrollTop(0);
-
-		const d = $e.data('info');
+	if (Info.recinfo[$e.data('recinfoid')]){
+		const d = Info.recinfo[$e.data('recinfoid')];
 		setEpgInfo(d);
 
 		$('#path').text(d.recFilePath);
@@ -657,7 +632,7 @@ const setRecInfo = $e => {
 		showSpinner(true);
 		$.get(`${ROOT}api/EnumRecInfo?id=${$e.data('recinfoid')}`).done(xml => {
 			if ($(xml).find('recinfo').length){
-				$e.data('info', toObj.EpgInfo($(xml).find('recinfo').first(), true));
+				Info.recinfo[$e.data('recinfoid')] = toObj.EpgInfo($(xml).find('recinfo').first());
 				setRecInfo($e);
 			}else{
 				errMessage($(xml));
@@ -689,38 +664,42 @@ const setReserve = (r, fn) => {
 
 //デフォルト読込
 const setDefault = mark => {
-	setRecSettting(PresetList['0']);
+	getList.recpreset(d => {
+		setRecSettting(d.get(0));
 
-	$('#set').attr('action', `${ROOT}api/SetReserve`);
-	$('#action').attr('name', 'add');
-	$('#reserved, #delreseved, #toprogres').hide();
-	$('[name=presetID]').val(0);
-	$('#reserve').text('予約追加');
+		$('#set').attr('action', `${ROOT}api/SetReserve`);
+		$('#action').attr('name', 'add');
+		$('#reserved, #delreseved, #toprogres').hide();
+		$('[name=presetID]').val(0);
+		$('#reserve').text('予約追加');
 
-	if (!mark) return;
+		if (!mark) return;
 
-	$('.open .mark.reserve').remove();
-	$('.open .addreserve').data('id', false).data('oneclick', 1).text('予約追加');
-	$('.open .reserve').removeClass('reserve disabled partially shortage view');
-	$('.open .flag').data('id', false).data('oneclick', 1).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored', click: e => addReserve($(e.currentTarget)), html:'<i class="material-icons">add</i>'}));
+		$('.open .mark.reserve').remove();
+		$('.open .addreserve').data('id', false).data('oneclick', 1).text('予約追加');
+		$('.open .reserve').removeClass('reserve disabled partially shortage view');
+		$('.open .flag').data('id', false).data('oneclick', 1).html($('<span>', {class:'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored', click: e => addReserve($(e.currentTarget)), html:'<i class="material-icons">add</i>'}));
+	});
 }
 
 //録画マーク追加
 const addRecMark = (r, $target, $content) => {
 	if ($('.open').hasClass('epginfo')) return;
 
-	if (!r.recMode) r = toObj.RecSet(r);
-	const messege = r.recMode == 5 ? '無効' : '有効';
-	const button = r.recMode == 5 ? '有効' : '無効';
-	const mode = r.recMode == 5 ? 'disabled' :
-		r.overlapMode == 1 ? 'partially' :
-		r.overlapMode == 2 ? 'shortage' :
-		r.recMode == 4 ? 'view' : '';
-	const mark = r.recMode == 5 ? '無' :
-		r.overlapMode == 1 ? '部' :
-		r.overlapMode == 2 ? '不' :
-		r.recMode == 4 ? '視' : '録';
-	$target.data('id', r.id).data('toggle', r.recMode == 5 ? 1 : 0).data('oneclick', 0).text(button);
+	if (!r.recSetting) r = toObj.RecSet(r);
+	const recMode = r.recSetting.recMode;
+	const overlapMode = r.recSetting.overlapMode;
+	const messege = recMode == 5 ? '無効' : '有効';
+	const button = recMode == 5 ? '有効' : '無効';
+	const mode = recMode == 5 ? 'disabled' :
+		overlapMode == 1 ? 'partially' :
+		overlapMode == 2 ? 'shortage' :
+		recMode == 4 ? 'view' : '';
+	const mark = recMode == 5 ? '無' :
+		overlapMode == 1 ? '部' :
+		overlapMode == 2 ? '不' :
+		recMode == 4 ? '視' : '録';
+	$target.data('id', r.id).data('toggle', recMode == 5 ? 1 : 0).data('oneclick', 0).text(button);
 	$content.not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 	$content.removeClass('disabled partially shortage view').addClass(`reserve ${mode}`).find('.mark.reserve').text(mark);
 
@@ -731,7 +710,7 @@ const addRecMark = (r, $target, $content) => {
 const fixRecToggleSW = (d, $e = $('.open')) => {
 	if ($e.hasClass('cell')) return;
 
-	if (!d.recMode) d = toObj.RecSet(d);
+	if (!d.recSetting) d = toObj.RecSet(d);
 
 	const $input = $e.find('input');
 	if ($e.hasClass('search')){						//検索ページ向け
@@ -739,7 +718,7 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 		//スイッチ追加
 		if (d.starttime < Date.now()){
 			$input.removeClass().addClass('search recmark').empty();
-			if (d.recMode != 5) $input.unbind('click');
+			if (d.recSetting.recMode != 5) $input.unbind('click');
 		}else if (!$e.hasClass('addreserve')){
 			const id = `reserve${d.id}`;
 			const $switch = $('<label>', {
@@ -751,7 +730,7 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 					type: 'checkbox',
 					checked: d.recMode != 5,
 					change: e => {
-						$e.data('toggle', d.recMode == 5 ? 1 : 0);
+						$e.data('toggle', d.recSetting.recMode == 5 ? 1 : 0);
 						addReserve($(e.currentTarget))} }) });
 			componentHandler.upgradeElement($switch.get(0));
 
@@ -764,12 +743,12 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 		}
 	}
 
-	const mode = d.recMode == 5 ? 'disabled' :	//無効
-		d.overlapmode == 1 ? 'partially' :		//チューナー不足
-		d.overlapmode == 2 ? 'shortage' : '';	//一部録画
+	const mode = d.recSetting.recMode == 5 ? 'disabled' :	//無効
+		d.recSetting.overlapmode == 1 ? 'partially' :		//チューナー不足
+		d.recSetting.overlapmode == 2 ? 'shortage' : '';	//一部録画
 
 	$e.removeClass('disabled partially shortage').addClass(mode);
-	$input.mdl_prop('checked', d.recMode != 5);
+	$input.mdl_prop('checked', d.recSetting.recMode != 5);
 }
 
 //プログラム予約
@@ -780,38 +759,40 @@ const progReserve = d => {
 	$('#starttime').val(`${zero(start.getUTCHours())}:${zero(start.getUTCMinutes())}:${zero(start.getUTCSeconds())}`);
 	$('#endtime').val(`${zero(end.getUTCHours())}:${zero(end.getUTCMinutes())}:${zero(end.getUTCSeconds())}`);
 
-	$('#toprogres').text(`プログラム予約${d.id != 65535 ? '化' : ''}`);
+	$('#toprogres').text(`プログラム予約${d.eid != 65535 ? '化' : ''}`);
 	$('#progres p').toggle(d.eid != 65535);
 }
 
 //番組詳細予約確認
 const checkReserve = ($e, d) => {
-	let id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
-	let r = ReserveAutoaddList[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`];
-	if (r){
-		if (!id){															//追加されてた
-			if (!r.recMode) r = toObj.RecSet(r);
-			if ($e.hasClass('onair')) $e.data(`${d.next ? 'next' : ''}id`, r.id);
-		}
-		if (!$e.hasClass('onair')){
-			addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
-			fixRecToggleSW(r);
-		}
-		setReserve(r);
-	}else if (id){															//削除されてた
-		if ($e.hasClass('reserve')){
-			$e.remove();
-		}else{
-			if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
+	getList.reserve(r => {
+		let id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
+		r = r.get(`${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid}`);
+		if (r){
+			if (!id){															//追加されてた
+				if (!r.recSetting.recMode) r = toObj.RecSet(r);
+				if ($e.hasClass('onair')) $e.data(`${d.next ? 'next' : ''}id`, r.id);
+			}
+			if (!$e.hasClass('onair')){
+				addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
+				fixRecToggleSW(r);
+			}
+			setReserve(r);
+		}else if (id){															//削除されてた
+			if ($e.hasClass('reserve')){
+				$e.remove();
+			}else{
+				if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
 
-			getList.Preset(() => setDefault(true));
+				setDefault(true);
+				$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+			}
+			if (!$e.hasClass('onair')) Snackbar('予約が見つかりませんでした');
+		}else{
+			setDefault();
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 		}
-		if (!$e.hasClass('onair')) Snackbar('予約が見つかりませんでした');
-	}else{
-		getList.Preset(() => setDefault());
-		$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-	}
+	});
 }
 
 //番組詳細を取得
@@ -822,24 +803,24 @@ const getEpgInfo = ($e, d = $e.data()) => {
 	$e.addClass('open');
 	$('.sidePanel-content').scrollTop(0);
 
-	const info = d.next ? d.nextinfo : d.info;
+	const info = Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid || d.starttime}`];
 	if (info){
 		setEpgInfo(info);
-		getList.Reserve(() => checkReserve($e, d));
+		checkReserve($e, d);
 		return;
 	}
 
 	showSpinner(true);
 	$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`}).done(xml => {
 		if ($(xml).find('eventinfo').length){
-			d.info = setEpgInfo($(xml).find('eventinfo').first());
-			getList.Reserve(() => checkReserve($e, d));
+			Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`] = setEpgInfo($(xml).find('eventinfo').first());
+			checkReserve($e, d)
 		}else{
 			const id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
 			if (id){													//プログラム予約または番組変更でなくなった
-				getList.Reserve(() => {
+				getList.reserve(r => {
 					const key = d.eid == 65535 ? id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`
-					const r = ReserveAutoaddList[key];
+					r = r.get(key);
 					if (r){
 						setEpgInfo(r);
 						setReserve(r);
@@ -1139,11 +1120,11 @@ $(function(){
 
 	//録画設定
 	//プリセット読み込み
-	const setPreset = (list, id) => {
+	const setPreset = (d, id) => {
 		let messege = 'プリセットの読み込に失敗しました';
-		const preset = list[id];
-		if (preset){
-			const name = setRecSettting(preset).name ?? $('[name=presetID] option:selected').text();
+		d = d.get(id);
+		if (d){
+			const name = setRecSettting(d).name ?? $('[name=presetID] option:selected').text();
 			messege = `"${name}" を読み込みました`;
 		}
 		Snackbar(messege);
@@ -1151,14 +1132,14 @@ $(function(){
 	$('[name=presetID]').change(e => {
 		const $e = $(e.currentTarget);
 		if ($e.val() != 65535){
-			getList.Preset(() => setPreset(PresetList, $e.val()));
+			getList.recpreset(d => setPreset(d, parseInt($e.val())));
 		}else if ($e.data('reseveid')){
 			const d = $('#set').data();
 			const id = d.eid == 65535 ? $e.data('reseveid') : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
-			getList.Reserve(() => setPreset(ReserveAutoaddList, id));
+			getList.reserve(d => setPreset(d, id));
 		}else{
 			const id = $e.data('autoaddid');
-			getList.AutoAdd(() => setPreset(ReserveAutoaddList, id));
+			getList.autoaddepg(d => setPreset(d, id));
 		}
 	});
 	//録画マージン
@@ -1245,7 +1226,7 @@ $(function(){
 							$('.open .category').html( count==0 ? '全ジャンル' : `${$('#contentList option:selected:first').text()}${count>1 ? `<small>.他${(count-1)}ch` : ''}` );
 							$('.open .mode').text($('[name=recMode] option:selected').text());
 						}else if (d.action == 'del'){
-							getList.Preset(() => setDefault(true));
+							setDefault(true);
 							if ($('.open').hasClass('reserve')) {
 								$('#sidePanel, .close_info.mdl-layout__obfuscator').removeClass('is-visible');
 								$('.open').remove();

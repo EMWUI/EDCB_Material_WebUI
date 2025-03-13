@@ -32,14 +32,14 @@ $(function(){
 			$e.data({
 				path: xml.txt('path'),
 				public: xml.num('public') == 1,
-				info: {
+				meta: {
 					duration: xml.children('meta').num('duration'),
 					audio: xml.children('meta').num('audio')
 				}
 			});
 			playMovie($e);
 		});
-}
+	}
 
 	let order = localStorage.getItem('sortOrder') ?? 'name';
 	let asc = localStorage.getItem('ascending') == 'true';
