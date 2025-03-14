@@ -34,25 +34,8 @@ else
   page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
 end
 
-if math.ceil((#a/pageCount)-1)>0 then
-  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href=\"recinfo.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href=\"recinfo.html?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
-
-  n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
-  for i=n, n+4 do
-    pg=pg..(i>=0 and i<#a/pageCount and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
-  end
-
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"recinfo.html?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href=\"recinfo.html?page='..math.ceil((#a/pageCount)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
-
-  pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
-end
-
-ct.main='<main class="sidePanel-container mdl-layout__content">\n'
-
 if SIDE_PANEL then
-  ct.main=ct.main..[=[
+  SIDE_PANEL=[=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">録画結果</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
 <div class="sidePanel-content">
@@ -85,20 +68,6 @@ if SIDE_PANEL then
     ..'<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
 end
 
-  ct.main=ct.main..'<div class="mdl-layout__content">'..(pg or '')..'<div class="list mdl-grid">'
-
-  ..'<table class="mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
-
-  ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
-  ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
-  ..' <th class="title mdl-data-table__cell--non-numeric ">タイトル\n'
-  ..' <th class="service mdl-data-table__cell--non-numeric ">サービス\n'
-  ..' <th class="comment mdl-data-table__cell--non-numeric ">結果\n'
-  ..' <th class="drop">D\n'
-  ..' <th class="scramble">S\n'
-  ..'<tbody>\n'
-
 ctt={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
@@ -106,7 +75,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
      or v.scrambles>0 and ' scrambles' or ''
   table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(bg or '')..'" '
     ..(SIDE_PANEL and 'data-recinfoid="'..v.id
-                  or 'data-href="recinfodesc.html?id='..v.id)..'">\n'
+                   or 'data-href="recinfodesc.html?id='..v.id)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName
@@ -116,7 +85,28 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n')
 end
 
-ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>'
+pageNav=pagination(page, a, 'recinfo')
+
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
+
+  ..(SIDE_PANEL or '')
+
+  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+
+  ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
+  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
+  ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
+  ..' <th class="title mdl-data-table__cell--non-numeric ">タイトル\n'
+  ..' <th class="service mdl-data-table__cell--non-numeric ">サービス\n'
+  ..' <th class="comment mdl-data-table__cell--non-numeric ">結果\n'
+  ..' <th class="drop">D\n'
+  ..' <th class="scramble">S\n'
+  ..'<tbody>\n'
+
+  ..table.concat(ctt)
+
+  ..'</table>\n</div>\n'..pageNav..'</div>\n'
 
 ct=Template(ct)
 

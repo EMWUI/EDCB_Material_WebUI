@@ -218,7 +218,7 @@ for i,v in ipairs(st) do
         if j>#st or j>i and not st[j].subCh then
           column=j-i
           id=v.onid..'-'..v.tsid..'-'..v.sid
-          ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..id..'"><input type="checkbox" id="c-'..id..'" class="stationToggle mdl-switch__input" value="'..id..'"'..(v.hide and '' or ' checked')..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
+          ct.side=ct.side..'<li><label class="mdl-switch mdl-js-switch" for="c-'..id..'"><input id="c-'..id..'" class="stationToggle mdl-switch__input"'..Checkbox(not v.hide,id)..'><span class="mdl-switch__label">'..v.service_name..'</span></label></li>\n'
           table.insert(Head, '<a class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..' mdl-typography--body-2 mdl-color-text--primary-contrast"'..(v.hide and ' style="display:none;"' or '')..' href="epgweek.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..(interval~=25 and '&interval='..interval or '')..'"><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</span></a>\n')
           table.insert(ctt, '<div class="station id-'..id..(SubChConcat and WIDE[id] and ' wide' or '')..'"'..(v.hide and ' style="display:none;"' or '')..' data-service_id="'..id..'" data-service="'..v.service_name..'">\n')
           break

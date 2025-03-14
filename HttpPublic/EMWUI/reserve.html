@@ -39,32 +39,41 @@ else
   page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
 end
 
-if math.ceil((#a/pageCount)-1)>0 then
-  pg='<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="reserve.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></a>\n'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="reserve.html?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></a>\n'
+ctt={}
+rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
+rate={}
+for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
+  v=a[i]
+  size=getPredictionSize(v)
+  bg=v.recSetting.recMode==5 and ' disabled'
+     or v.overlapMode==1 and ' partially'
+     or v.overlapMode==2 and ' shortage' or nil
+  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
+    ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
+                   or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">\n'
 
-  n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
-  for i=n, n+4 do
-    pg=pg..(i>=0 and i<#a/pageCount and '<a class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="reserve.html?page='..i)..'">'..(i+1)..'</a>\n' or '')
-  end
-
-  pg=pg..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="reserve.html?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></a>\n'
-    ..'<a class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="reserve.html?page='..math.ceil((#a/pageCount)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></a>\n'
-
-  pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
+    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span'
+    ..(TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..v.reserveID..'" class="mdl-switch__input"'..Checkbox(v.recSetting.recMode~=5)..'></label>'
+                                       or ' class="recmark">')
+    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
+    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
+    ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.stationName
+    ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
+    ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
+    ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..v.recSetting.priority
+    ..'\n')
 end
+
+pageNav=pagination(page, a, 'autoaddepg')
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..SidePanelTemplate(true)
 
-  ..'<div class="mdl-layout__content">'
+  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
 
-  ..(pg or '')..'<div class="list mdl-grid">'
-
-  ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+  ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
   ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
-
   ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
   ..' <th class="flag mdl-data-table__cell--non-numeric">録画\n'
   ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
@@ -75,47 +84,9 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..' <th class="priority">優先度\n'
   ..'<tbody>\n'
 
-ctt={}
-rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
-rate={}
-for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
-  v=a[i]
-  size=nil
-  if v.recSetting.recMode~=4 then
-    --予想ファイルサイズ
-    for j=1,4 do
-      key=('%04X%04X%04X'):format((j>3 and 65535 or v.onid),(j>2 and 65535 or v.tsid),(j>1 and 65535 or v.sid))
-      rate[key]=rate[key] or tonumber(edcb.GetPrivateProfile('BITRATE',key,0,'Bitrate.ini')) or 0
-      if rate[key]>0 then
-        break
-      elseif j==4 then
-        rate[key]=19456
-      end
-    end
-    size=rate[key]/8*1000*math.max((v.recSetting.startMargin or rsdef and rsdef.startMargin or 0)+
-                                   (v.recSetting.endMargin or rsdef and rsdef.endMargin or 0)+v.durationSecond,0)
-  end
-  bg=v.recSetting.recMode==5 and ' disabled'
-     or v.overlapMode==1 and ' partially'
-     or v.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
-    ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                  or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">\n'
-
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span'
-    ..(TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input type="checkbox" id="reserve'..v.reserveID..'" class="mdl-switch__input"'..(v.recSetting.recMode~=5 and ' checked' or '')..'></label>'
-                                       or ' class="recmark">')
-    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
-    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
-    ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.stationName
-    ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
-    ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
-    ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..v.recSetting.priority
-    ..'\n')
-
-end
-
-ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')..'</div>\n'
+  ..table.concat(ctt)
+  
+  ..'</table>\n</div>\n'..pageNav..'</div>\n'
 
 ct=Template(ct)
 

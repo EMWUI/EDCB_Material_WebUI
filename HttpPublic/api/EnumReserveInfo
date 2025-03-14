@@ -2,9 +2,9 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 edcb.htmlEscape=15
 a=edcb.GetReserveData()
-rsdef=edcb.GetReserveData(0x7FFFFFFF)
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
+  size=getPredictionSize(v)
   table.insert(ct, '<reserveinfo><ID>'
     ..v.reserveID..'</ID><title>'
     ..v.title..'</title><startDate>'
@@ -18,13 +18,10 @@ for i,v in ipairs(a) do
     ..v.sid..'</SID><eventID>'
     ..v.eid..'</eventID><comment>'
     ..v.comment..'</comment><overlapMode>'
-    ..v.overlapMode..'</overlapMode>'
-    ..XmlRecSetting(v.recSetting, rsdef)
-    ..'<recFileNameList>')
-  for j,w in ipairs(v.recFileNameList) do
-    table.insert(ct, '<name>'..w..'</name>')
-  end
-  table.insert(ct, '</recFileNameList></reserveinfo>\r\n')
+    ..v.overlapMode..'</overlapMode><size>'
+    ..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')..'</size>'
+    ..XmlRecSetting(v.recSetting)
+    ..'</reserveinfo>\r\n')
 end
 table.insert(ct, '</items></entry>')
 cl=0

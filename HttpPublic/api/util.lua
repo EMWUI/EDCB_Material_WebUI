@@ -223,6 +223,18 @@ POST_MAX_BYTE=1024*1024
 
 --以下、関数名はパスカルケース、定数名はアッパースネークケースとし、変数は関数スコープに閉じ込めること
 
+function Checkbox(b,v)
+  return ' type="checkbox" value="'..(v or 1)..(b and '" checked' or '"')
+end
+
+function Radiobtn(b,v)
+  return ' type="radio" value="'..(v or 1)..(b and '" checked' or '"')
+end
+
+function Selected(b)
+  return b and ' selected' or ''
+end
+
 function GetTranscodeQueries(qs)
   local reload=(mg.get_var(qs,'reload') or ''):match('^'..('[0-9a-f]'):rep(16,'?')..'$')
   local loadKey=reload or (mg.get_var(qs,'load') or ''):match('^'..('[0-9a-f]'):rep(16,'?')..'$')
@@ -253,7 +265,7 @@ end
 
 
 function RecModeTextList()
-  return {'全サービス','指定サービス','全サービス（デコード処理なし）','指定サービス（デコード処理なし）','視聴','無効'}
+  return {'全サービス','指定サービス','全サービス（デコード処理なし）','指定サービス（デコード処理なし）','視聴'}
 end
 
 function NetworkType(onid)
@@ -970,6 +982,28 @@ if LOGO_DIR then
   LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',INI)
 end
 
+--予想ファイルサイズ
+BITRATE={}
+function getPredictionSize(v)
+  local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
+  local size=nil
+  local key
+  if v.recSetting.recMode~=4 then
+    for j=1,4 do
+      key=('%04X%04X%04X'):format((j>3 and 65535 or v.onid),(j>2 and 65535 or v.tsid),(j>1 and 65535 or v.sid))
+      BITRATE[key]=BITRATE[key] or tonumber(edcb.GetPrivateProfile('BITRATE',key,0,'Bitrate.ini')) or 0
+      if BITRATE[key]>0 then
+        break
+      elseif j==4 then
+        BITRATE[key]=19456
+      end
+    end
+    size=BITRATE[key]/8*1000*math.max((v.recSetting.startMargin or rsdef and rsdef.startMargin or 0)+
+                                  (v.recSetting.endMargin or rsdef and rsdef.endMargin or 0)+v.durationSecond,0)
+  end
+  return size
+end
+
 function HideServiceList()
   local st={}
   for i=0,1000 do
@@ -1029,9 +1063,11 @@ function CustomServiceList()
 end
 
 --録画設定をxmlに
-function XmlRecSetting(rs, rsdef)
-  local s='<recsetting><recMode>'
-    ..rs.recMode..'</recMode><priority>'
+function XmlRecSetting(rs)
+  local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
+  local s='<recsetting><recEnabled>'
+    ..(rs.recMode~=5 and 1 or 0)..'</recEnabled><recMode>'
+    ..(rs.recMode~=5 and rs.recMode or rs.noRecMode or 1)..'</recMode><priority>'
     ..rs.priority..'</priority><tuijyuuFlag>'
     ..(rs.tuijyuuFlag and 1 or 0)..'</tuijyuuFlag><serviceMode>'
     ..rs.serviceMode..'</serviceMode><pittariFlag>'
@@ -1045,11 +1081,11 @@ function XmlRecSetting(rs, rsdef)
   end
   s=s..'</recFolderList><suspendMode>'
     ..rs.suspendMode..'</suspendMode><defserviceMode>'
-    ..(rsdef and rsdef.recSetting.serviceMode or rs.suspendMode)..'</defserviceMode><rebootFlag>'
-    ..((rs.suspendMode==0 and rsdef and rsdef.recSetting.rebootFlag or rs.suspendMode~=0 and rs.rebootFlag) and 1 or 0)..'</rebootFlag><useMargineFlag>'
+    ..(rsdef.serviceMode or rs.suspendMode)..'</defserviceMode><rebootFlag>'
+    ..((rs.suspendMode==0 and rsdef.rebootFlag or rs.suspendMode~=0 and rs.rebootFlag) and 1 or 0)..'</rebootFlag><useMargineFlag>'
     ..(rs.startMargin and 1 or 0)..'</useMargineFlag><startMargine>'
-    ..(rs.startMargin or rsdef and rsdef.recSetting.startMargin or 0)..'</startMargine><endMargine>'
-    ..(rs.endMargin or rsdef and rsdef.recSetting.endMargin or 0)..'</endMargine><continueRecFlag>'
+    ..(rs.startMargin or rsdef.startMargin or 0)..'</startMargine><endMargine>'
+    ..(rs.endMargin or rsdef.endMargin or 0)..'</endMargine><continueRecFlag>'
     ..(rs.continueRecFlag and 1 or 0)..'</continueRecFlag><partialRecFlag>'
     ..rs.partialRecFlag..'</partialRecFlag><tunerID>'
     ..rs.tunerID..'</tunerID><partialRecFolder>'
@@ -1063,54 +1099,53 @@ function XmlRecSetting(rs, rsdef)
 end
 
 --録画設定を取得
-function GetRecSetting(rs,post)
-  if rs then
-    local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
-    rs={
-      batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or rs.batFilePath,
-      recFolderList={},
-      partialRecFolder={},
-      recMode=GetVarInt(post,'recMode',0,5),
-      tuijyuuFlag=GetVarInt(post,'tuijyuuFlag'),
-      priority=GetVarInt(post,'priority',1,5),
-      pittariFlag=GetVarInt(post,'pittariFlag'),
-      suspendMode=GetVarInt(post,'suspendMode',0,4),
-      rebootFlag=GetVarInt(post,'rebootFlag'),
-      startMargin=useMargin and GetVarInt(post,'startMargin',-6*3600,6*3600),
-      endMargin=useMargin and GetVarInt(post,'endMargin',-6*3600,6*3600),
-      serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0),
-      continueRecFlag=GetVarInt(post,'continueRecFlag'),
-      tunerID=GetVarInt(post,'tunerID'),
-      partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
-    }
-    if mg.get_var(post, 'recFolder') then
-      for i=0,10000 do
-        if not mg.get_var(post, 'recFolder', i) then break end
-        table.insert(rs.recFolderList, {
-          recFolder=mg.get_var(post, 'recFolder', i),
-          writePlugIn=mg.get_var(post, 'writePlugIn', i),
-          recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
-        } )
-      end
+function GetRecSetting(post)
+  local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
+  local rs={
+    batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or rs.batFilePath,
+    recFolderList={},
+    partialRecFolder={},
+    recMode=GetVarInt(post,'recEnabled')~=1 and 5 or GetVarInt(post,'recMode',0,4),
+    noRecMode=GetVarInt(post,'recMode',0,4),
+    tuijyuuFlag=GetVarInt(post,'tuijyuuFlag'),
+    priority=GetVarInt(post,'priority',1,5),
+    pittariFlag=GetVarInt(post,'pittariFlag'),
+    suspendMode=GetVarInt(post,'suspendMode',0,4),
+    rebootFlag=GetVarInt(post,'rebootFlag'),
+    startMargin=useMargin and GetVarInt(post,'startMargin',-6*3600,6*3600),
+    endMargin=useMargin and GetVarInt(post,'endMargin',-6*3600,6*3600),
+    serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or 1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0),
+    continueRecFlag=GetVarInt(post,'continueRecFlag'),
+    tunerID=GetVarInt(post,'tunerID'),
+    partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
+  }
+  if mg.get_var(post, 'recFolder') then
+    for i=0,10000 do
+      if not mg.get_var(post, 'recFolder', i) then break end
+      table.insert(rs.recFolderList, {
+        recFolder=mg.get_var(post, 'recFolder', i),
+        writePlugIn=mg.get_var(post, 'writePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'recNamePlugIn', i)..(#mg.get_var(post, 'recNamePlugIn', i)>0 and #mg.get_var(post, 'recName', i)>0 and '?'..mg.get_var(post, 'recName', i) or '')
+      } )
     end
-    if mg.get_var(post, 'partialrecFolder') then
-      for i=0,10000 do
-        if not mg.get_var(post, 'partialrecFolder', i) then break end
-        table.insert(rs.partialRecFolder, {
-          recFolder=mg.get_var(post, 'partialrecFolder', i),
-          writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
-          recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
-        } )
-      end
+  end
+  if mg.get_var(post, 'partialrecFolder') then
+    for i=0,10000 do
+      if not mg.get_var(post, 'partialrecFolder', i) then break end
+      table.insert(rs.partialRecFolder, {
+        recFolder=mg.get_var(post, 'partialrecFolder', i),
+        writePlugIn=mg.get_var(post, 'partialwritePlugIn', i),
+        recNamePlugIn=mg.get_var(post, 'partialrecNamePlugIn', i)..(#mg.get_var(post, 'partialrecName', i)>0 and #mg.get_var(post, 'partialrecName', i)>0 and '?'..mg.get_var(post, 'partialrecName', i) or '')
+      } )
     end
-    if rs.recMode and
-       rs.priority and
-       rs.suspendMode and
-       (not useMargin or rs.startMargin and rs.endMargin) and
-       rs.tunerID
-    then
-      return rs
-    end
+  end
+  if rs.recMode and
+      rs.priority and
+      rs.suspendMode and
+      (not useMargin or rs.startMargin and rs.endMargin) and
+      rs.tunerID
+  then
+    return rs
   end
   return false
 end

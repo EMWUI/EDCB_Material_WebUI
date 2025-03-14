@@ -42,7 +42,7 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n'
 
 if not End and epgInfo then
 
-  ct.progres=r or SIDE_PANEL
+  ct.toProgR=r
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
@@ -61,8 +61,8 @@ if not End and epgInfo then
       ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
     end
   end
-  if SIDE_PANEL or r then
-    ct.main=ct.main..'<option id="reserved" value="65535"'..(preset and '' or ' selected')..(r and '' or ' style="display:none;"')..'>予約時'
+  if r then
+    ct.main=ct.main..'<option id="reserved" value="65535"'..Selected(not preset)..(r and '' or ' style="display:none;"')..'>予約時'
   end
   ct.main=ct.main..'</select></div></div>\n'
 

@@ -2,17 +2,7 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 function RecSetting(r,post)
-  local presetID=GetVarInt(post,'presetID',0,65534)
-  if presetID then
-    r.recSetting=nil
-    for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-      if v.id==presetID then
-        r.recSetting=v.recSetting
-        break
-      end
-    end
-  end
-  r.recSetting=GetRecSetting(r.recSetting, post)
+  r.recSetting=GetRecSetting(post)
   if r.recSetting then
     return r
   end
@@ -61,9 +51,9 @@ if post then
       else
         err='イベント情報が見つかりません'
       end
- 	else
+    else
       err='録画設定が正しくありません'
- 	end
+    end
   elseif change then
     r=edcb.GetReserveData(id)
     if r then
@@ -134,15 +124,7 @@ elseif toggle then
   AssertCsrf(mg.request_info.query_string)
   r=edcb.GetReserveData(id)
   if r then
-    if toggle == 1 then 
-      for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-        if v.id==0 then
-          recMode=(v.recSetting.recMode==5 and 0 or v.recSetting.recMode)
-          break
-        end
-      end
-    end
-    r.recSetting.recMode=(toggle == 1 and recMode or 5)
+    r.recSetting.recMode=(toggle == 1 and r.recSetting.noRecMode or 5)
     done=edcb.ChgReserveData(r)
   else
     err='予約が見つかりません'
@@ -160,7 +142,6 @@ if done then
     end
   end
   r=edcb.GetReserveData(id)
-  rsdef=edcb.GetReserveData(0x7FFFFFFF)
 
   messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success>'
     ..'<reserveinfo><ID>'
@@ -177,12 +158,8 @@ if done then
     ..r.eid..'</eventID><comment>'
     ..r.comment..'</comment><overlapMode>'
     ..r.overlapMode..'</overlapMode>'
-    ..XmlRecSetting(r.recSetting, rsdef)
-    ..'<recFileNameList>'
-  for j,w in ipairs(r.recFileNameList) do
-    messege=messege..'<name>'..w..'</name>'
-  end
-  messege=messege..'</recFileNameList></reserveinfo>\r\n'
+    ..XmlRecSetting(r.recSetting)
+    ..'</reserveinfo>\r\n'
 elseif err then
   messege='<err>予約を'..(
         (add or OneClick)  and '追加'

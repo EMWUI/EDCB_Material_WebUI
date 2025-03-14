@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
     css='241220',
-    common='250306',
+    common='250314',
     tvguide='241224',
-    player='250109',
-    onair='241224',
-    library='241224',
+    player='250314',
+    onair='250314',
+    library='250314',
     setting='241224',
     datastream='241224',
     legacy='20250108',
@@ -299,31 +299,35 @@ end
 --録画設定フォームのテンプレート
 function RecSettingTemplate(rs)
   local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
-  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">'
+  local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">有効</div>\n'
+  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+  ..'<div><label for="recEnabled" class="mdl-switch mdl-js-switch"><input id="recEnabled" class="mdl-switch__input" name="recEnabled"'..Checkbox(rs.recMode~=5)..'><span class="mdl-switch__label"></span></label></div></div>\n'
+
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画モード</div>\n'
+  ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="recMode">'
     for i=1,#RecModeTextList() do
-      s=s..'\n<option value="'..(i-1)..'"'..(rs.recMode==i-1 and ' selected' or '')..'>'..RecModeTextList()[i]
+      s=s..'\n<option value="'..(i-1)..'"'..Selected((rs.recMode~=5 and rs.recMode or rs.noRecMode or 1)==i-1)..'>'..RecModeTextList()[i]
     end
     s=s..'\n</select></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">イベントリレー追従</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-    ..'<div><label for="tuijyuuFlag" class="mdl-switch mdl-js-switch"><input id="tuijyuuFlag" type="checkbox" class="mdl-switch__input" name="tuijyuuFlag" value="1"'..(rs.tuijyuuFlag and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+    ..'<div><label for="tuijyuuFlag" class="mdl-switch mdl-js-switch"><input id="tuijyuuFlag" class="mdl-switch__input" name="tuijyuuFlag"'..Checkbox(rs.tuijyuuFlag)..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">優先度</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--1-col mdl-grid mdl-grid--no-spacing"><select name="priority">'
     for i=1,5 do
-      s=s..'\n<option value="'..i..'"'..(rs.priority==i and ' selected' or '')..'>'..i
+      s=s..'\n<option value="'..i..'"'..Selected(rs.priority==i)..'>'..i
     end
     s=s..'\n</select></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ぴったり（？）録画</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-    ..'<div><label for="pittariFlag" class="mdl-switch mdl-js-switch"><input id="pittariFlag" class="mdl-switch__input" type="checkbox" name="pittariFlag" value="1"'..(rs.pittariFlag and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+    ..'<div><label for="pittariFlag" class="mdl-switch mdl-js-switch"><input id="pittariFlag" class="mdl-switch__input" name="pittariFlag"'..Checkbox(rs.pittariFlag)..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画マージン</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n<div><label for="usedef" class="mdl-checkbox mdl-js-checkbox"><input id="usedef" class="mdl-checkbox__input" type="checkbox" name="useDefMarginFlag" value="1"'..(rs.startMargin and '' or ' checked')..'><span class="mdl-checkbox__label">デフォルト設定で使用</span></label></div>\n'
+    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n<div><label for="usedef" class="mdl-checkbox mdl-js-checkbox"><input id="usedef" class="mdl-checkbox__input" name="useDefMarginFlag"'..Checkbox(not rs.startMargin)..'><span class="mdl-checkbox__label">デフォルト設定で使用</span></label></div>\n'
     ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing'..(rs.startMargin and '' or ' is-disabled')..'">\n'
     ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--4-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield mdl-textfield--floating-label"><input class="recmargin mdl-textfield__input" type="number" name="startMargin" value="'..(rs.startMargin or rsdef and rsdef.startMargin or 0)..'"'..(rs.startMargin and '' or ' disabled')..' id="startMargin"><label class="mdl-textfield__label" for="startMargin">開始</label><span class="mdl-textfield__error">Input is not a number!</span></div><span>秒前</span></div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -332,10 +336,10 @@ function RecSettingTemplate(rs)
     ..'</div></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">指定サービス対象データ</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n<div><label for="smode" class="mdl-checkbox mdl-js-checkbox"><input id="smode" class="mdl-checkbox__input" type="checkbox" name="serviceMode" value="1"'..(rs.serviceMode%2==0 and ' checked' or '')..'><span class="mdl-checkbox__label">デフォルト設定で使用</span></label></div>\n'
+    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n<div><label for="smode" class="mdl-checkbox mdl-js-checkbox"><input id="smode" class="mdl-checkbox__input" name="serviceMode"'..Checkbox(rs.serviceMode%2==0)..'><span class="mdl-checkbox__label">デフォルト設定で使用</span></label></div>\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div><label for="mode1" class="mdl-checkbox mdl-js-checkbox"><input id="mode1" class="smode mdl-checkbox__input" type="checkbox" name="serviceMode_1" value="1"'..(math.floor(rs.serviceMode%2~=0 and rs.serviceMode/16 or rsdef and rsdef.serviceMode/16 or 0)%2~=0 and ' checked' or '')..(rs.serviceMode%2==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">字幕データを含める</span></label></div>\n<div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="mode2" class="mdl-checkbox mdl-js-checkbox"><input id="mode2" class="smode mdl-checkbox__input" type="checkbox" name="serviceMode_2" value="1"'..(math.floor(rs.serviceMode%2~=0 and rs.serviceMode/32 or rsdef and rsdef.serviceMode/32 or 0)%2~=0 and ' checked' or '')..(rs.serviceMode%2==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">データカルーセルを含める</span></label></div>\n<div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="mode1" class="mdl-checkbox mdl-js-checkbox"><input id="mode1" class="smode mdl-checkbox__input" name="serviceMode_1"'..Checkbox(math.floor(rs.serviceMode%2~=0 and rs.serviceMode/16 or rsdef and rsdef.serviceMode/16 or 0)%2~=0)..(rs.serviceMode%2==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">字幕データを含める</span></label></div>\n<div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="mode2" class="mdl-checkbox mdl-js-checkbox"><input id="mode2" class="smode mdl-checkbox__input" name="serviceMode_2"'..Checkbox(math.floor(rs.serviceMode%2~=0 and rs.serviceMode/32 or rsdef and rsdef.serviceMode/32 or 0)%2~=0)..(rs.serviceMode%2==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">データカルーセルを含める</span></label></div>\n<div class="mdl-layout-spacer"></div>\n'
     ..'</div></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ファイル出力'
@@ -353,13 +357,13 @@ function RecSettingTemplate(rs)
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">出力PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="writePlugIn">\n'
       for j,w in ipairs(EnumPlugInFileName('Write')) do
-        s=s..'<option value="'..w..'"'..(IsEqualPath(v.writePlugIn,w) and ' selected' or '')..'>'..w..'\n'
+        s=s..'<option value="'..w..'"'..Selected(IsEqualPath(v.writePlugIn,w))..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">ファイル名PlugIn</div>\n'
-        ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="recNamePlugIn">\n<option value=""'..((recNameDll or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
+        ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="recNamePlugIn">\n<option value=""'..Selected((recNameDll or v.recNamePlugIn)=='')..'>なし\n'
       for j,w in ipairs(EnumPlugInFileName('RecName')) do
-        s=s..'<option value="'..w..'"'..(IsEqualPath((recNameDll or v.recNamePlugIn),w) and ' selected' or '')..'>'..w..'\n'
+        s=s..'<option value="'..w..'"'..Selected(IsEqualPath((recNameDll or v.recNamePlugIn),w))..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">オプション</div>\n'
@@ -374,7 +378,7 @@ function RecSettingTemplate(rs)
     ..'</div>'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">部分受信サービス</div>\n'
-    ..'<div class="mdl-cell--middle"><label for="partial" class="mdl-checkbox mdl-js-checkbox"><input id="partial" class="mdl-checkbox__input" type="checkbox" name="partialRecFlag" value="1"'..(rs.partialRecFlag~=0 and ' checked' or '')..'><span class="mdl-checkbox__label">別ファイルに同時出力する</span></label></div></div>\n'
+    ..'<div class="mdl-cell--middle"><label for="partial" class="mdl-checkbox mdl-js-checkbox"><input id="partial" class="mdl-checkbox__input" name="partialRecFlag"'..Checkbox(rs.partialRecFlag~=0)..'><span class="mdl-checkbox__label">別ファイルに同時出力する</span></label></div></div>\n'
 
     ..'<div id="partialpreset" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"'..(rs.partialRecFlag==0 and ' style="display: none;"' or '')..'>\n'
 
@@ -388,13 +392,13 @@ function RecSettingTemplate(rs)
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">出力PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialwritePlugIn">\n'
       for j,w in ipairs(EnumPlugInFileName('Write')) do
-        s=s..'<option value="'..w..'"'..(IsEqualPath(v.writePlugIn,w) and ' selected' or '')..'>'..w..'\n'
+        s=s..'<option value="'..w..'"'..Selected(IsEqualPath(v.writePlugIn,w))..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">ファイル名PlugIn</div>\n'
-        ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialrecNamePlugIn">\n<option value=""'..((recNameDll or v.recNamePlugIn)=='' and ' selected' or '')..'>なし\n'
+        ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialrecNamePlugIn">\n<option value=""'..Selected((recNameDll or v.recNamePlugIn)=='')..'>なし\n'
       for j,w in ipairs(EnumPlugInFileName('RecName')) do
-        s=s..'<option value="'..w..'"'..(IsEqualPath((recNameDll or v.recNamePlugIn),w) and ' selected' or '')..'>'..w..'\n'
+        s=s..'<option value="'..w..'"'..Selected(IsEqualPath((recNameDll or v.recNamePlugIn),w))..'>'..w..'\n'
       end
       s=s..'</select></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">オプション</div>\n'
@@ -416,34 +420,34 @@ function RecSettingTemplate(rs)
   s=s..'</select>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">連続録画動作</div>\n'
-    ..'<div class="mdl-cell--middle"><label for="continue" class="mdl-checkbox mdl-js-checkbox"><input id="continue" class="mdl-checkbox__input" type="checkbox" name="continueRecFlag" value="1"'..(rs.continueRecFlag and ' checked' or '')..'><span class="mdl-checkbox__label">後ろの予約を同一ファイルで出力する</span></label></div></div>\n'
+    ..'<div class="mdl-cell--middle"><label for="continue" class="mdl-checkbox mdl-js-checkbox"><input id="continue" class="mdl-checkbox__input" name="continueRecFlag"'..Checkbox(rs.continueRecFlag)..'><span class="mdl-checkbox__label">後ろの予約を同一ファイルで出力する</span></label></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">使用チューナー強制指定</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="tunerID">\n<option value="0"'..(rs.tunerID==0 and ' selected' or '')..'>自動\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="tunerID">\n<option value="0"'..Selected(rs.tunerID==0)..'>自動\n'
   local a=edcb.GetTunerReserveAll()
   for i=1,#a-1 do
-    s=s..'<option value="'..a[i].tunerID..'"'..(a[i].tunerID==rs.tunerID and ' selected' or '')..string.format('>ID:%08X(', a[i].tunerID)..a[i].tunerName..')\n'
+    s=s..'<option value="'..a[i].tunerID..'"'..Selected(a[i].tunerID==rs.tunerID)..string.format('>ID:%08X(', a[i].tunerID)..a[i].tunerName..')\n'
   end
   s=s..'</select></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画後動作</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div class="pulldown mdl-cell mdl-cell--12-col"><select name="suspendMode">\n'
-    ..'<option value="0"'..(rs.suspendMode==0 and ' selected' or '')..'>デフォルト（'..(rsdef and ({'スタンバイ','休止','シャットダウン','何もしない'})[rsdef.suspendMode] or '')..'）'
-    ..'<option value="1"'..(rs.suspendMode==1 and ' selected' or '')..'>スタンバイ\n'
-    ..'<option value="2"'..(rs.suspendMode==2 and ' selected' or '')..'>休止\n'
-    ..'<option value="3"'..(rs.suspendMode==3 and ' selected' or '')..'>シャットダウン\n'
-    ..'<option value="4"'..(rs.suspendMode==4 and ' selected' or '')..'>何もしない\n</select></div>\n'
-    ..'<div><label for="reboot" class="mdl-checkbox mdl-js-checkbox"><input id="reboot" class="mdl-checkbox__input" type="checkbox" name="rebootFlag" value="1"'..((rs.suspendMode==0 and rsdef and rsdef.rebootFlag or rs.suspendMode~=0 and rs.rebootFlag) and ' checked' or '')..(rs.suspendMode==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">復帰後再起動する</span></label></div></div></div>\n'
+    ..'<option value="0"'..Selected(rs.suspendMode==0)..'>デフォルト（'..(rsdef and ({'スタンバイ','休止','シャットダウン','何もしない'})[rsdef.suspendMode] or '')..'）'
+    ..'<option value="1"'..Selected(rs.suspendMode==1)..'>スタンバイ\n'
+    ..'<option value="2"'..Selected(rs.suspendMode==2)..'>休止\n'
+    ..'<option value="3"'..Selected(rs.suspendMode==3)..'>シャットダウン\n'
+    ..'<option value="4"'..Selected(rs.suspendMode==4)..'>何もしない\n</select></div>\n'
+    ..'<div><label for="reboot" class="mdl-checkbox mdl-js-checkbox"><input id="reboot" class="mdl-checkbox__input" name="rebootFlag"'..Checkbox((rs.suspendMode==0 and rsdef and rsdef.rebootFlag or rs.suspendMode~=0 and rs.rebootFlag))..(rs.suspendMode==0 and ' disabled' or '')..'><span class="mdl-checkbox__label">復帰後再起動する</span></label></div></div></div>\n'
 
   local batFilePath, batFileTag=rs.batFilePath:match('^([^*]*)%*?(.*)$')
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">録画後実行bat</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..(batFilePath=='' and ' selected' or '')..'>なし\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="batFilePath">\n<option value=""'..Selected(batFilePath=='')..'>なし\n'
 
   local batDir=edcb.GetPrivateProfile('SET','batPath',PathAppend(CurrentDir,'bat'),INI)
   for j,w in ipairs(edcb.FindFile(PathAppend(batDir,'*'), 0) or {}) do
     if not w.isdir and (w.name:find('%.[Bb][Aa][Tt]$') or w.name:find('%.[Pp][Ss]1$') or w.name:find('%.[Ll][Uu][Aa]$')) or w.name:find('%.[Ss][Hh]$') then
       local batPath=PathAppend(batDir,w.name)
-      s=s..'<option value="'..batPath..'"'..(batFilePath:lower()==batPath:lower() and ' selected' or '')..'>'..w.name..'\n'
+      s=s..'<option value="'..batPath..'"'..Selected(batFilePath:lower()==batPath:lower())..'>'..w.name..'\n'
       batFilePath=batFilePath:lower()==batPath:lower() and '' or batFilePath
     end
   end
@@ -478,10 +482,10 @@ function SerchTemplate(si)
           ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">メモ</div>\n'
           ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div class="mdl-cell--12-col mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="note" value="'..ParseNotKey(si.notKey).note..'" size="25" id="note"><label class="mdl-textfield__label" for="note"></label></div>\n')
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div><label for="reg" class="mdl-checkbox mdl-js-checkbox"><input id="reg" class="mdl-checkbox__input" type="checkbox" name="regExpFlag" value="1"'..(si.regExpFlag and ' checked' or '')..'><span class="mdl-checkbox__label">正規表現</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="aimai" class="mdl-checkbox mdl-js-checkbox"><input id="aimai" class="mdl-checkbox__input" type="checkbox" name="aimaiFlag" value="1"'..(si.aimaiFlag and ' checked' or '')..'><span class="mdl-checkbox__label">あいまい検索</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="titleOnly" class="mdl-checkbox mdl-js-checkbox"><input id="titleOnly" class="mdl-checkbox__input" type="checkbox" name="titleOnlyFlag" value="1"'..(si.titleOnlyFlag and ' checked' or '')..'><span class="mdl-checkbox__label">番組名のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" type="checkbox" name="caseFlag" value="1"'..(ParseAndKey(si.andKey).caseFlag and ' checked' or '')..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="reg" class="mdl-checkbox mdl-js-checkbox"><input id="reg" class="mdl-checkbox__input" name="regExpFlag"'..Checkbox(si.regExpFlag)..'><span class="mdl-checkbox__label">正規表現</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="aimai" class="mdl-checkbox mdl-js-checkbox"><input id="aimai" class="mdl-checkbox__input" name="aimaiFlag"'..Checkbox(si.aimaiFlag)..'><span class="mdl-checkbox__label">あいまい検索</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="titleOnly" class="mdl-checkbox mdl-js-checkbox"><input id="titleOnly" class="mdl-checkbox__input" name="titleOnlyFlag"'..Checkbox(si.titleOnlyFlag)..'><span class="mdl-checkbox__label">番組名のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" name="caseFlag"'..Checkbox(ParseAndKey(si.andKey).caseFlag)..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div></div>\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象ジャンル' or 'ジャンル絞り込み')..'</div>\n'
@@ -495,7 +499,7 @@ function SerchTemplate(si)
   end
   s=s..'</select></div>\n'
    ..'<div><button class="g_celar'..(si.search and ' advanced' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
-   ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="5">\n'
+   ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="7">\n'
   for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
     local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
@@ -524,14 +528,14 @@ function SerchTemplate(si)
   end
   s=s..'</select></div>\n'
     ..(si.search and '<div><button class="g_celar mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div>' or '')..'</div>\n'
-    ..'<div class="mdl-grid mdl-grid--no-spacing"><div><label for="notcontet" class="mdl-checkbox mdl-js-checkbox"><input id="notcontet" class="mdl-checkbox__input" type="checkbox" name="notContetFlag" value="1"'..(si.notContetFlag and ' checked' or '')..'><span class="mdl-checkbox__label">NOT扱い</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="subGenre" class="mdl-checkbox mdl-js-checkbox"><input id="subGenre" class="mdl-checkbox__input" type="checkbox"'..((subGenreOption=='ALL' or (subGenreOption=='EPG' and not si.search)) and ' checked' or '')..'><span class="mdl-checkbox__label">サブジャンル表示</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div class="mdl-grid mdl-grid--no-spacing"><div><label for="notcontet" class="mdl-checkbox mdl-js-checkbox"><input id="notcontet" class="mdl-checkbox__input" name="notContetFlag"'..Checkbox(si.notContetFlag)..'><span class="mdl-checkbox__label">NOT扱い</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="subGenre" class="mdl-checkbox mdl-js-checkbox"><input id="subGenre" class="mdl-checkbox__input"'..Checkbox((subGenreOption=='ALL' or (subGenreOption=='EPG' and not si.search)))..'><span class="mdl-checkbox__label">サブジャンル表示</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div>\n'
     ..'<input type="hidden" name="serviceList"></div>\n'
 
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
-    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="5">'
+    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="7">'
 
   local NetworkList={}
   for i,v in ipairs(NetworkIndex()) do
@@ -539,7 +543,7 @@ function SerchTemplate(si)
   end
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
     NetworkList[NetworkIndex(v)]=true
-    s=s..'\n<option class="network'..NetworkIndex(v)..(not oneseg and NetworkIndex()[NetworkIndex(v)]=='ワンセグ' and ' hide' or '')..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
+    s=s..'\n<option class="network'..NetworkIndex(v)..(not oneseg and NetworkIndex()[NetworkIndex(v)]=='ワンセグ' and ' hidden' or '')..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
     for j,w in ipairs(si.serviceList) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         s=s..' selected'
@@ -557,7 +561,7 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell--4-col-phone"><label for="image" class="mdl-checkbox mdl-js-checkbox"><input id="image" class="mdl-checkbox__input" type="checkbox" checked><span class="mdl-checkbox__label">映像のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
   for i,v in ipairs(NetworkList) do
     if v then
-      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input" type="checkbox" value=".network'..i..'"'..(not oneseg and NetworkIndex()[i]=='ワンセグ' and '' or ' checked')..'><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
+      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input"'..Checkbox(oneseg or NetworkIndex()[i]~='ワンセグ','.network'..i)..'><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
     end
   end
   s=s..'</div>\n'
@@ -610,14 +614,14 @@ function SerchTemplate(si)
     ..'<div><span class="tilde">～</span><div class="mdl-textfield mdl-js-textfield"><input id="endTime" class="mdl-textfield__input" type="time" name="endTime" value="01:00"><label class="mdl-textfield__label" for="endTime"></label></div></div>'
     ..'</div></div></div>\n'
 
-    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="notdate"><input id="notdate" class="mdl-checkbox__input" type="checkbox" name="notDateFlag" value="1"'..(si.notDateFlag and ' checked' or '')..'><span class="mdl-checkbox__label">NOT扱い</span></label></div>\n'
+    ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="notdate"><input id="notdate" class="mdl-checkbox__input" name="notDateFlag"'..Checkbox(si.notDateFlag)..'><span class="mdl-checkbox__label">NOT扱い</span></label></div>\n'
     ..'</div><input type="hidden" name="dateList" value="'..dateListValue..'"></div>\n'
 
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">スクランブル放送</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="freeCAFlag">\n'
-    ..'<option value="0"'..(si.freeCAFlag==0 and ' selected' or '')..'>無料、有料番組を対象とする\n'
-    ..'<option value="1"'..(si.freeCAFlag==1 and ' selected' or '')..'>無料番組を対象とする\n'
-    ..'<option value="2"'..(si.freeCAFlag==2 and ' selected' or '')..'>有料番組を対象とする\n'
+    ..'<option value="0"'..Selected(si.freeCAFlag==0)..'>無料、有料番組を対象とする\n'
+    ..'<option value="1"'..Selected(si.freeCAFlag==1)..'>無料番組を対象とする\n'
+    ..'<option value="2"'..Selected(si.freeCAFlag==2)..'>有料番組を対象とする\n'
     ..'</select></div></div>\n'
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">番組長で絞り込み</div>\n'
     ..'<div class="number mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
@@ -633,8 +637,8 @@ function SerchTemplate(si)
       ..'<span class="mdl-tooltip" for="tt-days">0で無期限</span></div>\n'
   else
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">無効対象</div>\n'
-      ..'<div><div><label for="chkRecEnd" class="mdl-checkbox mdl-js-checkbox"><input id="chkRecEnd" class="mdl-checkbox__input" type="checkbox" name="chkRecEnd" value="1"'..(si.chkRecEnd and ' checked' or '')..'><span class="mdl-checkbox__label">同一番組名の録画結果があれば無効で登録する</span></label></div>\n'
-      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="chkRecNoService"><input id="chkRecNoService" class="mdl-checkbox__input" type="checkbox" name="chkRecNoService" value="1"'..(si.chkRecNoService and ' checked' or '')..'><span class="mdl-checkbox__label">全てのサービスで無効</span></label></div>\n'
+      ..'<div><div><label for="chkRecEnd" class="mdl-checkbox mdl-js-checkbox"><input id="chkRecEnd" class="mdl-checkbox__input" name="chkRecEnd"'..Checkbox(si.chkRecEnd)..'><span class="mdl-checkbox__label">同一番組名の録画結果があれば無効で登録する</span></label></div>\n'
+      ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="chkRecNoService"><input id="chkRecNoService" class="mdl-checkbox__input" name="chkRecNoService"'..Checkbox(si.chkRecNoService)..'><span class="mdl-checkbox__label">全てのサービスで無効</span></label></div>\n'
       ..'<div class="number textfield-container">確認対象期間<div class="text-right mdl-textfield mdl-js-textfield"><input id="chkRecDay" class="mdl-textfield__input" type="number" name="chkRecDay" value="'..si.chkRecDay..'" min="0"><label class="mdl-textfield__label" for="chkRecDay"></label><span class="mdl-textfield__error">Input is not a number!</span></div>日前まで</div>\n'
       ..'</div></div>\n'
   end
@@ -775,7 +779,7 @@ function PlayerTemplate(video, liveOrAudio)
 
 if audio then
   for i,v in ipairs(audio) do
-    s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio'..i..'" name="audio" value="0"'..(i==1 and ' checked' or '')..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
+    s=s..'<li class="ext mdl-menu__item"><input id="audio'..i..'" name="audio"'..Radiobtn(i==1,0)..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
   end
 else
   s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
@@ -789,12 +793,12 @@ s=s..[=[
   for i,v in ipairs(XCODE_OPTIONS) do
     if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
       local id = 'q_'..mg.md5(v.name)
-      s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input type="radio" id="'..id..'" name="quality" value="'..i..'"'..(i==1 and ' checked' or '')..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
+      s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input id="'..id..'" name="quality"'..Radiobtn(i==1,i)..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
   for i,v in pairs(XCODE_FAST_RATES) do
-    s=s..'<li class="ext mdl-menu__item"><input type="radio" id="rate'..i..'" name="rate" class="rate" value="'..v..'"'..(v==1 and ' checked' or '')..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n'
+    s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n'
   end
   return s..[=[
 </ul>
@@ -996,6 +1000,24 @@ function MacroTemplate()
     </div>
   </div>
 ]=]
+end
+
+function pagination(page, a, href)
+  local pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+  local tag=page>0 and 'a' or 'button'
+  local s='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n<'
+    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="'..href..'.html?page=0"' or 'disabled')..'><i class="material-icons">first_page</i></'..tag..'>\n<'
+    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="'..href..'.html?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></'..tag..'>\n<'
+
+  local n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
+  for i=n, n+4 do
+    s=s..(i>=0 and i<#a/pageCount and (i==page and 'button' or 'a')..' class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</'..(i==page and 'button' or 'a')..'>\n<' or '')
+  end
+
+  tag=page<(#a/pageCount-1) and 'a' or 'button'
+  return s..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'.html?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></'..tag..'>\n<'
+    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'.html?page='..math.ceil((#a/pageCount)-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></'..tag
+    ..'>\n</div></div>\n'
 end
 
 --タイトルのマークを装飾

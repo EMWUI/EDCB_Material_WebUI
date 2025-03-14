@@ -5,7 +5,7 @@ const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Co
 const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
 const errMessage = xml => xml.find('err').each((i, e) => Snackbar(`${i==0 ? 'Error : ' : ''}${$(e).text()}`));
 const zero = (e, n = 2) => (Array(n).join('0')+e).slice(-n);
-let Snackbar = d => setTimeout(() => Snackbar(d), 1000);
+let Snackbar = d => setTimeout(Snackbar, 1000, d);
 
 $.fn.extend({
 	mdl_prop: function(prop, enable){
@@ -40,11 +40,11 @@ class SearchLinks {
 		{href: d => `search.html?andkey=${d._title}`, icon: 'search'},
 		{href: d => `https://www.google.co.jp/search?q=${d._title}`, external: true, src:'img/google.png'},
 		{href: d => `https://www.google.co.jp/search?q=${d._title}&btnI=Im+Feeling+Lucky`, external: true, icon: 'sentiment_satisfied'},
-		{href: d => `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(d.title)}&location=${encodeURIComponent(d.service)}&dates=${d.dates}&details=${d.details}${Links.calendar.op}`, class: "mdl-cell--hide-phone mdl-cell--hide-tablet", external: true, icon: 'event'},
+		{href: d => `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ConvertZtoH(d.title))}&location=${encodeURIComponent(ConvertZtoH(d.service))}&dates=${d.dates}&details=${d.details}${Links.calendar.op}`, class: "mdl-cell--hide-phone mdl-cell--hide-tablet", external: true, icon: 'event'},
 	];
 	constructor(d){
 		this.#d = {...d};
-		this.#d._title = encodeURIComponent(d.title.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, ''));
+		this.#d._title = encodeURIComponent(ConvertZtoH(d.title).replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, ''));
 		this.#d.dates = encodeURIComponent(d.dates??`${ConvertTime(d.starttime, 'ISO')}/${ConvertTime(d.endtime, 'ISO')}`);
 		this.#d.details = encodeURIComponent((d.details??Links.calendar.details.replace(/%text_char%/g, d.text)).replace(/%br%/g, '\n'));
 	}
@@ -55,7 +55,7 @@ class SearchLinks {
 		const a = this.#defaults.concat(Links.custom??[]).map(d => this.#link(d));
 		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]; $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
 		return a;
-	 }
+	}
 }
 const createSearchLinks = e => {
 	const $e = $(e).find('.search-links');
@@ -66,13 +66,12 @@ const createSearchLinks = e => {
 
 
 //表示用に時間シフトしたDateオブジェクトを生成
-const createViewDate = value => {
-	if (value === undefined) value =  new Date();
-	if (typeof value !== 'elemect') value = new Date(value);
+const createViewDate = (value = new Date()) => {
+	if (typeof value !== 'object') value = new Date(value);
 	return new Date(value.getTime() + 9 * 3600000);
 }
 const ConvertTime = (t, show_sec, show_ymd) => {
-	if (!t)	return '未定';
+	if (!t) return '未定';
 	t = createViewDate(t);
 	if (show_sec == 'ISO') return `${t.getUTCFullYear()}${zero(t.getUTCMonth()+1)}${zero(t.getUTCDate())}T${zero(t.getUTCHours())}${zero(t.getUTCMinutes())}${zero(t.getUTCSeconds())}`;
 	return `${show_ymd ? `${t.getUTCFullYear()}/${zero(t.getUTCMonth()+1)}/${zero(t.getUTCDate())}(${Info.day[t.getUTCDay()]}) ` : ''
@@ -92,37 +91,41 @@ const ConvertText = a => {
 };
 const ConvertTitle = a => !a ? '' : $('<p>').text(a).html().replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
 const ConvertService = d => `<img class="logo" src="${ROOT}api/logo?onid=${d.onid}&sid=${d.sid}">` + $('<p>').html($('<span>').text(d.service)).html();
+const ConvertZtoH = s => s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ');
 
-const Notify = {
-	sound: new Audio(`${ROOT}video/notification.mp3`),
-	badge: () => {				//通知バッチ
+const Notify = new class {
+	#sound = new Audio(`${ROOT}video/notification.mp3`);
+	constructor(){
+		this.#sound.volume = 0.2;
+	}
+	#badge = () => {				//通知バッチ
 		const count = $('[id^=notify_]').length;
 		$('#notification i').toggleClass('mdl-badge', count != 0).text(`notifications${count==0 ? '_none' : ''}`);
 		$('#noNotify').toggle(count == 0);
 		$('#notification i').attr('data-badge', count);
-	},
-	save: (d, remove) => {		//通知保存
-		const list = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
-		!remove ? list.push(d) : list.some((v, i) => {if (v.eid == d.eid) list.splice(i,1);});
-		localStorage.setItem('notifications', JSON.stringify(list));
-	},
-	del: (d, noSnack) => {		//通知リスト削除
+	}
+	save = (d, remove) => {		//通知保存
+		const a = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
+		!remove ? a.push(d) : a.some((v, i) => {if (v.eid == d.eid) a.splice(i,1);});
+		localStorage.setItem('notifications', JSON.stringify(a));
+	}
+	del = (d, noSnack) => {		//通知リスト削除
 		clearTimeout(d.timer);
-		Notify.save(d, true);
+		this.save(d, true);
 		$(`.eid_${d.eid}.notify_icon,#notify_${d.eid}`).remove();
 		$(`.notify_${d.eid}`).data('notification', false).children().text('add_alert');
 
-		Notify.badge();
+		this.#badge();
 		if (!noSnack) Snackbar('削除しました');
-	},
-	create: (d, save) => {		//通知登録
+	}
+	create = (d, save) => {		//通知登録
 		if (save){
-			Notify.save(d);
+			this.save(d);
 			Snackbar('追加しました');
 		}
 
 		d.timer = setTimeout(async () => {
-			Notify.del(d, true);
+			this.del(d, true);
 			$(`.notify_${d.eid}`).children().text('notifications');
 
 			const id = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
@@ -140,7 +143,7 @@ const Notify = {
 				notification.close();
 			};
 
-				Notify.sound.play();
+			this.#sound.play();
 
 			setTimeout(() => notification.close(), 15*1000);	//通知を閉じる
 		}, d.starttime - Date.now() - 30*1000);
@@ -158,7 +161,7 @@ const Notify = {
 				$('<button>', {
 					class: 'mdl-list__item-secondary-action mdl-button mdl-js-button mdl-button--icon',
 					html: $('<i>', {class: 'material-icons', text: 'notifications_off'}),
-					click: () => Notify.del(d) }) ]}) ]});
+					click: () => this.del(d) }) ]}) ]});
 
 		let done;
 		$('#notifylist li').each((i, e) => {
@@ -170,10 +173,9 @@ const Notify = {
 		});
 		if (!done) $('#notifylist').append($notifyList);
 
-		Notify.badge();
+		this.#badge();
 	}
 }
-Notify.sound.volume = 0.2;
 
 //XMLをオブジェクト化
 const toObj = {
@@ -254,6 +256,7 @@ const toObj = {
 		const d = {
 			id: e.num('ID') || e.num('id'),
 			recSetting: {
+				recEnabled: r.num('recEnabled') == 1,
 				recMode: r.num('recMode'),
 				priority: r.num('priority'),
 				tuijyuuFlag: r.num('tuijyuuFlag') == 1,
@@ -382,8 +385,18 @@ const getList = new class {
 	}
 }
 
+const resetSidePanel = tab => {
+	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0).removeClass('is-active');
+	$('.mdl-tabs__tab,#sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
+	$(`[href="#${tab}"], #${tab}`).addClass('is-active');
+	$('.sidePanel-content').scrollTop(0);
+}
+
 //番組詳細を反映
-const setEpgInfo = d => {
+const setEpgInfo = (d, $e) => {
+	resetSidePanel('detail');
+	if ($e) $e.addClass('open');
+
 	if (!d.onid) d = toObj.EpgInfo(d);
 
 	$('#title').html( ConvertTitle(d.title) );
@@ -401,9 +414,9 @@ const setEpgInfo = d => {
 	$('#summary p').html( ConvertText(d.text) );
 	$('#ext').html( ConvertText(d.text_ext) );
 
-	$('#genreInfo').html(() => !d.genre ? '' : typeof d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`).join(''));
-	$('#videoInfo').html(() => !d.video ? '' : typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`).join(''));
-	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text} : ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`).join(''));
+	$('#genreInfo').html(() => !d.genre ? '' : typeof d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`));
+	$('#videoInfo').html(() => !d.video ? '' : typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`));
+	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text} : ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`));
 
 	if (d.recinfoid){
 		$('#otherInfo').html(d.other ? `<li>${d.other.replace(/\n/g,'<li>')}` : '');
@@ -421,10 +434,9 @@ const setEpgInfo = d => {
 		$('[name=sid]').val(d.sid);
 		$('[name=eid]').val(d.eid);
 
-		$('#link_epginfo').attr('href', /reserve.html/.test(location.pathname) ? `reserveinfo.html?id=${$('.open .flag').data('id')}` : `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`);
+		$('#link_epginfo').attr('href', $e&&$e.is('tr') ? `reserveinfo.html?id=${$e.find('.flag').data('id')}` : `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`);
 		$('#set').data('onid', d.onid).data('tsid', d.tsid).data('sid', d.sid).data('eid', d.eid);
 	}
-	return d;
 }
 
 //マクロ一覧表示
@@ -434,8 +446,8 @@ const openMacro = $e => {
 }
 
 //録画フォルダパス
-const recFolder = {
-	create: (d, i, partial) => {
+const recFolder = new class {
+	create = (d, i, partial) => {
 		const div = '<div>';
 		const container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
 		const select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
@@ -445,7 +457,7 @@ const recFolder = {
 		const recNamePlugIn = d.recNamePlugIn.match(/^(.*\.(?:dll|so))?(?:\?(.*))?/);
 		partial = partial ? 'partial' : '';
 		return $(div, {class: `preset ${container}`, append: [
-					$(div, {class: delbtn, click: e => recFolder.del($(e.currentTarget)), html:
+					$(div, {class: delbtn, click: e => this.del($(e.currentTarget)), html:
 						$('<i>', {class: 'material-icons', text: 'delete'}) }),
 					$(div, {class: container, append: [
 						$(div, {class: middle, text: 'フォルダ'}),
@@ -468,8 +480,8 @@ const recFolder = {
 							$('<input>', {class: 'has-icon mdl-textfield__input', type: 'text', name: `${partial}recName`, id: `${partial}recName${i}`, val: recNamePlugIn[2]}),
 							$('<label>', {class: 'mdl-textfield__label', for: `${partial}recName${i}`, text: 'ファイル名PlugIn'}),
 							$('<i>', {class: 'addmacro material-icons', text: 'add', click: e => openMacro($(e.currentTarget)) }) ]}) ]}) ]});
-	},
-	del: $e => {
+	}
+	del = $e => {
 		$e = $e.parent();
 		const $elem = $e.next();
 		const $clone = $e.clone(true);
@@ -491,6 +503,7 @@ const recFolder = {
 const setRecSettting = d => {
 	const r = d.recSetting;
 
+	$('[name=recEnabled]').mdl_prop('checked', r.recEnabled);				//有効
 	$('[name=recMode]').val(r.recMode);										//録画モード
 	$('[name=tuijyuuFlag]').mdl_prop('checked', r.tuijyuuFlag);				//追従
 	$('[name=priority]').val(r.priority);									//優先度
@@ -529,25 +542,25 @@ const setRecSettting = d => {
 }
 
 //時間絞り込み
-const dateList = {
-	click: e => {
+const dateList = new class {
+	click = e => {
 		$(e.currentTarget).toggleClass('mdl-color--accent mdl-color-text--accent-contrast');
 		const $e = $('#dateList_select option').eq( $(e.currentTarget).data('count') );
 		$e.prop('selected', !$e.prop('selected'));
-	},
-	create: () => {
+	}
+	create = () => {
 		$("#dateList_touch").empty();
 		$('[name=dateList]').val(
 			$('#dateList_select option').get().map((e, i) => {
-				dateList.add.touch(i, $(e).text());
+				this.add.touch(i, $(e).text());
 				return $(e).val();
 			})
 		);
-	},
+	}
 	//追加
-	add: {
+	add = {
 		select: (t, text) => $('#dateList_select').append(`<option value="${text ? `${t}">${text}` : `${t.startDayOfWeek}-${t.startTime}-${t.endDayOfWeek}-${t.endTime}">${t.startDayOfWeek} ${t.startTime} ～ ${t.endDayOfWeek} ${t.endTime}`}`),
-		touch: (i, text) => $("#dateList_touch").append($('<li>', {class: 'mdl-list__item', data: {count: i}, click: e => dateList.click(e), html: `<span class="mdl-list__item-primary-content">${text}</span>`}))
+		touch: (i, text) => $("#dateList_touch").append($('<li>', {class: 'mdl-list__item', data: {count: i}, click: e => this.click(e), html: `<span class="mdl-list__item-primary-content">${text}</span>`}))
 	}
 }
 
@@ -587,11 +600,8 @@ const setSerchSetting = s => {
 //EGP予約を反映
 const setAutoAdd = $e => {
 	showSpinner(true);
-	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
-	$('[href="#recset"], #recset, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
-	$('[href="#search_"], #search_').addClass('is-active');
+	resetSidePanel('search_');
 	$e.addClass('open');
-	$('.sidePanel-content').scrollTop(0);
 
 	getList.autoaddepg(d => {
 		const id = $e.data('id');
@@ -615,7 +625,7 @@ const setAutoAdd = $e => {
 const setRecInfo = $e => {
 	if (Info.recinfo[$e.data('recinfoid')]){
 		const d = Info.recinfo[$e.data('recinfoid')];
-		setEpgInfo(d);
+		setEpgInfo(d, $e);
 
 		$('#path').text(d.recFilePath);
 		$('#comment').text(d.comment);
@@ -646,9 +656,7 @@ const setRecInfo = $e => {
 const setReserve = (r, fn) => {
 	const id = setRecSettting(r).id;
 
-	$('#set').attr('action', `${ROOT}api/SetReserve?id=${id}`);
-	$('#del').attr('action', `${ROOT}api/SetReserve?id=${id}`);
-	$('#progres').attr('action', `${ROOT}api/SetReserve?id=${id}`);
+	$('#set,#del,#progres').attr('action', `${ROOT}api/SetReserve?id=${id}`);
 	$('#action').attr('name', 'change');
 	$('#reserved, #delreseved, #toprogres').show();
 	$('[name=presetID]').data('reseveid', id).val(65535);
@@ -687,23 +695,20 @@ const addRecMark = (r, $target, $content) => {
 	if ($('.open').hasClass('epginfo')) return;
 
 	if (!r.recSetting) r = toObj.RecSet(r);
-	const recMode = r.recSetting.recMode;
-	const overlapMode = r.recSetting.overlapMode;
-	const messege = recMode == 5 ? '無効' : '有効';
-	const button = recMode == 5 ? '有効' : '無効';
-	const mode = recMode == 5 ? 'disabled' :
-		overlapMode == 1 ? 'partially' :
-		overlapMode == 2 ? 'shortage' :
-		recMode == 4 ? 'view' : '';
-	const mark = recMode == 5 ? '無' :
-		overlapMode == 1 ? '部' :
-		overlapMode == 2 ? '不' :
-		recMode == 4 ? '視' : '録';
-	$target.data('id', r.id).data('toggle', recMode == 5 ? 1 : 0).data('oneclick', 0).text(button);
+	const rs = r.recSetting;
+	const mode = !rs.recEnabled ? 'disabled' :
+		rs.overlapMode == 1 ? 'partially' :
+		rs.overlapMode == 2 ? 'shortage' :
+		rs.recMode == 4 ? 'view' : '';
+	const mark = !rs.recEnabled ? '無' :
+		rs.overlapMode == 1 ? '部' :
+		rs.overlapMode == 2 ? '不' :
+		rs.recMode == 4 ? '視' : '録';
+	$target.data('id', r.id).data('toggle', rs.recEnabled ? 1 : 0).data('oneclick', 0).text(rs.recEnabled ? '有効' : '無効');
 	$content.not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 	$content.removeClass('disabled partially shortage view').addClass(`reserve ${mode}`).find('.mark.reserve').text(mark);
 
-	return messege;
+	return rs.recEnabled ? '無効' : '有効';
 }
 
 //一覧の録画トグル
@@ -743,12 +748,12 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 		}
 	}
 
-	const mode = d.recSetting.recMode == 5 ? 'disabled' :	//無効
+	const mode = !d.recSetting.recEnabled ? 'disabled' :	//無効
 		d.recSetting.overlapmode == 1 ? 'partially' :		//チューナー不足
 		d.recSetting.overlapmode == 2 ? 'shortage' : '';	//一部録画
 
 	$e.removeClass('disabled partially shortage').addClass(mode);
-	$input.mdl_prop('checked', d.recSetting.recMode != 5);
+	$input.mdl_prop('checked', d.recSetting.recEnabled);
 }
 
 //プログラム予約
@@ -796,25 +801,12 @@ const checkReserve = ($e, d) => {
 }
 
 //番組詳細を取得
-const getEpgInfo = ($e, d = $e.data()) => {
-	$('.mdl-tabs__panel').addClass('is-active').scrollTop(0);
-	$('[href="#recset"], #recset, #sidePanel, .clicked, .open').removeClass('is-visible is-active clicked open');
-	$('[href="#detail"], #detail').addClass('is-active');
-	$e.addClass('open');
-	$('.sidePanel-content').scrollTop(0);
-
-	const info = Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid || d.starttime}`];
-	if (info){
-		setEpgInfo(info);
-		checkReserve($e, d);
-		return;
-	}
-
+const getEpgInfo = async ($e, d = $e.data()) => {
 	showSpinner(true);
-	$.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`}).done(xml => {
+	const id = `${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid || d.starttime}`
+	const info = Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: id}).then(xml => {
 		if ($(xml).find('eventinfo').length){
-			Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`] = setEpgInfo($(xml).find('eventinfo').first());
-			checkReserve($e, d)
+			return Info.EventInfo[id] = toObj.EpgInfo($(xml).find('eventinfo').first());
 		}else{
 			const id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
 			if (id){													//プログラム予約または番組変更でなくなった
@@ -822,7 +814,7 @@ const getEpgInfo = ($e, d = $e.data()) => {
 					const key = d.eid == 65535 ? id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`
 					r = r.get(key);
 					if (r){
-						setEpgInfo(r);
+						setEpgInfo(r, $e);
 						setReserve(r);
 
 						$('#link_epginfo').attr('href', `reserveinfo.html?id=${id}`);
@@ -837,8 +829,13 @@ const getEpgInfo = ($e, d = $e.data()) => {
 				errMessage($(xml));
 			}
 		}
-		showSpinner();
 	});
+
+	showSpinner();
+	if (!info) return;
+
+	setEpgInfo(info, $e);
+	checkReserve($e, d);
 }
 
 //予約送信
@@ -997,7 +994,7 @@ $(function(){
 				suspend.close();
 				$.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => Snackbar($(xml).find('info').text()));
 			});
-		    suspend.showModal();
+			suspend.showModal();
 		});
 	}
 
@@ -1005,7 +1002,7 @@ $(function(){
 	//詳細検索
 	$('.advanced').toggle($('#advanced').prop('checked'));
 	$('#advanced').change(e => {
-		const enabled =  $(e.currentTarget).prop('checked');
+		const enabled = $(e.currentTarget).prop('checked');
 		$('.advanced').toggle(enabled);
 		$('.g_celar').not('.advanced').toggle(!enabled).prev().toggleClass('has-button', !enabled);
 	});
@@ -1027,18 +1024,18 @@ $(function(){
 	$('#subGenre').change(e => $('.subGenre').toggle($(e.currentTarget).prop('checked')));
 	//サービス
 	//全選択
-	$('.all_select').click(() => $('#serviceList option').not('.hide').prop('selected', true));
+	$('.all_select').click(() => $('#serviceList option').not('.hidden').prop('selected', true));
 	//映像のみ表示
 	$('#image').change(e => $(e.currentTarget).prop('checked')
-		? $('#serviceList option.data').addClass('hide')
-		: $('.extraction:checked').each((i, e) => $(`#serviceList ${$(e).val()}`).removeClass('hide'))
+		? $('#serviceList option.data').addClass('hidden')
+		: $('.extraction:checked').each((i, e) => $(`#serviceList ${$(e).val()}`).removeClass('hidden'))
 	);
 	//ネットワーク表示
 	$('.extraction').change(e => {
 		const $e = $(e.currentTarget);
 		$e.prop('checked')
-			? $('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hide') : $( $e.val() ).removeClass('hide')
-			: $($e.val()).addClass('hide').prop('selected', false);
+			? $('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hidden') : $( $e.val() ).removeClass('hidden')
+			: $($e.val()).addClass('hidden').prop('selected', false);
 	});
 	//時間絞り込み
 	//切替
@@ -1178,9 +1175,10 @@ $(function(){
 		setTimeout(() => $(e).children('.flag').data('id', false).children('span').remove(), $(e).data('endtime')-Date.now());
 	});
 	$('.submitEX').click(e => {
-		const d = $(e.currentTarget).data();
-		$(`#${d.form} .ctok`).val(d.ctok);
-		$(`#${d.form}`).attr('action', d.action).submit();
+		e.preventDefault();
+		e = e.currentTarget;
+		$(e.form).find('.ctok').prop('disabled', true).filter($(e).data('ctok')).prop('disabled', false);
+		$(e.form).attr('action', e.formAction).submit();
 	});
 
 	//サブミット

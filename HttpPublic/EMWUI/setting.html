@@ -126,15 +126,15 @@ PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,INI))~=0
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-sidePanel">サイドパネル</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" type="checkbox" class="mdl-switch__input" name="sidePanel" value="1"'..(SIDE_PANEL and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="sidePanel-flag" class="mdl-switch mdl-js-switch"><input id="sidePanel-flag" class="mdl-switch__input" name="sidePanel"'..Checkbox(SIDE_PANEL)..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-sidePanel">番組詳細等をサイドパネルで表示します</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Olympic">オリンピック・ワールドカップモード</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="Olympic-flag" class="mdl-switch mdl-js-switch"><input id="Olympic-flag" type="checkbox" class="mdl-switch__input" name="Olympic" value="1"'..(olympic and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="Olympic-flag" class="mdl-switch mdl-js-switch"><input id="Olympic-flag" class="mdl-switch__input" name="Olympic"'..Checkbox(olympic)..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Olympic">番組表のリンクを一覧に表示</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-Roboto">Webフォント "Roboto"</span></div><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" type="checkbox" class="mdl-switch__input" name="Roboto" value="1"'..(roboto and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="Roboto" class="mdl-switch mdl-js-switch"><input id="Roboto" class="mdl-switch__input" name="Roboto"'..Checkbox(roboto)..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-Roboto">Material Design推奨フォント</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-count">一覧表示数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -187,23 +187,23 @@ subChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,INI))~=0
 ct.main=ct.main..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-spacing form" id="guide">\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">ワンセグ</div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" type="checkbox" class="mdl-switch__input" name="oneseg" value="1"'..(ONESEG and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div></div>\n'
+  ..'<div><label for="oneseg-flag" class="mdl-switch mdl-js-switch"><input id="oneseg-flag" class="mdl-switch__input" name="oneseg"'..Checkbox(ONESEG)..'><span class="mdl-switch__label"></span></label></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-hover">マウスホバー</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" type="checkbox" class="mdl-switch__input" name="hover" value="1"'..(HOVER and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="hover" class="mdl-switch mdl-js-switch"><input id="hover" class="mdl-switch__input" name="hover"'..Checkbox(HOVER)..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-hover">ポップアップをマウスホバーで表示</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle"><span id="tt-subChConcat">サブチャンネル結合</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="subChConcat" class="mdl-switch mdl-js-switch"><input id="subChConcat" type="checkbox" class="mdl-switch__input" name="subChConcat" value="1"'..(subChConcat and ' checked' or '')..'><span class="mdl-switch__label"></span></label></div>\n'
+  ..'<div><label for="subChConcat" class="mdl-switch mdl-js-switch"><input id="subChConcat" class="mdl-switch__input" name="subChConcat" value="1"'..Checkbox(subChConcat)..'><span class="mdl-switch__label"></span></label></div>\n'
   ..'<span class="mdl-tooltip" for="tt-subChConcat">CSでは無効</span></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">番組名の制御</div>\n<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--1-col mdl-cell--4-col-phone">PC：</div><div class="mdl-cell mdl-cell--2-col mdl-cell--1-col-phone"><label class="mdl-switch mdl-js-switch" for="titleControl-PC"><input type="checkbox" id="titleControl-PC" class="mdl-switch__input" name="titleControl" value="1"'..(bit32.band(titleControl,1)==1 and ' checked' or '')..'><span class="mdl-switch__label">追従</span></label></div>\n'
-  ..'<div class="mdl-cell mdl-cell--4-col mdl-cell--3-col-phone mdl-grid mdl-grid--no-spacing"><div class="mdl-layout-spacer"></div><div><label class="mdl-radio mdl-js-radio" for="PC-JS"><input type="radio" id="PC-JS" class="mdl-radio__button" name="titleControl-PC" value="4"'..(bit32.band(titleControl,4)==4 and ' checked' or '')..'><span class="mdl-radio__label">JavaScriptで</span></label></div><div class="mdl-layout-spacer"></div>\n'
-  ..'<div><label class="mdl-radio mdl-js-radio" for="PC-CSS"><input type="radio" id="PC-CSS" class="mdl-radio__button" name="titleControl-PC" value="8"'..(bit32.band(titleControl,8)==8 and ' checked' or '')..'><span class="mdl-radio__label">CSSで</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div></div></div>\n'
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--1-col mdl-cell--4-col-phone">スマホ：</div><div class="mdl-cell mdl-cell--2-col mdl-cell--1-col-phone"><label class="mdl-switch mdl-js-switch" for="titleControl-SP"><input type="checkbox" id="titleControl-SP" class="mdl-switch__input" name="titleControl" value="2"'..(bit32.band(titleControl,2)==2 and ' checked' or '')..'><span class="mdl-switch__label">追従</span></label></div>\n'
-  ..'<div class="mdl-cell mdl-cell--4-col mdl-cell--3-col-phone mdl-grid mdl-grid--no-spacing"><div class="mdl-layout-spacer"></div><div><label class="mdl-radio mdl-js-radio" for="SP-JS"><input type="radio" id="SP-JS" class="mdl-radio__button" name="titleControl-SP" value="16"'..(bit32.band(titleControl,16)==16 and ' checked' or '')..'><span class="mdl-radio__label">JavaScriptで</span></label></div><div class="mdl-layout-spacer"></div>\n'
-  ..'<div><label class="mdl-radio mdl-js-radio" for="SP-CSS"><input type="radio" id="SP-CSS" class="mdl-radio__button" name="titleControl-SP" value="32"'..(bit32.band(titleControl,32)==32 and ' checked' or '')..'><span class="mdl-radio__label">CSSで</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div></div></div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--1-col mdl-cell--4-col-phone">PC：</div><div class="mdl-cell mdl-cell--2-col mdl-cell--1-col-phone"><label class="mdl-switch mdl-js-switch" for="titleControl-PC"><input id="titleControl-PC" class="mdl-switch__input" name="titleControl"'..Checkbox(bit32.btest(titleControl,1))..'><span class="mdl-switch__label">追従</span></label></div>\n'
+  ..'<div class="mdl-cell mdl-cell--4-col mdl-cell--3-col-phone mdl-grid mdl-grid--no-spacing"><div class="mdl-layout-spacer"></div><div><label class="mdl-radio mdl-js-radio" for="PC-JS"><input id="PC-JS" class="mdl-radio__button" name="titleControl-PC"'..Radiobtn(bit32.btest(titleControl,4),4)..'><span class="mdl-radio__label">JavaScriptで</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="PC-CSS"><input id="PC-CSS" class="mdl-radio__button" name="titleControl-PC"'..Radiobtn(bit32.btest(titleControl,8),8)..'><span class="mdl-radio__label">CSSで</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div></div></div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--1-col mdl-cell--4-col-phone">スマホ：</div><div class="mdl-cell mdl-cell--2-col mdl-cell--1-col-phone"><label class="mdl-switch mdl-js-switch" for="titleControl-SP"><input id="titleControl-SP" class="mdl-switch__input" name="titleControl"'..Checkbox(bit32.btest(titleControl,2),2)..'><span class="mdl-switch__label">追従</span></label></div>\n'
+  ..'<div class="mdl-cell mdl-cell--4-col mdl-cell--3-col-phone mdl-grid mdl-grid--no-spacing"><div class="mdl-layout-spacer"></div><div><label class="mdl-radio mdl-js-radio" for="SP-JS"><input id="SP-JS" class="mdl-radio__button" name="titleControl-SP"'..Radiobtn(bit32.btest(titleControl,16),16)..'><span class="mdl-radio__label">JavaScriptで</span></label></div><div class="mdl-layout-spacer"></div>\n'
+  ..'<div><label class="mdl-radio mdl-js-radio" for="SP-CSS"><input id="SP-CSS" class="mdl-radio__button" name="titleControl-SP"'..Radiobtn(bit32.btest(titleControl,32),32)..'><span class="mdl-radio__label">CSSで</span></label></div><div class="mdl-layout-spacer mdl-cell--hide-phone"></div></div></div>\n'
   ..'</div></div>\n'
 
   ..'<div class="number mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle"><span id="tt-chc">チャンネル数</span></div>\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -361,7 +361,7 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<div id="disabled" class="'..(paint and 'paint ' or '')..'reserve disabled '..CATEGORY[math.random(1,12)]..' mdl-cell mdl-cell--4-col mdl-grid" style="margin: 4px 8px;"><div class="mdl-cell--middle">予約無効</div>\n<div class="mdl-layout-spacer"></div>'
   ..'<div><input class="reserveset" type="color" name="disable" value="'..disabled..'" for="#disabled"></div></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--4-col mdl-grid mdl-cell--middle" style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="paint"><input id="paint" class="mdl-checkbox__input" type="checkbox" name="paint" value="1"'..(paint and ' checked' or '')..'><span class="mdl-checkbox__label">塗りつぶし</span></label></div>\n'
+  ..'<div class="mdl-cell mdl-cell--4-col mdl-grid mdl-cell--middle" style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="paint"><input id="paint" class="mdl-checkbox__input" name="paint"'..Checkbox(paint)..'><span class="mdl-checkbox__label">塗りつぶし</span></label></div>\n'
   ..'</div>\n'
 
   ..'<div id="partially" class="reserve partially mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">一部録画</div>\n<div class="mdl-layout-spacer"></div>'
@@ -424,12 +424,12 @@ for i,v in ipairs(ServiceList) do
     table.insert(NetworkList[NetworkIndex(v)],
       '<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">'
         ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>'
-        ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" type="checkbox" name="hide" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and ' checked' or '')..'>'
+        ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" name="hide"'..Checkbox(v.hide, v.onid..'-'..v.tsid..'-'..v.sid)..'>'
         ..'<label for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</label></span>'
         ..'<span class="mdl-list__item-sub-title">'..v.onid..'-'..v.tsid..'-'..v.sid..(v.change and ' <span class="mdl-color-text--accent">※TSID変更を検出 '..v.change..'→'..v.tsid..'</span>' or '')..'</span></span>' -- SID表示サブチャネル判別用
         ..'<span class="mdl-list__item-secondary-action">'
         ..'<label class="mdl-switch mdl-js-switch" for="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
-        ..'<input type="checkbox" id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..(v.hide and '' or ' checked')..'>'
+        ..'<input id="switch'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="switch mdl-switch__input" for="#hide'..v.onid..'-'..v.tsid..'-'..v.sid..'"'..Checkbox(not v.hide)..'>'
         ..'</label></span>\n'
         ..'<input type="hidden" name="sort" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'">'
         ..'</li>\n'

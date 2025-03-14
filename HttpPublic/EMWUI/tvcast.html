@@ -91,7 +91,7 @@ label={}
 ct.css='<style>\n'
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.main=ct.main..'<input type="radio" id="Network'..i..'" class="hidden" name="network"'..(NetworkIndex()[i]==NetworkIndex()[NetworkIndex(st)] and ' checked' or '')..'>\n'
+    ct.main=ct.main..'<input id="Network'..i..'" class="hidden" name="network"'..Radiobtn(NetworkIndex()[i]==NetworkIndex()[NetworkIndex(st)])..'>\n'
     ct.css=ct.css..'#Network'..i..':checked~div .onair:not(.Network'..i..'){display:none;}#Network'..i..':checked~div [for="Network'..i..'"]{color:var(--tag-color);background:var(--tag-gb-color);}\n'
     table.insert(label, '<label type="button" for="Network'..i..'" class="mdl-chip"><span class="mdl-chip__text">'..NetworkIndex()[i]..'</span></label>\n')
     table.insert(ctt, table.concat(v))

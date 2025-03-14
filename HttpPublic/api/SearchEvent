@@ -1,14 +1,8 @@
 -- vim:set ft=lua:
-key={
-  network=tonumber(mg.get_var(mg.request_info.query_string,'network')) or 0,
-  days29=tonumber(mg.get_var(mg.request_info.query_string,'days')) or 0,
-  andKey=mg.get_var(mg.request_info.query_string,'andkey') or '',
-  notKey=mg.get_var(mg.request_info.query_string,'notkey') or '',
-  contentList={}
-}
-for w in string.gmatch(mg.get_var(mg.request_info.query_string,'genru') or '','[^-]+') do
-  table.insert(key.contentList, {content_nibble=tonumber(w) or 0})
-end
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+post=AssertPost()
+key=post and GetSearchKey(post) or GetSearchKeyKeyword(mg.request_info.query_string)
 edcb.htmlEscape=15
 a=edcb.SearchEpg(key)
 ct={'<?xml version="1.0" encoding="UTF-8" ?>'}
@@ -104,7 +98,6 @@ else
 end
 cl=0
 for i,v in ipairs(ct) do cl=cl+#v end
-dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
 if mg.request_info.request_method~='HEAD' then
   for i,v in ipairs(ct) do mg.write(v) end

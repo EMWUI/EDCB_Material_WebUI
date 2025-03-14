@@ -6,23 +6,7 @@ if post then
   dataID=GetVarInt(mg.request_info.query_string,'id') or 0
   aa={dataID=dataID}
   if mg.get_var(post,'addchg') then
-    presetID=GetVarInt(post,'presetID',0,65534)
-    if presetID then
-      for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-        if v.id==presetID then
-          aa.recSetting=v.recSetting
-          break
-        end
-      end
-    elseif dataID~=0 then
-      for i,v in ipairs(edcb.EnumAutoAdd()) do
-        if v.dataID==dataID then
-          aa.recSetting=v.recSetting
-          break
-        end
-      end
-    end
-    aa.recSetting=GetRecSetting(aa.recSetting, post)
+    aa.recSetting=GetRecSetting(post)
     if aa.recSetting then
       aa.searchInfo=GetSearchKey(post)
       done=edcb.AddOrChgAutoAdd(aa)

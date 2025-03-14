@@ -2,13 +2,12 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 edcb.htmlEscape=15
 a=edcb.EnumRecPresetInfo()
-rsdef=edcb.GetReserveData(0x7FFFFFFF)
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
   table.insert(ct, '<recpresetinfo><id>'
     ..v.id..'</id><name>'
     ..v.name..'</name>'
-    ..XmlRecSetting(v.recSetting, rsdef)
+    ..XmlRecSetting(v.recSetting)
     ..'</recpresetinfo>\r\n')
 end
 table.insert(ct, '</items></entry>')

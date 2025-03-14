@@ -3,11 +3,11 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 edcb.htmlEscape=15
 a=edcb.EnumAutoAdd()
-rsdef=edcb.GetReserveData(0x7FFFFFFF)
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
   table.insert(ct, '<autoaddinfo><ID>'
-    ..v.dataID..'</ID><searchsetting><disableFlag>'
+    ..v.dataID..'</ID><addCount>'
+    ..v.addCount..'</addCount><searchsetting><disableFlag>'
     ..(ParseAndKey(v.searchInfo.andKey).disableFlag and 1 or 0)..'</disableFlag><caseFlag>'
     ..(ParseAndKey(v.searchInfo.andKey).caseFlag and 1 or 0)..'</caseFlag><andKey>'
     ..ParseAndKey(v.searchInfo.andKey).andKey..'</andKey><notKey>'
@@ -45,7 +45,7 @@ for i,v in ipairs(a) do
       ..w.sid..'</sid></serviceList>')
   end
   table.insert(ct, '</searchsetting>'
-    ..XmlRecSetting(v.recSetting, rsdef)
+    ..XmlRecSetting(v.recSetting)
     ..'</autoaddinfo>\r\n')
 end
 table.insert(ct, '</items></entry>')
