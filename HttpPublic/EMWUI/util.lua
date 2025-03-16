@@ -1011,7 +1011,7 @@ function pagination(page, a, href)
 
   local n=page>(#a/pageCount-2) and math.floor(#a/pageCount)-4 or math.max(0,page-2)
   for i=n, n+4 do
-    s=s..(i>=0 and i<#a/pageCount and (i==page and 'button' or 'a')..' class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="recinfo.html?page='..i)..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</'..(i==page and 'button' or 'a')..'>\n<' or '')
+    s=s..(i>=0 and i<#a/pageCount and (i==page and 'button' or 'a')..' class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="'..href..'.html?page='..i)..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</'..(i==page and 'button' or 'a')..'>\n<' or '')
   end
 
   tag=page<(#a/pageCount-1) and 'a' or 'button'

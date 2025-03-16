@@ -49,9 +49,9 @@ if SIDE_PANEL then
     if v.id==0 then
       rs=v.recSetting
     end
-    ct.main=ct.main..'<option value="'..v.id..'">'..v.name..'\n'
+    SIDE_PANEL=SIDE_PANEL..'<option value="'..v.id..'">'..v.name..'\n'
   end
-  ct.main=ct.main..'<option id="reserved" value="65535" selected>登録時\n</select></div></div>\n'
+  SIDE_PANEL=SIDE_PANEL..'<option id="reserved" value="65535" selected>登録時\n</select></div></div>\n'
 
     ..'<input type="hidden" name="onid">\n'
     ..'<input type="hidden" name="tsid">\n'

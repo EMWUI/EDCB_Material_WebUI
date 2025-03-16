@@ -57,14 +57,14 @@ if SIDE_PANEL then
 ]=]
 
   if mg.get_var(mg.request_info.query_string,'del') then
-    ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
+    SIDE_PANEL=SIDE_PANEL..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
       ..'<div class="mdl-layout-spacer"></div>\n'
       ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
       ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
       ..'</div>\n'
   end
 
-  ct.main=ct.main..'</div>\n'
+  SIDE_PANEL=SIDE_PANEL..'</div>\n'
     ..'<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
 end
 
