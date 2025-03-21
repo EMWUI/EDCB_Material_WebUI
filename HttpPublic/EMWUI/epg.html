@@ -3,7 +3,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
 show=mg.get_var(mg.request_info.query_string,'show')
 tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkIndex()) or 0
-date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
+date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or GetVarDate(mg.request_info.query_string,'date') or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or -1
 --hour=-1で現在時刻-MARGIN_HOUR時間を基準
 interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or DEF_INTERVAL
@@ -12,11 +12,8 @@ pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
 --UTC+9の今日の始まりの日付。現在時刻が深夜4時までは前日になることに注意
 baseDate=math.floor((utc9Now-4*3600)/24/3600)
-if date==0 then
-  m={(mg.get_var(mg.request_info.query_string,'date') or ''):match('^(%d%d%d%d)%-(%d?%d)%-(%d?%d)$')}
-  if #m==3 then
-    date=math.floor(TimeWithZone({year=m[1],month=m[2],day=m[3]})/24/3600)-baseDate
-  end
+if date>1000 then
+  date=math.floor(date/24/3600)-baseDate
 end
 Hour=hour<0 and math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
 if Hour<4-(hour<0 and MARGIN_HOUR or 0) then Hour=Hour+24 end

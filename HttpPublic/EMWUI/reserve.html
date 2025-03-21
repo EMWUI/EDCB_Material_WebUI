@@ -45,10 +45,10 @@ rate={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   size=getPredictionSize(v)
-  bg=v.recSetting.recMode==5 and ' disabled'
-     or v.overlapMode==1 and ' partially'
-     or v.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
+  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
+    ..(v.recSetting.recMode==5 and ' disabled' or v.overlapMode==1 and ' partially' or v.overlapMode==2 and ' shortage' or '')
+    ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')
+    ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
     ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
                    or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">\n'
 
@@ -64,7 +64,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n')
 end
 
-pageNav=pagination(page, a, 'reserve')
+pageNav=pagination(page, a)
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 

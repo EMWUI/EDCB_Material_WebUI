@@ -136,6 +136,35 @@ key.search=dataID==0 and not mg.get_var(post, 'id')
 
 edcb.htmlEscape=15
 
+range=nil
+archive=GetVarInt(post, 'archive')==1
+startDate=GetVarDate(post, 'startDate')
+if startDate then
+  startDate=startDate+GetVarTime(post, 'startTime')
+  endDate=GetVarDate(post, 'endDate')
+  if endDate then
+    range={startTime=os.date('!*t',startDate),durationSecond=endDate+GetVarTime(post, 'endTime')-startDate}
+  end
+end
+
+if range then
+  a=archive and edcb.SearchEpgArchive(key, range) or edcb.SearchEpg(key, range)
+else
+  a={}
+  if post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andKey') then
+    for i,v in ipairs(edcb.SearchEpg(key)) do
+      if v.startTime then
+        startTime=TimeWithZone(v.startTime)
+        endTime=v.durationSecond and startTime+v.durationSecond or startTime
+        if os.time()+9*3600<=endTime then
+          table.insert(a, v)
+        end
+      end
+    end
+  end
+end
+table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
+
 ct={
   title='検索',
   js='<script>const ctok=\''..CsrfToken('setreserve')..'\';$(function(){saerchbar();});</script>\n',
@@ -177,20 +206,6 @@ if key.search then
   ct.main=ct.main..'<span></span></div></div>\n'
 end
 
-interval=nil
-past=GetVarInt(post, 'past')==1
-m={(mg.get_var(post, 'startDate') or ''):match('^(%d%d%d%d)%-(%d?%d)%-(%d?%d)$')}
-if #m==3 then
-  date=TimeWithZone({year=m[1],month=m[2],day=m[3]})
-  m={(mg.get_var(post, 'endDate') or ''):match('^(%d%d%d%d)%-(%d?%d)%-(%d?%d)$')}
-  if #m==3 then
-    date_end=TimeWithZone({year=m[1],month=m[2],day=m[3]})
-    interval={startTime=os.date('!*t',date),durationSecond=date_end-date}
-  end
-end
-
-b=(post or preset or dataID~=0 or mg.get_var(mg.request_info.query_string, 'andKey')) and (past and edcb.SearchEpgArchive(key, interval) or edcb.SearchEpg(key, interval)) or {}
-
 --ここからkeyはHTML出力用
 key.andKey=EdcbHtmlEscape(key.andKey)
 key.notKey=EdcbHtmlEscape(key.notKey)
@@ -199,19 +214,26 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
   ..'<div class="form-container"><div class="mdl-grid mdl-grid--no-spacing form">\n'
 
-  ..(key.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
-  ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
-  ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input"'..Checkbox(mg.get_var(post, 'advanced'))..'><span class="mdl-switch__label"></span></label></div></div>\n' or '')
+  ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n'
+    or '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">アーカイブ検索</div>\n'
+      ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+      ..'<div><label for="archive" class="mdl-switch mdl-js-switch"><input id="archive" name="archive" class="mdl-switch__input"'..Checkbox(archive)..'><span class="mdl-switch__label"></span></label></div></div>\n'
+
+      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">日時指定</div>\n'
+      ..'<div class="mdl-cell mdl-cell--9-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell--middle"><div class="mdl-textfield mdl-js-textfield"><input id="startDate" class="mdl-textfield__input" type="date" name="startDate" value='..(range and mg.get_var(post, 'startDate') or '')..'><label class="mdl-textfield__label" for="startDate"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">検索開始日</span></label></div><div class="mdl-textfield mdl-js-textfield"><input id="startTime-from" class="mdl-textfield__input" type="time" name="startTime" value='..(range and mg.get_var(post, 'startTime') or '00:00')..'><label class="mdl-textfield__label" for="startTime-from"></label></div>'
+      ..'</div><div class="mdl-cell--middle"><div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div><span class="tilde">～</span><div class="mdl-textfield mdl-js-textfield"><input id="endDate" class="mdl-textfield__input" type="date" name="endDate" value='..(range and mg.get_var(post, 'endDate') or '')..'><label class="mdl-textfield__label" for="endDate"><span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">検索終了日</span></label></div><div class="mdl-textfield mdl-js-textfield"><input id="endTime-from" class="mdl-textfield__input" type="time" name="endTime" value="'..(range and mg.get_var(post, 'endTime') or '00:00')..'"><label class="mdl-textfield__label" for="endTime-from"></label></div></div>'
+      ..'</div></div>\n'
+
+      ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">詳細検索</div>\n'
+      ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
+      ..'<div><label for="advanced" class="mdl-switch mdl-js-switch"><input id="advanced" name="advanced" class="mdl-switch__input"'..Checkbox(mg.get_var(post, 'advanced'))..'><span class="mdl-switch__label"></span></label></div></div>\n'
+  )
+
   ..'<input type="hidden" name="ctok" class="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="ctok" class="ctok" id="custom" value="'..CsrfToken('epgcustom.html')..'" disabled>\n'
   ..'<input type="hidden" name="ctok" class="ctok" id="api" value="'..CsrfToken('searchevent')..'" disabled>\n'
-  ..'<input type="hidden" name="past" value="0">\n' --"1"で過去番組検索
-  ..'<input type="hidden" name="startDate" value="">\n' --"yyyy-mm-dd" 開始日時の範囲を指定（開始） ※過去番組が対象の場合、取得対象が月～年単位になりうるので、時間指定のない呼び出しは控えるべき
-  ..'<input type="hidden" name="endDate" value="">\n' --"yyyy-mm-dd" (終了)
 
   ..SerchTemplate(key)
-
-  ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
 
   ..(ParseAndKey(key.andKey).disableFlag and '<input type="hidden" name="disableFlag" checked>\n' or '')
  
@@ -223,23 +245,8 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'<button type="submit" class="mdl-button mdl-js-button mdl-button--primary" type="button">検索</button></div>\n'
   ..'</div></form>\n</div>\n'
 
-table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
 
-a={}
 
-if past then
-  a=b
-else
-  for i,v in ipairs(b) do
-    if v.startTime then
-      startTime=TimeWithZone(v.startTime)
-      endTime=v.durationSecond and startTime+v.durationSecond or startTime
-      if os.time()+9*3600<=endTime then
-        table.insert(a, v)
-      end
-    end
-  end
-end
 
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
@@ -267,7 +274,7 @@ if #a>0 then
     ..'<caption>'..#a..' 件中 '..math.min(#a,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
 
     ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
-    ..(not past and ' <th class="flag mdl-data-table__cell--non-numeric">録画\n' or '')
+    ..(not archive and ' <th class="flag mdl-data-table__cell--non-numeric">録画\n' or '')
     ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
     ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
     ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
@@ -296,10 +303,10 @@ if #a>0 then
     end
 
     table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
-      ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(past and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)
+      ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(archive and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)
                                or 'href="epginfo.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..'&amp;eid='..v.eid..(pageIndex~=0 and '&amp;page='..pageIndex or '')..(autopage~=0 and '&amp;autopage='..autopage or ''))..'">'
 
-      ..(not past and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
+      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
       ..(r and TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
                                                              or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))..'</span>' or '')
 
@@ -319,9 +326,11 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
     ..'<input type="hidden" class="ctok" name="ctok" value="'..CsrfToken()..'">\n'
     ..'<input type="hidden" name="ctok" class="ctok" id="autoaddepg" value="'..CsrfToken('autoaddepginfo.html')..'" disabled>\n'
-    ..(past and '<input type="hidden" name="past" value="1">\n' or '')
-    ..(interval and '<input type="hidden" name="startDate" value="'..mg.get_var(post, 'startDate')..'">\n' or '')
-    ..(interval and '<input type="hidden" name="endDate" value="'..mg.get_var(post, 'endDate')..'">\n' or '')
+    ..(archive and '<input type="hidden" name="archive" value="1">\n' or '')
+    ..(range and '<input type="hidden" name="startDate" value="'..mg.get_var(post, 'startDate')..'">\n'
+      ..'<input type="hidden" name="startTime" value="'..mg.get_var(post, 'startTime')..'">\n'
+      ..'<input type="hidden" name="endDate" value="'..mg.get_var(post, 'endDate')..'">\n'
+      ..'<input type="hidden" name="endTime" value="'..mg.get_var(post, 'endTime')..'">\n' or '')
     ..'<input type="hidden" name="andKey" value="'..ParseAndKey(key.andKey).andKey..'">\n'
     ..'<input type="hidden" name="notKey" value="'..key.notKey..'">\n'
     ..(key.regExpFlag and '<input type="hidden" name="regExpFlag" value="1">\n' or '')
@@ -364,7 +373,7 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
 end
 
 ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored submitEX" form="hidden" data-ctok="#autoaddepg'
-  ..(key.search and '" '..((post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
+  ..(key.search and '" '..((not archive and post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
                  or '" formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(autopage~=0 and '&amp;page='..autopage or '')..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=Template(ct)

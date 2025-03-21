@@ -9,7 +9,7 @@ if post then
   focusID=GetVarInt(post,'del')
   if focusID then
     edcb.DelAutoAdd(focusID)
-    ct.js=ct.js..'<script>Snackbar("削除しました");</script>'
+    ct.js='<script>Snackbar("削除しました");</script>'
   end
 end
 
@@ -24,6 +24,31 @@ if focusID then
   page=math.floor(math.max(math.min(focusIndex-1,#a-1),0)/pageCount)
 else
   page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
+end
+
+ctt={}
+for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
+  v=a[i].searchInfo
+  serviceName='なし'
+  if #v.serviceList>0 then
+    for j,w in ipairs(edcb.GetChDataList()) do
+      if w.onid==v.serviceList[1].onid and w.tsid==v.serviceList[1].tsid and w.sid==v.serviceList[1].sid then
+        serviceName=w.serviceName
+        break
+      end
+    end
+  end
+  table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
+    ..(SIDE_PANEL and 'data-id="'..a[i].dataID
+                   or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
+    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
+    ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--3-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..ParseNotKey(v.notKey).notKey
+    ..'\n <td class="note mdl-data-table__cell--non-numeric mdl-cell--1-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">note</i></span>'..ParseNotKey(v.notKey).note
+    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..'">'..a[i].addCount..'</a>'
+    ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.serviceList[1].onid..'&amp;sid='..v.serviceList[1].sid..'"><span>'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
+    ..'\n <td class="category mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(#v.contentList>0 and (v.notContetFlag and '<span class=header>否:</span>' or '')..edcb.GetGenreName(v.contentList[1].content_nibble)..(#v.contentList>1 and '<small>.他'..(#v.contentList-1)..'</small>' or '') or '全ジャンル')
+    ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(RecModeTextList()[a[i].recSetting.recMode+1] or '')
+    ..'\n')
 end
 
 if SIDE_PANEL then
@@ -71,32 +96,7 @@ if SIDE_PANEL then
     ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
 end
 
-ctt={}
-for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
-  v=a[i].searchInfo
-  serviceName='なし'
-  if #v.serviceList>0 then
-    for j,w in ipairs(edcb.GetChDataList()) do
-      if w.onid==v.serviceList[1].onid and w.tsid==v.serviceList[1].tsid and w.sid==v.serviceList[1].sid then
-        serviceName=w.serviceName
-        break
-      end
-    end
-  end
-  table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
-    ..(SIDE_PANEL and 'data-id="'..a[i].dataID
-                   or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
-    ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
-    ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--3-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..ParseNotKey(v.notKey).notKey
-    ..'\n <td class="note mdl-data-table__cell--non-numeric mdl-cell--1-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">note</i></span>'..ParseNotKey(v.notKey).note
-    ..'\n <td class="count mdl-cell--2-col-phone mdl-cell--order-1-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">search</i></span><a href="search.html?id='..a[i].dataID..'">'..a[i].addCount..'</a>'
-    ..'\n <td class="servicelist mdl-data-table__cell--non-numeric mdl-cell--2-col-phone"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.serviceList[1].onid..'&amp;sid='..v.serviceList[1].sid..'"><span>'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
-    ..'\n <td class="category mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(#v.contentList>0 and (v.notContetFlag and '<span class=header>否:</span>' or '')..edcb.GetGenreName(v.contentList[1].content_nibble)..(#v.contentList>1 and '<small>.他'..(#v.contentList-1)..'</small>' or '') or '全ジャンル')
-    ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(RecModeTextList()[a[i].recSetting.recMode+1] or '')
-    ..'\n')
-end
-
-pageNav=pagination(page, a, 'autoaddepg')
+pageNav=pagination(page, a)
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 

@@ -69,30 +69,31 @@
 
 
 /*日付入力*/
-input[type=date] {
-  width: 6.6em;
-  position: relative; }
-input[type=date],
-input[type=date]::-webkit-clear-button,
-input[type=date]::-webkit-inner-spin-button,
-input[type=date]::-webkit-date-and-time-value { 
-  -webkit-appearance: none;
-  margin-inline-start: 0; }
-input[type=date]::-webkit-date-and-time-value { 
-  margin: 0; }
-input[type=date]::-webkit-calendar-picker-indicator {
-  color: transparent;
-  cursor: pointer; }
-  .mdl-menu__item input[type=date]::-webkit-calendar-picker-indicator {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
+.mdl-menu__item {
+  input[type=date] {
+    width: 7em;
+    position: relative; }
+  input[type=date],
+  input[type=date]::-webkit-clear-button,
+  input[type=date]::-webkit-inner-spin-button,
+  input[type=date]::-webkit-date-and-time-value { 
+    -webkit-appearance: none;
     margin-inline-start: 0; }
-  input[type=date]::-webkit-calendar-picker-indicator:hover {
-    background-color: transparent; }
-  .mdl-menu__item input[type=date]::-webkit-clear-button{
-    -webkit-appearance: none; }
+  input[type=date]::-webkit-date-and-time-value { 
+    margin: 0; }
+  input[type=date]::-webkit-calendar-picker-indicator {
+    color: transparent;
+    cursor: pointer; }
+    input[type=date]::-webkit-calendar-picker-indicator {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      margin-inline-start: 0; }
+    input[type=date]::-webkit-calendar-picker-indicator:hover {
+      background-color: transparent; }
+    input[type=date]::-webkit-clear-button{
+      -webkit-appearance: none; }
   @-moz-document url-prefix() {
     #date_input .material-icons{
       display: none;} }
@@ -109,6 +110,18 @@ input[type=date]::-webkit-calendar-picker-indicator {
   @media (max-width: 479px) {
     .mdl-textfield.has-icon .material-icons {
       top: 12px; } }
+}
+.mdl-textfield:has(input[type=date]),
+.mdl-textfield:has(input[type=time]) {
+  width: auto; }
+.form {
+  .mdl-textfield input[type=date],
+  .mdl-textfield input[type=time] {
+    height: 16px; }
+  .mdl-textfield input[type=date] {
+    min-width: 7em; } }
+.mdl-textfield + .mdl-textfield {
+  margin-left: 8px; }
 
 
 /*セレクト*/
@@ -141,6 +154,7 @@ select {
       content: ''; }
   .pulldown select {
     height: 33px;
+    min-width: 48px;
     border: none;
     border-bottom: 1px solid rgba(0,0,0 ,0.12);
     padding: 4px 24px 4px 0; }
@@ -158,7 +172,9 @@ dialog {
   dialog .icon {
     position: absolute;
     top: 10px;
-    right: 15px; }
+    right: 15px;
+    .mdl-icon-toggle__ripple-container {
+      left: 14px; } }
   .colon {
     margin: 0 4px; }
 
@@ -474,16 +490,13 @@ header {
   display: none; }
 
 .mdl-menu__item .mdl-textfield {
-  width: auto;
   padding: 8px 0; }
   .mdl-menu__item .mdl-textfield__input {
     font-size: 14px; }
   .mdl-menu__item .mdl-textfield__label:after {
     bottom: 8px; }
-  .mdl-menu__item .mdl-textfield.has-icon .mdl-textfield__input {
-    padding-right: 5px; }
   .mdl-menu__item .mdl-textfield.has-icon .material-icons {
-    top: 13px; }
+    top: 12px; }
   @media (max-width: 479px) {
     .mdl-menu__item .mdl-textfield.has-icon .material-icons {
       top: 10px; } }
@@ -1231,9 +1244,6 @@ h4 .mdl-button--icon {
   padding: 4px 24px 4px 0;
   box-sizing: border-box; }
 
-#service option.hide {
-  display:none; }
-
 .number .mdl-textfield {
   width: 70px; }
 .number .text-right {
@@ -1321,8 +1331,6 @@ h4 .mdl-button--icon {
     padding-left: 24px; }
     #dateList_edit .time div {
       display: inline-block; }
-    #dateList_edit .time .mdl-textfield {
-      width: auto; }
   .tilde {
     margin: 0 8px; }
 
@@ -1482,7 +1490,7 @@ h4 .mdl-button--icon {
     white-space: normal;
     border-bottom: 1px solid rgba(0,0,0,.12);
     box-sizing: border-box; }
-    .mdl-data-table.reserve tbody tr {
+    .list .mdl-data-table tbody tr:has(.flag) {
       padding-left: 60px; }
     .mdl-data-table tbody tr:hover {
       background-color: transparent; }

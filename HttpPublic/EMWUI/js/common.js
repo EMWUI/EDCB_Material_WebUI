@@ -1005,6 +1005,7 @@ $(function(){
 		const enabled = $(e.currentTarget).prop('checked');
 		$('.advanced').toggle(enabled);
 		$('.g_celar').not('.advanced').toggle(!enabled).prev().toggleClass('has-button', !enabled);
+		$('#add_dateList').prop('disabled', $('#dateList_edit').is(':hidden'));
 	});
 	//ジャンル
 	$('#content').change(e => {
@@ -1173,6 +1174,12 @@ $(function(){
 	$('tr.search').each((i, e) => {
 		if ($(e).data('starttime')) setTimeout(() => $(e).addClass('start').children('.flag').children('span').addClass('recmark').empty(), $(e).data('starttime')-Date.now())
 		setTimeout(() => $(e).children('.flag').data('id', false).children('span').remove(), $(e).data('endtime')-Date.now());
+	});
+	$('#archive').change(e => {
+		const checked = $(e.currentTarget).prop('checked');
+		$('#startDate,#endDate').attr('required', checked);
+		$('#startDate').parent().toggleClass('is-invalid', checked && $('#startDate').val()=='');
+		$('#endDate').parent().toggleClass('is-invalid', checked && $('#endDate').val()=='');
 	});
 	$('.submitEX').click(e => {
 		e.preventDefault();

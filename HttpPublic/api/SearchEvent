@@ -4,11 +4,25 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 post=AssertPost()
 key=post and GetSearchKey(post) or GetSearchKeyKeyword(mg.request_info.query_string)
 edcb.htmlEscape=15
-a=edcb.SearchEpg(key)
+
+range=nil
+archive=GetVarInt(post, 'archive')==1
+startDate=GetVarDate(post, 'startDate')
+if startDate then
+  startDate=startDate+GetVarTime(post, 'startTime')
+  endDate=GetVarDate(post, 'endDate')
+  if endDate then
+    range={startTime=os.date('!*t',startDate),durationSecond=endDate+GetVarTime(post, 'endTime')-startDate}
+  end
+end
+
+a=archive and edcb.SearchEpgArchive(key, range) or edcb.SearchEpg(key, range)
+
 ct={'<?xml version="1.0" encoding="UTF-8" ?>'}
 if not a then
   table.insert(ct, '<entry><err>EPGデータを読み込み中、または存在しません</err></entry>')
 else
+  table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
   basic=(tonumber(mg.get_var(mg.request_info.query_string,'basic')) or 1)~=0
   index=math.max(tonumber(mg.get_var(mg.request_info.query_string,'index')) or 0,0)
   count=math.max(tonumber(mg.get_var(mg.request_info.query_string,'count')) or 200,0)

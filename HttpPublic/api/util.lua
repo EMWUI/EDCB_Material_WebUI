@@ -903,6 +903,23 @@ function GetVarInt(qs,n,ge,le,occ)
   return nil
 end
 
+--クエリパラメータから時刻を取得する
+function GetVarTime(qs,n,occ,sec)
+  local hour,min,sec=(mg.get_var(qs,n,occ) or ''):match('^(%d+):(%d+)'..(sec and ':(%d+)' or '')..'$')
+  if hour then
+    return hour*3600+min*60+(sec or 0)
+  end
+  return 0
+end
+
+--クエリパラメータから日時を取得する
+function GetVarDate(qs,n,occ)
+  local year,month,day=(mg.get_var(qs,n,occ) or ''):match('^(%d%d%d%d)%-(%d?%d)%-(%d?%d)$')
+  if year then
+    return TimeWithZone({year=year,month=month,day=day,hour=0})
+  end
+end
+
 --クエリパラメータからサービスのIDを取得する
 function GetVarServiceID(qs,n,occ,leextra)
   local onid,tsid,sid,x=(mg.get_var(qs,n,occ) or ''):match('^([0-9]+)%-([0-9]+)%-([0-9]+)'..(leextra and '%-([0-9]+)' or '')..'$')
@@ -1188,12 +1205,9 @@ function GetSearchKey(post)
   end
   if mg.get_var(post, 'serviceList') then
     for i=0,10000 do
-      local v=mg.get_var(post, 'serviceList', i)
-      if not v then break end
-      local m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-      if #m==3 then
-        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-      end
+      local onid,tsid,sid=GetVarServiceID(post, 'serviceList', i)
+      if onid==0 then break end
+      table.insert(key.serviceList, {onid=onid, tsid=tsid, sid=sid})
     end
   end
   if mg.get_var(post, 'dateList') then
