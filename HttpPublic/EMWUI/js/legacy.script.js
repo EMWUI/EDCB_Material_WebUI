@@ -1068,7 +1068,6 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
           startRead(mod);
         }
       }else{
-        setTimeout(function(){readNext(mod,reader,r);},0);
         var now=Date.now();
         if(!bitrateStart)bitrateStart=now;
         bitrateTotal+=r.value.length;
@@ -1077,6 +1076,7 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
           bitrateStart=now;
           bitrateTotal=0;
         }
+        readNext(mod,reader,r);
       }
     }).catch(function(e){
       if(wakeLock)wakeLock.release();

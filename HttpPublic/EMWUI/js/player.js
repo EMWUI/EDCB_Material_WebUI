@@ -128,7 +128,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 			  return;
 			}
 			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
-			mod.commitInputData(ret.value.length);
+			mod.commitInputData(inputLen);
 			if(inputLen<ret.value.length){
 				//Input the rest.
 				setTimeout(function(){readNext(mod,reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)});},0);
@@ -144,7 +144,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 					startRead(mod);
 				}
 			}else{
-				setTimeout(function(){readNext(mod,reader,r);},0);
+				readNext(mod,reader,r);
 			}
 		}).catch(function(e){
 			if(wakeLock)wakeLock.release();
