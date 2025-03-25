@@ -536,8 +536,9 @@ end
 
 --コマンドラインの引数として使うパスを引用符で囲む
 --※Windowsでは引用符などパスとして不正な文字がpathに含まれていないことが前提
-function QuoteCommandArgForPath(path)
-  return WIN32 and '"'..path:gsub('[&%^]','^%0')..'"' or "'"..path:gsub("'","'\"'\"'").."'"
+--※Windowsでstartコマンドなどでネストされたコマンドの引数として使うときはnestedにする
+function QuoteCommandArgForPath(path,nested)
+  return WIN32 and '"'..(nested and path:gsub('[&^]','^%0') or path):gsub('%%','"%%"')..'"' or "'"..path:gsub("'","'\"'\"'").."'"
 end
 
 --SendTSTCPのストリーム取得用パイプのパス
