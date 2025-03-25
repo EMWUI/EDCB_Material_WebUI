@@ -35,7 +35,9 @@ const $playerUI_titlebar = $('#playerUI,#titlebar');
 const $contral = $('#control .mdl-menu__container');
 const $subtitles = $('#subtitles');
 const $vid_meta = $('#vid-meta');
+let hoverID = 0;
 const hideBar = (t = 0) => {
+	if (hoverID) clearTimeout(hoverID);
 	hoverID = setTimeout(() => {
 		if (vid.paused) return;
 
@@ -45,7 +47,8 @@ const hideBar = (t = 0) => {
 	}, t);
 }
 const stopTimer = () => {
-	clearInterval(hoverID);
+	if (hoverID) clearTimeout(hoverID);
+	hoverID = 0;
 	$player.css('cursor', 'default');
 }
 
@@ -349,7 +352,8 @@ const loadMovie = ($e = $('.is_cast')) => {
 	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
-	$titlebar.html(d.name || `${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`);
+	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
+		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
 }
 
 const $currentTime_duration = $('.currentTime,.duration');
