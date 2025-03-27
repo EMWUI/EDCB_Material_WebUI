@@ -35,7 +35,9 @@ const $playerUI_titlebar = $('#playerUI,#titlebar');
 const $contral = $('#control .mdl-menu__container');
 const $subtitles = $('#subtitles');
 const $vid_meta = $('#vid-meta');
+let hoverID = 0;
 const hideBar = (t = 0) => {
+	if (hoverID) clearTimeout(hoverID);
 	hoverID = setTimeout(() => {
 		if (vid.paused) return;
 
@@ -45,7 +47,8 @@ const hideBar = (t = 0) => {
 	}, t);
 }
 const stopTimer = () => {
-	clearInterval(hoverID);
+	if (hoverID) clearTimeout(hoverID);
+	hoverID = 0;
 	$player.css('cursor', 'default');
 }
 
@@ -128,7 +131,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 			  return;
 			}
 			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
-			mod.commitInputData(ret.value.length);
+			mod.commitInputData(inputLen);
 			if(inputLen<ret.value.length){
 				//Input the rest.
 				setTimeout(function(){readNext(mod,reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)});},0);
@@ -144,7 +147,7 @@ const loadTslive = ($e = $('.is_cast')) => {
 					startRead(mod);
 				}
 			}else{
-				setTimeout(function(){readNext(mod,reader,r);},0);
+				readNext(mod,reader,r);
 			}
 		}).catch(function(e){
 			if(wakeLock)wakeLock.release();
@@ -349,7 +352,8 @@ const loadMovie = ($e = $('.is_cast')) => {
 	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
-	$titlebar.html(d.name || `${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`);
+	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
+		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
 }
 
 const $currentTime_duration = $('.currentTime,.duration');

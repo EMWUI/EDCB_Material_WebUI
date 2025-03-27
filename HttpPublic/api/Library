@@ -25,7 +25,7 @@ function MakeThumbs(fpath, check)
       if autoMakeThumbs then autoMakeThumbs[#autoMakeThumbs+1]=fpath end
       return
     end
-    local cmd=ffmpeg..' -ss 30 -i "'..fpath..'" -vframes 1 -f image2 -s 480x270 '..QuoteCommandArgForPath(thumbPath)
+    local cmd=ffmpeg..' -ss 30 -i '..QuoteCommandArgForPath(fpath)..' -vframes 1 -f image2 -s 480x270 '..QuoteCommandArgForPath(thumbPath)
     edcb.os.execute(WIN32 and '"'..cmd..'"' or cmd)
   end
   return thumbHash

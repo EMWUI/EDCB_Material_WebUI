@@ -120,6 +120,7 @@ if post then
   ct.js=ct.js..'<script>Snackbar({message: "'..messege..'", timeout:5000});</script>'
 end
 
+SIDE_PANEL=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,INI))~=0
 roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,INI))~=0
 subGenreOption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',INI)
 PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
