@@ -1,42 +1,64 @@
-.jikkyo-comments {
+#jikkyo-comm {
+  /* The top/bottom border of #jikkyo-comm must be 1px */
   border: 1px solid #ccc;
   flex: 0 0 25%;
-  font-size: small;
   margin-left: 1px;
+}
+
+#jikkyo-comm.minimized {
+  flex: none;
+  width: 0;
+}
+
+#jikkyo-comm > button {
+  display: none;
+  margin: 0;
+}
+
+#jikkyo-comm.shiftable > button {
+  display: unset;
+}
+
+#jikkyo-comm.minimized > button {
+  display: none;
+}
+
+#jikkyo-chats {
+  font-size: small;
   overflow: auto;
 }
 
-.jikkyo-comments > .closed {
+#jikkyo-chats > .closed {
   border-top: 1px dotted #aaa;
 }
 
-.jikkyo-comments > div > .nico {
+#jikkyo-chats > div > .nico {
   background: #fff;
   color: #00a;
   margin-left: 0.2em;
   margin-right: 0.2em;
 }
 
-.jikkyo-comments > div > .refuge {
+#jikkyo-chats > div > .refuge {
   background: #fff;
   color: #900;
   margin-left: 0.2em;
   margin-right: 0.2em;
 }
 
-.jikkyo-comments .dark {
+#jikkyo-chats .dark {
   color: #fff;
 }
 
-.jikkyo-comments .light {
+#jikkyo-chats .light {
   color: #000;
 }
 
-.video-full-container:fullscreen .jikkyo-comments {
+.video-full-container:fullscreen #jikkyo-comm {
   display: none;
 }
 
-.video-full-container:-webkit-full-screen .jikkyo-comments {
+.video-full-container:-webkit-full-screen #jikkyo-comm {
   display: none;
 }
 

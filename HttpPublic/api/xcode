@@ -170,7 +170,7 @@ end
 function OpenJikkyoReader(tot,nid,sid)
   local id=GetJikkyoID(nid,sid)
   if not id or not JKRDLOG_PATH then return nil end
-  local cmd=QuoteCommandArgForPath(JKRDLOG_PATH)..' -r '..(fastRate*100)..' '..id..' '..(tot+ofssec)..' 0'
+  local cmd=(WIN32 and QuoteCommandArgForPath(JKRDLOG_PATH) or FindToolsCommand(JKRDLOG_PATH))..' -r '..(fastRate*100)..' '..id..' '..(tot+ofssec)..' 0'
   return edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd)
 end
 

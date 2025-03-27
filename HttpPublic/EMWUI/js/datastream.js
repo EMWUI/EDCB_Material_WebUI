@@ -62,11 +62,12 @@ toggleJikkyo=function(enabled){
     onJikkyoStreamError=null;
     openSubStream();
     setSendComment(null);
-    $('#jk-comm').empty();
+    $('#jikkyo-chats').empty();
     return;
   }
   if (!VideoSrc) return;
-  var comm=document.getElementById("jk-comm");
+  var comm=document.getElementById("jikkyo-comm");
+  var chats=document.getElementById("jikkyo-chats");
   if(!danmaku){
     danmaku=new Danmaku({
       container:document.getElementById("danmaku-container"),
@@ -87,7 +88,7 @@ toggleJikkyo=function(enabled){
     b.innerText=text;
     var div=document.createElement("div");
     div.appendChild(b);
-    comm.appendChild(div);
+    chats.appendChild(div);
   }
   setSendComment(function(commInput){
     if(/^@/.test(commInput.value)){
@@ -113,9 +114,11 @@ toggleJikkyo=function(enabled){
     if(getComputedStyle(comm).display=="none"){
       commHide=true;
     }else{
-      var scroll=Math.abs(comm.scrollTop+comm.clientHeight-comm.scrollHeight)<comm.clientHeight/4;
-      //comm.style.height=vid.clientHeight+"px";
-      if(commHide||scroll)comm.scrollTop=comm.scrollHeight;
+      var scroll=Math.abs(chats.scrollTop+chats.clientHeight-chats.scrollHeight)<chats.clientHeight/4;
+      //The top/bottom border of #jikkyo-comm must be 1px
+      comm.style.height=vid.clientHeight-2+"px";
+      chats.style.height=vid.clientHeight-2+comm.getBoundingClientRect().y-chats.getBoundingClientRect().y+"px";
+      if(commHide||scroll)chats.scrollTop=chats.scrollHeight;
       commHide=false;
     }
   },1000);
@@ -168,9 +171,9 @@ toggleJikkyo=function(enabled){
     if(tag.indexOf(";T=")<0)scatterInterval=90;
     else scatterInterval=Math.min(Math.max(scatterInterval+(scatter.length>0?-10:10),100),200);
     setTimeout(function(){
-      var scroll=Math.abs(comm.scrollTop+comm.clientHeight-comm.scrollHeight)<comm.clientHeight/4;
+      var scroll=Math.abs(chats.scrollTop+chats.clientHeight-chats.scrollHeight)<chats.clientHeight/4;
       if(fragment){
-        comm.appendChild(fragment);
+        chats.appendChild(fragment);
         fragment=null;
       }
       if(scatterInterval<100){
@@ -189,11 +192,11 @@ toggleJikkyo=function(enabled){
         }
       }
       if(commHide||scroll){
-        while(comm.childElementCount>1000){
-          comm.removeChild(comm.firstElementChild);
+        while(chats.childElementCount>1000){
+          chats.removeChild(chats.firstElementChild);
         }
       }
-      if(scroll)comm.scrollTop=comm.scrollHeight;
+      if(scroll)chats.scrollTop=chats.scrollHeight;
     },0);
   };
   onJikkyoStreamError=function(status,readCount){

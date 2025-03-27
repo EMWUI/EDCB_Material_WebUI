@@ -629,9 +629,11 @@ end
 function ReadToPcr(f,pid)
   for i=1,10000 do
     local buf=f:read(188)
-    if buf and #buf==188 and buf:byte(1)==0x47 then
-      --adaptation_field_control and adaptation_field_length and PCR_flag
-      if math.floor(buf:byte(4)/16)%4>=2 and buf:byte(5)>=5 and math.floor(buf:byte(6)/16)%2~=0 then
+    if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
+    local adaptation=math.floor(buf:byte(4)/16)%4
+    if adaptation>=2 then
+      --adaptation_field_length and PCR_flag
+      if buf:byte(5)>=5 and math.floor(buf:byte(6)/16)%2~=0 then
         local pcr=((buf:byte(7)*256+buf:byte(8))*256+buf:byte(9))*256+buf:byte(10)
         local pid2=buf:byte(2)%32*256+buf:byte(3)
         if not pid or pid==pid2 then
@@ -736,10 +738,10 @@ function GetTotAndServiceID(f)
       for i=1,400000 do
         local buf=f:read(188)
         if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
+        local errorAndUnitStart=math.floor(buf:byte(2)/64)
         local adaptation=math.floor(buf:byte(4)/16)%4
         local adaptationLen=adaptation==1 and -1 or adaptation==3 and buf:byte(5) or 183
-        --payload_unit_start_indicator
-        if math.floor(buf:byte(2)/64)%2==1 and adaptationLen<183 then
+        if errorAndUnitStart==1 and adaptationLen<183 then
           local pid=buf:byte(2)%32*256+buf:byte(3)
           local pointer=7+adaptationLen+buf:byte(6+adaptationLen)
           local id=pointer<=188 and buf:byte(pointer)

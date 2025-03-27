@@ -2143,8 +2143,8 @@ h4 .mdl-button--icon {
   #apps:not(:checked)~.contener {
     display:none; }
 
-#jk-comm {
-  flex-grow: 1; }
+#jikkyo-comm {
+  flex-grow: 1 !important; }
 
 
 /* ポップアップ */
