@@ -1603,6 +1603,7 @@ h4 .mdl-button--icon {
 #video {
   background-color: #000;
   max-width: 100%;
+  max-height: 100vh;
   min-width: 300px;
   min-height: 176px; }
   #video.is-loadding {
@@ -1623,13 +1624,17 @@ h4 .mdl-button--icon {
   section#movie #stop {
     display: none; }
 
-#movie-theater-contner #video {
-  min-height: min(calc(100vw * (9 / 16)), calc(90vh - 70px));
-  max-height: calc(90vh - 70px); }
+#movie-theater-contner {
+  background: #000;
+  #video {
+    min-height: min(calc(100vw * (9 / 16)), calc(90vh - 70px));
+    max-height: calc(90vh - 70px); } }
 
-#movie-contner #video {
-  min-height: min(calc(100vh * 0.666666666667 - 16px * 2), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16)));
-  max-height: calc(90vh - 70px); }
+#movie-contner {
+  background: #000;
+  #video {
+    min-height: max(calc(100vh * 0.666666666667 - 16px * 2), 270px);
+    max-height: calc(90vh - 70px); } }
   @media (max-width: 479px) {
     #movie-contner #video {
       min-height: calc((100vw - 16px) * (9 / 16)); } }
@@ -1717,6 +1722,8 @@ h4 .mdl-button--icon {
   #popup.is-visible #playerUI.is-visible > div {
     opacity: 1;
     pointer-events: auto; }
+  body#popup #player {
+    height: 100vh; }
   #popup #stop,
   #popup:not(.window) #playprev,
   #popup:not(.window) #playnext,
@@ -1996,7 +2003,7 @@ h4 .mdl-button--icon {
   display:         flex;
   flex-direction: column;
   overflow: auto; }
-  .is-small-screen .remote-control.disabled {
+  #main-column .remote-control.disabled {
     display: none; }
   div:not(#main-column)>.remote-control {
     width: 200px; }

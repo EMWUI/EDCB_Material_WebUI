@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
-    css='250326',
+    css='250327',
     common='250320',
     tvguide='241224',
-    player='250325',
+    player='250327',
     onair='250314',
-    library='250314',
+    library='250327',
     setting='241224',
     datastream='250323',
     legacy='20250321',
@@ -758,7 +758,7 @@ function PlayerTemplate(video, liveOrAudio)
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">
-<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" step="0.00001">')..[=[</div>
+<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0">')..[=[</div>
 <button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
 <div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon fill"><i class="material-icons fill">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span class="mdl-cell--hide-phone"><span> / </span><span class="duration videoTime">0:00</span></span></div>

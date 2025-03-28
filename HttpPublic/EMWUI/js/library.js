@@ -5,10 +5,9 @@ $(function(){
 	const getLibrary = hash => {
 		if (hash) {
 			const params = new URLSearchParams(location.search);
-			params.delete('i');
-			params.delete('d');
-			params.delete('p');
-			history.pushState(null, null, `?${$.param(hash)}${params.size>0?`&${params.toString()}`:''}`);
+			['i','p','d'].forEach(n => params.delete(n));
+			hash.forEach(v => params.append(v.name, v.value));
+			history.pushState(null, null, `?${params.toString()}`);
 		}
 		showSpinner(true);
 		$.get(`${ROOT}api/Library${location.search}`).done(xml => {
@@ -31,6 +30,7 @@ $(function(){
 			xml = $(xml).find('file');
 			$e.data({
 				path: xml.txt('path'),
+				name: xml.txt('name'),
 				public: xml.num('public') == 1,
 				meta: {
 					duration: xml.children('meta').num('duration'),
@@ -103,7 +103,9 @@ $(function(){
 					public: $(e).children('public').length > 0,
 				}).click(() => {
 					showSpinner(true);
-					history.pushState(null, null, `?${$.param(path)}&play=${$.param(hash).replaceAll('&','%26')}`);
+					const params = new URLSearchParams(location.search);
+					params.set('play', $.param(hash));
+					history.pushState(null, null, `?${params.toString()}`);
 					$('#popup').addClass('is-visible');
 					$('#playerUI').addClass('is-visible');
 					$audios.prop('checked', false);
@@ -154,7 +156,7 @@ $(function(){
 		const dirname = xml.txt('dirname');
 		$('.mdl-layout__header-row .mdl-layout-title').text(dirname);
 		if (!$(`#l_${id}`).length){
-			$('.path').html(createTab('home', 'ホーム', {}, dirname == 'ホーム'));
+			$('.path').html(createTab('home', 'ホーム', [], dirname == 'ホーム'));
 
 			if (xml.children('pathname').length){
 				xml.txt('pathname').split('/').forEach((e, i) => {

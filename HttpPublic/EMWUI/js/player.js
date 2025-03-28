@@ -6,19 +6,67 @@ let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
 vid = document.getElementById("video");
 const $vid = $(vid);
+
+if (vid.tagName == "CANVAS") vid = new class {
+	#playbackRate;
+	#paused;
+	#muted;
+	#volume;
+	constructor(e){
+		this.e = e;
+		this.currentTime = 0;
+		this.error = null;
+		this.#playbackRate = 1;
+		this.#paused = true;
+		this.#muted = false;
+		this.#volume = 1;
+	}
+	get tslive(){return true};
+	play(){
+		this.#paused = false;
+		this.mod&&this.mod.resumeMainLoop();
+		this.e.dispatchEvent(new Event('play'));
+	};
+	pause(){
+		this.#paused = true;
+		this.mod&&this.mod.pauseMainLoop();
+		this.e.dispatchEvent(new Event('pause'));
+	};
+	get paused(){return this.#paused};
+	set audioTrack(n){this.mod.setDualMonoMode(n)};
+	get muted(){return this.#muted};
+	set muted(b){
+		this.#muted = b;
+		this.mod&&this.mod.setAudioGain(b ? 0 : this.#volume);
+		this.e.dispatchEvent(new Event('volumechange'));
+	};
+	get volume(){return this.#volume};
+	set volume(n){
+		this.#volume = Number(n);
+		this.mod&&this.mod.setAudioGain(n);
+		this.e.dispatchEvent(new Event('volumechange'));
+	};
+	get playbackRate(){return this.#playbackRate};
+	set playbackRate(n){
+		this.#playbackRate = Number(n);
+		this.mod&&this.mod.setPlaybackRate(n);
+		this.e.dispatchEvent(new Event('ratechange'));
+	};
+	get clientHeight(){return this.e.clientHeight};
+	get clientWidth(){return this.e.clientWidth};
+	get height(){return this.e.height};
+	get width(){return this.e.width};
+}(vid);
+
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
-vid.tslive = vid.tagName == "CANVAS";
 if (vid.tslive){
-	vid.currentTime = 0;
-	vid.playbackRate = 1;
 	//自動再生ポリシー対策
-	vid._muted = vid.muted;
+	const muted = vid.muted;
 	vid.muted = true;
 	$(document).one('click', () => {
-		vid.muted = vid._muted;
-		vid.volumeIcon();
-		if (vid.autoplay) vid.autoplay();
+		vid.muted = muted;
+		document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
 	});	
 }
 
@@ -54,13 +102,20 @@ const stopTimer = () => {
 
 vcont = document.getElementById("vid-cont");
 const creatCap = () => {
-	cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
+	cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
 	if (vid.tslive){
 		cap.attachMedia(null,vcont);
 	}else{
 		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
 		cap.attachMedia(vid);
 	}
+}
+
+const loadDataStream = () => {
+	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
+	if ($subtitles.hasClass('checked')) creatCap();
+	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
+	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 }
 
 const errorHLS = () => {
@@ -75,15 +130,8 @@ const startHLS= src => {
 		hls = new Hls();
 		hls.loadSource(src);
 		hls.attachMedia(vid);
-		hls.on(Hls.Events.MANIFEST_PARSED,function(){
-			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-			if ($subtitles.hasClass('checked')) creatCap();
-			if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
-			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
-		});
-		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {
-			for(var i=0;i<data.samples.length;i++){cap.pushID3v2Data(data.samples[i].pts,data.samples[i].data);}
-		});
+		hls.on(Hls.Events.MANIFEST_PARSED, loadDataStream);
+		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
@@ -115,8 +163,8 @@ const reloadHls = ($e = $('.is_cast')) => {
 const loadTslive = ($e = $('.is_cast')) => {
 	const d = $e.data();
 	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
-		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&`}&option=${quality}${
-		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
+		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}`}&option=${quality}${
+		//!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
 		$cinema.prop('checked') ? '&cinema=1' : ''
 	}`;
 
@@ -159,20 +207,22 @@ const loadTslive = ($e = $('.is_cast')) => {
 			throw e;
 		});
 	}
-	if ($subtitles.hasClass('checked')) creatCap();
 
 	function startRead(mod){
 		var ctrl=new AbortController();
 		var uri=VideoSrc+seekParam;
 		seekParam="";
+		/*
 		if(uri.indexOf("&audio2=1")>=0){
 			//2nd audio channel
 			mod.setDualMonoMode(1);
 		}
+		*/
 		fetch(uri,{signal:ctrl.signal}).then(function(response){
 			if(!response.ok)return;
 			//Reset caption
-			if(cap)cap.attachMedia(null,vcont);
+			loadDataStream();
+			mod.setAudioGain(vid.muted?0:vid.volume);
 			vid.currentTime=0;
 			vid.seekWithoutTransition=function(ofssec){
 				vid.seekWithoutTransition=null;
@@ -180,8 +230,10 @@ const loadTslive = ($e = $('.is_cast')) => {
 				ctrl.abort();
 			};
 			vid.stop = () => {
-				mod.pauseMainLoop();
+				vid.pause();
+				mod.reset();
 				ctrl.abort();
+				navigator.gpu.requestAdapter().then(adapter=>adapter.requestDevice().then(device=>vid.e.getContext("webgpu").configure({device: device,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",})))
 			};
 			readNext(mod,response.body.getReader(),null);
 			//Prevent screen sleep
@@ -189,60 +241,39 @@ const loadTslive = ($e = $('.is_cast')) => {
 		});
 	}
 	if(!window.createWasmModule){
-		Snackbar('Error : Probably ts-live.js not found.');
-		$vid.removeClass('is-loadding');
+		vid.error = {code: 0, message: 'Probably ts-live.js not found.'};
+		vid.e.dispatchEvent(new Event('error'));
 		return;
 	}
 	if(!navigator.gpu){
-		Snackbar('Error : WebGPU not available.');
-		$vid.removeClass('is-loadding');
+		vid.error = {code: 0, message: 'WebGPU not available.'};
+		vid.e.dispatchEvent(new Event('error'));
 		return;
 	}
 	navigator.gpu.requestAdapter().then(function(adapter){
 		adapter.requestDevice().then(function(device){
 			createWasmModule({preinitializedWebGPUDevice:device}).then(function(mod){
+				vid.mod = mod;
+				vid.error = null;
+				let done;
 				var statsTime=0;
 				mod.setCaptionCallback(function(pts,ts,data){
 					if(cap)cap.pushRawData(statsTime+ts,data.slice());
 				});
-				var rangeVolume=document.getElementById("volume");
-				mod.setAudioGain(vid.muted?0:vid.volume);
-				vid.volumeIcon();
-				document.getElementById("volume-icon").onclick = () => {
-					mod.setAudioGain(vid.muted?0:vid.volume);
-					$vid.trigger('volumechange');
-				};
-				rangeVolume.oninput=function(){
-					mod.setAudioGain(vid.volume);
-					$vid.trigger('volumechange');
-				};
+				mod.setAudioGain(1);	//一発目無効対策
 				mod.setStatsCallback(function(stats){
 					if(statsTime!=stats[stats.length-1].time){
 						vid.currentTime+=stats[stats.length-1].time-statsTime;
 						statsTime=stats[stats.length-1].time;
-						$vid.trigger('timeupdate');
+						vid.e.dispatchEvent(new Event('timeupdate'));
 						if(cap)cap.onTimeupdate(statsTime);
 					}
+					if (done) return;
+					vid.e.dispatchEvent(new Event('canplay'));
+					done = true;
 				});
 				if(vid.playbackRate != 1) mod.setPlaybackRate(vid.playbackRate);
-				vid.autoplay= () => {
-					mod.setAudioGain(vid.muted?0:vid.volume);
-					document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
-					vid.volumeIcon();
-				}
-				vid.pause = () => {
-					vid.paused = true;
-					mod.pauseMainLoop();
-					vid.dispatchEvent(new Event('pause'));
-				};
-				vid.play = () => {
-					vid.paused = false;
-					mod.resumeMainLoop();
-					vid.dispatchEvent(new Event('play'));
-				};
-				vid.setPlaybackRate = () => mod.setPlaybackRate(vid.playbackRate);
-				$vid.trigger('play');
-				vid.paused = false;
+
 				setTimeout(function(){
 					startRead(mod);
 				},500);
@@ -293,11 +324,11 @@ const loadHls = ($e, reload) => {
 const checkTslive = () => {
 	const url = new URL(location.href);
 	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
-	if (tslive && !vid.tslive){
+	if (tslive && !url.searchParams.has('tslive')){
 		url.searchParams.append('tslive', 1);
 		location.replace(url);
 		return true;
-	}else if (!tslive && vid.tslive){
+	}else if (!tslive && url.searchParams.has('tslive')){
 		url.searchParams.delete('tslive');
 		location.replace(url);
 		return true;
@@ -428,10 +459,10 @@ $(function(){
 			$vid.removeClass('is-loadding');
 			$('.is_cast').removeClass('is_cast');
 			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
-			Snackbar(`Error : ${['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
+			Snackbar(`Error : ${[vid.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
 		'volumechange': () => {
-			vid.volumeIcon();
+			vid.onVolumeChange();
 			localStorage.setItem('volume', vid.volume);
 			localStorage.setItem('muted', vid.muted);
 		},
@@ -448,7 +479,7 @@ $(function(){
 					promise.catch(error => {
 						vid.muted = true;
 						vid.play();
-						vid.volumeIcon();
+						vid.onVolumeChange();
 						document.querySelector('#volume').MaterialSlider.change(0);
 						$(document).one('click', () => {
 							vid.muted = false;
@@ -465,7 +496,7 @@ $(function(){
 		},
 		'timeupdate': () => {
 			const d = $('.is_cast').data();
-			if (!d.meta) return;
+			if (!d) return;
 
 			let currentTime;
 			if (d.onid){
@@ -536,8 +567,8 @@ $(function(){
 		vid.muted = !vid.muted;
 		$volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume);
 	});
-	vid.volumeIcon = () => $volume_icon_i.text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
-	vid.volumeIcon();
+	vid.onVolumeChange = () => $volume_icon_i.text(`volume_${vid.muted ? 'off' : vid.volume == 0 ? 'mute' : vid.volume > 0.5 ? 'up' : 'down'}`);
+	vid.onVolumeChange();
 
 	$('#fullscreen').click(() => {
 		const player = document.querySelector('#player');
@@ -583,6 +614,7 @@ $(function(){
 	if (document.pictureInPictureEnabled){
 		document.getElementById('PIP').addEventListener('click', async () => {
 			if ('documentPictureInPicture' in window) {
+				theater ? $('#movie-theater-contner').height($vid.height()) : $('#movie-contner').height($vid.height()).width($vid.width());
 				$('.remote-control,#comment-control').prependTo('.player-container');
 				const content = document.getElementById('player');
 				const pipWindow = await documentPictureInPicture.requestWindow();
@@ -618,9 +650,11 @@ $(function(){
 					if(theater){
 						$remote_control.prependTo('#main-column');
 						$('.remote-control .num').addClass('hidden');
+						$('#movie-theater-contner').height('');
 					}else{
 						$('#comment-control').insertAfter('#apps-contener>.contener');
 						$remote_control.prependTo('#apps-contener>.contener>.contener');
+						$('#movie-contner').height('').width('');
 					}
 				});
 			}else 
@@ -666,17 +700,15 @@ $(function(){
 	});
 	$('[name=audio]').change(e => {
 		audioVal = $(e.currentTarget).val();
-		vid.tslive ? loadTslive() : reloadHls();
+		vid.tslive ? vid.audioTrack = audioVal : reloadHls();
 	});
 	$('#cinema,#fast').change(() => reloadHls());
 	const $rate = $('.rate');
-	$rate.change(e => {
-		vid.playbackRate = $(e.currentTarget).val();
-		if (vid.tslive) vid.setPlaybackRate();
-	});
+	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
 
 	//TS-Live!有効時、非対応端末は画質選択無効
 	$('.tslive').attr('disabled', !window.isSecureContext || !navigator.gpu);
+	$('#rate1').attr('disabled', vid.tslive).parent().attr('disabled', vid.tslive);
 
 
 	hideBar();
