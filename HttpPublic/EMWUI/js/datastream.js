@@ -106,7 +106,7 @@ toggleJikkyo=function(enabled,noSubStream){
         addMessage("Post error! ("+xhr.status+")");
       }
     };
-    var d=document.querySelector(".is_cast").dataset;
+    var d=$getCastClass().data();
     var postCommentQuery=`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}`;
     xhr.send(postCommentQuery+(commInput.className=="refuge"?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
   });
@@ -340,13 +340,13 @@ var Jikkyolog;
       readTimer=null;
       return;
     }
-    if(!$('.is_cast').data('path')) return;
+    if(!$getCastClass().data('path')) return;
     //ログをテキストデータとして直接取得するのでストリームは使わない
     toggleJikkyo(true,true);
     startRead();
     if(xhr)return;
     xhr=new XMLHttpRequest();
-    xhr.open("GET",`${ROOT}api/jklog?fname=${$('.is_cast').data('path').replace(/^(?:\.\.\/)+/,"")}`);
+    xhr.open("GET",`${ROOT}api/jklog?fname=${$getCastClass().data('path').replace(/^(?:\.\.\/)+/,"")}`);
     xhr.onloadend=function(){
       if(!logText){
         if(onJikkyoStreamError)onJikkyoStreamError(xhr.status,0);
@@ -382,7 +382,7 @@ var onDataStreamError=null;
     var ctx={};
     xhr=new XMLHttpRequest();
     xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+
-             (enableJikkyoSubStream&&onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
+             (enableJikkyoSubStream&&onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($getCastClass().data('ofssec') || 0)+Math.floor(vid.currentTime)));
     xhr.onloadend=function(){
       if(xhr&&(readCount==0||xhr.status!=0)){
         if(onDataStreamError)onDataStreamError(xhr.status,readCount);

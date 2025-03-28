@@ -22,6 +22,13 @@ if (vid.tslive){
 	});	
 }
 
+const $getCastClass = () => {
+	let $e = $(`.is_cast`);
+	//データ放送で#shadow-rootに潜ると見つからないため
+	if (!$e.length && $vid.hasClass('is_cast')) $e = $vid;
+	return $e;
+}
+
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
 	const h = Math.floor(t / 3600);
@@ -78,7 +85,7 @@ const errorHLS = () => {
 }
 
 const startHLS= src => {
-	if (!$('.is_cast').length) return;
+	if (!$getCastClass().length) return;
 
 	if (Hls.isSupported()){
 		hls = new Hls();
@@ -105,7 +112,7 @@ const resetVid = () => {
 	VideoSrc = null;
 }
 
-const reloadHls = ($e = $('.is_cast')) => {
+const reloadHls = ($e = $getCastClass()) => {
 	const d = $e.data();
 	if (!d) return;
 
@@ -118,7 +125,7 @@ const reloadHls = ($e = $('.is_cast')) => {
 	loadHls($e, matchReload && matchReload[1]);
 }
 
-const loadTslive = ($e = $('.is_cast')) => {
+const loadTslive = ($e = $getCastClass()) => {
 	const d = $e.data();
 	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
 		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&`}&option=${quality}${
@@ -321,7 +328,7 @@ const $quality = $('.quality');
 const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
-const loadMovie = ($e = $('.is_cast')) => {
+const loadMovie = ($e = $getCastClass()) => {
 	const d = $e.data();
 	//TS-Live!はTSファイルのみ
 	if (checkTslive(d.path && !/\.(?:m?ts|m2ts?)$/.test(d.path))) return;
@@ -437,7 +444,7 @@ $(function(){
 			if ($vid.attr('src') == '') return;
 
 			$vid.removeClass('is-loadding');
-			$('.is_cast').removeClass('is_cast');
+			$getCastClass().removeClass('is_cast');
 			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
 			Snackbar(`Error : ${['MEDIA_ERR_ABORTED','MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
@@ -451,7 +458,7 @@ $(function(){
 			hideBar(2000);
 			$vid.removeClass('is-loadding');
 
-			const d = $('.is_cast').data();
+			const d = $getCastClass().data();
 			if (!d.paused) {
 				const promise = vid.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
@@ -475,7 +482,7 @@ $(function(){
 			$seek.attr('max', vid.duration);
 		},
 		'timeupdate': () => {
-			const d = $('.is_cast').data();
+			const d = $getCastClass().data();
 			if (!d.meta) return;
 
 			let currentTime;
@@ -507,7 +514,7 @@ $(function(){
 		history.replaceState(null,null,`${params.size>0?`?${params.toString()}`:location.pathname}`);
 		$vid.removeClass('is-loadding');
 		$epginfo.addClass('hidden');
-		$('.is_cast').removeClass('is_cast');
+		$getCastClass().removeClass('is_cast');
 		$('.playing').removeClass('playing');
 		$titlebar.empty();
 		$seek.hasClass('mdl-progress') ? seek.MaterialProgress.setProgress(0) : seek.MaterialSlider.change(0);
@@ -520,7 +527,7 @@ $(function(){
 		'touchstart mousedown': () => $seek.data('touched', true),
 		'touchend mouseup': () => $seek.data('touched', false),
 		'change': () => {
-			const d = $('.is_cast').data();
+			const d = $getCastClass().data();
 			if (vid.tslive){
 				d.ofssec = Math.floor($seek.val());
 				openSubStream();
@@ -533,7 +540,7 @@ $(function(){
 		},
 		'input': () => {
 			$currentTime.text(getVideoTime($seek.val()));
-			if ($('.is_cast').data('canPlay'))vid.currentTime = $seek.val();
+			if ($getCastClass().data('canPlay'))vid.currentTime = $seek.val();
 		}
 	});
 
@@ -739,7 +746,7 @@ $(function(){
 			const disabled = !$remote_control.hasClass('disabled');
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
-			if ($('.is_cast').data('canPlay')){
+			if ($getCastClass().data('canPlay')){
 				cbDatacast(!disabled);
 				return;
 			}
@@ -761,7 +768,7 @@ $(function(){
 				$remote.toggleClass('mdl-button--accent', DataStream);
 				const disabled = $remote_control.hasClass('disabled');
 
-				if ($('.is_cast').data('canPlay')){
+				if ($getCastClass().data('canPlay')){
 					cbDatacast(!disabled);
 					return;
 				}
@@ -790,7 +797,7 @@ $(function(){
 
 			if($danmaku.hasClass('checked')){
 				if (!onJikkyoStream){
-					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+					if ($getCastClass().data('canPlay')) Jikkyolog(true);
 					else toggleJikkyo(true);
 				}
 				if (danmaku) danmaku.show();
@@ -811,7 +818,7 @@ $(function(){
 				localStorage.setItem('Jikkyo', Jikkyo);
 				if (Jikkyo){
 					if (!onJikkyoStream){
-						if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+						if ($getCastClass().data('canPlay')) Jikkyolog(true);
 						else toggleJikkyo(true);
 					}
 					$danmaku.addClass('mdl-button--accent');
