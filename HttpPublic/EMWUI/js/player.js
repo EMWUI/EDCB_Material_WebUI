@@ -54,13 +54,22 @@ const stopTimer = () => {
 
 vcont = document.getElementById("vid-cont");
 const creatCap = () => {
-	cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
+	if (!cap){
+		cap = aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
+	}
 	if (vid.tslive){
 		cap.attachMedia(null,vcont);
 	}else{
 		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
 		cap.attachMedia(vid);
 	}
+}
+
+const onStreamStarted = () => {
+	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
+	if ($subtitles.hasClass('checked')) creatCap();
+	if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
+	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 }
 
 const errorHLS = () => {
@@ -75,12 +84,7 @@ const startHLS= src => {
 		hls = new Hls();
 		hls.loadSource(src);
 		hls.attachMedia(vid);
-		hls.on(Hls.Events.MANIFEST_PARSED,function(){
-			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-			if ($subtitles.hasClass('checked')) creatCap();
-			if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
-			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
-		});
+		hls.on(Hls.Events.MANIFEST_PARSED, onStreamStarted);
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {
 			for(var i=0;i<data.samples.length;i++){cap.pushID3v2Data(data.samples[i].pts,data.samples[i].data);}
 		});
@@ -95,6 +99,8 @@ const resetVid = () => {
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
+	cbDatacast(false, true);
+	Jikkyolog(false, true);
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
 }
@@ -159,8 +165,8 @@ const loadTslive = ($e = $('.is_cast')) => {
 			throw e;
 		});
 	}
-	if ($subtitles.hasClass('checked')) creatCap();
 
+	var started=false;
 	function startRead(mod){
 		var ctrl=new AbortController();
 		var uri=VideoSrc+seekParam;
@@ -171,6 +177,10 @@ const loadTslive = ($e = $('.is_cast')) => {
 		}
 		fetch(uri,{signal:ctrl.signal}).then(function(response){
 			if(!response.ok)return;
+			if(!started){
+				started=true;
+				onStreamStarted();
+			}
 			//Reset caption
 			if(cap)cap.attachMedia(null,vcont);
 			vid.currentTime=0;
@@ -290,9 +300,9 @@ const loadHls = ($e, reload) => {
 	}
 }
 
-const checkTslive = () => {
+const checkTslive = (forceDisable) => {
 	const url = new URL(location.href);
-	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
+	const tslive = !forceDisable && $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
 	if (tslive && !vid.tslive){
 		url.searchParams.append('tslive', 1);
 		location.replace(url);
@@ -312,8 +322,9 @@ const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const loadMovie = ($e = $('.is_cast')) => {
-	if (checkTslive()) return;
 	const d = $e.data();
+	//TS-Live!はTSファイルのみ
+	if (checkTslive(d.path && !/\.(?:m?ts|m2ts?)$/.test(d.path))) return;
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -338,7 +349,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${d.path}`;
 		$vid.attr('src', path);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
+		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		vid.tslive ? loadTslive($e) : loadHls($e);
@@ -512,6 +523,7 @@ $(function(){
 			const d = $('.is_cast').data();
 			if (vid.tslive){
 				d.ofssec = Math.floor($seek.val());
+				openSubStream();
 				vid.seekWithoutTransition(d.ofssec);
 			}else{
 				if (d.canPlay) return
@@ -728,7 +740,7 @@ $(function(){
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
 			if ($('.is_cast').data('canPlay')){
-				cbDatacast();
+				cbDatacast(!disabled);
 				return;
 			}
 
@@ -747,16 +759,17 @@ $(function(){
 				DataStream = !DataStream;
 				localStorage.setItem('DataStream', DataStream);
 				$remote.toggleClass('mdl-button--accent', DataStream);
+				const disabled = $remote_control.hasClass('disabled');
 
 				if ($('.is_cast').data('canPlay')){
-					cbDatacast();
+					cbDatacast(!disabled);
 					return;
 				}
 	
 				if (DataStream){
 					if (!onDataStream) toggleDataStream(true);
 				}else{
-					if ($remote_control.hasClass('disabled')) toggleDataStream(false);
+					if (disabled) toggleDataStream(false);
 				}
 			}, 1000));
 		}
@@ -775,17 +788,17 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			if ($danmaku.data('log')){
-				if (!$('.is_cast').data('path')) return;
-				Jikkyolog();
-				return;
-			}
-
 			if($danmaku.hasClass('checked')){
-				if (!onJikkyoStream) toggleJikkyo(true);
+				if (!onJikkyoStream){
+					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+					else toggleJikkyo(true);
+				}
 				if (danmaku) danmaku.show();
 			}else{
-				if (!Jikkyo) toggleJikkyo(false);
+				if (!Jikkyo){
+					toggleJikkyo(false);
+					Jikkyolog(false);
+				}
 				if (danmaku) danmaku.hide();
 			}
 		},
@@ -797,10 +810,16 @@ $(function(){
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
 				if (Jikkyo){
-					if (!onJikkyoStream) toggleJikkyo();
+					if (!onJikkyoStream){
+						if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+						else toggleJikkyo(true);
+					}
 					$danmaku.addClass('mdl-button--accent');
 				}else{
-					if (!$danmaku.hasClass('checked')) toggleJikkyo(false);
+					if (!$danmaku.hasClass('checked')){
+						toggleJikkyo(false);
+						Jikkyolog(false);
+					}
 					$danmaku.removeClass('mdl-button--accent');
 				}
 			}, 1000));

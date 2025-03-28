@@ -56,7 +56,8 @@ window.addEventListener('resize', () => setbmlBrowserSize());
 var danmaku=null;
 var onJikkyoStream=null;
 var onJikkyoStreamError=null;
-toggleJikkyo=function(enabled){
+var enableJikkyoSubStream=false;
+toggleJikkyo=function(enabled,noSubStream){
   if(enabled===false||enabled===undefined&&onJikkyoStream){
     onJikkyoStream=null;
     onJikkyoStreamError=null;
@@ -65,8 +66,9 @@ toggleJikkyo=function(enabled){
     $('#jk-comm').empty();
     return;
   }
-  if (!VideoSrc) return;
   var comm=document.getElementById("jk-comm");
+  if (!comm||!(noSubStream||VideoSrc)) return;
+  enableJikkyoSubStream=!noSubStream;
   if(!danmaku){
     danmaku=new Danmaku({
       container:document.getElementById("danmaku-container"),
@@ -199,8 +201,10 @@ toggleJikkyo=function(enabled){
   onJikkyoStreamError=function(status,readCount){
     addMessage("Error! ("+status+"|"+readCount+"Bytes)");
   };
-  openSubStream();
-  addMessage('接続開始');
+  if(enableJikkyoSubStream){
+    openSubStream();
+    addMessage('接続開始');
+  }
 };
 
 var vidMeta=document.getElementById("vid-meta");
@@ -226,6 +230,7 @@ loadVtt=function(){
   })();
 };
 
+//データ放送(直接再生するメディアファイル向け)
 var cbDatacast;
 (function(){
   var psiData=null;
@@ -255,8 +260,15 @@ var cbDatacast;
     readTimer=setTimeout(read,500);
   }
   var xhr=null;
-  cbDatacast=function(){
-    if(!$remote_control.hasClass('disabled')){
+  cbDatacast=function(enabled,clearResponse){
+    if(clearResponse){
+      if(xhr){
+        xhr.abort();
+        xhr=null;
+      }
+      psiData=null;
+    }
+    if(!enabled){
       clearTimeout(readTimer);
       readTimer=null;
       bmlBrowserSetInvisible(true);
@@ -285,7 +297,8 @@ var cbDatacast;
   };
 })();
 
-var Jikkyolog;    
+//実況ログ(直接再生するメディアファイル向け)
+var Jikkyolog;
 (function(){
   var logText=null;
   var readTimer=null;
@@ -313,14 +326,23 @@ var Jikkyolog;
     readTimer=setTimeout(read,200);
   }
   var xhr=null;
-  Jikkyolog=function(){
-    if($danmaku.hasClass('checked')){
+  Jikkyolog=function(enabled,clearResponse){
+    if(clearResponse){
+      if(xhr){
+        xhr.abort();
+        xhr=null;
+      }
+      logText=null;
+    }
+    if(!enabled){
       toggleJikkyo(false);
       clearTimeout(readTimer);
       readTimer=null;
       return;
     }
-    toggleJikkyo(true);
+    if(!$('.is_cast').data('path')) return;
+    //ログをテキストデータとして直接取得するのでストリームは使わない
+    toggleJikkyo(true,true);
     startRead();
     if(xhr)return;
     xhr=new XMLHttpRequest();
@@ -349,18 +371,18 @@ var onDataStreamError=null;
     if(xhr){
       xhr.abort();
       xhr=null;
-      if(onDataStream||onJikkyoStream){
+      if(onDataStream||(enableJikkyoSubStream&&onJikkyoStream)){
         reopen=true;
         setTimeout(function(){reopen=false;openSubStream();},5000);
       }
       return;
     }
-    if(!onDataStream&&!onJikkyoStream)return;
+    if(!onDataStream&&!(enableJikkyoSubStream&&onJikkyoStream))return;
     var readCount=0;
     var ctx={};
     xhr=new XMLHttpRequest();
     xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+
-             (onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
+             (enableJikkyoSubStream&&onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
     xhr.onloadend=function(){
       if(xhr&&(readCount==0||xhr.status!=0)){
         if(onDataStreamError)onDataStreamError(xhr.status,readCount);
