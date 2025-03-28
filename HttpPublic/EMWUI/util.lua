@@ -66,7 +66,7 @@ function Template(temp)
 <title>EpgTimer</title>
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
-<link rel="manifest" href="]=]..path..[=[manifest.json">
+<link rel="manifest" href="]=]..path..[=[manifest.json" crossorigin="use-credentials">
 ]=]..css..[=[
 <link rel="stylesheet" href="]=]..path..[=[css/default.css]=]..Version('css')..[=[">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
