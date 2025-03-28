@@ -114,7 +114,7 @@ const resetVid = () => {
 
 const reloadHls = ($e = $getCastClass()) => {
 	const d = $e.data();
-	if (!d) return;
+	if (!d || d.canPlay) return;
 
 	d.paused = vid.paused;
 	d.ofssec = Math.floor($('input#seek').val());
@@ -241,7 +241,6 @@ const loadTslive = ($e = $getCastClass()) => {
 						if(cap)cap.onTimeupdate(statsTime);
 					}
 				});
-				if(vid.playbackRate != 1) mod.setPlaybackRate(vid.playbackRate);
 				vid.autoplay= () => {
 					mod.setAudioGain(vid.muted?0:vid.volume);
 					document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
@@ -257,7 +256,12 @@ const loadTslive = ($e = $getCastClass()) => {
 					mod.resumeMainLoop();
 					vid.dispatchEvent(new Event('play'));
 				};
-				vid.setPlaybackRate = () => mod.setPlaybackRate(vid.playbackRate);
+				vid.setPlaybackRate = (fastRateID) => {
+					mod.setPlaybackRate(vid.playbackRate);
+					//主ストリームは再接続不要だが副ストリームは再接続が必要。倍速オプションを置換
+					VideoSrc = VideoSrc.replace(/&fast=\d+/, '') + `&fast=${fastRateID.substring(4)}`;
+					openSubStream();
+				};
 				$vid.trigger('play');
 				vid.paused = false;
 				setTimeout(function(){
@@ -293,6 +297,10 @@ const loadHls = ($e, reload) => {
 		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
 		$cinema.prop('checked') ? '&cinema=1' : ''
 	}`;
+	const fastRateID = $('[name=rate]:checked').attr('id');
+	if (fastRateID){
+		VideoSrc += `&fast=${fastRateID.substring(4)}`;
+	}
 
 	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？
 	if (window.Hls != undefined){
@@ -687,11 +695,13 @@ $(function(){
 		audioVal = $(e.currentTarget).val();
 		vid.tslive ? loadTslive() : reloadHls();
 	});
-	$('#cinema,#fast').change(() => reloadHls());
+	$('#cinema').change(() => reloadHls());
 	const $rate = $('.rate');
 	$rate.change(e => {
-		vid.playbackRate = $(e.currentTarget).val();
-		if (vid.tslive) vid.setPlaybackRate();
+		const $e = $(e.currentTarget);
+		vid.playbackRate = $e.val();
+		if (vid.tslive) vid.setPlaybackRate($e.attr('id'));
+		else reloadHls();
 	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効
