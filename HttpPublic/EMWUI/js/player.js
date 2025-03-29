@@ -67,7 +67,6 @@ const creatCap = () => {
 	if (vid.tslive){
 		cap.attachMedia(null,vcont);
 	}else{
-		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
 		cap.attachMedia(vid);
 	}
 }
@@ -738,8 +737,11 @@ $(function(){
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
 		if ($subtitles.hasClass('checked')){
-			if (!cap) creatCap();
-			cap.show();
+			if (!cap){
+				if ($getCastClass().data('canPlay')) loadVtt();
+				else creatCap();
+			}
+			if (cap) cap.show();
 		}else if (cap){
 			cap.hide();
 		}
