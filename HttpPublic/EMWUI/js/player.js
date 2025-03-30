@@ -52,6 +52,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.mod&&this.mod.setPlaybackRate(n);
 		this.e.dispatchEvent(new Event('ratechange'));
 	};
+	canPlayType(s){return document.createElement('video').canPlayType(s)};
+
 	get clientHeight(){return this.e.clientHeight};
 	get clientWidth(){return this.e.clientWidth};
 	get height(){return this.e.height};
@@ -109,13 +111,14 @@ const creatCap = () => {
 		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
 		cap.attachMedia(vid);
 	}
+	if (!$subtitles.hasClass('checked')) cap.hide();
 }
 
 const loadDataStream = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-	if ($subtitles.hasClass('checked')) creatCap();
 	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
+	creatCap();
 }
 
 const errorHLS = () => {
@@ -143,6 +146,7 @@ const resetVid = () => {
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
+	vid.src = '';
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
 }
@@ -321,16 +325,18 @@ const loadHls = ($e, reload) => {
 	}
 }
 
-const checkTslive = () => {
+const checkTslive = d => {
 	const url = new URL(location.href);
 	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
-	if (tslive && !url.searchParams.has('tslive')){
+	if (tslive && d&&!d.canPlay && !vid.tslive){
 		url.searchParams.append('tslive', 1);
-		location.replace(url);
+		history.replaceState(null, null, url);
+		location.reload();
 		return true;
-	}else if (!tslive && url.searchParams.has('tslive')){
+	}else if (!tslive || d&&d.canPlay && vid.tslive){
 		url.searchParams.delete('tslive');
-		location.replace(url);
+		history.replaceState(null, null, url);
+		location.reload();
 		return true;
 	}
 };
@@ -343,8 +349,9 @@ const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const loadMovie = ($e = $('.is_cast')) => {
-	if (checkTslive()) return;
 	const d = $e.data();
+	d.canPlay = d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
+	if (checkTslive(d)) return;
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -362,7 +369,6 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$remote_control.addClass('disabled').find('button').prop('disabled', true);
 	}
 
-	d.canPlay = !vid.tslive && d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
@@ -393,8 +399,7 @@ const playMovie = $e => {
 		hideBar(2000);
 		vid.play();
 	}else{
-		vid.src = '';
-		seek.MaterialSlider.change(0);
+		seek.MaterialSlider&&seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$audios.attr('disabled', true);
 		$('.playing').removeClass('is_cast playing');
@@ -490,7 +495,6 @@ $(function(){
 			}
 			if (!d.canPlay) return;
 
-			if ($subtitles.hasClass('checked')) loadVtt();
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
 		},
@@ -520,7 +524,6 @@ $(function(){
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
 		resetVid();
-		vid.src = '';
 		const params = new URLSearchParams(location.search);
 		params.delete('id');
 		params.delete('play');
@@ -740,12 +743,8 @@ $(function(){
 	$subtitles.click(() => {
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
-		if ($subtitles.hasClass('checked')){
-			if (!cap) creatCap();
-			cap.show();
-		}else if (cap){
-			cap.hide();
-		}
+		if (!cap) return;
+		$subtitles.hasClass('checked') ? cap.show() : cap.hide();
 	});
 	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
 

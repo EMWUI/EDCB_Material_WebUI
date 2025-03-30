@@ -204,7 +204,7 @@ else
         ref=PathAppend(dir,info.name)
         table.insert(ct, '<file><path>'
             ..(NativeToDocumentPath(ref) and mg.url_encode(NativeToDocumentPath(ref)):gsub('%%2f', '/')..'</path><public>1</public>'
-                                          or mg.url_encode(ref):gsub('%%2f', '/')..'</path>\n')..'<name>\n'
+                                          or mg.url_encode(ref):gsub('%%2f', '/')..'</path>\n')..'<name>'
           ..EdcbHtmlEscape(info.name)..'</name><hash>'
           ..mg.md5(info.name)..'</hash><date>'
           ..TimeWithZone(info.mtime, 9*3600)..'</date><size>'

@@ -206,18 +206,16 @@ toggleJikkyo=function(enabled){
   addMessage('接続開始');
 };
 
-var vidMeta=document.getElementById("vid-meta");
-loadVtt=function(){
+document.getElementById("vid-meta").oncuechange=function(){
   var work=[];
   var dataList=[];
-  var cues=vidMeta.track.cues;
+  var cues=this.track.cues;
   for(var i=0;i<cues.length;i++){
     var ret=decodeB24CaptionFromCueText(cues[i].text,work);
     if(!ret){return;}
     for(var j=0;j<ret.length;j++){dataList.push({pts:cues[i].startTime,pes:ret[j]});}
   }
   creatCap();
-  if(!$subtitles.hasClass('checked')){cap.hide();}
   dataList.reverse();
   (function pushCap(){
     for(var i=0;i<100;i++){
