@@ -328,18 +328,18 @@ const loadHls = ($e, reload) => {
 const checkTslive = d => {
 	const url = new URL(location.href);
 	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
-	if (tslive && d&&!d.canPlay && !vid.tslive){
+	if (!vid.tslive && tslive && d&&!d.canPlay){
 		url.searchParams.append('tslive', 1);
 		history.replaceState(null, null, url);
 		location.reload();
 		return true;
-	}else if (!tslive || d&&d.canPlay && vid.tslive){
+	}else if (vid.tslive && !tslive || d&&d.canPlay){
 		url.searchParams.delete('tslive');
 		history.replaceState(null, null, url);
 		location.reload();
 		return true;
 	}
-};
+}
 
 const seek = document.querySelector('#seek');
 const $seek = $(seek);
