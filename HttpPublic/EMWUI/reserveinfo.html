@@ -53,7 +53,8 @@ if r then
     ..'</section>\n'
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
-      ..PlayerTemplate('preload="none" data-reid="'..r.reserveID..'" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\' class="is_cast"', audio)
+      ..PlayerTemplate('preload="none"', audio)
+      ..'<div class="is_cast hidden" data-reid="'..r.reserveID..'" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 

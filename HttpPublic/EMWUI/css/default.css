@@ -2086,6 +2086,10 @@ h4 .mdl-button--icon {
 
 .data-broadcasting-browser-container {
   overflow: hidden; }
+  body#popup:not(:has(#video)) .data-broadcasting-browser-container {
+    height: 100vh;
+    display: flex;
+    align-items: center; }
 .data-broadcasting-browser-content {
   display:none; }
 .remote-control-status {

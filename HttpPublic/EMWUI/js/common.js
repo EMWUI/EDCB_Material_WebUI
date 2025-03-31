@@ -929,10 +929,10 @@ $(function(){
 	$('.mdl-layout__tab').click(() => $('main').scrollTop(0));
 	//再生タブ
 	$('#movie_tab').click(() => {
-		if ($('#video').data('load')) return;
+		if ($('#video').data('loaded')) return;
 
-		if (!$('#video').data('public')) loadMovie($('#video'));
-		$('#video').trigger('load').data('load', true);
+		if (!$('.is_cast').data('public')) loadMovie($('.is_cast'));
+		$('#video').trigger('load').data('loaded', true);
 	});
 
 	//通知

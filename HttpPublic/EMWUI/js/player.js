@@ -617,9 +617,10 @@ $(function(){
 	if (document.pictureInPictureEnabled){
 		document.getElementById('PIP').addEventListener('click', async () => {
 			if ('documentPictureInPicture' in window) {
-				theater ? $('#movie-theater-contner').height($vid.height()) : $('#movie-contner').height($vid.height()).width($vid.width());
 				$('.remote-control,#comment-control').prependTo('.player-container');
 				const content = document.getElementById('player');
+				const container = content.parentNode;
+				$(container).height($vid.height());
 				const pipWindow = await documentPictureInPicture.requestWindow();
 
 				// Copy style sheets over from the initial document
@@ -646,8 +647,8 @@ $(function(){
 				pipWindow.document.body.setAttribute('class','is-visible');
 				pipWindow.document.body.append(content);
 				
+				pipWindow.addEventListener('resize', () => setbmlBrowserSize());
 				pipWindow.addEventListener("pagehide", (event) => {
-					const container = document.getElementById((theater ? "movie-theater-contner" : "movie-contner"));
 					const pipContent = event.target.getElementById("player");
 					container.append(pipContent);
 					if(theater){

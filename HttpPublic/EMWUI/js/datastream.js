@@ -206,10 +206,10 @@ toggleJikkyo=function(enabled){
   addMessage('接続開始');
 };
 
-document.getElementById("vid-meta").oncuechange=function(){
+$('#vid-meta').on('cuechange', e => {
   var work=[];
   var dataList=[];
-  var cues=this.track.cues;
+  var cues=e.target.track.cues;
   for(var i=0;i<cues.length;i++){
     var ret=decodeB24CaptionFromCueText(cues[i].text,work);
     if(!ret){return;}
@@ -225,7 +225,7 @@ document.getElementById("vid-meta").oncuechange=function(){
     }
     setTimeout(pushCap,0);
   })();
-};
+});
 
 var cbDatacast;
 (function(){
