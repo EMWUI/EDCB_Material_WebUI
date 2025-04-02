@@ -1,6 +1,8 @@
 let fullscreen, theater;
 let readyToAutoPlay;
 let VideoSrc;
+const videoParams = new URLSearchParams();
+const streamParams = new URLSearchParams();
 let hls, cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
@@ -114,7 +116,7 @@ const creatCap = () => {
 	if (!$subtitles.hasClass('checked')) cap.hide();
 }
 
-const loadDataStream = () => {
+const onStreamStarted = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
@@ -133,19 +135,20 @@ const startHLS= src => {
 		hls = new Hls();
 		hls.loadSource(src);
 		hls.attachMedia(vid);
-		hls.on(Hls.Events.MANIFEST_PARSED, loadDataStream);
+		hls.on(Hls.Events.MANIFEST_PARSED, onStreamStarted);
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
 }
 
-const resetVid = () => {
+const resetVid = reload => {
 	if (hls) hls.destroy();
 	if (cap) cap.detachMedia();
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
+	if (reload) return;
 	vid.src = '';
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
@@ -156,22 +159,20 @@ const reloadHls = ($e = $('.is_cast')) => {
 	if (!d) return;
 
 	d.paused = vid.paused;
-	d.ofssec = Math.floor($('input#seek').val());
+	const key = $Time_wrap.hasClass('offset') ? 'offset' : 'ofssec';
+	d[key] = Math.floor($('input#seek').val());
+	d[key] > 0 ? videoParams.set(key, d[key]) : videoParams.delete(key);
 	$vid.addClass('is-loadding');
-	resetVid();
+	resetVid(true);
 
-	const matchReload = (VideoSrc || '').match(/&(?:re)?load=([0-9]+)/);
-	loadHls($e, matchReload && matchReload[1]);
+	if (videoParams.has('load')){
+		videoParams.set('reload', videoParams.get('load'));
+		videoParams.delete('load');
+	}
+	loadHls();
 }
 
-const loadTslive = ($e = $('.is_cast')) => {
-	const d = $e.data();
-	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
-		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}`}&option=${quality}${
-		//!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
-		$cinema.prop('checked') ? '&cinema=1' : ''
-	}`;
-
+const loadTslive = () => {
 	var wakeLock=null;
 	var seekParam="";
 	function readNext(mod,reader,ret){
@@ -216,16 +217,10 @@ const loadTslive = ($e = $('.is_cast')) => {
 		var ctrl=new AbortController();
 		var uri=VideoSrc+seekParam;
 		seekParam="";
-		/*
-		if(uri.indexOf("&audio2=1")>=0){
-			//2nd audio channel
-			mod.setDualMonoMode(1);
-		}
-		*/
 		fetch(uri,{signal:ctrl.signal}).then(function(response){
 			if(!response.ok)return;
 			//Reset caption
-			loadDataStream();
+			onStreamStarted();
 			mod.setAudioGain(vid.muted?0:vid.volume);
 			vid.currentTime=0;
 			vid.seekWithoutTransition=function(ofssec){
@@ -294,46 +289,35 @@ const $cinema = $('#cinema');
 const $remote = $('#remote');
 const $remote_control = $('.remote-control');
 const $danmaku = $('#danmaku');
-let quality = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1;
-let audioVal = 0;
-const loadHls = ($e, reload) => {
-	const d = $e.data();
-
+const loadHls = () => {
 	let dateNow = new Date();
 	dateNow = (dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
 	const hls1 = `&hls=${1+dateNow}`;
-
-	VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}` : `xcode?${
-		d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}&${
-		d.ofssec > 0 ? `ofssec=${d.ofssec}&` : ''}${
-		reload ? `reload=${reload}` : `load=${dateNow}`	//最初にユニークな値をつくりリロード時に値を引きつぐ
-	}`}&option=${quality}${
-		!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${
-		$cinema.prop('checked') ? '&cinema=1' : ''
-	}`;
+	if (!videoParams.has('reload')) videoParams.set('load', dateNow);	//最初にユニークな値をつくりリロード時に値を引きつぐ
 
 	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？
 	if (window.Hls != undefined){
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}&${videoParams.toString()}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${VideoSrc}&${videoParams.toString()}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
 		vid.src = VideoSrc;
 	}
 }
 
-const checkTslive = d => {
+const checkTslive = path => {
 	const url = new URL(location.href);
-	const tslive = $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
-	if (!vid.tslive && tslive && d&&!d.canPlay){
-		url.searchParams.append('tslive', 1);
+	const isTs = !path || /\.(?:m?ts|m2ts?)$/.test(path);
+	const tslive = isTs && $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
+	if (!vid.tslive && tslive){
+		url.searchParams.set('tslive', 1);
 		history.replaceState(null, null, url);
 		location.reload();
 		return true;
-	}else if (vid.tslive && !tslive || d&&d.canPlay){
+	}else if (vid.tslive && !tslive){
 		url.searchParams.delete('tslive');
 		history.replaceState(null, null, url);
 		location.reload();
@@ -351,7 +335,7 @@ const $titlebar = $('#titlebar');
 const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
 	d.canPlay = d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
-	if (checkTslive(d)) return;
+	if (checkTslive(d.path)) return;
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -378,14 +362,26 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		vid.tslive ? loadTslive($e) : loadHls($e);
+		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
+		                                : `xcode?${d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
+	
+		if (vid.tslive){
+			VideoSrc += `&option=${videoParams.get('option')}`
+			loadTslive();
+		}else{
+			['ofssec','offset','reload','audio2'].forEach(e => videoParams.delete(e));
+			loadHls();
+		}
 		if (!d.meta) return;
 
 		if (d.meta.duration){
 			$duration.text(getVideoTime(d.meta.duration));
 			$seek.attr('max', d.meta.duration);
-		}
-		$Time_wrap.toggleClass('is-disabled', !d.meta.duration);
+		}else{
+			$duration.text(getVideoTime());
+			$seek.attr('max', 100)
+		};
+		$Time_wrap.toggleClass('offset', !d.meta.duration);
 	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
@@ -511,7 +507,7 @@ $(function(){
 				if ($seek.data('touched')) return;
 
 				currentTime = vid.currentTime + (d.ofssec || 0);
-				seek.MaterialSlider.change(currentTime);
+				if (!$Time_wrap.hasClass('offset')) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		}
@@ -544,13 +540,14 @@ $(function(){
 		'touchend mouseup': () => $seek.data('touched', false),
 		'change': () => {
 			const d = $('.is_cast').data();
+			if (d.canPlay) return;
 			if (vid.tslive){
 				d.ofssec = Math.floor($seek.val());
 				vid.seekWithoutTransition(d.ofssec);
 			}else{
-				if (d.canPlay) return
-
-				d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration ? vid.currentTime = $seek.val() - d.ofssec : reloadHls();
+				if (d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration)
+					vid.currentTime = $seek.val() - d.ofssec;
+				else reloadHls();
 			}
 		},
 		'input': () => {
@@ -689,24 +686,26 @@ $(function(){
 	});
 
 	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
+	videoParams.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
-		if ($e.prop('checked')){
-			quality = $e.val();
-			localStorage.setItem('quality', $e.attr('id'));
-		}else{
-			localStorage.removeItem('quality');
-		}
+		localStorage.setItem('quality', $e.attr('id'));
+		videoParams.set('option', $e.val());
 
 		checkTslive();
 
 		if (!$vid.data('cast') || localStorage.getItem('apk') != 'true') reloadHls();
 	});
 	$('[name=audio]').change(e => {
-		audioVal = $(e.currentTarget).val();
-		vid.tslive ? vid.audioTrack = audioVal : reloadHls();
+		const val = $(e.currentTarget).val();
+		videoParams.set('audio2', val);
+		vid.tslive ? vid.audioTrack = val : reloadHls();
 	});
-	$('#cinema,#fast').change(() => reloadHls());
+	$('#cinema').change(e => {
+		if ($(e.currentTarget).checked()) videoParams.set('cinema', 1);
+		else videoParams.delete('cinema');
+		reloadHls();
+	});
 	const $rate = $('.rate');
 	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
 

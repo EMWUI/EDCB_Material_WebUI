@@ -58,6 +58,7 @@ var onJikkyoStream=null;
 var onJikkyoStreamError=null;
 toggleJikkyo=function(enabled){
   if(enabled===false||enabled===undefined&&onJikkyoStream){
+    streamParams.delete('jikkyo');
     onJikkyoStream=null;
     onJikkyoStreamError=null;
     openSubStream();
@@ -126,6 +127,7 @@ toggleJikkyo=function(enabled){
   var scatter=[];
   var scatterInterval=200;
   var closed=false;
+  streamParams.set('jikkyo', 1);
   onJikkyoStream=function(tag){
       if(/^<chat /.test(tag)){
       var c=parseChatTag(replaceTag(tag));
@@ -359,9 +361,9 @@ var onDataStreamError=null;
     if(!onDataStream&&!onJikkyoStream)return;
     var readCount=0;
     var ctx={};
+    videoParams.set('ofssec', ($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime));
     xhr=new XMLHttpRequest();
-    xhr.open("GET",VideoSrc+(onDataStream?"&psidata=1":"")+
-             (onJikkyoStream?"&jikkyo=1":"")+"&ofssec="+(($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime)));
+    xhr.open("GET",`${VideoSrc}&${videoParams.toString()}&${streamParams.toString()}`);
     xhr.onloadend=function(){
       if(xhr&&(readCount==0||xhr.status!=0)){
         if(onDataStreamError)onDataStreamError(xhr.status,readCount);
@@ -381,6 +383,7 @@ var onDataStreamError=null;
 //データ放送
 toggleDataStream=function(enabled){
   if (enabled===false||enabled===undefined&&onDataStream){
+    streamParams.delete('psidata');
     onDataStream=null;
     onDataStreamError=null;
     openSubStream();
@@ -390,6 +393,7 @@ toggleDataStream=function(enabled){
   if (!VideoSrc) return;
   setbmlBrowserSize();
   bmlBrowserSetInvisible(false);
+  streamParams.set('psidata', 1);
   onDataStream=function(pid,dict,code,pcr){
     dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
   };
