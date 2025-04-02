@@ -3,11 +3,11 @@ function Version(a)
     css='250331',
     common='250331',
     tvguide='241224',
-    player='250330.1',
+    player='250402',
     onair='250314',
     library='250327',
     setting='241224',
-    datastream='250331',
+    datastream='250402',
     legacy='20250321',
     hls='v1.5.15',
     aribb24='v1.11.5',
@@ -796,8 +796,13 @@ s=s..[=[
     end
   end
   s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
-  for i,v in pairs(XCODE_FAST_RATES) do
-    s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v)..'</label></li>\n'
+  local has1=false
+  for i,v in ipairs(XCODE_FAST_RATES) do
+    if not has1 and v==1 then
+      has1=true
+      i=0
+    end
+  s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..' data-index='..i..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</label></li>\n'
   end
   return s..[=[
 </ul>

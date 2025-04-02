@@ -707,7 +707,24 @@ $(function(){
 		reloadHls();
 	});
 	const $rate = $('.rate');
-	$rate.change(e => vid.playbackRate = $(e.currentTarget).val());
+	$rate.change(e => {
+		const $e = $(e.currentTarget);
+		const isTs = $('.is_cast').data('path') && /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
+		//極力再読み込みは避けたい
+		if (!vid.tslive && isTs && $e.val()>1){	
+			videoParams.set('fast', $e.data('index'));
+			streamParams.delete('fast');
+			reloadHls();
+			return;
+		}else if (videoParams.has('fast')){
+			videoParams.delete('fast');
+			reloadHls();
+		};
+
+		vid.playbackRate = $e.val();
+		streamParams.set('fast', $e.data('index'));
+		openSubStream();
+	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効
 	$('.tslive').attr('disabled', !window.isSecureContext || !navigator.gpu);
