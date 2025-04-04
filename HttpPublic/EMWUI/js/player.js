@@ -4,7 +4,6 @@ let VideoSrc;
 const videoParams = new URLSearchParams();
 const streamParams = new URLSearchParams();
 const hls = window.Hls&&Hls.isSupported() && new Hls();
-let cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
 vid = document.getElementById("video");
@@ -12,56 +11,215 @@ const $vid = $(vid);
 
 if (hls) hls.attachMedia(vid);
 if (vid.tagName == "CANVAS") vid = new class {
+	#e;
+	#error;
+	#currentTime;
 	#playbackRate;
 	#paused;
 	#muted;
 	#volume;
+	#url;
+	#networkState;
+	#mod;
+	#done;
+	#statsTime;
+	#wakeLock;
+	#ctrl;
 	constructor(e){
-		this.e = e;
-		this.currentTime = 0;
-		this.error = null;
+		this.#e = e;
 		this.#playbackRate = 1;
 		this.#paused = true;
 		this.#muted = false;
 		this.#volume = 1;
+		this.#statsTime = 0;
+		this.#initialize();
+		if(!window.createWasmModule || !navigator.gpu) return;
+		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
+			createWasmModule({preinitializedWebGPUDevice:device}).then(mod => {
+				this.#mod = mod;
+				mod.setAudioGain(1);	//一発目無効対策
+				setTimeout(() => mod.setAudioGain(this.#muted?0:this.#volume), 500);
+				mod.pauseMainLoop();
+				mod.setCaptionCallback((pts,ts,data) => this.cap&&this.cap.pushRawData(this.#statsTime+ts,data.slice()));
+				mod.setStatsCallback(stats => {
+					if(this.#statsTime!=stats[stats.length-1].time){
+						this.#currentTime+=stats[stats.length-1].time-this.#statsTime;
+						this.#statsTime=stats[stats.length-1].time;
+						this.#e.dispatchEvent(new Event('timeupdate'));
+						this.cap&&this.cap.onTimeupdate(this.#statsTime);
+						//statsの中身がすべて同じ時、最後まで再生したとみなす
+					}else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
+						this.pause();
+						this.#e.dispatchEvent(new Event('ended'));
+					}
+					if(this.#done) return;
+					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
+					this.#done = true;
+				});
+			});
+		})).catch(e => {
+			this.#error = {code: 0, message: e.message};
+			this.#e.dispatchEvent(new Event('error'));
+			throw e;
+		});
 	}
-	get tslive(){return true};
+	#initialize(){
+		this.#url = '';
+		this.#error = null;
+		this.#networkState = this.#networkStateCode.EMPTY;
+		this.#currentTime = 0;
+		this.#done = false;
+		this.#wakeLock = null;
+	}
+	get e(){return this.#e}
+	get tslive(){return true}
 	play(){
 		this.#paused = false;
-		this.mod&&this.mod.resumeMainLoop();
-		this.e.dispatchEvent(new Event('play'));
-	};
+		this.#mod.resumeMainLoop();
+		this.#e.dispatchEvent(new Event('play'));
+	}
 	pause(){
 		this.#paused = true;
-		this.mod&&this.mod.pauseMainLoop();
-		this.e.dispatchEvent(new Event('pause'));
-	};
-	get paused(){return this.#paused};
-	set audioTrack(n){this.mod.setDualMonoMode(n)};
-	get muted(){return this.#muted};
+		this.#mod.pauseMainLoop();
+		this.#e.dispatchEvent(new Event('pause'));
+	}
+	stop(){
+		if (!this.#mod||!this.#ctrl) return;
+		this.pause();
+		this.#mod.reset();
+		this.#ctrl.abort();
+		this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",})
+		this.#initialize();
+	}
+	get paused(){return this.#paused}
+	set audioTrack(n){
+		if (!Number(n)) return;
+		this.#mod.setDualMonoMode(n);
+	}
+	get muted(){return this.#muted}
 	set muted(b){
 		this.#muted = b;
-		this.mod&&this.mod.setAudioGain(b ? 0 : this.#volume);
-		this.e.dispatchEvent(new Event('volumechange'));
-	};
-	get volume(){return this.#volume};
+		this.#mod&&this.#mod.setAudioGain(b ? 0 : this.#volume);
+		this.#e.dispatchEvent(new Event('volumechange'));
+	}
+	get volume(){return this.#volume}
 	set volume(n){
+		if (!Number(n)) return;
 		this.#volume = Number(n);
-		this.mod&&this.mod.setAudioGain(n);
-		this.e.dispatchEvent(new Event('volumechange'));
-	};
-	get playbackRate(){return this.#playbackRate};
+		this.#mod&&this.#mod.setAudioGain(n);
+		this.#e.dispatchEvent(new Event('volumechange'));
+	}
+	get playbackRate(){return this.#playbackRate}
 	set playbackRate(n){
+		if (!Number(n)) return;
 		this.#playbackRate = Number(n);
-		this.mod&&this.mod.setPlaybackRate(n);
-		this.e.dispatchEvent(new Event('ratechange'));
-	};
-	canPlayType(s){return document.createElement('video').canPlayType(s)};
+		this.#mod.setPlaybackRate(n);
+		this.#e.dispatchEvent(new Event('ratechange'));
+	}
 
-	get clientHeight(){return this.e.clientHeight};
-	get clientWidth(){return this.e.clientWidth};
-	get height(){return this.e.height};
-	get width(){return this.e.width};
+	get networkState(){return this.#networkState}
+	#networkStateCode = {
+		EMPTY: 0,
+		IDLE: 1,
+		LOADING: 2,
+		NO_SOURCE: 3,
+	}
+	get error(){return this.#error}
+	#errorCode = {
+		ABORTED: 1,
+		NETWORK: 2,
+		DECODE: 3,
+		SRC_NOT_SUPPORTED: 4,
+	}
+	get currentTime(){return this.#currentTime}
+	set currentTime(ofssec){
+		if (!Number(ofssec)) return;
+		this.#currentTime = Math.floor(ofssec);
+		this.#url.searchParams.set('ofssec', ofssec);
+		this.#resetRead();
+	}
+	set offset(offset){
+		if (!Number(offset)) return;
+		this.#url.searchParams.set('offset', offset);
+		this.#resetRead();
+	}
+	get src(){return this.#url.href??''}
+	set src(src){
+		if (!src) return;
+		if (!window.createWasmModule) this.#error = {code: 0, message: 'Probably ts-live.js not found.'};
+		if (!navigator.gpu) this.#error = {code: 0, message: 'WebGPU not available.'};
+		if (this.#error){
+			this.#e.dispatchEvent(new Event('error'));
+			return;
+		}
+		if (!this.#mod) {
+			setTimeout(() => this.src = src, 500);
+			return;
+		}
+		this.#initialize();
+		this.#url = new URL(src, location.href);
+		this.#startRead();
+		this.#mod.resumeMainLoop();
+		this.#paused = false;
+	}
+	canPlayType(s){return document.createElement('video').canPlayType(s)}
+
+	get clientHeight(){return this.#e.clientHeight}
+	get clientWidth(){return this.#e.clientWidth}
+	get height(){return this.#e.height}
+	get width(){return this.#e.width}
+
+	onStreamStarted(){}
+
+	#readNext(reader,ret){
+		if(ret&&ret.value){
+			var inputLen=Math.min(ret.value.length,1e6);
+			var buffer=this.#mod.getNextInputBuffer(inputLen);
+			if(!buffer){
+			  setTimeout(() => this.#readNext(reader,ret),1000);
+			  return;
+			}
+			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
+			this.#mod.commitInputData(inputLen);
+			if(inputLen<ret.value.length){
+				//Input the rest.
+				setTimeout(() => this.#readNext(reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)}),0);
+				return;
+			}
+		}
+		reader.read().then(r => {
+			if(r.done){ 
+				if(this.#wakeLock) this.#wakeLock.release();
+			}else this.#readNext(reader,r);
+		}).catch(e => {
+			if(this.#wakeLock)this.#wakeLock.release();
+			throw e;
+		});
+	}
+	#startRead(){
+		this.#ctrl = new AbortController();
+		fetch(this.#url,{signal:this.#ctrl.signal}).then(response => {
+			if(!response.ok){
+				if (response.status == 404){
+					this.#networkState = this.#networkStateCode.NO_SOURCE;
+					this.#error = {code: this.#errorCode.SRC_NOT_SUPPORTED, message: 'MEDIA_ELEMENT_ERROR: Format error'};
+				};
+				this.#e.dispatchEvent(new Event('error'));
+				return
+			};
+			this.onStreamStarted();
+			this.#readNext(response.body.getReader(),null);
+			//Prevent screen sleep
+			navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
+		});
+		['ofssec','offset'].forEach(e => this.#url.searchParams.delete(e));
+	}
+	#resetRead(){
+		this.#ctrl.abort();
+		this.#mod.reset();
+		this.#startRead();
+		this.play();
+	}
 }(vid);
 
 vid.muted = localStorage.getItem('muted') == 'true';
@@ -108,17 +266,17 @@ const stopTimer = () => {
 
 vcont = document.getElementById("vid-cont");
 const creatCap = () => {
-	cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
+	vid.cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
 	if (vid.tslive){
-		cap.attachMedia(null,vcont);
+		vid.cap.attachMedia(null,vcont);
 	}else{
 		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
-		cap.attachMedia(vid);
+		vid.cap.attachMedia(vid);
 	}
-	if (!$subtitles.hasClass('checked')) cap.hide();
+	if (!$subtitles.hasClass('checked')) vid.cap.hide();
 }
 
-const onStreamStarted = () => {
+vid.onStreamStarted = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
@@ -135,8 +293,8 @@ const startHLS = src => {
 
 	if (hls){
 		hls.loadSource(src);
-		hls.on(Hls.Events.MANIFEST_PARSED, onStreamStarted);
-		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => cap.pushID3v2Data(d.pts, d.data)));
+		hls.on(Hls.Events.MANIFEST_PARSED, vid.onStreamStarted);
+		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
@@ -144,7 +302,7 @@ const startHLS = src => {
 
 const resetVid = reload => {
 	if (hls) hls.loadSource('');
-	if (cap) cap.detachMedia();
+	if (vid.cap) vid.cap.detachMedia();
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
@@ -170,118 +328,6 @@ const reloadHls = ($e = $('.is_cast')) => {
 		videoParams.delete('load');
 	}
 	loadHls();
-}
-
-const loadTslive = () => {
-	var wakeLock=null;
-	var seekParam="";
-	function readNext(mod,reader,ret){
-		if(ret&&ret.value){
-			var inputLen=Math.min(ret.value.length,1e6);
-			var buffer=mod.getNextInputBuffer(inputLen);
-			if(!buffer){
-			  setTimeout(function(){readNext(mod,reader,ret);},1000);
-			  return;
-			}
-			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
-			mod.commitInputData(inputLen);
-			if(inputLen<ret.value.length){
-				//Input the rest.
-				setTimeout(function(){readNext(mod,reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)});},0);
-				return;
-			}
-		}
-		reader.read().then(function(r){
-			if(r.done){
-				if(wakeLock)wakeLock.release();
-				vid.seekWithoutTransition=null;
-				if(seekParam){
-					mod.reset();
-					startRead(mod);
-				}
-			}else{
-				readNext(mod,reader,r);
-			}
-		}).catch(function(e){
-			if(wakeLock)wakeLock.release();
-			vid.seekWithoutTransition=null;
-			if(seekParam){
-				mod.reset();
-				startRead(mod);
-			}
-			throw e;
-		});
-	}
-
-	function startRead(mod){
-		var ctrl=new AbortController();
-		var uri=VideoSrc+seekParam;
-		seekParam="";
-		fetch(uri,{signal:ctrl.signal}).then(function(response){
-			if(!response.ok)return;
-			//Reset caption
-			onStreamStarted();
-			mod.setAudioGain(vid.muted?0:vid.volume);
-			vid.currentTime=0;
-			vid.seekWithoutTransition=function(ofssec){
-				vid.seekWithoutTransition=null;
-				seekParam="&ofssec="+ofssec;
-				ctrl.abort();
-			};
-			vid.stop = () => {
-				vid.pause();
-				mod.reset();
-				ctrl.abort();
-				navigator.gpu.requestAdapter().then(adapter=>adapter.requestDevice().then(device=>vid.e.getContext("webgpu").configure({device: device,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",})))
-			};
-			readNext(mod,response.body.getReader(),null);
-			//Prevent screen sleep
-			navigator.wakeLock.request("screen").then(function(lock){wakeLock=lock;});
-		});
-	}
-	if(!window.createWasmModule){
-		vid.error = {code: 0, message: 'Probably ts-live.js not found.'};
-		vid.e.dispatchEvent(new Event('error'));
-		return;
-	}
-	if(!navigator.gpu){
-		vid.error = {code: 0, message: 'WebGPU not available.'};
-		vid.e.dispatchEvent(new Event('error'));
-		return;
-	}
-	navigator.gpu.requestAdapter().then(function(adapter){
-		adapter.requestDevice().then(function(device){
-			createWasmModule({preinitializedWebGPUDevice:device}).then(function(mod){
-				vid.mod = mod;
-				vid.error = null;
-				let done;
-				var statsTime=0;
-				mod.setCaptionCallback(function(pts,ts,data){
-					if(cap)cap.pushRawData(statsTime+ts,data.slice());
-				});
-				mod.setAudioGain(1);	//一発目無効対策
-				mod.setStatsCallback(function(stats){
-					if(statsTime!=stats[stats.length-1].time){
-						vid.currentTime+=stats[stats.length-1].time-statsTime;
-						statsTime=stats[stats.length-1].time;
-						vid.e.dispatchEvent(new Event('timeupdate'));
-						if(cap)cap.onTimeupdate(statsTime);
-					}
-					if (done) return;
-					vid.e.dispatchEvent(new Event('canplay'));
-					done = true;
-				});
-				if(vid.playbackRate != 1) mod.setPlaybackRate(vid.playbackRate);
-
-				setTimeout(function(){
-					startRead(mod);
-				},500);
-			});
-		});
-	}).catch(function(e){
-		Snackbar(e.message);
-		throw e;
-	});
 }
 
 const $audio = $('#audio');
@@ -366,8 +412,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		                                : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
 		if (vid.tslive){
-			VideoSrc += `&option=${videoParams.get('option')}`
-			loadTslive();
+			vid.src = `${VideoSrc}&option=${videoParams.get('option')}`;
 		}else{
 			['ofssec','offset','reload','audio2'].forEach(e => videoParams.delete(e));
 			loadHls();
@@ -542,8 +587,7 @@ $(function(){
 			const d = $('.is_cast').data();
 			if (d.canPlay) return;
 			if (vid.tslive){
-				d.ofssec = Math.floor($seek.val());
-				vid.seekWithoutTransition(d.ofssec);
+				vid[$Time_wrap.hasClass('offset')?'offset':'currentTime'] = $seek.val();
 			}else{
 				if (d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration)
 					vid.currentTime = $seek.val() - d.ofssec;
@@ -760,8 +804,8 @@ $(function(){
 	$subtitles.click(() => {
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
-		if (!cap) return;
-		$subtitles.hasClass('checked') ? cap.show() : cap.hide();
+		if (!vid.cap) return;
+		$subtitles.hasClass('checked') ? vid.cap.show() : vid.cap.hide();
 	});
 	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
 

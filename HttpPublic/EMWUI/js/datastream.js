@@ -223,7 +223,7 @@ $('#vid-meta').on('cuechange', e => {
     for(var i=0;i<100;i++){
       var data=dataList.pop();
       if(!data){return;}
-      cap.pushRawData(data.pts,data.pes);
+      vid.cap.pushRawData(data.pts,data.pes);
     }
     setTimeout(pushCap,0);
   })();
