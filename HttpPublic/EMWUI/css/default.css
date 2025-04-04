@@ -1633,7 +1633,7 @@ h4 .mdl-button--icon {
 #movie-contner {
   background: #000;
   #video {
-    min-height: max(calc(100vh * 0.666666666667 - 16px * 2), 270px);
+    min-height: max(min(calc(100vh * 0.666666666667 - 16px * 2), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16))), 270px);
     max-height: calc(90vh - 70px); } }
   @media (max-width: 479px) {
     #movie-contner #video {

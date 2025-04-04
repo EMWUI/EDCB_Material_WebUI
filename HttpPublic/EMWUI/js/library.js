@@ -105,7 +105,7 @@ $(function(){
 					showSpinner(true);
 					const params = new URLSearchParams(location.search);
 					params.set('play', $.param(hash));
-					history.pushState(null, null, `?${params.toString()}`);
+					history.replaceState(null, null, `?${params.toString()}`);
 					$('#popup').addClass('is-visible');
 					$('#playerUI').addClass('is-visible');
 					$audios.prop('checked', false);

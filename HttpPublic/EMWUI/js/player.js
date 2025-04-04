@@ -3,12 +3,14 @@ let readyToAutoPlay;
 let VideoSrc;
 const videoParams = new URLSearchParams();
 const streamParams = new URLSearchParams();
-let hls, cap;
+const hls = window.Hls&&Hls.isSupported() && new Hls();
+let cap;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
 vid = document.getElementById("video");
 const $vid = $(vid);
 
+if (hls) hls.attachMedia(vid);
 if (vid.tagName == "CANVAS") vid = new class {
 	#playbackRate;
 	#paused;
@@ -128,13 +130,11 @@ const errorHLS = () => {
 	Snackbar('HLSエラー');
 }
 
-const startHLS= src => {
+const startHLS = src => {
 	if (!$('.is_cast').length) return;
 
-	if (Hls.isSupported()){
-		hls = new Hls();
+	if (hls){
 		hls.loadSource(src);
-		hls.attachMedia(vid);
 		hls.on(Hls.Events.MANIFEST_PARSED, onStreamStarted);
 		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
@@ -143,7 +143,7 @@ const startHLS= src => {
 }
 
 const resetVid = reload => {
-	if (hls) hls.destroy();
+	if (hls) hls.loadSource('');
 	if (cap) cap.detachMedia();
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
@@ -356,15 +356,15 @@ const loadMovie = ($e = $('.is_cast')) => {
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
-		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${d.path}`;
+		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${encodeURIComponent(d.path)}`;
 		$vid.attr('src', path);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
-		                                : `xcode?${d.path ? `fname=${d.path}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
-	
+		                                : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
+
 		if (vid.tslive){
 			VideoSrc += `&option=${videoParams.get('option')}`
 			loadTslive();
@@ -467,7 +467,7 @@ $(function(){
 			localStorage.setItem('volume', vid.volume);
 			localStorage.setItem('muted', vid.muted);
 		},
-		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') video.defaultPlaybackRate = this.playbackRate;},
+		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		'canplay': () => {
 			hideBar(2000);
 			$vid.removeClass('is-loadding');
@@ -682,7 +682,7 @@ $(function(){
 
 	$('#autoplay').change(e => {
 		sessionStorage.setItem('autoplay', $(e.currentTarget).prop('checked'));
-		//video.defaultPlaybackRate = $(e.currentTarget).prop('checked') ? video.playbackRate : 1;
+		//vid.defaultPlaybackRate = $(e.currentTarget).prop('checked') ? vid.playbackRate : 1;
 	});
 
 	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
