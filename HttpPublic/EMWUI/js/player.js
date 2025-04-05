@@ -234,6 +234,79 @@ if (vid.tslive){
 	});	
 }
 
+class tsThumb {
+	#mod;
+	#url;
+	#e;
+	constructor(){
+		if(!window.createMiscWasmModule) return;
+		createMiscWasmModule().then(mod => this.#mod = mod);
+	}
+	attachMedia(e){
+		this.#e = e;
+	}
+	set src(src){
+		this.#url = new URL(src, location.href);
+	}
+	set path(f){
+		this.#url.searchParams.set('fname', f);
+	}
+	reset(){
+		this.#url.searchParams.delete('fname');
+	}
+
+	#load;
+	async get(value){
+		if(!this.#mod) return;
+		this.#url.searchParams.set('offset', Math.floor(value)??0);
+		this.#load = true;
+		const frame = await fetch(this.#url).then(r => {
+			if (this.#leaved||!r.ok) throw r;
+			return r.arrayBuffer();
+		}).then(r => {
+			const buffer = this.#mod.getGrabberInputBuffer(r.byteLength);
+			buffer.set(new Uint8Array(r));
+			return this.#mod.grabFirstFrame(r.byteLength);
+		}).catch(e => null);
+		this.#load = false;
+
+		return frame;
+	}
+
+	#timer;
+	#leaved;
+	async seek(value){
+		if (!this.#url.searchParams.has('fname')||Math.floor(value)==this.#url.searchParams.get('offset')) return;
+		if (value == null){
+			this.#leaved = true;
+			this.#e.style.display="none";
+			this.#url.searchParams.delete('offset');
+			return;
+		}
+		this.#leaved = false;
+		this.#e.style.setProperty('--offset', value);
+		if (this.#load) {
+			if (this.#timer) clearTimeout(this.#timer);
+			this.#timer = setTimeout(() => {
+				if (this.#leaved) return;
+				this.seek(value);
+			}, 200);
+			return;
+		};
+		const frame = await this.get(value);
+		if (frame){
+			this.#e.width=frame.width;
+			this.#e.height=frame.height;
+			this.#e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(frame.buffer),frame.width,frame.height),0,0);
+			this.#e.style.display=null;
+		}
+	}
+}
+
+const thumb = new tsThumb();
+thumb.attachMedia(document.querySelector('#vid-thumb'));
+thumb.src =`${ROOT}api/grabber`
+
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
 	const h = Math.floor(t / 3600);
@@ -310,6 +383,7 @@ const resetVid = reload => {
 	vid.src = '';
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
+	//thumb.reset();
 }
 
 const reloadHls = ($e = $('.is_cast')) => {
@@ -411,6 +485,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
 		                                : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
+		if(d.path) thumb.path = d.path;
 		if (vid.tslive){
 			vid.src = `${VideoSrc}&option=${videoParams.get('option')}`;
 		}else{
@@ -581,22 +656,41 @@ $(function(){
 	});
 
 	$seek.on({
-		'touchstart mousedown': () => $seek.data('touched', true),
-		'touchend mouseup': () => $seek.data('touched', false),
-		'change': () => {
+		change(){
 			const d = $('.is_cast').data();
 			if (d.canPlay) return;
 			if (vid.tslive){
-				vid[$Time_wrap.hasClass('offset')?'offset':'currentTime'] = $seek.val();
+				vid[$Time_wrap.hasClass('offset')?'offset':'currentTime'] = this.value;
 			}else{
-				if (d.ofssec < $seek.val() && $seek.val() < d.ofssec + vid.duration)
-					vid.currentTime = $seek.val() - d.ofssec;
+				if (d.ofssec < this.value && this.value < d.ofssec + vid.duration)
+					vid.currentTime = this.value - d.ofssec;
 				else reloadHls();
 			}
 		},
-		'input': () => {
-			$currentTime.text(getVideoTime($seek.val()));
-			if ($('.is_cast').data('canPlay'))vid.currentTime = $seek.val();
+		input(){
+			$currentTime.text(getVideoTime(this.value));
+			if ($('.is_cast').data('canPlay'))vid.currentTime = this.value;
+		},
+		mousedown(){$seek.data('touched', true)},
+		mouseenter(e){
+			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
+			thumb.seek(e.offsetX/this.clientWidth*100);
+		},
+		touchstart(){
+			$seek.data('touched', true);
+			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
+			thumb.seek(e.offsetX/this.clientWidth*100);
+		},
+		mousemove(e){
+			thumb.seek(e.offsetX/this.clientWidth*100);
+		},
+		mouseup(){$seek.data('touched', false)},
+		touchend(){
+			$seek.data('touched', false);
+			thumb.seek();
+		},
+		mouseleave(){
+			thumb.seek();
 		}
 	});
 

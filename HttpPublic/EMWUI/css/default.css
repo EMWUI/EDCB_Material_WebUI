@@ -1967,6 +1967,12 @@ h4 .mdl-button--icon {
     height: 5px;
     -webkit-transform: translate(0, -2.5px);
             transform: translate(0, -2.5px); }
+  #vid-thumb {
+    width: 16em;
+    height: 9em;
+    border: 2px solid;
+    border-radius: 0.8em;
+    transform: translate(max(12px, min(calc((var(--width) + 12px)* var(--offset) / 100 - 50%), calc(var(--width) - 12px - 100%))), -12px); }
 
 #volume-wrap {
   display: -webkit-flex;

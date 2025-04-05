@@ -645,6 +645,86 @@ function ReadToPcr(f,pid)
   return nil
 end
 
+--MPEG-2映像のIフレームを取得する
+function GetIFrameVideoStream(f)
+  local exclude={}
+  local priorPid=8192
+  local videoPid=nil
+  local stream,pesRemain,headerRemain,seqState
+  local function findPictureCodingType(buf)
+    for i=1,#buf do
+      local b=buf:byte(i)
+      if (seqState<=1 or seqState==3) and b==0 or seqState==4 then
+        seqState=seqState+1
+      elseif seqState==2 and b<=1 then
+        if b==1 then
+          seqState=seqState+1
+        end
+      elseif seqState==5 then
+        seqState=-1
+        return math.floor(b/8)%8
+      else
+        seqState=0
+      end
+    end
+    return nil
+  end
+  for i=1,15000 do
+    local buf=f:read(188)
+    if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
+    local errorAndUnitStart=math.floor(buf:byte(2)/64)
+    local pid=buf:byte(2)%32*256+buf:byte(3)
+    if errorAndUnitStart<=1 and pid==videoPid or
+       errorAndUnitStart==1 and not videoPid then
+      if errorAndUnitStart==1 and videoPid then
+        if pesRemain==0 then
+          --PESがたまった
+          if seqState<0 then return table.concat(stream) end
+          exclude[pid]=true
+        end
+        videoPid=nil
+      end
+      local adaptation=math.floor(buf:byte(4)/16)%4
+      local adaptationLen=adaptation==1 and -1 or adaptation==3 and buf:byte(5) or 183
+      if adaptationLen>183 then break end
+      local pos=6+adaptationLen
+      --H.262のpicture_coding_typeが見つからないものは除外。複数候補ある場合はPIDが小さいほう
+      if not videoPid and not exclude[pid] and pid<=priorPid and pos<=180 and buf:find('^\0\0\1[\xE0-\xEF]',pos) then
+        --H.262/264/265 PES
+        videoPid=pid
+        stream={}
+        pesRemain=buf:byte(pos+4)*256+buf:byte(pos+5)
+        headerRemain=buf:byte(pos+8)
+        seqState=0
+        pos=pos+9
+      end
+      if videoPid and pos<=188 then
+        local n=math.min(189-pos,headerRemain)
+        headerRemain=headerRemain-n
+        pos=pos+n
+        if pos<=188 then
+          n=pesRemain>0 and math.min(189-pos,pesRemain) or 189-pos
+          stream[#stream+1]=buf:sub(pos,pos+n-1)
+          if seqState>=0 and findPictureCodingType(stream[#stream])~=1 and seqState<0 then
+            --Iフレームじゃない
+            priorPid=pid
+            videoPid=nil
+          elseif pesRemain>0 then
+            pesRemain=pesRemain-n
+            if pesRemain==0 then
+              --PESがたまった
+              if seqState<0 then return table.concat(stream) end
+              exclude[pid]=true
+              videoPid=nil
+            end
+          end
+        end
+      end
+    end
+  end
+  return nil
+end
+
 --PCRをもとにファイルの長さを概算する
 function GetDurationSec(f)
   local fsize=f:seek('end') or 0
