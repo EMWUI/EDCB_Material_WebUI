@@ -733,9 +733,9 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 					id: id,
 					class: 'search addreserve mdl-switch__input',
 					type: 'checkbox',
-					checked: d.recMode != 5,
+					checked: d.recSetting.recEnabled,
 					change: e => {
-						$e.data('toggle', d.recSetting.recMode == 5 ? 1 : 0);
+						$e.data('toggle', $(e.currentTarget).prop('checked') ? 1 : 0);
 						addReserve($(e.currentTarget))} }) });
 			componentHandler.upgradeElement($switch.get(0));
 
