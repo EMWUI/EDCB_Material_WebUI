@@ -2450,7 +2450,8 @@ h4 .mdl-button--icon {
 .library .mdl-card {
   min-height: 150px;
   background: #fff center / cover;
-  user-select: none; }
+  user-select: none;
+  --min-height: 150px; }
   .library .mdl-card__title {
     padding: 8px;
     justify-content: center; }
@@ -2476,6 +2477,15 @@ h4 .mdl-button--icon {
       background: rgba(0, 0, 0, 0.5); }
     .library .mdl-card:hover > .mdl-card__actions .filename {
       white-space: normal; }
+  .library .mdl-card canvas {
+    display: block;
+    height: 100%;
+    left: calc((100% - (var(--min-height) * 16 / 9)) / 2);
+    position: absolute;
+    top: 0;
+    width: calc(var(--min-height) * 16 / 9);
+    z-index: 0;
+    overflow: hidden; }
   /*
   .library .mdl-list__item>span {
     display: block; }
@@ -2495,7 +2505,8 @@ h4 .mdl-button--icon {
     text-align: right; }
   @media (min-width: 1300px) {
     .library .mdl-card {
-      min-height: 200px; }
+      min-height: 200px;
+      --min-height: 200px; }
     .library .mdl-card__title {
       padding: 16px }
     .library .mdl-card__title + .material-icons {

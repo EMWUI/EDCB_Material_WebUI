@@ -152,7 +152,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 			this.#e.dispatchEvent(new Event('error'));
 			return;
 		}
-		if (!this.#mod) {
+		if (!this.#mod){
 			setTimeout(() => this.src = src, 500);
 			return;
 		}
@@ -237,75 +237,110 @@ if (vid.tslive){
 class tsThumb {
 	#mod;
 	#url;
+	#def;
 	#e;
-	constructor(){
-		if(!window.createMiscWasmModule) return;
+	constructor(url){
+		if (!window.createMiscWasmModule) return;
+		if (url) this.url = url;
 		createMiscWasmModule().then(mod => this.#mod = mod);
 	}
 	attachMedia(e){
 		this.#e = e;
 	}
-	set src(src){
-		this.#url = new URL(src, location.href);
+	set videoSrc(src){
+		this.#url.search = new URL(src, location.href).search;
 	}
-	set path(f){
-		this.#url.searchParams.set('fname', f);
+	set url(url){
+		this.#def = url;
+		this.reset();
+	}
+	set path(path){
+		this.#url.searchParams.set('fname', path);
 	}
 	reset(){
-		this.#url.searchParams.delete('fname');
+		this.#url = new URL(this.#def, location.href);
 	}
 
-	#load;
-	async get(value){
-		if(!this.#mod) return;
-		this.#url.searchParams.set('offset', Math.floor(value)??0);
-		this.#load = true;
-		const frame = await fetch(this.#url).then(r => {
-			if (this.#leaved||!r.ok) throw r;
+	#id = 0;
+	#loading;
+	key = 'offset';
+	async get(path, value, id = this.#id){
+		if (!this.#mod) return;
+	
+		const url = path ? new URL(this.#def, location.href) : this.#url;
+		if (path) url.searchParams.set('fname', path);
+		url.searchParams.set(this.key, Math.floor(value)||0);
+
+		this.#loading = true;
+		const frame = await fetch(url).then(r => {
+			if (id!=this.#id || !r.ok) throw r;
 			return r.arrayBuffer();
 		}).then(r => {
 			const buffer = this.#mod.getGrabberInputBuffer(r.byteLength);
 			buffer.set(new Uint8Array(r));
 			return this.#mod.grabFirstFrame(r.byteLength);
 		}).catch(e => null);
-		this.#load = false;
+		this.#loading = false;
 
 		return frame;
 	}
 
-	#timer;
-	#leaved;
-	async seek(value){
-		if (!this.#url.searchParams.has('fname')||Math.floor(value)==this.#url.searchParams.get('offset')) return;
-		if (value == null){
-			this.#leaved = true;
-			this.#e.style.display="none";
-			this.#url.searchParams.delete('offset');
-			return;
-		}
-		this.#leaved = false;
-		this.#e.style.setProperty('--offset', value);
-		if (this.#load) {
-			if (this.#timer) clearTimeout(this.#timer);
-			this.#timer = setTimeout(() => {
-				if (this.#leaved) return;
-				this.seek(value);
-			}, 200);
+	#putImage(frame, e = this.#e){
+		e.width = frame.width;
+		e.height = frame.height;
+		e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(frame.buffer),frame.width,frame.height),0,0);
+		e.style.display = null;
+	}
+
+	async set(e, path, value){
+		const frame = await this.get(path, value);
+		if (!frame) return;
+		this.#putImage(frame, e);
+		return true;
+	}
+
+	#timerID = 0;
+	async seek(value, offset){
+		if (!this.#url.searchParams.size>0||Math.floor(value)==this.#url.searchParams.get(this.key)) return;
+		this.#e.style.setProperty('--offset', offset??value);
+		if (this.#loading){
+			clearTimeout(this.#timerID);
+			this.#timerID = setTimeout(() => this.seek(value), 200);
 			return;
 		};
-		const frame = await this.get(value);
-		if (frame){
-			this.#e.width=frame.width;
-			this.#e.height=frame.height;
-			this.#e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(frame.buffer),frame.width,frame.height),0,0);
-			this.#e.style.display=null;
-		}
+		const frame = await this.get(null, value, this.#id);
+		if (frame) this.#putImage(frame);
+	}
+
+	#range = 5;
+	max = 100;
+	#roll(value){
+		clearTimeout(this.#timerID);
+		this.#timerID = setTimeout(async () => {
+			if (value >= this.max) value = 0;
+			const frame = await this.get(null, value, this.#id);
+			if (frame){
+				this.#putImage(frame);
+				this.#roll(value+this.#range);
+			}
+		}, 1000);
+	}
+	roll(e, path, value = 0){
+		this.#e = e;
+		this.#url.searchParams.set('fname', path);
+		this.#roll(value);
+	}
+
+	hide(){
+		clearTimeout(this.#timerID);
+		this.#id++;
+		this.#e.style.display = "none";
+		this.#url.searchParams.delete(this.key);
 	}
 }
 
-const thumb = new tsThumb();
-thumb.attachMedia(document.querySelector('#vid-thumb'));
-thumb.src =`${ROOT}api/grabber`
+const thumb = window.createMiscWasmModule && new tsThumb(`${ROOT}api/grabber`);
+if (thumb) thumb.attachMedia(document.querySelector('#vid-thumb'));
 
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
@@ -380,10 +415,11 @@ const resetVid = reload => {
 	toggleDataStream(false);
 	toggleJikkyo(false);
 	if (reload) return;
+
 	vid.src = '';
 	$vid_meta.attr('src', '');
 	VideoSrc = null;
-	//thumb.reset();
+	if (thumb) thumb.reset();
 }
 
 const reloadHls = ($e = $('.is_cast')) => {
@@ -485,7 +521,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
 		                                : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
-		if(d.path) thumb.path = d.path;
+		if (d.path??d.id??d.reid) thumb.videoSrc = VideoSrc;
 		if (vid.tslive){
 			vid.src = `${VideoSrc}&option=${videoParams.get('option')}`;
 		}else{
@@ -593,10 +629,10 @@ $(function(){
 			$vid.removeClass('is-loadding');
 
 			const d = $('.is_cast').data();
-			if (!d.paused) {
+			if (!d.paused){
 				const promise = vid.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
-				if (promise !== undefined) {
+				if (promise !== undefined){
 					promise.catch(error => {
 						vid.muted = true;
 						vid.play();
@@ -669,29 +705,35 @@ $(function(){
 		},
 		input(){
 			$currentTime.text(getVideoTime(this.value));
-			if ($('.is_cast').data('canPlay'))vid.currentTime = this.value;
+			if ($('.is_cast').data('canPlay')) vid.currentTime = this.value;
+
+			if (!thumb || $(this).data('hover')) return;
+			thumb.seek(this.value/$(this).attr('max')*100);
 		},
-		mousedown(){$seek.data('touched', true)},
+		mousedown(){$(this).data('touched', true)},
 		mouseenter(e){
+			if (!thumb) return;
+			$(this).data('hover', true);
 			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
 			thumb.seek(e.offsetX/this.clientWidth*100);
 		},
 		touchstart(){
-			$seek.data('touched', true);
+			$(this).data('touched', true);
+			if (!thumb) return;
+			stopTimer();
 			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
-			thumb.seek(e.offsetX/this.clientWidth*100);
 		},
 		mousemove(e){
+			if (!thumb) return;
+			$(this).data('hover', false);
 			thumb.seek(e.offsetX/this.clientWidth*100);
 		},
-		mouseup(){$seek.data('touched', false)},
+		mouseup(){$(this).data('touched', false)},
 		touchend(){
-			$seek.data('touched', false);
-			thumb.seek();
+			$(this).data('touched', false);
+			if (thumb) thumb.hide();
 		},
-		mouseleave(){
-			thumb.seek();
-		}
+		mouseleave(){if (thumb) thumb.hide();}
 	});
 
 	$volume.on('input', () => {

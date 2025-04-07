@@ -1,9 +1,11 @@
 $(function(){
 	const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
 
+	const rollThumb = window.createMiscWasmModule && new tsThumb(`${ROOT}api/grabber`);
+	
 	//ライブラリ取得
 	const getLibrary = hash => {
-		if (hash) {
+		if (hash){
 			const params = new URLSearchParams(location.search);
 			['i','p','d'].forEach(n => params.delete(n));
 			hash.forEach(v => params.append(v.name, v.value));
@@ -24,9 +26,9 @@ $(function(){
 		});
 	}
 
-	const getMetadata = ($e, hash) => {
-		$.get(`${ROOT}api/Library`, hash).done(xml => {
-			showSpinner();
+	const getMetadata = async ($e, hash) => {
+		if ($e.data('path')) return;
+		await $.get(`${ROOT}api/Library`, hash).done(xml => {
 			xml = $(xml).find('file');
 			$e.data({
 				path: xml.txt('path'),
@@ -37,7 +39,6 @@ $(function(){
 					audio: xml.children('meta').num('audio')
 				}
 			});
-			playMovie($e);
 		});
 	}
 
@@ -47,11 +48,10 @@ $(function(){
 		const list = d.file ?? $('.item').clone(true);
 		order = d.order ?? order
 		asc = d.asc ? !asc : asc
-		if (order == 'date'){
-			list.sort((a,b) => asc ? $(a).data().date - $(b).data().date : $(b).data().date - $(a).data().date);
-		}else if (order == 'name'){
-			list.sort((a,b) => asc ? $(a).data().name > $(b).data().name ? 1 : -1 : $(a).data().name > $(b).data().name ? -1 : 1);
-		}
+
+		if (order == 'date') list.sort((a,b) => asc ? $(a).data().date - $(b).data().date : $(b).data().date - $(a).data().date);
+		else if (order == 'name') list.sort((a,b) => asc ? $(a).data().name > $(b).data().name ? 1 : -1 : $(a).data().name > $(b).data().name ? -1 : 1);
+
 		$('.item').remove();
 		$(`#file${isGrid() ? '' : ' ul'}`).append(list);
 		localStorage.setItem('sortOrder', order);
@@ -84,24 +84,24 @@ $(function(){
 				if ($(e).children('hash').length) hash.push({name: 'd', value: $(e).txt('hash')});
 
 				$e.addClass('folder').click(() => getLibrary(hash));
-				isGrid()
-					? $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
-						$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
-						$('<div>', {class: 'foldername', text: name }) )
-					: $e.addClass('mdl-list__item').append(
-						$('<span>', {class: 'mdl-list__item-primary-content', append: [
-							$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
-							$('<span>', {text: name}) ]}) );
+				if (isGrid()) $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+					$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
+					$('<div>', {class: 'foldername', text: name }) );
+				else $e.addClass('mdl-list__item').append(
+					$('<span>', {class: 'mdl-list__item-primary-content', append: [
+						$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
+						$('<span>', {text: name}) ]}) );
 				folder.push($e);
 			}else{
 				if (xml.children('dirhash').length) hash.push({name: 'd', value: xml.txt('dirhash')});
 				hash.push({name: 'h', value: $(e).txt('hash')});
+				const canvas = document.createElement('canvas');
 
 				$e.addClass('item').data({
 					name: name,
 					date: $(e).txt('date')*1000,
 					public: $(e).children('public').length > 0,
-				}).click(() => {
+				}).click(async () => {
 					showSpinner(true);
 					const params = new URLSearchParams(location.search);
 					params.set('play', $.param(hash));
@@ -110,16 +110,35 @@ $(function(){
 					$('#playerUI').addClass('is-visible');
 					$audios.prop('checked', false);
 					$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-					getMetadata($e, hash);
+					await getMetadata($e, hash);
+					showSpinner();
+					playMovie($e);
 				});
+
+				if (rollThumb){
+					$e.hover(async () => {
+						await getMetadata($e, hash);
+						rollThumb.roll(canvas, $e.data('path'));
+					}, () => rollThumb.hide());
+				}
 
 				const thumb = $(e).txt('thumb');
 				if (isGrid()){
 					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-					(thumb != 0) 
-						? $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumb}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) )
-						: $e.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-					$e.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }) );
+
+					if (!thumb){
+						if (rollThumb){
+							(async () => {
+								const thumb = document.createElement('canvas');
+								await getMetadata($e, hash);
+								const done = await rollThumb.set(thumb, $e.data('path'));
+								if (done) canvas.before(thumb);
+							})();
+						}
+						$e.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
+					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumb}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) )
+					
+					$e.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), canvas );
 				}else{
 					const date = createViewDate($e.data('date'));
 					const avatar = (thumb != 0)
@@ -135,22 +154,22 @@ $(function(){
 			}
 		});
 
-		isGrid()
-			? $('#folder').show().append(folder)
-			: $('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
+		if (isGrid()) $('#folder').show().append(folder);
+		else $('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
+
 		sortLibrary({file: file});
 
 		let id = 'home';
 		location.search.slice(1).split('&').forEach(e => {
 			e = e.split('=');
 			if (e[0] == 'i') id = `index${e[1]}`;
-			if (e[0] == 'd') {
+			if (e[0] == 'd'){
 				id = e[1];
 				return;
 			}
 		});
 
-		const createTab = (id, text, hash, active) => $('<span>', {id: `l_${id}`, class: `mdl-layout__tab${active ? ' is-active' : ''}`, text: text, data: {hash: hash}, click: () => getLibrary(hash)});
+		const createTab = (id, text, hash, active) => $('<span>', {id: `l_${id}`, class: `mdl-layout__tab${active ? ' is-active' : ''}`, text: text, data: {hash: hash}, click(){getLibrary(hash)}});
 		const chevron_right = '<i class="mdl-layout__tab material-icons">chevron_right'
 
 		const dirname = xml.txt('dirname');
@@ -199,7 +218,10 @@ $(function(){
 	if (play){
 		const $e = $('<div class="hidden is_cast">');
 		$('#tvcast').append($e);
-		readyToAutoPlay = getMetadata($e, play);
+		readyToAutoPlay = async () => {
+			await getMetadata($e, play);
+			playMovie($e);
+		}
 	}
 
 	$('#menu_autoplay').removeClass('hidden');
