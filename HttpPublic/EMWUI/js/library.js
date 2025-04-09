@@ -155,8 +155,6 @@ $(function(){
 
 				const thumb = $(e).txt('thumb');
 				if (isGrid()){
-					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp');
-
 					if (!thumb){
 						if (rollThumb){
 							(async () => {
@@ -167,9 +165,9 @@ $(function(){
 							})();
 						}
 						$e.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumb}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) )
+					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumb}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 					
-					$e.append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), canvas );
+					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), canvas );
 				}else{
 					const date = createViewDate($e.data('date'));
 					const avatar = (thumb != 0)

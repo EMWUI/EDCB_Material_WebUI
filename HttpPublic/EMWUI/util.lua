@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
     css='250406',
-    common='250406',
+    common='250409',
     tvguide='241224',
     player='250406',
     onair='250314',
-    library='250406',
+    library='250409',
     setting='241224',
     datastream='250404',
     legacy='20250321',
@@ -83,7 +83,7 @@ function Template(temp)
 <script src="]=]..path..[=[js/hammer.min.js"></script>
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
-..'<script>const ROOT=\''..PathToRoot()..'\''..(temp.searchlinks and ';const Links={calendar:{details:\''..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)..'\',op:\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',INI)..'\'}}' or '')..';</script>\n'
+..'<script>const ROOT=\''..PathToRoot()..'\';'..(temp.searchlinks and searchLinksScriptTemplate() or '')..'</script>\n'
 ..'<script src="'..path..'js/common.js'..Version('common')..'"></script>\n'
 ..(temp.js or '')
 
@@ -645,6 +645,17 @@ function SerchTemplate(si)
   return s
 end
 
+function searchLinksScriptTemplate()
+  local esc=edcb.htmlEscape
+  edcb.htmlEscape=0
+  links=edcb.GetPrivateProfile('SET','links','',INI)
+  edcb.htmlEscape=esc
+  return 'const Links={calendar:{details:\''..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)
+    ..'\',op:\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)
+    ..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',INI)..'\'}'
+    ..(links~='' and ',links:['..links..']' or '')..'};'
+end
+
 function SidePanelTemplate(reserve)
   if not SIDE_PANEL then return '' end
   local s=[=[
@@ -696,6 +707,7 @@ function SidePanelTemplate(reserve)
     ..'</div>\n'
 
     ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
+    ..'<script>'..searchLinksScriptTemplate()..'</script>\n'
 end
 
 --プレイヤー

@@ -90,7 +90,7 @@ ct={
   js=EpgJsTemplate(pageTime-9*3600,NOW,date==0,(NOW and pageTime+(interval-9)*3600 or false)),
   menu=EpgMenuTemplate(true),
   progres=true,
-  searchlinks=true
+  searchlinks=not SIDE_PANEL
 }
 
 ct.subheader='<div id="subheader">\n'

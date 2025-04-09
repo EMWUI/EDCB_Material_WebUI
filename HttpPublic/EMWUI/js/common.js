@@ -36,11 +36,11 @@ const saerchbar = () => $('main>.mdl-layout__content').scroll(() => {
 class SearchLinks {
 	#d;
 	#defaults = [
-		//{href : d => `${d.title}`, class: '', external: true, icon: '', src: ''},
-		{href: d => `search.html?andkey=${d._title}`, icon: 'search'},
-		{href: d => `https://www.google.co.jp/search?q=${d._title}`, external: true, src:'img/google.png'},
-		{href: d => `https://www.google.co.jp/search?q=${d._title}&btnI=Im+Feeling+Lucky`, external: true, icon: 'sentiment_satisfied'},
-		{href: d => `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ConvertZtoH(d.title))}&location=${encodeURIComponent(ConvertZtoH(d.service))}&dates=${d.dates}&details=${d.details}${Links.calendar.op}`, class: "mdl-cell--hide-phone mdl-cell--hide-tablet", external: true, icon: 'event'},
+		//{href : d => `${d._title}`, class: '', local: true, icon: '', src: ''},
+		{href: d => `search.html?andkey=${d._title}`, local: true, icon: 'search'},
+		{href: d => `https://www.google.co.jp/search?q=${d._title}`, src:'img/google.png'},
+		{href: d => `https://www.google.co.jp/search?q=${d._title}&btnI=Im+Feeling+Lucky`, icon: 'sentiment_satisfied'},
+		{href: d => `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(ConvertZtoH(d.title))}&location=${encodeURIComponent(ConvertZtoH(d.service))}&dates=${d.dates}&details=${d.details}${Links.calendar.op}`, class: "mdl-cell--hide-phone mdl-cell--hide-tablet", icon: 'event'},
 	];
 	constructor(d){
 		this.#d = {...d};
@@ -49,10 +49,10 @@ class SearchLinks {
 		this.#d.details = encodeURIComponent((d.details??Links.calendar.details.replace(/%text_char%/g, d.text)).replace(/%br%/g, '\n'));
 	}
 
-	#link = d => $('<a>', {class: `mdl-button mdl-button--icon ${d.class??''}`, href: d.href(this.#d), target: d.external&&'_blank', rel: d.external&&'noreferrer', append: $(`<${d.icon?'i':'img'}>`, {class: 'material-icons', src: d.src, alt: d.alt, text: d.icon})})
+	#link = d => $('<a>', {class: `mdl-button mdl-button--icon ${d.class??''}`, href: d.href(this.#d), target: !d.local?'_blank':undefined, rel: !d.local?'noreferrer':undefined, append: $(`<${d.icon?'i':'img'}>`, {class: 'material-icons', src: d.src, alt: d.alt, text: d.icon})})
 	get html(){return this.#defaults.map(d => this.#link(d));}		//番組表向け
 	get htmlEX(){													//サイドパネル向け
-		const a = this.#defaults.concat(Links.custom??[]).map(d => this.#link(d));
+		const a = this.#defaults.concat(Links.links??[]).map(d => this.#link(d));
 		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]; $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
 		return a;
 	}
@@ -82,7 +82,7 @@ const ConvertText = a => {
 	const re = /https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>)/g;
 	let s = '';
 	let i = 0;
-	for (let m; m = re.exec(a); i = re.lastIndex) {
+	for (let m; m = re.exec(a); i = re.lastIndex){
 		s += $('<p>').text(a.substring(i, re.lastIndex - m[0].length)).html();
 		s += $('<p>').html($('<a>', {href: m[0], target: '_blank', text: m[0], rel:'noreferrer'})).html();
 	}
@@ -98,18 +98,18 @@ const Notify = new class {
 	constructor(){
 		this.#sound.volume = 0.2;
 	}
-	#badge = () => {				//通知バッチ
+	#badge(){				//通知バッチ
 		const count = $('[id^=notify_]').length;
 		$('#notification i').toggleClass('mdl-badge', count != 0).text(`notifications${count==0 ? '_none' : ''}`);
 		$('#noNotify').toggle(count == 0);
 		$('#notification i').attr('data-badge', count);
 	}
-	save = (d, remove) => {		//通知保存
+	save(d, remove){		//通知保存
 		const a = localStorage.getItem('notifications') ? JSON.parse(localStorage.getItem('notifications')) : new Array();
 		!remove ? a.push(d) : a.some((v, i) => {if (v.eid == d.eid) a.splice(i,1);});
 		localStorage.setItem('notifications', JSON.stringify(a));
 	}
-	del = (d, noSnack) => {		//通知リスト削除
+	del(d, noSnack){		//通知リスト削除
 		clearTimeout(d.timer);
 		this.save(d, true);
 		$(`.eid_${d.eid}.notify_icon,#notify_${d.eid}`).remove();
@@ -118,7 +118,7 @@ const Notify = new class {
 		this.#badge();
 		if (!noSnack) Snackbar('削除しました');
 	}
-	create = (d, save) => {		//通知登録
+	create(d, save){		//通知登録
 		if (save){
 			this.save(d);
 			Snackbar('追加しました');
@@ -404,9 +404,7 @@ const setEpgInfo = (d, $e) => {
 	if (d.starttime){
 		$('#info_date').html(`${ConvertTime(d.starttime, true, true)}～${ConvertTime(d.endtime, true)}`);
 		progReserve(d);
-	}else{
-		$('#info_date').html('未定');
-	}
+	}else $('#info_date').html('未定');
 	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.recinfoid && true || d.starttime && !d.endtime || Date.now() < d.endtime);
 
 	$('#service').html(ConvertService(d));
@@ -416,7 +414,7 @@ const setEpgInfo = (d, $e) => {
 
 	$('#genreInfo').html(() => !d.genre ? '' : typeof d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`));
 	$('#videoInfo').html(() => !d.video ? '' : typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`));
-	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text} : ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`));
+	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text}<li>サンプリングレート: ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`));
 
 	if (d.recinfoid){
 		$('#otherInfo').html(d.other ? `<li>${d.other.replace(/\n/g,'<li>')}` : '');
@@ -447,7 +445,7 @@ const openMacro = $e => {
 
 //録画フォルダパス
 const recFolder = new class {
-	create = (d, i, partial) => {
+	create(d, i, partial){
 		const div = '<div>';
 		const container = 'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing';
 		const select = 'mdl-cell pulldown mdl-grid mdl-grid--no-spacing';
@@ -481,7 +479,7 @@ const recFolder = new class {
 							$('<label>', {class: 'mdl-textfield__label', for: `${partial}recName${i}`, text: 'ファイル名PlugIn'}),
 							$('<i>', {class: 'addmacro material-icons', text: 'add', click: e => openMacro($(e.currentTarget)) }) ]}) ]}) ]});
 	}
-	del = $e => {
+	del($e){
 		$e = $e.parent();
 		const $elem = $e.next();
 		const $clone = $e.clone(true);
@@ -543,12 +541,12 @@ const setRecSettting = d => {
 
 //時間絞り込み
 const dateList = new class {
-	click = e => {
+	click(e){
 		$(e.currentTarget).toggleClass('mdl-color--accent mdl-color-text--accent-contrast');
 		const $e = $('#dateList_select option').eq( $(e.currentTarget).data('count') );
 		$e.prop('selected', !$e.prop('selected'));
 	}
-	create = () => {
+	create(){
 		$("#dateList_touch").empty();
 		$('[name=dateList]').val(
 			$('#dateList_select option').get().map((e, i) => {
@@ -614,9 +612,8 @@ const setAutoAdd = $e => {
 			setRecSettting(d);
 
 			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-		}else{
-			Snackbar('Error : 自動予約が見つかりませんでした');
-		}
+		}else Snackbar('Error : 自動予約が見つかりませんでした');
+
 		showSpinner();
 	});
 }
@@ -644,9 +641,7 @@ const setRecInfo = $e => {
 			if ($(xml).find('recinfo').length){
 				Info.recinfo[$e.data('recinfoid')] = toObj.EpgInfo($(xml).find('recinfo').first());
 				setRecInfo($e);
-			}else{
-				errMessage($(xml));
-			}
+			}else errMessage($(xml));
 			showSpinner();
 		});
 	}
@@ -723,7 +718,7 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 		//スイッチ追加
 		if (d.starttime < Date.now()){
 			$input.removeClass().addClass('search recmark').empty();
-			if (d.recSetting.recMode != 5) $input.unbind('click');
+			if (d.recSetting.recEnabled) $input.unbind('click');
 		}else if (!$e.hasClass('addreserve')){
 			const id = `reserve${d.id}`;
 			const $switch = $('<label>', {
@@ -825,9 +820,7 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 						Snackbar('予約が見つかりませんでした');
 					}
 				});
-			}else{
-				errMessage($(xml));
-			}
+			}else errMessage($(xml));
 		}
 	});
 
@@ -911,10 +904,10 @@ $(function(){
 		const $e = $(e.currentTarget);
 		if ($(e.target).is('.flag, .flag *, .count a')) return;
 
-		$e.data('onid') ? getEpgInfo($e) :
-		$e.data('id') ? setAutoAdd($e) :
-		$e.data('recinfoid') ? setRecInfo($e) : 
-		location.href = $e.data('href');
+		if ($e.data('onid')) getEpgInfo($e);
+		else if ($e.data('id')) setAutoAdd($e);
+		else if ($e.data('recinfoid')) setRecInfo($e);
+		else location.href = $e.data('href');
 	});
 	$('.close_info').click(() => $('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open'));
 
@@ -932,7 +925,8 @@ $(function(){
 		if ($('#video').data('loaded')) return;
 
 		if (!$('.is_cast').data('public')) loadMovie($('.is_cast'));
-		$('#video').trigger('load').data('loaded', true);
+		else $('#video').trigger('load');
+		$('#video').data('loaded', true);
 	});
 
 	//通知
@@ -978,11 +972,8 @@ $(function(){
 		$.post(`${ROOT}api/Common`, $(e.currentTarget).data()).done(xml => {
 			const message = $(xml).find('info').text();
 			Snackbar(message);
-			if (message.match('起動')){
-				$('#nosuspend').data('nosuspend', 'n').addClass('n').removeClass('y');
-			}else if (message.match('停止')){
-				$('#nosuspend').data('nosuspend', 'y').addClass('y').removeClass('n');
-			}
+			if (message.match('起動')) $('#nosuspend').data('nosuspend', 'n').addClass('n').removeClass('y');
+			else if (message.match('停止')) $('#nosuspend').data('nosuspend', 'y').addClass('y').removeClass('n');
 		});
 	});
 	//スタンバイ
@@ -1012,11 +1003,8 @@ $(function(){
 		const val = $('#content').val();
 		$('#contentList option').show();
 		$('#subGenre').mdl_prop('disabled', val != 'all');
-		if (val != 'all'){
-			$('#contentList option').not(val).prop('selected', false).hide();
-		}else if (!$('#subGenre').prop('checked')){
-			$('.subGenre').hide();
-		}
+		if (val != 'all') $('#contentList option').not(val).prop('selected', false).hide();
+		else if (!$('#subGenre').prop('checked'))$('.subGenre').hide();
 	});
 	//全ジャンル選択解除
 	$('.g_celar').click(() => $('#contentList option').prop('selected', false));
@@ -1027,16 +1015,15 @@ $(function(){
 	//全選択
 	$('.all_select').click(() => $('#serviceList option').not('.hidden').prop('selected', true));
 	//映像のみ表示
-	$('#image').change(e => $(e.currentTarget).prop('checked')
-		? $('#serviceList option.data').addClass('hidden')
-		: $('.extraction:checked').each((i, e) => $(`#serviceList ${$(e).val()}`).removeClass('hidden'))
-	);
+	$('#image').change(e => { 
+		if ($(e.currentTarget).prop('checked')) $('#serviceList option.data').addClass('hidden');
+		else $('.extraction:checked').each((i, e) => $(`#serviceList ${$(e).val()}`).removeClass('hidden'))
+	});
 	//ネットワーク表示
 	$('.extraction').change(e => {
 		const $e = $(e.currentTarget);
-		$e.prop('checked')
-			? $('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hidden') : $( $e.val() ).removeClass('hidden')
-			: $($e.val()).addClass('hidden').prop('selected', false);
+		if ($e.prop('checked')) $('#image').prop('checked') ? $( $e.val() ).not('.data').removeClass('hidden') : $( $e.val() ).removeClass('hidden');
+		else $($e.val()).addClass('hidden').prop('selected', false);
 	});
 	//時間絞り込み
 	//切替
@@ -1170,6 +1157,7 @@ $(function(){
 			setTimeout(() => $(e).remove(), $(e).data('endtime')-Date.now());
 		}, $(e).data('starttime')-Date.now())
 	);
+
 	//検索ページ向け
 	$('tr.search').each((i, e) => {
 		if ($(e).data('starttime')) setTimeout(() => $(e).addClass('start').children('.flag').children('span').addClass('recmark').empty(), $(e).data('starttime')-Date.now())
@@ -1205,11 +1193,9 @@ $(function(){
 				const xml = $(xhr.responseXML);
 				if (xml.find('success').length){
 					Snackbar({message: xml.find('success').text(), timeout: 1500});
-					if (d.redirect){
-						setTimeout(() => location.href=d.redirect, 1500);
-					}else if (d.submit){
-						setTimeout(() => $(d.submit).submit(), 1500);
-					}else if (d.reload || $form.hasClass('reload')){
+					if (d.redirect) setTimeout(() => location.href=d.redirect, 1500);
+					else if (d.submit) setTimeout(() => $(d.submit).submit(), 1500);
+					else if (d.reload || $form.hasClass('reload')){
 						Snackbar({message: 'リロードします', timeout: 1000});
 						setTimeout(() => location.reload(), 2500);
 					}else if (d.action) {
