@@ -420,6 +420,7 @@ const resetVid = reload => {
 
 	vid.src = '';
 	$vid_meta.attr('src', '');
+	$vid_meta.off('cuechange', oncuechangeB24Caption);
 	VideoSrc = null;
 	if (thumb) thumb.reset();
 }
@@ -516,6 +517,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 	if (d.canPlay){
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${encodeURIComponent(d.path)}`;
 		$vid.attr('src', path);
+		$vid_meta.on('cuechange', oncuechangeB24Caption);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();

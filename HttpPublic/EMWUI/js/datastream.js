@@ -210,7 +210,8 @@ toggleJikkyo=function(enabled,noSubStream){
   }
 };
 
-$('#vid-meta').on('cuechange', e => {
+const oncuechangeB24Caption = e => {
+  $(e.target).off('cuechange',oncuechangeB24Caption);
   var work=[];
   var dataList=[];
   var cues=e.target.track.cues;
@@ -229,7 +230,7 @@ $('#vid-meta').on('cuechange', e => {
     }
     setTimeout(pushCap,0);
   })();
-});
+};
 
 //データ放送(直接再生するメディアファイル向け)
 var cbDatacast;
