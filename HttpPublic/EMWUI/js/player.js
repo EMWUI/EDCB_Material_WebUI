@@ -386,7 +386,7 @@ const creatCap = () => {
 
 vid.onStreamStarted = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
+	if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	creatCap();
 }
@@ -414,6 +414,8 @@ const resetVid = reload => {
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
+	cbDatacast(false, true);
+	Jikkyolog(false, true);
 	if (reload) return;
 
 	vid.src = '';
@@ -515,7 +517,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${encodeURIComponent(d.path)}`;
 		$vid.attr('src', path);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
+		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
@@ -956,7 +958,7 @@ $(function(){
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
 			if ($('.is_cast').data('canPlay')){
-				cbDatacast();
+				cbDatacast(!disabled);
 				return;
 			}
 
@@ -975,16 +977,17 @@ $(function(){
 				DataStream = !DataStream;
 				localStorage.setItem('DataStream', DataStream);
 				$remote.toggleClass('mdl-button--accent', DataStream);
+				const disabled = $remote_control.hasClass('disabled');
 
 				if ($('.is_cast').data('canPlay')){
-					cbDatacast();
+					cbDatacast(!disabled);
 					return;
 				}
 	
 				if (DataStream){
 					if (!onDataStream) toggleDataStream(true);
 				}else{
-					if ($remote_control.hasClass('disabled')) toggleDataStream(false);
+					if (disabled) toggleDataStream(false);
 				}
 			}, 1000));
 		}
@@ -1003,17 +1006,17 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			if ($danmaku.data('log')){
-				if (!$('.is_cast').data('path')) return;
-				Jikkyolog();
-				return;
-			}
-
 			if($danmaku.hasClass('checked')){
-				if (!onJikkyoStream) toggleJikkyo(true);
+				if (!onJikkyoStream){
+					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+					else toggleJikkyo(true);
+				}
 				if (danmaku) danmaku.show();
 			}else{
-				if (!Jikkyo) toggleJikkyo(false);
+				if (!Jikkyo){
+					toggleJikkyo(false);
+					Jikkyolog(false);
+				}
 				if (danmaku) danmaku.hide();
 			}
 		},
@@ -1025,10 +1028,16 @@ $(function(){
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
 				if (Jikkyo){
-					if (!onJikkyoStream) toggleJikkyo();
+					if (!onJikkyoStream){
+						if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+						else toggleJikkyo(true);
+					}
 					$danmaku.addClass('mdl-button--accent');
 				}else{
-					if (!$danmaku.hasClass('checked')) toggleJikkyo(false);
+					if (!$danmaku.hasClass('checked')){
+						toggleJikkyo(false);
+						Jikkyolog(false);
+					}
 					$danmaku.removeClass('mdl-button--accent');
 				}
 			}, 1000));
