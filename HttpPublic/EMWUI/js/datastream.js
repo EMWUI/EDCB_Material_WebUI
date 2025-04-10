@@ -94,7 +94,8 @@ toggleJikkyo=function(enabled,noSubStream){
   setSendComment(function(commInput){
     if(/^@/.test(commInput.value)){
       if(commInput.value=="@sw"){
-        commInput.className=commInput.className=="refuge"?"nico":"refuge";
+        commInput.classList.toggle("nico");
+        commInput.classList.toggle("refuge");
       }
       return;
     }
@@ -108,7 +109,7 @@ toggleJikkyo=function(enabled,noSubStream){
     };
     var d=document.querySelector(".is_cast").dataset;
     var postCommentQuery=`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}`;
-    xhr.send(postCommentQuery+(commInput.className=="refuge"?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
+    xhr.send(postCommentQuery+(commInput.classList.contains("refuge")?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
   });
   var commHide=true;
   setInterval(function(){
