@@ -23,6 +23,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#mod;
 	#done;
 	#statsTime;
+	#sameStatsCount;
+	#currentReader;
 	#wakeLock;
 	#ctrl;
 	constructor(e){
@@ -32,6 +34,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#muted = false;
 		this.#volume = 1;
 		this.#statsTime = 0;
+		this.#sameStatsCount = 0;
+		this.#currentReader = null;
 		this.#initialize();
 		if(!window.createWasmModule || !navigator.gpu) return;
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
@@ -47,10 +51,16 @@ if (vid.tagName == "CANVAS") vid = new class {
 						this.#statsTime=stats[stats.length-1].time;
 						this.#e.dispatchEvent(new Event('timeupdate'));
 						this.cap&&this.cap.onTimeupdate(this.#statsTime);
-						//statsの中身がすべて同じ時、最後まで再生したとみなす
+						this.#sameStatsCount=0;
+						//statsの中身がすべて同じ状態が続くとき、最後まで再生したとみなす
 					}else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
-						this.pause();
-						this.#e.dispatchEvent(new Event('ended'));
+						if(++this.#sameStatsCount>=5){
+							this.#sameStatsCount=0;
+							this.pause();
+							this.#e.dispatchEvent(new Event('ended'));
+						}
+					}else{
+						this.#sameStatsCount=0;
 					}
 					if(this.#done) return;
 					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
@@ -172,7 +182,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	onStreamStarted(){}
 
 	#readNext(reader,ret){
-		if(ret&&ret.value){
+		if(reader==this.#currentReader&&ret&&ret.value){
 			var inputLen=Math.min(ret.value.length,1e6);
 			var buffer=this.#mod.getNextInputBuffer(inputLen);
 			if(!buffer){
@@ -188,11 +198,23 @@ if (vid.tagName == "CANVAS") vid = new class {
 			}
 		}
 		reader.read().then(r => {
-			if(r.done){ 
-				if(this.#wakeLock) this.#wakeLock.release();
+			if(r.done){
+				if(reader==this.#currentReader){
+					this.#currentReader=null;
+					if(this.#wakeLock){
+						this.#wakeLock.release();
+						this.#wakeLock=null;
+					}
+				}
 			}else this.#readNext(reader,r);
 		}).catch(e => {
-			if(this.#wakeLock)this.#wakeLock.release();
+			if(reader==this.#currentReader){
+				this.#currentReader=null;
+				if(this.#wakeLock){
+					this.#wakeLock.release();
+					this.#wakeLock=null;
+				}
+			}
 			throw e;
 		});
 	}
@@ -208,9 +230,10 @@ if (vid.tagName == "CANVAS") vid = new class {
 				return
 			};
 			this.onStreamStarted();
-			this.#readNext(response.body.getReader(),null);
+			this.#currentReader = response.body.getReader();
+			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
-			navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
+			if(!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
 		});
 		['ofssec','offset'].forEach(e => this.#url.searchParams.delete(e));
 	}
