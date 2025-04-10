@@ -401,11 +401,14 @@ const startHLS = src => {
 
 	if (hls){
 		hls.loadSource(src);
-		hls.on(Hls.Events.MANIFEST_PARSED, vid.onStreamStarted);
-		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
+}
+
+if (hls){
+	hls.on(Hls.Events.MANIFEST_PARSED, () => vid.onStreamStarted());
+	hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
 }
 
 const resetVid = reload => {
