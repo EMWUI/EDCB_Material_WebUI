@@ -896,7 +896,7 @@ $(function(){
 	const $rate = $('.rate');
 	$rate.change(e => {
 		const $e = $(e.currentTarget);
-		const isTs = $('.is_cast').data('path') && /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
+		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
 		//極力再読み込みは避けたい
 		if (!vid.tslive && isTs && $e.val()>1){	
 			videoParams.set('fast', $e.data('index'));
