@@ -3,11 +3,11 @@ function Version(a)
     css='250406',
     common='250409',
     tvguide='241224',
-    player='250406',
+    player='250410',
     onair='250314',
     library='250409',
     setting='241224',
-    datastream='250404',
+    datastream='250410',
     legacy='20250321',
     hls='v1.5.15',
     aribb24='v1.11.5',
@@ -66,7 +66,7 @@ function Template(temp)
 <title>EpgTimer</title>
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
-<link rel="manifest" href="]=]..path..[=[manifest.json">
+<link rel="manifest" href="]=]..path..[=[manifest.json" crossorigin="use-credentials">
 ]=]..css..[=[
 <link rel="stylesheet" href="]=]..path..[=[css/default.css]=]..Version('css')..[=[">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
@@ -778,7 +778,7 @@ function PlayerTemplate(video, liveOrAudio)
 <p class="mdl-layout-spacer"></p>
 ]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
   ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">subtitles</i></button>\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="danmaku" class="'..(JKRDLOG_PATH and 'log ' or '')..'ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
 <button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>

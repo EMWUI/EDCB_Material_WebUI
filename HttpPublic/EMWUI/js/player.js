@@ -23,6 +23,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#mod;
 	#done;
 	#statsTime;
+	#sameStatsCount;
+	#currentReader;
 	#wakeLock;
 	#ctrl;
 	constructor(e){
@@ -32,6 +34,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#muted = false;
 		this.#volume = 1;
 		this.#statsTime = 0;
+		this.#sameStatsCount = 0;
+		this.#currentReader = null;
 		this.#initialize();
 		if(!window.createWasmModule || !navigator.gpu) return;
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
@@ -47,10 +51,16 @@ if (vid.tagName == "CANVAS") vid = new class {
 						this.#statsTime=stats[stats.length-1].time;
 						this.#e.dispatchEvent(new Event('timeupdate'));
 						this.cap&&this.cap.onTimeupdate(this.#statsTime);
-						//statsの中身がすべて同じ時、最後まで再生したとみなす
+						this.#sameStatsCount=0;
+						//statsの中身がすべて同じ状態が続くとき、最後まで再生したとみなす
 					}else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
-						this.pause();
-						this.#e.dispatchEvent(new Event('ended'));
+						if(++this.#sameStatsCount>=5){
+							this.#sameStatsCount=0;
+							this.pause();
+							this.#e.dispatchEvent(new Event('ended'));
+						}
+					}else{
+						this.#sameStatsCount=0;
 					}
 					if(this.#done) return;
 					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
@@ -172,7 +182,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	onStreamStarted(){}
 
 	#readNext(reader,ret){
-		if(ret&&ret.value){
+		if(reader==this.#currentReader&&ret&&ret.value){
 			var inputLen=Math.min(ret.value.length,1e6);
 			var buffer=this.#mod.getNextInputBuffer(inputLen);
 			if(!buffer){
@@ -188,11 +198,23 @@ if (vid.tagName == "CANVAS") vid = new class {
 			}
 		}
 		reader.read().then(r => {
-			if(r.done){ 
-				if(this.#wakeLock) this.#wakeLock.release();
+			if(r.done){
+				if(reader==this.#currentReader){
+					this.#currentReader=null;
+					if(this.#wakeLock){
+						this.#wakeLock.release();
+						this.#wakeLock=null;
+					}
+				}
 			}else this.#readNext(reader,r);
 		}).catch(e => {
-			if(this.#wakeLock)this.#wakeLock.release();
+			if(reader==this.#currentReader){
+				this.#currentReader=null;
+				if(this.#wakeLock){
+					this.#wakeLock.release();
+					this.#wakeLock=null;
+				}
+			}
 			throw e;
 		});
 	}
@@ -208,9 +230,10 @@ if (vid.tagName == "CANVAS") vid = new class {
 				return
 			};
 			this.onStreamStarted();
-			this.#readNext(response.body.getReader(),null);
+			this.#currentReader = response.body.getReader();
+			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
-			navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
+			if(!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
 		});
 		['ofssec','offset'].forEach(e => this.#url.searchParams.delete(e));
 	}
@@ -386,7 +409,7 @@ const creatCap = () => {
 
 vid.onStreamStarted = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-	if (Jikkyo || $danmaku.hasClass('checked')) $danmaku.data('log') ? Jikkyolog() : toggleJikkyo();
+	if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	creatCap();
 }
@@ -401,11 +424,14 @@ const startHLS = src => {
 
 	if (hls){
 		hls.loadSource(src);
-		hls.on(Hls.Events.MANIFEST_PARSED, vid.onStreamStarted);
-		hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
 	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
+}
+
+if (hls){
+	hls.on(Hls.Events.MANIFEST_PARSED, () => vid.onStreamStarted());
+	hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
 }
 
 const resetVid = reload => {
@@ -414,10 +440,13 @@ const resetVid = reload => {
 	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
+	cbDatacast(false, true);
+	Jikkyolog(false, true);
 	if (reload) return;
 
 	vid.src = '';
 	$vid_meta.attr('src', '');
+	$vid_meta.off('cuechange', oncuechangeB24Caption);
 	VideoSrc = null;
 	if (thumb) thumb.reset();
 }
@@ -514,8 +543,9 @@ const loadMovie = ($e = $('.is_cast')) => {
 	if (d.canPlay){
 		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${encodeURIComponent(d.path)}`;
 		$vid.attr('src', path);
+		$vid_meta.on('cuechange', oncuechangeB24Caption);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog();
+		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
 		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
@@ -889,7 +919,7 @@ $(function(){
 	const $rate = $('.rate');
 	$rate.change(e => {
 		const $e = $(e.currentTarget);
-		const isTs = $('.is_cast').data('path') && /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
+		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
 		//極力再読み込みは避けたい
 		if (!vid.tslive && isTs && $e.val()>1){	
 			videoParams.set('fast', $e.data('index'));
@@ -956,7 +986,7 @@ $(function(){
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
 			if ($('.is_cast').data('canPlay')){
-				cbDatacast();
+				cbDatacast(!disabled);
 				return;
 			}
 
@@ -975,16 +1005,17 @@ $(function(){
 				DataStream = !DataStream;
 				localStorage.setItem('DataStream', DataStream);
 				$remote.toggleClass('mdl-button--accent', DataStream);
+				const disabled = $remote_control.hasClass('disabled');
 
 				if ($('.is_cast').data('canPlay')){
-					cbDatacast();
+					cbDatacast(!disabled);
 					return;
 				}
 	
 				if (DataStream){
 					if (!onDataStream) toggleDataStream(true);
 				}else{
-					if ($remote_control.hasClass('disabled')) toggleDataStream(false);
+					if (disabled) toggleDataStream(false);
 				}
 			}, 1000));
 		}
@@ -1003,17 +1034,17 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			if ($danmaku.data('log')){
-				if (!$('.is_cast').data('path')) return;
-				Jikkyolog();
-				return;
-			}
-
 			if($danmaku.hasClass('checked')){
-				if (!onJikkyoStream) toggleJikkyo(true);
+				if (!onJikkyoStream){
+					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+					else toggleJikkyo(true);
+				}
 				if (danmaku) danmaku.show();
 			}else{
-				if (!Jikkyo) toggleJikkyo(false);
+				if (!Jikkyo){
+					toggleJikkyo(false);
+					Jikkyolog(false);
+				}
 				if (danmaku) danmaku.hide();
 			}
 		},
@@ -1025,10 +1056,16 @@ $(function(){
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
 				if (Jikkyo){
-					if (!onJikkyoStream) toggleJikkyo();
+					if (!onJikkyoStream){
+						if ($('.is_cast').data('canPlay')) Jikkyolog(true);
+						else toggleJikkyo(true);
+					}
 					$danmaku.addClass('mdl-button--accent');
 				}else{
-					if (!$danmaku.hasClass('checked')) toggleJikkyo(false);
+					if (!$danmaku.hasClass('checked')){
+						toggleJikkyo(false);
+						Jikkyolog(false);
+					}
 					$danmaku.removeClass('mdl-button--accent');
 				}
 			}, 1000));
