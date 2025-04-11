@@ -56,7 +56,7 @@ window.addEventListener('resize', () => setbmlBrowserSize());
 var danmaku=null;
 var onJikkyoStream=null;
 var onJikkyoStreamError=null;
-toggleJikkyo=function(enabled){
+toggleJikkyo=function(enabled,noSubStream){
   if(enabled===false||enabled===undefined&&onJikkyoStream){
     streamParams.delete('jikkyo');
     onJikkyoStream=null;
@@ -66,9 +66,9 @@ toggleJikkyo=function(enabled){
     $('#jikkyo-chats').empty();
     return;
   }
-  if (!VideoSrc) return;
   var comm=document.getElementById("jikkyo-comm");
   var chats=document.getElementById("jikkyo-chats");
+  if (!comm||!chats||!(noSubStream||VideoSrc)) return;
   if(!danmaku){
     danmaku=new Danmaku({
       container:document.getElementById("danmaku-container"),
@@ -94,7 +94,8 @@ toggleJikkyo=function(enabled){
   setSendComment(function(commInput){
     if(/^@/.test(commInput.value)){
       if(commInput.value=="@sw"){
-        commInput.className=commInput.className=="refuge"?"nico":"refuge";
+        commInput.classList.toggle("nico");
+        commInput.classList.toggle("refuge");
       }
       return;
     }
@@ -108,7 +109,7 @@ toggleJikkyo=function(enabled){
     };
     var d=document.querySelector(".is_cast").dataset;
     var postCommentQuery=`ctok=${ctokC}&n=0&id=${d.onid}-${d.tsid}-${d.sid}`;
-    xhr.send(postCommentQuery+(commInput.className=="refuge"?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
+    xhr.send(postCommentQuery+(commInput.classList.contains("refuge")?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
   });
   var commHide=true;
   setInterval(function(){
@@ -127,7 +128,6 @@ toggleJikkyo=function(enabled){
   var scatter=[];
   var scatterInterval=200;
   var closed=false;
-  streamParams.set('jikkyo', 1);
   onJikkyoStream=function(tag){
       if(/^<chat /.test(tag)){
       var c=parseChatTag(replaceTag(tag));
@@ -204,11 +204,15 @@ toggleJikkyo=function(enabled){
   onJikkyoStreamError=function(status,readCount){
     addMessage("Error! ("+status+"|"+readCount+"Bytes)");
   };
-  openSubStream();
-  addMessage('接続開始');
+  if(!noSubStream){
+    streamParams.set('jikkyo', 1);
+    openSubStream();
+    addMessage('接続開始');
+  }
 };
 
-$('#vid-meta').on('cuechange', e => {
+const oncuechangeB24Caption = e => {
+  $(e.target).off('cuechange',oncuechangeB24Caption);
   var work=[];
   var dataList=[];
   var cues=e.target.track.cues;
@@ -227,8 +231,9 @@ $('#vid-meta').on('cuechange', e => {
     }
     setTimeout(pushCap,0);
   })();
-});
+};
 
+//データ放送(直接再生するメディアファイル向け)
 var cbDatacast;
 (function(){
   var psiData=null;
@@ -258,8 +263,15 @@ var cbDatacast;
     readTimer=setTimeout(read,500);
   }
   var xhr=null;
-  cbDatacast=function(){
-    if(!$remote_control.hasClass('disabled')){
+  cbDatacast=function(enabled,clearResponse){
+    if(clearResponse){
+      if(xhr){
+        xhr.abort();
+        xhr=null;
+      }
+      psiData=null;
+    }
+    if(!enabled){
       clearTimeout(readTimer);
       readTimer=null;
       bmlBrowserSetInvisible(true);
@@ -288,7 +300,8 @@ var cbDatacast;
   };
 })();
 
-var Jikkyolog;    
+//実況ログ(直接再生するメディアファイル向け)
+var Jikkyolog;
 (function(){
   var logText=null;
   var readTimer=null;
@@ -316,14 +329,23 @@ var Jikkyolog;
     readTimer=setTimeout(read,200);
   }
   var xhr=null;
-  Jikkyolog=function(){
-    if($danmaku.hasClass('checked')){
+  Jikkyolog=function(enabled,clearResponse){
+    if(clearResponse){
+      if(xhr){
+        xhr.abort();
+        xhr=null;
+      }
+      logText=null;
+    }
+    if(!enabled){
       toggleJikkyo(false);
       clearTimeout(readTimer);
       readTimer=null;
       return;
     }
-    toggleJikkyo(true);
+    if(!$('.is_cast').data('path')) return;
+    //ログをテキストデータとして直接取得するのでストリームは使わない
+    toggleJikkyo(true,true);
     startRead();
     if(xhr)return;
     xhr=new XMLHttpRequest();
@@ -352,13 +374,13 @@ var onDataStreamError=null;
     if(xhr){
       xhr.abort();
       xhr=null;
-      if(onDataStream||onJikkyoStream){
+      if(streamParams.has('psidata')||streamParams.has('jikkyo')){
         reopen=true;
         setTimeout(function(){reopen=false;openSubStream();},5000);
       }
       return;
     }
-    if(!onDataStream&&!onJikkyoStream)return;
+    if(!streamParams.has('psidata')&&!streamParams.has('jikkyo'))return;
     var readCount=0;
     var ctx={};
     videoParams.set('ofssec', ($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime));
