@@ -74,7 +74,7 @@ $(function(){
 	}
 
 	let order = localStorage.getItem('sortOrder') ?? 'name';
-	let asc = localStorage.getItem('ascending') == 'true';
+	let asc = localStorage.getItem('ascending')??'true' == 'true';
 	const sortLibrary = d => {
 		const list = d.file ?? $('.item').clone(true);
 		order = d.order ?? order
@@ -82,6 +82,7 @@ $(function(){
 
 		if (order == 'date') list.sort((a,b) => asc ? $(a).data().date - $(b).data().date : $(b).data().date - $(a).data().date);
 		else if (order == 'name') list.sort((a,b) => asc ? $(a).data().name > $(b).data().name ? 1 : -1 : $(a).data().name > $(b).data().name ? -1 : 1);
+		else if (order == 'size') list.sort((a,b) => asc ? $(a).data().size > $(b).data().size ? 1 : -1 : $(a).data().size > $(b).data().size ? -1 : 1);
 
 		$('.item').remove();
 		$(`#file${isGrid() ? '' : ' ul'}`).append(list);
@@ -131,6 +132,7 @@ $(function(){
 				$e.addClass('item').data({
 					name: name,
 					date: $(e).txt('date')*1000,
+					size: $(e).num('size'),
 					public: $(e).children('public').length > 0,
 				}).click(async () => {
 					showSpinner(true);
@@ -256,7 +258,7 @@ $(function(){
 	$('#menu_autoplay').removeClass('hidden');
 	$('#toggleView').click(() => toggleView());
 	$(`#sort_${order}`).addClass('mdl-color-text--accent');
-	$(asc ? '#asc' : '#des').hide();
+	$(asc ? '#des' : '#asc').hide();
 	$('[id^=sort_]').click(e => {
 		$('[id^=sort_]').removeClass('mdl-color-text--accent');
 		$(e.currentTarget).addClass('mdl-color-text--accent');
