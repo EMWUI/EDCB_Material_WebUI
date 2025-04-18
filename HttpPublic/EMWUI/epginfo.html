@@ -29,7 +29,8 @@ end
 
 ct={
   title='番組情報',
-  searchlinks=true
+  searchlinks=true,
+  fixedTabs=true
 }
 
 --検索等のリンクを生成
@@ -42,14 +43,14 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n'
 
 if not End and epgInfo then
 
-  ct.toProgR=r
+  ct.reserve=r
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
     ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SetReserve'..(r and '?id='..r.reserveID or '')..'" data-action="add" data-onid="'..onid..'" data-tsid="'..tsid..'" data-sid="'..sid..'" data-eid="'..eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reseveid="'..r.reserveID..'"' or '')..'>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reserve="'..r.reserveID..'"' or '')..'>\n'
   preset=false
   rs=r and r.recSetting or nil
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do

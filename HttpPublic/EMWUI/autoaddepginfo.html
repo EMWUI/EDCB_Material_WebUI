@@ -59,21 +59,20 @@ if aa.searchInfo then
 
     ..'<section class="mdl-layout__tab-panel" id="recset">\n<div class="form mdl-grid mdl-grid--no-spacing">'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-autoaddid="'..aa.dataID..'">\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-autoadd="'..aa.dataID..'">\n'
   presetID=GetVarInt(mg.request_info.query_string,'presetID') or GetVarInt(post, 'presetID') or 65535
   if aa.dataID==0 and presetID==65535 then
     presetID=0
   end
   preset=false
   rs=aa.recSetting
-  presetList=edcb.EnumRecPresetInfo()
-  for i,v in ipairs(presetList) do
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
     if v.id==presetID then
       preset=true
       rs=v.recSetting
+    else
+      rs=rs or v.recSetting
     end
-  end
-  for i,v in ipairs(presetList) do
     ct.main=ct.main..'<option value="'..v.id..'"'..Selected(v.id==presetID)..'>'..v.name..'\n'
   end
   if aa.dataID~=0 then
@@ -81,13 +80,10 @@ if aa.searchInfo then
   end
   ct.main=ct.main..'</select></div></div>\n'
 
-
-  if rs then
-    ct.main=ct.main..'<input type="hidden" name="presetID" value="'..(preset and presetID or 65535)..'">'
-      ..'<input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'">\n'
-      ..RecSettingTemplate(rs)
-  end
-  ct.main=ct.main..'</div></section>\n</form></div>\n'
+    ..'<input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'">\n'
+    ..RecSettingTemplate(rs)
+  
+    ..'</div></section>\n</form></div>\n'
 
   if aa.dataID~=0 then
     ct.main=ct.main..'<form id="del" method="POST" action="autoaddepg.html"><input type="hidden" name="del" value="'..aa.dataID..'"><input type="hidden" name="ctok" value="'..CsrfToken('autoaddepg.html')..'"></form>\n'
@@ -99,6 +95,7 @@ if aa.searchInfo then
     ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddepg">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
     ..'</div>\n</div>\n</div>\n'
 
+  ct.fixedTabs=true
   ct.tab='<a href="#search" class="mdl-layout__tab is-active">検索条件</a>\n'
        ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
 end

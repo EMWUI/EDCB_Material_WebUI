@@ -39,7 +39,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     end
   end
   table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
-    ..(SIDE_PANEL and 'data-id="'..a[i].dataID
+    ..(SIDE_PANEL and 'data-autoadd="'..a[i].dataID
                    or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--3-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..ParseNotKey(v.notKey).notKey
@@ -51,61 +51,16 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n')
 end
 
-if SIDE_PANEL then
-  SIDE_PANEL=[=[
-<div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">EPG予約</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><span class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></span></div>
-<div class="sidePanel-content">
-<form class="tab-container" id="set" method="POST" data-action="autoadd"><div class="mdl-tabs__tab-bar"><a href="#search_" class="mdl-tabs__tab is-active">検索条件</a><a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
-<section class="panel-swipe mdl-tabs__panel is-active" id="search_">
-<div class="form mdl-grid mdl-grid--no-spacing">
-<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">自動予約無効</div>
-<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>
-<input type="hidden" name="addchg" value="1">
-<div><label for="disable" class="mdl-switch mdl-js-switch"><input id="disable" class="mdl-switch__input" type="checkbox" name="disableFlag"></label><span class="mdl-switch__label"></span></div></div>
-]=]..SerchTemplate(GetSearchKeyKeyword(mg.request_info.query_string))..[=[
-</div></section>
-<section class="panel-swipe mdl-tabs__panel" id="recset">
-<div class="form mdl-grid mdl-grid--no-spacing">
-<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>
-<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID">
-]=]
-  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
-    if v.id==0 then
-      rs=v.recSetting
-    end
-    SIDE_PANEL=SIDE_PANEL..'<option value="'..v.id..'">'..v.name..'\n'
-  end
-  SIDE_PANEL=SIDE_PANEL..'<option id="reserved" value="65535" selected>登録時\n</select></div></div>\n'
-
-    ..'<input type="hidden" name="onid">\n'
-    ..'<input type="hidden" name="tsid">\n'
-    ..'<input type="hidden" name="sid">\n'
-    ..'<input type="hidden" name="eid">\n'
-    ..'<input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'">\n'
-      ..RecSettingTemplate(rs)
-    ..'</div></section></div>\n</form>\n'
-    ..'<div class="mdl-card__actions">\n'
-    ..'<div class="mdl-layout-spacer"></div>\n'
-
-    ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setautoadd')..'"></form>\n<button id="delreseved" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-
-    ..'<button id="reserve" class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#set">変更</button>\n'
-    ..'</div>\n'
-
-    ..'</div>\n<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
-end
-
 pageNav=pagination(page, a)
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-  ..(SIDE_PANEL or '')
+  ..SidePanelTemplate(true)
 
   ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
   ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
   ..' <th class="keyword mdl-data-table__cell--non-numeric">キーワード\n'
   ..' <th class="notkeyword mdl-data-table__cell--non-numeric">NOTキーワード\n'

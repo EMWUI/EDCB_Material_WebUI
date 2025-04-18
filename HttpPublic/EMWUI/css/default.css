@@ -33,7 +33,6 @@
 *:not(#ext):not(#summary p)>a {
   user-select: none; }
 
-
 @media (pointer: fine) {
   * {
     scrollbar-width: thin; }
@@ -388,6 +387,9 @@ header {
 .navigation__footer small .material-icons {
   font-size:smaller;
   vertical-align:text-bottom; }
+ .mdl-layout__tab {
+  text-transform: none; }
+
 
 
 
@@ -1062,7 +1064,7 @@ h4 .mdl-button--icon {
 @media (min-width: 480px) {
   .main-content>div.form-container {
     padding-top: 24px; }
-  #autoaddepg {
+  #autoaddepg, #autoaddmanual {
     padding-top: 16px; } }
 
 /* サイドパネル */
@@ -1424,7 +1426,7 @@ h4 .mdl-button--icon {
   overflow-x: auto; }
   .list caption {
     text-align: right; }
-  .list tr {
+  .list tbody tr {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0); }

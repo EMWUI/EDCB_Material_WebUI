@@ -1,0 +1,78 @@
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+edcb.htmlEscape=15
+
+post=AssertPost()
+
+aa={dataID=GetVarInt(mg.request_info.query_string,'id') or 0}
+if aa.dataID==0 then
+  ct={title='プログラム予約 新規追加'}
+  aa.dayOfWeekFlag=0
+  aa.startTime=0
+  aa.durationSecond=0
+  aa.title=''
+else
+  ct={title='プログラム予約 条件変更'}
+  aa=BinarySearch(edcb.EnumManuAdd(),aa,CompareFields('dataID')) or aa
+end
+
+if aa.dayOfWeekFlag then
+  endTime=(aa.startTime+aa.durationSecond)%(24*3600)
+
+  ct.main='<main class="mdl-layout__content">\n'
+    ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"><div>'
+    ..'<form id="autoaddmanual" method="POST" action="'..PathToRoot()..'api/SetManuAdd?id='..aa.dataID..(redirect and '" data-redirect="'..redirect or '')..'">\n'
+    ..'<section class="mdl-layout__tab-panel is-active" id="search">\n'
+    ..'<div class="form mdl-grid mdl-grid--no-spacing">'
+
+    ..ManuAddTemplate(aa)
+  
+    ..'</div></section>\n'
+
+    ..'<section class="mdl-layout__tab-panel" id="recset">\n<div class="form mdl-grid mdl-grid--no-spacing">'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">プリセット</div>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-manuadd="'..aa.dataID..'">\n'
+  presetID=aa.dataID==0 and 0 or 65535
+  preset=false
+  rs=aa.recSetting
+  for i,v in ipairs(edcb.EnumRecPresetInfo()) do
+    if v.id==presetID then
+      preset=true
+      rs=v.recSetting
+    else
+      rs=rs or v.recSetting
+    end
+    ct.main=ct.main..'<option value="'..v.id..'"'..Selected(v.id==presetID)..'>'..v.name..'\n'
+  end
+  if aa.dataID~=0 then
+    ct.main=ct.main..'<option value="65535"'..Selected(not preset)..'>予約時\n'
+  end
+  ct.main=ct.main..'</select></div></div>\n'
+  
+
+
+  if rs then
+    ct.main=ct.main..'<input type="hidden" name="ctok" value="'..CsrfToken('setmanuadd')..'">\n'
+      ..RecSettingTemplate(rs)
+  end
+  ct.main=ct.main..'</div></section>\n</form></div>\n'
+
+  if aa.dataID~=0 then
+    ct.main=ct.main..'<form id="del" method="POST" action="autoaddmanual.html"><input type="hidden" name="del" value="'..aa.dataID..'"><input type="hidden" name="ctok" value="'..CsrfToken('autoaddmanual.html')..'"></form>\n'
+  end
+
+  ct.main=ct.main..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
+    ..'<div class="mdl-layout-spacer"></div>\n'
+    ..(aa.dataID~=0 and '<button class="mdl-button mdl-js-button mdl-button--primary" form="del">削除</button>\n' or '')
+    ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#autoaddmanual">'..(aa.dataID==0 and '追加' or '変更')..'</button>\n'
+    ..'</div>\n</div>\n</div>\n'
+
+  ct.fixedTabs=true
+  ct.tab='<a href="#search" class="mdl-layout__tab is-active">予約条件</a>\n'
+    ..'<a href="#recset" class="mdl-layout__tab">録画設定</a>\n'
+end
+
+ct=Template(ct)
+
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

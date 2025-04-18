@@ -100,10 +100,10 @@ edcb.htmlEscape=15
 
 b=edcb.SearchEpg(key or {})
 table.sort(b, function(a,b)
-  if os.time(a.startTime)==os.time(b.startTime) then
-    return a.sid < b.sid
+  if (a.startTime and os.time(a.startTime) or 0)==(b.startTime and os.time(b.startTime) or 0) then
+    return a.sid<b.sid
   else
-    return os.time(a.startTime) < os.time(b.startTime)
+    return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0)
   end
 end)
 
@@ -142,7 +142,6 @@ ct={
   css=EpgCssTemplate(),
   js=EpgJsTemplate(baseTime-9*3600,true),
   menu=EpgMenuTemplate(true),
-  progres=true,
   searchlinks=not SIDE_PANEL
 }
 

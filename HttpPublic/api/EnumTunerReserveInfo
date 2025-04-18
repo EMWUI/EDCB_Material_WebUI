@@ -1,0 +1,40 @@
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+edcb.htmlEscape=15
+a=edcb.GetTunerReserveAll()
+ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
+for i,v in ipairs(a) do
+  table.insert(ct, '<tuner><total>'
+    ..#v.reserveList..'</total><tunerID>'
+    ..v.tunerID..'</tunerID><tunerName>'
+    ..v.tunerName..'</tunerName><reserveList>')
+  for j,w in ipairs(v.reserveList) do
+    r=edcb.GetReserveData(w)
+    size=getPredictionSize(r)
+    table.insert(ct, '<reserveinfo><ID>'
+    ..r.reserveID..'</ID><title>'
+    ..r.title..'</title><startDate>'
+    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                    r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
+    ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
+    ..r.durationSecond..'</duration><service_name>'
+    ..r.stationName..'</service_name><ONID>'
+    ..r.onid..'</ONID><TSID>'
+    ..r.tsid..'</TSID><SID>'
+    ..r.sid..'</SID><eventID>'
+    ..r.eid..'</eventID><comment>'
+    ..r.comment..'</comment><overlapMode>'
+    ..r.overlapMode..'</overlapMode><size>'
+    ..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')..'</size>'
+    ..XmlRecSetting(r.recSetting)
+    ..'</reserveinfo>\r\n')
+  end
+  table.insert(ct, '</reserveList></tuner>')
+end
+table.insert(ct, '</items></entry>')
+cl=0
+for i,v in ipairs(ct) do cl=cl+#v end
+mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
+if mg.request_info.request_method~='HEAD' then
+  for i,v in ipairs(ct) do mg.write(v) end
+end

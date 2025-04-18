@@ -1,85 +1,81 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-PAGE_COUNT=30
+ct={title='チューナー別',tab=''}
+
+if (not SIDE_PANEL) then
+  ct.css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
+  ..';}.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
+  ..';}</style>\n'
+  ct.js='<script>const ctok=\''..CsrfToken('setreserve')..'\';</script>\n'
+end
+
+pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 tab=GetVarInt(mg.request_info.query_string,'tab') or 1
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-
-
-ct={
-  title='チューナー別',
-  css='<style>\n.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
-    ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
-    ..';}\n</style>\n',
-  js='<script>const ctok=\''..CsrfToken('setreserve')..'\';</script>\n',
-  progres=true,
-}
 
 edcb.htmlEscape=15
-a=edcb.GetReserveData()
-table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
+ctt={}
+for i,v in ipairs(edcb.GetTunerReserveAll()) do
+  ct.tab=ct.tab..'<a href="?tab='..i..'" class="mdl-layout__tab'..(i==tab and ' is-active' or '')..'">'..i..':'..v.tunerName..' ('..#v.reserveList..')</a>\n'
 
-ct.main='<main class="tab-swipe sidePanel-container mdl-layout__content">\n'
+  if i==tab then 
+    a={}
+    for j,w in ipairs(v.reserveList) do
+      table.insert(a, edcb.GetReserveData(w))
+    end
+
+    table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
+    page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
+    if pageCount==0 then pageCount=#a end
+
+    pageNav=pagination(page, a)
+
+    table.insert(ctt, '<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+
+      ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
+      ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+      ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
+      ..' <th class="flag mdl-data-table__cell--non-numeric">録画\n'
+      ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
+      ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
+      ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
+      ..' <th class="comment mdl-data-table__cell--non-numeric">コメント\n'
+      ..' <th class="size">予想サイズ\n'
+      ..' <th class="priority">優先度\n'
+      ..'<tbody>\n')
+
+    for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
+      w=a[i]
+      size=getPredictionSize(w)
+
+      table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
+        ..(w.recSetting.recMode==5 and ' disabled' or w.overlapMode==1 and ' partially' or w.overlapMode==2 and ' shortage' or '')
+        ..'" data-startTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)-(w.recSetting.startMargin or 0))*1000 or '')
+        ..'" data-endTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+w.durationSecond+(w.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
+        ..(SIDE_PANEL and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
+                       or 'data-href="reserveinfo.html?id='..w.reserveID..'&amp;tuner=&amp;page='..page)..'">'
+
+        ..'\n <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'"><span><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..w.reserveID..'" class="mdl-switch__input"'..Checkbox(w.recSetting.recMode~=5)..'></label></span>'
+        ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(w.startTime, w.durationSecond)
+        ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(w.title)
+        ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..w.onid..'&amp;sid='..w.sid..'"><span>'..w.stationName
+        ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..w.comment
+        ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
+        ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">priority_high</i></span>'..w.recSetting.priority
+        ..'\n')
+    end
+    
+    table.insert(ctt, '</table>\n</div>\n'..pageNav..'</div>\n')
+  end
+end
+
+ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..SidePanelTemplate(true)
 
-  ..'<div class="mdl-layout__content">\n'
-  ..'<div class="list mdl-grid">\n'
-  ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+  ..table.concat(ctt)
 
-  ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
-  ..' <th class="flag mdl-data-table__cell--non-numeric">録画\n'
-  ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
-  ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
-  ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
-  ..' <th class="comment mdl-data-table__cell--non-numeric">コメント\n'
-  ..' <th class="size">予想サイズ\n'
-  ..' <th class="priority">優先度\n'
-
-ct.tab=''
-ct.Scrollable=true
-
-ctt={}
-rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
-rate={}
-for i,v in ipairs(edcb.GetTunerReserveAll()) do
-
-  ct.tab=ct.tab..'<a href="#dll_'..i..'" class="mdl-layout__tab'..(i==tab and ' is-active' or '')..'">'..i..':'..v.tunerName:gsub( "BonDriver_(.*).'..(WIN32 and 'dll' or 'so')..'", "%1")..' ('..#v.reserveList..')</a>\n'
-
-  table.insert(ctt, '<tbody class="mdl-layout__tab-panel'..(i==tab and ' is-active' or '')..'" id="dll_'..i..'">\n')
-
-  b={}
-  for j,w in ipairs(v.reserveList) do
-    table.insert(b, edcb.GetReserveData(w))
-  end
-
-  table.sort(b, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
-  for j,w in ipairs(b) do
-    size=getPredictionSize(w)
-
-    bg=w.recSetting.recMode==5 and ' disabled'
-       or w.overlapMode==1 and ' partially'
-       or w.overlapMode==2 and ' shortage' or nil
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'..(bg or '')..'" data-startTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+(w.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+w.durationSecond+(w.recSetting.endMargin or 0))*1000 or 0)..'" '
-    ..(SIDE_PANEL and 'data-onid="'..w.onid..'" data-tsid="'..w.tsid..'" data-sid="'..w.sid..'" data-eid="'..w.eid
-                  or 'data-href="reserveinfo.html?id='..w.reserveID..'&amp;tuner=&amp;page='..pageIndex)..'">\n'
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-toggle="1" data-id="'..w.reserveID..'"><span'
-    ..(TimeWithZone(w.startTime,9*3600)>os.time() and '><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..w.reserveID..'" class="mdl-switch__input"'..Checkbox(w.recSetting.recMode~=5)..'></label>'
-                                       or ' class="recmark">')
-    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(w.startTime, w.durationSecond)
-    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(w.title)
-    ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..w.onid..'&amp;sid='..w.sid..'"><span>'..w.stationName
-    ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..w.comment
-    ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
-    ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">priority_high</i></span>'..w.recSetting.priority
-    ..'\n')
-  end
-  
-  table.insert(ctt, '</tbody>\n')
-
-end
-
-ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n</div>\n'
+  ..'<a id="add" class="hidden mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"><i class="material-icons">add</i></a>'
 
 ct=Template(ct)
 

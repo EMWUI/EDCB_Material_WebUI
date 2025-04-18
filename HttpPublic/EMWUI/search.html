@@ -163,12 +163,17 @@ else
     end
   end
 end
-table.sort(a, function(a,b) return os.time(a.startTime) < os.time(b.startTime) end)
+table.sort(a, function(a,b)
+  if (a.startTime and os.time(a.startTime) or 0)==(b.startTime and os.time(b.startTime) or 0) then
+    return a.sid<b.sid
+  else
+    return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0)
+  end
+end)
 
 ct={
   title='検索',
   js='<script>const ctok=\''..CsrfToken('setreserve')..'\';$(function(){saerchbar();});</script>\n',
-  progres=true,
 }
 
 ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-600"><div class="mdl-navigation">\n'
@@ -177,7 +182,7 @@ ct.subheader='<div id="subheader" class="serch-bar scroll mdl-color-text--grey-6
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-  ..SidePanelTemplate(true)
+  ..SidePanelTemplate()
 
   ..'<div class="mdl-layout__content">'
 
@@ -247,31 +252,28 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
 
 
 
-pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
-autopage=GetVarInt(mg.request_info.query_string,'autopage',0,100000) or 0
-PAGE_COUNT=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
-if PAGE_COUNT==0 then PAGE_COUNT=#a end
+page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+if pageCount==0 then pageCount=#a end
 
 if #a>0 then
-  if math.ceil((#a/PAGE_COUNT)-1)>0 then
-    pg='<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html'..(dataID~=0 and '?id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
-      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex>0 and 'formaction="search.html?page='..(pageIndex-1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
+  pageNav='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'
+    ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'formaction="search.html'..(dataID~=0 and '?id='..dataID or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
+    ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'formaction="search.html?page='..(page-1)..(dataID~=0 and '&amp;id='..dataID or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
 
-    n=pageIndex>(#a/PAGE_COUNT-2) and math.floor(#a/PAGE_COUNT)-4 or math.max(0,pageIndex-2)
-    for i=n, n+4 do
-      pg=pg..(i>=0 and i<#a/PAGE_COUNT and '<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon'..(i==pageIndex and ' mdl-color--accent mdl-color-text--accent-contrast' or '" formaction="search.html?page='..i..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or ''))..'">'..(i+1)..'</button>\n' or '')
-    end
-
-    pg=pg..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..(pageIndex+1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
-      ..'<button class="mdl-button mdl-js-button mdl-button--icon" type="submit" form="hidden" '..(pageIndex<(#a/PAGE_COUNT-1) and 'formaction=\"search.html?page='..math.ceil((#a/PAGE_COUNT)-1)..(dataID~=0 and '&amp;id='..dataID..(autopage and '&amp;autopage='..autopage or '') or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
-
-    pg='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'..pg..'</div></div>\n'
+  n=math.max(math.min(page-2,math.floor(#a/pageCount)-4),0)
+  for i=n, n+4 do
+    pageNav=pageNav..((i==page or i<#a/pageCount) and '<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" formaction="search.html?page='..i..(dataID~=0 and '&amp;id='..dataID or ''))..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</button>\n' or '')
   end
 
-  ct.main=ct.main..(pg or '')..'<div class="list mdl-grid">'
-    ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-    ..'<caption>'..#a..' 件中 '..math.min(#a,pageIndex*PAGE_COUNT+1)..' － '..math.min(#a,(pageIndex+1)*PAGE_COUNT)..' 件</caption>\n'
+  pageNav=pageNav..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'formaction="search.html?page='..(page+1)..(dataID~=0 and '&amp;id='..dataID or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
+    ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'formaction="search.html?page='..math.ceil(#a/pageCount-1)..(dataID~=0 and '&amp;id='..dataID or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
+    ..'</div></div>\n'
 
+  ct.main=ct.main..pageNav..'<div class="list mdl-grid">'
+
+    ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+    ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
     ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
     ..(not archive and ' <th class="flag mdl-data-table__cell--non-numeric">録画\n' or '')
     ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
@@ -285,15 +287,15 @@ if #a>0 then
     rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
   end
 
+  sn={}
+  for i,v in ipairs(edcb.GetServiceList() or {}) do
+    sn[v.onid..'-'..v.tsid..'-'..v.sid]=v.service_name
+  end
+
   ctt={}
-  for i=math.max(1,pageIndex*PAGE_COUNT+1),math.min(#a,(pageIndex+1)*PAGE_COUNT) do
+  for i=math.max(1,page*pageCount+1),math.min(#a,(page+1)*pageCount) do
     v=a[i]
-    for j,w in ipairs(edcb.GetServiceList() or {}) do
-      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
-        service_name=w.service_name
-        break
-      end
-    end
+    service_name=sn[v.onid..'-'..v.tsid..'-'..v.sid] or ''
     r=nil
     id=rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
     if id then
@@ -301,13 +303,15 @@ if #a>0 then
       rs=r.recSetting
     end
 
-    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)+(r.recSetting.startMargin or 0))*1000 or '')..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0)
+    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'
+      ..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)-(r.recSetting.startMargin or 0))*1000 or '')
+      ..(not archive and '" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0) or '')
       ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(archive and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)
-                               or 'href="epginfo.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid..(pageIndex~=0 and '&amp;page='..pageIndex or '')..(autopage~=0 and '&amp;autopage='..autopage or ''))..'">'
+                                or 'href="epginfo.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..'-'..(archive and TimeWithZone(v.startTime) or v.eid)..(page~=0 and '&amp;page='..page or ''))..'">'
 
-      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and rs.recMode==5 and ' disabled' or '')..(r and '" data-toggle="1" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
-      ..(r and TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
-                                                             or ' class="search '..(r and 'recmark">' or 'add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>'))..'</span>' or '')
+      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and (rs.recMode==5 and ' disabled' or '')..'" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
+        ..(r and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
+              or ' class="add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>')..'</span>' or '')
 
       ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime)
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
@@ -316,7 +320,7 @@ if #a>0 then
       ..'\n')
   end
 
-  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..(pg or '')
+  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..pageNav
 end
 ct.main=ct.main..'\n</div>\n'
 
@@ -324,6 +328,7 @@ if dataID>0 or post or preset or mg.get_var(mg.request_info.query_string, 'andKe
   ct.main=ct.main..'<form id="hidden" method="POST">\n'
     ..(not key.search and '<input type="hidden" name="id" value="'..(mg.get_var(post, 'id') or dataID)..'">\n' or '')
     ..'<input type="hidden" class="ctok" name="ctok" value="'..CsrfToken()..'">\n'
+    ..'<input type="hidden" name="ctok" class="ctok" id="api" value="'..CsrfToken('searchevent')..'" disabled>\n'
     ..'<input type="hidden" name="ctok" class="ctok" id="autoaddepg" value="'..CsrfToken('autoaddepginfo.html')..'" disabled>\n'
     ..(archive and '<input type="hidden" name="archive" value="1">\n' or '')
     ..(range and '<input type="hidden" name="startDate" value="'..mg.get_var(post, 'startDate')..'">\n'
@@ -373,7 +378,7 @@ end
 
 ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored submitEX" form="hidden" data-ctok="#autoaddepg'
   ..(key.search and '" '..((not archive and post or mg.get_var(mg.request_info.query_string, 'andKey')) and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add'
-                 or '" formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..(autopage~=0 and '&amp;page='..autopage or '')..'"><i class="material-icons">edit')..'</i></button>\n'
+                 or '" formaction="autoaddepginfo.html?id='..(mg.get_var(post, 'id') or dataID)..'"><i class="material-icons">edit')..'</i></button>\n'
 
 ct=Template(ct)
 

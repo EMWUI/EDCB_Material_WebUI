@@ -1,0 +1,74 @@
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+ct={title='プログラム予約'}
+
+focusID=nil
+post=AssertPost()
+if post then
+  focusID=GetVarInt(post,'del')
+  if focusID then
+    edcb.DelManuAdd(focusID)
+    ct.js='<script>Snackbar("削除しました");</script>'
+  end
+end
+
+edcb.htmlEscape=15
+a=edcb.EnumManuAdd()
+pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
+if pageCount==0 then pageCount=#a end
+focusID=focusID or GetVarInt(mg.request_info.query_string,'id')
+if focusID then
+  --focusIDの行を含むページを探す
+  focusIndex=BinarySearchBound(a,{dataID=focusID},CompareFields('dataID'))
+  page=math.floor(math.max(math.min(focusIndex-1,#a-1),0)/pageCount)
+else
+  page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
+end
+
+ctt={}
+for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
+  dayOfWeek=''
+  for j,v in ipairs({'日','月','火','水','木','金','土'}) do
+    if bit32.btest(a[i].dayOfWeekFlag,2^(j-1)) then dayOfWeek=dayOfWeek..v end
+  end
+
+  endTime=(a[i].startTime+a[i].durationSecond)%(24*3600)
+  table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing" '
+    ..(SIDE_PANEL and 'data-manuadd="'..a[i].dataID..'"'
+                   or 'data-href="autoaddmanualinfo.html?id='..a[i].dataID)..'">'
+    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..a[i].title
+    ..'\n <td class="mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..dayOfWeek
+    ..('\n <td class="mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">%02d:%02d:%02d ～ %02d:%02d:%02d'):format(math.floor(a[i].startTime/3600),math.floor(a[i].startTime/60)%60,a[i].startTime%60,math.floor(endTime/3600),math.floor(endTime/60)%60,endTime%60)
+    ..'\n <td class="mode mdl-data-table__cell--non-numeric mdl-cell--2-col-phone">'..(RecModeTextList()[(a[i].recSetting.recMode~=5 and a[i].recSetting.recMode or a[i].recSetting.noRecMode or 1)+1] or '')
+    ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..a[i].recSetting.priority
+    ..'\n')
+end
+
+pageNav=pagination(page, a)
+
+ct.main='  <main class="sidePanel-container mdl-layout__content">\n'
+
+..SidePanelTemplate(true)
+
+  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+
+  ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
+  ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
+  ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
+  ..' <th class="mdl-data-table__cell--non-numeric">曜日\n'
+  ..' <th class="mdl-data-table__cell--non-numeric">時間\n'
+  ..' <th class="mode mdl-data-table__cell--non-numeric">録画モード\n'
+  ..' <th class="priority">優先度\n'
+  ..'<tbody>\n'
+
+  ..table.concat(ctt)
+
+  ..'</table>\n</div>\n'..pageNav..'</div>\n'
+
+  ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddmanualinfo.html"><i class="material-icons">add</i></a>'
+
+ct=Template(ct)
+
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))

@@ -1,0 +1,44 @@
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+post=AssertPost()
+if post then
+  dataID=GetVarInt(mg.request_info.query_string,'id') or 0
+  aa={dataID=dataID}
+  if mg.get_var(post,'addchg') then   
+    aa.recSetting=GetRecSetting(post)
+    if aa.recSetting then
+      aa.dayOfWeekFlag=0
+      for i=7,1,-1 do
+        aa.dayOfWeekFlag=aa.dayOfWeekFlag*2+(GetVarInt(post,'checkDayOfWeek'..i)==1 and 1 or 0)
+      end
+      aa.startTime=GetVarTime(post, 'starTtime', true)
+      aa.durationSecond=(GetVarTime(post, 'endTime', true)-aa.startTime)%(24*3600)
+      aa.onid,aa.tsid,aa.sid=GetVarServiceID(post,'serviceID')
+      if aa.onid then
+        chInfo=BinarySearch(edcb.GetChDataList(),aa,CompareFields('onid',false,'tsid',false,'sid'))
+        if chInfo then
+          aa.stationName=chInfo.serviceName
+          --制御文字は消す
+          aa.title=(mg.get_var(post,'title') or ''):gsub('%c','')
+          done=edcb.AddOrChgManuAdd(aa)
+        end
+      end
+    end
+    if done then
+      messege='<success>プログラム予約を'..(dataID==0 and '追加' or '変更')..'しました</success>'
+    else
+      messege='<err>プログラム予約を'..(dataID==0 and '追加' or '変更')..(aa.recSetting.recMode or 'B')..'できませんでした</err>'
+    end
+  elseif mg.get_var(post,'del') then
+    edcb.DelManuAdd(aa.dataID)
+    messege='<success>プログラム予約を削除しました</success>'
+  end
+end
+
+
+ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
+mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
+if mg.request_info.request_method~='HEAD' then
+  mg.write(ct)
+end

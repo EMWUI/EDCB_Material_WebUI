@@ -6,14 +6,17 @@ page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 edcb.htmlEscape=15
 r=edcb.GetReserveData(GetVarInt(mg.request_info.query_string,'id') or 0)
 
-ct={title='予約情報'}
+ct={
+  title='予約情報',
+  fixedTabs=true
+}
 
 if r then
   recording=edcb.GetRecFilePath(r.reserveID)
 
   ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
 
-  ct.progres=r
+  ct.reserve=r
 
   ct.searchlinks=true
 
@@ -30,7 +33,7 @@ if r then
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-reseveid="'..r.reserveID..'">\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-reserve="'..(r.eid==65535 and r.reserveID or r.onid..'-'..r.tsid..'-'..r.sid..'-'..r.eid)..'">\n'
   presetID=GetVarInt(mg.request_info.query_string,'presetID') or 65535
   preset=false
   rs=r.recSetting

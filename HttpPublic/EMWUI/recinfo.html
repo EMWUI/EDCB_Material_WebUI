@@ -1,10 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-ct={
-  title='録画結果',
-  searchlinks=true
-}
+ct={title='録画結果'}
 
 focus=nil
 post=AssertPost()
@@ -38,7 +35,7 @@ ctt={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(v.drops>0 and ' drops' or v.scrambles>0 and ' scrambles' or '')..'" '
-    ..(SIDE_PANEL and 'data-recinfoid="'..v.id
+    ..(SIDE_PANEL and 'data-recinfo="'..v.id
                    or 'data-href="recinfodesc.html?id='..v.id)..'">\n'
     ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
@@ -49,50 +46,16 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n')
 end
 
-if SIDE_PANEL then
-  SIDE_PANEL=[=[
-<div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
-<div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">録画結果</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
-<div class="sidePanel-content">
-<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
-<div class="tab-container"><div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a><a href="#error" class="mdl-tabs__tab">エラーログ</a></div>
-<section class="panel-swipe mdl-tabs__panel is-active" id="detail">
-<div id="ext" class="mdl-typography--body-1"></div>
-<ul><li>結果:<span id="comment"></li>
-<li><div>録画ファイルパス:<div id="path"></div></div></li>
-<li>ドロップ:<span id="drops"></li>
-<li>スクランブル:<span id="scrambles"></li>
-<li>ジャンル<ul id="genreInfo"></ul></li>
-<li>映像<ul id="videoInfo"></ul></li>
-<li>音声<ul id="audioInfo"></ul></li>
-<li>その他<ul id="otherInfo"></ul></li>
-</ul></section>
-<section class="panel-swipe mdl-tabs__panel" id="error"><div><pre></pre></div></section>
-</div></div>
-]=]
-
-  if mg.get_var(mg.request_info.query_string,'del') then
-    SIDE_PANEL=SIDE_PANEL..'<div id="actions" class="mdl-card__actions mdl-card--border">\n'
-      ..'<div class="mdl-layout-spacer"></div>\n'
-      ..'<form id="del" method="POST" data-action="del"><input type="hidden" name="del" value="1"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form>\n'
-      ..'<button class="submit mdl-button mdl-js-button mdl-button--primary" data-form="#del">削除</button>\n'
-      ..'</div>\n'
-  end
-
-  SIDE_PANEL=SIDE_PANEL..'</div>\n'
-    ..'<div class="close_info mdl-layout__obfuscator mdl-layout--small-screen-only"></div>\n'
-end
-
 pageNav=pagination(page, a)
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
-  ..(SIDE_PANEL or '')
+  ..SidePanelTemplate(true)
 
   ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
   ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
   ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
   ..' <th class="title mdl-data-table__cell--non-numeric ">タイトル\n'
@@ -105,6 +68,8 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..table.concat(ctt)
 
   ..'</table>\n</div>\n'..pageNav..'</div>\n'
+
+  ..'<a id="add" class="hidden mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"><i class="material-icons">add</i></a>'
 
 ct=Template(ct)
 

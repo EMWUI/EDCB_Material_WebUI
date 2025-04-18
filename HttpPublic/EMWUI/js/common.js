@@ -8,14 +8,14 @@ const zero = (e, n = 2) => (Array(n).join('0')+e).slice(-n);
 let Snackbar = d => setTimeout(Snackbar, 1000, d);
 
 $.fn.extend({
-	mdl_prop: function(prop, enable){
+	mdl_prop(prop, enable){
 		this.prop(prop, enable).parent().toggleClass(`is-${prop}`, enable);
 		return this;
 	},
-	txt: function(a){
+	txt(a){
 		return this.children(a).text();
 	},
-	num: function(a){
+	num(a){
 		return Number(this.txt(a));
 	},
 });
@@ -23,7 +23,7 @@ $.fn.extend({
 const Info = {
 	day: ['日', '月', '火', '水', '木', '金', '土'],
 	EventInfo: {},
-	recinfo: {},
+	recinfoEX: {},
 }
 
 //検索バー表示
@@ -90,7 +90,8 @@ const ConvertText = a => {
 	return s.replace(/\n/g,'<br>');
 };
 const ConvertTitle = a => !a ? '' : $('<p>').text(a).html().replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">$1</span>');
-const ConvertService = d => `<img class="logo" src="${ROOT}api/logo?onid=${d.onid}&sid=${d.sid}">` + $('<p>').html($('<span>').text(d.service)).html();
+const ConvertService = d => `<img class="logo" src="${ROOT}api/logo?onid=${d.onid}&sid=${d.sid}">` + $('<p>').html($('<span>').text(d.service||Info.service.get(`${d.onid}-${d.tsid}-${d.sid}`).service_name)).html();
+const ConvertServiceList = d => ConvertService({onid: d.serviceList[0].onid, tsid: d.serviceList[0].tsid, sid: d.serviceList[0].sid})+`${d.serviceList.length > 1 ? `<small>.他${d.serviceList.length - 1}ch` : ''}`;
 const ConvertZtoH = s => s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ');
 
 const Notify = new class {
@@ -179,7 +180,8 @@ const Notify = new class {
 
 //XMLをオブジェクト化
 const toObj = {
-	EpgInfo: e => {
+	EpgInfo(e){
+		e = $(e);
 		const d = {
 			onid: e.num('ONID'),
 			tsid: e.num('TSID'),
@@ -231,7 +233,7 @@ const toObj = {
 		if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 
 		if (e.num('ID')){
-			d.recinfoid = e.num('ID');
+			d.id = e.num('ID');
 			const programInfo = e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
 			if (programInfo){
 				d.text = programInfo[1];
@@ -251,7 +253,8 @@ const toObj = {
 
 		return d;
 	},
-	RecSet: e => {
+	RecSet(e){
+		e = $(e);
 		r = e.children('recsetting');
 		const d = {
 			id: e.num('ID') || e.num('id'),
@@ -288,101 +291,593 @@ const toObj = {
 			}
 		}
 
-		if (e.children('name').length){											//プリセット
-			d.name = e.txt('name');
-		}else if (e.txt('eventID') == 65535 || e.children('ONID').length){		//予約
+		if (e.txt('eventID') == 65535 || e.children('ONID').length){		//予約
 			d.title = e.txt('title');
-			d.starttime = new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime(),
+			d.starttime = e.children('startDate').length ? new Date(`${e.txt('startDate').replace(/\//g,'-')}T${e.txt('startTime')}+09:00`).getTime() : e.num('startTime'),
 			d.duration = e.num('duration');
-			if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 			d.service = e.txt('service_name');
 			d.onid = e.num('ONID');
 			d.tsid = e.num('TSID');
 			d.sid = e.num('SID');
-			d.eid = e.num('eventID');
-			d.comment = e.txt('comment');
-			d.overlapMode = e.num('overlapMode');
-		}
+			if (e.children('dayOfWeekFlag').length){
+				d.dayOfWeekFlag = e.num('dayOfWeekFlag');
+				d.endtime = d.starttime + d.duration;
+			}else{
+				if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
+				d.eid = e.num('eventID');
+				d.comment = e.txt('comment');
+				d.overlapMode = e.num('overlapMode');
+				d.size = e.txt('size');
+			}
+		}else if (e.children('name').length) d.name = e.txt('name');		//プリセット
+		else d.addCount = e.num('addCount');								//EPG予約
 
 		return d
 	},
-	Search: e => {
-		e = $(e).children('searchsetting');
-		return {searchSetting: {
-			disableFlag: e.num('disableFlag') == 1,
-			andKey: e.txt('andKey'),
-			notKey: e.txt('notKey'),
-			note: e.txt('note'),
-			regExpFlag: e.num('regExpFlag') == 1,
-			aimaiFlag: e.num('aimaiFlag') == 1,
-			titleOnlyFlag: e.num('titleOnlyFlag') == 1,
-			caseFlag: e.num('caseFlag') == 1,
+	Search(e){
+		s = $(e).children('searchsetting');
+		return {
+			searchSetting: {
+				disableFlag: s.num('disableFlag') == 1,
+				andKey: s.txt('andKey'),
+				notKey: s.txt('notKey'),
+				note: s.txt('note'),
+				regExpFlag: s.num('regExpFlag') == 1,
+				aimaiFlag: s.num('aimaiFlag') == 1,
+				titleOnlyFlag: s.num('titleOnlyFlag') == 1,
+				caseFlag: s.num('caseFlag') == 1,
 
-			contentList: e.children('contentList').get().map(e => {
-				return {
-					content_nibble: $(e).num('content_nibble'),
-					user_nibble: $(e).num('user_nibble')
-				}
-			}),
-			notContetFlag: e.txt('notContetFlag') == 1,
-			serviceList: e.children('serviceList').get().map(e => {
-				return {
-					onid: $(e).num('onid'),
-					tsid: $(e).num('tsid'),
-					sid: $(e).num('sid')
-				}
-			}),
-			dateList: e.children('dateList').get().map(e => {
-				return {
-					startDayOfWeek: $(e).num('startDayOfWeek'),
-					startMin: $(e).num('startMin'),
-					startHour: $(e).num('startHour'),
-					endDayOfWeek: $(e).num('endDayOfWeek'),
-					endHour: $(e).num('endHour'),
-					endMin: $(e).num('endMin')
-				}
-			}),
+				contentList: s.children('contentList').get().map(e => {
+					return {
+						content_nibble: $(e).num('content_nibble'),
+						user_nibble: $(e).num('user_nibble')
+					}
+				}),
+				notContetFlag: s.txt('notContetFlag') == 1,
+				serviceList: s.children('serviceList').get().map(e => {
+					return {
+						onid: $(e).num('onid'),
+						tsid: $(e).num('tsid'),
+						sid: $(e).num('sid')
+					}
+				}),
+				dateList: s.children('dateList').get().map(e => {
+					return {
+						startDayOfWeek: $(e).num('startDayOfWeek'),
+						startMin: $(e).num('startMin'),
+						startHour: $(e).num('startHour'),
+						endDayOfWeek: $(e).num('endDayOfWeek'),
+						endHour: $(e).num('endHour'),
+						endMin: $(e).num('endMin')
+					}
+				}),
 
-			notDateFlag: e.num('notDateFlag') == 1,
-			freeCAFlag: e.num('freeCAFlag'),
-			chkDurationMin: e.num('chkDurationMin'),
-			chkDurationMax: e.num('chkDurationMax'),
-			chkRecEnd: e.num('chkRecEnd') == 1,
-			chkRecNoService: e.num('chkRecNoService') == 1,
-			chkRecDay: e.num('chkRecDay')
-		} }
+				notDateFlag: s.num('notDateFlag') == 1,
+				freeCAFlag: s.num('freeCAFlag'),
+				chkDurationMin: s.num('chkDurationMin'),
+				chkDurationMax: s.num('chkDurationMax'),
+				chkRecEnd: s.num('chkRecEnd') == 1,
+				chkRecNoService: s.num('chkRecNoService') == 1,
+				chkRecDay: s.num('chkRecDay')
+			}
+		}
+	},
+	service(e){
+		e = $(e);
+		return {
+			onid: e.num('ONID'),
+			tsid: e.num('TSID'),
+			sid: e.num('SID'),
+			service_type: e.num('service_type'),
+			partialReceptionFlag: e.num('partialReceptionFlag') == 1,
+			service_provider_name: e.txt('service_provider_name'),
+			service_name: e.txt('service_name'),
+			network_name: e.txt('network_name'),
+			ts_name: e.txt('ts_name'),
+			remote_control_key_id: e.num('remote_control_key_id')
+		}
 	}
 }
 
 //各リストを取得
 const getList = new class {
+	#presets = {
+		reserve: {
+			notify: 2,
+			url: `${ROOT}api/EnumReserveInfo`,
+			sort: 'starttime',
+			toArray: $xml => $.map($xml.find('reserveinfo'), e => toObj.RecSet(e)).map(d => [d.eid == 65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, d]),
+		},
+		tunerreserve: {
+			notify: 2,
+			url: `${ROOT}api/EnumTunerReserveInfo`,
+			sort: 'starttime',
+			toArray: $xml => $.map($xml.find('reserveinfo'), e => toObj.RecSet(e)).map(d => [d.eid == 65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, d]),
+			tabArray: $xml => $.map($xml.find('tuner'), e => [[{total: $(e).num('total'),tunerName: $(e).txt('tunerName'),tunerID: $(e).num('tunerID')}, e]]),
+		},
+		recinfo: {
+			notify: 3,
+			url: `${ROOT}api/EnumRecInfo`,
+			toArray: $xml => $.map($xml.find('recinfo'), e => toObj.EpgInfo(e)).map(d => [d.id, d]),
+		},
+		autoaddepg: {
+			notify: 4,
+			url: `${ROOT}api/EnumAutoAdd`,
+			toArray: $xml => $.map($xml.find('autoaddinfo'), e => Object.assign(toObj.RecSet(e) , toObj.Search(e))).map(d => [d.id, d]),
+		},
+		autoaddmanual: {
+			notify: 5,
+			url: `${ROOT}api/EnumManuAdd`,
+			toArray: $xml => $.map($xml.find('autoaddinfo'), e => toObj.RecSet(e)).map(d => [d.id, d]),
+		},
+		search: {
+			url: `${ROOT}api/SearchEvent`,
+			toArray: ($xml, archive) => $.map($xml.find('eventinfo'), e => toObj.EpgInfo(e)).map(d => [`${d.onid}-${d.tsid}-${d.sid}-${archive?d.starttime:d.eid}`, d]),
+		},
+		recpreset: {
+			url: `${ROOT}api/EnumRecPreset`,
+			toArray: $xml => ({0: new Map($.map($xml.find('recpresetinfo'), e => toObj.RecSet(e)).map(d => [d.id, d]))})
+		},
+		service: {
+			url: `${ROOT}api/EnumService`,
+			toArray: $xml => new Map($.map($xml.find('serviceinfo'), e => toObj.service(e)).map(d => [`${d.onid}-${d.tsid}-${d.sid}`, d]))
+		},
+	}
+
 	#notify = {};
-	fetch = (key, url, n, fn = e=>e, toArray = e=>e) => {
-		$.get(`${ROOT}api/Common`, {notify: n}).done(xml => {
-			const notify = $(xml).num();
-			if (notify == this.#notify[key]){
-				fn(Info[key]);
-			}else{
-				this.#notify[key] = notify;
-				$.get(url).done(xml => {
-					Info[key] = new Map(toArray($(xml)));
-					fn(Info[key]);
-				});
-			}
+	#div;
+	#count;
+	#index(page){return Math.floor(page / this.#div * PAGE_COUNT) * this.#div};
+	constructor(){
+		this.#div = Math.round(200/PAGE_COUNT)*PAGE_COUNT;
+		if (this.#div != 200) this.#count = this.#div;
+	}
+
+	async checkUpdate(key){
+		const notify = await $.get(`${ROOT}api/Common`, {notify: this.#presets[key].notify}).then(r => $(r).num(), r=>this.#notify[key]) + 1;
+		if (notify != this.#notify[key]) return notify;
+	}
+	async fetch(key, fn = e=>e){
+		const preset = this.#presets[key];
+		if (!preset) return;
+		if (Info[key]) return fn(Info[key]);
+
+		return await $.get(preset.url).then(xml => {
+			Info[key] = preset.toArray($(xml));
+			return fn(Info[key]);
 		});
 	}
-	reserve = fn => this.fetch('reserve', `${ROOT}api/EnumReserveInfo`, 2, fn, $xml => $.map($xml.find('reserveinfo'), e => toObj.RecSet($(e))).map(d => [d.id == 65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, d]));
-	autoaddepg = fn => this.fetch('autoaddepg', `${ROOT}api/EnumAutoAdd`, 4, fn, $xml => $.map($xml.find('autoaddinfo'), e => Object.assign(toObj.RecSet($(e)), toObj.Search($(e)))).map(d=>[d.id, d]));
-	recpreset = fn => {
-		if (Info.preset){
-			fn(Info.preset);
-		}else{
-			$.get(`${ROOT}api/EnumRecPreset`).done(xml => {
-				Info.preset = new Map($.map($(xml).find('recpresetinfo'), e => toObj.RecSet($(e))).map(d=>[d.id, d]));
-				fn(Info.preset);
-			});
-		}
+	async fetchEX(key, index = 0, any, fn){
+		const preset = this.#presets[key];
+		if (!preset) return;
+
+		const notify = typeof any === 'number' ? any : await this.checkUpdate(key);
+		const sort = typeof any === 'string' ? any : null;
+		fn ??= typeof any === 'function' ? any : e=>e;
+
+		if (!notify && Info[key][index]){
+			if (sort) Info[key][index] = new Map(this.sort(key, Info[key][index], sort));
+			return fn(Info[key]);
+		};
+
+		return await $.get(preset.url, {index: index, count: this.#count}).then(xml => {
+			const $xml = $(xml);
+			if (notify){
+				this.#notify[key] = notify;
+				Info[key] = preset.tabArray ? {} : {total: $xml.children().num('total')};
+			}
+
+			if (preset.tabArray){
+				(preset.tabArray($(xml))).forEach((e, i) => {
+					e[0][index] = new Map(this.sort(key, preset.toArray($(e[1])), sort));
+					Info[key][i+1] = e[0];
+				});
+			}else Info[key][index] = new Map(this.sort(key, preset.toArray($xml), sort));
+
+			return fn(Info[key]);
+		}, () => fn(Info[key]));
 	}
+	sort(key, d, sort, reverse){
+		if (typeof sort === 'boolean'){
+			reverse = sort;
+			sort = null;
+		}
+		const x = this.#presets[key];
+		if (sort) x.sort = sort;
+		if (!x.sort) return d;
+		return [...d].sort((a, b) => reverse ? b[1][x.sort] > a[1][x.sort] ? 1 : -1 : a[1][x.sort] > b[1][x.sort] ? 1 : -1);
+	}
+
+	reserve = fn => this.fetchEX('reserve', 0, fn);
+	tunerreserve = fn => this.fetchEX('tunerreserve', 0, fn);
+	recinfo = (fn, page) => this.fetchEX('recinfo', this.#index(page), fn);
+	autoaddepg = fn => this.fetchEX('autoaddepg', 0, fn);
+	autoaddmanual = fn => this.fetchEX('autoaddmanual', 0, fn);
+	recpreset = fn => this.fetch('recpreset', fn);
+	service = fn => this.fetch('service', fn);
+	async search(form, index = 0, fn = e=>e){
+		await this.reserve();
+		const preset = this.#presets.search;
+		$(`#${form}`).find('.ctok').prop('disabled', true).filter('#api').prop('disabled', false);
+		Info.search ??= {};
+		const key = $(`#${form}`).serialize();
+		if (Info.search[key] && Info.search[key][index]) return fn(Info.search[key]);
+		const params = new URLSearchParams();
+		if (index) params.set('index', index);
+		if (this.#count) params.set('count', this.#count);
+		return await $.post(`${preset.url}?${params.toString()}`, $(`#${form}`).serializeArray()).then(xml => {
+			const $xml = $(xml);
+			const d = new Map(this.sort('search', preset.toArray($xml, $('#archive').prop('checked'))));
+			Info.search[key] ??= {total:  $xml.children().num('total'), archive: $('#archive').prop('checked')};
+			Info.search[key][index] = d;
+			return fn(Info.search[key]);
+		});
+	};
+}
+
+const createHtml = new class {
+	#days = Info.day;
+	#recMode = ['全サービス', '指定サービス', '全サービス（デコード処理なし）', '指定サービス（デコード処理なし）', '視聴', '無効'];
+	#presets = {
+		reserve: {
+			title: '予約一覧',
+			subtitle: '番組情報',
+			load: () => {
+				if (!$('tbody tr').length) return;
+				const sortedStartTime = $.map($('tbody tr'), e=>e).sort((a,b) => $(a).data('starttime') - $(b).data('starttime'));
+				const onStart = () => {
+					if (!sortedStartTime.length) return;
+					const $e = $(sortedStartTime[0]);
+					this.#timerID[1] = setTimeout(() => {
+						$e.find('.flag>span').empty().addClass('recmark');
+						if ($e.has('disabled')) $e.find('.flag>span').one({click(){$e.children('.flag').data('toggle', 1);addReserve($(this));}});
+						sortedStartTime.shift();
+						onStart();
+					}, $e.data('starttime') - Date.now());
+				}
+				onStart();
+				this.#timerID[2] = setTimeout(() => this.popstate(), Math.min(...$.map($('tbody tr'), e => $(e).data('endtime'))) - Date.now());
+			},
+			sidePanel: '#detail,#recset',
+			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'} `,
+			data: d => ({id: d.id, onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid??65535, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000}),
+			click: e => {
+				if ($(e.target).is('.flag, .flag *')) return;
+				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `reserveinfo.html?id=${$(e.currentTarget).data('id')}`;
+			},
+			cell: [
+				{title: '録画', class: 'flag', text: d => createSwitch(d), data: d => ({id: d.id})},
+				{title: '日付', class: 'date', text: d => `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`},
+				{title: '番組名', class: 'title', col: 4, text: d => ConvertTitle(d.title)},
+				{title: 'サービス', class: 'service', text: d => '<span>'+ConvertService(d)},
+				{title: 'コメント', class: 'comment', text: d => d.comment},
+				{title: '予想サイズ', class: 'size', text: d => d.size, n: true},
+				{title: '優先度', class: 'priority', text: d => `<span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>${d.recSetting.priority}`, n: true},
+			],
+		},
+		tunerreserve: {
+			tab: (d,i) => $('<a>', {href: '?tab='+i, class: 'mdl-layout__tab'+(i==1?' is-active':''), text: `${i}:${d.tunerName}(${d.total})`, click: e=>{e.preventDefault();this.setTab(i);}}),
+			title: 'チューナー別',
+			subtitle: '番組情報',
+			load: () => {
+				if (!$('tbody tr').length) return;
+				const sortedStartTime = $.map($('tbody tr'), e=>e).sort((a,b) => $(a).data('starttime') - $(b).data('starttime'));
+				const onStart = () => {
+					if (!sortedStartTime.length) return;
+					const $e = $(sortedStartTime[0]);
+					this.#timerID[1] = setTimeout(() => {
+						$e.find('.flag>span').empty().addClass('recmark');
+						sortedStartTime.shift();
+						onStart();
+					}, $e.data('starttime') - Date.now());
+				}
+
+				onStart();
+				this.#timerID[2] = setTimeout(() => this.popstate(), Math.min(...$.map($('tbody tr'), e => $(e).data('endtime'))) - Date.now());
+			},
+			sidePanel: '#detail,#recset',
+			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'} `,
+			data: d => ({onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid??65535, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000}),
+			click: e => {
+				if ($(e.target).is('.flag, .flag *')) return;
+				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `reserveinfo.html?id=${$(e.currentTarget).data('id')}`;
+			},
+			cell: [
+				{title: '録画', class: 'flag', text: d => createSwitch(d), data: d => ({id: d.id})},
+				{title: '日付', class: 'date', text: d => `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`},
+				{title: '番組名', class: 'title', col: 4, text: d => ConvertTitle(d.title)},
+				{title: 'サービス', class: 'service', text: d => '<span>'+ConvertService(d)},
+				{title: 'コメント', class: 'comment', text: d => d.comment},
+				{title: '予想サイズ', class: 'size', text: d => d.size, n: true},
+				{title: '優先度', class: 'priority', text: d => `<span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>${d.recSetting.priority}`, n: true},
+			],
+		},
+		recinfo: {
+			div: true,
+			title: '録画結果',
+			sidePanel: '#detail,#error',
+			class: d => d.drops>0 ? 'drops' : d.scrambles>0 ? 'scrambles' : '',
+			data: d => ({recinfo: d.id}),
+			click: e => $('#sidePanel').length ? setRecInfo($(e.currentTarget)) : location.href = `recinfodesc.html?id=${$(e.currentTarget).data('recinfo')}`,
+			cell: [
+				{title: '日付', class: 'date', text: d => `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`},
+				{title: 'タイトル', class: 'title', col: 4, text: d => ConvertTitle(d.title)},
+				{title: 'サービス', class: 'service', text: d => '<span>'+ConvertService(d)},
+				{title: '結果', class: 'comment', col: 4, text: d => d.comment},
+				{title: 'D', class: 'drop', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drops:</span>${d.drops}`, n: true},
+				{title: 'S', class: 'scramble', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>${d.scrambles}`, n: true},
+			],
+		},
+		autoaddepg: {
+			title: 'EPG予約',
+			add: 'autoaddepginfo.html',
+			sidePanel: '#search_,#recset',
+			data: d => ({autoadd: d.id}),
+			click: e => {
+				if ($(e.target).is('.count a')) return;
+				$('#sidePanel').length ? setAutoAdd($(e.currentTarget)) : location.href = `autoaddepginfo.html?id=${$(e.currentTarget).data('id')}`;
+			},
+			cell: [
+				{title: 'キーワード', class: 'keyword', col: 4, text: d => d.searchSetting.andKey},
+				{title: 'NOTキーワード', class: 'notkeyword', col: 3, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'block'})}), d.searchSetting.notKey]},
+				{title: 'メモ', class: 'note', col: 1, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'note'})}), d.searchSetting.note]},
+				{title: '登録数', class: 'count', col: 2, order: 1, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'search'})}), $('<a>', {text: d.addCount, href: `search.html?id=${d.id}`})], n: true},
+				{title: 'サービス', class: 'servicelist', col: 2, text: d => '<span>'+ConvertServiceList(d.searchSetting)},
+				{title: 'ジャンル', class: 'category', col: 2, text: d => d.searchSetting.contentList.length ? $(`#contentList [value="${d.searchSetting.contentList[0].content_nibble}"]`).text() : '全ジャンル'},
+				{title: '録画モード', class: 'mode', col: 2, text: d => this.#recMode[d.recSetting.recMode]}
+			],
+		},
+		autoaddmanual: {
+			title: 'プログラム予約',
+			add: 'autoaddmanualinfo.html',
+			sidePanel: '#manuadd,#recset',
+			data: d => ({manuadd: d.id}),
+			click: e => $('#sidePanel').length ? setManuAdd($(e.currentTarget)) : location.href = `autoaddmanualinfo.html?id=${$(e.currentTarget).data('id')}`,
+			cell: [
+				{title: '番組名', class: 'title', col:4, text: d => d.title},
+				{title: '曜日', class: '', text: d => this.#days.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))},
+				{title: '時間', class: '', text: d => `${zero(Math.floor(d.starttime / 3600))}:${zero(Math.floor((d.starttime / 60) % 60))}:${zero(Math.floor(d.starttime % 60))} ～ ${zero(Math.floor(d.endtime / 3600))}:${zero(Math.floor((d.endtime / 60) % 60))}:${zero(Math.floor(d.endtime % 60))}`},
+				{title: '録画モード', class: 'mode', text: d => this.#recMode[d.recSetting.recMode]},
+				{title: '優先度', class: 'priority', text: d => `<span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>${d.recSetting.priority}`, n: true},
+			],
+		},
+		search: {
+			ori: true,
+			div: true,
+			load: () => {
+				if (!$('tbody tr').length) return;
+				const sortedStartTime = $.map($('tbody tr').filter((i,a) => $(a).find('.flag').data('id')), e=>e).sort((a,b) => $(a).data('starttime') - $(b).data('starttime'));
+				const onStart = () => {
+					if (!sortedStartTime.length) return;
+					const $e = $(sortedStartTime[0]);
+					this.#timerID[1] = setTimeout(() => {
+						$e.find('.flag>span').empty().addClass('recmark');
+						if ($e.children('.flag').has('disabled')) $e.find('.flag>span').one({click(){$e.children('.flag').data('toggle', 1);addReserve($(this));}});
+						sortedStartTime.shift();
+						onStart();
+					}, $e.data('starttime') - Date.now());
+				}
+				onStart();
+
+				const sortedEndTime = $.map($('tbody tr').filter((i,a) => $(a).data('endtime')), e=>e).sort((a,b) => $(a).data('endtime') - $(b).data('endtime'));
+				const onEnd = () => {
+					if (!sortedEndTime.length) return;
+					const $e = $(sortedEndTime[0]);
+					this.#timerID[2] = setTimeout(() => {
+						$e.children('.flag').data('id', false).children('span').remove();
+						sortedEndTime.shift();
+						onEnd();
+					}, $e.data('endtime') - Date.now());
+				}
+				onEnd();
+			},
+			class: () => 'search',
+			data: d => ({onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid, endtime: d.endtime, starttime: d.id?d.starttime:undefined}),
+			click: e => {
+				if ($(e.target).is('.flag, .flag *')) return;
+				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `reserveinfo.html?id=${$(e.currentTarget).data('id')}`;
+			},
+			cell: [
+				{title: '録画', class: 'flag', text: d => createSwitch(d), data: d => ({id: d.id, onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid, oneclick: !d.id?1:undefined})},
+				{title: '日付', class: 'date', text: d => `${ConvertTime(d.starttime, false, true)}`},
+				{title: '番組名', class: 'title', col: 4, text: d => ConvertTitle(d.title)},
+				{title: 'サービス', class: 'service', text: d => '<span>'+ConvertService(d)},
+				{title: '番組内容', class: 'info', text: d => d.text},
+			],
+		},
+	}
+
+	#timerID = [];
+	#clearTimeout = () => this.#timerID.forEach(e => clearTimeout(e));
+
+	#key;
+	#form;
+	#container = 'div.mdl-layout__content';
+	#div = Math.round(200 / PAGE_COUNT);
+	constructor(){
+		this.#setFromURL();
+		if (!this.#preset) return;
+		$(window).on('popstate', () => this.popstate());
+		$(() => {
+			getList.service();
+			if (this.#preset.load) this.#preset.load();
+
+			$('.pagination a').click(e => {
+				e.preventDefault();
+				this.setPage(new URL($(e.currentTarget).attr('href'), location.href).searchParams.get('page') ?? 0);
+			});
+			/*
+			$('.pagination button:not(:disabled)').click(e => {
+				e.preventDefault();
+				const page = Number(new URL($(e.currentTarget).attr('formaction'), location.href).searchParams.get('page') ?? 0);
+				this.#form = $(e.currentTarget).attr('form');
+				this.setPage(page);
+			});
+			//*/
+			if (!this.enabled) return;
+
+			this.#checkUpdate();
+			this.#resetSidePanel();
+
+			$('.mdl-navigation a').click(e => {
+				const key = $(e.currentTarget).attr('href').split('.')[0];
+				if (!this[key]) return;
+				e.preventDefault();
+				this[key]();
+			});
+			$('.mdl-layout__tab').click(e => {
+				const params = new URLSearchParams($(e.currentTarget).attr('href'));
+				if (!params.has('tab')) return;
+				e.preventDefault();
+				this.setTab(params.get('tab'));
+			});
+		});
+	}
+
+	set setContainer(e){this.#container = e};
+	get #preset(){return this.#presets[this.#key] && this.#presets[this.#key]};
+	get enabled(){return this.#key=='index' || this.#preset && !this.#preset.ori || false};
+	get #index(){return this.#preset.div ? (Math.floor(this.#page / this.#div) * this.#div * PAGE_COUNT) : 0};
+
+	load(){
+		this.#clearTimeout();
+		this.#presets[this.#key].load();
+	}
+
+	#main(d){
+		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
+		return [
+			$('<caption>', {text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
+			$('<thead>', {class: 'mdl-cell--hide-phone', append:
+				$('<tr>', {append: this.#preset.cell.map(cell =>
+					$('<th>', {class: `${cell.class}${cell.n ? '' : ' mdl-data-table__cell--non-numeric'}`, text: cell.title}) )}) }),
+			$('<tbody>', {append: [...d[this.#index]].slice(i, i + PAGE_COUNT).map(e =>
+				$('<tr>', { class: `${this.#preset.class ? this.#preset.class(e[1]) : ''} mdl-grid--no-spacing`, data: this.#preset.data(e[1]), click: e => this.#preset.click(e), append: this.#preset.cell.map(cell =>
+					$('<td>', {class: `${cell.class}${cell.n?'':' mdl-data-table__cell--non-numeric'}${cell.col?` mdl-cell--${cell.col}-col-phone`:''}${cell.order?` mdl-cell--order-${cell.order}-phone`:''}`, data: cell.data && cell.data(e[1]), append: cell.text(e[1])}) )}) )})
+		];
+	}
+	#pagination(d){
+		const i = 5;	//表示数
+		const max = Math.ceil(d.total / PAGE_COUNT - 1);
+		const n = Math.max(Math.min(this.#page-Math.round(i/2)+1, max-i+1), 0);
+		return $('<div>', {class: 'mdl-grid mdl-grid--no-spacing', append: [
+					{text: 'first_page', page: 0, disabled: this.#page==0},
+					{text: 'chevron_left', page: this.#page-1, disabled: this.#page == 0, class: 'prev'},
+					...[...Array(i)].map((e, i)=>i+n).filter(i=>i==this.#page||i<=max).map(i => ({text: i+1, page: i, class: i==this.#page?'mdl-color--accent mdl-color-text--accent-contrast':'', disabled: i==this.#page})),
+					{text: 'chevron_right', page: this.#page+1, disabled: this.#page>=max, class: 'next'},
+					{text: 'last_page', page: max, disabled: this.#page>=max}
+				].map(d => $(`<${!d.disabled&&!this.#form ? 'a' : 'button'}>`, {class: `mdl-button mdl-js-button mdl-button--icon ${d.class ?? ''}`, href: !d.disabled ? `${this.#key}.html${d.page>0 ? `?page=${d.page}` : ''}` : null, disabled: d.disabled, click: e => {e.preventDefault();this.setPage(d.page);}, html: typeof d.text == 'number' ? d.text : $('<i>', {class: 'material-icons', text: d.text}) })) });
+	}
+	async create(notify){
+		showSpinner(true);
+		this.#clearTimeout();
+
+		const d = this.#key=='search' ? await getList.search(this.#form, this.#index)
+			: await getList.fetchEX(this.#key, this.#index, notify, d => this.#preset.tab?d[this.#tab]:d);
+
+		$('.mdl-layout__content').scrollTop(0);
+		$(`${this.#container} .pagination`).html(this.#pagination(d));
+		$(`${this.#container} table`).html(this.#main(d))
+		componentHandler.upgradeDom();
+
+		if (this.#preset.load) this.#preset.load();
+		this.#checkUpdate();
+
+		showSpinner();
+	}
+	async sort(sort){
+		const d = await getList.fetchEX(this.#key, this.#index, sort);
+		$(`${this.#container} table`).html(this.#main(d));
+		componentHandler.upgradeDom();
+	}
+
+	#checkUpdate(){
+		this.#timerID[0] = setTimeout(async ()=> {
+			const notify = await getList.checkUpdate(this.#key);
+			if (notify) this.create(notify);
+			else this.#checkUpdate();
+		}, 10*60*1000);
+	}
+
+	#resetSidePanel(){
+		$('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open');
+		$('.mdl-layout__drawer').attr('aria-hidden', true);
+		$('.mdl-layout__drawer,.mdl-layout__obfuscator').removeClass('is-visible');
+
+		$('header .mdl-layout-title').text(this.#preset.title);
+		$('.sidePanel_title').text(this.#preset.subtitle ?? this.#preset.title);
+		$('form.tab-container').find('input,select').mdl_prop('disabled', true);
+		$(this.#preset.sidePanel).find('input,select').mdl_prop('disabled', false);
+		$('#del [name="ctok"]').prop('disabled', true);
+		$(`#del-${this.#key}`).prop('disabled', false);
+		$('.mdl-tabs__tab,[class*="show-"]').addClass('hidden');
+		$(`${this.#preset.sidePanel.split(',').map(e=>`.mdl-tabs__tab[href='${e}']`).join(',')},[class*="hide-"],.show-${this.#key}`).removeClass('hidden');
+		$(`.hide-${this.#key}`).addClass('hidden');
+		$('#reserve').text('変更');
+		$('#add').toggleClass('hidden', !this.#preset.add).attr('href', this.#preset.add??'')
+	}
+
+	get #page(){return Number(this.#params.get('page'))||0};
+	set #page(page){page ? this.#params.set('page', page) : this.#params.delete('page')};
+	setPage(page){
+		this.#setParams(page);
+	}
+	get #tab(){return Number(this.#params.get('tab'))||1};
+	set #tab(tab){tab>1 ? this.#params.set('tab', tab) : this.#params.delete('tab')};
+	setTab(tab){
+		$('.mdl-layout__tab').removeClass('is-active');
+		$(`[href='?tab=${tab}']`).addClass('is-active');
+		this.#tab = tab;
+		this.#setParams(0);
+	}
+
+	#params;
+	#setFromURL(){
+		const old = this.#key;
+		const key = location.pathname.split('/');
+		this.#key = key[key.length - 1].split('.')[0];
+		if (this.#key=='') this.#key = 'index';
+		this.#params = new URLSearchParams(location.search);
+		return this.#key != old && this.#key!='index';
+	}
+	async #setToURL(key, page, tab = 1){
+		if (this.#key != key){
+			this.#key = key;
+			$('.mdl-layout__tab-bar-container').remove();
+			if (this.#preset.tab){
+				$('header').append($('<div>', {class:'mdl-layout__tab-bar', append: Object.values(await getList[this.#key]()).map((d,i)=>this.#preset.tab(d,i+1))}));
+				const btn = document.querySelector('.mdl-layout__drawer-button');
+				const clonedBtn = btn.cloneNode(true);
+				btn.replaceWith(clonedBtn);
+				$('.mdl-layout').unwrap();
+				delete $('.mdl-layout.mdl-js-layout.mdl-layout--fixed-header').get(0).dataset.upgraded;
+				$('.has-drawer>.mdl-layout__obfuscator:not(#macro)').remove();
+			}
+		}
+		this.#page = page;
+		this.#tab = tab;
+		this.#resetSidePanel();
+		history.pushState(null, null, `${this.#key}.html?${this.#params.toString()}`);
+		this.create();
+	}
+	async #setParams(page){
+		this.#page = page;
+		history.pushState(null, null, `?${this.#params.toString()}`);
+		await this.create();
+	}
+	async popstate(){
+		this.#setFromURL() && this.#resetSidePanel();
+		if (this.#key=='index'){
+			$(this.#container).find('.pagination,table').empty();
+			$('header .mdl-layout-title').text('');
+		}else this.create();
+	}
+
+	reserve(page = 0){this.#setToURL('reserve', page)}
+	recinfo(page = 0){this.#setToURL('recinfo', page)}
+	autoaddepg(page = 0){this.#setToURL('autoaddepg', page)}
+	autoaddmanual(page = 0){this.#setToURL('autoaddmanual', page)}
+	tunerreserve(page = 0, tab = 1){this.#setToURL('tunerreserve', page, tab)}
 }
 
 const resetSidePanel = tab => {
@@ -393,7 +888,7 @@ const resetSidePanel = tab => {
 }
 
 //番組詳細を反映
-const setEpgInfo = (d, $e) => {
+const setEpgInfo = (d, $e, id) => {
 	resetSidePanel('detail');
 	if ($e) $e.addClass('open');
 
@@ -405,7 +900,7 @@ const setEpgInfo = (d, $e) => {
 		$('#info_date').html(`${ConvertTime(d.starttime, true, true)}～${ConvertTime(d.endtime, true)}`);
 		progReserve(d);
 	}else $('#info_date').html('未定');
-	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions').toggle(d.recinfoid && true || d.starttime && !d.endtime || Date.now() < d.endtime);
+	$('#sidePanel .mdl-tabs__tab-bar,#sidePanel .mdl-card__actions:not(.hidden)').toggle(d.errInfo && true || d.starttime && !d.endtime || Date.now() < d.endtime);
 
 	$('#service').html(ConvertService(d));
 	$('#links').html(new SearchLinks(d).htmlEX);
@@ -416,7 +911,7 @@ const setEpgInfo = (d, $e) => {
 	$('#videoInfo').html(() => !d.video ? '' : typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`));
 	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text}<li>サンプリングレート: ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`));
 
-	if (d.recinfoid){
+	if (d.errInfo){
 		$('#otherInfo').html(d.other ? `<li>${d.other.replace(/\n/g,'<li>')}` : '');
 	}else{
 		$('#otherInfo').html(`
@@ -432,7 +927,7 @@ const setEpgInfo = (d, $e) => {
 		$('[name=sid]').val(d.sid);
 		$('[name=eid]').val(d.eid);
 
-		$('#link_epginfo').attr('href', $e&&$e.is('tr') ? `reserveinfo.html?id=${$e.find('.flag').data('id')}` : `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`);
+		$('#link_epginfo').attr('href', createHtml.enabled ? `reserveinfo.html?id=${$e.find('.flag').data('id')}` : `epginfo.html?id=${id||`${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`}`);
 		$('#set').data('onid', d.onid).data('tsid', d.tsid).data('sid', d.sid).data('eid', d.eid);
 	}
 }
@@ -602,11 +1097,12 @@ const setAutoAdd = $e => {
 	$e.addClass('open');
 
 	getList.autoaddepg(d => {
-		const id = $e.data('id');
-		d = d.get(id);
+		const id = $e.data('autoadd');
+		d = d[0].get(id);
 		if (d){
 			$('#set,#del').attr('action', `${ROOT}api/SetAutoAdd?id=${id}`);
 			$('#link_epginfo').attr('href', `autoaddepginfo.html?id=${id}`);
+			$('[name=presetID]').data('id', id).data('key', 'autoaddepg').val(65535);
 
 			setSerchSetting(d);
 			setRecSettting(d);
@@ -618,33 +1114,59 @@ const setAutoAdd = $e => {
 	});
 }
 
+//プログラム予約を反映
+const setManuAdd = $e =>{
+	showSpinner(true);
+	resetSidePanel('manuadd');
+	$e.addClass('open');
+
+	getList.autoaddmanual(d => {
+		const id = $e.data('manuadd');
+		d = d[0].get(id);
+		if (d){
+			$('#set,#del').attr('action', `${ROOT}api/SetManuAdd?id=${id}`);
+			$('#link_epginfo').attr('href', `autoaddmanualinfo.html?id=${id}`);
+			$('[name=presetID]').data('id', id).data('key', 'autoaddmanual').val(65535);
+
+			[...Array(7)].map((e, i)=>$(`#checkDayOfWeek${i+1}`).mdl_prop('checked', (d.dayOfWeekFlag & 2 ** i)>0));
+			$('#startTime-from').val(`${zero(Math.floor(d.starttime / 3600))}:${zero(Math.floor((d.starttime / 60) % 60))}:${zero(Math.floor(d.starttime % 60))}`);
+			$('#endTime-from').val(`${zero(Math.floor((d.endtime) / 3600))}:${zero(Math.floor(((d.endtime) / 60) % 60))}:${zero(Math.floor((d.endtime) % 60))}`);
+			$('#title-from').val(d.title);
+			$('#serviceID').val(`${d.onid}-${d.tsid}-${d.sid}`);
+			setRecSettting(d);
+
+			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+		}else Snackbar('Error : プログラム予約が見つかりませんでした');
+
+		showSpinner();
+	});
+}
+
 //録画結果を反映
-const setRecInfo = $e => {
-	if (Info.recinfo[$e.data('recinfoid')]){
-		const d = Info.recinfo[$e.data('recinfoid')];
-		setEpgInfo(d, $e);
+const setRecInfo = async $e => {
+	showSpinner(true);
+	const id = $e.data('recinfo');
+	const d = Info.recinfoEX[id] ?? await $.get(`${ROOT}api/EnumRecInfo?id=${id}`).then(xml => {
+		if ($(xml).find('recinfo').length) return Info.recinfoEX[id] = toObj.EpgInfo($(xml).find('recinfo').first());
+		else errMessage($(xml));
+	});
+	showSpinner();
 
-		$('#path').text(d.recFilePath);
-		$('#comment').text(d.comment);
-		$('#drops').text(d.drops);
-		$('#scrambles').text(d.scrambles);
+	if (!d) return;
 
-		$('pre').text(d.errInfo);
+	setEpgInfo(d, $e);
 
-		$('#del').attr('action', `${ROOT}api/SetRecInfo?id=${d.recinfoid}`).next('button').prop('disabled', d.protect);
-		$('#link_epginfo').attr('href', `recinfodesc.html?id=${d.recinfoid}`);
+	$('#path').text(d.recFilePath);
+	$('#comment').text(d.comment);
+	$('#drops').text(d.drops);
+	$('#scrambles').text(d.scrambles);
 
-		$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-	}else{
-		showSpinner(true);
-		$.get(`${ROOT}api/EnumRecInfo?id=${$e.data('recinfoid')}`).done(xml => {
-			if ($(xml).find('recinfo').length){
-				Info.recinfo[$e.data('recinfoid')] = toObj.EpgInfo($(xml).find('recinfo').first());
-				setRecInfo($e);
-			}else errMessage($(xml));
-			showSpinner();
-		});
-	}
+	$('pre').text(d.errInfo);
+
+	$('#del').attr('action', `${ROOT}api/SetRecInfo?id=${d.id}`).next('button').prop('disabled', d.protect);
+	$('#link_epginfo').attr('href', `recinfodesc.html?id=${d.id}`);
+
+	$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 }
 
 //予約を反映
@@ -654,7 +1176,7 @@ const setReserve = (r, fn) => {
 	$('#set,#del,#progres').attr('action', `${ROOT}api/SetReserve?id=${id}`);
 	$('#action').attr('name', 'change');
 	$('#reserved, #delreseved, #toprogres').show();
-	$('[name=presetID]').data('reseveid', id).val(65535);
+	$('[name=presetID]').data('id', r.eid == 65535 ? r.id : `${r.onid}-${r.tsid}-${r.sid}-${r.eid}`).data('key', 'reserve').val(65535);
 	$('#reserve').text('変更');
 
 	if (fn){
@@ -668,7 +1190,7 @@ const setReserve = (r, fn) => {
 //デフォルト読込
 const setDefault = mark => {
 	getList.recpreset(d => {
-		setRecSettting(d.get(0));
+		setRecSettting(d[0].get(0));
 
 		$('#set').attr('action', `${ROOT}api/SetReserve`);
 		$('#action').attr('name', 'add');
@@ -706,6 +1228,32 @@ const addRecMark = (r, $target, $content) => {
 	return rs.recEnabled ? '無効' : '有効';
 }
 
+const createSwitch = d => {
+	if (!d.id) return $('<span>', {
+		class: 'search add mdl-button mdl-js-button mdl-button--fab mdl-button--colored',
+		click(){addReserve($(this))},
+		html: '<i class="material-icons">add'
+	});
+
+	const id = `reserve${d.id}`;
+	return $('<span>', {
+		append: $('<label>', {
+			class: 'mdl-switch mdl-js-switch',
+			for: id,
+			html: $('<input>', {
+				id: id,
+				class: 'mdl-switch__input',
+				type: 'checkbox',
+				checked: d.recSetting.recEnabled,
+				change(){
+					$(this).parents('td').data('toggle', $(this).prop('checked') ? 1 : 0);
+					addReserve($(this));
+				}
+			})
+		})
+	});
+}
+
 //一覧の録画トグル
 const fixRecToggleSW = (d, $e = $('.open')) => {
 	if ($e.hasClass('cell')) return;
@@ -713,34 +1261,18 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 	if (!d.recSetting) d = toObj.RecSet(d);
 
 	const $input = $e.find('input');
-	if ($e.hasClass('search')){						//検索ページ向け
-		$e = $e.find('.flag').data('id', d.id);
+	//検索ページ向け
+	if ($e.hasClass('search')){
 		//スイッチ追加
-		if (d.starttime < Date.now()){
-			$input.removeClass().addClass('search recmark').empty();
-			if (d.recSetting.recEnabled) $input.unbind('click');
-		}else if (!$e.hasClass('addreserve')){
-			const id = `reserve${d.id}`;
-			const $switch = $('<label>', {
-				class: 'mdl-switch mdl-js-switch',
-				for: id,
-				html: $('<input>', {
-					id: id,
-					class: 'search addreserve mdl-switch__input',
-					type: 'checkbox',
-					checked: d.recSetting.recEnabled,
-					change: e => {
-						$e.data('toggle', $(e.currentTarget).prop('checked') ? 1 : 0);
-						addReserve($(e.currentTarget))} }) });
-			componentHandler.upgradeElement($switch.get(0));
+		if (!$e.data('starttime')){		
+			$e.data('starttime', d.starttime - d.recSetting.startMargine * 1000);
+			const $switch = createSwitch(d);
+			componentHandler.upgradeElement($switch.children().get(0));
 
-			const $mark = $('<span>').html($switch);
-			$e.removeData('oneclick').html($mark);
-			setTimeout(() => {
-				$e.parent('tr').addClass('start');
-				$mark.addClass('recmark').empty();
-			}, d.starttime-Date.now());
+			$e.find('.flag').data('id', d.id).removeData('oneclick').html($switch);
+			createHtml.load();
 		}
+		$e = $e.find('.flag');
 	}
 
 	const mode = !d.recSetting.recEnabled ? 'disabled' :	//無効
@@ -763,72 +1295,69 @@ const progReserve = d => {
 	$('#progres p').toggle(d.eid != 65535);
 }
 
-//番組詳細予約確認
-const checkReserve = ($e, d) => {
-	getList.reserve(r => {
-		let id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
-		r = r.get(`${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid}`);
-		if (r){
-			if (!id){															//追加されてた
-				if (!r.recSetting.recMode) r = toObj.RecSet(r);
-				if ($e.hasClass('onair')) $e.data(`${d.next ? 'next' : ''}id`, r.id);
-			}
-			if (!$e.hasClass('onair')){
-				addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
-				fixRecToggleSW(r);
-			}
-			setReserve(r);
-		}else if (id){															//削除されてた
-			if ($e.hasClass('reserve')){
-				$e.remove();
-			}else{
-				if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
-
-				setDefault(true);
-				$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-			}
-			if (!$e.hasClass('onair')) Snackbar('予約が見つかりませんでした');
-		}else{
-			setDefault();
-			$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
-		}
-	});
-}
-
 //番組詳細を取得
 const getEpgInfo = async ($e, d = $e.data()) => {
 	showSpinner(true);
-	const id = `${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid || d.starttime}`
-	const info = Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: id}).then(xml => {
-		if ($(xml).find('eventinfo').length){
-			return Info.EventInfo[id] = toObj.EpgInfo($(xml).find('eventinfo').first());
-		}else{
-			const id = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
-			if (id){													//プログラム予約または番組変更でなくなった
-				getList.reserve(r => {
-					const key = d.eid == 65535 ? id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid || d.starttime}`
-					r = r.get(key);
-					if (r){
-						setEpgInfo(r, $e);
-						setReserve(r);
+	const rid = d.next ? d.nextid : d.id || $e.find('.addreserve').data('id') || $e.children('.flag').data('id');
+	if ((d.next ? d._eid : d.eid) == 65535){
+		getList.reserve(r => {
+			r = r[0].get(rid);
+			if (r){
+				setEpgInfo(r, $e);
+				setReserve(r);
 
-						$('#link_epginfo').attr('href', `reserveinfo.html?id=${id}`);
-						$('[href="#detail"], #detail').removeClass('is-active');
-						$('[href="#recset"], #recset').addClass('is-active');
-					}else{
-						$e.remove();
-						Snackbar('予約が見つかりませんでした');
+				$('#link_epginfo').attr('href', `reserveinfo.html?id=${rid}`);
+				$('[href="#detail"], #detail').removeClass('is-active');
+				$('[href="#recset"], #recset').addClass('is-active');
+			}else{
+				createHtml.create();
+				Snackbar('予約が見つかりませんでした');
+			}
+			showSpinner();
+		});
+	}else{
+		const id = `${d.onid}-${d.tsid}-${d.sid}-${d.next ? d._eid : d.eid || d.starttime}`
+		const info = Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {basic: 0, id: id}).then(xml => {
+			if ($(xml).find('eventinfo').length) return Info.EventInfo[id] = toObj.EpgInfo($(xml).find('eventinfo').first());
+			else {
+				errMessage($(xml));
+				showSpinner();
+			}
+		});
+		if (info){
+			setEpgInfo(info, $e, id);
+			if (!d.eid){
+				$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+				showSpinner();
+				return;
+			};
+			getList.reserve(r => {
+				r = r[0].get(id);
+				if (r){
+					if (!rid){															//追加されてた				
+						if ($e.hasClass('onair')) $e.data(`${d.next ? 'next' : ''}id`, r.id);
+						else if ($e.hasClass('reserve')) fixRecToggleSW(r);
+						else addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
 					}
-				});
-			}else errMessage($(xml));
+					setReserve(r);
+				}else if (rid){															//削除されてた
+					if ($e.hasClass('reserve')){
+						createHtml.create();
+					}else{
+						if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
+		
+						setDefault(true);
+						$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+					}
+					if (!$e.hasClass('onair')) Snackbar('予約が見つかりませんでした');
+				}else{
+					$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
+					setDefault();
+				}
+				showSpinner();
+			});
 		}
-	});
-
-	showSpinner();
-	if (!info) return;
-
-	setEpgInfo(info, $e);
-	checkReserve($e, d);
+	}
 }
 
 //予約送信
@@ -878,25 +1407,12 @@ $(function(){
 		//タブ移動
 		const moveTab = $e => {
 			if (!$e.length || document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement | document.msFullscreenElement) return
-			const panel = $e.attr('href');
-			if ($e.hasClass('mdl-layout__tab')){
-				$('.mdl-layout__tab, .mdl-layout__tab-panel').removeClass('is-active');
-				$('main').scrollTop(0);
-			}else{
-				$('.mdl-tabs__tab, .mdl-tabs__panel').removeClass('is-active');
-			}
-			$e.addClass('is-active');
-			$(panel).addClass('is-active');
-
-			if (panel != '#movie' || $('#video').data('load')) return;
-
-			if (!$('#video').data('public')) loadMovie($('#video'));
-			$('#video').trigger('load').data('load', true);
+			$e.get(0).click();
 		}
 		$('.tab-swipe'  ).hammer().on('swiperight', () => moveTab($('.mdl-layout__tab.is-active').prev()));
 		$('.tab-swipe'  ).hammer().on('swipeleft' , () => moveTab($('.mdl-layout__tab.is-active').next()));
-		$('.panel-swipe').hammer().on('swiperight', () => moveTab($('.mdl-tabs__tab.is-active').prev()));
-		$('.panel-swipe').hammer().on('swipeleft' , () => moveTab($('.mdl-tabs__tab.is-active').next()));
+		$('.panel-swipe').hammer().on('swiperight', () => moveTab($('.mdl-tabs__tab.is-active').prevAll(':visible:first')));
+		$('.panel-swipe').hammer().on('swipeleft' , () => moveTab($('.mdl-tabs__tab.is-active').nextAll(':visible:first')));
 	}
 
 	//一覧の行をリンクに
@@ -905,8 +1421,9 @@ $(function(){
 		if ($(e.target).is('.flag, .flag *, .count a')) return;
 
 		if ($e.data('onid')) getEpgInfo($e);
-		else if ($e.data('id')) setAutoAdd($e);
-		else if ($e.data('recinfoid')) setRecInfo($e);
+		else if ($e.data('autoadd')) setAutoAdd($e);
+		else if ($e.data('manuadd')) setManuAdd($e);
+		else if ($e.data('recinfo')) setRecInfo($e);
 		else location.href = $e.data('href');
 	});
 	$('.close_info').click(() => $('#sidePanel, .close_info.mdl-layout__obfuscator, .open').removeClass('is-visible open'));
@@ -1107,7 +1624,7 @@ $(function(){
 	//プリセット読み込み
 	const setPreset = (d, id) => {
 		let messege = 'プリセットの読み込に失敗しました';
-		d = d.get(id);
+		d = d[0].get(id);
 		if (d){
 			const name = setRecSettting(d).name ?? $('[name=presetID] option:selected').text();
 			messege = `"${name}" を読み込みました`;
@@ -1116,16 +1633,11 @@ $(function(){
 	}
 	$('[name=presetID]').change(e => {
 		const $e = $(e.currentTarget);
-		if ($e.val() != 65535){
-			getList.recpreset(d => setPreset(d, parseInt($e.val())));
-		}else if ($e.data('reseveid')){
-			const d = $('#set').data();
-			const id = d.eid == 65535 ? $e.data('reseveid') : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
-			getList.reserve(d => setPreset(d, id));
-		}else{
-			const id = $e.data('autoaddid');
-			getList.autoaddepg(d => setPreset(d, id));
-		}
+		if ($e.val() != 65535) getList.recpreset(d => setPreset(d, parseInt($e.val())));
+		else if ($e.data('key')) setPreset(Info[$e.data('key')], $e.data('id'));
+		else if ($e.data('reserve')) getList.reserve(d => setPreset(d, $e.data('reserve')));
+		else if ($e.data('autoadd')) getList.autoaddepg(d => setPreset(d, $e.data('autoadd')));
+		else if ($e.data('manuadd')) getList.autoaddmanual(d => setPreset(d, $e.data('manuadd')));
 	});
 	//録画マージン
 	$('#usedef').change(e => $('.recmargin').mdl_prop('disabled', $(e.currentTarget).prop('checked')));
@@ -1140,29 +1652,10 @@ $(function(){
 		$(e.currentTarget).parents('td').data('toggle', $(e.currentTarget).prop('checked') ? 1 : 0);
 		addReserve($(e.currentTarget));
 	});
-	//録画無効マーク
-	$('.disabled span').click(e => {if ($(e.currentTarget).hasClass('recmark')) addReserve($(e.currentTarget));});
-	//検索ページ追加ボタン
-	$('.add').click(e => addReserve($(e.currentTarget)));
-
-	//通信エラー
-	$(document).ajaxError((e, xhr, textStatus) => {
-		showSpinner();
-		Snackbar(xhr.status!=0 ? `${xhr.status}Error : ${xhr.statusText}` : `Error : ${textStatus.url.match('api/set') ? 'トークン認証失敗' : '通信エラー'}`);
-	});
-
-	//予約一覧マーク等処理
-	$('tr.reserve').each((i, e) => setTimeout(() => {
-			$(e).addClass('start').children('.flag').children('span').empty().addClass('recmark');
-			setTimeout(() => $(e).remove(), $(e).data('endtime')-Date.now());
-		}, $(e).data('starttime')-Date.now())
-	);
-
+	
 	//検索ページ向け
-	$('tr.search').each((i, e) => {
-		if ($(e).data('starttime')) setTimeout(() => $(e).addClass('start').children('.flag').children('span').addClass('recmark').empty(), $(e).data('starttime')-Date.now())
-		setTimeout(() => $(e).children('.flag').data('id', false).children('span').remove(), $(e).data('endtime')-Date.now());
-	});
+	//予約追加ボタン
+	$('.add').click(e => addReserve($(e.currentTarget)));
 	$('#archive').change(e => {
 		const checked = $(e.currentTarget).prop('checked');
 		$('#startDate,#endDate').attr('required', checked);
@@ -1174,6 +1667,12 @@ $(function(){
 		e = e.currentTarget;
 		$(e.form).find('.ctok').prop('disabled', true).filter($(e).data('ctok')).prop('disabled', false);
 		$(e.form).attr('action', e.formAction).submit();
+	});
+
+	//通信エラー
+	$(document).ajaxError((e, xhr, textStatus) => {
+		showSpinner();
+		Snackbar(xhr.status!=0 ? `${xhr.status}Error : ${xhr.statusText}` : `Error : ${textStatus.url.match('api/set') ? 'トークン認証失敗' : '通信エラー'}`);
 	});
 
 	//サブミット
@@ -1198,29 +1697,28 @@ $(function(){
 					else if (d.reload || $form.hasClass('reload')){
 						Snackbar({message: 'リロードします', timeout: 1000});
 						setTimeout(() => location.reload(), 2500);
-					}else if (d.action) {
-						if (d.action == 'add' || d.action == 'reserve'){
+					}else if (d.action){
+						if (d.action == 'epg'){
 							const r = toObj.RecSet(xml.find('reserveinfo'));
 
 							setReserve(r, () => {
 								addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
 								progReserve(r);
 
-								if (d.action == 'reserve') fixRecToggleSW(r);
+								if ($('.open').hasClass('epginfo')) fixRecToggleSW(r);
 							});
-						}else if (d.action == 'autoadd'){
-							$('.open .keyword').text($('#andKey').val());
-							$('.open .notkeyword').text($('#notKey').val());
-							let count = $('#serviceList option:selected').length-1;
-							$('.open .servicelist').html(`${$('#serviceList option:selected:first').text().replace(/^\(.*\)\s/g, '')}${count>0 ? `<small>.他${count}ch` : ''}`);
-							count = $('#contentList option:selected').length;
-							$('.open .category').html( count==0 ? '全ジャンル' : `${$('#contentList option:selected:first').text()}${count>1 ? `<small>.他${(count-1)}ch` : ''}` );
-							$('.open .mode').text($('[name=recMode] option:selected').text());
+						}else if (d.action == 'list'){
+							createHtml.create();
 						}else if (d.action == 'del'){
-							setDefault(true);
-							if ($('.open').hasClass('reserve')) {
+							if (createHtml.enabled){
 								$('#sidePanel, .close_info.mdl-layout__obfuscator').removeClass('is-visible');
-								$('.open').remove();
+								createHtml.create();
+							}else{
+								setDefault(true);
+								if ($('.open').hasClass('reserve')){
+									$('#sidePanel, .close_info.mdl-layout__obfuscator').removeClass('is-visible');
+									$('.open').remove();
+								}
 							}
 						}
 					}

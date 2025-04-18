@@ -1,14 +1,14 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-ct={
-  title='予約一覧',
-  css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
-  ..';}'..'.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
-  ..';}</style>\n',
-  js='<script>const ctok=\''..CsrfToken('setreserve')..'\';</script>\n',
-  progres=true,
-}
+ct={title='予約一覧'}
+
+if (not SIDE_PANEL) then
+  ct.css='<style>.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
+  ..';}.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
+  ..';}</style>\n'
+  ct.js='<script>const ctok=\''..CsrfToken('setreserve')..'\';</script>\n'
+end
 
 focus=nil
 post=AssertPost()
@@ -46,15 +46,13 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   size=getPredictionSize(v)
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
     ..(v.recSetting.recMode==5 and ' disabled' or v.overlapMode==1 and ' partially' or v.overlapMode==2 and ' shortage' or '')
-    ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+(v.recSetting.startMargin or 0))*1000 or '')
-    ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0))*1000 or 0)..'" '
+    ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)-(v.recSetting.startMargin or 0))*1000 or '')
+    ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
     ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                   or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">\n'
+                   or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">'
 
-    ..' <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span'
-    ..(TimeWithZone(v.startTime,9*3600)>os.time() and '><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..v.reserveID..'" class="mdl-switch__input"'..Checkbox(v.recSetting.recMode~=5)..'></label>'
-                                       or ' class="recmark">')
-    ..'</span>\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
+    ..'\n <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..v.reserveID..'" class="mdl-switch__input"'..Checkbox(v.recSetting.recMode~=5)..'></label></span>'
+    ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.stationName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
@@ -72,7 +70,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
 
   ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
-  ..'<caption>'..#a..' 件中 '..math.max(1,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
   ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
   ..' <th class="flag mdl-data-table__cell--non-numeric">録画\n'
   ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
@@ -86,6 +84,8 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
   ..table.concat(ctt)
   
   ..'</table>\n</div>\n'..pageNav..'</div>\n'
+
+  ..'<a id="add" class="hidden mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"><i class="material-icons">add</i></a>'
 
 ct=Template(ct)
 
