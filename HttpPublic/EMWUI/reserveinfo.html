@@ -27,7 +27,7 @@ if r then
     ..(#epgInfo>0 and epgInfo
       or '<div>\n<h4 class="mdl-typography--title">'..ConvertTitle(r.title)
         ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
-        ..'<span class="service">'..r.stationName..'</span>\n</span></h4>\n</div>\n<div>')
+        ..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..r.onid..'&amp;sid='..r.sid..'"><span class="service">'..r.stationName..'</span></span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(#epgInfo==0 and ' is-active' or '')..'" id="recset">\n'
     ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID..'" data-onid="'..r.onid..'" data-tsid="'..r.tsid..'" data-sid="'..r.sid..'" data-eid="'..r.eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'

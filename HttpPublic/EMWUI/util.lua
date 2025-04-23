@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
     css='250413',
-    common='250413',
+    common='250423',
     tvguide='241224',
     player='250410',
     onair='250314',
@@ -689,8 +689,8 @@ function searchLinksScriptTemplate()
   links=edcb.GetPrivateProfile('SET','links','',INI)
   edcb.htmlEscape=esc
   return 'const Links={calendar:{details:\''..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)
-    ..'\',op:\'&amp;authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)
-    ..'&amp;src='..edcb.GetPrivateProfile('CALENDAR','src','',INI)..'\'}'
+    ..'\',op:\'&authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)
+    ..'&src='..edcb.GetPrivateProfile('CALENDAR','src','',INI)..'\'}'
     ..(links~='' and ',links:['..links..']' or '')..'};'
 end
 

@@ -53,7 +53,7 @@ class SearchLinks {
 	get html(){return this.#defaults.map(d => this.#link(d));}		//番組表向け
 	get htmlEX(){													//サイドパネル向け
 		const a = this.#defaults.concat(Links.links??[]).map(d => this.#link(d));
-		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]; $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
+		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]||Info.reserve[0].get(this.#d.id); $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
 		return a;
 	}
 }
@@ -129,9 +129,9 @@ const Notify = new class {
 			this.del(d, true);
 			$(`.notify_${d.eid}`).children().text('notifications');
 
-			const id = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
+			const id = d.eid==65535 ? d.id : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
 
-			const _d = Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {id: id}).then(xml => toObj.EpgInfo($(xml).find('eventinfo').first()));
+			const _d = d.eid==65535 ? await getList.reserve(r => r[0].get(id)) : Info.EventInfo[id] ?? await $.get(`${ROOT}api/EnumEventInfo`, {id: id}).then(xml => toObj.EpgInfo($(xml).find('eventinfo').first()));
 			const notification = new Notification(_d.title, {
 				body: `${ConvertTime(_d.starttime)}～ ${_d.service}\n${_d.text}`,
 				tag: id,
@@ -140,7 +140,7 @@ const Notify = new class {
 
 			notification.onclick = e => {
 				e.preventDefault();
-				location.href=`epginfo.html?id=${id}`;
+				location.href = d.eid==65535 ? `reserveinfo.html?id=${id}` : `epginfo.html?id=${id}`;
 				notification.close();
 			};
 
@@ -155,7 +155,7 @@ const Notify = new class {
 		const date = createViewDate(d.starttime);
 
 		const $notifyList = $('<li>', {id: `notify_${d.eid}`, class: 'mdl-list__item mdl-list__item--two-line', data: {start: d.starttime}, append: [
-			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, append: [
+			$('<span>', {class: 'mdl-list__item-primary-content', click: () => location.href = d.eid==65535 ? `reserveinfo.html?id=${d.id}` : `epginfo.html?id=${d.onid}-${d.tsid}-${d.sid}-${d.eid}`, append: [
 				$('<span>', {html: d.title}),
 				$('<span>', {class: 'mdl-list__item-sub-title', text: `${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())}(${Info.day[date.getUTCDay()]}) ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())} ${d.service}`}) ]}),
 			$('<span>', {class: 'mdl-list__item-secondary-content', append: [
@@ -198,37 +198,31 @@ const toObj = {
 
 			freeCAFlag: e.num('freeCAFlag') == 1,
 
-			genre: e.children('contentInfo').get().map(e => {
-				return {
-					nibble1: $(e).num('nibble1'),
-					nibble2: $(e).num('nibble2'),
-					component_type_name: $(e).txt('component_type_name')
-				}
-			}),
-			video: e.children('videoInfo').get().map(e => {
-				return {
-					stream_content: $(e).num('stream_content'),
-					component_type: $(e).num('component_type'),
-					component_tag: $(e).num('component_tag'),
-					text: $(e).txt('text'),
-					component_type_name: $(e).txt('component_type_name')
-				}
-			}),
-			audio: e.children('audioInfo').get().map(e => {
-				return {
-					stream_content: $(e).num('stream_content'),
-					component_type: $(e).num('component_type'),
-					component_tag: $(e).num('component_tag'),
-					stream_type: $(e).num('stream_type'),
-					simulcast_group_tag: $(e).num('simulcast_group_tag'),
-					ES_multi_lingual: $(e).num('ES_multi_lingual_flag') == 1,
-					main_component: $(e).num('main_component_flag') == 1,
-					quality_indicator: $(e).txt('quality_indicator'),
-					sampling_rate: $(e).txt('sampling_rate'),
-					text: $(e).txt('text'),
-					component_type_name: $(e).txt('component_type_name')
-				}
-			})
+			genre: e.children('contentInfo').get().map(e => ({
+				nibble1: $(e).num('nibble1'),
+				nibble2: $(e).num('nibble2'),
+				component_type_name: $(e).txt('component_type_name')
+			})),			
+			video: e.children('videoInfo').get().map(e => ({
+				stream_content: $(e).num('stream_content'),
+				component_type: $(e).num('component_type'),
+				component_tag: $(e).num('component_tag'),
+				text: $(e).txt('text'),
+				component_type_name: $(e).txt('component_type_name')
+			})),
+			audio: e.children('audioInfo').get().map(e => ({
+				stream_content: $(e).num('stream_content'),
+				component_type: $(e).num('component_type'),
+				component_tag: $(e).num('component_tag'),
+				stream_type: $(e).num('stream_type'),
+				simulcast_group_tag: $(e).num('simulcast_group_tag'),
+				ES_multi_lingual: $(e).num('ES_multi_lingual_flag') == 1,
+				main_component: $(e).num('main_component_flag') == 1,
+				quality_indicator: $(e).num('quality_indicator'),
+				sampling_rate: $(e).num('sampling_rate'),
+				text: $(e).txt('text'),
+				component_type_name: $(e).txt('component_type_name')
+			}))
 		}
 		if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 
@@ -274,20 +268,16 @@ const toObj = {
 				continueRecFlag: r.num('continueRecFlag') == 1,
 				partialRecFlag: r.num('partialRecFlag') == 1,
 				tunerID: r.num('tunerID'),
-				recFolderList: r.children('recFolderList').children('recFolderInfo').get().map(e => {
-					return {
-						recFolder: $(e).txt('recFolder'),
-						writePlugIn: $(e).txt('writePlugIn'),
-						recNamePlugIn: $(e).txt('recNamePlugIn')
-					}
-				}),
-				partialRecFolder: r.children('partialRecFolder').children('recFolderInfo').get().map(e => {
-					return {
-						recFolder: $(e).txt('recFolder'),
-						writePlugIn: $(e).txt('writePlugIn'),
-						recNamePlugIn: $(e).txt('recNamePlugIn')
-					}
-				}),
+				recFolderList: r.children('recFolderList').children('recFolderInfo').get().map(e => ({
+					recFolder: $(e).txt('recFolder'),
+					writePlugIn: $(e).txt('writePlugIn'),
+					recNamePlugIn: $(e).txt('recNamePlugIn')
+				})),
+				partialRecFolder: r.children('partialRecFolder').children('recFolderInfo').get().map(e => ({
+					recFolder: $(e).txt('recFolder'),
+					writePlugIn: $(e).txt('writePlugIn'),
+					recNamePlugIn: $(e).txt('recNamePlugIn')
+				})),
 			}
 		}
 

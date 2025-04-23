@@ -12,8 +12,8 @@ if post then
       for i=7,1,-1 do
         aa.dayOfWeekFlag=aa.dayOfWeekFlag*2+(GetVarInt(post,'checkDayOfWeek'..i)==1 and 1 or 0)
       end
-      aa.startTime=GetVarTime(post, 'starTtime', true)
-      aa.durationSecond=(GetVarTime(post, 'endTime', true)-aa.startTime)%(24*3600)
+      aa.startTime=GetVarTime(post, 'starTtime')
+      aa.durationSecond=(GetVarTime(post, 'endTime')-aa.startTime)%(24*3600)
       aa.onid,aa.tsid,aa.sid=GetVarServiceID(post,'serviceID')
       if aa.onid then
         chInfo=BinarySearch(edcb.GetChDataList(),aa,CompareFields('onid',false,'tsid',false,'sid'))

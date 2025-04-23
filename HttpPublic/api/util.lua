@@ -987,10 +987,10 @@ function GetVarInt(qs,n,ge,le,occ)
 end
 
 --クエリパラメータから時刻を取得する
-function GetVarTime(qs,n,occ,sec)
-  local hour,min,sec=(mg.get_var(qs,n,occ) or ''):match('^(%d+):(%d+)'..(sec and ':(%d+)' or '')..'$')
+function GetVarTime(qs,n,occ)
+  local hour,min,sec=(mg.get_var(qs,n,occ) or ''):match('^(%d+):(%d+):?(%d*)')
   if hour then
-    return hour*3600+min*60+(sec or 0)
+    return hour*3600+min*60+(tonumber(sec) or 0)
   end
   return 0
 end
