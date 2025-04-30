@@ -1,5 +1,6 @@
 -- メディアファイルのメタデータをもとに実況のログを取得する
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+dofile(mg.script_name:gsub('[^\\/]*$','')..'jkconst.lua')
 
 -- TOT時刻の範囲とネットワークIDとサービスIDを取得する
 function ExtractTotListAndServiceIDFromPsiData(f)
@@ -218,8 +219,8 @@ if JKRDLOG_PATH then
       end
       if totList and nid and sid then
         code=404
-        id=GetJikkyoID(nid,sid)
-        if id then
+        jkID=GetJikkyoID(nid,sid)
+        if jkID then
           code=200
         end
       end
@@ -232,7 +233,7 @@ if code==200 then
   currSec=1
   for i,v in ipairs(totList) do
     if v.tot<v.totEnd then
-      cmd=(WIN32 and QuoteCommandArgForPath(JKRDLOG_PATH) or FindToolsCommand(JKRDLOG_PATH))..' '..id..' '..v.tot..' '..v.totEnd
+      cmd=(WIN32 and QuoteCommandArgForPath(JKRDLOG_PATH) or FindToolsCommand(JKRDLOG_PATH))..' jk'..jkID..' '..v.tot..' '..v.totEnd
       f=edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd)
       if f then
         while true do

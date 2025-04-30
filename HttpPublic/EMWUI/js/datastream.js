@@ -120,8 +120,8 @@ toggleJikkyo=function(enabled,noSubStream){
       }else{
         var scroll=Math.abs(chats.scrollTop+chats.clientHeight-chats.scrollHeight)<chats.clientHeight/4;
         //The top/bottom border of #jikkyo-comm must be 1px
-        comm.style.height=vid.clientHeight-2+"px";
-        chats.style.height=vid.clientHeight-2+comm.getBoundingClientRect().y-chats.getBoundingClientRect().y+"px";
+        //comm.style.height=vid.clientHeight-2+"px";
+        //chats.style.height=vid.clientHeight-2+comm.getBoundingClientRect().y-chats.getBoundingClientRect().y+"px";
         if(commHide||scroll)chats.scrollTop=chats.scrollHeight;
         commHide=false;
       }
@@ -130,6 +130,7 @@ toggleJikkyo=function(enabled,noSubStream){
     var scatter=[];
     var scatterInterval=200;
     var closed=false;
+    var jkID="?";
     onJikkyoStream=function(tag){
       if(/^<chat /.test(tag)){
         var c=parseChatTag(replaceTag(tag));
@@ -165,7 +166,18 @@ toggleJikkyo=function(enabled,noSubStream){
         var m=tag.match(/^[^>]*? status="(\d+)"/);
         if(m&&m[1]!="0")addMessage("Error! (chat_result="+m[1]+")");
         return;
-
+      }else if(/^<x_room /.test(tag)){
+        var m=tag.match(/^[^>]*? nickname="(.*?)"/);
+        var nickname=m?m[1]:"";
+        var loggedIn=/^[^>]*? is_logged_in="1"/.test(tag);
+        var refuge=/^[^>]*? refuge="1"/.test(tag);
+        addMessage("Connected to "+(refuge?"refuge":"nicovideo")+" jk"+jkID+" ("+(loggedIn?"login=":"")+nickname+")");
+        return;
+      }else if(/^<x_disconnect /.test(tag)){
+        var m=tag.match(/^[^>]*? status="(\d+)"/);
+        var refuge=/^[^>]*? refuge="1"/.test(tag);
+        if(m)addMessage("Disconnected from "+(refuge?"refuge":"nicovideo")+" (status="+m[1]+")");
+        return;
       }else if(/^<!-- M=/.test(tag)){
         if(tag.substring(7,22)=="Closed logfile.")closed=true;
         else if(tag.substring(7,31)!="Started reading logfile:")addMessage(tag.substring(7,tag.length-4));
@@ -173,6 +185,7 @@ toggleJikkyo=function(enabled,noSubStream){
       }else if(!/^<!-- J=/.test(tag)){
         return;
       }
+      jkID=tag.match(/^<!-- J=(\d*)/)[1]||"?";
       if(tag.indexOf(";T=")<0)scatterInterval=90;
       else scatterInterval=Math.min(Math.max(scatterInterval+(scatter.length>0?-10:10),100),200);
       setTimeout(function(){

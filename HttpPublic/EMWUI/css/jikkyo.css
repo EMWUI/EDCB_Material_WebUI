@@ -26,6 +26,7 @@
 #jikkyo-chats {
   font-size: small;
   overflow: auto;
+  height: 100%;
 }
 
 #jikkyo-chats > .closed {
