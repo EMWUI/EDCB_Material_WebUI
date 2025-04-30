@@ -608,12 +608,7 @@ $(function(){
 
 	const $volume = $('#volume');
 	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
-	if (!isSmallScreen()){
-		$remote_control.prependTo('#apps-contener>.contener>.contener');
-	}else{
-		$('.remote-control .num').addClass('hidden');
-		$('.remote-control,#apps-contener').prependTo('#main-column');
-	}
+	$remote_control.insertBefore('#epginfo');
 
 
 	//閉じる
@@ -628,9 +623,9 @@ $(function(){
 	const $playerUI = $('#playerUI');
 	const $live = $('#live');
 	$vid.on({
-		'pause': () => $play_icon.text('play_arrow'),
-		'play': () => $play_icon.text('pause'),
-		'ended': () => {
+		pause(){$play_icon.text('play_arrow')},
+		play(){$play_icon.text('pause')},
+		ended(){
 			const autoplay = sessionStorage.getItem('autoplay') == 'true';
 			if (autoplay && !$('.playing').is('.item:last')){
 				$('.playing').next().click();
@@ -640,7 +635,7 @@ $(function(){
 				$playerUI.addClass('is-visible');
 			}
 		},
-		'error': () => {
+		error(){
 			if ($vid.attr('src') == '') return;
 
 			$vid.removeClass('is-loadding');
@@ -648,13 +643,13 @@ $(function(){
 			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
 			Snackbar(`Error : ${[vid.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
-		'volumechange': () => {
+		volumechange(){
 			vid.onVolumeChange();
 			localStorage.setItem('volume', vid.volume);
 			localStorage.setItem('muted', vid.muted);
 		},
-		//'ratechange': e => {if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
-		'canplay': () => {
+		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
+		canplay(){
 			hideBar(2000);
 			$vid.removeClass('is-loadding');
 
@@ -680,7 +675,7 @@ $(function(){
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
 		},
-		'timeupdate': () => {
+		timeupdate(){
 			const d = $('.is_cast').data();
 			if (!d) return;
 
@@ -811,14 +806,7 @@ $(function(){
 			fullscreen = false;
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
-			if(theater || isSmallScreen()){
-				$remote_control.prependTo('#main-column');
-				$('.remote-control .num').addClass('hidden');
-			}else{
-				$('#comment-control').insertAfter('#apps-contener>.contener');
-				$remote_control.prependTo('#apps-contener>.contener>.contener');
-			}
-
+			$remote_control.insertBefore('#epginfo');
 		}
 	});
 	if (document.pictureInPictureEnabled){
@@ -858,15 +846,9 @@ $(function(){
 				pipWindow.addEventListener("pagehide", (event) => {
 					const pipContent = event.target.getElementById("player");
 					container.append(pipContent);
-					if(theater){
-						$remote_control.prependTo('#main-column');
-						$('.remote-control .num').addClass('hidden');
-						$('#movie-theater-contner').height('');
-					}else{
-						$('#comment-control').insertAfter('#apps-contener>.contener');
-						$remote_control.prependTo('#apps-contener>.contener>.contener');
-						$('#movie-contner').height('').width('');
-					}
+					$remote_control.insertBefore('#epginfo');
+					if(theater) $('#movie-theater-contner').height('');
+					else $('#movie-contner').height('').width('');
 				});
 			}else 
 				vid.requestPictureInPicture();
@@ -878,15 +860,11 @@ $(function(){
 	$('#defult').click(() => {
 		theater = true;
 		$player.prependTo($('#movie-theater-contner'));
-		$remote_control.prependTo('#main-column');
-		$('.remote-control .num').addClass('hidden');
 		setbmlBrowserSize();
 	});
 	$('#theater').click(() => {
 		theater = false;
 		$player.prependTo($('#movie-contner'));
-		$remote_control.prependTo('#apps-contener>.contener>.contener');
-		$('.remote-control .num').removeClass('hidden');
 		setbmlBrowserSize();
 	});
 

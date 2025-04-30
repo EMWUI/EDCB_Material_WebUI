@@ -806,7 +806,7 @@ function PlayerTemplate(video, liveOrAudio)
     <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
     <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
   </span>
-  <span class="num">
+  <span class="num hidden">
     <span>
       <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>1</button>
       <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>2</button>
@@ -901,7 +901,7 @@ s=s..[=[
   ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'"></script>\n' or '')
 
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n'
-    ..'<script>const ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};const jk_comment_height='..JK_COMMENT_HEIGHT..';const jk_comment_durtion='..JK_COMMENT_DURATION..';</script>\n'
+    ..'<script>const ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};const commentHeight='..JK_COMMENT_HEIGHT..';const commentDuration='..JK_COMMENT_DURATION..';</script>\n'
     ..'<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
   ..(tslive and '<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'

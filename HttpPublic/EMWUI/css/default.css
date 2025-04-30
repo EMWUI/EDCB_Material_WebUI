@@ -1628,13 +1628,13 @@ h4 .mdl-button--icon {
 
 #movie-theater-contner {
   background: #000;
-  #video {
+  #player:not(:fullscreen) #video {
     min-height: min(calc(100vw * (9 / 16)), calc(90vh - 70px));
     max-height: calc(90vh - 70px); } }
 
 #movie-contner {
   background: #000;
-  #video {
+  #player:not(:fullscreen) #video {
     min-height: max(min(calc(100vh * 0.666666666667 - 16px * 2), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16))), 270px);
     max-height: calc(90vh - 70px); } }
   @media (max-width: 479px) {
@@ -1662,32 +1662,27 @@ h4 .mdl-button--icon {
     background: black;
     overflow: hidden;
     justify-content: center; }
-  #player:fullscreen,
-  #player:fullscreen #video {
+  #player:fullscreen {
     background-size: contain;
     padding: 0!important;
     width: 100%;
     height: 100%;
     max-height: none; }
-  #player:-webkit-full-screen,
-  #player:-webkit-full-screen #video {
+  #player:-webkit-full-screen {
     background-size: contain;
     padding: 0!important;
     width: 100vw;
     max-height: none; }
-    #player:-webkit-full-screen,
-    #player:-webkit-full-screen video#video {
+    #player:-webkit-full-screen {
     height: 100vh; }
-  #player:-moz-full-screen,
-  #player:-moz-full-screen #video {
+  #player:-moz-full-screen {
     background-size: contain;
     padding: 0!important;
     width: 100%;
     height: 100%;
     max-height: none; }
 
-  #player:-ms-fullscreen,
-  #player:-ms-fullscreen #video {
+  #player:-ms-fullscreen {
     background-size: contain;
     padding: 0!important;
     width: 100%;
@@ -1701,10 +1696,12 @@ h4 .mdl-button--icon {
 #danmaku-container {
   position: absolute;
   width: 100%;
-  height: 100%; }
+  height: 100%;
+  z-index: 3; }
 #playerUI {
   width: 100%;
   color: #EEEEEE;
+  z-index: 3;
   -webkit-user-select: none;
      -moz-user-select: none;
       -ms-user-select: none;
@@ -1741,6 +1738,8 @@ h4 .mdl-button--icon {
   #movie-contner #theater,
   .is-small-screen .player-mode { 
     display: none; }
+#vid-cont {
+  position: relative; }
 
 #titlebar {
   top: 0;
@@ -2022,7 +2021,7 @@ h4 .mdl-button--icon {
     display:     -ms-flexbox;
     display:         flex; }
   #main-column>.remote-control {
-    margin-bottom: 8px;
+    margin-top: 8px;
     justify-content: center;
     flex-direction: row;
     flex-wrap: wrap;
@@ -2040,6 +2039,8 @@ h4 .mdl-button--icon {
       margin-right: 8px; }
     #main-column>.remote-control .remote-control-indicator {
       width: 100%; }
+  #main-column .num{
+    width: 100%; }
 
 #player .remote-control {
   position: absolute;
