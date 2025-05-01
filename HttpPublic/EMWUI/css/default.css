@@ -2022,6 +2022,7 @@ h4 .mdl-button--icon {
     display:         flex; }
   #main-column>.remote-control {
     margin-top: 8px;
+    padding: 0 16px;
     justify-content: center;
     flex-direction: row;
     flex-wrap: wrap;
@@ -2038,7 +2039,10 @@ h4 .mdl-button--icon {
     #main-column>.remote-control button {
       margin-right: 8px; }
     #main-column>.remote-control .remote-control-indicator {
-      width: 100%; }
+      width: 100%;
+      justify-content: end; }
+    .is-small-screen #main-column>.remote-control {
+      margin-bottom: 8px; }
   #main-column .num{
     width: 100%; }
 

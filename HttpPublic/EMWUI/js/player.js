@@ -541,7 +541,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
-		const path = `${ROOT}${!d.public ? 'api/Movie?fname=' : ''}${encodeURIComponent(d.path)}`;
+		const path = `${ROOT}${!d.public ? `api/Movie?fname=${encodeURIComponent(d.path)}` : encodeURIComponent(d.path).replace('%2F','/')}`;
 		$vid.attr('src', path);
 		$vid_meta.on('cuechange', oncuechangeB24Caption);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
@@ -608,7 +608,7 @@ $(function(){
 
 	const $volume = $('#volume');
 	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
-	$remote_control.insertBefore('#epginfo');
+	$remote_control.insertAfter('#movie-contner');
 
 
 	//閉じる
@@ -739,14 +739,14 @@ $(function(){
 		mouseenter(e){
 			if (!thumb) return;
 			$(this).data('hover', true);
-			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
+			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
 			thumb.seek(e.offsetX/this.clientWidth*100);
 		},
 		touchstart(){
 			$(this).data('touched', true);
 			if (!thumb) return;
 			stopTimer();
-			document.querySelector('#vid-thumb').style.setProperty('--width', vid.clientWidth+'PX');
+			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
 		},
 		mousemove(e){
 			if (!thumb) return;
@@ -806,7 +806,7 @@ $(function(){
 			fullscreen = false;
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
-			$remote_control.insertBefore('#epginfo');
+			$remote_control.insertAfter('#movie-contner');
 		}
 	});
 	if (document.pictureInPictureEnabled){
@@ -846,7 +846,7 @@ $(function(){
 				pipWindow.addEventListener("pagehide", (event) => {
 					const pipContent = event.target.getElementById("player");
 					container.append(pipContent);
-					$remote_control.insertBefore('#epginfo');
+					$remote_control.insertAfter('#movie-contner');
 					if(theater) $('#movie-theater-contner').height('');
 					else $('#movie-contner').height('').width('');
 				});

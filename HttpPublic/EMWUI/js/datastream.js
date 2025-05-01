@@ -220,11 +220,9 @@ toggleJikkyo=function(enabled,noSubStream){
     onJikkyoStreamError=function(status,readCount){
       addMessage("Error! ("+status+"|"+readCount+"Bytes)");
     };
-    if(!noSubStream){
-      streamParams.set('jikkyo', 1);
-      openSubStream();
-      addMessage('接続開始');
-    }
+    if(noSubStream)return;
+    streamParams.set('jikkyo', 1);
+    openSubStream();
 };
 
 const oncuechangeB24Caption = e => {
