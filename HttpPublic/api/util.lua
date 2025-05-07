@@ -177,18 +177,17 @@ USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
 --jkcnslを直接呼び出してライブ実況する場合、その絶対パス。Windows以外ではコマンド名
 --コメント投稿したい場合はあらかじめjkcnsl側でログインしておく(jkcnslのReadmeを参照)
 JKCNSL_PATH=edcb.GetPrivateProfile('JK','JKCNSL_PATH','',INI)
---JKCNSL_PATH='C:\\Path\\to\\jkcnsl.exe' --Windows
---JKCNSL_PATH='jkcnsl' --Windows以外
 if JKCNSL_PATH=='' then JKCNSL_PATH=nil end
 
 --jkcnslの設定ファイルなどが置かれている場所(通常、変更不要)
-JKCNSL_UNIX_BASE_DIR='/var/local/jkcnsl'
+JKCNSL_UNIX_BASE_DIR=edcb.GetPrivateProfile('JK','UNIX_BASE_DIR','/var/local/jkcnsl',INI)
 
 --以下、JKCNSL_で始まる定数はjkcnslを直接呼び出してライブ実況する場合のオプション。意味はNicoJKの対応する設定と同じ
-JKCNSL_REFUGE_URI=nil
-JKCNSL_DROP_FORWARDED_COMMENT=false
-JKCNSL_REFUGE_MIXING=false
-JKCNSL_ANONYMITY=true
+JKCNSL_REFUGE_URI=edcb.GetPrivateProfile('JK','refugeUri','',INI)
+if JKCNSL_REFUGE_URI=='' then JKCNSL_REFUGE_URI=nil end
+JKCNSL_DROP_FORWARDED_COMMENT=edcb.GetPrivateProfile('JK','dropForwardedComment',false,INI)~=0
+JKCNSL_REFUGE_MIXING=edcb.GetPrivateProfile('JK','refugeMixing',false,INI)~=0
+JKCNSL_ANONYMITY=edcb.GetPrivateProfile('JK','anonymity',true,INI)~=0
 
 --実況の番号(jk?)と、チャットのID(ch???やlv???など)
 --指定しない番号には"jkconst.lua"にある既定値が使われる
@@ -205,8 +204,6 @@ JKCNSL_CHAT_STREAMS={
 
 --実況ログ表示機能を使う場合、jkrdlog.exeの絶対パス。Windows以外ではコマンド名
 JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',INI)
---JKRDLOG_PATH='C:\\Path\\to\\jkrdlog.exe' --Windows
---JKRDLOG_PATH='jkrdlog' --Windows以外
 if JKRDLOG_PATH=='' then JKRDLOG_PATH=nil end
 
 --実況コメントの文字の高さ(px)
@@ -1082,7 +1079,7 @@ end
 
 if not WIN32 then
   INDEX_ENABLE_SUSPEND=false
-  USE_LIVEJK=false
+  USE_LIVEJK=not not JKCNSL_PATH
 end
 
 ----------ここまでLegacy WebUIから----------

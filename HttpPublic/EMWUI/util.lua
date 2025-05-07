@@ -3,7 +3,7 @@ function Version(a)
     css='250501',
     common='250430',
     tvguide='241224',
-    player='250501',
+    player='250507',
     onair='250314',
     library='250413',
     setting='241224',

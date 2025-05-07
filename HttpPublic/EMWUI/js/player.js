@@ -287,7 +287,7 @@ class tsThumb {
 	#id = 0;
 	#loading;
 	key = 'offset';
-	async get(path, value, id = this.#id){
+	async get(path, value, id){
 		if (!this.#mod) return;
 	
 		const url = path ? new URL(this.#def, location.href) : this.#url;
@@ -296,7 +296,7 @@ class tsThumb {
 
 		this.#loading = true;
 		const frame = await fetch(url).then(r => {
-			if (id!=this.#id || !r.ok) throw r;
+			if (id && id!=this.#id || !r.ok) throw r;
 			return r.arrayBuffer();
 		}).then(r => {
 			const buffer = this.#mod.getGrabberInputBuffer(r.byteLength);
