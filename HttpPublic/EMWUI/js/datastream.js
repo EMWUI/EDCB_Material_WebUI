@@ -5,15 +5,15 @@ const playerUI = document.querySelector('#playerUI');
 const setbmlBrowserSize = () => {
 	var width = window.innerWidth;
 	var height = width * (9/16);
-	if (fullscreen){
+	if (vid.fullscreen){
 		if (window.innerHeight < width * (9/16)){
 			height = window.innerHeight;
 			width = height * (16/9);
 		}
-	}else if (theater && window.innerHeight * 0.85 - 70 < width * (9/16)){
+	}else if (vid.theater && window.innerHeight * 0.85 - 70 < width * (9/16)){
 		height = window.innerHeight * 0.85 - 70;
 		width = height * (16/9);
-	}else if (!fullscreen){
+	}else if (!vid.fullscreen){
 		width = playerUI.clientWidth;
 		height = width * (9/16);
 	}
@@ -71,7 +71,7 @@ toggleJikkyo=function(enabled,noSubStream){
     }
     var comm=document.getElementById("jikkyo-comm");
     var chats=document.getElementById("jikkyo-chats");
-    if (!comm||!chats||!(noSubStream||VideoSrc)) return;
+    if (!comm||!chats||!(noSubStream||vid.initSrc)) return;
     if(!danmaku){
       danmaku=new Danmaku({
         container:document.getElementById("danmaku-container"),
@@ -399,7 +399,7 @@ var onDataStreamError=null;
         var ctx={};
         videoParams.set('ofssec', ($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime));
         xhr=new XMLHttpRequest();
-        xhr.open("GET",`${VideoSrc}&${videoParams.toString()}&${streamParams.toString()}`);
+        xhr.open("GET",`${vid.initSrc}&${videoParams.toString()}&${streamParams.toString()}`);
         xhr.onloadend=function(){
           if(xhr&&(readCount==0||xhr.status!=0)){
             if(onDataStreamError)onDataStreamError(xhr.status,readCount);
@@ -426,7 +426,7 @@ toggleDataStream=function(enabled){
           bmlBrowserSetInvisible(true);
           return;
         }
-        if (!VideoSrc) return;
+        if (!vid.initSrc) return;
         setbmlBrowserSize();
         bmlBrowserSetInvisible(false);
         streamParams.set('psidata', 1);

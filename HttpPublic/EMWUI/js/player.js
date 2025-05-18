@@ -1,6 +1,4 @@
-let fullscreen, theater;
 let readyToAutoPlay;
-let VideoSrc;
 const videoParams = new URLSearchParams();
 const streamParams = new URLSearchParams();
 const hls = window.Hls&&Hls.isSupported() && new Hls();
@@ -98,7 +96,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.pause();
 		this.#mod.reset();
 		this.#ctrl.abort();
-		this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",})
+		//Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
+		if (!isMobile) this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
 		this.#initialize();
 	}
 	get paused(){return this.#paused}
@@ -447,7 +446,7 @@ const resetVid = reload => {
 	vid.src = '';
 	$vid_meta.attr('src', '');
 	$vid_meta.off('cuechange', oncuechangeB24Caption);
-	VideoSrc = null;
+	vid.initSrc = null;
 	if (thumb) thumb.reset();
 }
 
@@ -483,13 +482,13 @@ const loadHls = () => {
 	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？
 	if (window.Hls != undefined){
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-		setTimeout(() => waitForHlsStart(`${VideoSrc}&${videoParams.toString()}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
+		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${VideoSrc}&${videoParams.toString()}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
+		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
-		vid.src = VideoSrc;
+		vid.src = vid.initSrc;
 	}
 }
 
@@ -548,12 +547,12 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		VideoSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
-		                                : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
+		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
+		                                   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
-		if (d.path??d.id??d.reid) thumb.videoSrc = VideoSrc;
+		if (d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
 		if (vid.tslive){
-			vid.src = `${VideoSrc}&option=${videoParams.get('option')}`;
+			vid.src = `${vid.initSrc}&option=${videoParams.get('option')}`;
 		}else{
 			['ofssec','offset','reload','audio2'].forEach(e => videoParams.delete(e));
 			loadHls();
@@ -592,10 +591,10 @@ const playMovie = $e => {
 
 $(window).on('load resize', () => {
 	$player.toggleClass('is-small', $vid.width() < 800);
-	if (fullscreen) return;
+	if (vid.fullscreen) return;
 
-	if (theater || isSmallScreen()){
-		theater = true;
+	if (vid.theater || isSmallScreen()){
+		vid.theater = true;
 		$('#movie-contner #player').prependTo('#movie-theater-contner');
 	}else{
 		$('#movie-theater-contner #player').prependTo('#movie-contner');
@@ -778,92 +777,95 @@ $(function(){
 	$('#fullscreen').click(() => {
 		const player = document.querySelector('#player');
 		if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement){
-			if (player.requestFullscreen) {
-				player.requestFullscreen();
-			} else if (player.msRequestFullscreen) {
-				player.msRequestFullscreen();
-			} else if (player.mozRequestFullScreen) {
-				player.mozRequestFullScreen();
-			} else if (player.webkitRequestFullscreen) {
-				player.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-			}
-			fullscreen = true;
-			screen.orientation.lock('landscape');
+			if (player.requestFullscreen) player.requestFullscreen();
+			else if (player.msRequestFullscreen) player.msRequestFullscreen();
+			else if (player.mozRequestFullScreen) player.mozRequestFullScreen();
+			else if (player.webkitRequestFullscreen) player.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+
+			vid.fullscreen = true;
+
+			if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape');
+			else if (window.screen.lockOrientation) window.screen.lockOrientation('landscape');
+			else if (window.screen.mozLockOrientation) window.screen.mozLockOrientation('landscape');
+			else if (window.screen.webkitLockOrientation) window.screen.webkitLockOrientation('landscape');
+
 			$('#fullscreen i').text('fullscreen_exit');
 			$('.mdl-js-snackbar').appendTo('#player');
 			$('.remote-control,#comment-control').prependTo('.player-container');
 		}else{
-			screen.orientation.unlock('landscape');
-			if (document.exitFullscreen) {
-				document.exitFullscreen();
-			} else if (document.msExitFullscreen) {
-				document.msExitFullscreen();
-			} else if (document.mozCancelFullScreen) {
-				document.mozCancelFullScreen();
-			} else if (document.webkitExitFullscreen) {
-				document.webkitExitFullscreen();
-			}
-			fullscreen = false;
+			if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+			else if (window.screen.unlockOrientation) window.screen.unlockOrientation();
+			else if (window.screen.mozUnlockOrientation) window.screen.mozUnlockOrientation();
+			else if (window.screen.webkitUnlockOrientation) window.screen.webkitUnlockOrientation();
+
+			if (document.exitFullscreen) document.exitFullscreen();
+			else if (document.msExitFullscreen) document.msExitFullscreen();
+			else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+			else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+
+			vid.fullscreen = false;
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
 			$remote_control.insertAfter('#movie-contner');
 		}
 	});
-	if (document.pictureInPictureEnabled){
+	const enableDocumentPIP = 'documentPictureInPicture' in window;
+	if (!document.pictureInPictureEnabled || vid.tslive && !enableDocumentPIP) $('#PIP,#PIP_exit').hide();
+	else{
 		document.getElementById('PIP').addEventListener('click', async () => {
-			if ('documentPictureInPicture' in window) {
-				$('.remote-control,#comment-control').prependTo('.player-container');
-				const content = document.getElementById('player');
-				const container = content.parentNode;
-				$(container).height($vid.height());
-				const pipWindow = await documentPictureInPicture.requestWindow();
-
-				// Copy style sheets over from the initial document
-				// so that the player looks the same.
-				[...document.styleSheets].forEach((styleSheet) => {
-					try {
-						const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-						const style = document.createElement('style');
-
-						style.textContent = cssRules;
-						pipWindow.document.head.appendChild(style);
-					} catch (e) {
-						const link = document.createElement('link');
-
-						link.rel = 'stylesheet';
-
-						link.type = styleSheet.type;
-						link.media = styleSheet.media;
-						link.href = styleSheet.href;
-						pipWindow.document.head.appendChild(link);
-					}
-				});
-				pipWindow.document.body.setAttribute('id','popup');
-				pipWindow.document.body.setAttribute('class','is-visible');
-				pipWindow.document.body.append(content);
-				
-				pipWindow.addEventListener('resize', () => setbmlBrowserSize());
-				pipWindow.addEventListener("pagehide", (event) => {
-					const pipContent = event.target.getElementById("player");
-					container.append(pipContent);
-					$remote_control.insertAfter('#movie-contner');
-					if(theater) $('#movie-theater-contner').height('');
-					else $('#movie-contner').height('').width('');
-				});
-			}else 
+			if (!enableDocumentPIP){
 				vid.requestPictureInPicture();
+				return;
+			}
+
+			$('.remote-control,#comment-control').prependTo('.player-container');
+			const content = document.getElementById('player');
+			const container = content.parentNode;
+			$(container).height($vid.height());
+			const pipWindow = await documentPictureInPicture.requestWindow();
+
+			// Copy style sheets over from the initial document
+			// so that the player looks the same.
+			[...document.styleSheets].forEach((styleSheet) => {
+				try {
+					const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+					const style = document.createElement('style');
+
+					style.textContent = cssRules;
+					pipWindow.document.head.appendChild(style);
+				} catch (e) {
+					const link = document.createElement('link');
+
+					link.rel = 'stylesheet';
+
+					link.type = styleSheet.type;
+					link.media = styleSheet.media;
+					link.href = styleSheet.href;
+					pipWindow.document.head.appendChild(link);
+				}
+			});
+			pipWindow.document.body.setAttribute('id','popup');
+			pipWindow.document.body.setAttribute('class','is-visible');
+			pipWindow.document.body.append(content);
+			
+			pipWindow.addEventListener('resize', () => setbmlBrowserSize());
+			pipWindow.addEventListener("pagehide", (event) => {
+				const pipContent = event.target.getElementById("player");
+				container.append(pipContent);
+				$remote_control.insertAfter('#movie-contner');
+				if(vid.theater) $('#movie-theater-contner').height('');
+				else $('#movie-contner').height('').width('');
+			});
 		});
 		$('#PIP_exit').click(() => documentPictureInPicture.window.close())
-	}else{
-		$('#PIP,#PIP_exit').hide();
 	}
 	$('#defult').click(() => {
-		theater = true;
+		vid.theater = true;
 		$player.prependTo($('#movie-theater-contner'));
 		setbmlBrowserSize();
 	});
 	$('#theater').click(() => {
-		theater = false;
+		vid.theater = false;
 		$player.prependTo($('#movie-contner'));
 		setbmlBrowserSize();
 	});
@@ -972,7 +974,6 @@ $(function(){
 				if (!DataStream) toggleDataStream(false);
 			}else{
 				if (!onDataStream) toggleDataStream(true);
-				if (!theater) $('#apps').prop('checked', true);
 			}
 		},
 		'touchstart mousedown': e => {
