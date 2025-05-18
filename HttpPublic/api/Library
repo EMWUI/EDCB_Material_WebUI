@@ -14,7 +14,17 @@ for v in edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',INI):gmatch('[^
 end
 
 
-ffmpeg=FindToolsCommand('ffmpeg')
+tools=PathAppend(EdcbModulePath(),'Tools')
+if WIN32 then
+  for s in ('ffmpeg\\ffmpeg.exe|ffmpeg.exe'):gmatch('[^|]+') do
+    if EdcbFindFilePlain(PathAppend(tools,s)) then
+      ffmpeg='"'..PathAppend(tools,s)..'"'
+      break
+    end
+  end
+else
+  ffmpeg=FindToolsCommand('ffmpeg')
+end
 autoMakeThumbs=ffmpeg and {}
 thumbsDir=PathAppend(PathAppend(mg.document_root,'video'),'thumbs')
 function MakeThumbs(fpath, check)
@@ -290,7 +300,17 @@ else
           
         if info.ists then
           local tsreadex=FindToolsCommand('tsreadex')
-          local ffprobe=FindToolsCommand('ffprobe')
+          local ffprobe
+          if WIN32 then
+            for s in ('ffmpeg\\ffprobe.exe|ffprobe.exe'):gmatch('[^|]+') do
+              if EdcbFindFilePlain(PathAppend(tools,s)) then
+                ffprobe='"'..PathAppend(tools,s)..'"'
+                break
+              end
+            end
+          else
+            ffprobe=FindToolsCommand('ffprobe')
+          end
           f=edcb.io.open(ref, 'rb')
           if f then
             audio=0
