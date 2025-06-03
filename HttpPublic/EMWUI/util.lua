@@ -9,7 +9,7 @@ function Version(a)
     setting='241224',
     datastream='250518',
     legacy='20250403',
-    hls='v1.5.15',
+    hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
     danmaku='6c13364',
