@@ -3,7 +3,7 @@ dofile(mg.script_name:gsub('js/[^\\/]*$','')..'util.lua')
 
 t=mg.get_var(mg.request_info.query_string,'t')
 f=nil
-if t=='.js' or t=='.worker.js' or t=='.wasm' or t=='-misc.js' or t=='-misc.wasm' then
+if t=='.js' or t=='.wasm' or t=='-misc.js' or t=='-misc.wasm' then
   f=edcb.io.open(mg.script_name:gsub('[^\\/]*$','')..'ts-live'..t,'rb')
 end
 
@@ -13,8 +13,8 @@ else
   s=f:read('*a') or ''
   f:close()
   if t=='.js' then
-    -- "ts-live.js"に含まれる文字列ts-live.{worker.js,wasm}を置換
-    s=s:gsub('(ts%-live)(%.worker%.js["\'])','%1.lua?t=%2'):gsub('(ts%-live)(%.wasm["\'])','%1.lua?t=%2')
+    -- "ts-live.js"に含まれる文字列ts-live.wasmを置換
+    s=s:gsub('(ts%-live)(%.wasm["\'])','%1.lua?t=%2')
   elseif t=='-misc.js' then
     -- "ts-live-misc.js"に含まれる文字列ts-live-misc.wasmを置換
     s=s:gsub('(ts%-live)(%-misc%.wasm["\'])','%1.lua?t=%2')
