@@ -733,9 +733,9 @@ var tempI64;
 // end include: runtime_debug.js
 // === Body ===
 var ASM_CONSTS = {
-  409684: () => Module && Module.myAudio && Module.myAudio.discardIntervalId ? 0 : 1,
-  409763: ($0, $1, $2) => {
-    if (Module && Module.myAudio && Module.myAudio.discardIntervalId) {
+  461260: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
+  461319: ($0, $1, $2) => {
+    if (Module.myAudio && Module.myAudio.discard) {
       const buffer0 = GROWABLE_HEAP_F32().slice($0 >> 2, ($0 >> 2) + $2);
       const buffer1 = GROWABLE_HEAP_F32().slice($1 >> 2, ($1 >> 2) + $2);
       Module.myAudio.discardSamples.push({
@@ -757,7 +757,7 @@ var ASM_CONSTS = {
       }, [ buffer0.buffer, buffer1.buffer ]);
     }
   },
-  410476: $0 => {
+  462012: $0 => {
     (async function() {
       const audioContext = new AudioContext({
         sampleRate: 48e3
@@ -773,9 +773,8 @@ var ASM_CONSTS = {
       gainNode.connect(audioContext.destination);
       console.log("AudioSetup OK");
       let samples = [];
-      if (Module.myAudio && Module.myAudio.discardIntervalId) {
+      if (Module.myAudio && Module.myAudio.discard) {
         samples = Module.myAudio.discardSamples;
-        clearInterval(Module.myAudio.discardIntervalId);
       }
       Module["myAudio"] = {
         ctx: audioContext,
@@ -801,15 +800,21 @@ var ASM_CONSTS = {
       }
     })();
   },
-  411745: $0 => {
+  463222: () => {
+    if (Module.myAudio && Module.myAudio.discard) {
+      Module.myAudio.discard();
+    }
+  },
+  463302: $0 => {
     if ($0 == 0 && !Module.myAudio) {
-      let discardBaseTime = performance.now();
+      let discardBaseTime = 0;
       Module.myAudio = {
         discardSamples: []
       };
-      Module.myAudio.discardIntervalId = setInterval(() => {
+      Module.myAudio.discard = () => {
         const samples = Module.myAudio.discardSamples;
         while (samples.length > 0) {
+          if (!discardBaseTime) discardBaseTime = performance.now();
           const duration = samples[0].buffer0.length / (48e3 / 1e3);
           if (discardBaseTime + duration > performance.now()) break;
           discardBaseTime += duration;
@@ -820,7 +825,7 @@ var ASM_CONSTS = {
           sum += samples[i].buffer0.length;
         }
         Module.setBufferedAudioSamples(sum);
-      }, 30);
+      };
     }
     if (Module.myAudio && Module.myAudio.gain) Module.myAudio.gain.gain.setValueAtTime($0, Module.myAudio.ctx.currentTime);
   }
@@ -5457,6 +5462,8 @@ var runEmAsmFunction = (code, sigPtr, argbuf) => {
 
 var _emscripten_asm_const_int = (code, sigPtr, argbuf) => runEmAsmFunction(code, sigPtr, argbuf);
 
+var _emscripten_cancel_animation_frame = id => cancelAnimationFrame(id);
+
 var warnOnce = text => {
   warnOnce.shown ||= {};
   if (!warnOnce.shown[text]) {
@@ -5485,6 +5492,8 @@ var getHeapMax = () => // Stay one Wasm page short of 4GB: while e.g. Chrome is 
 var _emscripten_get_heap_max = () => getHeapMax();
 
 var _emscripten_num_logical_cores = () => navigator["hardwareConcurrency"];
+
+var _emscripten_request_animation_frame = (cb, userData) => requestAnimationFrame(timeStamp => getWasmTableEntry(cb)(timeStamp, userData));
 
 var growMemory = size => {
   var b = wasmMemory.buffer;
@@ -6749,12 +6758,6 @@ var _wgpuCommandEncoderBeginRenderPass = (encoderId, descriptor) => {
   return WebGPU.mgrRenderPassEncoder.create(commandEncoder.beginRenderPass(desc));
 };
 
-var _wgpuCommandEncoderCopyTextureToTexture = (encoderId, srcPtr, dstPtr, copySizePtr) => {
-  var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
-  var copySize = WebGPU.makeExtent3D(copySizePtr);
-  commandEncoder.copyTextureToTexture(WebGPU.makeImageCopyTexture(srcPtr), WebGPU.makeImageCopyTexture(dstPtr), copySize);
-};
-
 var _wgpuCommandEncoderFinish = (encoderId, descriptor) => {
   // TODO: Use the descriptor.
   var commandEncoder = WebGPU.mgrCommandEncoder.get(encoderId);
@@ -7440,12 +7443,14 @@ function assignWasmImports() {
     /** @export */ _tzset_js: __tzset_js,
     /** @export */ clock_time_get: _clock_time_get,
     /** @export */ emscripten_asm_const_int: _emscripten_asm_const_int,
+    /** @export */ emscripten_cancel_animation_frame: _emscripten_cancel_animation_frame,
     /** @export */ emscripten_check_blocking_allowed: _emscripten_check_blocking_allowed,
     /** @export */ emscripten_date_now: _emscripten_date_now,
     /** @export */ emscripten_exit_with_live_runtime: _emscripten_exit_with_live_runtime,
     /** @export */ emscripten_get_heap_max: _emscripten_get_heap_max,
     /** @export */ emscripten_get_now: _emscripten_get_now,
     /** @export */ emscripten_num_logical_cores: _emscripten_num_logical_cores,
+    /** @export */ emscripten_request_animation_frame: _emscripten_request_animation_frame,
     /** @export */ emscripten_resize_heap: _emscripten_resize_heap,
     /** @export */ emscripten_set_main_loop_arg: _emscripten_set_main_loop_arg,
     /** @export */ emscripten_start_fetch: _emscripten_start_fetch,
@@ -7462,7 +7467,6 @@ function assignWasmImports() {
     /** @export */ wgpuCommandBufferRelease: _wgpuCommandBufferRelease,
     /** @export */ wgpuCommandEncoderBeginComputePass: _wgpuCommandEncoderBeginComputePass,
     /** @export */ wgpuCommandEncoderBeginRenderPass: _wgpuCommandEncoderBeginRenderPass,
-    /** @export */ wgpuCommandEncoderCopyTextureToTexture: _wgpuCommandEncoderCopyTextureToTexture,
     /** @export */ wgpuCommandEncoderFinish: _wgpuCommandEncoderFinish,
     /** @export */ wgpuCommandEncoderRelease: _wgpuCommandEncoderRelease,
     /** @export */ wgpuComputePassEncoderDispatchWorkgroups: _wgpuComputePassEncoderDispatchWorkgroups,
@@ -7506,11 +7510,11 @@ var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports["__wasm_call_ct
 
 var _pthread_self = () => (_pthread_self = wasmExports["pthread_self"])();
 
+var _free = a0 => (_free = wasmExports["free"])(a0);
+
 var _malloc = a0 => (_malloc = wasmExports["malloc"])(a0);
 
 var _main = Module["_main"] = (a0, a1) => (_main = Module["_main"] = wasmExports["main"])(a0, a1);
-
-var _free = a0 => (_free = wasmExports["free"])(a0);
 
 var ___getTypeName = a0 => (___getTypeName = wasmExports["__getTypeName"])(a0);
 
@@ -7540,13 +7544,15 @@ var __emscripten_stack_alloc = a0 => (__emscripten_stack_alloc = wasmExports["_e
 
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports["emscripten_stack_get_current"])();
 
-var dynCall_ijiii = Module["dynCall_ijiii"] = (a0, a1, a2, a3, a4, a5) => (dynCall_ijiii = Module["dynCall_ijiii"] = wasmExports["dynCall_ijiii"])(a0, a1, a2, a3, a4, a5);
+var dynCall_ijii = Module["dynCall_ijii"] = (a0, a1, a2, a3, a4) => (dynCall_ijii = Module["dynCall_ijii"] = wasmExports["dynCall_ijii"])(a0, a1, a2, a3, a4);
 
 var dynCall_jiji = Module["dynCall_jiji"] = (a0, a1, a2, a3, a4) => (dynCall_jiji = Module["dynCall_jiji"] = wasmExports["dynCall_jiji"])(a0, a1, a2, a3, a4);
 
 var dynCall_iiiiij = Module["dynCall_iiiiij"] = (a0, a1, a2, a3, a4, a5, a6) => (dynCall_iiiiij = Module["dynCall_iiiiij"] = wasmExports["dynCall_iiiiij"])(a0, a1, a2, a3, a4, a5, a6);
 
 var dynCall_jiiij = Module["dynCall_jiiij"] = (a0, a1, a2, a3, a4, a5) => (dynCall_jiiij = Module["dynCall_jiiij"] = wasmExports["dynCall_jiiij"])(a0, a1, a2, a3, a4, a5);
+
+var dynCall_iiijiiii = Module["dynCall_iiijiiii"] = (a0, a1, a2, a3, a4, a5, a6, a7, a8) => (dynCall_iiijiiii = Module["dynCall_iiijiiii"] = wasmExports["dynCall_iiijiiii"])(a0, a1, a2, a3, a4, a5, a6, a7, a8);
 
 var dynCall_viiijj = Module["dynCall_viiijj"] = (a0, a1, a2, a3, a4, a5, a6, a7) => (dynCall_viiijj = Module["dynCall_viiijj"] = wasmExports["dynCall_viiijj"])(a0, a1, a2, a3, a4, a5, a6, a7);
 
@@ -7560,7 +7566,7 @@ var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a
 
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) => (dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = wasmExports["dynCall_iiiiiijj"])(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 
-var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 237536;
+var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289536;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

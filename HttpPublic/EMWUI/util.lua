@@ -3,12 +3,12 @@ function Version(a)
     css='250501',
     common='250430',
     tvguide='241224',
-    player='250518',
+    player='250601',
     onair='250314',
     library='250413',
     setting='241224',
-    datastream='250518',
-    legacy='20250403',
+    datastream='250601',
+    legacy='20250529',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
@@ -856,21 +856,23 @@ function PlayerTemplate(video, liveOrAudio)
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
 ]=]
 
-if audio then
-  for i,v in ipairs(audio) do
-    s=s..'<li class="ext mdl-menu__item"><input id="audio'..i..'" name="audio"'..Radiobtn(i==1,0)..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
+  if audio then
+    for i,v in ipairs(audio) do
+      s=s..'<li class="ext mdl-menu__item"><input id="audio'..i..'" name="audio"'..Radiobtn(i==1,0)..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
+    end
+  else
+    s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
+      ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
   end
-else
-  s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
-    ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
-end
 
-s=s..[=[
+  s=s..[=[
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
 ]=]
+  local autoCinema
   for i,v in ipairs(XCODE_OPTIONS) do
     if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+      if v.tslive then autoCinema=v.autoCinema end
       local id = 'q_'..mg.md5(v.name)
       s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input id="'..id..'" name="quality"'..Radiobtn(i==1,i)..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
     end
@@ -882,7 +884,7 @@ s=s..[=[
       has1=true
       i=0
     end
-  s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..' data-index='..i..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</label></li>\n'
+    s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..' data-index='..i..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</label></li>\n'
   end
   return s..[=[
 </ul>
@@ -906,7 +908,7 @@ s=s..[=[
 
   ..(tslive and '<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
         ..'<script src="js/ts-live.lua?t=.js"></script>\n'
-        ..'<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};</script>\n'
+        ..'<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};const autoCinema='..(autoCinema and 'true' or 'false')..'</script>\n'
       or (ALLOW_HLS and '<script>const hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
         ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
         ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n' or '')

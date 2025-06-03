@@ -1182,7 +1182,7 @@ function runHlsScript(aribb24UseSvg,aribb24Option,alwaysUseHls,postQuery,hlsQuer
   }
 }
 
-function runTsliveScript(aribb24UseSvg,aribb24Option){
+function runTsliveScript(autoCinema,aribb24UseSvg,aribb24Option){
   var vbitrate=document.getElementById("vid-bitrate");
   var bitrateStart=null;
   var bitrateTotal=0;
@@ -1260,10 +1260,6 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
 
   function startRead(mod){
     var ctrl=new AbortController();
-    if(vid.initSrc.indexOf("&audio2=1")>=0){
-      //2nd audio channel
-      mod.setDualMonoMode(1);
-    }
     fetch(vid.initSrc+seekParam,{signal:ctrl.signal}).then(function(response){
       if(!response.ok)return;
       //Reset caption
@@ -1322,12 +1318,31 @@ function runTsliveScript(aribb24UseSvg,aribb24Option){
           vid.volume=rangeVolume.value/100;
           mod.setAudioGain(vid.volume);
         };
+        var cbAudio2=document.querySelector('#vid-form input[name="audio2"]');
+        //2nd audio channel
+        mod.setDualMonoMode(cbAudio2.checked?1:0);
+        cbAudio2.onclick=function(){mod.setDualMonoMode(cbAudio2.checked?1:0);};
+        var cbCinema=document.querySelector('#vid-form input[name="cinema"]');
+        if(mod.setDetelecineMode){
+          //0=never,1=force,2=auto
+          mod.setDetelecineMode(autoCinema?2:cbCinema.checked?1:0);
+          cbCinema.onclick=function(){
+            autoCinema=false;
+            mod.setDetelecineMode(cbCinema.checked?1:0);
+          };
+        }else{
+          autoCinema=false;
+        }
         mod.setStatsCallback(function(stats){
           if(statsTime!=stats[stats.length-1].time){
             vid.currentTime+=stats[stats.length-1].time-statsTime;
             statsTime=stats[stats.length-1].time;
             if(vid.ontimeupdate)vid.ontimeupdate();
             if(cap)cap.onTimeupdate(statsTime);
+          }
+          if(autoCinema){
+            var f=stats[stats.length-1].TelecineFlag;
+            if(cbCinema.checked!=f)cbCinema.checked=f;
           }
         });
         if(vid.fast!=1)mod.setPlaybackRate(vid.fast);

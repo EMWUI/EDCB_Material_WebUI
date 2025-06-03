@@ -16,6 +16,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#paused;
 	#muted;
 	#volume;
+	#detelecine;
 	#url;
 	#networkState;
 	#mod;
@@ -25,12 +26,13 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#currentReader;
 	#wakeLock;
 	#ctrl;
-	constructor(e){
+	constructor(e, autoCinema){
 		this.#e = e;
 		this.#playbackRate = 1;
 		this.#paused = true;
 		this.#muted = false;
 		this.#volume = 1;
+		this.#detelecine = autoCinema ? 2 : 0;
 		this.#statsTime = 0;
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
@@ -41,6 +43,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 				this.#mod = mod;
 				mod.setAudioGain(1);	//一発目無効対策
 				setTimeout(() => mod.setAudioGain(this.#muted?0:this.#volume), 500);
+				mod.setDetelecineMode(this.#detelecine);
 				mod.pauseMainLoop();
 				mod.setCaptionCallback((pts,ts,data) => this.cap&&this.cap.pushRawData(this.#statsTime+ts,data.slice()));
 				mod.setStatsCallback(stats => {
@@ -60,6 +63,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 					}else{
 						this.#sameStatsCount=0;
 					}
+					if(this.#detelecine==2) this.onAutoCinema(stats[stats.length-1].TelecineFlag);
 					if(this.#done) return;
 					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
 					this.#done = true;
@@ -102,7 +106,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	}
 	get paused(){return this.#paused}
 	set audioTrack(n){
-		if (!Number(n)) return;
+		if (isNaN(n)) return;
 		this.#mod.setDualMonoMode(n);
 	}
 	get muted(){return this.#muted}
@@ -113,19 +117,25 @@ if (vid.tagName == "CANVAS") vid = new class {
 	}
 	get volume(){return this.#volume}
 	set volume(n){
-		if (!Number(n)) return;
+		if (isNaN(n)) return;
 		this.#volume = Number(n);
 		this.#mod&&this.#mod.setAudioGain(n);
 		this.#e.dispatchEvent(new Event('volumechange'));
 	}
 	get playbackRate(){return this.#playbackRate}
 	set playbackRate(n){
-		if (!Number(n)) return;
+		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
 		this.#mod.setPlaybackRate(n);
 		this.#e.dispatchEvent(new Event('ratechange'));
 	}
-
+	get detelecine(){return this.#detelecine}
+	set detelecine(n){
+		if (isNaN(n)) return;
+		this.#detelecine = Number(n);
+		this.#mod.setDetelecineMode(n);
+	}
+	
 	get networkState(){return this.#networkState}
 	#networkStateCode = {
 		EMPTY: 0,
@@ -178,6 +188,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	get height(){return this.#e.height}
 	get width(){return this.#e.width}
 
+	onAutoCinema(){}
 	onStreamStarted(){}
 
 	#readNext(reader,ret){
@@ -242,7 +253,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#startRead();
 		this.play();
 	}
-}(vid);
+}(vid, autoCinema);
 
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
@@ -395,7 +406,7 @@ const stopTimer = () => {
 }
 
 vcont = document.getElementById("vid-cont");
-const creatCap = () => {
+const createCap = () => {
 	vid.cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
 	if (vid.tslive){
 		vid.cap.attachMedia(null,vcont);
@@ -410,7 +421,7 @@ vid.onStreamStarted = () => {
 	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
 	if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
 	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
-	creatCap();
+	createCap();
 }
 
 const errorHLS = () => {
@@ -423,7 +434,7 @@ const startHLS = src => {
 
 	if (hls){
 		hls.loadSource(src);
-	}else if(vid.canPlayType('application/vnd.apple.mpegurl')){
+	}else if (vid.canPlayType('application/vnd.apple.mpegurl')){
 		vid.src = src;
 	}
 }
@@ -484,7 +495,7 @@ const loadHls = () => {
 		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
 		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
 		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
-	}else if(ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
+	}else if (ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
 		//環境がないためテスト出来ず
 		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
 	}else{
@@ -853,7 +864,7 @@ $(function(){
 				const pipContent = event.target.getElementById("player");
 				container.append(pipContent);
 				$remote_control.insertAfter('#movie-contner');
-				if(vid.theater) $('#movie-theater-contner').height('');
+				if (vid.theater) $('#movie-theater-contner').height('');
 				else $('#movie-contner').height('').width('');
 			});
 		});
@@ -891,11 +902,16 @@ $(function(){
 		videoParams.set('audio2', val);
 		vid.tslive ? vid.audioTrack = val : reloadHls();
 	});
-	$('#cinema').change(e => {
-		if ($(e.currentTarget).checked()) videoParams.set('cinema', 1);
-		else videoParams.delete('cinema');
-		reloadHls();
+	const $cinema = $('#cinema');
+	$cinema.change(e => {
+		if (vid.tslive) vid.detelecine = e.currentTarget.checked ? 1 : 0;
+		else{
+			if (e.currentTarget.checked) videoParams.set('cinema', 1);
+			else videoParams.delete('cinema');
+			reloadHls();
+		}
 	});
+	vid.onAutoCinema = autoCinema => $cinema.mdl_prop('checked', autoCinema);
 	const $rate = $('.rate');
 	$rate.change(e => {
 		const $e = $(e.currentTarget);
@@ -918,7 +934,6 @@ $(function(){
 
 	//TS-Live!有効時、非対応端末は画質選択無効
 	$('.tslive').attr('disabled', !window.isSecureContext || !navigator.gpu);
-	$('#rate1').attr('disabled', vid.tslive).parent().attr('disabled', vid.tslive);
 
 
 	hideBar();
@@ -1013,7 +1028,7 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			if($danmaku.hasClass('checked')){
+			if ($danmaku.hasClass('checked')){
 				if (!onJikkyoStream){
 					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
 					else toggleJikkyo(true);

@@ -235,7 +235,7 @@ const oncuechangeB24Caption = e => {
       if(!ret){return;}
       for(var j=0;j<ret.length;j++){dataList.push({pts:cues[i].startTime,pes:ret[j]});}
     }
-    creatCap();
+    createCap();
     dataList.reverse();
     (function pushCap(){
       for(var i=0;i<100;i++){

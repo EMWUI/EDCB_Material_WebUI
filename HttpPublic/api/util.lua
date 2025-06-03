@@ -42,6 +42,7 @@ XCODE_FAST_RATES={
 --filter*FastFunc:倍速再生用、未定義でもよい。倍率に応じたオプションを返す関数を指定する
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
 --editorOptionFastFunc:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを返す関数を指定する
+--autoCinema:TS-Live!方式専用。Cinema(逆テレシネ)モードを自動切り替え
 XCODE_OPTIONS={
   {
     --ffmpegの例。-b:vでおおよその最大ビットレートを決め、-qminで動きの少ないシーンのデータ量を節約する
@@ -149,6 +150,7 @@ XCODE_OPTIONS={
   {
     --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)
     name='tslive',
+    autoCinema=true,
     tslive=true,
     xcoder='',
     option='',
@@ -269,6 +271,7 @@ function GetTranscodeQueries(qs)
   return {
     option=option,
     tslive=XCODE_OPTIONS[option or 1].tslive,
+    autoCinema=XCODE_OPTIONS[option or 1].autoCinema,
     offset=GetVarInt(qs,'offset',0,100),
     audio2=GetVarInt(qs,'audio2')==1,
     cinema=GetVarInt(qs,'cinema')==1,
