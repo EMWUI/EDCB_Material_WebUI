@@ -37,7 +37,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
 		this.#initialize();
-		if(!window.createWasmModule || !navigator.gpu) return;
+		if(!('createWasmModule' in window) || !navigator.gpu) return;
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
 			createWasmModule({preinitializedWebGPUDevice:device}).then(mod => {
 				this.#mod = mod;
@@ -165,7 +165,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 	get src(){return this.#url.href??''}
 	set src(src){
 		if (!src) return;
-		if (!window.createWasmModule) this.#error = {code: 0, message: 'Probably ts-live.js not found.'};
+		if (!('createWasmModule' in window)) this.#error = {code: 0, message: 'Probably ts-live.js not found.'};
 		if (!navigator.gpu) this.#error = {code: 0, message: 'WebGPU not available.'};
 		if (this.#error){
 			this.#e.dispatchEvent(new Event('error'));
@@ -273,7 +273,7 @@ class tsThumb {
 	#def;
 	#e;
 	constructor(url){
-		if (!window.createMiscWasmModule) return;
+		if (!('createMiscWasmModule' in window)) return;
 		if (url) this.url = url;
 		createMiscWasmModule().then(mod => this.#mod = mod);
 	}
@@ -372,7 +372,7 @@ class tsThumb {
 	}
 }
 
-const thumb = window.createMiscWasmModule && new tsThumb(`${ROOT}api/grabber`);
+const thumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`);
 if (thumb) thumb.attachMedia(document.querySelector('#vid-thumb'));
 
 const getVideoTime = t => {

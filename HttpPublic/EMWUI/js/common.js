@@ -53,7 +53,7 @@ class SearchLinks {
 	get html(){return this.#defaults.map(d => this.#link(d));}		//番組表向け
 	get htmlEX(){													//サイドパネル向け
 		const a = this.#defaults.concat(Links.links??[]).map(d => this.#link(d));
-		if (Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]||Info.reserve[0].get(this.#d.id); $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
+		if ('Notification' in window && Notification.permission == 'granted') a.unshift($('<button>', {class: `notify_${this.#d.eid} mdl-button mdl-js-button mdl-button--icon`, data: {notification: $(`#notify_${this.#d.eid}`).length > 0}, disabled: this.#d.starttime-30<=Date.now(), click: e => { const d = Info.EventInfo[`${this.#d.onid}-${this.#d.tsid}-${this.#d.sid}-${this.#d.eid}`]||Info.reserve[0].get(this.#d.id); $(e.currentTarget).data('notification') ? Notify.del(d) : Notify.create(d, true); }, append: $('<i>', {class: 'material-icons', text: $(`#notify_${this.#d.eid}`).length ? 'notifications_off' : this.#d.starttime-30<=Date.now() ? 'notifications' : 'add_alert'}),}) )
 		return a;
 	}
 }
@@ -1211,11 +1211,11 @@ const addRecMark = (r, $target, $content) => {
 		rs.overlapMode == 1 ? '部' :
 		rs.overlapMode == 2 ? '不' :
 		rs.recMode == 4 ? '視' : '録';
-	$target.data('id', r.id).data('toggle', rs.recEnabled ? 1 : 0).data('oneclick', 0).text(rs.recEnabled ? '有効' : '無効');
+	$target.data('id', r.id).data('toggle', rs.recEnabled ? 0 : 1).data('oneclick', 0).text(rs.recEnabled ? '無効' : '有効');
 	$content.not('.reserve').find('.startTime').after('<span class="mark reserve"></span>');
 	$content.removeClass('disabled partially shortage view').addClass(`reserve ${mode}`).find('.mark.reserve').text(mark);
 
-	return rs.recEnabled ? '無効' : '有効';
+	return rs.recEnabled ? '有効' : '無効';
 }
 
 const createSwitch = d => {
@@ -1437,7 +1437,7 @@ $(function(){
 	});
 
 	//通知
-	if (!isMobile && !isTouch && window.Notification){
+	if (!isMobile && !isTouch && 'Notification' in window){
 		if (Notification.permission == 'granted'){
 			$('.notification').removeClass('hidden');
 			//通知リスト読み込み
@@ -1551,7 +1551,7 @@ $(function(){
 			date.startDayOfWeek = $('#startDayOfWeek').val();
 			date.endDayOfWeek = $('#endDayOfWeek').val();
 			dateList.add.select(date);
-		}else if(date.startTime > date.endTime){
+		}else if (date.startTime > date.endTime){
 			Snackbar('開始 > 終了です');
 			return;
 		}else{

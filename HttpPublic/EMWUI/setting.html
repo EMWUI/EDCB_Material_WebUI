@@ -380,7 +380,7 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<div class="mdl-tabs__tab-bar">\n'
 
 
-a=edcb.GetServiceList() or {}
+a=SortServiceListInplace(edcb.GetServiceList()) or {}
 ServiceList={}
 HIDE_SERVICES=HideServiceList()
 if edcb.GetPrivateProfile('SORT','sort0',false,INI)~='0' then
@@ -415,7 +415,6 @@ if edcb.GetPrivateProfile('SORT','sort0',false,INI)~='0' then
   end
 else
   ServiceList=a
-  SortServiceListInplace(ServiceList)
 end
 
 NetworkList={}

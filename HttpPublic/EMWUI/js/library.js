@@ -1,7 +1,7 @@
 $(function(){
 	const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
 
-	const rollThumb = window.createMiscWasmModule && new tsThumb(`${ROOT}api/grabber`);
+	const rollThumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`);
 	
 	//ライブラリ取得
 	const getLibrary = hash => {
