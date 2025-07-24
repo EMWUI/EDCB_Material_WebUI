@@ -149,7 +149,7 @@ XCODE_OPTIONS={
   },
   {
     --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)
-    name='tslive',
+    name='TS-Live!',
     autoCinema=true,
     tslive=true,
     xcoder='',
@@ -655,21 +655,35 @@ function UintCounterDiff(a,b)
   return (a+0x100000000-b)%0x100000000
 end
 
+--TSパケットヘッダを解析する
+function ParseTsPacket(ts,buf,i)
+  i=i or 1
+  if not buf or #buf<i+187 or buf:byte(i)~=0x47 then return false end
+  local b=buf:byte(i+1)
+  ts.err=b>127
+  ts.unitStart=b%128>63
+  ts.pid=b%32*256+buf:byte(i+2)
+  ts.adaptation=math.floor(buf:byte(i+3)/16)%4
+  return true
+end
+
+--PCR(45000Hz)があれば取得する
+function GetPcrFromTsPacket(adaptation,buf,i)
+  i=i or 1
+  --adaptation_field_length and PCR_flag
+  return adaptation>=2 and buf:byte(i+4)>=5 and buf:byte(i+5)%32>15 and
+    ((buf:byte(i+6)*256+buf:byte(i+7))*256+buf:byte(i+8))*256+buf:byte(i+9)
+end
+
 --PCRまで読む
 function ReadToPcr(f,pid)
+  local ts={}
   for i=1,10000 do
     local buf=f:read(188)
-    if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
-    local adaptation=math.floor(buf:byte(4)/16)%4
-    if adaptation>=2 then
-      --adaptation_field_length and PCR_flag
-      if buf:byte(5)>=5 and math.floor(buf:byte(6)/16)%2~=0 then
-        local pcr=((buf:byte(7)*256+buf:byte(8))*256+buf:byte(9))*256+buf:byte(10)
-        local pid2=buf:byte(2)%32*256+buf:byte(3)
-        if not pid or pid==pid2 then
-          return pcr,pid2,i*188
-        end
-      end
+    if not ParseTsPacket(ts,buf) then break end
+    local pcr=GetPcrFromTsPacket(ts.adaptation,buf)
+    if not ts.err and pcr and (not pid or pid==ts.pid) then
+      return pcr,ts.pid,i*188
     end
   end
   return nil
@@ -677,6 +691,7 @@ end
 
 --MPEG-2映像のIフレームを取得する
 function GetIFrameVideoStream(f)
+  local ts={}
   local exclude={}
   local priorPid=8192
   local videoPid=nil
@@ -701,27 +716,23 @@ function GetIFrameVideoStream(f)
   end
   for i=1,15000 do
     local buf=f:read(188)
-    if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
-    local errorAndUnitStart=math.floor(buf:byte(2)/64)
-    local pid=buf:byte(2)%32*256+buf:byte(3)
-    if errorAndUnitStart<=1 and pid==videoPid or
-       errorAndUnitStart==1 and not videoPid then
-      if errorAndUnitStart==1 and videoPid then
+    if not ParseTsPacket(ts,buf) then break end
+    if not ts.err and (ts.pid==videoPid or ts.unitStart and not videoPid) then
+      if ts.unitStart and videoPid then
         if pesRemain==0 then
           --PESがたまった
           if seqState<0 then return table.concat(stream) end
-          exclude[pid]=true
+          exclude[ts.pid]=true
         end
         videoPid=nil
       end
-      local adaptation=math.floor(buf:byte(4)/16)%4
-      local adaptationLen=adaptation==1 and -1 or adaptation==3 and buf:byte(5) or 183
+      local adaptationLen=ts.adaptation==1 and -1 or ts.adaptation==3 and buf:byte(5) or 183
       if adaptationLen>183 then break end
       local pos=6+adaptationLen
       --H.262のpicture_coding_typeが見つからないものは除外。複数候補ある場合はPIDが小さいほう
-      if not videoPid and not exclude[pid] and pid<=priorPid and pos<=180 and buf:find('^\0\0\1[\xE0-\xEF]',pos) then
+      if not videoPid and not exclude[ts.pid] and ts.pid<=priorPid and pos<=180 and buf:find('^\0\0\1[\xE0-\xEF]',pos) then
         --H.262/264/265 PES
-        videoPid=pid
+        videoPid=ts.pid
         stream={}
         pesRemain=buf:byte(pos+4)*256+buf:byte(pos+5)
         headerRemain=buf:byte(pos+8)
@@ -737,14 +748,14 @@ function GetIFrameVideoStream(f)
           stream[#stream+1]=buf:sub(pos,pos+n-1)
           if seqState>=0 and findPictureCodingType(stream[#stream])~=1 and seqState<0 then
             --Iフレームじゃない
-            priorPid=pid
+            priorPid=ts.pid
             videoPid=nil
           elseif pesRemain>0 then
             pesRemain=pesRemain-n
             if pesRemain==0 then
               --PESがたまった
               if seqState<0 then return table.concat(stream) end
-              exclude[pid]=true
+              exclude[ts.pid]=true
               videoPid=nil
             end
           end
@@ -844,18 +855,15 @@ function GetTotAndServiceID(f)
   if f:seek('set') then
     local pcr,pcrPid=ReadToPcr(f)
     if pcr then
-      local tot,nid,sid=nil,nil,nil
+      local ts,tot,nid,sid={},nil,nil,nil
       for i=1,400000 do
         local buf=f:read(188)
-        if not buf or #buf~=188 or buf:byte(1)~=0x47 then break end
-        local errorAndUnitStart=math.floor(buf:byte(2)/64)
-        local adaptation=math.floor(buf:byte(4)/16)%4
-        local adaptationLen=adaptation==1 and -1 or adaptation==3 and buf:byte(5) or 183
-        if errorAndUnitStart==1 and adaptationLen<183 then
-          local pid=buf:byte(2)%32*256+buf:byte(3)
+        if not ParseTsPacket(ts,buf) then break end
+        local adaptationLen=ts.adaptation==1 and -1 or ts.adaptation==3 and buf:byte(5) or 183
+        if not ts.err and ts.unitStart and adaptationLen<183 then
           local pointer=7+adaptationLen+buf:byte(6+adaptationLen)
           local id=pointer<=188 and buf:byte(pointer)
-          if pid==0 and pointer+13<=188 and id==0x00 then
+          if ts.pid==0 and pointer+13<=188 and id==0x00 then
             --PAT
             local sectionLen=buf:byte(pointer+2)
             sid=buf:byte(pointer+8)*256+buf:byte(pointer+9)
@@ -865,10 +873,10 @@ function GetTotAndServiceID(f)
             if sectionLen<13 or sid==0 then
               sid=nil
             end
-          elseif pid==16 and pointer+4<=188 and id==0x40 then
+          elseif ts.pid==16 and pointer+4<=188 and id==0x40 then
             --NIT
             nid=buf:byte(pointer+3)*256+buf:byte(pointer+4)
-          elseif pid==20 and pointer+7<=188 and (id==0x70 or id==0x73) and not tot then
+          elseif ts.pid==20 and pointer+7<=188 and (id==0x70 or id==0x73) and not tot then
             --TDT,TOT
             local pcr2=ReadToPcr(f,pcrPid)
             if not pcr2 then break end

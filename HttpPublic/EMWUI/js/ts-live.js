@@ -733,12 +733,12 @@ var tempI64;
 // end include: runtime_debug.js
 // === Body ===
 var ASM_CONSTS = {
-  461260: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
-  461319: ($0, $1, $2) => {
+  461516: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
+  461575: ($0, $1, $2) => {
     if (Module.myAudio && Module.myAudio.discard) {
       const buffer0 = GROWABLE_HEAP_F32().slice($0 >> 2, ($0 >> 2) + $2);
       const buffer1 = GROWABLE_HEAP_F32().slice($1 >> 2, ($1 >> 2) + $2);
-      Module.myAudio.discardSamples.push({
+      Module.myAudio.discard.samples.push({
         buffer0,
         buffer1
       });
@@ -757,7 +757,48 @@ var ASM_CONSTS = {
       }, [ buffer0.buffer, buffer1.buffer ]);
     }
   },
-  462012: $0 => {
+  462269: () => {
+    if (Module.myAudio && Module.myAudio.discard) {
+      Module.myAudio.discard = {
+        samples: []
+      };
+      Module.setBufferedAudioSamples(0);
+      return;
+    }
+    if (Module.myAudio && Module.myAudio.node) {
+      Module.myAudio.node.port.postMessage({
+        type: "reset"
+      });
+    }
+  },
+  462508: () => {
+    if (Module.myAudio && Module.myAudio.discard) {
+      const discard = Module.myAudio.discard;
+      while (discard.samples.length > 0) {
+        if (!discard.baseTime) discard.baseTime = performance.now();
+        const duration = discard.samples[0].buffer0.length / (48e3 / 1e3);
+        if (discard.baseTime + duration > performance.now()) break;
+        discard.baseTime += duration;
+        discard.samples.shift();
+      }
+      let sum = 0;
+      for (let i = 0; i < discard.samples.length; i++) {
+        sum += discard.samples[i].buffer0.length;
+      }
+      Module.setBufferedAudioSamples(sum);
+    }
+  },
+  463031: $0 => {
+    if ($0 == 0 && !Module.myAudio) {
+      Module.myAudio = {
+        discard: {
+          samples: []
+        }
+      };
+    }
+    if (Module.myAudio && Module.myAudio.gain) Module.myAudio.gain.gain.setValueAtTime($0, Module.myAudio.ctx.currentTime);
+  },
+  463236: ($0, $1) => {
     (async function() {
       const audioContext = new AudioContext({
         sampleRate: 48e3
@@ -774,7 +815,7 @@ var ASM_CONSTS = {
       console.log("AudioSetup OK");
       let samples = [];
       if (Module.myAudio && Module.myAudio.discard) {
-        samples = Module.myAudio.discardSamples;
+        samples = Module.myAudio.discard.samples;
       }
       Module["myAudio"] = {
         ctx: audioContext,
@@ -786,10 +827,7 @@ var ASM_CONSTS = {
         Module.setBufferedAudioSamples(e.data);
       };
       console.log("latency", Module["myAudio"]["ctx"].baseLatency);
-      if (Module.myAudio.gainValue === undefined) {
-        Module.myAudio.gainValue = 1;
-      }
-      Module.myAudio.gain.gain.setValueAtTime(Module.myAudio.gainValue, Module.myAudio.ctx.currentTime);
+      Module.myAudio.gain.gain.setValueAtTime($1, Module.myAudio.ctx.currentTime);
       while (samples.length > 0) {
         audioNode.port.postMessage({
           type: "feed",
@@ -799,35 +837,6 @@ var ASM_CONSTS = {
         samples.shift();
       }
     })();
-  },
-  463222: () => {
-    if (Module.myAudio && Module.myAudio.discard) {
-      Module.myAudio.discard();
-    }
-  },
-  463302: $0 => {
-    if ($0 == 0 && !Module.myAudio) {
-      let discardBaseTime = 0;
-      Module.myAudio = {
-        discardSamples: []
-      };
-      Module.myAudio.discard = () => {
-        const samples = Module.myAudio.discardSamples;
-        while (samples.length > 0) {
-          if (!discardBaseTime) discardBaseTime = performance.now();
-          const duration = samples[0].buffer0.length / (48e3 / 1e3);
-          if (discardBaseTime + duration > performance.now()) break;
-          discardBaseTime += duration;
-          samples.shift();
-        }
-        let sum = 0;
-        for (let i = 0; i < samples.length; i++) {
-          sum += samples[i].buffer0.length;
-        }
-        Module.setBufferedAudioSamples(sum);
-      };
-    }
-    if (Module.myAudio && Module.myAudio.gain) Module.myAudio.gain.gain.setValueAtTime($0, Module.myAudio.ctx.currentTime);
   }
 };
 
@@ -7566,7 +7575,7 @@ var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a
 
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) => (dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = wasmExports["dynCall_iiiiiijj"])(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 
-var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289536;
+var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289780;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

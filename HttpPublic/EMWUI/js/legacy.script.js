@@ -385,6 +385,16 @@ function runOnscreenButtonsScript(xcode){
   var bexit=document.createElement("div");
   bexit.className="exit-control";
   bexit.appendChild(btn);
+  if(document.fullscreenEnabled||document.webkitFullscreenEnabled){
+    vfull[document.fullscreenEnabled?"onfullscreenchange":"onwebkitfullscreenchange"]=function(){
+      var vseek=document.getElementById("vid-seek");
+      if(vseek){
+        var vseekMarker=document.getElementById("vid-seek-marker");
+        if(document.fullscreenElement||document.webkitFullscreenElement)vcont.appendChild(vseek);
+        else vseekMarker.parentNode.insertBefore(vseek,vseekMarker);
+      }
+    };
+  }
   var diffs=[0,0,0,0,0];
   var duration=-1;
   var lastseek=0;
@@ -833,21 +843,25 @@ function runVideoScript(aribb24UseSvg,aribb24Option,useDatacast,useJikkyoLog){
 }
 
 function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,postCommentQuery){
-  vid.initSrc=document.getElementById("vidsrc").textContent;
+  vid.initSrc=vid.e.dataset.src||vid.e.src;
   if(vid.c){
     //Playback rate is controlled on client-side.
     vid.fast=fast;
     fast=1;
-  }else if(window.createMiscWasmModule){
-    setTimeout(function(){
-      createMiscWasmModule().then(function(mod){
-        //Functions for drawing thumbnails
-        vid.getGrabberInputBuffer=mod.getGrabberInputBuffer;
-        vid.grabFirstFrame=mod.grabFirstFrame;
-      });
-    },0);
+  }else{
+    if(vid.e.controlsList)vid.e.controlsList.add("noplaybackrate");
+    if(window.createMiscWasmModule){
+      setTimeout(function(){
+        createMiscWasmModule().then(function(mod){
+          //Functions for drawing thumbnails
+          vid.getGrabberInputBuffer=mod.getGrabberInputBuffer;
+          vid.grabFirstFrame=mod.grabFirstFrame;
+        });
+      },0);
+    }
   }
   var vseek=document.getElementById("vid-seek");
+  var rangeSeek=document.querySelector("#vid-seek input");
   var vseekStatus=document.getElementById("vid-seek-status");
   var vseekStatusMaxWidth=-1;
   function adjustSeekbarWidth(){
@@ -859,7 +873,7 @@ function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,p
     }
     var othersWidth=vseekStatusMaxWidth;
     document.querySelectorAll(".video-side-item").forEach(function(e){othersWidth+=e.offsetWidth;});
-    vseek.style.width=Math.max(1-othersWidth/window.innerWidth,0.3)*100+"%";
+    rangeSeek.style.width=Math.max(1-othersWidth/window.innerWidth,0.3)*100+"%";
   }
   window.addEventListener("load",adjustSeekbarWidth);
   window.addEventListener("resize",adjustSeekbarWidth);
@@ -978,35 +992,44 @@ function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,p
   var voffset=document.getElementById("vid-offset");
   if(voffset){
     var vselect=document.querySelector('#vid-form select[name="offset"]');
-    var vseekLeaved=true;
     var msList=[];
-    var vthumb=document.getElementById("vid-thumb");
+    var vthumb=document.querySelector("#vid-seek canvas");
     var thumbTimer=0;
     var thumbXhr=null;
     for(var i=0;i<=100;i++){
-      msList[i]=vselect.options[i].textContent.match(/^(?:\d+m\d\ds)?/)[0];
+      msList[i]={m:vselect.options[i].textContent.match(/^(?:(\d+)m(\d\d)s)?/)};
+      msList[i].sec=msList[i].m[0]?60*msList[i].m[1]+1*msList[i].m[2]:-1;
     }
-    vseek.ontouchend=vseek.onmouseleave=function(){
-      vseekLeaved=true;
+    function rangeSeekSec(){
+      var n=rangeSeek.value;
+      var i=Math.floor(n);
+      return i>99?msList[100].sec:msList[i].sec<0||msList[i+1].sec<0?-1:Math.floor(msList[i+1].sec*(n-i)-msList[i].sec*(n-i-1));
+    }
+    function formatSec(sec){
+      return Math.floor(sec/60)+"m"+String(100+sec%60).substring(1)+"s";
+    }
+    rangeSeek.ontouchend=rangeSeek.onmouseleave=function(){
+      vseek.classList.remove("active");
       vseekStatus.innerText="";
       if(vthumb)vthumb.style.display="none";
     };
-    vseek.oninput=function(){
-      vseekLeaved=false;
-      var sec=ofssec+Math.floor((vid.c||vid.e).currentTime*fast);
-      var ms=Math.floor(sec/60)+"m"+String(100+sec%60).substring(1)+"s";
-      vseekStatus.innerText=ms+"\u2192"+msList[vseek.value]+"|"+vseek.value+"%";
+    rangeSeek.oninput=function(){
+      vseek.classList.add("active");
+      vseekStatus.innerText=formatSec(ofssec+Math.floor((vid.c||vid.e).currentTime*fast))+"\u2192"+
+        (rangeSeekSec()>=0&&vid.seekWithoutTransition?formatSec(rangeSeekSec()):msList[Math.floor(rangeSeek.value)].m[0])+
+        "|"+Math.floor(rangeSeek.value)+"%";
       var m=vid.initSrc.match(/\?fname=[^&]*/);
       if(m&&vthumb&&vid.grabFirstFrame){
         clearTimeout(thumbTimer);
         thumbTimer=setTimeout(function(){
-          if(vseekLeaved||thumbXhr)return;
+          if(!vseek.classList.contains("active")||thumbXhr)return;
           //Get thumbnail of seek position.
           thumbXhr=new XMLHttpRequest();
-          thumbXhr.open("GET","grabber.lua"+m[0]+"&offset="+vseek.value);
+          thumbXhr.open("GET","grabber.lua"+m[0]+
+            (rangeSeekSec()>=0&&vid.seekWithoutTransition?"&ofssec="+rangeSeekSec():"&offset="+Math.floor(rangeSeek.value)));
           thumbXhr.responseType="arraybuffer";
           thumbXhr.onloadend=function(){
-            if(!vseekLeaved&&thumbXhr.status==200&&thumbXhr.response){
+            if(vseek.classList.contains("active")&&thumbXhr.status==200&&thumbXhr.response){
               var buffer=vid.getGrabberInputBuffer(thumbXhr.response.byteLength);
               buffer.set(new Uint8Array(thumbXhr.response));
               var frame=vid.grabFirstFrame(thumbXhr.response.byteLength);
@@ -1023,32 +1046,35 @@ function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,p
         },thumbTimer?200:0);
       }
     };
-    vseek.onchange=function(){
-      vselect.options[vseek.value].selected=true;
-      var m=msList[vseek.value].match(/^(\d+)m(\d\d)s/);
-      if(m&&vid.seekWithoutTransition){
-        ofssec=60*m[1]+1*m[2];
+    rangeSeek.onchange=function(){
+      vselect.options[Math.floor(rangeSeek.value)].selected=true;
+      if(rangeSeekSec()>=0&&vid.seekWithoutTransition){
+        ofssec=rangeSeekSec();
         openSubStream();
         vid.seekWithoutTransition(ofssec,fastParam);
+        vseek.classList.remove("active");
       }else{
         document.querySelector('#vid-form button[type="submit"]').click();
       }
     };
     (vid.c||vid.e).ontimeupdate=function(){
       var sec=ofssec+Math.floor((vid.c||vid.e).currentTime*fast);
-      var ms=Math.floor(sec/60)+"m"+String(100+sec%60).substring(1)+"s";
-      voffset.innerText="|"+ms;
-      if(vseekLeaved){
-        for(var i=0;;i++){
-          if(i==99||(msList[i]&&("000"+msList[i]).slice(-8)>=("000"+ms).slice(-8))){
-            vseek.value=i;
-            vseek.style.display=null;
-            break;
+      voffset.innerText="|"+formatSec(sec);
+      for(var i=0;;i++){
+        if(i==99||msList[i].sec>=sec){
+          var marker=document.querySelector("#vid-seek-marker option");
+          if(vseek.classList.contains("active")){
+            marker.value=Math.abs(i-rangeSeek.value)>5?i:null;
+          }else{
+            marker.value=null;
+            rangeSeek.value=i;
+            rangeSeek.style.display=null;
           }
+          break;
         }
       }
     };
-    voffset.innerText="|"+Math.floor(ofssec/60)+"m"+String(100+ofssec%60).substring(1)+"s";
+    voffset.innerText="|"+formatSec(ofssec);
   }
   var vfast=document.querySelector('#vid-form select[name="fast"]');
   if(vfast){
@@ -1061,6 +1087,30 @@ function runTranscodeScript(useDatacast,useLiveJikkyo,useJikkyoLog,ofssec,fast,p
         openSubStream();
         vid.seekWithoutTransition(ofssec,fastParam,fastRate);
       }
+    };
+  }
+  if(!vid.c){
+    var unfixTimer=0;
+    vid.fixSizeThenUnfixOnPlay=function(){
+      if(!vid.e.style.width){
+        //Temporarily fix the size.
+        vid.e.style.width=vid.e.clientWidth+"px";
+        vid.e.style.height=vid.e.clientHeight+"px";
+        function unfix(){
+          vid.e.onplay=null;
+          clearTimeout(unfixTimer);
+          unfixTimer=setTimeout(function(){if(/px$/.test(vid.e.style.width))vid.e.style.width=vid.e.style.height=null;},500);
+        }
+        vid.e.onplay=unfix;
+        clearTimeout(unfixTimer);
+        unfixTimer=setTimeout(unfix,8000);
+      }
+    };
+    var swtCount=0;
+    vid.seekWithoutTransition=function(ofssec,fastParam){
+      vid.fixSizeThenUnfixOnPlay();
+      //"count" is to ensure that the src attribute is reloaded.
+      vid.e.src=(fastParam?vid.initSrc.replace(/&fast=[^&]*/,"")+fastParam:vid.initSrc).replace("&load=","&reload=")+"&ofssec="+ofssec+"&count="+(++swtCount);
     };
   }
   if((vid.c||vid.e).muted){
@@ -1090,6 +1140,7 @@ function runHlsScript(aribb24UseSvg,aribb24Option,alwaysUseHls,postQuery,hlsQuer
     document.querySelector('#vid-form input[name="caption"]').value=cbCaption.checked?"1":"0";
   }
   if(alwaysUseHls){
+    vid.seekWithoutTransition=null;
     onclickCaption();
     cbCaption.onclick=onclickCaption;
     document.getElementById("label-caption").style.display="inline";
@@ -1123,23 +1174,14 @@ function runHlsScript(aribb24UseSvg,aribb24Option,alwaysUseHls,postQuery,hlsQuer
             }
           }
         });
-        var unfixTimer=0;
-        var lastOfssec=-1;
+        var swtCount=0;
         function swt(ofssec,fastParam){
           vid.seekWithoutTransition=null;
-          if(!vid.e.style.width){
-            //Temporarily fix the size.
-            vid.e.style.width=vid.e.clientWidth+"px";
-            vid.e.style.height=vid.e.clientHeight+"px";
-            clearTimeout(unfixTimer);
-            unfixTimer=setTimeout(function(){if(/px$/.test(vid.e.style.width))vid.e.style.width=vid.e.style.height=null;},8000);
-          }
+          vid.fixSizeThenUnfixOnPlay();
           hls.detachMedia();
-          //To avoid same parameters as last time.
-          lastOfssec=ofssec+(ofssec==lastOfssec?1:0);
-          waitForHlsStart((fastParam?vid.initSrc.replace(/&fast=[^&]*/,"")+fastParam:vid.initSrc)+"&ofssec="+lastOfssec+
+          waitForHlsStart((fastParam?vid.initSrc.replace(/&fast=[^&]*/,"")+fastParam:vid.initSrc).replace("&load=","&reload=")+"&ofssec="+ofssec+
             //Excludes Firefox for Android, because playback of non-keyframe fragmented MP4 is jerky.
-            hlsQuery+(/Android.+Firefox/i.test(navigator.userAgent)?"":hlsMp4Query),postQuery,200,500,function(){vid.e.poster=null;},function(src){
+            hlsQuery.replace("&hls=","&hls="+(++swtCount)+"_")+(/Android.+Firefox/i.test(navigator.userAgent)?"":hlsMp4Query),postQuery,200,500,function(){vid.e.poster=null;},function(src){
             hls.loadSource(src);
             hls.attachMedia(vid.e);
             vid.seekWithoutTransition=swt;
@@ -1153,6 +1195,7 @@ function runHlsScript(aribb24UseSvg,aribb24Option,alwaysUseHls,postQuery,hlsQuer
   }else{
     //Excludes Android even though canPlayType here may not return an empty string, because the quality of the native implementation is inconsistent.
     if(!/Android/i.test(navigator.userAgent)&&vid.e.canPlayType("application/vnd.apple.mpegurl")){
+      vid.seekWithoutTransition=null;
       onclickCaption();
       cbCaption.onclick=onclickCaption;
       document.getElementById("label-caption").style.display="inline";
@@ -1164,20 +1207,6 @@ function runHlsScript(aribb24UseSvg,aribb24Option,alwaysUseHls,postQuery,hlsQuer
       });
     }else{
       vid.e.src=vid.initSrc;
-      var unfixTimer=0;
-      var lastOfssec=-1;
-      vid.seekWithoutTransition=function(ofssec,fastParam){
-        if(!vid.e.style.width){
-          //Temporarily fix the size.
-          vid.e.style.width=vid.e.clientWidth+"px";
-          vid.e.style.height=vid.e.clientHeight+"px";
-          clearTimeout(unfixTimer);
-          unfixTimer=setTimeout(function(){if(/px$/.test(vid.e.style.width))vid.e.style.width=vid.e.style.height=null;},8000);
-        }
-        //To avoid same parameters as last time.
-        lastOfssec=ofssec+(ofssec==lastOfssec?1:0);
-        vid.e.src=(fastParam?vid.initSrc.replace(/&fast=[^&]*/,"")+fastParam:vid.initSrc)+"&ofssec="+lastOfssec;
-      };
     }
   }
 }
@@ -1189,9 +1218,10 @@ function runTsliveScript(autoCinema,aribb24UseSvg,aribb24Option){
   var lastWidth=vid.e.width;
   var lastHeight=vid.e.height;
   var wakeLock=null;
+  //Non-empty seekParam means that abort() has been called and the next fetch() call is pending.
   var seekParam="";
   function readNext(mod,reader,ret){
-    if(ret&&ret.value){
+    if(ret&&ret.value&&!seekParam){
       var inputLen=Math.min(ret.value.length,1e6);
       var buffer=mod.getNextInputBuffer(inputLen);
       if(!buffer){
@@ -1260,15 +1290,18 @@ function runTsliveScript(autoCinema,aribb24UseSvg,aribb24Option){
 
   function startRead(mod){
     var ctrl=new AbortController();
-    fetch(vid.initSrc+seekParam,{signal:ctrl.signal}).then(function(response){
+    //"throttle" is to avoid excessive prefetching in some browsers.
+    fetch((seekParam.indexOf("&fast=")>=0?vid.initSrc.replace(/&fast=[^&]*/,""):vid.initSrc)+
+          seekParam+"&throttle=1",{signal:ctrl.signal}).then(function(response){
       if(!response.ok)return;
       //Reset caption
       if(cap)cap.attachMedia(null,vcont);
       vid.currentTime=0;
       vid.seekWithoutTransition=function(ofssec,fastParam,fastRate){
         if(fastRate)mod.setPlaybackRate(fastRate);
+        vid.currentTime=0;
         vid.seekWithoutTransition=null;
-        seekParam="&ofssec="+ofssec;
+        seekParam="&ofssec="+ofssec+fastParam;
         ctrl.abort();
       };
       readNext(mod,response.body.getReader(),null);
@@ -1311,7 +1344,7 @@ function runTsliveScript(autoCinema,aribb24UseSvg,aribb24Option){
           rangeVolume.value=Math.floor(vid.volume*100);
           mod.setAudioGain(vid.volume);
         };
-        rangeVolume.onchange=function(){
+        rangeVolume.oninput=rangeVolume.onchange=function(){
           var btnUnmute=document.getElementById("vid-unmute");
           btnUnmute.style.display="none";
           vid.muted=false;

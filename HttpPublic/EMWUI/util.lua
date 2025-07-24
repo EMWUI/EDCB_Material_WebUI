@@ -1,14 +1,14 @@
 function Version(a)
   local ver={
     css='250501',
-    common='250430',
+    common='250723',
     tvguide='241224',
-    player='250601',
+    player='250723',
     onair='250314',
-    library='250413',
+    library='250723',
     setting='241224',
     datastream='250601',
-    legacy='20250529',
+    legacy='20250624',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',

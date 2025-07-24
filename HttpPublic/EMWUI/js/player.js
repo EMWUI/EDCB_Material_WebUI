@@ -41,8 +41,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
 			createWasmModule({preinitializedWebGPUDevice:device}).then(mod => {
 				this.#mod = mod;
-				mod.setAudioGain(1);	//一発目無効対策
-				setTimeout(() => mod.setAudioGain(this.#muted?0:this.#volume), 500);
+				mod.setAudioGain(this.#muted?0:this.#volume);
 				mod.setDetelecineMode(this.#detelecine);
 				mod.pauseMainLoop();
 				mod.setCaptionCallback((pts,ts,data) => this.cap&&this.cap.pushRawData(this.#statsTime+ts,data.slice()));
@@ -177,6 +176,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		}
 		this.#initialize();
 		this.#url = new URL(src, location.href);
+		this.#url.searchParams.set('throttle', 1);
 		this.#startRead();
 		this.#mod.resumeMainLoop();
 		this.#paused = false;
@@ -192,35 +192,35 @@ if (vid.tagName == "CANVAS") vid = new class {
 	onStreamStarted(){}
 
 	#readNext(reader,ret){
-		if(reader==this.#currentReader&&ret&&ret.value){
+		if (reader==this.#currentReader&&ret&&ret.value){
 			var inputLen=Math.min(ret.value.length,1e6);
 			var buffer=this.#mod.getNextInputBuffer(inputLen);
-			if(!buffer){
+			if (!buffer){
 			  setTimeout(() => this.#readNext(reader,ret),1000);
 			  return;
 			}
 			buffer.set(new Uint8Array(ret.value.buffer,ret.value.byteOffset,inputLen));
 			this.#mod.commitInputData(inputLen);
-			if(inputLen<ret.value.length){
+			if (inputLen<ret.value.length){
 				//Input the rest.
 				setTimeout(() => this.#readNext(reader,{value:new Uint8Array(ret.value.buffer,ret.value.byteOffset+inputLen,ret.value.length-inputLen)}),0);
 				return;
 			}
 		}
 		reader.read().then(r => {
-			if(r.done){
-				if(reader==this.#currentReader){
+			if (r.done){
+				if (reader==this.#currentReader){
 					this.#currentReader=null;
-					if(this.#wakeLock){
+					if (this.#wakeLock){
 						this.#wakeLock.release();
 						this.#wakeLock=null;
 					}
 				}
 			}else this.#readNext(reader,r);
 		}).catch(e => {
-			if(reader==this.#currentReader){
+			if (reader==this.#currentReader){
 				this.#currentReader=null;
-				if(this.#wakeLock){
+				if (this.#wakeLock){
 					this.#wakeLock.release();
 					this.#wakeLock=null;
 				}
@@ -231,19 +231,19 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#startRead(){
 		this.#ctrl = new AbortController();
 		fetch(this.#url,{signal:this.#ctrl.signal}).then(response => {
-			if(!response.ok){
+			if (!response.ok){
 				if (response.status == 404){
 					this.#networkState = this.#networkStateCode.NO_SOURCE;
 					this.#error = {code: this.#errorCode.SRC_NOT_SUPPORTED, message: 'MEDIA_ELEMENT_ERROR: Format error'};
-				};
+				}
 				this.#e.dispatchEvent(new Event('error'));
 				return
-			};
+			}
 			this.onStreamStarted();
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
-			if(!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
+			if (!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
 		});
 		['ofssec','offset'].forEach(e => this.#url.searchParams.delete(e));
 	}
@@ -296,7 +296,7 @@ class tsThumb {
 
 	#id = 0;
 	#loading;
-	key = 'offset';
+	key = 'ofssec';
 	async get(path, value, id){
 		if (!this.#mod) return;
 	
@@ -335,22 +335,21 @@ class tsThumb {
 	#timerID = 0;
 	async seek(value, offset){
 		if (!this.#url.searchParams.size>0||Math.floor(value)==this.#url.searchParams.get(this.key)) return;
-		this.#e.style.setProperty('--offset', offset??value);
+		if (offset) this.#e.style.setProperty('--offset', offset);
 		if (this.#loading){
 			clearTimeout(this.#timerID);
 			this.#timerID = setTimeout(() => this.seek(value), 200);
 			return;
-		};
+		}
 		const frame = await this.get(null, value, this.#id);
 		if (frame) this.#putImage(frame);
 	}
 
 	#range = 5;
-	max = 100;
 	#roll(value){
 		clearTimeout(this.#timerID);
 		this.#timerID = setTimeout(async () => {
-			if (value >= this.max) value = 0;
+			if (value >= 100) value = 0;
 			const frame = await this.get(null, value, this.#id);
 			if (frame){
 				this.#putImage(frame);
@@ -359,6 +358,7 @@ class tsThumb {
 		}, 1000);
 	}
 	roll(e, path, value = 0){
+		this.key = 'offset';
 		this.#e = e;
 		this.#url.searchParams.set('fname', path);
 		this.#roll(value);
@@ -743,14 +743,14 @@ $(function(){
 			if ($('.is_cast').data('canPlay')) vid.currentTime = this.value;
 
 			if (!thumb || $(this).data('hover')) return;
-			thumb.seek(this.value/$(this).attr('max')*100);
+			thumb.seek(this.value, this.value/$(this).attr('max')*100);
 		},
 		mousedown(){$(this).data('touched', true)},
 		mouseenter(e){
 			if (!thumb) return;
 			$(this).data('hover', true);
 			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
-			thumb.seek(e.offsetX/this.clientWidth*100);
+			thumb.seek($(this).attr('max')*e.offsetX/this.clientWidth, e.offsetX/this.clientWidth*100);
 		},
 		touchstart(){
 			$(this).data('touched', true);
@@ -761,7 +761,7 @@ $(function(){
 		mousemove(e){
 			if (!thumb) return;
 			$(this).data('hover', false);
-			thumb.seek(e.offsetX/this.clientWidth*100);
+			thumb.seek($(this).attr('max')*e.offsetX/this.clientWidth, e.offsetX/this.clientWidth*100);
 		},
 		mouseup(){$(this).data('touched', false)},
 		touchend(){

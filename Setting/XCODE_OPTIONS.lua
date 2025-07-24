@@ -125,7 +125,7 @@ XCODE_OPTIONS={
   },
   {
     --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)
-    name='tslive',
+    name='TS-Live!',
     autoCinema=true,
     tslive=true,
     xcoder='',
