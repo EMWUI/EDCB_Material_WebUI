@@ -125,8 +125,7 @@ class hlsLoader {
 	}
 }
 
-if (vid.tagName == "CANVAS") vid = new class {
-	#e;
+customElements.define('ts-live', class extends HTMLCanvasElement{
 	#error;
 	#currentTime;
 	#playbackRate;
@@ -143,18 +142,19 @@ if (vid.tagName == "CANVAS") vid = new class {
 	#currentReader;
 	#wakeLock;
 	#ctrl;
-	constructor(e, autoCinema){
-		this.#e = e;
+	constructor(){
+		super();
 		this.#playbackRate = 1;
 		this.#paused = true;
-		this.#muted = false;
+		this.#muted = this.hasAttribute('muted');
 		this.#volume = 1;
-		this.#detelecine = autoCinema ? 2 : 0;
+		this.#detelecine = this.hasAttribute('autoCinema') ? 2 : 0;
 		this.#statsTime = 0;
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
+		this.ctok = this.getAttribute('ctok');
 		this.#initialize();
-		if(!('createWasmModule' in window) || !navigator.gpu) return;
+		if (this.#isUnsupported()) return;
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
 			createWasmModule({preinitializedWebGPUDevice:device}).then(mod => {
 				this.#mod = mod;
@@ -166,7 +166,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 					if(this.#statsTime!=stats[stats.length-1].time){
 						this.#currentTime+=stats[stats.length-1].time-this.#statsTime;
 						this.#statsTime=stats[stats.length-1].time;
-						this.#e.dispatchEvent(new Event('timeupdate'));
+						this.dispatchEvent(new Event('timeupdate'));
 						this.cap&&this.cap.onTimeupdate(this.#statsTime);
 						this.#sameStatsCount=0;
 						//statsの中身がすべて同じ状態が続くとき、最後まで再生したとみなす
@@ -174,20 +174,20 @@ if (vid.tagName == "CANVAS") vid = new class {
 						if(++this.#sameStatsCount>=5){
 							this.#sameStatsCount=0;
 							this.pause();
-							this.#e.dispatchEvent(new Event('ended'));
+							this.dispatchEvent(new Event('ended'));
 						}
 					}else{
 						this.#sameStatsCount=0;
 					}
 					if(this.#detelecine==2) this.onAutoCinema(stats[stats.length-1].TelecineFlag);
 					if(this.#done) return;
-					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
+					this.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
 					this.#done = true;
 				});
 			});
 		})).catch(e => {
 			this.#error = {code: 0, message: e.message};
-			this.#e.dispatchEvent(new Event('error'));
+			this.dispatchEvent(new Event('error'));
 			throw e;
 		});
 	}
@@ -199,17 +199,16 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#done = false;
 		this.#wakeLock = null;
 	}
-	get e(){return this.#e}
 	get tslive(){return true}
 	play(){
 		this.#paused = false;
 		this.#mod.resumeMainLoop();
-		this.#e.dispatchEvent(new Event('play'));
+		this.dispatchEvent(new Event('play'));
 	}
 	pause(){
 		this.#paused = true;
 		this.#mod.pauseMainLoop();
-		this.#e.dispatchEvent(new Event('pause'));
+		this.dispatchEvent(new Event('pause'));
 	}
 	reset(){
 		if (!this.#mod||!this.#ctrl) return;
@@ -217,7 +216,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#mod.reset();
 		this.#ctrl.abort();
 		//Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
-		if (!isMobile) this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
+		if (!isMobile) this.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
 		this.#initialize();
 	}
 	get paused(){return this.#paused}
@@ -229,21 +228,21 @@ if (vid.tagName == "CANVAS") vid = new class {
 	set muted(b){
 		this.#muted = b;
 		this.#mod&&this.#mod.setAudioGain(b ? 0 : this.#volume);
-		this.#e.dispatchEvent(new Event('volumechange'));
+		this.dispatchEvent(new Event('volumechange'));
 	}
 	get volume(){return this.#volume}
 	set volume(n){
 		if (isNaN(n)) return;
 		this.#volume = Number(n);
 		this.#mod&&this.#mod.setAudioGain(n);
-		this.#e.dispatchEvent(new Event('volumechange'));
+		this.dispatchEvent(new Event('volumechange'));
 	}
 	get playbackRate(){return this.#playbackRate}
 	set playbackRate(n){
 		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
 		this.#mod.setPlaybackRate(n);
-		this.#e.dispatchEvent(new Event('ratechange'));
+		this.dispatchEvent(new Event('ratechange'));
 	}
 	get detelecine(){return this.#detelecine}
 	set detelecine(n){
@@ -278,15 +277,17 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#url.searchParams.set('offset', offset);
 		this.#resetRead();
 	}
-	get src(){return this.#url.href??''}
-	set src(src){
-		if (!src) return;
+	#isUnsupported(){
 		if (!('createWasmModule' in window)) this.#error = {code: 0, message: 'Probably ts-live.js not found.'};
 		if (!navigator.gpu) this.#error = {code: 0, message: 'WebGPU not available.'};
 		if (this.#error){
-			this.#e.dispatchEvent(new Event('error'));
-			return;
+			this.dispatchEvent(new Event('error'));
+			return true;
 		}
+	}
+	get src(){return this.#url.href??''}
+	set src(src){
+		if (!src || this.#isUnsupported()) return;
 		if (!this.#mod){
 			setTimeout(() => this.src = src, 500);
 			return;
@@ -298,12 +299,12 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#mod.resumeMainLoop();
 		this.#paused = false;
 	}
+	/*
+	#poster;
+	get poster(){return this.#poster??''}
+	set poster(src){this.#poster = src;}
+	//*/
 	canPlayType(s){return document.createElement('video').canPlayType(s)}
-
-	get clientHeight(){return this.#e.clientHeight}
-	get clientWidth(){return this.#e.clientWidth}
-	get height(){return this.#e.height}
-	get width(){return this.#e.width}
 
 	onAutoCinema(){}
 
@@ -352,10 +353,10 @@ if (vid.tagName == "CANVAS") vid = new class {
 					this.#networkState = this.#networkStateCode.NO_SOURCE;
 					this.#error = {code: this.#errorCode.SRC_NOT_SUPPORTED, message: 'MEDIA_ELEMENT_ERROR: Format error'};
 				}
-				this.#e.dispatchEvent(new Event('error'));
+				this.dispatchEvent(new Event('error'));
 				return
 			}
-			this.#e.dispatchEvent(new Event('streamStarted'));
+			this.dispatchEvent(new Event('streamStarted'));
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
@@ -369,7 +370,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#startRead();
 		this.play();
 	}
-}(vid, autoCinema);
+}, {extends: 'canvas'});
 
 vid.videoParams = new URLSearchParams();
 vid.streamParams = new URLSearchParams();
@@ -607,7 +608,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${vid.ctok??ctok}`
+		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${vid.ctok}`
 		                                   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
 		if (thumb??d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
@@ -706,27 +707,27 @@ $(function(){
 			Snackbar('Error : HLS loading error');
 		},
 		volumechange(){
-			vid.onVolumeChange();
-			localStorage.setItem('volume', vid.volume);
-			localStorage.setItem('muted', vid.muted);
+			this.onVolumeChange();
+			localStorage.setItem('volume', this.volume);
+			localStorage.setItem('muted', this.muted);
 		},
 		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		canplay(){
 			hideBar(2000);
 			$vid.removeClass('is-loading');
 
-			if (!vid.doNotAutoplay){
-				const promise = vid.play();
+			if (!this.doNotAutoplay){
+				const promise = this.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
 				if (promise !== undefined){
 					promise.catch(error => {
-						vid.muted = true;
-						vid.play();
-						vid.onVolumeChange();
+						this.muted = true;
+						this.play();
+						this.onVolumeChange();
 						document.querySelector('#volume').MaterialSlider.change(0);
 						$(document).one('click', () => {
-							vid.muted = false;
-							document.querySelector('#volume').MaterialSlider.change(vid.volume);
+							this.muted = false;
+							document.querySelector('#volume').MaterialSlider.change(this.volume);
 						});
 					});
 				}
@@ -734,8 +735,8 @@ $(function(){
 			const d = $('.is_cast').data();
 			if (!d.canPlay) return;
 
-			$duration.text(getVideoTime(vid.duration));
-			$seek.attr('max', vid.duration);
+			$duration.text(getVideoTime(this.duration));
+			$seek.attr('max', this.duration);
 		},
 		timeupdate(){
 			const d = $('.is_cast').data();
@@ -745,11 +746,11 @@ $(function(){
 			if (d.onid){
 				currentTime = (Date.now() - d.meta.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.meta.duration * 100);
-				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
+				$live.toggleClass('live', this.duration - this.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;
 
-				currentTime = vid.currentTime * (vid.fast || 1) + (vid.ofssec || 0);
+				currentTime = this.currentTime * (this.fast || 1) + (this.ofssec || 0);
 				if (!vid.isOffset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));

@@ -1,14 +1,13 @@
 function Version(a)
   local ver={
-    css='250501',
+    css='250729',
     common='250723',
     tvguide='241224',
-    player='250723',
+    player='250729',
     onair='250314',
     library='250723',
     setting='241224',
-    datastream='250601',
-    legacy='20250624',
+    datastream='250729',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
@@ -896,7 +895,7 @@ function PlayerTemplate(video, liveOrAudio)
 </div>
 </div>
 <div class="arib-video-invisible-container" id="vid-cont"><div class="arib-video-container">
-<]=]..(tslive and 'canvas' or 'video')..' id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
+<]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '')..' ctok="'..CsrfToken(live and 'view' or 'xcode')..'"' or 'video')..' id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
 </div></div>
 </div></div>
 ]=]
@@ -909,12 +908,9 @@ function PlayerTemplate(video, liveOrAudio)
   ..'<script>const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
 
-  ..'<script src="js/legacy.script.js'..Version('legacy')..'"></script>\n'
   ..'<script src="js/datastream.js'..Version('datastream')..'"></script>\n'
 
-  ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const autoCinema='..(autoCinema and 'true' or 'false')..';</script>\n'
-    or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
-
+  ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
   ..(not tslive and '<script>hls=new hlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');</script>\n' or '')
 end
