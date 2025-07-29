@@ -61,7 +61,7 @@ toggleJikkyo=function(enabled,noSubStream){
     clearInterval(checkScrollID);
     checkScrollID=0;
     if(enabled===false||enabled===undefined&&onJikkyoStream){
-      streamParams.delete('jikkyo');
+      vid.streamParams.delete('jikkyo');
       onJikkyoStream=null;
       onJikkyoStreamError=null;
       openSubStream();
@@ -221,7 +221,7 @@ toggleJikkyo=function(enabled,noSubStream){
       addMessage("Error! ("+status+"|"+readCount+"Bytes)");
     };
     if(noSubStream)return;
-    streamParams.set('jikkyo', 1);
+    vid.streamParams.set('jikkyo', 1);
     openSubStream();
 };
 
@@ -388,18 +388,17 @@ var onDataStreamError=null;
         if(xhr){
           xhr.abort();
           xhr=null;
-          if(streamParams.has('psidata')||streamParams.has('jikkyo')){
+          if(vid.streamParams.has('psidata')||vid.streamParams.has('jikkyo')){
             reopen=true;
             setTimeout(function(){reopen=false;openSubStream();},5000);
           }
           return;
         }
-        if(!streamParams.has('psidata')&&!streamParams.has('jikkyo'))return;
+        if(!vid.streamParams.has('psidata')&&!vid.streamParams.has('jikkyo'))return;
         var readCount=0;
         var ctx={};
-        videoParams.set('ofssec', ($('.is_cast').data('ofssec') || 0)+Math.floor(vid.currentTime));
         xhr=new XMLHttpRequest();
-        xhr.open("GET",`${vid.initSrc}&${videoParams.toString()}&${streamParams.toString()}`);
+        xhr.open("GET",`${vid.initSrc}&${vid.videoParams.toString()}&${vid.streamParams.toString()}&&ofssec=${(vid.ofssec || 0)+Math.floor(vid.currentTime * (vid.fast || 1))}`);
         xhr.onloadend=function(){
           if(xhr&&(readCount==0||xhr.status!=0)){
             if(onDataStreamError)onDataStreamError(xhr.status,readCount);
@@ -419,7 +418,7 @@ var onDataStreamError=null;
 //データ放送
 toggleDataStream=function(enabled){
         if (enabled===false||enabled===undefined&&onDataStream){
-          streamParams.delete('psidata');
+          vid.streamParams.delete('psidata');
           onDataStream=null;
           onDataStreamError=null;
           openSubStream();
@@ -429,7 +428,7 @@ toggleDataStream=function(enabled){
         if (!vid.initSrc) return;
         setbmlBrowserSize();
         bmlBrowserSetInvisible(false);
-        streamParams.set('psidata', 1);
+        vid.streamParams.set('psidata', 1);
         onDataStream=function(pid,dict,code,pcr){
           dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
         };

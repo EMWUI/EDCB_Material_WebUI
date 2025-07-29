@@ -1,13 +1,130 @@
 let readyToAutoPlay;
-const videoParams = new URLSearchParams();
-const streamParams = new URLSearchParams();
-const hls = window.Hls&&Hls.isSupported() && new Hls();
+let hls;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
 vid = document.getElementById("video");
 const $vid = $(vid);
 
-if (hls) hls.attachMedia(vid);
+class hlsLoader {
+	#e;
+	#postQuery;
+	#hlsMp4Query;
+	#hls;
+	#onload;
+	#onstart;
+	constructor(e, aribb24Option, alwaysUseHls, hls4, ctok){
+		e.ctok = ctok;
+		e.reset = () => this.#reset();
+		this.#e = e;
+		this.#postQuery = `ctok=${ctok}&open=1`;
+		this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
+		aribb24Option.enableAutoInBandMetadataTextTrackDetection = !alwaysUseHls || !Hls.isSupported();
+		if (alwaysUseHls){
+			if (Hls.isSupported()){
+				this.#hls = new Hls();
+				this.#hls.attachMedia(e);
+				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => e.dispatchEvent(new Event('streamStarted')));
+				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => e.cap&&e.cap.pushID3v2Data(d.pts, d.data)));
+
+				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
+				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.videoParams.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
+				this.#onstart = src => this.#hls.loadSource(src);
+			}else if (e.canPlayType('application/vnd.apple.mpegurl')) {
+				this.#onload = () => e.src = e.initSrc;
+			}
+		}else{
+			//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
+			 if (!/Android/i.test(navigator.userAgent)&&e.canPlayType('application/vnd.apple.mpegurl')){
+				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.videoParams.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
+				this.#onstart = src => e.src = src;
+			}else{
+				this.#onload = () => e.src = e.initSrc;
+			}
+		}
+	}
+
+	get js(){return this.#hls;}
+
+	#createRandom(bytes = 8) {
+		const array = new Uint8Array(bytes);
+		crypto.getRandomValues(array);
+
+		let hex = '';
+		for (const num of array) hex += num.toString(16).padStart(2, '0');
+
+		return hex;
+	}
+
+	set audioTrack(n){
+		if (isNaN(n)) return;
+		this.#e.videoParams.set('audio2', n);
+		this.reload();
+	}
+	set detelecine(b){
+		if (typeof b !== 'boolean') return;
+		if (b) this.#e.videoParams.set('cinema', 1);
+		else this.#e.videoParams.delete('cinema');
+		this.reload();
+	}
+
+	#reset(reload){
+		this.#src = '';
+		if (this.#hls) this.#hls.loadSource('');
+		if (!reload) ['ofssec','offset','reload','audio2'].forEach(e => this.#e.videoParams.delete(e));
+	}
+	load(){
+		this.#e.videoParams.set('load', this.#createRandom());
+		this.#onload();
+	}
+	reload(seek = this.#e.currentTime * (this.#e.fast || 1) + (this.#e.ofssec || 0)){
+		if (this.#e.videoParams.has('load')){
+			this.#e.videoParams.set('reload', this.#e.videoParams.get('load'));
+			this.#e.videoParams.delete('load');
+		}
+
+		this.#e.doNotAutoplay = this.#e.paused;
+		const key = this.#e.isOffset ? 'offset' : 'ofssec';
+		this.#e[key] = Math.floor(seek);
+		this.#e[key] > 0 ? this.#e.videoParams.set(key, this.#e[key]) : this.#e.videoParams.delete(key);
+
+		this.#e.classList.add('is-loading');
+		this.#reset(true);
+		this.#e.cap.detachMedia();
+		this.#onload();
+	}
+
+	#method;
+	#src;
+	#waitForHlsStart(src){
+		this.#method = 'POST';
+		this.#src = src;
+		this.#poll();
+	}
+	#interval = 200;
+	#delay = 500;
+	#poll(){
+		if (!this.#src) return;
+
+		var xhr = new XMLHttpRequest();
+		xhr.open(this.#method, this.#src);
+		if (this.#method == 'POST') xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+		this.#method = 'GET';
+		xhr.onloadend = () => {
+			if (xhr.status == 200 && xhr.response){
+				if (xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:') < 0) setTimeout(() => this.#poll(), this.#interval);
+				else setTimeout(() => this.#start(this.#src), this.#delay);
+			}else{
+				this.#e.dispatchEvent(new Event('hlserror'));
+			}
+		}
+		xhr.send(this.#postQuery);
+	}
+	#start(src){
+		if (!this.#src) return;
+		this.#onstart(src);
+	}
+}
+
 if (vid.tagName == "CANVAS") vid = new class {
 	#e;
 	#error;
@@ -94,7 +211,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 		this.#mod.pauseMainLoop();
 		this.#e.dispatchEvent(new Event('pause'));
 	}
-	stop(){
+	reset(){
 		if (!this.#mod||!this.#ctrl) return;
 		this.pause();
 		this.#mod.reset();
@@ -189,7 +306,6 @@ if (vid.tagName == "CANVAS") vid = new class {
 	get width(){return this.#e.width}
 
 	onAutoCinema(){}
-	onStreamStarted(){}
 
 	#readNext(reader,ret){
 		if (reader==this.#currentReader&&ret&&ret.value){
@@ -239,7 +355,7 @@ if (vid.tagName == "CANVAS") vid = new class {
 				this.#e.dispatchEvent(new Event('error'));
 				return
 			}
-			this.onStreamStarted();
+			this.#e.dispatchEvent(new Event('streamStarted'));
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
@@ -255,6 +371,8 @@ if (vid.tagName == "CANVAS") vid = new class {
 	}
 }(vid, autoCinema);
 
+vid.videoParams = new URLSearchParams();
+vid.streamParams = new URLSearchParams();
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
 if (vid.tslive){
@@ -270,11 +388,12 @@ if (vid.tslive){
 class tsThumb {
 	#mod;
 	#url;
-	#def;
+	#api;
 	#e;
-	constructor(url){
-		if (!('createMiscWasmModule' in window)) return;
+	constructor(url, e){
 		if (url) this.url = url;
+		if (e) this.#e = e;
+		if (!('createMiscWasmModule' in window)) return;
 		createMiscWasmModule().then(mod => this.#mod = mod);
 	}
 	attachMedia(e){
@@ -284,14 +403,14 @@ class tsThumb {
 		this.#url.search = new URL(src, location.href).search;
 	}
 	set url(url){
-		this.#def = url;
+		this.#api = url;
 		this.reset();
 	}
 	set path(path){
 		this.#url.searchParams.set('fname', path);
 	}
 	reset(){
-		this.#url = new URL(this.#def, location.href);
+		this.#url = new URL(this.#api, location.href);
 	}
 
 	#id = 0;
@@ -300,7 +419,7 @@ class tsThumb {
 	async get(path, value, id){
 		if (!this.#mod) return;
 	
-		const url = path ? new URL(this.#def, location.href) : this.#url;
+		const url = path ? new URL(this.#api, location.href) : this.#url;
 		if (path) url.searchParams.set('fname', path);
 		url.searchParams.set(this.key, Math.floor(value)||0);
 
@@ -372,8 +491,7 @@ class tsThumb {
 	}
 }
 
-const thumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`);
-if (thumb) thumb.attachMedia(document.querySelector('#vid-thumb'));
+const thumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`, document.querySelector('#vid-thumb'));
 
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
@@ -408,75 +526,25 @@ const stopTimer = () => {
 vcont = document.getElementById("vid-cont");
 const createCap = () => {
 	vid.cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
-	if (vid.tslive){
-		vid.cap.attachMedia(null,vcont);
-	}else{
-		aribb24Option.enableAutoInBandMetadataTextTrackDetection = window.Hls != undefined || !Hls.isSupported();
-		vid.cap.attachMedia(vid);
-	}
+	if (vid.tslive) vid.cap.attachMedia(null,vcont);
+	else vid.cap.attachMedia(vid);
 	if (!$subtitles.hasClass('checked')) vid.cap.hide();
 }
 
-vid.onStreamStarted = () => {
-	if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-	if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
-	if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
-	createCap();
-}
-
-const errorHLS = () => {
-	$vid.removeClass('is-loadding');
-	Snackbar('HLSエラー');
-}
-
-const startHLS = src => {
-	if (!$('.is_cast').length) return;
-
-	if (hls){
-		hls.loadSource(src);
-	}else if (vid.canPlayType('application/vnd.apple.mpegurl')){
-		vid.src = src;
-	}
-}
-
-if (hls){
-	hls.on(Hls.Events.MANIFEST_PARSED, () => vid.onStreamStarted());
-	hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => vid.cap.pushID3v2Data(d.pts, d.data)));
-}
-
-const resetVid = reload => {
-	if (hls) hls.loadSource('');
+const resetVid = () => {
+	vid.reset();
 	if (vid.cap) vid.cap.detachMedia();
-	if (vid.stop) vid.stop();
 	toggleDataStream(false);
 	toggleJikkyo(false);
 	cbDatacast(false, true);
 	Jikkyolog(false, true);
-	if (reload) return;
 
 	vid.src = '';
 	$vid_meta.attr('src', '');
 	$vid_meta.off('cuechange', oncuechangeB24Caption);
 	vid.initSrc = null;
+	vid[vid.isOffset ? 'offset' : 'ofssec'] = null;
 	if (thumb) thumb.reset();
-}
-
-const reloadHls = ($e = $('.is_cast')) => {
-	const d = $e.data();
-	if (!d) return;
-
-	d.paused = vid.paused;
-	const key = $Time_wrap.hasClass('offset') ? 'offset' : 'ofssec';
-	d[key] = Math.floor($('input#seek').val());
-	d[key] > 0 ? videoParams.set(key, d[key]) : videoParams.delete(key);
-	$vid.addClass('is-loadding');
-	resetVid(true);
-
-	if (videoParams.has('load')){
-		videoParams.set('reload', videoParams.get('load'));
-		videoParams.delete('load');
-	}
-	loadHls();
 }
 
 const $audio = $('#audio');
@@ -484,24 +552,6 @@ const $cinema = $('#cinema');
 const $remote = $('#remote');
 const $remote_control = $('.remote-control');
 const $danmaku = $('#danmaku');
-const loadHls = () => {
-	let dateNow = new Date();
-	dateNow = (dateNow.getHours()*60+dateNow.getMinutes())*60+dateNow.getSeconds();
-	const hls1 = `&hls=${1+dateNow}`;
-	if (!videoParams.has('reload')) videoParams.set('load', dateNow);	//最初にユニークな値をつくりリロード時に値を引きつぐ
-
-	const interval = onDataStream ? 5*1000 : 0;	//データ放送切ってから一定期間待たないと動画が出力されない？
-	if (window.Hls != undefined){
-		//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${/Android.+Firefox/i.test(navigator.userAgent)?'':hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => startHLS(src)), interval);
-		//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
-	}else if (ALLOW_HLS&&!/Android/i.test(navigator.userAgent)&&vid.canPlayType('application/vnd.apple.mpegurl')){
-		//環境がないためテスト出来ず
-		setTimeout(() => waitForHlsStart(`${vid.initSrc}&${videoParams.toString()}${hls1}${hls4}`, `ctok=${ctok}&open=1`, 200, 500, () => errorHLS(), src => vid.src=src), interval);
-	}else{
-		vid.src = vid.initSrc;
-	}
-}
 
 const checkTslive = path => {
 	const url = new URL(location.href);
@@ -524,7 +574,6 @@ const seek = document.querySelector('#seek');
 const $seek = $(seek);
 const $duration = $('.duration');
 const $quality = $('.quality');
-const $Time_wrap = $('.Time-wrap');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const loadMovie = ($e = $('.is_cast')) => {
@@ -542,7 +591,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 	}
 
 	resetVid();
-	$vid.addClass('is-loadding');
+	$vid.addClass('is-loading');
 	if ($remote.hasClass('done')){	//一度読み込んだら最後、無効化
 		$remote.prop('disabled', true);
 		$remote_control.addClass('disabled').find('button').prop('disabled', true);
@@ -558,16 +607,14 @@ const loadMovie = ($e = $('.is_cast')) => {
 		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
 		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
 	}else{
-		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}`
+		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${vid.ctok??ctok}`
 		                                   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
-		if (d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
-		if (vid.tslive){
-			vid.src = `${vid.initSrc}&option=${videoParams.get('option')}`;
-		}else{
-			['ofssec','offset','reload','audio2'].forEach(e => videoParams.delete(e));
-			loadHls();
-		}
+		if (thumb??d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
+
+		if (vid.tslive) vid.src = `${vid.initSrc}&option=${vid.videoParams.get('option')}`;
+		else hls.load();
+
 		if (!d.meta) return;
 
 		if (d.meta.duration){
@@ -577,7 +624,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 			$duration.text(getVideoTime());
 			$seek.attr('max', 100)
 		};
-		$Time_wrap.toggleClass('offset', !d.meta.duration);
+		vid.isOffset = !d.meta.duration;
 	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
@@ -648,10 +695,15 @@ $(function(){
 		error(){
 			if ($vid.attr('src') == '') return;
 
-			$vid.removeClass('is-loadding');
-			$('.is_cast').removeClass('is_cast');
+			$vid.removeClass('is-loading');
+			$('.is_cast').removeClass('is_cast playing');
 			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
 			Snackbar(`Error : ${[vid.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
+		},
+		hlserror(){
+			$vid.removeClass('is-loading');
+			$('.is_cast').removeClass('is_cast playing');
+			Snackbar('Error : HLS loading error');
 		},
 		volumechange(){
 			vid.onVolumeChange();
@@ -661,10 +713,9 @@ $(function(){
 		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		canplay(){
 			hideBar(2000);
-			$vid.removeClass('is-loadding');
+			$vid.removeClass('is-loading');
 
-			const d = $('.is_cast').data();
-			if (!d.paused){
+			if (!vid.doNotAutoplay){
 				const promise = vid.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
 				if (promise !== undefined){
@@ -676,10 +727,11 @@ $(function(){
 						$(document).one('click', () => {
 							vid.muted = false;
 							document.querySelector('#volume').MaterialSlider.change(vid.volume);
-						});			
+						});
 					});
 				}
 			}
+			const d = $('.is_cast').data();
 			if (!d.canPlay) return;
 
 			$duration.text(getVideoTime(vid.duration));
@@ -697,10 +749,16 @@ $(function(){
 			}else if (d.path || d.id || d.reid){
 				if ($seek.data('touched')) return;
 
-				currentTime = vid.currentTime + (d.ofssec || 0);
-				if (!$Time_wrap.hasClass('offset')) seek.MaterialSlider.change(currentTime);
+				currentTime = vid.currentTime * (vid.fast || 1) + (vid.ofssec || 0);
+				if (!vid.isOffset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
+		},
+		streamStarted(){
+			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
+			if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
+			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
+			createCap();
 		}
 	});
 
@@ -715,7 +773,7 @@ $(function(){
 		params.delete('id');
 		params.delete('play');
 		history.replaceState(null,null,`${params.size>0?`?${params.toString()}`:location.pathname}`);
-		$vid.removeClass('is-loadding');
+		$vid.removeClass('is-loading');
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
 		$('.playing').removeClass('playing');
@@ -731,11 +789,11 @@ $(function(){
 			const d = $('.is_cast').data();
 			if (d.canPlay) return;
 			if (vid.tslive){
-				vid[$Time_wrap.hasClass('offset')?'offset':'currentTime'] = this.value;
+				vid[vid.isOffset?'offset':'currentTime'] = this.value;
 			}else{
-				if (d.ofssec < this.value && this.value < d.ofssec + vid.duration)
-					vid.currentTime = this.value - d.ofssec;
-				else reloadHls();
+				if (vid.ofssec < this.value && this.value < vid.ofssec + vid.duration)
+					vid.currentTime = this.value - vid.ofssec;
+				else hls.reload(this.value);
 			}
 		},
 		input(){
@@ -887,29 +945,25 @@ $(function(){
 	});
 
 	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
-	videoParams.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
+	vid.videoParams.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
 		localStorage.setItem('quality', $e.attr('id'));
-		videoParams.set('option', $e.val());
+		vid.videoParams.set('option', $e.val());
 
 		checkTslive();
 
-		if (!$vid.data('cast') || localStorage.getItem('apk') != 'true') reloadHls();
+		if (!$vid.data('cast') || localStorage.getItem('apk') != 'true') hls.reload();
 	});
 	$('[name=audio]').change(e => {
 		const val = $(e.currentTarget).val();
-		videoParams.set('audio2', val);
-		vid.tslive ? vid.audioTrack = val : reloadHls();
+		if (vid.tslive) vid.audioTrack = val;
+		else hls.audioTrack = val;
 	});
 	const $cinema = $('#cinema');
 	$cinema.change(e => {
 		if (vid.tslive) vid.detelecine = e.currentTarget.checked ? 1 : 0;
-		else{
-			if (e.currentTarget.checked) videoParams.set('cinema', 1);
-			else videoParams.delete('cinema');
-			reloadHls();
-		}
+		hls.detelecine = e.currentTarget.checked;
 	});
 	vid.onAutoCinema = autoCinema => $cinema.mdl_prop('checked', autoCinema);
 	const $rate = $('.rate');
@@ -918,17 +972,19 @@ $(function(){
 		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
 		//極力再読み込みは避けたい
 		if (!vid.tslive && isTs && $e.val()>1){	
-			videoParams.set('fast', $e.data('index'));
-			streamParams.delete('fast');
-			reloadHls();
+			vid.fast = $e.val();
+			vid.videoParams.set('fast', $e.data('index'));
+			vid.streamParams.delete('fast');
+			hls.reload();
 			return;
-		}else if (videoParams.has('fast')){
-			videoParams.delete('fast');
-			reloadHls();
+		}else if (vid.videoParams.has('fast')){
+			vid.videoParams.delete('fast');
+			hls.reload();
 		};
 
+		vid.fast = 1;
 		vid.playbackRate = $e.val();
-		streamParams.set('fast', $e.data('index'));
+		vid.streamParams.set('fast', $e.data('index'));
 		openSubStream();
 	});
 

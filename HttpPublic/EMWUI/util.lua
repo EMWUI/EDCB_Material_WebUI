@@ -906,20 +906,17 @@ function PlayerTemplate(video, liveOrAudio)
     ..'<script>const ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};const commentHeight='..JK_COMMENT_HEIGHT..';const commentDuration='..JK_COMMENT_DURATION..';</script>\n'
     ..'<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
-  ..(tslive and '<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
-        ..'<script src="js/ts-live.lua?t=.js"></script>\n'
-        ..'<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};const autoCinema='..(autoCinema and 'true' or 'false')..'</script>\n'
-      or (ALLOW_HLS and '<script>const hls4=\''..(USE_MP4_HLS and '&hls4='..(USE_MP4_LLHLS and '2' or '1') or '')..'\';const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
-        ..(ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
-        ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n' or '')
+  ..'<script>const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
+  ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
 
-        ..((ALLOW_HLS or live) and '<script>const ALLOW_HLS='..(ALLOW_HLS and 'true' or 'false')..';const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';</script>\n' or '')
-  )
   ..'<script src="js/legacy.script.js'..Version('legacy')..'"></script>\n'
+  ..'<script src="js/datastream.js'..Version('datastream')..'"></script>\n'
 
-  ..((USE_DATACAST or live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<script src="js/datastream.js'..Version('datastream')..'"></script>\n' or '')
+  ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n<script>const ctok=\''..(CsrfToken(live and 'view' or 'xcode'))..'\';const autoCinema='..(autoCinema and 'true' or 'false')..';</script>\n'
+    or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
 
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
+  ..(not tslive and '<script>hls=new hlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');</script>\n' or '')
 end
 
 function MacroTemplate()

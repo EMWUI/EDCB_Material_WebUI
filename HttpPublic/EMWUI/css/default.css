@@ -1608,10 +1608,10 @@ h4 .mdl-button--icon {
   max-height: 100vh;
   min-width: 300px;
   min-height: 176px; }
-  #video.is-loadding {
+  #video.is-loading {
     background: #000 center / cover no-repeat url('../img/noise.gif'); }
     @media all and (display-mode: picture-in-picture) {
-      #video.is-loadding {
+      #video.is-loading {
         background-image: url('img/noise.gif'); } }
   @media (min-width: 700px) {
     #video {
