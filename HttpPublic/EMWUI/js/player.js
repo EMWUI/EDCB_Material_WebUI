@@ -414,7 +414,7 @@ class tsThumb {
 		this.#url = new URL(this.#api, location.href);
 	}
 
-	#id = 0;
+	#id = 1;
 	#loading;
 	key = 'ofssec';
 	async get(path, value, id){

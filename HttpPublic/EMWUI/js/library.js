@@ -149,10 +149,15 @@ $(function(){
 				});
 
 				if (rollThumb){
+					let hovered = false;
 					$e.hover(async () => {
+						hovered = true;
 						await getMetadata($e, hash);
-						rollThumb.roll(canvas, $e.data('path'));
-					}, () => rollThumb.hide());
+						if (hovered) rollThumb.roll(canvas, $e.data('path'));
+					}, () => {
+						hovered = false;
+						rollThumb.hide();
+					});
 				}
 
 				const thumb = $(e).txt('thumb');

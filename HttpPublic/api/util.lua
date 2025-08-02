@@ -1390,13 +1390,17 @@ function GetFilePath(query)
       if faddr then
         fpath=DocumentToNativePath(faddr)
         if not fpath then
-          -- 冗長表現の可能性を潰す
-          faddr=edcb.Convert('utf-8','utf-8',faddr):gsub('/+','/')
+          -- ディレクトリ区切りを一旦'/'に統一する
+          faddr=faddr:gsub('['..DIR_SEPS..']+','/')
           for i,v in ipairs(GetLibraryPathList()) do
             -- ライブラリ配下にあるか＋禁止文字と正規化のチェック
-            v=(v..'\\'):gsub('/+','/')
-            if faddr:sub(1,#v):lower()==v:lower() and not faddr:sub(#v+1):find('[\0-\x1f\x7f'..(WIN32 and ':*?"<>|' or '')..']') and not faddr:sub(#v+1):find('%./') and not faddr:sub(#v+1):find('%.$') then
-                fpath=faddr
+            local w=(v..'/'):gsub('['..DIR_SEPS..']+','/')
+            if IsEqualPath(faddr:sub(1,#w),w) then
+              fpath=DocumentToNativePath(faddr:sub(#w+1))
+              if fpath then
+                -- ライブラリ配下の絶対パスにする
+                fpath=PathAppend(v,fpath:sub(#PathAppend(mg.document_root,'')+1))
+              end
               break
             end
           end
