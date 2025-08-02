@@ -184,7 +184,7 @@ else
           if not w then break end
           pathhash=(pathhash and pathhash..',' or '')..w
           for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
-            if v.isdir and mg.md5(v.name)==w then
+            if v.isdir and not v.name:find('^%.') and mg.md5(v.name)==w then
               dir=PathAppend(dir,v.name)
               pathname=pathname..'/'..v.name
               break
@@ -192,7 +192,7 @@ else
           end
         end
         for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
-          if v.isdir and mg.md5(v.name)==dirhash then
+          if v.isdir and not v.name:find('^%.') and mg.md5(v.name)==dirhash then
             dir=PathAppend(dir,v.name)
             dirname=v.name
             break
