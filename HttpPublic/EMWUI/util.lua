@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='250729',
+    css='250803',
     common='250723',
     tvguide='241224',
-    player='250729',
+    player='250803',
     onair='250314',
-    library='250723',
+    library='250803',
     setting='241224',
-    datastream='250729',
+    datastream='250803',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
@@ -833,7 +833,7 @@ function PlayerTemplate(video, liveOrAudio)
 <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
 <div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
 ]=] or '')..(live and USE_LIVEJK and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="nico mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')
-..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<div id="danmaku-container"></div>' or '')..[=[
+..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<div id="jikkyo-comm" class="jikkyo-comments"><div id="jikkyo-chats"></div></div><div id="danmaku-container"></div>' or '')..[=[
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">
@@ -901,9 +901,7 @@ function PlayerTemplate(video, liveOrAudio)
 ]=]
   ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'"></script>\n' or '')
 
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n'
-    ..'<script>const ctokC=\''..CsrfToken('comment')..'\';function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;};const commentHeight='..JK_COMMENT_HEIGHT..';const commentDuration='..JK_COMMENT_DURATION..';</script>\n'
-    ..'<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
   ..'<script>const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
@@ -912,7 +910,8 @@ function PlayerTemplate(video, liveOrAudio)
 
   ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
-  ..(not tslive and '<script>hls=new hlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');</script>\n' or '')
+  ..'<script>'..(not tslive and 'hls=new hlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');\n' or '')
+  ..'stream=new datacast(vid,'..(live and 'true' or 'false')..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and ',\''..CsrfToken('comment')..'\','..JK_COMMENT_HEIGHT..','..JK_COMMENT_DURATION..',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog: `${ROOT}api/jklog`,comment: `${ROOT}api/comment`}' or '')..');\n</script>\n'
 end
 
 function MacroTemplate()

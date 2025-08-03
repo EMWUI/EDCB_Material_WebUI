@@ -2167,6 +2167,8 @@ h4 .mdl-button--icon {
   #apps:not(:checked)~.contener {
     display:none; }
 
+#player #jikkyo-comm {
+  display: none; }
 #jikkyo-comm {
   flex-grow: 1 !important; }
 

@@ -1,8 +1,8 @@
 let readyToAutoPlay;
-let hls;
+let hls,stream;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
-vid = document.getElementById("video");
+const vid = document.getElementById("video");
 const $vid = $(vid);
 
 class hlsLoader {
@@ -15,6 +15,7 @@ class hlsLoader {
 	constructor(e, aribb24Option, alwaysUseHls, hls4, ctok){
 		e.ctok = ctok;
 		e.reset = () => this.#reset();
+		e.params=new URLSearchParams();
 		this.#e = e;
 		this.#postQuery = `ctok=${ctok}&open=1`;
 		this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
@@ -27,7 +28,7 @@ class hlsLoader {
 				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => e.cap&&e.cap.pushID3v2Data(d.pts, d.data)));
 
 				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.videoParams.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
+				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
 				this.#onstart = src => this.#hls.loadSource(src);
 			}else if (e.canPlayType('application/vnd.apple.mpegurl')) {
 				this.#onload = () => e.src = e.initSrc;
@@ -35,7 +36,7 @@ class hlsLoader {
 		}else{
 			//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 			 if (!/Android/i.test(navigator.userAgent)&&e.canPlayType('application/vnd.apple.mpegurl')){
-				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.videoParams.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
+				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
 				this.#onstart = src => e.src = src;
 			}else{
 				this.#onload = () => e.src = e.initSrc;
@@ -57,35 +58,35 @@ class hlsLoader {
 
 	set audioTrack(n){
 		if (isNaN(n)) return;
-		this.#e.videoParams.set('audio2', n);
+		this.#e.params.set('audio2', n);
 		this.reload();
 	}
 	set detelecine(b){
 		if (typeof b !== 'boolean') return;
-		if (b) this.#e.videoParams.set('cinema', 1);
-		else this.#e.videoParams.delete('cinema');
+		if (b) this.#e.params.set('cinema', 1);
+		else this.#e.params.delete('cinema');
 		this.reload();
 	}
 
 	#reset(reload){
 		this.#src = '';
 		if (this.#hls) this.#hls.loadSource('');
-		if (!reload) ['ofssec','offset','reload','audio2'].forEach(e => this.#e.videoParams.delete(e));
+		if (!reload) ['ofssec','offset','reload','audio2'].forEach(e => this.#e.params.delete(e));
 	}
 	load(){
-		this.#e.videoParams.set('load', this.#createRandom());
+		this.#e.params.set('load', this.#createRandom());
 		this.#onload();
 	}
 	reload(seek = this.#e.currentTime * (this.#e.fast || 1) + (this.#e.ofssec || 0)){
-		if (this.#e.videoParams.has('load')){
-			this.#e.videoParams.set('reload', this.#e.videoParams.get('load'));
-			this.#e.videoParams.delete('load');
+		if (this.#e.params.has('load')){
+			this.#e.params.set('reload', this.#e.params.get('load'));
+			this.#e.params.delete('load');
 		}
 
 		this.#e.doNotAutoplay = this.#e.paused;
 		const key = this.#e.isOffset ? 'offset' : 'ofssec';
 		this.#e[key] = Math.floor(seek);
-		this.#e[key] > 0 ? this.#e.videoParams.set(key, this.#e[key]) : this.#e.videoParams.delete(key);
+		this.#e[key] > 0 ? this.#e.params.set(key, this.#e[key]) : this.#e.params.delete(key);
 
 		this.#e.classList.add('is-loading');
 		this.#reset(true);
@@ -142,6 +143,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#currentReader;
 	#wakeLock;
 	#ctrl;
+	#params
 	constructor(){
 		super();
 		this.#playbackRate = 1;
@@ -153,6 +155,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
 		this.ctok = this.getAttribute('ctok');
+		this.#params = new URLSearchParams();
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
@@ -192,6 +195,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		});
 	}
 	#initialize(){
+		this.removeAttribute('src');
 		this.#url = '';
 		this.#error = null;
 		this.#networkState = this.#networkStateCode.EMPTY;
@@ -219,6 +223,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		if (!isMobile) this.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
 		this.#initialize();
 	}
+	get params(){return this.#params}
 	get paused(){return this.#paused}
 	set audioTrack(n){
 		if (isNaN(n)) return;
@@ -293,6 +298,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 			return;
 		}
 		this.#initialize();
+		this.setAttribute('src', src);
 		this.#url = new URL(src, location.href);
 		this.#url.searchParams.set('throttle', 1);
 		this.#startRead();
@@ -372,8 +378,6 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	}
 }, {extends: 'canvas'});
 
-vid.videoParams = new URLSearchParams();
-vid.streamParams = new URLSearchParams();
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
 if (vid.tslive){
@@ -524,10 +528,9 @@ const stopTimer = () => {
 	$player.css('cursor', 'default');
 }
 
-vcont = document.getElementById("vid-cont");
 const createCap = () => {
 	vid.cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
-	if (vid.tslive) vid.cap.attachMedia(null,vcont);
+	if (vid.tslive) vid.cap.attachMedia(null,document.getElementById("vid-cont"));
 	else vid.cap.attachMedia(vid);
 	if (!$subtitles.hasClass('checked')) vid.cap.hide();
 }
@@ -535,10 +538,7 @@ const createCap = () => {
 const resetVid = () => {
 	vid.reset();
 	if (vid.cap) vid.cap.detachMedia();
-	toggleDataStream(false);
-	toggleJikkyo(false);
-	cbDatacast(false, true);
-	Jikkyolog(false, true);
+	stream.clear();
 
 	vid.src = '';
 	$vid_meta.attr('src', '');
@@ -593,10 +593,6 @@ const loadMovie = ($e = $('.is_cast')) => {
 
 	resetVid();
 	$vid.addClass('is-loading');
-	if ($remote.hasClass('done')){	//一度読み込んだら最後、無効化
-		$remote.prop('disabled', true);
-		$remote_control.addClass('disabled').find('button').prop('disabled', true);
-	}
 
 	$seek.attr('disabled', false);
 	$quality.attr('disabled', d.canPlay);
@@ -605,16 +601,15 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$vid.attr('src', path);
 		$vid_meta.on('cuechange', oncuechangeB24Caption);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		if (Jikkyo || $danmaku.hasClass('checked')) Jikkyolog(true);
-		if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
+		stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 	}else{
 		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${vid.ctok}`
 		                                   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
 
 		if (thumb??d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
 
-		if (vid.tslive) vid.src = `${vid.initSrc}&option=${vid.videoParams.get('option')}`;
-		else hls.load();
+		if (hls) hls.load();
+		else vid.src = `${vid.initSrc}&option=${vid.params.get('option')}`;
 
 		if (!d.meta) return;
 
@@ -756,10 +751,13 @@ $(function(){
 			$currentTime.text(getVideoTime(currentTime));
 		},
 		streamStarted(){
-			if (DataStream && false || !$remote_control.hasClass('disabled')) toggleDataStream(true);	//一度しか読み込めないため常時読み込みはオミット
-			if (Jikkyo || $danmaku.hasClass('checked')) toggleJikkyo(true);
-			if (danmaku && !$danmaku.hasClass('checked')) danmaku.hide();
+			if (DataStream && false || !$remote_control.hasClass('disabled')) stream.toggleDatacast(true);	//一度しか読み込めないため常時読み込みはオミット
+			stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 			createCap();
+		},
+		disabledDatacast(){
+			$remote.prop('disabled', true);
+			$remote_control.addClass('disabled').find('button').prop('disabled', true);
 		}
 	});
 
@@ -946,11 +944,11 @@ $(function(){
 	});
 
 	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
-	vid.videoParams.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
+	vid.params.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
 		localStorage.setItem('quality', $e.attr('id'));
-		vid.videoParams.set('option', $e.val());
+		vid.params.set('option', $e.val());
 
 		checkTslive();
 
@@ -958,13 +956,13 @@ $(function(){
 	});
 	$('[name=audio]').change(e => {
 		const val = $(e.currentTarget).val();
-		if (vid.tslive) vid.audioTrack = val;
-		else hls.audioTrack = val;
+		if (hls) hls.audioTrack = val;
+		else vid.audioTrack = val;
 	});
 	const $cinema = $('#cinema');
 	$cinema.change(e => {
-		if (vid.tslive) vid.detelecine = e.currentTarget.checked ? 1 : 0;
-		hls.detelecine = e.currentTarget.checked;
+		if (hls) hls.detelecine = e.currentTarget.checked;
+		vid.detelecine = e.currentTarget.checked ? 1 : 0;
 	});
 	vid.onAutoCinema = autoCinema => $cinema.mdl_prop('checked', autoCinema);
 	const $rate = $('.rate');
@@ -972,21 +970,19 @@ $(function(){
 		const $e = $(e.currentTarget);
 		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
 		//極力再読み込みは避けたい
-		if (!vid.tslive && isTs && $e.val()>1){	
+		if (hls && isTs && $e.val()>1){	
 			vid.fast = $e.val();
-			vid.videoParams.set('fast', $e.data('index'));
-			vid.streamParams.delete('fast');
+			vid.params.set('fast', $e.data('index'));
+			stream.fast = null;
 			hls.reload();
 			return;
-		}else if (vid.videoParams.has('fast')){
-			vid.videoParams.delete('fast');
+		}else if (vid.params.has('fast')){
+			vid.params.delete('fast');
 			hls.reload();
-		};
+		}
 
 		vid.fast = 1;
-		vid.playbackRate = $e.val();
-		vid.streamParams.set('fast', $e.data('index'));
-		openSubStream();
+		vid.playbackRate = stream.fast = $e.val();
 	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効
@@ -1037,16 +1033,7 @@ $(function(){
 			const disabled = !$remote_control.hasClass('disabled');
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
-			if ($('.is_cast').data('canPlay')){
-				cbDatacast(!disabled);
-				return;
-			}
-
-			if (disabled){
-				if (!DataStream) toggleDataStream(false);
-			}else{
-				if (!onDataStream) toggleDataStream(true);
-			}
+			stream.toggleDatacast(!disabled);
 		},
 		'touchstart mousedown': e => {
 			if (e.which > 1 || $remote.data('click')) return;
@@ -1056,18 +1043,8 @@ $(function(){
 				DataStream = !DataStream;
 				localStorage.setItem('DataStream', DataStream);
 				$remote.toggleClass('mdl-button--accent', DataStream);
-				const disabled = $remote_control.hasClass('disabled');
 
-				if ($('.is_cast').data('canPlay')){
-					cbDatacast(!disabled);
-					return;
-				}
-	
-				if (DataStream){
-					if (!onDataStream) toggleDataStream(true);
-				}else{
-					if (disabled) toggleDataStream(false);
-				}
+				stream.toggleDatacast(!$remote_control.hasClass('disabled'));
 			}, 1000));
 		}
 	});
@@ -1085,19 +1062,7 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			if ($danmaku.hasClass('checked')){
-				if (!onJikkyoStream){
-					if ($('.is_cast').data('canPlay')) Jikkyolog(true);
-					else toggleJikkyo(true);
-				}
-				if (danmaku) danmaku.show();
-			}else{
-				if (!Jikkyo){
-					toggleJikkyo(false);
-					Jikkyolog(false);
-				}
-				if (danmaku) danmaku.hide();
-			}
+			stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 		},
 		'touchstart mousedown': e => {
 			if (e.which > 1 || $danmaku.data('click')) return;
@@ -1106,23 +1071,14 @@ $(function(){
 				$danmaku.data('click', false);
 				Jikkyo = !Jikkyo;
 				localStorage.setItem('Jikkyo', Jikkyo);
-				if (Jikkyo){
-					if (!onJikkyoStream){
-						if ($('.is_cast').data('canPlay')) Jikkyolog(true);
-						else toggleJikkyo(true);
-					}
-					$danmaku.addClass('mdl-button--accent');
-				}else{
-					if (!$danmaku.hasClass('checked')){
-						toggleJikkyo(false);
-						Jikkyolog(false);
-					}
-					$danmaku.removeClass('mdl-button--accent');
-				}
+				$danmaku.toggleClass('mdl-button--accent', Jikkyo);
+
+				stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 			}, 1000));
 		}
 	});
 	
+	$("#jikkyo-comm").appendTo('#apps-contener>.contener>.contener');
 	$('#apps').change(e => {
 		($(e.currentTarget).prop('checked'))
 			? $('#comment-control').insertAfter('#apps-contener>.contener>.contener')
@@ -1136,7 +1092,11 @@ $(function(){
 	$('#comm').focus(() => $('#comment-control').addClass('is-focused')
 		).blur(() => $('#comment-control').removeClass('is-focused')
 		).change(e => $('#comment-control').toggleClass('is-dirty', $(e.currentTarget).val()!='')
-	);
+	).on({
+		sentComment(){
+			$('#comment-control,#comment-control>div').removeClass('is-dirty');
+		}
+	});
 
 	//準備できてから再生開始
 	if (readyToAutoPlay) readyToAutoPlay();
