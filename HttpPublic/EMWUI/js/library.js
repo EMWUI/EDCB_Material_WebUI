@@ -1,7 +1,7 @@
 $(function(){
 	const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
 
-	const rollThumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`);
+	const thumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`);
 	
 	//ライブラリ取得
 	const getLibrary = hash => {
@@ -127,7 +127,7 @@ $(function(){
 			}else{
 				if (xml.children('dirhash').length) hash.push({name: 'd', value: xml.txt('dirhash')});
 				hash.push({name: 'h', value: $(e).txt('hash')});
-				const canvas = document.createElement('canvas');
+				const rollCanvas = document.createElement('canvas');
 
 				$e.addClass('item').data({
 					name: name,
@@ -148,37 +148,37 @@ $(function(){
 					playMovie($e);
 				});
 
-				if (rollThumb){
+				if (thumb){
 					let hovered = false;
 					$e.hover(async () => {
 						hovered = true;
 						await getMetadata($e, hash);
-						if (hovered) rollThumb.roll(canvas, $e.data('path'));
+						if (hovered) thumb.roll(rollCanvas, $e.data('path'));
 					}, () => {
 						hovered = false;
-						rollThumb.hide();
+						thumb.hide();
 					});
 				}
 
-				const thumb = $(e).txt('thumb');
+				const thumbHash = $(e).txt('thumb');
 				if (isGrid()){
-					if (!thumb){
-						if (rollThumb){
+					if (!thumbHash){
+						if (thumb){
 							(async () => {
-								const thumb = document.createElement('canvas');
+								const thumbCanvas = document.createElement('canvas');
 								await getMetadata($e, hash);
-								const done = await rollThumb.set(thumb, $e.data('path'));
-								if (done) canvas.before(thumb);
+								const done = await thumb.setThumb(thumbCanvas, $e.data('path'));
+								if (done) rollCanvas.before(thumbCanvas);
 							})();
 						}
 						$e.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumb}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
+					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumbHash}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
 					
-					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), canvas );
+					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), rollCanvas );
 				}else{
 					const date = createViewDate($e.data('date'));
-					const avatar = (thumb != 0)
-						? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumb}.jpg\');`})
+					const avatar = (thumbHash != 0)
+						? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumbHash}.jpg\');`})
 						: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 					$e.addClass('mdl-list__item mdl-list__item--two-line').append(
 						$('<span>', {class: 'mdl-list__item-primary-content', append: [

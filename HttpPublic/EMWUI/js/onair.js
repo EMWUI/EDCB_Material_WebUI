@@ -150,10 +150,12 @@ $(function(){
 		if (!d.eid){
 			Snackbar('番組情報がありません');
 		}else if (Magnezio){
-			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: ctok, id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
+			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: $('#forced').data('ctok'), id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
 				!$(xml).find('success').length ? Snackbar('失敗') : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
 			);
 		}else if (apk){
+			Snackbar('工事中');
+			/*
 			showSpinner(true);
 			Snackbar('準備中');
 			const src = `${ROOT}api/view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}&hls=${1+d.onid+d.tsid+d.sid}${hls4}&option=${quality}${
@@ -167,6 +169,7 @@ $(function(){
 				showSpinner();
 				location.href = `intent:${new URL(src, document.baseURI).href}#Intent;type=video/*;end;`;
 			});
+			//*/
 		}else if ($('#open_popup').prop('checked')){
 			$('#popup,#playerUI').addClass('is-visible');
 			loadMovie($e);
