@@ -22,128 +22,149 @@ window.addEventListener('resize', () => setbmlBrowserSize());
 const oncuechangeB24Caption = e => {
   $(e.target).off('cuechange',oncuechangeB24Caption);
   createCap();
-  datacast.oncuechangeB24Caption(vid.cap, e.target.track.cues);
+  Datacast.oncuechangeB24Caption(vid.cap, e.target.track.cues);
 };
 
-class datacast{
+class Datacast{
   #e;
-  #live;
-  #postCommentQuery;
+  #ctok;
   #replaceTag;
   #params;
   #danmaku;
   #api={
     jklog: 'jklog',
     comment: 'comment',
-  };
-  constructor(vid,live,ctok,height,duration,replaceTag,api){
-    this.#e=vid;
-    this.#live=live;
+  }
+  #elems={
+    vcont: document.getElementById("vid-cont"),
+    comm: document.getElementById("jikkyo-comm"),
+    chats: document.getElementById("jikkyo-chats"),
+    commInput: document.getElementById("comm"),
+    commBtn: document.getElementById("commSend"),
+    bcomm: document.getElementById("comment-control"),
+    indicator: document.querySelector(".remote-control-indicator"),
+  }
+  constructor(video,danmaku,ctok,replaceTag,api){
+    this.#e=video;
     this.#params=new URLSearchParams();
-    if(ctok){
-      if(api)this.#api=api;
-      this.#postCommentQuery=`ctok=${ctok}&n=0`;
+    if(danmaku){
+      if(api)Object.assign(this.#api,api);
+      this.#ctok=ctok;
       this.#replaceTag=replaceTag;
-      this.#danmaku=new Danmaku({
-        container:document.getElementById("danmaku-container"),
+      this.#danmaku=new Danmaku(Object.assign({
+        container:this.#elems.vcont,
         opacity:1,
         callback:function(){},
         error:function(msg){},
         apiBackend:{read:function(opt){opt.success([]);}},
-        height:height,
-        duration:duration,
+        height:32,
+        duration:5,
         paddingTop:10,
         paddingBottom:10,
         unlimited:false,
         api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
-      });
-      const commInput=document.querySelector("#comm");
-      if(commInput){
-        commInput.onkeydown=e=>{
-          if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter"){
-            if(commInput.value){
-              this.#sendComment(commInput);
-              commInput.dispatchEvent(new Event('sentComment'));
-            }
-            commInput.value="";
-          }
-        };
-        document.querySelector("#commSend").onclick=()=>{
-          if(commInput.value){
-            this.#sendComment(commInput);
-            commInput.dispatchEvent(new Event('sentComment'));
-          }
-          commInput.value="";
-        };
-      }
+      }, danmaku));
+      if(this.#elems.commInput)this.#addSendComment();
     }
   }
 
-  set fast(fast){
+  get clear(){return this.#clear}
+  get datacast(){return this.#datacast}
+  get jikkyo(){return this.#jk}
+  get toggleDatacast(){return this.#toggleDatacast}
+  get toggleJikkyo(){return this.#toggleJikkyo}
+  get setFast(){return this.#setFast}
+
+  get setElemsList(){this.#setElems}
+
+
+  #clear(){
+    this.#jklog.clear();
+    this.#psc.clear();
+    this.#disableJikkyo();
+    this.#disableDatacast();
+  }
+  #STATE={
+    DISABLED:0,
+    STREAM:1,
+    LOG:2,
+  }
+  get #datacast(){
+    return {
+      unavailable: this.#unavailable,
+      enable: ()=>this.#enableDatacast(),
+      disable: ()=>this.#disableDatacast(),
+    }
+  }
+  get #unavailable(){
+    return this.#loaded&&this.#loaded!=(this.#e.initSrc||this.#e.getAttribute("src")) ? true : false
+  }
+  #datacastState=this.#STATE.DISABLED;
+  #enableDatacast(){
+    if(this.#e.initSrc)this.#dataStream.enable();
+    else this.#psc.enable();
+  }
+  #disableDatacast(){
+    if(this.#datacastState==this.#STATE.STREAM)this.#dataStream.disable();
+    else this.#psc.disable();
+  }
+  #toggleDatacast(enabled){
+    if(enabled===false||enabled===undefined&&this.#datacastState)
+      this.#disableDatacast();
+    else this.#enableDatacast();
+    return this.#jikkyoState?true:false;
+  }
+  get #jk(){
+    return {
+      danmaku: this.#danmaku,
+      show: ()=>this.#showJikkyo(),
+      hide: ()=>this.#hideJikkyo(),
+      enable: ()=>this.#enableJikkyo(),
+      disable: ()=>this.#disableJikkyo(),
+    }
+  }
+  #jikkyoState=this.#STATE.DISABLED;
+  #enableJikkyo(){
+    if(this.#e.initSrc)this.#jikkyo.enable();
+    else this.#jklog.enable();
+  }
+  #disableJikkyo(){
+    if(this.#jikkyoState==this.#STATE.STREAM)this.#jikkyo.disable();
+    else this.#jklog.disable();
+  }
+  #showJikkyo(){
+    if(!this.#jikkyoState)this.#enableJikkyo();
+    this.#danmaku.show();
+  }
+  #hideJikkyo(){
+    if(!this.#jikkyoState)this.#enableJikkyo();
+    this.#danmaku.hide();
+  }
+  #toggleJikkyo(enabled, load){
+    if(enabled===false&&!load||enabled===undefined&&this.#jikkyoState)
+      this.#disableJikkyo();
+    else if(!enabled)this.#hideJikkyo();
+    else this.#showJikkyo();
+    return this.#jikkyoState?true:false;
+  }
+  #setFast(fast){
     if(fast===null)this.#params.delete('fast');
     else this.#params.set('fast',fast);
     this.#openSubStream();
   }
-  get clear(){
-    return ()=>{
-      this.#jklog.clear();
-      this.#psc.clear();
-      this.toggleJikkyo(false);
-      this.toggleDatacast(false);
-      this.#fname='';
-    }
-  }
-  get datacast(){
-    return {
-      show: ()=>this.toggleDatacast(true),
-      hide: ()=>this.toggleDatacast(false)
-    }
-  }
-  get jikkyo(){
-    return {
-      show: ()=>this.toggleJikkyo(true),
-      hide: ()=>this.toggleJikkyo(false),
-    }
-  }
-  toggleDatacast(enabled){
-    if(enabled===false||enabled===undefined&&this.#enabledDatacast){
-      this.#enabledDatacast=false;
-      if(this.#checkTs())this.#dataStream.disable();
-      else this.#psc.disable();
-    }else{
-      this.#enabledDatacast=true;
-      if(this.#checkTs())this.#dataStream.enable();
-      else this.#psc.enable();
-    }
-  }
-  toggleJikkyo(enabled, load){
-    if(enabled===false&&!load||enabled===undefined&&this.#enabledJikkyo){
-      this.#enabledJikkyo=false;
-      if(this.#checkTs())this.#jikkyo.disable();
-      else this.#jklog.disable();
-    }else{
-      if(!enabled) this.#danmaku.hide();
-      else if (!this.#danmaku.showing) this.#danmaku.show();
-      if(!this.#params.has('jikkyo')){       
-        this.#enabledJikkyo=true;
-        if(this.#checkTs())this.#jikkyo.enable();
-        else this.#jklog.enable();
-      }
-    }
-  }
 
-  #enabledDatacast;
-  #enabledJikkyo;
-  #fname='';
-  #checkTs(){
-    if(this.#live)return true;
-    if(!this.#fname){
-      const url=new URL(this.#e.getAttribute('src'), location.href);
-      if(vid.initSrc)this.#fname=vid.initSrc;
-      else if(url.searchParams.has('fname'))this.#fname=url.searchParams.get('fname');
-      else this.#fname=this.#e.getAttribute('src');
-    }
-    if(/\.(?:m?ts|m2ts?)$/.test(this.#fname))return true;
+  #fname(){
+    const src=this.#e.initSrc||new URL(this.#e.getAttribute('src'), location.href);
+    if(src.searchParams.has('fname'))return src.searchParams.get('fname');
+    else return this.#e.getAttribute('src')||'';
+  }
+  #setElems(elems){
+    Object.assign(this.#elems,elems);
+    this.#addSendComment();
+  }
+  #addSendComment(){
+    this.#elems.commInput.onkeydown=e=>{if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter")this.#sendComment();}
+    this.#elems.commBtn.onclick=()=>this.#sendComment();
   }
 
   #readPsiData(data,proc,startSec,ctx){
@@ -273,8 +294,7 @@ class datacast{
       if(i==readCount){
         i=response.indexOf("\n",readCount);
         if(i<0)break;
-        //if(this.#params.has('jikkyo'))
-          this.#jikkyo.stream(response.substring(readCount,i));
+        this.#jikkyo.stream(response.substring(readCount,i));
         readCount=i+1;
       }else{
         i=i<0?response.length:i;
@@ -286,8 +306,7 @@ class datacast{
           for(var j=0;j<ctx.psiData.length;j++)concatData[j]=ctx.psiData[j];
           for(var j=0;j<addData.length;j++)concatData[ctx.psiData.length+j]=addData.charCodeAt(j);
           ctx.psiData=this.#readPsiData(concatData.buffer,(sec,dict,code,pid)=>{
-            //if(this.#params.has('psidata'))
-              this.#dataStream.stream(pid,dict,code,Math.floor(sec*90000));
+            this.#dataStream.stream(pid,dict,code,Math.floor(sec*90000));
             return true;
           },0,ctx.ctx);
           if(ctx.psiData)ctx.psiData=new Uint8Array(ctx.psiData);
@@ -462,9 +481,6 @@ class datacast{
     }
   }
 
-  #comm=document.getElementById("jikkyo-comm");
-  #chats=document.getElementById("jikkyo-chats");
-  #bcomm=document.getElementById("comment-control");
   #commHide;
   #checkScrollID;
   #fragment;
@@ -474,24 +490,26 @@ class datacast{
   #jkID="?";
   #jikkyo={
     disable:()=>{
+      this.#jikkyoState=this.#STATE.DISABLED;
       this.#params.delete('jikkyo');
       clearInterval(this.#checkScrollID);
       this.#checkScrollID=0;
       this.#openSubStream();
-      if(this.#bcomm){
-        this.#bcomm.style.display="none";
-        while (this.#chats.firstChild) this.#chats.removeChild(this.#chats.firstChild);
+      if(this.#elems.bcomm){
+        this.#elems.bcomm.style.display="none";
+        while (this.#elems.chats.firstChild) this.#elems.chats.removeChild(this.#elems.chats.firstChild);
       }
     },
     enable:()=>{
+      this.#jikkyoState=this.#STATE.STREAM;
       this.#params.set('jikkyo', 1);
       this.#fragment=null;
       this.#scatter=[];
       this.#scatterInterval=200;
       this.#closed=false;
       this.#jkID="?";
-      if(this.#bcomm){
-        this.#bcomm.style.display=null;
+      if(this.#elems.bcomm){
+        this.#elems.bcomm.style.display=null;
         this.#chatsScroller();
       }
       this.#openSubStream();
@@ -558,9 +576,9 @@ class datacast{
       if(tag.indexOf(";T=")<0)this.#scatterInterval=90;
       else this.#scatterInterval=Math.min(Math.max(this.#scatterInterval+(this.#scatter.length>0?-10:10),100),200);
       setTimeout(()=>{
-        var scroll=Math.abs(this.#chats.scrollTop+this.#chats.clientHeight-this.#chats.scrollHeight)<this.#chats.clientHeight/4;
+        var scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
         if(this.#fragment){
-          this.#chats.appendChild(this.#fragment);
+          this.#elems.chats.appendChild(this.#fragment);
           this.#fragment=null;
         }
         if(this.#scatterInterval<100){
@@ -579,11 +597,11 @@ class datacast{
           }
         }
         if(this.#commHide||scroll){
-          while(this.#chats.childElementCount>1000){
-            this.#chats.removeChild(this.#chats.firstElementChild);
+          while(this.#elems.chats.childElementCount>1000){
+            this.#elems.chats.removeChild(this.#elems.chats.firstElementChild);
           }
         }
-        if(scroll)this.#chats.scrollTop=this.#chats.scrollHeight;
+        if(scroll)this.#elems.chats.scrollTop=this.#elems.chats.scrollHeight;
       },0);
     },
   }
@@ -591,11 +609,11 @@ class datacast{
     clearInterval(this.#checkScrollID);
     this.#commHide=true;
     this.#checkScrollID=setInterval(()=>{
-      if(getComputedStyle(this.#comm).display=="none"){
+      if(getComputedStyle(this.#elems.comm).display=="none"){
         this.#commHide=true;
       }else{
-        var scroll=Math.abs(this.#chats.scrollTop+this.#chats.clientHeight-this.#chats.scrollHeight)<this.#chats.clientHeight/4;
-        if(this.#commHide||scroll)this.#chats.scrollTop=this.#chats.scrollHeight;
+        var scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
+        if(this.#commHide||scroll)this.#elems.chats.scrollTop=this.#elems.chats.scrollHeight;
         this.#commHide=false;
       }
     },1000);
@@ -605,14 +623,14 @@ class datacast{
     b.innerText=text;
     var div=document.createElement("div");
     div.appendChild(b);
-    this.#chats.appendChild(div);
+    this.#elems.chats.appendChild(div);
   }
 
   static oncuechangeB24Caption(cap,cues){
     var work=[];
     var dataList=[];
     for(var i=0;i<cues.length;i++){
-      var ret=datacast.decodeB24CaptionFromCueText(cues[i].text,work);
+      var ret=this.decodeB24CaptionFromCueText(cues[i].text,work);
       if(!ret){return;}
       for(var j=0;j<ret.length;j++){dataList.push({pts:cues[i].startTime,pes:ret[j]});}
     }
@@ -627,8 +645,6 @@ class datacast{
     })();
   }
 
-  #vcont=document.getElementById("vid-cont");
-  #indicator=document.querySelector(".remote-control-indicator");
   #psiData;
   #psc={
     startRead:()=>{
@@ -644,7 +660,7 @@ class datacast{
         }
         this.#psc.videoLastSec=videoSec;
         if(this.#psiData&&this.#readPsiData(this.#psiData,(sec,dict,code,pid)=>{
-            this.#loaded=this.#e.getAttribute("src");
+            if(!this.#loaded)this.#loaded=this.#e.getAttribute("src");
             dict[code]=bmlBrowserPlayTSSection(pid,dict[code],Math.floor(sec*90000))||dict[code];
             return sec<videoSec;
           },startSec,ctx)!==false){
@@ -664,18 +680,20 @@ class datacast{
       this.#psc.videoLastSec=0;
     },
     disable:()=>{
+      this.#datacastState=this.#STATE.DISABLED;
       clearTimeout(this.#psc.readTimer);
       this.#psc.readTimer=0;
       bmlBrowserSetInvisible(true);
     },
     enable:()=>{
-      if(!this.#e.getAttribute("src"))return;
+      if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
       if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src")){
         this.#e.dispatchEvent(new Event('disabledDatacast'));
         return
       }
+      this.#datacastState=this.#STATE.LOG;
       this.#psc.startRead();
-      bmlBrowserSetVisibleSize(this.#vcont.clientWidth,this.#vcont.clientHeight);
+      bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
       bmlBrowserSetInvisible(false);
       if(this.#psc.xhr)return;
       this.#psc.xhr=new XMLHttpRequest();
@@ -684,7 +702,7 @@ class datacast{
       this.#psc.xhr.overrideMimeType("application/octet-stream");
       this.#psc.xhr.onloadend=()=>{
         if(!this.#psiData){
-          this.#indicator.innerText="Error! ("+this.#psc.xhr.status+")";
+          if(this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+this.#psc.xhr.status+")";
         }
       };
       this.#psc.xhr.onload=()=>{
@@ -692,7 +710,7 @@ class datacast{
         this.#psiData=this.#psc.xhr.response;
       };
       this.#psc.xhr.send();
-      this.#indicator.innerText="接続中...";
+      if(this.#elems.indicator)this.#elems.indicator.innerText="接続中...";
     },
   }
 
@@ -734,16 +752,18 @@ class datacast{
       this.#jkID="?";
     },
     disable:()=>{
+      this.#jikkyoState=this.#STATE.DISABLED;
       clearTimeout(this.#jklog.readTimer);
       this.#jklog.readTimer=0;
     },
     enable:()=>{
-      if(!this.#e.getAttribute("src"))return;
+      if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
+      this.#jikkyoState=this.#STATE.LOG;
       this.#chatsScroller();
       this.#jklog.startRead();
       if(this.#jklog.xhr)return;
       this.#jklog.xhr=new XMLHttpRequest();
-      this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${(this.#fname).replace(/^(?:\.\.\/)+/,"")}`);
+      this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${this.#fname().replace(/^(?:\.\.\/)+/,"")}`);
       this.#jklog.xhr.onloadend=()=>{
         if(!this.#logText){
           this.#jikkyo.error(this.#jklog.xhr.status,0);
@@ -756,10 +776,13 @@ class datacast{
       this.#jklog.xhr.send();
     }
   }
-  #sendComment(commInput){
-    if(/^@/.test(commInput.value)){
-      if(commInput.value=="@sw"){
-        commInput.className=commInput.className=="refuge"?"nico":"refuge";
+  
+  #sendComment(){
+    if(!this.#elems.commInput.value) return;
+
+    if(/^@/.test(this.#elems.commInput.value)){
+      if(this.#elems.commInput.value=="@sw"){
+        this.#elems.commInput.className=this.#elems.commInput.className=="refuge"?"nico":"refuge";
       }
       return;
     }
@@ -771,8 +794,13 @@ class datacast{
         this.#addMessage("Post error! ("+xhr.status+")");
       }
     };
-    var d=document.querySelector(".is_cast").dataset;
-    xhr.send(this.#postCommentQuery+`&id=${d.onid}-${d.tsid}-${d.sid}`+(commInput.classList.contains("refuge")?"&refuge=1":"")+"&comm="+encodeURIComponent(commInput.value).replace(/%20/g,"+"));
+    const params=new URLSearchParams(this.#e.initSrc.search);
+    params.set('ctok',this.#ctok);
+    if(this.#elems.commInput.classList.contains("refuge"))params.set("refuge", 1);
+    params.set('comm',this.#elems.commInput.value);
+    xhr.send(params);
+    this.#elems.commInput.dispatchEvent(new Event('sentComment'));
+    this.#elems.commInput.value="";
   }
 
   #reopen;
@@ -811,27 +839,29 @@ class datacast{
   #loaded;
   #dataStream={
     error:(status,readCount)=>{
-      this.#indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
+      if(this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
     },
     stream:(pid,dict,code,pcr)=>{
-      this.#loaded=this.#e.initSrc;
+      if(!this.#loaded)this.#loaded=this.#e.initSrc.href;
       dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
     },
     disable:()=>{
+      this.#datacastState=this.#STATE.DISABLED;
       this.#params.delete('psidata');
       this.#openSubStream();
       bmlBrowserSetInvisible(true);
     },
     enable:()=>{
-      if(this.#loaded&&this.#loaded!=this.#e.initSrc){
+      if(this.#loaded&&this.#loaded!=this.#e.initSrc.href){
         this.#e.dispatchEvent(new Event('disabledDatacast'));
         return
       }
+      this.#datacastState=this.#STATE.STREAM;
       this.#params.set('psidata', 1);
-      bmlBrowserSetVisibleSize(this.#vcont.clientWidth,this.#vcont.clientHeight);
+      bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
       bmlBrowserSetInvisible(false);
       this.#openSubStream();
-      this.#indicator.innerText="接続中...";
+      if(this.#elems.indicator)this.#elems.indicator.innerText="接続中...";
     }
   }
 }

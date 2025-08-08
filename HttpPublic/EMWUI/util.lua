@@ -910,8 +910,8 @@ function PlayerTemplate(video, liveOrAudio)
 
   ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
-  ..'<script>'..(not tslive and 'hls=new hlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');\n' or '')
-  ..'stream=new datacast(vid,'..(live and 'true' or 'false')..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and ',\''..CsrfToken('comment')..'\','..JK_COMMENT_HEIGHT..','..JK_COMMENT_DURATION..',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog: `${ROOT}api/jklog`,comment: `${ROOT}api/comment`}' or '')..');\n</script>\n'
+  ..'<script>'..(not tslive and 'hls=new HlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');\n' or '')
+  ..'stream=new Datacast(vid'..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and ',{container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog: `${ROOT}api/jklog`,comment: `${ROOT}api/comment`}' or '')..');\n</script>\n'
 end
 
 function MacroTemplate()

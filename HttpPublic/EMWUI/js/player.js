@@ -2,50 +2,68 @@ let readyToAutoPlay;
 let hls,stream;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
+const danmaku = document.getElementById("danmaku-container");
 const vid = document.getElementById("video");
 const $vid = $(vid);
 
-class hlsLoader {
+class HlsLoader{
 	#e;
-	#postQuery;
+	#ctok;
 	#hlsMp4Query;
+	constructor(video, aribb24Option, alwaysUseHls, hls4, ctok){
+		this.#ctok = ctok;
+		this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
+		aribb24Option.enableAutoInBandMetadataTextTrackDetection = !alwaysUseHls || !Hls.isSupported();
+		this.#addMethods(video);
+		this.#initHls(alwaysUseHls);
+	}
+
+	get js(){return this.#hls}
+	get clear(){return this.#clear}
+	get loadSource(){return this.#loadSource}
+	get load(){return this.#load}
+	get reload(){return this.#reload}
+	set setSeek(v){this.#setSeek(v)}
+	set audioTrack(n){this.#setAudioTrack(n)}
+	set detelecine(b){this.#setDetelecine(b)}
+
+
 	#hls;
 	#onload;
 	#onstart;
-	constructor(e, aribb24Option, alwaysUseHls, hls4, ctok){
-		e.ctok = ctok;
-		e.reset = () => this.#reset();
-		e.params=new URLSearchParams();
-		this.#e = e;
-		this.#postQuery = `ctok=${ctok}&open=1`;
-		this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
-		aribb24Option.enableAutoInBandMetadataTextTrackDetection = !alwaysUseHls || !Hls.isSupported();
+	#addMethods(video){
+		this.#e = video;
+		video.params = new URLSearchParams();
+		video.reset = () => this.clear();
+		video.loadSource = src => this.#loadSource(src);
+		video.setSeek = v => this.#setSeek(v);
+		video.setAudioTrack = n => this.#setAudioTrack(n);
+		video.setDetelecine = b => this.#setDetelecine(b);
+	}
+	#initHls(alwaysUseHls){
 		if (alwaysUseHls){
 			if (Hls.isSupported()){
 				this.#hls = new Hls();
-				this.#hls.attachMedia(e);
-				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => e.dispatchEvent(new Event('streamStarted')));
-				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => e.cap&&e.cap.pushID3v2Data(d.pts, d.data)));
+				this.#hls.attachMedia(this.#e);
+				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => this.#e.dispatchEvent(new Event('streamStarted')));
+				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#e.cap&&this.#e.cap.pushID3v2Data(d.pts, d.data)));
 
 				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#e.params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
 				this.#onstart = src => this.#hls.loadSource(src);
-			}else if (e.canPlayType('application/vnd.apple.mpegurl')) {
-				this.#onload = () => e.src = e.initSrc;
+			}else if (this.#e.canPlayType('application/vnd.apple.mpegurl')){
+				this.#onload = () => this.#e.src = this.#e.initSrc.href;
 			}
 		}else{
 			//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
-			 if (!/Android/i.test(navigator.userAgent)&&e.canPlayType('application/vnd.apple.mpegurl')){
-				this.#onload = () => this.#waitForHlsStart(`${e.initSrc}&${e.params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
-				this.#onstart = src => e.src = src;
+			if (!/Android/i.test(navigator.userAgent)&&this.#e.canPlayType('application/vnd.apple.mpegurl')){
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#e.params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
+				this.#onstart = src => this.#e.src = src;
 			}else{
-				this.#onload = () => e.src = e.initSrc;
+				this.#onload = () => this.#e.src = this.#e.initSrc.href;
 			}
 		}
 	}
-
-	get js(){return this.#hls;}
-
 	#createRandom(bytes = 8) {
 		const array = new Uint8Array(bytes);
 		crypto.getRandomValues(array);
@@ -56,42 +74,65 @@ class hlsLoader {
 		return hex;
 	}
 
-	set audioTrack(n){
+	#setAudioTrack(n){
 		if (isNaN(n)) return;
 		this.#e.params.set('audio2', n);
 		this.reload();
 	}
-	set detelecine(b){
+	#setDetelecine(b){
 		if (typeof b !== 'boolean') return;
 		if (b) this.#e.params.set('cinema', 1);
 		else this.#e.params.delete('cinema');
 		this.reload();
 	}
-
-	#reset(reload){
+	#reset(){
 		this.#src = '';
 		if (this.#hls) this.#hls.loadSource('');
-		if (!reload) ['ofssec','offset','reload','audio2'].forEach(e => this.#e.params.delete(e));
+		if (this.#e.cap) this.#e.cap.detachMedia();
+		['ofssec','offset'].forEach(e => {
+			this.#e[e] = null;
+			this.#e.params.delete(e);
+		});
 	}
-	load(){
+	#clear(){
+		this.#reset();
+		this.#e.src = '';
+		this.#e.initSrc = null;
+		['reload','audio2'].forEach(e => this.#e.params.delete(e));
+	}
+	#loadSource(src){
+		if (!src){
+			this.#clear();
+			return;
+		}
+		this.#e.initSrc = new URL(src, location.href);
+		this.#e.initSrc.searchParams.set('ctok', this.#ctok);
+		this.#load();
+	}
+	#load(){
 		this.#e.params.set('load', this.#createRandom());
 		this.#onload();
 	}
-	reload(seek = this.#e.currentTime * (this.#e.fast || 1) + (this.#e.ofssec || 0)){
+	#reload(seek = this.#e.currentTime * (this.#e.fast || 1) + (this.#e.ofssec || 0)){
 		if (this.#e.params.has('load')){
 			this.#e.params.set('reload', this.#e.params.get('load'));
 			this.#e.params.delete('load');
 		}
 
 		this.#e.doNotAutoplay = this.#e.paused;
-		const key = this.#e.isOffset ? 'offset' : 'ofssec';
-		this.#e[key] = Math.floor(seek);
-		this.#e[key] > 0 ? this.#e.params.set(key, this.#e[key]) : this.#e.params.delete(key);
+		this.#reset();
+		if (seek){
+			const key = seek<1 ? 'offset' : 'ofssec';
+			this.#e[key] = Math.floor(seek*(seek<1?100:1));
+			this.#e.params.set(key, this.#e[key]);
+		}
 
-		this.#e.classList.add('is-loading');
-		this.#reset(true);
-		this.#e.cap.detachMedia();
 		this.#onload();
+	}
+	#setSeek(value){
+		if (1 < value && this.#e.ofssec < value && value < this.#e.ofssec + this.#e.duration)
+			this.#e.currentTime = value - this.#e.ofssec;
+		else this.#reload(this.value);
 	}
 
 	#method;
@@ -113,16 +154,12 @@ class hlsLoader {
 		xhr.onloadend = () => {
 			if (xhr.status == 200 && xhr.response){
 				if (xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:') < 0) setTimeout(() => this.#poll(), this.#interval);
-				else setTimeout(() => this.#start(this.#src), this.#delay);
+				else setTimeout(() => {if (!this.#src) return;this.#onstart(this.#src);}, this.#delay);
 			}else{
 				this.#e.dispatchEvent(new Event('hlserror'));
 			}
 		}
-		xhr.send(this.#postQuery);
-	}
-	#start(src){
-		if (!this.#src) return;
-		this.#onstart(src);
+		xhr.send(`ctok=${this.#ctok}&open=1`);
 	}
 }
 
@@ -134,7 +171,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#muted;
 	#volume;
 	#detelecine;
-	#url;
+	#src;
 	#networkState;
 	#mod;
 	#done;
@@ -143,7 +180,8 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#currentReader;
 	#wakeLock;
 	#ctrl;
-	#params
+	#ctok;
+	#params;
 	constructor(){
 		super();
 		this.#playbackRate = 1;
@@ -154,10 +192,54 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		this.#statsTime = 0;
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
-		this.ctok = this.getAttribute('ctok');
+		this.#ctok = this.getAttribute('ctok');
 		this.#params = new URLSearchParams();
 		this.#initialize();
 		if (this.#isUnsupported()) return;
+		this.#createWasmModule();
+	}
+
+
+	get tslive(){return true}
+	get params(){return this.#params}
+
+	get loadSource(){return this.#loadSource}
+	get load(){return this.#load}
+	get play(){return this.#play}
+	get pause(){return this.#pause}
+	get reset(){return this.#reset}
+	get setAudioTrack(){return this.#setAudioTrack}
+	get setDetelecine(){return this.#setDetelecine}
+	get setSeek(){return this.#setSeek}
+
+	get src(){return this.#src.href??''}
+	set src(src){this.#setSrc(src)}
+
+	get paused(){return this.#paused}
+	get muted(){return this.#muted}
+	set muted(b){this.#setMuted(b)}
+	get volume(){return this.#volume}
+	set volume(n){this.#setVolume(n)}
+	set audioTrack(n){this.#setAudioTrack(n)}
+	get playbackRate(){return this.#playbackRate}
+	set playbackRate(n){this.#setPlaybackRate(n)}
+	get detelecine(){return this.#detelecine}
+	set detelecine(n){this.#setDetelecine(n)}
+
+	get currentTime(){return this.#currentTime}
+	set currentTime(ofssec){this.#setCurrentTime(ofssec)}
+	set offset(offset){this.#setOffset(offset)}
+
+	get networkState(){return this.#networkState}
+	get error(){return this.#error}
+	get canPlayType(){return this.#canPlayType}
+	/*
+	get poster(){return this.#poster??''}
+	set poster(src){this.#setPoster(src)}
+	//*/
+
+
+	#createWasmModule(){
 		navigator.gpu.requestAdapter().then(adapter => adapter.requestDevice().then(device => {
 			createWasmModule({preinitializedWebGPUDevice:device}).then(mod => {
 				this.#mod = mod;
@@ -182,7 +264,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 					}else{
 						this.#sameStatsCount=0;
 					}
-					if(this.#detelecine==2) this.onAutoCinema(stats[stats.length-1].TelecineFlag);
+					if(this.#detelecine==2)this.dispatchEvent(new Event(`${stats[stats.length-1].TelecineFlag?'enabled':'disabled'}Detelecine`));
 					if(this.#done) return;
 					this.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
 					this.#done = true;
@@ -194,92 +276,111 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 			throw e;
 		});
 	}
+
 	#initialize(){
-		this.removeAttribute('src');
-		this.#url = '';
+		this.#src = '';
 		this.#error = null;
 		this.#networkState = this.#networkStateCode.EMPTY;
 		this.#currentTime = 0;
 		this.#done = false;
 		this.#wakeLock = null;
 	}
-	get tslive(){return true}
-	play(){
+
+	#loadSource(src){
+		if (!src){
+			this.#reset();
+			return;
+		}
+		this.initSrc = new URL(src, location.href);
+		this.initSrc.searchParams.set('ctok', this.#ctok);
+		this.load();
+	}
+	#load(){
+		this.#setSrc(`${this.initSrc}&option=${this.params.get('option')}`);
+	}
+	#play(){
 		this.#paused = false;
 		this.#mod.resumeMainLoop();
 		this.dispatchEvent(new Event('play'));
 	}
-	pause(){
+	#pause(){
 		this.#paused = true;
 		this.#mod.pauseMainLoop();
 		this.dispatchEvent(new Event('pause'));
 	}
-	reset(){
+	#clear(){
+		this.src = '';
+		this.removeAttribute('src');
+		this.initSrc = null;
+		this.offset = null;
+		this.ofssec = null;
+		if (this.cap) this.cap.detachMedia();
+	}
+	#reset(){
+		this.#clear();
+		this.#initialize();
 		if (!this.#mod||!this.#ctrl) return;
 		this.pause();
 		this.#mod.reset();
 		this.#ctrl.abort();
 		//Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
 		if (!isMobile) this.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
-		this.#initialize();
 	}
-	get params(){return this.#params}
-	get paused(){return this.#paused}
-	set audioTrack(n){
+
+	#setAudioTrack(n){
 		if (isNaN(n)) return;
 		this.#mod.setDualMonoMode(n);
 	}
-	get muted(){return this.#muted}
-	set muted(b){
+	#setMuted(b){
 		this.#muted = b;
 		this.#mod&&this.#mod.setAudioGain(b ? 0 : this.#volume);
 		this.dispatchEvent(new Event('volumechange'));
 	}
-	get volume(){return this.#volume}
-	set volume(n){
+	#setVolume(n){
 		if (isNaN(n)) return;
 		this.#volume = Number(n);
 		this.#mod&&this.#mod.setAudioGain(n);
 		this.dispatchEvent(new Event('volumechange'));
 	}
-	get playbackRate(){return this.#playbackRate}
-	set playbackRate(n){
+	#setPlaybackRate(n){
 		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
 		this.#mod.setPlaybackRate(n);
 		this.dispatchEvent(new Event('ratechange'));
 	}
-	get detelecine(){return this.#detelecine}
-	set detelecine(n){
+	#setDetelecine(n){
+		//0=never,1=force,2=auto
+		if (n==='boolean') n = n ? 1 : 0;
 		if (isNaN(n)) return;
 		this.#detelecine = Number(n);
 		this.#mod.setDetelecineMode(n);
 	}
 	
-	get networkState(){return this.#networkState}
 	#networkStateCode = {
 		EMPTY: 0,
 		IDLE: 1,
 		LOADING: 2,
 		NO_SOURCE: 3,
 	}
-	get error(){return this.#error}
 	#errorCode = {
 		ABORTED: 1,
 		NETWORK: 2,
 		DECODE: 3,
 		SRC_NOT_SUPPORTED: 4,
 	}
-	get currentTime(){return this.#currentTime}
-	set currentTime(ofssec){
+	#setSeek(val){
+		if (0<val&&val<1) this.#setOffset(val*100);
+		else this.#setCurrentTime(val);
+	}
+	#setCurrentTime(ofssec){
 		if (!Number(ofssec)) return;
 		this.#currentTime = Math.floor(ofssec);
-		this.#url.searchParams.set('ofssec', ofssec);
+		this.#src.searchParams.set('ofssec', ofssec);
 		this.#resetRead();
 	}
-	set offset(offset){
+	#setOffset(offset){
 		if (!Number(offset)) return;
-		this.#url.searchParams.set('offset', offset);
+		this.#src.searchParams.set('offset', offset);
 		this.#resetRead();
 	}
 	#isUnsupported(){
@@ -290,29 +391,22 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 			return true;
 		}
 	}
-	get src(){return this.#url.href??''}
-	set src(src){
+	#setSrc(src){
 		if (!src || this.#isUnsupported()) return;
 		if (!this.#mod){
-			setTimeout(() => this.src = src, 500);
+			setTimeout(() => this.#setSrc(src), 500);
 			return;
 		}
 		this.#initialize();
 		this.setAttribute('src', src);
-		this.#url = new URL(src, location.href);
-		this.#url.searchParams.set('throttle', 1);
+		this.#src = new URL(src, location.href);
+		this.#src.searchParams.set('throttle', 1);
 		this.#startRead();
 		this.#mod.resumeMainLoop();
 		this.#paused = false;
 	}
-	/*
-	#poster;
-	get poster(){return this.#poster??''}
-	set poster(src){this.#poster = src;}
-	//*/
-	canPlayType(s){return document.createElement('video').canPlayType(s)}
+	#canPlayType(s){return document.createElement('video').canPlayType(s)}
 
-	onAutoCinema(){}
 
 	#readNext(reader,ret){
 		if (reader==this.#currentReader&&ret&&ret.value){
@@ -353,14 +447,14 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	}
 	#startRead(){
 		this.#ctrl = new AbortController();
-		fetch(this.#url,{signal:this.#ctrl.signal}).then(response => {
+		fetch(this.#src,{signal:this.#ctrl.signal}).then(response => {
 			if (!response.ok){
 				if (response.status == 404){
 					this.#networkState = this.#networkStateCode.NO_SOURCE;
 					this.#error = {code: this.#errorCode.SRC_NOT_SUPPORTED, message: 'MEDIA_ELEMENT_ERROR: Format error'};
 				}
 				this.dispatchEvent(new Event('error'));
-				return
+				return;
 			}
 			this.dispatchEvent(new Event('streamStarted'));
 			this.#currentReader = response.body.getReader();
@@ -368,7 +462,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 			//Prevent screen sleep
 			if (!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
 		});
-		['ofssec','offset'].forEach(e => this.#url.searchParams.delete(e));
+		['ofssec','offset'].forEach(e => this.#src.searchParams.delete(e));
 	}
 	#resetRead(){
 		this.#ctrl.abort();
@@ -390,46 +484,46 @@ if (vid.tslive){
 	});	
 }
 
-class tsThumb {
+class TsThumb{
 	#mod;
 	#url;
 	#api;
 	#e;
-	constructor(url, e){
-		if (url) this.url = url;
-		if (e) this.#e = e;
+	#vid;
+	constructor(api, canvas, video){
+		if (api) this.#api = api;
+		if (canvas) this.#e = canvas;
+		if (video) this.#vid = video;
+		this.#reset();
 		if (!('createMiscWasmModule' in window)) return;
 		createMiscWasmModule().then(mod => this.#mod = mod);
 	}
-	attachMedia(e){
-		this.#e = e;
-	}
-	set videoSrc(src){
-		this.#url.search = new URL(src, location.href).search;
-	}
-	set url(url){
-		this.#api = url;
-		this.reset();
-	}
-	set path(path){
-		this.#url.searchParams.set('fname', path);
-	}
-	reset(){
+
+	get setThumb(){return this.#setThumb}
+
+	get hide(){return this.#hide}
+
+	get seek(){return this.#seek}
+	get reset(){return this.#reset}
+
+	get roll(){return this.#roll}
+
+
+	#reset(){
 		this.#url = new URL(this.#api, location.href);
 	}
 
 	#id = 1;
 	#loading;
-	key = 'ofssec';
-	async get(path, value, id){
+	async #get(path, value, id){
 		if (!this.#mod) return;
 	
 		const url = path ? new URL(this.#api, location.href) : this.#url;
 		if (path) url.searchParams.set('fname', path);
-		url.searchParams.set(this.key, Math.floor(value)||0);
+		this.#value = value;
 
 		this.#loading = true;
-		const frame = await fetch(url).then(r => {
+		const frame = await fetch(`${url}&${0<value&&value<1?'offset':'ofssec'}=${Math.floor(0<value&&value<1?value*100:value)||0}`).then(r => {
 			if (id && id!=this.#id || !r.ok) throw r;
 			return r.arrayBuffer();
 		}).then(r => {
@@ -449,54 +543,54 @@ class tsThumb {
 		e.style.display = null;
 	}
 
-	async set(e, path, value){
-		const frame = await this.get(path, value);
+	async #setThumb(canvas, path, value){
+		const frame = await this.#get(path, value);
 		if (!frame) return;
-		this.#putImage(frame, e);
+		this.#putImage(frame, canvas);
 		return true;
 	}
 
+	#value;
 	#timerID = 0;
-	async seek(value, offset){
-		if (!this.#url.searchParams.size>0||Math.floor(value)==this.#url.searchParams.get(this.key)) return;
+	async #seek(value, offset){
+		if (!this.#vid.initSrc||Math.floor(value)==this.#value) return;
+		if (!this.#url.searchParams.size) this.#url.search = this.#vid.initSrc.search;
 		if (offset) this.#e.style.setProperty('--offset', offset);
 		if (this.#loading){
 			clearTimeout(this.#timerID);
 			this.#timerID = setTimeout(() => this.seek(value), 200);
 			return;
 		}
-		const frame = await this.get(null, value, this.#id);
+		const frame = await this.#get(null, value, this.#id);
 		if (frame) this.#putImage(frame);
 	}
 
-	#range = 5;
-	#roll(value){
+	#rollLoop(offset, range = 10){
 		clearTimeout(this.#timerID);
 		this.#timerID = setTimeout(async () => {
-			if (value >= 100) value = 0;
-			const frame = await this.get(null, value, this.#id);
+			if (offset >= 100) offset = 0;
+			const frame = await this.#get(null, offset/100, this.#id);
 			if (frame){
 				this.#putImage(frame);
-				this.#roll(value+this.#range);
+				this.#rollLoop(offset+range);
 			}
-		}, 1000);
+		}, 700);
 	}
-	roll(e, path, value = 0){
-		this.key = 'offset';
-		this.#e = e;
+	#roll(canvas, path, offset = 0){
+		this.#e = canvas;
 		this.#url.searchParams.set('fname', path);
-		this.#roll(value);
+		this.#rollLoop(offset);
 	}
 
-	hide(){
+	#hide(){
 		clearTimeout(this.#timerID);
 		this.#id++;
 		this.#e.style.display = "none";
-		this.#url.searchParams.delete(this.key);
+		this.#value = null;
 	}
 }
 
-const thumb = 'createMiscWasmModule' in window && new tsThumb(`${ROOT}api/grabber`, document.querySelector('#vid-thumb'));
+const thumb = 'createMiscWasmModule' in window && new TsThumb(`${ROOT}api/grabber`, document.querySelector('#vid-thumb'), vid);
 
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
@@ -537,14 +631,10 @@ const createCap = () => {
 
 const resetVid = () => {
 	vid.reset();
-	if (vid.cap) vid.cap.detachMedia();
 	stream.clear();
 
-	vid.src = '';
 	$vid_meta.attr('src', '');
 	$vid_meta.off('cuechange', oncuechangeB24Caption);
-	vid.initSrc = null;
-	vid[vid.isOffset ? 'offset' : 'ofssec'] = null;
 	if (thumb) thumb.reset();
 }
 
@@ -603,26 +693,25 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 	}else{
-		vid.initSrc = `${ROOT}api/${d.onid ? `view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${vid.ctok}`
-		                                   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`
-
-		if (thumb??d.path??d.id??d.reid) thumb.videoSrc = vid.initSrc;
-
-		if (hls) hls.load();
-		else vid.src = `${vid.initSrc}&option=${vid.params.get('option')}`;
+		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv||0}&id=${d.onid}-${d.tsid}-${d.sid}`
+		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
 
 		if (!d.meta) return;
 
 		if (d.meta.duration){
 			$duration.text(getVideoTime(d.meta.duration));
 			$seek.attr('max', d.meta.duration);
+			$seek.attr('step', 1);
 		}else{
 			$duration.text(getVideoTime());
-			$seek.attr('max', 100)
-		};
-		vid.isOffset = !d.meta.duration;
+			$seek.attr('max', 1);
+			$seek.attr('step', 0.01);
+		}
 	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
+
+	$remote.prop('disabled', stream.datacast.unavailable);
+	if (stream.datacast.unavailable) $remote_control.addClass('disabled').find('button').prop('disabled', true);
 
 	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
 		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
@@ -746,7 +835,7 @@ $(function(){
 				if ($seek.data('touched')) return;
 
 				currentTime = this.currentTime * (this.fast || 1) + (this.ofssec || 0);
-				if (!vid.isOffset) seek.MaterialSlider.change(currentTime);
+				if (!vid.offset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		},
@@ -754,6 +843,12 @@ $(function(){
 			if (DataStream && false || !$remote_control.hasClass('disabled')) stream.toggleDatacast(true);	//一度しか読み込めないため常時読み込みはオミット
 			stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 			createCap();
+		},
+		enabledDetelecine(){
+			$('#cinema').mdl_prop('checked', true);
+		},
+		disabledDetelecine(){
+			$('#cinema').mdl_prop('checked', false);
 		},
 		disabledDatacast(){
 			$remote.prop('disabled', true);
@@ -785,15 +880,10 @@ $(function(){
 
 	$seek.on({
 		change(){
-			const d = $('.is_cast').data();
-			if (d.canPlay) return;
-			if (vid.tslive){
-				vid[vid.isOffset?'offset':'currentTime'] = this.value;
-			}else{
-				if (vid.ofssec < this.value && this.value < vid.ofssec + vid.duration)
-					vid.currentTime = this.value - vid.ofssec;
-				else hls.reload(this.value);
-			}
+			if ($('.is_cast').data('canPlay')) return;
+
+			$vid.addClass('is-loading');
+			vid.setSeek(this.value);
 		},
 		input(){
 			$currentTime.text(getVideoTime(this.value));
@@ -807,7 +897,7 @@ $(function(){
 			if (!thumb) return;
 			$(this).data('hover', true);
 			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
-			thumb.seek($(this).attr('max')*e.offsetX/this.clientWidth, e.offsetX/this.clientWidth*100);
+			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
 		},
 		touchstart(){
 			$(this).data('touched', true);
@@ -818,7 +908,7 @@ $(function(){
 		mousemove(e){
 			if (!thumb) return;
 			$(this).data('hover', false);
-			thumb.seek($(this).attr('max')*e.offsetX/this.clientWidth, e.offsetX/this.clientWidth*100);
+			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
 		},
 		mouseup(){$(this).data('touched', false)},
 		touchend(){
@@ -950,21 +1040,17 @@ $(function(){
 		localStorage.setItem('quality', $e.attr('id'));
 		vid.params.set('option', $e.val());
 
-		checkTslive();
-
-		if (!$vid.data('cast') || localStorage.getItem('apk') != 'true') hls.reload();
+		if (checkTslive() || localStorage.getItem('apk') == 'true') return;		
+		$vid.addClass('is-loading');
+		hls.reload();
 	});
 	$('[name=audio]').change(e => {
-		const val = $(e.currentTarget).val();
-		if (hls) hls.audioTrack = val;
-		else vid.audioTrack = val;
+		vid.setAudioTrack($(e.currentTarget).val());
 	});
 	const $cinema = $('#cinema');
 	$cinema.change(e => {
-		if (hls) hls.detelecine = e.currentTarget.checked;
-		vid.detelecine = e.currentTarget.checked ? 1 : 0;
+		vid.setDetelecine(e.currentTarget.checked);
 	});
-	vid.onAutoCinema = autoCinema => $cinema.mdl_prop('checked', autoCinema);
 	const $rate = $('.rate');
 	$rate.change(e => {
 		const $e = $(e.currentTarget);
@@ -973,16 +1059,19 @@ $(function(){
 		if (hls && isTs && $e.val()>1){	
 			vid.fast = $e.val();
 			vid.params.set('fast', $e.data('index'));
-			stream.fast = null;
+			stream.setFast(null);
+			$vid.addClass('is-loading');
 			hls.reload();
 			return;
 		}else if (vid.params.has('fast')){
 			vid.params.delete('fast');
+			$vid.addClass('is-loading');
 			hls.reload();
 		}
 
 		vid.fast = 1;
-		vid.playbackRate = stream.fast = $e.val();
+		vid.playbackRate = $e.val();
+		stream.setFast($e.val());
 	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効
