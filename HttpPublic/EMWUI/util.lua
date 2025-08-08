@@ -3,11 +3,11 @@ function Version(a)
     css='250803',
     common='250723',
     tvguide='241224',
-    player='250803',
-    onair='250314',
-    library='250803',
+    player='250808',
+    onair='250808',
+    library='250808',
     setting='241224',
-    datastream='250803',
+    tsloader='250808',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
@@ -906,9 +906,9 @@ function PlayerTemplate(video, liveOrAudio)
   ..'<script>const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
 
-  ..'<script src="js/datastream.js'..Version('datastream')..'"></script>\n'
-
   ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
+
+  ..'<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
   ..'<script>'..(not tslive and 'hls=new HlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');\n' or '')
   ..'stream=new Datacast(vid'..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and ',{container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog: `${ROOT}api/jklog`,comment: `${ROOT}api/comment`}' or '')..');\n</script>\n'
