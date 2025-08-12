@@ -118,7 +118,7 @@ if temp.reserve or hasSIDE_PANEL then
     ..'</div>\n</dialog>\n')
 end
 
-s:Append([=[
+  s:Append([=[
 <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header]=]..(temp.fixedTabs and ' mdl-layout--fixed-tabs' or '')..[=[">
   <header class="mdl-layout__header">
     <div class="mdl-layout__header-row mdl-color--primary">
@@ -147,12 +147,12 @@ s:Append([=[
     </div>
 ]=]
 
-..(temp.subheader or '')
+  ..(temp.subheader or '')
 
--- タブ
-..(temp.tab and '<div class="mdl-layout__tab-bar">\n'..temp.tab..'</div>\n' or '')
+  -- タブ
+  ..(temp.tab and '<div class="mdl-layout__tab-bar">\n'..temp.tab..'</div>\n' or '')
 
-..[=[
+  ..[=[
     <div id="spinner" class="mdl-shadow--3dp"><div class="mdl-spinner mdl-js-spinner"></div></div>
   </header>
   <div class="mdl-layout__drawer">
@@ -160,11 +160,11 @@ s:Append([=[
     <nav class="mdl-navigation">
 ]=]
 
--- サイドバー
-..(temp.side or '')
+  -- サイドバー
+  ..(temp.side or '')
 
-..(olympic and '      <a class="mdl-navigation__link" href="'..path..'epgcustom.html?Olympic="><i class="material-icons">sports</i>オリンピック</a>' or '')
-..[=[
+  ..(olympic and '      <a class="mdl-navigation__link" href="'..path..'epgcustom.html?Olympic="><i class="material-icons">sports</i>オリンピック</a>' or '')
+  ..[=[
       <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">tv</i>放送中</a>
@@ -196,9 +196,9 @@ s:Append([=[
   <div class="drawer-swipe"></div>
 ]=]
 
-..MacroTemplate()
+  ..MacroTemplate()
 
-..(temp.video and [=[
+  ..(temp.video and [=[
   <div id="popup" class="window mdl-layout__obfuscator">
     <div class="mdl-card mdl-shadow--16dp">
 ]=]..PlayerTemplate('', temp.video=='live')..[=[

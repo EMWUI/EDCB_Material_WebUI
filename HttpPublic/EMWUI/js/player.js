@@ -332,6 +332,7 @@ $(function(){
 		$quality_audio.attr('disabled', true);
 	});
 
+	const vid_thumb = document.querySelector('#vid-thumb');
 	$seek.on({
 		change(){
 			if ($('.is_cast').data('canPlay')) return;
@@ -350,14 +351,14 @@ $(function(){
 		mouseenter(e){
 			if (!thumb) return;
 			$(this).data('hover', true);
-			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
+			vid_thumb.style.setProperty('--width', $player.width()+'PX');
 			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
 		},
 		touchstart(){
 			$(this).data('touched', true);
 			if (!thumb) return;
 			stopTimer();
-			document.querySelector('#vid-thumb').style.setProperty('--width', $player.width()+'PX');
+			vid_thumb.style.setProperty('--width', $player.width()+'PX');
 		},
 		mousemove(e){
 			if (!thumb) return;
@@ -403,7 +404,7 @@ $(function(){
 
 			$('#fullscreen i').text('fullscreen_exit');
 			$('.mdl-js-snackbar').appendTo('#player');
-			$('.remote-control,#comment-control').prependTo('.player-container');
+			$('.remote-control,#comment-control').prependTo('#playerUI');
 		}else{
 			if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
 			else if (window.screen.unlockOrientation) window.screen.unlockOrientation();
@@ -430,7 +431,7 @@ $(function(){
 				return;
 			}
 
-			$('.remote-control,#comment-control').prependTo('.player-container');
+			$('.remote-control,#comment-control').prependTo('#playerUI');
 			const content = document.getElementById('player');
 			const container = content.parentNode;
 			$(container).height($vid.height());
