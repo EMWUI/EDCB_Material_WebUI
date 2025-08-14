@@ -121,7 +121,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 	}else{
-		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv||0}&id=${d.onid}-${d.tsid}-${d.sid}`
+		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
 		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
 
 		if (!d.meta) return;
@@ -532,6 +532,14 @@ $(function(){
 		}
 		vid.playbackRate = $e.val();
 		stream.setFast($e.data('index'));
+	});
+	vid.nwtv = $('[name=nwtv]:checked').val();
+	$('[name=nwtv]').change(e => {
+		vid.nwtv = $(e.currentTarget).val();
+
+		const url = new URL(location.href);
+		url.searchParams.set('n', vid.nwtv);
+		history.replaceState(null, null, url);
 	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効

@@ -782,8 +782,51 @@ function PlayerTemplate(video, liveOrAudio)
   local tslive = GetVarInt(mg.request_info.query_string,'tslive')==1
   local list = edcb.GetPrivateProfile('set','quality','',INI)
   local live = type(liveOrAudio)=='boolean' and liveOrAudio
-  local audio = type(liveOrAudio)=='table' and liveOrAudio
-  local s=[=[<div id="player">
+  local function nwtv()
+    local n=GetVarInt(mg.request_info.query_string,'n') or 0
+    local s=''
+    for i=0,3 do
+      s=s..'<li class="ext mdl-menu__item"><input id="nwtv'..i..'" name="nwtv"'..Radiobtn(i==n,i)..'><label for="nwtv'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="nwtv'..i..'">nwtv'..i..'</label></li>\n'
+    end
+    return s
+  end
+  local function audio()
+    if type(liveOrAudio)=='table' and liveOrAudio then
+      local s=''
+      for i,v in ipairs(liveOrAudio) do
+        s=s..'<li class="ext mdl-menu__item"><input id="audio'..i..'" name="audio"'..Radiobtn(i==1,0)..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
+      end
+      return s
+    else
+      return '<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
+        ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
+    end
+  end
+  local function option()
+    local autoCinema
+    local s=''
+    for i,v in ipairs(XCODE_OPTIONS) do
+      if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+        if v.tslive then autoCinema=v.autoCinema end
+        local id = 'q_'..mg.md5(v.name)
+        s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input id="'..id..'" name="quality"'..Radiobtn(i==1,i)..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
+      end
+    end
+    return s
+  end
+  local function rate()
+    local has1=false
+    local s=''
+    for i,v in ipairs(XCODE_FAST_RATES) do
+      if not has1 and v==1 then
+        has1=true
+        i=0
+      end
+      s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..' data-index='..i..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</label></li>\n'
+    end
+    return s
+  end
+  return [=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
 ]=]..(USE_DATACAST and [=[<div class="remote-control disabled">
   <span class="navi">
@@ -849,43 +892,19 @@ function PlayerTemplate(video, liveOrAudio)
 <button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
+]=]..(live and '<li class="ext mdl-menu__item nwtv" id="nwtv"><button class="nwtv"><span class="mdl-layout-spacer">nwtv</span><i class="material-icons">navigate_next</i></button>' or '')..[=[
 <li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
 <li class="ext mdl-menu__item quality" id="quality" disabled><button class="quality" disabled><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
 <li class="ext mdl-menu__item rate" id="rate"><button class="rate"><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
-</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
-]=]
-
-  if audio then
-    for i,v in ipairs(audio) do
-      s=s..'<li class="ext mdl-menu__item"><input id="audio'..i..'" name="audio"'..Radiobtn(i==1,0)..'><label for="audio'..i..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio'..i..'">'..(v.text_char=='' and ({'主音声','副音声'})[i] or v.text_char)..'</label></li>\n'
-    end
-  else
-    s=s..'<li class="ext mdl-menu__item"><input type="radio" id="audio1" name="audio" value="0" checked><label for="audio1" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio1">主音声</label></li>\n'
-      ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
-  end
-
-  s=s..[=[
+</ul>]=]..(live and [=[<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="nwtv">
+]=]..nwtv()..[=[
+</ul>]=] or '')..[=[<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
+]=]..audio()..[=[
 </ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
 <li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
-]=]
-  local autoCinema
-  for i,v in ipairs(XCODE_OPTIONS) do
-    if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
-      if v.tslive then autoCinema=v.autoCinema end
-      local id = 'q_'..mg.md5(v.name)
-      s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input id="'..id..'" name="quality"'..Radiobtn(i==1,i)..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
-    end
-  end
-  s=s..'</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">\n'
-  local has1=false
-  for i,v in ipairs(XCODE_FAST_RATES) do
-    if not has1 and v==1 then
-      has1=true
-      i=0
-    end
-    s=s..'<li class="ext mdl-menu__item"><input id="rate'..i..'" name="rate" class="rate"'..Radiobtn(v==1,v)..' data-index='..i..'><label for="rate'..i..'"><i class="material-icons">check</i></label><label for="rate'..i..'">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</label></li>\n'
-  end
-  return s..[=[
+]=]..option()..[=[
+</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">
+]=]..rate()..[=[
 </ul>
 <button id="PIP" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">picture_in_picture</i><span class="mdl-tooltip" data-mdl-for="PIP">ピクチャーインピクチャー</span></button>
 <button id="PIP_exit" class="only-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">pip_exit</i><span class="mdl-tooltip" data-mdl-for="PIP_exit">タブに戻る</span></button>

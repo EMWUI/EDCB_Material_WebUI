@@ -190,7 +190,7 @@ $(function(){
 	$('#subCH').change(e => $('.subCH').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
 
 	$('#forced').click(e => {
-		$.post(`${ROOT}api/TvCast`, {ctok: $(e.currentTarget).data('ctok'), n: 0, id: '1-1-0'}).done(xhr => Snackbar($(xhr).find('success').text()));
+		$.post(`${ROOT}api/TvCast`, {ctok: $(e.currentTarget).data('ctok'), n: vid.nwtv, id: '1-1-0'}).done(xhr => Snackbar($(xhr).find('success').text()));
 		$('#stop').click();
 	});
 });
