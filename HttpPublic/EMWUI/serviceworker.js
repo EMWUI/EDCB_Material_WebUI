@@ -22,6 +22,10 @@ self.addEventListener('install', function(event) {
 
 // キャッシュロード
 self.addEventListener('fetch', function(event) {
+	// APIによるリクエストを除外
+	if (event.request.destination === '') {
+		return;
+	}
 	event.respondWith(
 		caches.open(CACHE_NAME).then(function(cache) {
 			return cache.match(event.request).then(function(response) {

@@ -510,23 +510,28 @@ $(function(){
 	$rate.change(e => {
 		const $e = $(e.currentTarget);
 		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
-		//極力再読み込みは避けたい
-		if (hls && isTs && $e.val()>1){	
+		if (hls && isTs){
+			//サーバー側で倍速処理
 			vid.fast = $e.val();
-			vid.params.set('fast', $e.data('index'));
+			if ($e.val() != 1){
+				vid.params.set('fast', $e.data('index'));
+			}else{
+				vid.params.delete('fast');
+			}
+			vid.playbackRate = 1;
 			stream.setFast(null);
 			$vid.addClass('is-loading');
 			hls.reload();
 			return;
-		}else if (vid.params.has('fast')){
-			vid.params.delete('fast');
-			$vid.addClass('is-loading');
-			hls.reload();
 		}
 
 		vid.fast = 1;
+		if (vid.tslive){
+			//転送速度のスロットリングのため
+			vid.setFast($e.data('index'));
+		}
 		vid.playbackRate = $e.val();
-		stream.setFast($e.val());
+		stream.setFast($e.data('index'));
 	});
 
 	//TS-Live!有効時、非対応端末は画質選択無効
