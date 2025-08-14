@@ -64,6 +64,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	get setAudioTrack(){return this.#setAudioTrack}
 	get setDetelecine(){return this.#setDetelecine}
 	get setSeek(){return this.#setSeek}
+	get setFast(){return this.#setFast}
 
 	get src(){return this.#src.href??''}
 	set src(src){this.#setSrc(src)}
@@ -213,6 +214,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
 		this.#mod.setPlaybackRate(n);
+		this.#setCurrentTime(Math.floor(this.#currentTime));
 		this.dispatchEvent(new Event('ratechange'));
 	}
 	#setDetelecine(n){
@@ -225,6 +227,10 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#setSeek(val){
 		if (0<val&&val<1) this.#setOffset(val*100);
 		else this.#setCurrentTime(val);
+	}
+	#setFast(fast){
+		if (fast==null) this.#src.searchParams.delete('fast');
+		else this.#src.searchParams.set('fast', fast);
 	}
 	#setCurrentTime(ofssec){
 		if (!Number(ofssec)) return;
