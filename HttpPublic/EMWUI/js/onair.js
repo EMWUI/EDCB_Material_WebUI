@@ -92,10 +92,9 @@ $(function(){
 		}
 	});
 
-	let apk, Magnezio;
+	let apk;
 	if (navigator.userAgent.indexOf('Android') > 0){
 		apk = localStorage.getItem('apk') == 'true';
-		//Magnezio = true;	//Magnezioで視聴
 		$('[for=menu] .mdl-menu__item').removeClass('hidden');
 		$('#open_popup').prop('disabled', apk);
 		$('#menu_popup').attr('disabled', apk);
@@ -149,27 +148,23 @@ $(function(){
 		const d = $e.data();
 		if (!d.eid){
 			Snackbar('番組情報がありません');
-		}else if (Magnezio){
-			$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: $('#forced').data('ctok'), id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml =>
-				!$(xml).find('success').length ? Snackbar('失敗') : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
-			);
 		}else if (apk){
-			Snackbar('工事中');
-			/*
 			showSpinner(true);
 			Snackbar('準備中');
-			const src = `${ROOT}api/view?n=0&id=${d.onid}-${d.tsid}-${d.sid}&ctok=${ctok}&hls=${1+d.onid+d.tsid+d.sid}${hls4}&option=${quality}${
-				!$audio.attr('disabled') ? `&audio2=${audioVal}` : ''}${$cinema.prop('checked') ? '&cinema=1' : ''
-			}`;
-
-			waitForHlsStart(src, `ctok=${ctok}&open=1`, 1000, 1000, () => {
-				showSpinner();
-				Snackbar('エラー');
-			}, src => {
-				showSpinner();
-				location.href = `intent:${new URL(src, document.baseURI).href}#Intent;type=video/*;end;`;
-			});
-			//*/
+			if (vid.tslive){
+				$.get(`${ROOT}api/TvCast`, {mode: 1, ctok: $('#forced').data('ctok'), id: `${d.onid}-${d.tsid}-${d.sid}`}).done(xml => {
+					showSpinner();
+					!$(xml).find('success').length ? Snackbar('失敗') : location.href = 'intent:#Intent;scheme=arib;package=com.mediagram.magnezio;end;'
+				});
+			}else{
+				vid.apk(`${ROOT}api/view?n=${vid.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`, () => {
+					showSpinner();
+					Snackbar('エラー');
+				}, src => {
+					showSpinner();
+					location.href = `intent:${src}#Intent;type=video/*;end;`
+				});
+			}
 		}else if ($('#open_popup').prop('checked')){
 			$('#popup,#playerUI').addClass('is-visible');
 			loadMovie($e);
@@ -181,7 +176,7 @@ $(function(){
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
 
-	if ($('.onair.is_cast').length) readyToAutoPlay = loadMovie;
+	if ($('.onair.is_cast').length) vid.readyToAutoPlay = loadMovie;
 	$('.toggle').click(e => {
 		const $e = $(e.currentTarget).children();
 		const flag = $e.hasClass('flag');

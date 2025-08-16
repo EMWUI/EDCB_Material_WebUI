@@ -16,7 +16,8 @@ Datacast
 【web-bml】web_bml_play_ts.js https://github.com/xtne6f/web-bml
 */
 
-customElements.define('ts-live', class extends HTMLCanvasElement{
+const tsliveMixin = (Base = class {}) => class extends Base{
+	#e;
 	#error;
 	#currentTime;
 	#playbackRate;
@@ -35,18 +36,27 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#ctrl;
 	#ctok;
 	#params;
-	constructor(){
+	constructor(notCustom, aribb24 = {}, autoCinema, ctok){
 		super();
 		this.#playbackRate = 1;
 		this.#paused = true;
-		this.#muted = this.hasAttribute('muted');
 		this.#volume = 1;
-		this.#detelecine = this.hasAttribute('autoCinema') ? 2 : 0;
 		this.#statsTime = 0;
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
-		this.#ctok = this.getAttribute('ctok');
 		this.#params = new URLSearchParams();
+		if (notCustom){
+			this.#e = document.getElementById('video');
+			this.#ctok = ctok;
+			this.#muted = false;
+			this.#detelecine = autoCinema ? 2 : 0;
+			this.#initCap(aribb24.useSvg, aribb24.option, aribb24.container);
+		}else{
+			this.#e = this;
+			this.#ctok = this.getAttribute('ctok');
+			this.#muted = this.hasAttribute('muted') ? true : false;
+			this.#detelecine = this.hasAttribute('autoCinema') ? 2 : 0;
+		}
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		this.#createWasmModule();
@@ -55,16 +65,20 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 
 	get tslive(){return true}
 	get params(){return this.#params}
+	get cap(){return this.#cap}
+	get createCap(){return this.#initCap}
 
 	get loadSource(){return this.#loadSource}
 	get load(){return this.#load}
 	get play(){return this.#play}
 	get pause(){return this.#pause}
 	get reset(){return this.#reset}
-	get setAudioTrack(){return this.#setAudioTrack}
-	get setDetelecine(){return this.#setDetelecine}
+
 	get setSeek(){return this.#setSeek}
 	get setFast(){return this.#setFast}
+	get setOption(){return this.#setOption}
+	get setAudioTrack(){return this.#setAudioTrack}
+	get setDetelecine(){return this.#setDetelecine}
 
 	get src(){return this.#src.href??''}
 	set src(src){this.#setSrc(src)}
@@ -87,10 +101,9 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	get networkState(){return this.#networkState}
 	get error(){return this.#error}
 	get canPlayType(){return this.#canPlayType}
-	/*
-	get poster(){return this.#poster??''}
-	set poster(src){this.#setPoster(src)}
-	//*/
+	//get poster(){return this.#poster??''}
+	//set poster(src){this.#setPoster(src)}
+
 
 
 	#createWasmModule(){
@@ -99,34 +112,34 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 				this.#mod = mod;
 				mod.setAudioGain(this.#muted?0:this.#volume);
 				mod.setDetelecineMode(this.#detelecine);
-				mod.pauseMainLoop();
-				mod.setCaptionCallback((pts,ts,data) => this.cap&&this.cap.pushRawData(this.#statsTime+ts,data.slice()));
+				mod.pause();
+				mod.setCaptionCallback((pts,ts,data) => this.#cap&&this.#cap.pushRawData(this.#statsTime+ts,data.slice()));
 				mod.setStatsCallback(stats => {
 					if(this.#statsTime!=stats[stats.length-1].time){
 						this.#currentTime+=stats[stats.length-1].time-this.#statsTime;
 						this.#statsTime=stats[stats.length-1].time;
-						this.dispatchEvent(new Event('timeupdate'));
-						this.cap&&this.cap.onTimeupdate(this.#statsTime);
+						this.#e.dispatchEvent(new Event('timeupdate'));
+						this.#cap&&this.#cap.onTimeupdate(this.#statsTime);
 						this.#sameStatsCount=0;
 						//statsの中身がすべて同じ状態が続くとき、最後まで再生したとみなす
 					}else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
 						if(++this.#sameStatsCount>=5){
 							this.#sameStatsCount=0;
-							this.pause();
-							this.dispatchEvent(new Event('ended'));
+							this.#pause();
+							this.#e.dispatchEvent(new Event('ended'));
 						}
 					}else{
 						this.#sameStatsCount=0;
 					}
-					if(this.#detelecine==2)this.dispatchEvent(new Event(`${stats[stats.length-1].TelecineFlag?'enabled':'disabled'}Detelecine`));
+					if(this.#detelecine==2)this.#e.dispatchEvent(new Event(`${stats[stats.length-1].TelecineFlag?'enabled':'disabled'}Detelecine`));
 					if(this.#done) return;
-					this.dispatchEvent(new Event('canplay'));	//疑似的、MainLoopがpauseだと呼び出されない
+					this.#e.dispatchEvent(new Event('canplay'));	//疑似的、pauseしてると呼び出されない
 					this.#done = true;
 				});
 			});
 		})).catch(e => {
 			this.#error = {code: 0, message: e.message};
-			this.dispatchEvent(new Event('error'));
+			this.#e.dispatchEvent(new Event('error'));
 			throw e;
 		});
 	}
@@ -140,41 +153,49 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		this.#wakeLock = null;
 	}
 
+	#cap;
+	#container = document.getElementById("vid-cont");
+	#initCap(useSvg = false, option = {}, container){
+		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
+		if (container) this.#container = container;
+	}
+
 	#loadSource(src){
 		if (!src){
 			this.#reset();
 			return;
 		}
-		this.initSrc = new URL(src, location.href);
-		this.initSrc.searchParams.set('ctok', this.#ctok);
-		this.load();
+		this.#e.initSrc = new URL(src, location.href);
+		this.#e.initSrc.searchParams.set('ctok', this.#ctok);
+		this.#load();
 	}
 	#load(){
-		this.#setSrc(`${this.initSrc}&option=${this.params.get('option')}`);
+		this.#setSrc(`${this.#e.initSrc}&${this.params.toString()}`);
 	}
 	#play(){
 		this.#paused = false;
-		this.#mod.resumeMainLoop();
-		this.dispatchEvent(new Event('play'));
+		this.#mod.resume();
+		this.#e.dispatchEvent(new Event('play'));
 	}
 	#pause(){
 		this.#paused = true;
-		this.#mod.pauseMainLoop();
-		this.dispatchEvent(new Event('pause'));
+		this.#mod.pause();
+		this.#e.dispatchEvent(new Event('pause'));
 	}
 	#clear(){
-		this.src = '';
-		this.removeAttribute('src');
-		this.initSrc = null;
-		this.offset = null;
-		this.ofssec = null;
-		if (this.cap) this.cap.detachMedia();
+		this.#e.src = '';
+		this.#e.removeAttribute('src');
+		this.#e.initSrc = null;
+		this.#e.offset = null;
+		this.#e.ofssec = null;
+		this.#cap&&this.#cap.detachMedia();
 	}
 	#reset(){
 		this.#clear();
 		this.#initialize();
+		super.clear&&super.clear();
 		if (!this.#mod||!this.#ctrl) return;
-		this.pause();
+		this.#pause();
 		this.#mod.reset();
 		this.#ctrl.abort();
 		//Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
@@ -188,12 +209,17 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 			return;
 		}
 		this.#initialize();
-		this.setAttribute('src', src);
+		this.#e.setAttribute('src', src);
 		this.#src = new URL(src, location.href);
 		this.#src.searchParams.set('throttle', 1);
 		this.#startRead();
-		this.#mod.resumeMainLoop();
+		this.#mod.resume();
 		this.#paused = false;
+	}
+	#setOption(val, isTslive, onFallback = ()=>{}){
+		if (isTslive) this.#params.set('option', val);
+		else onFallback();
+		return isTslive;
 	}
 	#setAudioTrack(n){
 		if (isNaN(n)) return;
@@ -202,25 +228,23 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 	#setMuted(b){
 		this.#muted = b;
 		this.#mod&&this.#mod.setAudioGain(b ? 0 : this.#volume);
-		this.dispatchEvent(new Event('volumechange'));
+		this.#e.dispatchEvent(new Event('volumechange'));
 	}
 	#setVolume(n){
 		if (isNaN(n)) return;
 		this.#volume = Number(n);
 		this.#mod&&this.#mod.setAudioGain(n);
-		this.dispatchEvent(new Event('volumechange'));
+		this.#e.dispatchEvent(new Event('volumechange'));
 	}
 	#setPlaybackRate(n){
 		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
 		this.#mod.setPlaybackRate(n);
-		this.#setCurrentTime(Math.floor(this.#currentTime));
-		this.dispatchEvent(new Event('ratechange'));
+		this.#e.dispatchEvent(new Event('ratechange'));
 	}
 	#setDetelecine(n){
 		//0=never,1=force,2=auto
-		if (n==='boolean') n = n ? 1 : 0;
-		if (isNaN(n)) return;
+		if (isNaN(n) || n === 'boolean') return;
 		this.#detelecine = Number(n);
 		this.#mod.setDetelecineMode(n);
 	}
@@ -228,9 +252,15 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		if (0<val&&val<1) this.#setOffset(val*100);
 		else this.#setCurrentTime(val);
 	}
-	#setFast(fast){
-		if (fast==null) this.#src.searchParams.delete('fast');
-		else this.#src.searchParams.set('fast', fast);
+	#setFast(val, index){
+		super.setFast&&super.setFast(val, index);
+		this.#setPlaybackRate(val);
+
+		if (!this.#src.searchParams.has('throttle')) return;
+		//転送速度のスロットリングのため
+		if (val == 1) this.#src.searchParams.delete('fast');
+		else this.#src.searchParams.set('fast', index);
+		this.#setCurrentTime(Math.floor(this.#currentTime));
 	}
 	#setCurrentTime(ofssec){
 		if (!Number(ofssec)) return;
@@ -243,7 +273,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		this.#src.searchParams.set('offset', offset);
 		this.#resetRead();
 	}
-	#canPlayType(s){return document.createElement('video').canPlayType(s)}
+	#canPlayType(s){return /video\/mp2t/.test(s) ? 'maybe' : ''}
 
 	#networkStateCode = {
 		EMPTY: 0,
@@ -262,7 +292,7 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		if (!('createWasmModule' in window)) this.#error = {code: 0, message: 'Probably ts-live.js not found.'};
 		if (!navigator.gpu) this.#error = {code: 0, message: 'WebGPU not available.'};
 		if (this.#error){
-			this.dispatchEvent(new Event('error'));
+			this.#e.dispatchEvent(new Event('error'));
 			return true;
 		}
 	}
@@ -311,10 +341,11 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 					this.#networkState = this.#networkStateCode.NO_SOURCE;
 					this.#error = {code: this.#errorCode.SRC_NOT_SUPPORTED, message: 'MEDIA_ELEMENT_ERROR: Format error'};
 				}
-				this.dispatchEvent(new Event('error'));
+				this.#e.dispatchEvent(new Event('error'));
 				return;
 			}
-			this.dispatchEvent(new Event('streamStarted'));
+			this.#e.dispatchEvent(new Event('streamStarted'));
+			this.#cap&&this.#cap.attachMedia(null, this.#container);
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
@@ -326,54 +357,87 @@ customElements.define('ts-live', class extends HTMLCanvasElement{
 		this.#ctrl.abort();
 		this.#mod.reset();
 		this.#startRead();
-		this.play();
+		this.#play();
 	}
-}, {extends: 'canvas'});
+}
 
-class HlsLoader{
+class TsLive extends tsliveMixin(){
+	constructor(video, aribb24, autoCinema, ctok){
+		super(true, video, aribb24, autoCinema, ctok);
+	}
+}
+
+const hlsMixin = (Base = class {}) => class extends Base{
 	#e;
+	#error;
 	#ctok;
 	#hlsMp4Query;
-	constructor(video, aribb24Option, alwaysUseHls, hls4, ctok){
-		this.#ctok = ctok;
-		this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
-		aribb24Option.enableAutoInBandMetadataTextTrackDetection = !alwaysUseHls || !Hls.isSupported();
-		this.#addMethods(video);
-		this.#initHls(alwaysUseHls);
+	#alwaysUseHls;
+	#params;
+	#fast;
+	#errorEvent;
+	constructor(notCustom, video, aribb24 = {}, alwaysUseHls, hls4, ctok){
+		super();
+		this.#params = new URLSearchParams();
+		this.#fast = 1;
+		if (notCustom){
+			this.#e = video;
+			this.#e.params = this.params;
+			this.#e.fast = this.fast;
+			this.#ctok = ctok;
+			this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
+			this.#alwaysUseHls = alwaysUseHls;
+			this.#initCap(aribb24.useSvg, aribb24.option, aribb24.vidMeta);
+			this.#errorEvent = 'hlserror';
+		}else{
+			this.#e = this;
+			this.#ctok = this.getAttribute('ctok');
+			this.#hlsMp4Query = this.hasAttribute('hls4') ? `&hls4=${this.getAttribute('hls4')}` : '';
+			this.#alwaysUseHls = this.hasAttribute('alwaysUseHls') ? true : false;
+			this.#errorEvent = 'error';
+		}
+		this.#initHls();
 	}
 
-	get js(){return this.#hls}
-	get clear(){return this.#clear}
+
+	get hls(){return this.#hls}
+	get params(){return this.#params}
+	get fast(){return this.#e.initSrc?this.#fast:1}
+	get error(){return super.error||this.#error}
+	get cap(){return this.#cap}
+	get createCap(){return this.#initCap}
+	get canPlayType(){return this.#canPlayType}
+	get apk(){return this.#apk}
+
 	get loadSource(){return this.#loadSource}
-	get load(){return this.#load}
+	//get load(){if (!super.load) return this.#load}
 	get reload(){return this.#reload}
-	set setSeek(v){this.#setSeek(v)}
+	get reset(){return this.#clear}
+
+	get setSeek(){return this.#setSeek}
+	get setFast(){return this.#setFast}
+	get setOption(){return this.#setOption}
+	get setAudioTrack(){return this.#setAudioTrack}
+	get setDetelecine(){return this.#setDetelecine}
+
 	set audioTrack(n){this.#setAudioTrack(n)}
 	set detelecine(b){this.#setDetelecine(b)}
+
 
 
 	#hls;
 	#onload;
 	#onstart;
-	#addMethods(video){
-		this.#e = video;
-		video.params = new URLSearchParams();
-		video.reset = () => this.clear();
-		video.loadSource = src => this.#loadSource(src);
-		video.setSeek = v => this.#setSeek(v);
-		video.setAudioTrack = n => this.#setAudioTrack(n);
-		video.setDetelecine = b => this.#setDetelecine(b);
-	}
-	#initHls(alwaysUseHls){
-		if (alwaysUseHls){
+	#initHls(){
+		if (this.#alwaysUseHls){
 			if (Hls.isSupported()){
 				this.#hls = new Hls();
 				this.#hls.attachMedia(this.#e);
-				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => this.#e.dispatchEvent(new Event('streamStarted')));
-				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#e.cap&&this.#e.cap.pushID3v2Data(d.pts, d.data)));
+				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => {this.#e.dispatchEvent(new Event('streamStarted')); this.#cap&&this.#cap.attachMedia(this.#e);});
+				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#cap&&this.#cap.pushID3v2Data(d.pts, d.data)));
 
 				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#e.params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
 				this.#onstart = src => this.#hls.loadSource(src);
 			}else if (this.#e.canPlayType('application/vnd.apple.mpegurl')){
 				this.#onload = () => this.#e.src = this.#e.initSrc.href;
@@ -381,7 +445,7 @@ class HlsLoader{
 		}else{
 			//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 			if (!/Android/i.test(navigator.userAgent)&&this.#e.canPlayType('application/vnd.apple.mpegurl')){
-				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#e.params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
 				this.#onstart = src => this.#e.src = src;
 			}else{
 				this.#onload = () => this.#e.src = this.#e.initSrc.href;
@@ -398,20 +462,38 @@ class HlsLoader{
 		return hex;
 	}
 
+	#cap;
+	#cue;
+	#initCap(useSvg = false, option = {}, vidMeta = document.getElementById('vid-meta')){
+		option.enableAutoInBandMetadataTextTrackDetection = !this.#alwaysUseHls || !Hls.isSupported();
+		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
+		if (vidMeta) vidMeta.oncuechange = e => this.#cuechangeB24Caption(e);
+	}
+	#cuechangeB24Caption(e){
+		if (this.#cue) return;
+		this.#cue = true;
+		this.#cap.attachMedia(this.#e);
+		Datacast.oncuechangeB24Caption(this.#cap, e.target.track.cues);
+	}
+
 	#reset(){
 		this.#src = '';
-		if (this.#hls) this.#hls.loadSource('');
-		if (this.#e.cap) this.#e.cap.detachMedia();
+		this.#hls&&this.#hls.loadSource('');
+		this.#cap&&this.#cap.detachMedia();
 		['ofssec','offset'].forEach(e => {
 			this.#e[e] = null;
-			this.#e.params.delete(e);
+			this.#params.delete(e);
 		});
 	}
 	#clear(){
 		this.#reset();
 		this.#e.src = '';
 		this.#e.initSrc = null;
-		['reload','audio2'].forEach(e => this.#e.params.delete(e));
+		this.#e.defaultPlaybackRate = this.#fast;
+		this.#error = null;
+		this.#cue = false;
+		['reload','audio2'].forEach(e => this.#params.delete(e));
+		super.clear&&super.clear();
 	}
 	#loadSource(src){
 		if (!src){
@@ -420,16 +502,17 @@ class HlsLoader{
 		}
 		this.#e.initSrc = new URL(src, location.href);
 		this.#e.initSrc.searchParams.set('ctok', this.#ctok);
-		this.#load();
-	}
-	#load(){
-		this.#e.params.set('load', this.#createRandom());
+		this.#e.defaultPlaybackRate = 1;
+		this.#params.set('load', this.#createRandom());
 		this.#onload();
 	}
-	#reload(seek = this.#e.currentTime * (this.#e.fast || 1) + (this.#e.ofssec || 0)){
-		if (this.#e.params.has('load')){
-			this.#e.params.set('reload', this.#e.params.get('load'));
-			this.#e.params.delete('load');
+	#reload(onload = ()=>{}, seek = this.#e.currentTime * this.#fast + (this.#e.ofssec || 0)){
+		if (!this.#e.initSrc) return;
+		onload();
+
+		if (this.#params.has('load')){
+			this.#params.set('reload', this.#params.get('load'));
+			this.#params.delete('load');
 		}
 
 		this.#e.doNotAutoplay = this.#e.paused;
@@ -437,54 +520,93 @@ class HlsLoader{
 		if (seek){
 			const key = seek<1 ? 'offset' : 'ofssec';
 			this.#e[key] = Math.floor(seek*(seek<1?100:1));
-			this.#e.params.set(key, this.#e[key]);
+			this.#params.set(key, this.#e[key]);
 		}
 
 		this.#onload();
 	}
 
-	#setSeek(value){
-		if (1 < value && this.#e.ofssec < value && value < this.#e.ofssec + this.#e.duration)
-			this.#e.currentTime = value - this.#e.ofssec;
-		else this.#reload(this.value);
+	#setSeek(val, onload){
+		if (1 < val && this.#e.ofssec < val && val < this.#e.ofssec + this.#e.duration){
+			this.#e.currentTime = val - this.#e.ofssec;
+			return;
+		}
+		this.#reload(onload, val);
 	}
-	#setAudioTrack(n){
+	#setOption(val, isTslive, onFallback = ()=>{}, onload){
+		this.#params.set('option', val);
+		if (isTslive) onFallback();
+		else this.#reload(onload);
+	}
+	#setAudioTrack(n, onload){
 		if (isNaN(n)) return;
-		this.#e.params.set('audio2', n);
-		this.reload();
+		this.#params.set('audio2', n);
+		this.#reload(onload);
 	}
-	#setDetelecine(b){
+	#setDetelecine(b, onload){
 		if (typeof b !== 'boolean') return;
-		if (b) this.#e.params.set('cinema', 1);
-		else this.#e.params.delete('cinema');
-		this.reload();
+		if (b) this.#params.set('cinema', 1);
+		else this.#params.delete('cinema');
+		this.#reload(onload);
+	}
+	#setFast(val, index, onload){
+		super.setFast&&super.setFast(val, index);
+
+		if (val == 1) this.#params.delete('fast');
+		else this.#params.set('fast', index);
+
+		this.#fast = val;
+		if (!this.#e.initSrc) this.#e.playbackRate = val;
+		
+		this.#reload(onload);
+	}
+	#canPlayType(s){
+		if (/video\/mp2t/.test(s)) return 'maybe';
+		else return super.canPlayType ? super.canPlayType(s) : this.#e.canPlayType(s);
+	}
+
+	#apk(src, onerror, onstart){
+		src = new URL(src, location.href);
+		src.searchParams.set('ctok', this.#ctok);
+		src.searchParams.set('load', this.#createRandom());
+		this.#waitForHlsStart(`${src}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`, onerror, onstart);
 	}
 
 	#method;
 	#src;
-	#waitForHlsStart(src){
-		this.#method = 'POST';
-		this.#src = src;
-		this.#poll();
-	}
 	#interval = 200;
 	#delay = 500;
-	#poll(){
-		if (!this.#src) return;
+	#onerror(){
+		this.#error = {code: 0, message: 'HLS loading error'};
+		this.#e.dispatchEvent(new Event(this.#errorEvent));
+	}
+	#waitForHlsStart(src, onerror = this.#onerror, onstart = this.#onstart){
+		this.#method = 'POST';
+		this.#src = src;
+		const poll = () => {
+			if (!this.#src) return;
 
-		var xhr = new XMLHttpRequest();
-		xhr.open(this.#method, this.#src);
-		if (this.#method == 'POST') xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-		this.#method = 'GET';
-		xhr.onloadend = () => {
-			if (xhr.status == 200 && xhr.response){
-				if (xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:') < 0) setTimeout(() => this.#poll(), this.#interval);
-				else setTimeout(() => {if (!this.#src) return;this.#onstart(this.#src);}, this.#delay);
-			}else{
-				this.#e.dispatchEvent(new Event('hlserror'));
+			var xhr = new XMLHttpRequest();
+			xhr.open(this.#method, this.#src);
+			if (this.#method == 'POST') xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+			this.#method = 'GET';
+			xhr.onloadend = () => {
+				if (xhr.status == 200 && xhr.response){
+					if (xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:') < 0) setTimeout(() => poll(), this.#interval);
+					else setTimeout(() => {if(this.#src)onstart(this.#src);}, this.#delay);
+				}else{
+					onerror();
+				}
 			}
+			xhr.send(`ctok=${this.#ctok}&open=1`);
 		}
-		xhr.send(`ctok=${this.#ctok}&open=1`);
+		poll();
+	}
+}
+
+class HlsLoader extends hlsMixin(){
+	constructor(video, aribb24, alwaysUseHls, hls4, ctok){
+		super(true, video, aribb24, alwaysUseHls, hls4, ctok);
 	}
 }
 
@@ -584,6 +706,7 @@ class TsThumb{
 		e.style.display = null;
 	}
 	#hide(){
+		if (!this.#e) return;
 		clearTimeout(this.#timerID);
 		this.#id++;
 		this.#e.style.display = "none";
@@ -591,16 +714,10 @@ class TsThumb{
 	}
 }
 
-class Datacast{
+const datacastMixin = (Base = class {}) => class extends Base{
 	#e;
-	#ctok;
-	#replaceTag;
 	#params;
-	#danmaku;
-	#api = {
-		jklog: 'jklog',
-		comment: 'comment',
-	}
+	#fast;
 	#elems = {
 		vcont: document.getElementById("vid-cont"),
 		comm: document.getElementById("jikkyo-comm"),
@@ -610,29 +727,18 @@ class Datacast{
 		bcomm: document.getElementById("comment-control"),
 		indicator: document.querySelector(".remote-control-indicator"),
 	}
+	#noWebBml;
+	#noDanmaku;
 	constructor(video, danmaku, ctok, replaceTag, api){
-		this.#e = video;
+		super();
+		this.#e = video||this;
+		this.#fast = 1;
 		this.#params = new URLSearchParams();
-		if (!danmaku) return;
-
-		if (api) Object.assign(this.#api, api);
-		this.#ctok = ctok;
-		this.#replaceTag = replaceTag;
-		this.#danmaku = new Danmaku(Object.assign({
-			container:this.#elems.vcont,
-			opacity:1,
-			callback:function(){},
-			error:function(msg){},
-			apiBackend:{read:function(opt){opt.success([]);}},
-			height:32,
-			duration:5,
-			paddingTop:10,
-			paddingBottom:10,
-			unlimited:false,
-			api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
-		}, danmaku));
-		if (this.#elems.commInput) this.#addSendComment();
+		this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
+		this.#noDanmaku = typeof Danmaku === 'undefined';
+		if (danmaku) this.#initDanmaku(danmaku, ctok, replaceTag, api);
 	}
+
 
 	get clear(){return this.#clear}
 	get datacast(){return this.#datacast}
@@ -641,9 +747,42 @@ class Datacast{
 	get toggleJikkyo(){return this.#toggleJikkyo}
 	get setFast(){return this.#setFast}
 
-	get setElemsList(){this.#setElems}
+	get createDanmaku(){return this.#initDanmaku}
+	get shiftJikkyo(){return this.#shiftJikkyo}
+
+	get setElemsList(){return this.#setElems}
 
 
+
+	#ctok;
+	#replaceTag;
+	#danmaku;
+	#danmakuOption = {
+		container:this.#elems.vcont,
+		opacity:1,
+		callback:function(){},
+		error:function(msg){},
+		apiBackend:{read:function(opt){opt.success([]);}},
+		height:32,
+		duration:5,
+		paddingTop:10,
+		paddingBottom:10,
+		unlimited:false,
+		api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
+	};
+	#api = {
+		jklog: 'jklog',
+		comment: 'comment',
+	}
+	#initDanmaku(danmaku = {}, ctok, replaceTag, api = {}){
+		if (this.#noDanmaku) return;
+		Object.assign(this.#danmakuOption, danmaku);
+		Object.assign(this.#api, api);
+		this.#ctok = ctok;
+		this.#replaceTag = replaceTag;
+		this.#danmaku = new Danmaku(this.#danmakuOption);
+		if (this.#elems.commInput) this.#addSendComment();
+	}
 	#clear(){
 		this.#jklog.clear();
 		this.#psc.clear();
@@ -665,12 +804,14 @@ class Datacast{
 	get #unavailable(){
 		return this.#loaded&&this.#loaded!=(this.#e.initSrc || his.#e.getAttribute("src")) ? true : false
 	}
-	#datacastState=this.#STATE.DISABLED;
+	#datacastState = this.#STATE.DISABLED;
 	#enableDatacast(){
+		if (this.#noWebBml) return;
 		if (this.#e.initSrc) this.#dataStream.enable();
 		else this.#psc.enable();
 	}
 	#disableDatacast(){
+		if (this.#noWebBml) return;
 		if (this.#datacastState==this.#STATE.STREAM) this.#dataStream.disable();
 		else this.#psc.disable();
 	}
@@ -678,7 +819,7 @@ class Datacast{
 		if (enabled===false || enabled===undefined&&this.#datacastState)
 			this.#disableDatacast();
 		else this.#enableDatacast();
-		return this.#jikkyoState ? true : false;
+		return this.#datacastState ? true : false;
 	}
 	get #jk(){
 		return {
@@ -691,31 +832,36 @@ class Datacast{
 	}
 	#jikkyoState = this.#STATE.DISABLED;
 	#enableJikkyo(){
+		if (this.#noDanmaku) return;
 		if (this.#e.initSrc) this.#jikkyo.enable();
 		else this.#jklog.enable();
 	}
 	#disableJikkyo(){
+		if (this.#noDanmaku) return;
 		if (this.#jikkyoState==this.#STATE.STREAM) this.#jikkyo.disable();
 		else this.#jklog.disable();
 	}
 	#showJikkyo(){
+		if (this.#noDanmaku) return;
 		if (!this.#jikkyoState) this.#enableJikkyo();
 		this.#danmaku.show();
 	}
 	#hideJikkyo(){
+		if (this.#noDanmaku) return;
 		if (!this.#jikkyoState) this.#enableJikkyo();
 		this.#danmaku.hide();
 	}
 	#toggleJikkyo(enabled, load){
 		if (enabled===false&&!load || enabled===undefined&&this.#jikkyoState)
 			this.#disableJikkyo();
-		else if (!enabled) this.#hideJikkyo();
+		else if (enabled===false || enabled===undefined&&this.#jikkyoState) this.#hideJikkyo();
 		else this.#showJikkyo();
 		return this.#jikkyoState ? true : false;
 	}
-	#setFast(fast){
-		if (fast===null) this.#params.delete('fast');
-		else this.#params.set('fast',fast);
+	#setFast(val, index){
+		if (val == 1) this.#params.delete('fast');
+		else this.#params.set('fast', index);
+		this.#fast = val;
 		this.#openSubStream();
 	}
 
@@ -1171,6 +1317,10 @@ class Datacast{
 			},0);
 		},
 	}
+	#shiftJikkyo(sec){
+		this.#jklog.offsetSec+=sec;
+		this.#addMessage("Offset "+this.#jklog.offsetSec+"sec");
+	}
 	#chatsScroller(){
 		clearInterval(this.#checkScrollID);
 		this.#commHide=true;
@@ -1282,6 +1432,7 @@ class Datacast{
 
 	#logText;
 	#jklog = {
+		offsetSec: 0,
 		startRead: () => {
 			clearTimeout(this.#jklog.readTimer);
 			var startSec=this.#e.currentTime+this.#jklog.offsetSec;
@@ -1389,7 +1540,7 @@ class Datacast{
 		var readCount=0;
 		var ctx={};
 		this.#xhr=new XMLHttpRequest();
-		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#e.params.toString()}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#e.fast || 1))}`);
+		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#e.fast || 1))}`);
 		this.#xhr.onloadend=()=>{
 			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
 				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
@@ -1434,3 +1585,21 @@ class Datacast{
 		}
 	}
 }
+
+class Datacast extends datacastMixin(){
+	constructor(video, danmaku, ctok, replaceTag, api){
+		super(video, danmaku, ctok, replaceTag, api);
+	}
+}
+
+customElements.define('ts-live', class extends tsliveMixin(datacastMixin(HTMLCanvasElement)){
+	constructor(){
+		super();
+	}
+}, {extends: 'canvas'});
+
+customElements.define('ts-hls', class extends hlsMixin(datacastMixin(HTMLVideoElement)){
+	constructor(){
+		super();
+	}
+}, {extends: 'video'});

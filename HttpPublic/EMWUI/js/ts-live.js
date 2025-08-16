@@ -733,8 +733,8 @@ var tempI64;
 // end include: runtime_debug.js
 // === Body ===
 var ASM_CONSTS = {
-  461516: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
-  461575: ($0, $1, $2) => {
+  461708: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
+  461767: ($0, $1, $2) => {
     if (Module.myAudio && Module.myAudio.discard) {
       const buffer0 = GROWABLE_HEAP_F32().slice($0 >> 2, ($0 >> 2) + $2);
       const buffer1 = GROWABLE_HEAP_F32().slice($1 >> 2, ($1 >> 2) + $2);
@@ -757,7 +757,7 @@ var ASM_CONSTS = {
       }, [ buffer0.buffer, buffer1.buffer ]);
     }
   },
-  462269: () => {
+  462461: () => {
     if (Module.myAudio && Module.myAudio.discard) {
       Module.myAudio.discard = {
         samples: []
@@ -771,9 +771,26 @@ var ASM_CONSTS = {
       });
     }
   },
-  462508: () => {
+  462700: () => {
+    if (Module.myAudio && Module.myAudio.node) {
+      Module.myAudio.node.port.postMessage({
+        type: "pause"
+      });
+    }
+  },
+  462806: () => {
+    if (Module.myAudio && Module.myAudio.node) {
+      Module.myAudio.node.port.postMessage({
+        type: "resume"
+      });
+    }
+  },
+  462913: $0 => {
     if (Module.myAudio && Module.myAudio.discard) {
       const discard = Module.myAudio.discard;
+      if ($0) {
+        discard.baseTime = 0;
+      }
       while (discard.samples.length > 0) {
         if (!discard.baseTime) discard.baseTime = performance.now();
         const duration = discard.samples[0].buffer0.length / (48e3 / 1e3);
@@ -788,7 +805,7 @@ var ASM_CONSTS = {
       Module.setBufferedAudioSamples(sum);
     }
   },
-  463031: $0 => {
+  463470: $0 => {
     if ($0 == 0 && !Module.myAudio) {
       Module.myAudio = {
         discard: {
@@ -798,7 +815,7 @@ var ASM_CONSTS = {
     }
     if (Module.myAudio && Module.myAudio.gain) Module.myAudio.gain.gain.setValueAtTime($0, Module.myAudio.ctx.currentTime);
   },
-  463236: ($0, $1) => {
+  463675: ($0, $1, $2) => {
     (async function() {
       const audioContext = new AudioContext({
         sampleRate: 48e3
@@ -828,6 +845,11 @@ var ASM_CONSTS = {
       };
       console.log("latency", Module["myAudio"]["ctx"].baseLatency);
       Module.myAudio.gain.gain.setValueAtTime($1, Module.myAudio.ctx.currentTime);
+      if ($2) {
+        audioNode.port.postMessage({
+          type: "pause"
+        });
+      }
       while (samples.length > 0) {
         audioNode.port.postMessage({
           type: "feed",
@@ -5502,70 +5524,6 @@ var _emscripten_get_heap_max = () => getHeapMax();
 
 var _emscripten_num_logical_cores = () => navigator["hardwareConcurrency"];
 
-var _emscripten_request_animation_frame = (cb, userData) => requestAnimationFrame(timeStamp => getWasmTableEntry(cb)(timeStamp, userData));
-
-var growMemory = size => {
-  var b = wasmMemory.buffer;
-  var pages = ((size - b.byteLength + 65535) / 65536) | 0;
-  try {
-    // round size grow request up to wasm page size (fixed 64KB per spec)
-    wasmMemory.grow(pages);
-    // .grow() takes a delta compared to the previous size
-    updateMemoryViews();
-    return 1;
-  } /*success*/ catch (e) {}
-};
-
-// implicit 0 return to save code size (caller will cast "undefined" into 0
-// anyhow)
-var _emscripten_resize_heap = requestedSize => {
-  var oldSize = GROWABLE_HEAP_U8().length;
-  // With CAN_ADDRESS_2GB or MEMORY64, pointers are already unsigned.
-  requestedSize >>>= 0;
-  // With multithreaded builds, races can happen (another thread might increase the size
-  // in between), so return a failure, and let the caller retry.
-  if (requestedSize <= oldSize) {
-    return false;
-  }
-  // Memory resize rules:
-  // 1.  Always increase heap size to at least the requested size, rounded up
-  //     to next page multiple.
-  // 2a. If MEMORY_GROWTH_LINEAR_STEP == -1, excessively resize the heap
-  //     geometrically: increase the heap size according to
-  //     MEMORY_GROWTH_GEOMETRIC_STEP factor (default +20%), At most
-  //     overreserve by MEMORY_GROWTH_GEOMETRIC_CAP bytes (default 96MB).
-  // 2b. If MEMORY_GROWTH_LINEAR_STEP != -1, excessively resize the heap
-  //     linearly: increase the heap size by at least
-  //     MEMORY_GROWTH_LINEAR_STEP bytes.
-  // 3.  Max size for the heap is capped at 2048MB-WASM_PAGE_SIZE, or by
-  //     MAXIMUM_MEMORY, or by ASAN limit, depending on which is smallest
-  // 4.  If we were unable to allocate as much memory, it may be due to
-  //     over-eager decision to excessively reserve due to (3) above.
-  //     Hence if an allocation fails, cut down on the amount of excess
-  //     growth, in an attempt to succeed to perform a smaller allocation.
-  // A limit is set for how much we can grow. We should not exceed that
-  // (the wasm binary specifies it, so if we tried, we'd fail anyhow).
-  var maxHeapSize = getHeapMax();
-  if (requestedSize > maxHeapSize) {
-    return false;
-  }
-  // Loop through potential heap size increases. If we attempt a too eager
-  // reservation that fails, cut down on the attempted size and reserve a
-  // smaller bump instead. (max 3 times, chosen somewhat arbitrarily)
-  for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
-    var overGrownHeapSize = oldSize * (1 + .2 / cutDown);
-    // ensure geometric growth
-    // but limit overreserving (default to capping at +96MB overgrowth at most)
-    overGrownHeapSize = Math.min(overGrownHeapSize, requestedSize + 100663296);
-    var newSize = Math.min(maxHeapSize, alignMemory(Math.max(requestedSize, overGrownHeapSize), 65536));
-    var replacement = growMemory(newSize);
-    if (replacement) {
-      return true;
-    }
-  }
-  return false;
-};
-
 var _emscripten_set_main_loop_timing = (mode, value) => {
   MainLoop.timingMode = mode;
   MainLoop.timingValue = value;
@@ -5625,6 +5583,85 @@ var _emscripten_set_main_loop_timing = (mode, value) => {
     MainLoop.method = "immediate";
   }
   return 0;
+};
+
+var runtimeKeepalivePop = () => {
+  runtimeKeepaliveCounter -= 1;
+};
+
+/**
+     * @param {number=} arg
+     * @param {boolean=} noSetTiming
+     */ var setMainLoop = (iterFunc, fps, simulateInfiniteLoop, arg, noSetTiming) => {
+  MainLoop.func = iterFunc;
+  MainLoop.arg = arg;
+  var thisMainLoopId = MainLoop.currentlyRunningMainloop;
+  function checkIsRunning() {
+    if (thisMainLoopId < MainLoop.currentlyRunningMainloop) {
+      runtimeKeepalivePop();
+      maybeExit();
+      return false;
+    }
+    return true;
+  }
+  // We create the loop runner here but it is not actually running until
+  // _emscripten_set_main_loop_timing is called (which might happen a
+  // later time).  This member signifies that the current runner has not
+  // yet been started so that we can call runtimeKeepalivePush when it
+  // gets it timing set for the first time.
+  MainLoop.running = false;
+  MainLoop.runner = function MainLoop_runner() {
+    if (ABORT) return;
+    if (MainLoop.queue.length > 0) {
+      var start = Date.now();
+      var blocker = MainLoop.queue.shift();
+      blocker.func(blocker.arg);
+      if (MainLoop.remainingBlockers) {
+        var remaining = MainLoop.remainingBlockers;
+        var next = remaining % 1 == 0 ? remaining - 1 : Math.floor(remaining);
+        if (blocker.counted) {
+          MainLoop.remainingBlockers = next;
+        } else {
+          // not counted, but move the progress along a tiny bit
+          next = next + .5;
+          // do not steal all the next one's progress
+          MainLoop.remainingBlockers = (8 * remaining + next) / 9;
+        }
+      }
+      MainLoop.updateStatus();
+      // catches pause/resume main loop from blocker execution
+      if (!checkIsRunning()) return;
+      setTimeout(MainLoop.runner, 0);
+      return;
+    }
+    // catch pauses from non-main loop sources
+    if (!checkIsRunning()) return;
+    // Implement very basic swap interval control
+    MainLoop.currentFrameNumber = MainLoop.currentFrameNumber + 1 | 0;
+    if (MainLoop.timingMode == 1 && MainLoop.timingValue > 1 && MainLoop.currentFrameNumber % MainLoop.timingValue != 0) {
+      // Not the scheduled time to render this frame - skip.
+      MainLoop.scheduler();
+      return;
+    } else if (MainLoop.timingMode == 0) {
+      MainLoop.tickStartTime = _emscripten_get_now();
+    }
+    MainLoop.runIter(iterFunc);
+    // catch pauses from the main loop itself
+    if (!checkIsRunning()) return;
+    MainLoop.scheduler();
+  };
+  if (!noSetTiming) {
+    if (fps && fps > 0) {
+      _emscripten_set_main_loop_timing(0, 1e3 / fps);
+    } else {
+      // Do rAF by rendering each frame (no decimating)
+      _emscripten_set_main_loop_timing(1, 1);
+    }
+    MainLoop.scheduler();
+  }
+  if (simulateInfiniteLoop) {
+    throw "unwind";
+  }
 };
 
 var MainLoop = {
@@ -5714,84 +5751,73 @@ var MainLoop = {
   }
 };
 
-var runtimeKeepalivePop = () => {
-  runtimeKeepaliveCounter -= 1;
+var _emscripten_pause_main_loop = () => MainLoop.pause();
+
+var _emscripten_request_animation_frame = (cb, userData) => requestAnimationFrame(timeStamp => getWasmTableEntry(cb)(timeStamp, userData));
+
+var growMemory = size => {
+  var b = wasmMemory.buffer;
+  var pages = ((size - b.byteLength + 65535) / 65536) | 0;
+  try {
+    // round size grow request up to wasm page size (fixed 64KB per spec)
+    wasmMemory.grow(pages);
+    // .grow() takes a delta compared to the previous size
+    updateMemoryViews();
+    return 1;
+  } /*success*/ catch (e) {}
 };
 
-/**
-     * @param {number=} arg
-     * @param {boolean=} noSetTiming
-     */ var setMainLoop = (iterFunc, fps, simulateInfiniteLoop, arg, noSetTiming) => {
-  MainLoop.func = iterFunc;
-  MainLoop.arg = arg;
-  var thisMainLoopId = MainLoop.currentlyRunningMainloop;
-  function checkIsRunning() {
-    if (thisMainLoopId < MainLoop.currentlyRunningMainloop) {
-      runtimeKeepalivePop();
-      maybeExit();
-      return false;
-    }
-    return true;
+// implicit 0 return to save code size (caller will cast "undefined" into 0
+// anyhow)
+var _emscripten_resize_heap = requestedSize => {
+  var oldSize = GROWABLE_HEAP_U8().length;
+  // With CAN_ADDRESS_2GB or MEMORY64, pointers are already unsigned.
+  requestedSize >>>= 0;
+  // With multithreaded builds, races can happen (another thread might increase the size
+  // in between), so return a failure, and let the caller retry.
+  if (requestedSize <= oldSize) {
+    return false;
   }
-  // We create the loop runner here but it is not actually running until
-  // _emscripten_set_main_loop_timing is called (which might happen a
-  // later time).  This member signifies that the current runner has not
-  // yet been started so that we can call runtimeKeepalivePush when it
-  // gets it timing set for the first time.
-  MainLoop.running = false;
-  MainLoop.runner = function MainLoop_runner() {
-    if (ABORT) return;
-    if (MainLoop.queue.length > 0) {
-      var start = Date.now();
-      var blocker = MainLoop.queue.shift();
-      blocker.func(blocker.arg);
-      if (MainLoop.remainingBlockers) {
-        var remaining = MainLoop.remainingBlockers;
-        var next = remaining % 1 == 0 ? remaining - 1 : Math.floor(remaining);
-        if (blocker.counted) {
-          MainLoop.remainingBlockers = next;
-        } else {
-          // not counted, but move the progress along a tiny bit
-          next = next + .5;
-          // do not steal all the next one's progress
-          MainLoop.remainingBlockers = (8 * remaining + next) / 9;
-        }
-      }
-      MainLoop.updateStatus();
-      // catches pause/resume main loop from blocker execution
-      if (!checkIsRunning()) return;
-      setTimeout(MainLoop.runner, 0);
-      return;
-    }
-    // catch pauses from non-main loop sources
-    if (!checkIsRunning()) return;
-    // Implement very basic swap interval control
-    MainLoop.currentFrameNumber = MainLoop.currentFrameNumber + 1 | 0;
-    if (MainLoop.timingMode == 1 && MainLoop.timingValue > 1 && MainLoop.currentFrameNumber % MainLoop.timingValue != 0) {
-      // Not the scheduled time to render this frame - skip.
-      MainLoop.scheduler();
-      return;
-    } else if (MainLoop.timingMode == 0) {
-      MainLoop.tickStartTime = _emscripten_get_now();
-    }
-    MainLoop.runIter(iterFunc);
-    // catch pauses from the main loop itself
-    if (!checkIsRunning()) return;
-    MainLoop.scheduler();
-  };
-  if (!noSetTiming) {
-    if (fps && fps > 0) {
-      _emscripten_set_main_loop_timing(0, 1e3 / fps);
-    } else {
-      // Do rAF by rendering each frame (no decimating)
-      _emscripten_set_main_loop_timing(1, 1);
-    }
-    MainLoop.scheduler();
+  // Memory resize rules:
+  // 1.  Always increase heap size to at least the requested size, rounded up
+  //     to next page multiple.
+  // 2a. If MEMORY_GROWTH_LINEAR_STEP == -1, excessively resize the heap
+  //     geometrically: increase the heap size according to
+  //     MEMORY_GROWTH_GEOMETRIC_STEP factor (default +20%), At most
+  //     overreserve by MEMORY_GROWTH_GEOMETRIC_CAP bytes (default 96MB).
+  // 2b. If MEMORY_GROWTH_LINEAR_STEP != -1, excessively resize the heap
+  //     linearly: increase the heap size by at least
+  //     MEMORY_GROWTH_LINEAR_STEP bytes.
+  // 3.  Max size for the heap is capped at 2048MB-WASM_PAGE_SIZE, or by
+  //     MAXIMUM_MEMORY, or by ASAN limit, depending on which is smallest
+  // 4.  If we were unable to allocate as much memory, it may be due to
+  //     over-eager decision to excessively reserve due to (3) above.
+  //     Hence if an allocation fails, cut down on the amount of excess
+  //     growth, in an attempt to succeed to perform a smaller allocation.
+  // A limit is set for how much we can grow. We should not exceed that
+  // (the wasm binary specifies it, so if we tried, we'd fail anyhow).
+  var maxHeapSize = getHeapMax();
+  if (requestedSize > maxHeapSize) {
+    return false;
   }
-  if (simulateInfiniteLoop) {
-    throw "unwind";
+  // Loop through potential heap size increases. If we attempt a too eager
+  // reservation that fails, cut down on the attempted size and reserve a
+  // smaller bump instead. (max 3 times, chosen somewhat arbitrarily)
+  for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
+    var overGrownHeapSize = oldSize * (1 + .2 / cutDown);
+    // ensure geometric growth
+    // but limit overreserving (default to capping at +96MB overgrowth at most)
+    overGrownHeapSize = Math.min(overGrownHeapSize, requestedSize + 100663296);
+    var newSize = Math.min(maxHeapSize, alignMemory(Math.max(requestedSize, overGrownHeapSize), 65536));
+    var replacement = growMemory(newSize);
+    if (replacement) {
+      return true;
+    }
   }
+  return false;
 };
+
+var _emscripten_resume_main_loop = () => MainLoop.resume();
 
 var _emscripten_set_main_loop_arg = (func, arg, fps, simulateInfiniteLoop) => {
   var iterFunc = () => getWasmTableEntry(func)(arg);
@@ -7459,8 +7485,10 @@ function assignWasmImports() {
     /** @export */ emscripten_get_heap_max: _emscripten_get_heap_max,
     /** @export */ emscripten_get_now: _emscripten_get_now,
     /** @export */ emscripten_num_logical_cores: _emscripten_num_logical_cores,
+    /** @export */ emscripten_pause_main_loop: _emscripten_pause_main_loop,
     /** @export */ emscripten_request_animation_frame: _emscripten_request_animation_frame,
     /** @export */ emscripten_resize_heap: _emscripten_resize_heap,
+    /** @export */ emscripten_resume_main_loop: _emscripten_resume_main_loop,
     /** @export */ emscripten_set_main_loop_arg: _emscripten_set_main_loop_arg,
     /** @export */ emscripten_start_fetch: _emscripten_start_fetch,
     /** @export */ emscripten_webgpu_get_device: _emscripten_webgpu_get_device,
@@ -7575,7 +7603,7 @@ var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a
 
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) => (dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = wasmExports["dynCall_iiiiiijj"])(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 
-var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289780;
+var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289976;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===

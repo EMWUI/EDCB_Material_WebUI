@@ -1,5 +1,3 @@
-let readyToAutoPlay;
-let hls,stream;
 let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
 let DataStream = localStorage.getItem('DataStream') == 'true';
 const danmaku = document.getElementById("danmaku-container");
@@ -14,7 +12,7 @@ if (vid.tslive){
 	vid.muted = true;
 	$(document).one('click', () => {
 		vid.muted = muted;
-		document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
+		document.querySelector('#volume').MaterialSlider&&document.querySelector('#volume').MaterialSlider.change(vid.muted?0:vid.volume);
 	});	
 }
 
@@ -31,8 +29,6 @@ const getVideoTime = t => {
 const $player = $('#player');
 const $playerUI_titlebar = $('#playerUI,#titlebar');
 const $contral = $('#control .mdl-menu__container');
-const $subtitles = $('#subtitles');
-const $vid_meta = $('#vid-meta');
 let hoverID = 0;
 const hideBar = (t = 0) => {
 	if (hoverID) clearTimeout(hoverID);
@@ -50,55 +46,38 @@ const stopTimer = () => {
 	$player.css('cursor', 'default');
 }
 
-const createCap = () => {
-	vid.cap ??= aribb24UseSvg ? new aribb24js.SVGRenderer(aribb24Option) : new aribb24js.CanvasRenderer(aribb24Option);
-	if (vid.tslive) vid.cap.attachMedia(null,document.getElementById("vid-cont"));
-	else vid.cap.attachMedia(vid);
-	if (!$subtitles.hasClass('checked')) vid.cap.hide();
-}
-
+const $vid_meta = $('#vid-meta');
 const resetVid = () => {
 	vid.reset();
-	stream.clear();
 
 	$vid_meta.attr('src', '');
-	$vid_meta.off('cuechange', oncuechangeB24Caption);
 	if (thumb) thumb.reset();
 }
 
-const $audio = $('#audio');
-const $cinema = $('#cinema');
-const $remote = $('#remote');
-const $remote_control = $('.remote-control');
-const $danmaku = $('#danmaku');
-
-const checkTslive = path => {
+const toggleTslive = () => {
 	const url = new URL(location.href);
-	const isTs = !path || /\.(?:m?ts|m2ts?)$/.test(path);
-	const tslive = isTs && $(`#${localStorage.getItem('quality')}`).hasClass('tslive');
-	if (!vid.tslive && tslive){
-		url.searchParams.set('tslive', 1);
-		history.replaceState(null, null, url);
-		location.reload();
-		return true;
-	}else if (vid.tslive && !tslive){
-		url.searchParams.delete('tslive');
-		history.replaceState(null, null, url);
-		location.reload();
-		return true;
-	}
+	url.searchParams.has('tslive') ? url.searchParams.delete('tslive') : url.searchParams.set('tslive', 1);
+	history.replaceState(null, null, url);
+	location.reload();
 }
 
 const seek = document.querySelector('#seek');
 const $seek = $(seek);
 const $duration = $('.duration');
-const $quality = $('.quality');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
+const $remote = $('#remote');
+const $remote_control = $('.remote-control');
+const $danmaku = $('#danmaku');
+const addClassLoadding = () => $vid.addClass('is-loading');
 const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
-	d.canPlay = d.path ? vid.canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
-	if (checkTslive(d.path)) return;
+	d.canPlay = d.path ? document.createElement('video').canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
+
+	if ((!d.canPlay&&vid.toTslive) || !vid.canPlayType(`video/${!d.path || /\.(?:m?ts|m2ts?)$/.test(d.path) ? 'mp2t' : d.path.match(/[^\.]*$/)}`)){
+		toggleTslive();
+		return;
+	}
 
 	if ($e.hasClass('item')){
 		$('#playprev').prop('disabled', $e.is('.item:first'));
@@ -110,36 +89,34 @@ const loadMovie = ($e = $('.is_cast')) => {
 	}
 
 	resetVid();
-	$vid.addClass('is-loading');
+	addClassLoadding();
 
 	$seek.attr('disabled', false);
-	$quality.attr('disabled', d.canPlay);
 	if (d.canPlay){
 		const path = `${ROOT}${!d.public ? `api/Movie?fname=${encodeURIComponent(d.path)}` : encodeURIComponent(d.path).replace('%2F','/')}`;
 		$vid.attr('src', path);
-		$vid_meta.on('cuechange', oncuechangeB24Caption);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
+		vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 	}else{
 		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
 		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
 
-		if (!d.meta) return;
-
-		if (d.meta.duration){
-			$duration.text(getVideoTime(d.meta.duration));
-			$seek.attr('max', d.meta.duration);
-			$seek.attr('step', 1);
-		}else{
-			$duration.text(getVideoTime());
-			$seek.attr('max', 1);
-			$seek.attr('step', 0.01);
+		if (d.meta){
+			if (d.meta.duration){
+				$duration.text(getVideoTime(d.meta.duration));
+				$seek.attr('max', d.meta.duration);
+				$seek.attr('step', 1);
+			}else{
+				$duration.text(getVideoTime());
+				$seek.attr('max', 1);
+				$seek.attr('step', 0.01);
+			}
+			if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 		}
-	    if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 	}
 
-	$remote.prop('disabled', stream.datacast.unavailable);
-	if (stream.datacast.unavailable) $remote_control.addClass('disabled').find('button').prop('disabled', true);
+	$remote.prop('disabled', vid.datacast.unavailable);
+	if (vid.datacast.unavailable) $remote_control.addClass('disabled').find('button').prop('disabled', true);
 
 	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
 		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
@@ -162,6 +139,7 @@ const playMovie = $e => {
 
 const playerUI = document.querySelector('#playerUI');
 const setbmlBrowserSize = () => {
+	if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
 	var width = window.innerWidth;
 	var height = width * (9/16);
 	if (vid.fullscreen){
@@ -179,13 +157,8 @@ const setbmlBrowserSize = () => {
 	bmlBrowserSetVisibleSize(width,height);
 }
 
-const oncuechangeB24Caption = e => {
-  $(e.target).off('cuechange',oncuechangeB24Caption);
-  createCap();
-  Datacast.oncuechangeB24Caption(vid.cap, e.target.track.cues);
-};
-
 $(window).on('load resize', () => {
+	setbmlBrowserSize();
 	$player.toggleClass('is-small', $vid.width() < 800);
 	if (vid.fullscreen) return;
 
@@ -195,7 +168,6 @@ $(window).on('load resize', () => {
 	}else{
 		$('#movie-theater-contner #player').prependTo('#movie-contner');
 	}
-	setbmlBrowserSize();
 });
 
 $(function(){
@@ -238,11 +210,6 @@ $(function(){
 			$('.is_cast').removeClass('is_cast playing');
 			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
 			Snackbar(`Error : ${[vid.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
-		},
-		hlserror(){
-			$vid.removeClass('is-loading');
-			$('.is_cast').removeClass('is_cast playing');
-			Snackbar('Error : HLS loading error');
 		},
 		volumechange(){
 			this.onVolumeChange();
@@ -289,14 +256,13 @@ $(function(){
 				if ($seek.data('touched')) return;
 
 				currentTime = this.currentTime * (this.fast || 1) + (this.ofssec || 0);
-				if (!vid.offset) seek.MaterialSlider.change(currentTime);
+				if (!this.offset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		},
 		streamStarted(){
-			if (DataStream && false || !$remote_control.hasClass('disabled')) stream.toggleDatacast(true);	//一度しか読み込めないため常時読み込みはオミット
-			stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
-			createCap();
+			if (DataStream && false || !$remote_control.hasClass('disabled')) this.toggleDatacast(true);	//一度しか読み込めないため常時読み込みはオミット
+			this.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 		},
 		enabledDetelecine(){
 			$('#cinema').mdl_prop('checked', true);
@@ -312,7 +278,6 @@ $(function(){
 
 	$('#play').click(() => vid.paused ? vid.play() : vid.pause());
 	
-	const $quality_audio = $('.quality,.audio');
 	const $stop = $('.stop');
 	const $epginfo = $('#epginfo');
 	$stop.click(() => {
@@ -329,7 +294,7 @@ $(function(){
 		$seek.hasClass('mdl-progress') ? seek.MaterialProgress.setProgress(0) : seek.MaterialSlider.change(0);
 		$currentTime_duration.text('0:00');
 		$seek.attr('disabled', true);
-		$quality_audio.attr('disabled', true);
+		$audios.attr('disabled', true);
 	});
 
 	const vid_thumb = document.querySelector('#vid-thumb');
@@ -337,8 +302,7 @@ $(function(){
 		change(){
 			if ($('.is_cast').data('canPlay')) return;
 
-			$vid.addClass('is-loading');
-			vid.setSeek(this.value);
+			vid.setSeek(this.value, addClassLoadding);
 		},
 		input(){
 			$currentTime.text(getVideoTime(this.value));
@@ -483,56 +447,27 @@ $(function(){
 		setbmlBrowserSize();
 	});
 
-	$('#autoplay').change(e => {
-		sessionStorage.setItem('autoplay', $(e.currentTarget).prop('checked'));
-		//vid.defaultPlaybackRate = $(e.currentTarget).prop('checked') ? vid.playbackRate : 1;
-	});
+	$('#autoplay').change(e => sessionStorage.setItem('autoplay', $(e.currentTarget).prop('checked')));
 
-	if (localStorage.getItem('quality')) $(`#${localStorage.getItem('quality')}`).prop('checked', true);
-	vid.params.set('option', localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`).val() : 1);
+	(() => {
+		const $e = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`) : $('[name=quality]:first');
+		$e.prop('checked', true);
+		vid.setOption($e.val(), $e.hasClass('tslive'), ()=> vid.readyToAutoPlay ? vid.toTslive=true : toggleTslive);
+	})()
+	
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
 		localStorage.setItem('quality', $e.attr('id'));
-		vid.params.set('option', $e.val());
 
-		if (checkTslive() || localStorage.getItem('apk') == 'true') return;		
-		$vid.addClass('is-loading');
-		hls.reload();
+		vid.setOption($e.val(), $e.hasClass('tslive'), toggleTslive, ()=>{if(localStorage.getItem('apk') != 'true')addClassLoadding();});
 	});
-	$('[name=audio]').change(e => {
-		vid.setAudioTrack($(e.currentTarget).val());
-	});
-	const $cinema = $('#cinema');
-	$cinema.change(e => {
-		vid.setDetelecine(e.currentTarget.checked);
-	});
-	const $rate = $('.rate');
-	$rate.change(e => {
+	$('[name=audio]').change(e => vid.setAudioTrack($(e.currentTarget).val(), addClassLoadding));
+	$('#cinema').change(e => vid.setDetelecine(e.currentTarget.checked, addClassLoadding));
+	$('.rate').change(e => {
 		const $e = $(e.currentTarget);
-		const isTs = !$('.is_cast').data('path') || /\.(?:m?ts|m2ts?)$/.test($('.is_cast').data('path'));
-		if (hls && isTs){
-			//サーバー側で倍速処理
-			vid.fast = $e.val();
-			if ($e.val() != 1){
-				vid.params.set('fast', $e.data('index'));
-			}else{
-				vid.params.delete('fast');
-			}
-			vid.playbackRate = 1;
-			stream.setFast(null);
-			$vid.addClass('is-loading');
-			hls.reload();
-			return;
-		}
-
-		vid.fast = 1;
-		if (vid.tslive){
-			//転送速度のスロットリングのため
-			vid.setFast($e.data('index'));
-		}
-		vid.playbackRate = $e.val();
-		stream.setFast($e.data('index'));
+		vid.setFast($e.val(), $e.data('index'), addClassLoadding);
 	});
+
 	vid.nwtv = $('[name=nwtv]:checked').val();
 	$('[name=nwtv]').change(e => {
 		vid.nwtv = $(e.currentTarget).val();
@@ -572,6 +507,7 @@ $(function(){
 
 	$('#live:not(.live)').click(() => vid.currentTime = vid.duration);
 
+	const $subtitles = $('#subtitles');
 	$subtitles.click(() => {
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
@@ -590,7 +526,7 @@ $(function(){
 			const disabled = !$remote_control.hasClass('disabled');
 			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
 
-			stream.toggleDatacast(!disabled);
+			vid.toggleDatacast(!disabled);
 		},
 		'touchstart mousedown': e => {
 			if (e.which > 1 || $remote.data('click')) return;
@@ -601,7 +537,7 @@ $(function(){
 				localStorage.setItem('DataStream', DataStream);
 				$remote.toggleClass('mdl-button--accent', DataStream);
 
-				stream.toggleDatacast(!$remote_control.hasClass('disabled'));
+				vid.toggleDatacast(!$remote_control.hasClass('disabled'));
 			}, 1000));
 		}
 	});
@@ -619,7 +555,7 @@ $(function(){
 			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
 			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
 
-			stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
+			vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 		},
 		'touchstart mousedown': e => {
 			if (e.which > 1 || $danmaku.data('click')) return;
@@ -630,7 +566,7 @@ $(function(){
 				localStorage.setItem('Jikkyo', Jikkyo);
 				$danmaku.toggleClass('mdl-button--accent', Jikkyo);
 
-				stream.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
+				vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 			}, 1000));
 		}
 	});
@@ -656,5 +592,7 @@ $(function(){
 	});
 
 	//準備できてから再生開始
-	if (readyToAutoPlay) readyToAutoPlay();
+	if (!vid.readyToAutoPlay) return;
+	vid.readyToAutoPlay();
+	vid.readyToAutoPlay = null;
 });

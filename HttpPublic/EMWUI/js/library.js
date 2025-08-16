@@ -150,13 +150,16 @@ $(function(){
 
 				if (thumb){
 					let hovered = false;
-					$e.hover(async () => {
-						hovered = true;
-						await getMetadata($e, hash);
-						if (hovered) thumb.roll(rollCanvas, $e.data('path'));
-					}, () => {
-						hovered = false;
-						thumb.hide();
+					$e.on({
+						'mouseenter touchstart': async () => {
+							hovered = true;
+							await getMetadata($e, hash);
+							if (hovered) thumb.roll(rollCanvas, $e.data('path'));
+						},
+						'mouseleave  touchend': () => {
+							hovered = false;
+							thumb.hide();
+						}
 					});
 				}
 
@@ -254,7 +257,7 @@ $(function(){
 	if (play){
 		const $e = $('<div class="hidden is_cast">');
 		$('#tvcast').append($e);
-		readyToAutoPlay = async () => {
+		vid.readyToAutoPlay = async () => {
 			await getMetadata($e, play);
 			playMovie($e);
 		}

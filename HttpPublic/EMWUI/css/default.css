@@ -1873,16 +1873,16 @@ h4 .mdl-button--icon {
     color: rgba(255, 255, 255, 0.26); }
 
 .ctl-button {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   z-index: 5;
   .material-icons {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     font-size: 28px;
-    -webkit-transform: translate(-21px,-21px);
-    transform: translate(-21px,-21px);
-    line-height: 42px; } }
+    -webkit-transform: translate(-20px,-20px);
+    transform: translate(-20px,-20px);
+    line-height: 40px; } }
   .ctl-button.mdl-button[disabled][disabled] {
     color: rgba(255,255,255,.26); }
   .ctl-button.mdl-button.mdl-button--accent{
@@ -1904,7 +1904,7 @@ h4 .mdl-button--icon {
     transition: left .1s cubic-bezier(.4,0,1,1),width .1s cubic-bezier(.4,0,1,1); }
     .marker.ctl-button.checked:after {
       width: 27px;
-      left: 8px;
+      left: 7px;
       -webkit-transition: left .25s cubic-bezier(0,0,.2,1),width .25s cubic-bezier(0,0,.2,1);
       -o-transition: left .25s cubic-bezier(0,0,.2,1),width .25s cubic-bezier(0,0,.2,1);
       transition: left .25s cubic-bezier(0,0,.2,1),width .25s cubic-bezier(0,0,.2,1); }

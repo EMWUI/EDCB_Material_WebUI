@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='250803',
+    css='250815',
     common='250723',
     tvguide='241224',
-    player='250808',
-    onair='250808',
-    library='250808',
+    player='250815',
+    onair='250815',
+    library='250815',
     setting='241224',
-    tsloader='250808',
+    tsloader='250815',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='f3c89c9',
@@ -38,6 +38,7 @@ function Template(temp)
   local olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,INI))~=0
   local suspend=''
   local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
+  local tslive = GetVarInt(mg.request_info.query_string,'tslive')==1 and '?tslive=1' or ''
   if WIN32 and EdcbFindFilePlain(edcbnosuspend) then
     local onstat,stat,code=edcb.os.execute('tasklist /fi "imagename eq edcbnosuspend.exe" /fo csv /nh | find /i "edcbnosuspend.exe"')
     onstat=onstat and stat=='exit' and code==0 and 'y'
@@ -167,13 +168,13 @@ end
   ..[=[
       <a class="mdl-navigation__link" href="]=]..path..[=[epg.html"><i class="material-icons">dashboard</i>番組表</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[epgweek.html"><i class="material-icons">view_week</i>週間番組表</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[onair.html"><i class="material-icons">tv</i>放送中</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[tvcast.html"><i class="material-icons">live_tv</i>リモート視聴</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[onair.html]=]..tslive..[=["><i class="material-icons">tv</i>放送中</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[tvcast.html]=]..tslive..[=["><i class="material-icons">live_tv</i>リモート視聴</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[reserve.html"><i class="material-icons">schedule</i>予約一覧</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[tunerreserve.html"><i class="material-icons">tune</i>チューナー別</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddepg.html"><i class="material-icons">update</i>EPG予約</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[autoaddmanual.html"><i class="material-icons">timer</i>プログラム予約</a>
-      <a class="mdl-navigation__link" href="]=]..path..[=[library.html"><i class="material-icons">storage</i>ライブラリ</a>
+      <a class="mdl-navigation__link" href="]=]..path..[=[library.html]=]..tslive..[=["><i class="material-icons">storage</i>ライブラリ</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[recinfo.html"><i class="material-icons">history</i>録画結果</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[search.html"><i class="material-icons">search</i>検索</a>
       <a class="mdl-navigation__link" href="]=]..path..[=[setting.html"><i class="material-icons">settings</i>設定</a>
@@ -894,7 +895,7 @@ function PlayerTemplate(video, liveOrAudio)
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
 ]=]..(live and '<li class="ext mdl-menu__item nwtv" id="nwtv"><button class="nwtv"><span class="mdl-layout-spacer">nwtv</span><i class="material-icons">navigate_next</i></button>' or '')..[=[
 <li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
-<li class="ext mdl-menu__item quality" id="quality" disabled><button class="quality" disabled><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
+<li class="ext mdl-menu__item quality" id="quality"><button class="quality"><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
 <li class="ext mdl-menu__item rate" id="rate"><button class="rate"><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
 </ul>]=]..(live and [=[<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="nwtv">
 ]=]..nwtv()..[=[
@@ -914,7 +915,7 @@ function PlayerTemplate(video, liveOrAudio)
 </div>
 </div>
 <div class="arib-video-invisible-container" id="vid-cont"><div class="arib-video-container">
-<]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '')..' ctok="'..CsrfToken(live and 'view' or 'xcode')..'"' or 'video')..' id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
+<]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '') or 'video is="ts-hls"'..(ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or ''))..' ctok="'..CsrfToken(live and 'view' or 'xcode')..'" id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
 </div></div>
 </div></div>
 ]=]
@@ -922,15 +923,15 @@ function PlayerTemplate(video, liveOrAudio)
 
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
-  ..'<script>const aribb24UseSvg='..(ARIBB24_USE_SVG and 'true' or 'false')..';const aribb24Option={'..ARIBB24_JS_OPTION..'};\n</script>\n'
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
 
   ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
 
   ..'<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
-  ..'<script>'..(not tslive and 'hls=new HlsLoader(vid,aribb24Option,'..(ALWAYS_USE_HLS and 'true,' or 'false,')..(USE_MP4_HLS and (USE_MP4_LLHLS and '2' or '1') or '')..',\''..(CsrfToken(live and 'view' or 'xcode'))..'\');\n' or '')
-  ..'stream=new Datacast(vid'..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and ',{container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog: `${ROOT}api/jklog`,comment: `${ROOT}api/comment`}' or '')..');\n</script>\n'
+  ..'<script>vid.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'vid.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
+  ..'</script>\n'
 end
 
 function MacroTemplate()
