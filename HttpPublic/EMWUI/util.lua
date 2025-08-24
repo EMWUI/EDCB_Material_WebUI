@@ -832,7 +832,9 @@ function PlayerTemplate(video, liveOrAudio)
 ]=]..(USE_DATACAST and [=[<div class="remote-control disabled">
   <span class="navi">
     <span>
+      <button class="draggable" disabled></button>
       <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">north</span></button>
+      <button class="draggable" disabled></button>
     </span><span>
       <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">west</span></button>
       <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary" disabled><span class="fill material-icons">circle</span></button>

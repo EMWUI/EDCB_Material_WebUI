@@ -67,7 +67,8 @@ const $duration = $('.duration');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
 const $remote = $('#remote');
-const $remote_control = $('.remote-control');
+const remocon = document.querySelector('.remote-control');
+const $remote_control = $(remocon);
 const $danmaku = $('#danmaku');
 const addClassLoadding = () => $vid.addClass('is-loading');
 const loadMovie = ($e = $('.is_cast')) => {
@@ -452,7 +453,7 @@ $(function(){
 	(() => {
 		const $e = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`) : $('[name=quality]:first');
 		$e.prop('checked', true);
-		vid.setOption($e.val(), $e.hasClass('tslive'), ()=> vid.readyToAutoPlay ? vid.toTslive=true : toggleTslive);
+		vid.setOption($e.val(), $e.hasClass('tslive'), vid.readyToAutoPlay ? () => vid.toTslive=true : toggleTslive);
 	})()
 	
 	$('[name=quality]').change(e => {
@@ -491,7 +492,7 @@ $(function(){
 
 		$player_container.mousemove(() => {
 			stopTimer();
-			hideBar(2000);
+			hideBar(3000);
 			$playerUI.addClass('is-visible');
 		});
 	}else{
@@ -501,7 +502,7 @@ $(function(){
 		$('.player-container>*').not('.remote-control').click(() => {
 			$('#playerUI').addClass('is-visible');
 			stopTimer();
-			hideBar(2000);
+			hideBar(3000);
 		});
 	}
 
@@ -518,7 +519,7 @@ $(function(){
 
 	if (DataStream) $remote.addClass('mdl-button--accent');
 	$remote.on({
-		'click': () => {
+		click(){
 			if (!$remote.data('click')) return;
 
 			clearTimeout($remote.data('click'));
@@ -528,8 +529,8 @@ $(function(){
 
 			vid.toggleDatacast(!disabled);
 		},
-		'touchstart mousedown': e => {
-			if (e.which > 1 || $remote.data('click')) return;
+		pointerdown(e){
+			if (e.button != 0 || $remote.data('click')) return;
 
 			$remote.data('click', setTimeout(() => {
 				$remote.data('click', false);
@@ -541,6 +542,25 @@ $(function(){
 			}, 1000));
 		}
 	});
+	remocon.transform = {X: 0, Y: 0};
+	$('.draggable').on({
+		pointerdown(e){
+			if (e.button != 0) return;
+			remocon.touched = true;
+			e.currentTarget.style.cursor = 'grabbing';
+			e.currentTarget.setPointerCapture(e.pointerId);
+		},
+		pointermove(e){
+			if (!remocon.touched) return;
+			hideBar(3000);
+			remocon.style.transform = `translate(${remocon.transform.X += e.originalEvent.movementX}px, ${remocon.transform.Y += e.originalEvent.movementY}px)`;
+		},
+		pointerup(e){
+			remocon.touched = false;
+			e.currentTarget.style.cursor = null;
+			e.currentTarget.releasePointerCapture(e.pointerId);
+		}
+	});
 
 	$('#num').change(e => $('.remote-control .num').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
 
@@ -548,7 +568,7 @@ $(function(){
 	if (Jikkyo) $danmaku.addClass('mdl-button--accent');
 
 	$danmaku.on({
-		'click': () => {
+		click(){
 			if (!$danmaku.data('click')) return;
 
 			clearTimeout($danmaku.data('click'));
@@ -557,8 +577,8 @@ $(function(){
 
 			vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
 		},
-		'touchstart mousedown': e => {
-			if (e.which > 1 || $danmaku.data('click')) return;
+		pointerdown(e){
+			if (e.button != 0 || $danmaku.data('click')) return;
 
 			$danmaku.data('click', setTimeout(() => {
 				$danmaku.data('click', false);

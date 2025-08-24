@@ -378,8 +378,8 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#errorEvent;
 	constructor(notCustom, video, aribb24 = {}, alwaysUseHls, hls4, ctok){
 		super();
-		this.#params = new URLSearchParams();
 		this.#fast = 1;
+		this.#params = new URLSearchParams();
 		if (notCustom){
 			this.#e = video;
 			this.#e.params = this.params;
@@ -1540,7 +1540,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		var readCount=0;
 		var ctx={};
 		this.#xhr=new XMLHttpRequest();
-		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#e.fast || 1))}`);
+		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#fast || 1))}`);
 		this.#xhr.onloadend=()=>{
 			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
 				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
