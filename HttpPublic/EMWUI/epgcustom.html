@@ -140,7 +140,6 @@ end
 ct={
   title=EdcbHtmlEscape(preset or post and '検索 ('..ParseAndKey(key.andKey).andKey..')' or olympic and 'オリンピック・FIFAワールドカップ' or ''),
   css=EpgCssTemplate(),
-  js=EpgJsTemplate(baseTime-9*3600,true),
   menu=EpgMenuTemplate(true),
   searchlinks=not SIDE_PANEL
 }
@@ -239,6 +238,7 @@ ct.main=table.concat(main)..'</div><main class="sidePanel-container mdl-layout__
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
+  ..EpgJsTemplate(baseTime-9*3600,true)
 
 ct=Template(ct)
 

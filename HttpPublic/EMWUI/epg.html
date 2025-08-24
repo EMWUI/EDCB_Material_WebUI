@@ -87,7 +87,6 @@ end
 ct={
   title='番組表',
   css=EpgCssTemplate(),
-  js=EpgJsTemplate(pageTime-9*3600,NOW,date==0,(NOW and pageTime+(interval-9)*3600 or false)),
   menu=EpgMenuTemplate(true),
   searchlinks=not SIDE_PANEL
 }
@@ -322,6 +321,7 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
+  ..EpgJsTemplate(pageTime-9*3600,NOW,date==0,(NOW and pageTime+(interval-9)*3600 or false))
 
 ct=Template(ct)
 

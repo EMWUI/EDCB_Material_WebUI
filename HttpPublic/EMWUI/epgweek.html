@@ -44,7 +44,6 @@ end
 ct={
   title='週間番組表'..(st and ' <span class="mdl-typography--subhead mdl-cell--hide-phone">－<img class="logo" src="'..PathToRoot()..'api/logo?onid='..st.onid..'&sid='..st.sid..'"><span>'..st.service_name..'</span></span>' or ''),
   css=EpgCssTemplate(),
-  js=EpgJsTemplate(Hour,NOW),
   menu=EpgMenuTemplate(true),
   searchlinks=not SIDE_PANEL
 }
@@ -202,6 +201,7 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
   ..'</form>\n'
+  ..EpgJsTemplate(Hour,NOW)
 
 ct=Template(ct)
 

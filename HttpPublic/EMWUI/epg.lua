@@ -32,7 +32,7 @@ CATEGORY={
   'other',
 }
 
-function Background(key, def)
+function Background(key,def)
   return '.'..key..'{background:'..edcb.GetPrivateProfile('BACKGROUND',key,def,INI)..';}'
 end
 
@@ -76,21 +76,21 @@ end
 
 function EpgJsTemplate(baseTime,NOW,date,lastTime)
   local titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,INI))
-  return '<script>'
-    ..'const SHOW_MIN='..(SHOW_MIN and 'true' or 'false')
-    ..';let oneminpx='..ONE_MIN_PX
-    ..';const baseTime='..baseTime
-    ..';const lastTime='..(lastTime and lastTime or 'null')
-    ..';const titleControl='..titleControl
-    ..';const marginmin='..MARGIN_MIN
-    ..';const hover='..(HOVER and 'true' or 'false')
-    ..';const now='..(NOW and 'true' or 'false')
-    ..';const endMark='..(date and 'true' or 'false')
-    ..';const ctok=\''..CsrfToken('setreserve')
-    ..'\';</script>\n<script src="js/tvguide.js'..Version('tvguide')..'"></script>\n'
+  return '<script src="js/tvguide.js'..Version('tvguide')..'"></script>\n'
+    ..'<script>new TvGuide('
+    ..ONE_MIN_PX..','
+    ..baseTime..','
+    ..MARGIN_MIN..','
+    ..(lastTime and lastTime or 'null')..','
+    ..titleControl..','
+    ..(HOVER and 'true,' or 'false,')
+    ..(NOW and 'true,' or 'false,')
+    ..(date and 'true,' or 'false,')
+    ..');const ctok=\''..CsrfToken('setreserve')
+    ..'\';</script>\n'
 end
 
-function CellTemplate(v, op, id ,custom)
+function CellTemplate(v,op,id,custom)
   local category=v.contentInfoList and #v.contentInfoList>0 and CATEGORY[math.floor(v.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
   local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
   local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
