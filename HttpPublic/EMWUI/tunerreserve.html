@@ -28,7 +28,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
     page=GetVarInt(mg.request_info.query_string,'page',0,(#a-1)/pageCount) or 0
     if pageCount==0 then pageCount=#a end
 
-    pageNav=pagination(page, a)
+    pageNav=Pagination(page, a)
 
     table.insert(ctt, '<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
 
@@ -46,7 +46,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
 
     for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
       w=a[i]
-      size=getPredictionSize(w)
+      size=GetPredictionSize(w)
 
       table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
         ..(w.recSetting.recMode==5 and ' disabled' or w.overlapMode==1 and ' partially' or w.overlapMode==2 and ' shortage' or '')

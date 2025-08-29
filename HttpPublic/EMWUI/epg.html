@@ -1,7 +1,6 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
-show=mg.get_var(mg.request_info.query_string,'show')
 tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkIndex()) or 0
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or GetVarDate(mg.request_info.query_string,'date') or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or -1
@@ -87,7 +86,7 @@ end
 ct={
   title='番組表',
   css=EpgCssTemplate(),
-  menu=EpgMenuTemplate(true),
+  menu=EpgMenuTemplate(),
   searchlinks=not SIDE_PANEL
 }
 

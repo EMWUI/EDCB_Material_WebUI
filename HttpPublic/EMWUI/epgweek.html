@@ -1,7 +1,6 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
-show=mg.get_var(mg.request_info.query_string,'show')
 date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or GetVarDate(mg.request_info.query_string,'date') or 0
 hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
 --hour=-1で現在時刻-MARGIN_HOUR時間を基準
@@ -44,7 +43,7 @@ end
 ct={
   title='週間番組表'..(st and ' <span class="mdl-typography--subhead mdl-cell--hide-phone">－<img class="logo" src="'..PathToRoot()..'api/logo?onid='..st.onid..'&sid='..st.sid..'"><span>'..st.service_name..'</span></span>' or ''),
   css=EpgCssTemplate(),
-  menu=EpgMenuTemplate(true),
+  menu=EpgMenuTemplate(),
   searchlinks=not SIDE_PANEL
 }
 

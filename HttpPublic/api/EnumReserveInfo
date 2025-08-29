@@ -4,7 +4,7 @@ edcb.htmlEscape=15
 a=edcb.GetReserveData()
 ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
 for i,v in ipairs(a) do
-  size=getPredictionSize(v)
+  size=GetPredictionSize(v)
   table.insert(ct, '<reserveinfo><ID>'
     ..v.reserveID..'</ID><title>'
     ..v.title..'</title><startDate>'

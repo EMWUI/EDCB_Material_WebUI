@@ -13,7 +13,7 @@ if onair then
   if not startTime then
     startTime=os.date('!*t',utc9Now-24*3600)
   end
-  durationSecond=mg.get_var(mg.request_info.query_string,'duration') or 48*3600
+  durationSecond=mg.get_var(mg.request_info.query_string,'duration') or (48*3600)
 
   b=edcb.EnumEventInfo({key},{startTime=startTime, durationSecond=durationSecond})
 

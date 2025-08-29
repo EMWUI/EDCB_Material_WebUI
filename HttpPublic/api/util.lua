@@ -1115,7 +1115,7 @@ end
 
 --予想ファイルサイズ
 BITRATE={}
-function getPredictionSize(v)
+function GetPredictionSize(v)
   local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
   local size=nil
   local key
@@ -1146,6 +1146,7 @@ function HideServiceList()
 end
 
 function CustomServiceList()
+  local show=mg.get_var(mg.request_info.query_string,'show')
   local subch=mg.get_var(mg.request_info.query_string,'subch')
   local SubChConcat=tonumber(edcb.GetPrivateProfile('GUIDE','subChConcat',true,INI))~=0
   local NOT_SUBCH={
@@ -1233,7 +1234,7 @@ end
 function GetRecSetting(post)
   local useMargin=GetVarInt(post,'useDefMarginFlag')~=1 or nil
   local rs={
-    batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or rs.batFilePath,
+    batFilePath=mg.get_var(post, 'batFilePath') and mg.get_var(post, 'batFilePath')..(#mg.get_var(post, 'batFileTag')>0 and '*'..mg.get_var(post, 'batFileTag') or '') or '',
     recFolderList={},
     partialRecFolder={},
     recMode=GetVarInt(post,'recEnabled')~=1 and 5 or GetVarInt(post,'recMode',0,4),

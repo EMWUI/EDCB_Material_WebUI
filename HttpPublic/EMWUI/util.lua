@@ -83,7 +83,7 @@ function Template(temp)
 <script src="]=]..path..[=[js/hammer.min.js"></script>
 <script src="]=]..path..[=[js/jquery.hammer.js"></script>
 ]=]
-..'<script>const ROOT=\''..PathToRoot()..'\';const PAGE_COUNT='..edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI)..';'..(temp.searchlinks and searchLinksScriptTemplate() or '')..'</script>\n'
+..'<script>const ROOT=\''..PathToRoot()..'\';const PAGE_COUNT='..edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI)..';'..(temp.searchlinks and SearchLinksScriptTemplate() or '')..'</script>\n'
 ..'<script src="'..path..'js/common.js'..Version('common')..'"></script>\n'
 ..(temp.js or '')
 
@@ -102,7 +102,7 @@ for i,v in ipairs(temp.dialog or {}) do
     ..'</div>\n</dialog>\n')
 end
 
-if temp.reserve or hasSIDE_PANEL then
+if temp.reserve or HAS_SIDE_PANEL then
   local r=temp.reserve
   local dur=r and r.startTime.hour*3600+r.startTime.min*60+r.startTime.sec+r.durationSecond or nil
   s:Append('<dialog id="dialog_progres" class="mdl-dialog">\n<div class="mdl-dialog__content">\n'
@@ -678,15 +678,15 @@ function ManuAddTemplate(aa)
   end
   if not found and aa and aa.onid then
     s=s..'<option value="'..aa.onid..'-'..aa.tsid..'-'..aa.sid..'" selected'
-      ..'>('..NetworkIndex()[NetworkIndex(v)]..') '..aa.stationName..'\n'
+      ..'>('..NetworkIndex()[NetworkIndex(aa)]..') '..aa.stationName..'\n'
   end
   return s..'</select></div>\n</div></div>\n'
 end
 
-function searchLinksScriptTemplate()
+function SearchLinksScriptTemplate()
   local esc=edcb.htmlEscape
   edcb.htmlEscape=0
-  links=edcb.GetPrivateProfile('SET','links','',INI)
+  local links=edcb.GetPrivateProfile('SET','links','',INI)
   edcb.htmlEscape=esc
   return 'const Links={calendar:{details:\''..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)
     ..'\',op:\'&authuser='..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)
@@ -696,7 +696,7 @@ end
 
 function SidePanelTemplate(list)
   if not SIDE_PANEL then return '' end
-  hasSIDE_PANEL=true
+  HAS_SIDE_PANEL=true
   local rs
   local s=''
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do
@@ -775,13 +775,12 @@ function SidePanelTemplate(list)
   ..';}.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
   ..';}</style>\n'
   ..'<script>const ctok=\''..CsrfToken('setreserve')..'\';' or '<script>')
-  ..searchLinksScriptTemplate()..'</script>\n'
+  ..SearchLinksScriptTemplate()..'</script>\n'
 end
 
 --プレイヤー
 function PlayerTemplate(video, liveOrAudio)
   local tslive = GetVarInt(mg.request_info.query_string,'tslive')==1
-  local list = edcb.GetPrivateProfile('set','quality','',INI)
   local live = type(liveOrAudio)=='boolean' and liveOrAudio
   local function nwtv()
     local n=GetVarInt(mg.request_info.query_string,'n') or 0
@@ -1102,7 +1101,7 @@ function MacroTemplate()
 ]=]
 end
 
-function pagination(page, a, href)
+function Pagination(page, a, href)
   if (not href) then href = mg.script_name:match('[^\\/]*$') end
   local pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
   local tag=page>0 and 'a' or 'button'

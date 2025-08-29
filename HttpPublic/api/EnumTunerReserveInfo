@@ -10,7 +10,7 @@ for i,v in ipairs(a) do
     ..v.tunerName..'</tunerName><reserveList>')
   for j,w in ipairs(v.reserveList) do
     r=edcb.GetReserveData(w)
-    size=getPredictionSize(r)
+    size=GetPredictionSize(r)
     table.insert(ct, '<reserveinfo><ID>'
     ..r.reserveID..'</ID><title>'
     ..r.title..'</title><startDate>'

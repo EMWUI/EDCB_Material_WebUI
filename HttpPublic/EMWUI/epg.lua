@@ -6,10 +6,7 @@ ONE_MIN_PX=edcb.GetPrivateProfile('GUIDE','ONE_MIN_PX','4',INI)
 MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',INI)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',INI)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',INI))
-
-local IS_SP=UserAgentSP()
-DEF_CH_COUNT=IS_SP and 15 or DEF_CH_COUNT
-DEF_INTERVAL=IS_SP and 13 or 25
+DEF_INTERVAL=25
 
 utc9Now=os.time()+9*3600
 

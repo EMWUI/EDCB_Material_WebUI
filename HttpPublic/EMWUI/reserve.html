@@ -43,7 +43,7 @@ rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
 rate={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
-  size=getPredictionSize(v)
+  size=GetPredictionSize(v)
   table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
     ..(v.recSetting.recMode==5 and ' disabled' or v.overlapMode==1 and ' partially' or v.overlapMode==2 and ' shortage' or '')
     ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)-(v.recSetting.startMargin or 0))*1000 or '')
@@ -61,7 +61,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n')
 end
 
-pageNav=pagination(page, a)
+pageNav=Pagination(page, a)
 
 ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
