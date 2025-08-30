@@ -802,8 +802,8 @@ function PlayerTemplate(video, liveOrAudio)
         ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
     end
   end
+  local autoCinema
   local function option()
-    local autoCinema
     local s=''
     for i,v in ipairs(XCODE_OPTIONS) do
       if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
@@ -888,9 +888,9 @@ function PlayerTemplate(video, liveOrAudio)
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span class="mdl-cell--hide-phone"><span> / </span><span class="duration videoTime">0:00</span></span></div>
 ]=]..(live and '<div id="live"><span>&#8226;</span><small>ライブ</small></div>' or '')..[=[
 <p class="mdl-layout-spacer"></p>
-]=]..(USE_DATACAST and '<button id="remote" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
+]=]..(USE_DATACAST and '<button id="datacast" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
   ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">subtitles</i></button>\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="danmaku" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<button id="jikkyo" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">sms</i></button>\n' or '')..[=[
 <button id="settings" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings</i></button>
 <ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="settings">
 <li class="ext mdl-menu__item hidden" id="menu_autoplay"><label for="autoplay" class="mdl-layout-spacer">自動再生</label><span><label class="mdl-switch mdl-js-switch" for="autoplay"><input type="checkbox" id="autoplay" class="mdl-switch__input"></label></span></li>
@@ -920,8 +920,6 @@ function PlayerTemplate(video, liveOrAudio)
 </div></div>
 </div></div>
 ]=]
-  ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'"></script>\n' or '')
-
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
@@ -931,6 +929,7 @@ function PlayerTemplate(video, liveOrAudio)
   ..'<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
   ..'<script>vid.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
+  ..(USE_DATACAST and 'vid.setWebBml("js/web_bml_play_ts.js'..Version('bml')..'", initRemocon);\n' or '')
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'vid.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
   ..'</script>\n'
 end

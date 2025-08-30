@@ -344,7 +344,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 				this.#e.dispatchEvent(new Event('error'));
 				return;
 			}
-			this.#e.dispatchEvent(new Event('streamStarted'));
+			super.loadSubData?super.loadSubData():this.#e.dispatchEvent(new Event('streamStarted'));
 			this.#cap&&this.#cap.attachMedia(null, this.#container);
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
@@ -433,7 +433,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 			if (Hls.isSupported()){
 				this.#hls = new Hls();
 				this.#hls.attachMedia(this.#e);
-				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => {this.#e.dispatchEvent(new Event('streamStarted')); this.#cap&&this.#cap.attachMedia(this.#e);});
+				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => {super.loadSubData?super.loadSubData():this.#e.dispatchEvent(new Event('streamStarted')); this.#cap&&this.#cap.attachMedia(this.#e);});
 				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#cap&&this.#cap.pushID3v2Data(d.pts, d.data)));
 
 				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
@@ -725,15 +725,20 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		commInput: document.getElementById("comm"),
 		commBtn: document.getElementById("commSend"),
 		bcomm: document.getElementById("comment-control"),
+		webBmlContainer: document.querySelector(".data-broadcasting-browser-container"),
+		remocon: document.querySelector(".remote-control"),
 		indicator: document.querySelector(".remote-control-indicator"),
+		indicatorName: ".remote-control-indicator",
 	}
+	#webBmlSrc;
 	#noWebBml;
 	#noDanmaku;
-	constructor(video, danmaku, ctok, replaceTag, api){
+	constructor(video, webBml, danmaku, ctok, replaceTag, api){
 		super();
 		this.#e = video||this;
 		this.#fast = 1;
 		this.#params = new URLSearchParams();
+		this.#webBmlSrc = webBml;
 		this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
 		this.#noDanmaku = typeof Danmaku === 'undefined';
 		if (danmaku) this.#initDanmaku(danmaku, ctok, replaceTag, api);
@@ -742,12 +747,14 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	get clear(){return this.#clear}
 	get datacast(){return this.#datacast}
-	get jikkyo(){return this.#jk}
+	get jikkyo(){return this.#jikkyo}
 	get toggleDatacast(){return this.#toggleDatacast}
 	get toggleJikkyo(){return this.#toggleJikkyo}
+	get loadSubData(){return this.#loadSubData}
 	get setFast(){return this.#setFast}
 
 	get createDanmaku(){return this.#initDanmaku}
+	get setWebBml(){return this.#setWebBml};
 	get shiftJikkyo(){return this.#shiftJikkyo}
 
 	get setElemsList(){return this.#setElems}
@@ -783,37 +790,66 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#danmaku = new Danmaku(this.#danmakuOption);
 		if (this.#elems.commInput) this.#addSendComment();
 	}
+	#initRemocon = () => {}
+	#setWebBml(src, initRemocon){
+		this.#webBmlSrc = src;
+		this.#initRemocon = initRemocon;
+		this.#initWebBml();
+	}
+	async #initWebBml(){
+		return new Promise((resolve, reject) => {
+			//bmlブラウザを空に、リモコンのイベントを消し去る
+			[...this.#elems.webBmlContainer.children, ...this.#elems.remocon.children].forEach(e => e.replaceWith(e.cloneNode(true)));
+			this.#elems.indicator = this.#elems.remocon.querySelector(this.#elems.indicatorName);
+			this.#initRemocon(this.#elems.remocon);
+			const script = document.createElement('script');
+			script.src = this.#webBmlSrc;
+			script.onload = () => {
+				this.#loaded = null;
+				this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
+				return resolve();
+			}
+			script.onerror = () => reject();
+			document.body.append(script);
+		});
+	}
 	#clear(){
-		this.#jklog.clear();
-		this.#psc.clear();
-		this.#disableJikkyo();
-		this.#disableDatacast();
+		if (!this.#noDanmaku){
+			this.#jklog.disable();
+			this.#jkStream.clear();
+		}
+		if (!this.#noWebBml){
+			this.#psc.disable();
+			this.#dataStream.clear();
+		}
+		this.#closeSubStream();
 	}
 	#STATE = {
 		DISABLED: 0,
-		STREAM: 1,
-		LOG: 2,
+		ENABLED: 1,
+		STREAM: 2,
+		LOG: 3,
 	}
 	get #datacast(){
 		return {
-			unavailable: this.#unavailable,
+			enabled: this.#datacastState ? true : false,
 			enable: () => this.#enableDatacast(),
 			disable: () => this.#disableDatacast(),
 		}
 	}
-	get #unavailable(){
-		return this.#loaded&&this.#loaded!=(this.#e.initSrc || his.#e.getAttribute("src")) ? true : false
-	}
 	#datacastState = this.#STATE.DISABLED;
 	#enableDatacast(){
+		this.#datacastState = this.#STATE.ENABLED;
 		if (this.#noWebBml) return;
-		if (this.#e.initSrc) this.#dataStream.enable();
+		if (this.#e.initSrc) this.#dataStream.enable(true);
 		else this.#psc.enable();
 	}
 	#disableDatacast(){
-		if (this.#noWebBml) return;
-		if (this.#datacastState==this.#STATE.STREAM) this.#dataStream.disable();
-		else this.#psc.disable();
+		if (!this.#noWebBml){
+			if (this.#datacastState==this.#STATE.STREAM) this.#dataStream.disable();
+			else this.#psc.disable();
+		}
+		this.#datacastState=this.#STATE.DISABLED;
 	}
 	#toggleDatacast(enabled){
 		if (enabled===false || enabled===undefined&&this.#datacastState)
@@ -821,9 +857,12 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		else this.#enableDatacast();
 		return this.#datacastState ? true : false;
 	}
-	get #jk(){
+	get #jikkyo(){
 		return {
 			danmaku: this.#danmaku,
+			enabled: this.#jikkyoState ? true : false,
+			showing: this.#jikkyoState && this.#jkStream.showing ? true : false,
+			loading: this.#jkStream.loading ? true : false,
 			show: () => this.#showJikkyo(),
 			hide: () => this.#hideJikkyo(),
 			enable: () => this.#enableJikkyo(),
@@ -832,31 +871,47 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	}
 	#jikkyoState = this.#STATE.DISABLED;
 	#enableJikkyo(){
+		this.#jikkyoState = this.#STATE.ENABLED;
 		if (this.#noDanmaku) return;
-		if (this.#e.initSrc) this.#jikkyo.enable();
+		if (this.#e.initSrc) this.#jkStream.enable(true);
 		else this.#jklog.enable();
 	}
 	#disableJikkyo(){
-		if (this.#noDanmaku) return;
-		if (this.#jikkyoState==this.#STATE.STREAM) this.#jikkyo.disable();
-		else this.#jklog.disable();
+		if (!this.#noDanmaku){
+			if (this.#jikkyoState==this.#STATE.STREAM) this.#jkStream.disable();
+			else this.#jklog.disable();
+		}
+		this.#jikkyoState=this.#STATE.DISABLED;
+		this.#jkStream.showing = false;
 	}
 	#showJikkyo(){
+		this.#jkStream.showing = true;
 		if (this.#noDanmaku) return;
 		if (!this.#jikkyoState) this.#enableJikkyo();
 		this.#danmaku.show();
 	}
 	#hideJikkyo(){
+		this.#jkStream.showing = false;
 		if (this.#noDanmaku) return;
 		if (!this.#jikkyoState) this.#enableJikkyo();
 		this.#danmaku.hide();
 	}
-	#toggleJikkyo(enabled, load){
-		if (enabled===false&&!load || enabled===undefined&&this.#jikkyoState)
+	#toggleJikkyo(enabled, load = this.#jkStream.loading){
+		this.#jkStream.loading = load;
+		if (!load && (enabled===false || enabled===undefined&&this.#jikkyoState))
 			this.#disableJikkyo();
-		else if (enabled===false || enabled===undefined&&this.#jikkyoState) this.#hideJikkyo();
+		else if (enabled===false || enabled===undefined&&this.jikkyo.showing) this.#hideJikkyo();
 		else this.#showJikkyo();
-		return this.#jikkyoState ? true : false;
+		return this.jikkyo.showing;
+	}
+	#loadSubData(){
+		if (!this.#noWebBml && this.#datacastState!=this.#STATE.DISABLED)
+			if (this.#e.initSrc) this.#dataStream.enable();
+			else this.#psc.enable();
+		if (!this.#noDanmaku && this.#jikkyoState!=this.#STATE.DISABLED)
+			if (this.#e.initSrc) this.#jkStream.enable();
+			else this.#jklog.enable();
+		if (this.#e.initSrc) this.#openSubStream();
 	}
 	#setFast(val, index){
 		if (val == 1) this.#params.delete('fast');
@@ -1006,7 +1061,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(i==readCount){
 				i=response.indexOf("\n",readCount);
 				if(i<0)break;
-				this.#jikkyo.stream(response.substring(readCount,i));
+				this.#jkStream.stream(response.substring(readCount,i));
 				readCount=i+1;
 			}else{
 				i=i<0?response.length:i;
@@ -1200,19 +1255,20 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#scatterInterval=200;
 	#closed;
 	#jkID="?";
-	#jikkyo = {
-		disable: () => {
-			this.#jikkyoState=this.#STATE.DISABLED;
-			this.#params.delete('jikkyo');
+	#jkStream = {
+		clear: () => {
 			clearInterval(this.#checkScrollID);
 			this.#checkScrollID=0;
-			this.#openSubStream();
-			if (this.#elems.bcomm){
-				this.#elems.bcomm.style.display="none";
-				while (this.#elems.chats.firstChild) this.#elems.chats.removeChild(this.#elems.chats.firstChild);
-			}
+			if (!this.#elems.bcomm) return;
+			this.#elems.bcomm.style.display="none";
+			while (this.#elems.chats.firstChild) this.#elems.chats.removeChild(this.#elems.chats.firstChild);
 		},
-		enable: () => {
+		disable: () => {
+			this.#params.delete('jikkyo');
+			this.#jkStream.clear();
+			this.#openSubStream();
+		},
+		enable: open => {
 			this.#jikkyoState=this.#STATE.STREAM;
 			this.#params.set('jikkyo', 1);
 			this.#fragment=null;
@@ -1224,7 +1280,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				this.#elems.bcomm.style.display=null;
 				this.#chatsScroller();
 			}
-			this.#openSubStream();
+			if (open) this.#openSubStream();
 		},
 		error: (status, readCount) => {
 			this.#addMessage("Error! ("+status+"|"+readCount+"Bytes)");
@@ -1387,26 +1443,21 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			this.#psc.readTimer=setTimeout(()=>read(),500);
 		},
-		clear: () => {
+		disable: () => {
+			clearTimeout(this.#psc.readTimer);
+			this.#psc.readTimer=0;
+			bmlBrowserSetInvisible(true);
+			if (this.#elems.indicator) this.#elems.indicator.innerText = '';
 			if(this.#psc.xhr){
 				this.#psc.xhr.abort();
 				this.#psc.xhr=null;
 			}
-			this.psiData=null;
+			this.#psiData=null;
 			this.#psc.videoLastSec=0;
 		},
-		disable: () => {
-			this.#datacastState=this.#STATE.DISABLED;
-			clearTimeout(this.#psc.readTimer);
-			this.#psc.readTimer=0;
-			bmlBrowserSetInvisible(true);
-		},
-		enable: () => {
+		enable: async () => {
 			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
-			if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src")){
-				this.#e.dispatchEvent(new Event('disabledDatacast'));
-				return
-			}
+			if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src"))await this.#initWebBml();
 			this.#datacastState=this.#STATE.LOG;
 			this.#psc.startRead();
 			bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
@@ -1417,9 +1468,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#psc.xhr.responseType="arraybuffer";
 			this.#psc.xhr.overrideMimeType("application/octet-stream");
 			this.#psc.xhr.onloadend=()=>{
-				if(!this.#psiData){
-					if(this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+this.#psc.xhr.status+")";
-				}
+				if(!this.#psiData&&this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+this.#psc.xhr.status+")";
 			};
 			this.#psc.xhr.onload=()=>{
 				if(this.#psc.xhr.status!=200||!this.#psc.xhr.response)return;
@@ -1455,7 +1504,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			this.#jklog.readTimer=setTimeout(()=>read(),200);
 		},
-		clear: () => {
+		disable: () => {
+			clearTimeout(this.#jklog.readTimer);
+			this.#jklog.readTimer=0;
 			if(this.#jklog.xhr){
 				this.#jklog.xhr.abort();
 				this.#jklog.xhr=null;
@@ -1468,11 +1519,6 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#closed=false;
 			this.#jkID="?";
 		},
-		disable: () => {
-			this.#jikkyoState=this.#STATE.DISABLED;
-			clearTimeout(this.#jklog.readTimer);
-			this.#jklog.readTimer=0;
-		},
 		enable: () => {
 			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
 			this.#jikkyoState=this.#STATE.LOG;
@@ -1483,7 +1529,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${this.#fname().replace(/^(?:\.\.\/)+/,"")}`);
 			this.#jklog.xhr.onloadend=()=>{
 				if(!this.#logText){
-					this.#jikkyo.error(this.#jklog.xhr.status,0);
+					this.#jkStream.error(this.#jklog.xhr.status,0);
 				}
 			};
 			this.#jklog.xhr.onload=()=>{
@@ -1525,6 +1571,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	#reopen;
 	#xhr;
+	#closeSubStream(){
+		if (!this.#xhr) return;
+		this.#xhr.abort();
+		this.#xhr=null;
+	}
 	#openSubStream(){
 		if(this.#reopen)return;
 		if(this.#xhr){
@@ -1536,7 +1587,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			return;
 		}
-		if(!this.#params.has('psidata')&&!this.#params.has('jikkyo'))return;
+		if(!this.#e.initSrc||!this.#params.has('psidata')&&!this.#params.has('jikkyo'))return;
 		var readCount=0;
 		var ctx={};
 		this.#xhr=new XMLHttpRequest();
@@ -1544,7 +1595,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#xhr.onloadend=()=>{
 			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
 				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
-				if(this.#params.has('jikkyo'))this.#jikkyo.error(this.#xhr.status,readCount);
+				if(this.#params.has('jikkyo'))this.#jkStream.error(this.#xhr.status,readCount);
 			}
 			this.#xhr=null;
 		};
@@ -1557,7 +1608,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	}
 
 	#loaded;
-	#dataStream={
+	#dataStream = {
 		error: (status,readCount) => {
 			if(this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
 		},
@@ -1565,30 +1616,30 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(!this.#loaded)this.#loaded=this.#e.initSrc.href;
 			dict[code]=bmlBrowserPlayTSSection(pid,dict[code],pcr)||dict[code];
 		},
-		disable: () => {
-			this.#datacastState=this.#STATE.DISABLED;
-			this.#params.delete('psidata');
-			this.#openSubStream();
+		clear: () => {
 			bmlBrowserSetInvisible(true);
+			if (this.#elems.indicator) this.#elems.indicator.innerText = '';
 		},
-		enable: () => {
-			if(this.#loaded&&this.#loaded!=this.#e.initSrc.href){
-				this.#e.dispatchEvent(new Event('disabledDatacast'));
-				return
-			}
+		disable: () => {
+			this.#params.delete('psidata');
+			this.#dataStream.clear();
+			this.#openSubStream();
+		},
+		enable: async open => {
+			if(this.#loaded&&this.#loaded!=this.#e.initSrc.href)await this.#initWebBml();
 			this.#datacastState=this.#STATE.STREAM;
 			this.#params.set('psidata', 1);
 			bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
 			bmlBrowserSetInvisible(false);
-			this.#openSubStream();
 			if(this.#elems.indicator)this.#elems.indicator.innerText="接続中...";
+			if (open) this.#openSubStream();
 		}
 	}
 }
 
 class Datacast extends datacastMixin(){
-	constructor(video, danmaku, ctok, replaceTag, api){
-		super(video, danmaku, ctok, replaceTag, api);
+	constructor(video, webBml, danmaku, ctok, replaceTag, api){
+		super(video, webBml, danmaku, ctok, replaceTag, api);
 	}
 }
 

@@ -1,5 +1,3 @@
-let Jikkyo = localStorage.getItem('Jikkyo') == 'true';
-let DataStream = localStorage.getItem('DataStream') == 'true';
 const danmaku = document.getElementById("danmaku-container");
 const vid = document.getElementById("video");
 const $vid = $(vid);
@@ -66,10 +64,9 @@ const $seek = $(seek);
 const $duration = $('.duration');
 const $audios = $('.audio');
 const $titlebar = $('#titlebar');
-const $remote = $('#remote');
-const remocon = document.querySelector('.remote-control');
-const $remote_control = $(remocon);
-const $danmaku = $('#danmaku');
+const $datacast = $('#datacast');
+const $remocon = $('.remote-control');
+const $jikkyo = $('#jikkyo');
 const addClassLoadding = () => $vid.addClass('is-loading');
 const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
@@ -97,7 +94,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		const path = `${ROOT}${!d.public ? `api/Movie?fname=${encodeURIComponent(d.path)}` : encodeURIComponent(d.path).replace('%2F','/')}`;
 		$vid.attr('src', path);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
+		vid.loadSubData();
 	}else{
 		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
 		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
@@ -115,9 +112,6 @@ const loadMovie = ($e = $('.is_cast')) => {
 			if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 		}
 	}
-
-	$remote.prop('disabled', vid.datacast.unavailable);
-	if (vid.datacast.unavailable) $remote_control.addClass('disabled').find('button').prop('disabled', true);
 
 	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
 		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
@@ -158,6 +152,31 @@ const setbmlBrowserSize = () => {
 	bmlBrowserSetVisibleSize(width,height);
 }
 
+const initRemocon = remocon => {
+	remocon.querySelectorAll('.mdl-button,.mdl-icon-toggle').forEach(e => componentHandler.upgradeElement(e));
+
+	remocon.transform = {X: 0, Y: 0};
+	$remocon.find('.draggable').on({
+		pointerdown(e){
+			if (e.button != 0) return;
+			remocon.touched = true;
+			e.currentTarget.style.cursor = 'grabbing';
+			e.currentTarget.setPointerCapture(e.pointerId);
+		},
+		pointermove(e){
+			if (!remocon.touched) return;
+			hideBar(3000);
+			remocon.style.transform = `translate(${remocon.transform.X += e.originalEvent.movementX}px, ${remocon.transform.Y += e.originalEvent.movementY}px)`;
+		},
+		pointerup(e){
+			remocon.touched = false;
+			e.currentTarget.style.cursor = null;
+			e.currentTarget.releasePointerCapture(e.pointerId);
+		}
+	});
+	$remocon.find('#num').change(e => $remocon.find('.num').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
+}
+
 $(window).on('load resize', () => {
 	setbmlBrowserSize();
 	$player.toggleClass('is-small', $vid.width() < 800);
@@ -177,7 +196,7 @@ $(function(){
 
 	const $volume = $('#volume');
 	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
-	$remote_control.insertAfter('#movie-contner');
+	$remocon.insertAfter('#movie-contner');
 
 
 	//閉じる
@@ -261,19 +280,11 @@ $(function(){
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		},
-		streamStarted(){
-			if (DataStream && false || !$remote_control.hasClass('disabled')) this.toggleDatacast(true);	//一度しか読み込めないため常時読み込みはオミット
-			this.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
-		},
 		enabledDetelecine(){
 			$('#cinema').mdl_prop('checked', true);
 		},
 		disabledDetelecine(){
 			$('#cinema').mdl_prop('checked', false);
-		},
-		disabledDatacast(){
-			$remote.prop('disabled', true);
-			$remote_control.addClass('disabled').find('button').prop('disabled', true);
 		}
 	});
 
@@ -369,7 +380,7 @@ $(function(){
 
 			$('#fullscreen i').text('fullscreen_exit');
 			$('.mdl-js-snackbar').appendTo('#player');
-			$('.remote-control,#comment-control').prependTo('#playerUI');
+			$('.remote-control,#comment-control').prependTo(playerUI);
 		}else{
 			if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
 			else if (window.screen.unlockOrientation) window.screen.unlockOrientation();
@@ -384,7 +395,7 @@ $(function(){
 			vid.fullscreen = false;
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
-			$remote_control.insertAfter('#movie-contner');
+			$remocon.insertAfter('#movie-contner');
 		}
 	});
 	const enableDocumentPIP = 'documentPictureInPicture' in window;
@@ -396,7 +407,7 @@ $(function(){
 				return;
 			}
 
-			$('.remote-control,#comment-control').prependTo('#playerUI');
+			$('.remote-control,#comment-control').prependTo(playerUI);
 			const content = document.getElementById('player');
 			const container = content.parentNode;
 			$(container).height($vid.height());
@@ -430,7 +441,7 @@ $(function(){
 			pipWindow.addEventListener("pagehide", (event) => {
 				const pipContent = event.target.getElementById("player");
 				container.append(pipContent);
-				$remote_control.insertAfter('#movie-contner');
+				$remocon.insertAfter('#movie-contner');
 				if (vid.theater) $('#movie-theater-contner').height('');
 				else $('#movie-contner').height('').width('');
 			});
@@ -517,77 +528,41 @@ $(function(){
 	});
 	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
 
-	if (DataStream) $remote.addClass('mdl-button--accent');
-	$remote.on({
-		click(){
-			if (!$remote.data('click')) return;
-
-			clearTimeout($remote.data('click'));
-			$remote.data('click', false);
-			const disabled = !$remote_control.hasClass('disabled');
-			$remote_control.toggleClass('disabled', disabled).find('button').prop('disabled', disabled);
-
-			vid.toggleDatacast(!disabled);
-		},
-		pointerdown(e){
-			if (e.button != 0 || $remote.data('click')) return;
-
-			$remote.data('click', setTimeout(() => {
-				$remote.data('click', false);
-				DataStream = !DataStream;
-				localStorage.setItem('DataStream', DataStream);
-				$remote.toggleClass('mdl-button--accent', DataStream);
-
-				vid.toggleDatacast(!$remote_control.hasClass('disabled'));
-			}, 1000));
-		}
-	});
-	remocon.transform = {X: 0, Y: 0};
-	$('.draggable').on({
-		pointerdown(e){
-			if (e.button != 0) return;
-			remocon.touched = true;
-			e.currentTarget.style.cursor = 'grabbing';
-			e.currentTarget.setPointerCapture(e.pointerId);
-		},
-		pointermove(e){
-			if (!remocon.touched) return;
-			hideBar(3000);
-			remocon.style.transform = `translate(${remocon.transform.X += e.originalEvent.movementX}px, ${remocon.transform.Y += e.originalEvent.movementY}px)`;
-		},
-		pointerup(e){
-			remocon.touched = false;
-			e.currentTarget.style.cursor = null;
-			e.currentTarget.releasePointerCapture(e.pointerId);
-		}
+	if (localStorage.getItem('datacast') == 'true') {
+		vid.datacast.enable();
+		$remocon.removeClass('disabled').find('button').prop('disabled', false);
+	}
+	$datacast.click(() => {
+		const enabled = vid.toggleDatacast();
+		$remocon.toggleClass('disabled', !enabled).find('button').prop('disabled', !enabled);
+		localStorage.setItem('datacast', enabled);
 	});
 
-	$('#num').change(e => $('.remote-control .num').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
-
-	if (localStorage.getItem('danmaku') == 'true') $danmaku.addClass('checked');
-	if (Jikkyo) $danmaku.addClass('mdl-button--accent');
-
-	$danmaku.on({
+	if (localStorage.getItem('danmaku') == 'true') $jikkyo.addClass('checked');
+	if (localStorage.getItem('Jikkyo') == 'true') $jikkyo.addClass('mdl-button--accent');
+	vid.toggleJikkyo($jikkyo.hasClass('checked'), $jikkyo.hasClass('mdl-button--accent'));
+	$jikkyo.on({
 		click(){
-			if (!$danmaku.data('click')) return;
+			if (!this.longClick) return;
+			clearTimeout(this.longClick);
+			this.longClick = 0;
 
-			clearTimeout($danmaku.data('click'));
-			$danmaku.data('click', false).toggleClass('checked', !$danmaku.hasClass('checked'));
-			localStorage.setItem('danmaku', $danmaku.hasClass('checked'));
-
-			vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
+			const enabled = vid.toggleJikkyo();
+			$jikkyo.toggleClass('checked', enabled);
+			localStorage.setItem('danmaku', enabled);
 		},
 		pointerdown(e){
-			if (e.button != 0 || $danmaku.data('click')) return;
+			if (e.button != 0 || this.longClick) return;
 
-			$danmaku.data('click', setTimeout(() => {
-				$danmaku.data('click', false);
-				Jikkyo = !Jikkyo;
-				localStorage.setItem('Jikkyo', Jikkyo);
-				$danmaku.toggleClass('mdl-button--accent', Jikkyo);
+			this.longClick = setTimeout(() => {
+				this.longClick = 0;
 
-				vid.toggleJikkyo($danmaku.hasClass('checked'), Jikkyo);
-			}, 1000));
+				const enabled = !vid.jikkyo.loading;
+				$jikkyo.toggleClass('mdl-button--accent', enabled);
+				localStorage.setItem('Jikkyo', enabled);
+
+				vid.toggleJikkyo(vid.jikkyo.showing, enabled);
+			}, 1000);
 		}
 	});
 	
