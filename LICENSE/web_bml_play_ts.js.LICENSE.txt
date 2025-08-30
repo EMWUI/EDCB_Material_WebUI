@@ -1,11 +1,14 @@
 The attached "web_bml_play_ts.js" ( https://github.com/xtne6f/web-bml ) can be
 built with the following command:
 
-$ yarn workspace web-bml-play-ts build
+$ npm i && npm -w @chinachu/aribts run build && npm -w play-ts run build
 
-The attached "KosugiMaru-Regular.ttf" and "Kosugi-Regular.ttf" were copied from
-TVTDataBroadcastingWV2 ( https://github.com/otya128/TVTDataBroadcastingWV2 )
-release 0.5.0 asset.
+The attached "KosugiMaru-Bold.woff2", "KosugiMaru-Regular.woff2" and
+"Kosugi-Regular.woff2" were copied from
+https://github.com/otya128/web-bml/tree/169561da14356dbee4080ddef2577681a0f4a174
+. Kosugi and Kosugi Maru are designed by MOTOYA ( https://www.motoyafont.jp ),
+and licensed under the Apache License, Version 2.0.
+"KosugiMaru-Bold.woff2" is derived by otya128 from "KosugiMaru-Regular.woff2".
 
 web-bml ( https://github.com/otya128/web-bml ) is licensed under the following
 license:
