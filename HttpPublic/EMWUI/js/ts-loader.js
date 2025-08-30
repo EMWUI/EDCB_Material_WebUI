@@ -759,6 +759,29 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	get setElemsList(){return this.#setElems}
 
+	static get prefix(){return "nvram_prefix=receiverinfo%2F"}
+	static setNvramZip(zip){
+		if (!zip) return;
+		if (/^[0-9]{7}$/.test(zip)) localStorage.setItem(`${this.prefix}zipcode`,btoa(zip));
+		else localStorage.removeItem(`${this.prefix}zipcode`);
+	}
+	static setNvramPrefecture(prefecture, regioncode){
+		if (!prefecture) return;
+		if (prefecture&&prefecture!=="255-0x0"){
+			localStorage.setItem(`${this.prefix}prefecture`,btoa(String.fromCharCode(parseInt(prefecture))));
+			regioncode??=parseInt(regioncode.split("-0x")[1],16);
+			localStorage.setItem(`${this.prefix}regioncode`,btoa(String.fromCharCode(regioncode>>8,regioncode&0xff)));
+		}else{
+			localStorage.removeItem(`${this.prefix}prefecture`);
+			localStorage.removeItem(`${this.prefix}regioncode`);
+		}
+
+	}
+	static setNvramDef(zip, prefecture, regioncode){
+		if(!localStorage.getItem(`${this.prefix}zipcode`)) this.setNvramZip(zip);
+		if(!localStorage.getItem(`${this.prefix}prefecture`)) this.setNvramPrefecture(prefecture, regioncode);
+	}
+
 
 
 	#ctok;

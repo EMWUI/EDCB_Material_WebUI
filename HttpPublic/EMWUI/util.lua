@@ -782,6 +782,8 @@ end
 function PlayerTemplate(video, liveOrAudio)
   local tslive = GetVarInt(mg.request_info.query_string,'tslive')==1
   local live = type(liveOrAudio)=='boolean' and liveOrAudio
+  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
+  local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
   local function nwtv()
     local n=GetVarInt(mg.request_info.query_string,'n') or 0
     local s=''
@@ -931,6 +933,7 @@ function PlayerTemplate(video, liveOrAudio)
   ..'<script>vid.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
   ..(USE_DATACAST and 'vid.setWebBml("js/web_bml_play_ts.js'..Version('bml')..'", initRemocon);\n' or '')
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'vid.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
+  ..(not zip and prefecture==0 and '' or 'Datacast.setNvramDef('..(zip or 'null')..(prefecture==0 and '' or ','..prefecture..','..GetEwsRegionCode(prefecture))..')')
   ..'</script>\n'
 end
 

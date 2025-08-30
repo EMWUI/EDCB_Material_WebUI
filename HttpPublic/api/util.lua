@@ -172,6 +172,12 @@ ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,IN
 --データ放送表示機能を使うかどうか。トランスコード中に表示する場合はpsisiarc.exeを用意すること。IE非対応
 USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,INI))~=0
 
+--データ放送の郵便番号(7桁)の初期値。例えば東京都西新宿は'1600023'。''のとき未設定
+NVRAM_ZIP=edcb.GetPrivateProfile('NVRAM','ZIP','',INI)
+
+--データ放送の県域コード(1～50)の初期値。例えば東京都は14。0のとき未設定。県域とコードの対応はLegacy WebUI:メニュー→NVRAM設定→地域を参照
+NVRAM_REGION=tonumber(edcb.GetPrivateProfile('NVRAM','REGION',0,INI))
+
 --ライブ実況表示機能を使うかどうか
 --利用には実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
 USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
@@ -1086,6 +1092,13 @@ end
 --※サーバに変更を加える要求(POSTに限らない)を処理する前にこれを呼ぶべき
 function AssertCsrf(qs)
   assert(mg.get_var(qs,'ctok')==CsrfToken() or mg.get_var(qs,'ctok')==CsrfToken(nil,-1))
+end
+
+--県域コード(1～50)に対応する緊急情報信号の地域符号を返す
+function GetEwsRegionCode(prefecture)
+  --地域符号(Hex3桁x50)
+  local codes='16b16b4675d4758ac6e4c1aec69e3898b64b1c7aac56c4ce5396a692dd4a9d2a65a5a9662dcce459acb2674a93396d2331b2b5b31b98e629b419d2e362d959a2b8a7c8dd1cd45372aacd45'
+  return tonumber(codes:sub(prefecture*3-2,prefecture*3),16)
 end
 
 if not WIN32 then
