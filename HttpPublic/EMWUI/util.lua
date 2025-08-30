@@ -3,14 +3,14 @@ function Version(a)
     css='250824',
     common='250723',
     tvguide='250824',
-    player='250824',
+    player='250829',
     onair='250815',
     library='250815',
     setting='241224',
-    tsloader='250815',
+    tsloader='250829',
     hls='v1.5.20',
     aribb24='v1.11.5',
-    bml='f3c89c9',
+    bml='7348e3b',
     danmaku='6c13364',
   }
   return '?ver='..ver[a]

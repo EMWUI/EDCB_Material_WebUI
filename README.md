@@ -86,21 +86,20 @@ Legacy WebUIの配信機能を移植し、以下の事が可能となりまし�
 * TS-Live!モジュールでMPEG2を直接再生
 * web-bmlによるデータ放送の表示
 * aribb24.jsによる字幕表示
-* 実況の表示 (録画用アプリにTvTestの使用時のみ)
+* 実況の表示
 
-過去の機能と仕様などが変わり互換性はありませんので再度設定をしてください  
 [EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください
-`ts-live.js`と`ts-live.wasm`はjsフォルダに配置してください  
 
 ### 注意
 * トランスコードオプションは`XCODE_OPTIONS.lua`を編集してください
-* リモコン、コメントボタンを長押しすると各データの常時取得が有効になります
-* **データ放送がリセットできない**ため、一度データ放送を読み込みチャンネルを変更すると、リモコンボタンは無効化されます  
-上記の理由から常時取得有効中でも、リモコンボタンを一度押すまでデータ放送は読み込まれません
-* データ放送のNVRAM設定はLegacy WebUIと共通です、今のところ Legacy WebUI の[NVRAM設定](http://localhost:5510/legacy/nvram.html)でできます
+* コメントボタンを長押しすると常時取得が有効になります
+* ~~**データ放送がリセットできない**ため、一度データ放送を読み込みチャンネルを変更すると、リモコンボタンは無効化されます  
+上記の理由から常時取得有効中でも、リモコンボタンを一度押すまでデータ放送は読み込まれません~~  
+力技で対応しました
+* データ放送のNVRAM設定はLegacy WebUIと共通です、今のところ Legacy WebUI の[NVRAM設定](http://localhost:5510/legacy/nvram.html)でできます  
+初期値は`HttpPublic.ini`から指定できるようになりました
 * 実況ログ表示機能は動作未確認、動いてたらラッキー  
-* プレイヤーの速度設定はブラウザ側の機能を使用しています  
-倍速読み込みはトランスコードオプションの`filterFast`を有効にします
+* 倍速読み込みはトランスコードオプションの`filterFast`を有効にします
 
 
 ## リモート視聴
@@ -191,6 +190,7 @@ URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインに�
 * [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
 * [hls.js](https://github.com/video-dev/hls.js)
 * [web_bml_play_ts.js](https://github.com/xtne6f/web-bml)
+* [TS-Live!](https://github.com/xtne6f/ts-live)
 * [aribb24.js](https://github.com/xtne6f/aribb24.js)
 * [danmaku.js](https://github.com/DIYgod/DPlayer)
 
