@@ -62,13 +62,13 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
 
 
 NetworkList={}
-for i,v in ipairs(NetworkIndex()) do
+for i,v in ipairs(NetworkType()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(ServiceList) do
   if not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)],
-      '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
+    table.insert(NetworkList[NetworkIndex(v.onid)],
+      '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v.onid)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
         ..'" data-onid="'..v.onid
         ..'" data-tsid="'..v.tsid
         ..'" data-sid="'..v.sid
@@ -77,7 +77,7 @@ for i,v in ipairs(ServiceList) do
 
         ..'<div class="mdl-grid">\n'
         ..'<div class="logo-contener"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"></div>\n'
-        ..'<div class="title-contener"><h6 class="title""></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
+        ..'<div class="title-contener"><h6 class="title"></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
         ..'<div class="event_text"></div></div>\n'
 
         ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>'
@@ -91,9 +91,9 @@ label={}
 ct.css='<style>\n'
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.main=ct.main..'<input id="Network'..i..'" class="hidden" name="network"'..Radiobtn(NetworkIndex()[i]==NetworkIndex()[NetworkIndex(st)])..'>\n'
+    ct.main=ct.main..'<input id="Network'..i..'" class="hidden" name="network"'..Radiobtn(NetworkType()[i]==NetworkType()[NetworkIndex(st.onid)])..'>\n'
     ct.css=ct.css..'#Network'..i..':checked~div .onair:not(.Network'..i..'){display:none;}#Network'..i..':checked~div [for="Network'..i..'"]{color:var(--tag-color);background:var(--tag-gb-color);}\n'
-    table.insert(label, '<label type="button" for="Network'..i..'" class="mdl-chip"><span class="mdl-chip__text">'..NetworkIndex()[i]..'</span></label>\n')
+    table.insert(label, '<label type="button" for="Network'..i..'" class="mdl-chip"><span class="mdl-chip__text">'..NetworkType()[i]..'</span></label>\n')
     table.insert(ctt, table.concat(v))
   end
 end

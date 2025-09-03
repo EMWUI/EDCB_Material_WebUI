@@ -36,7 +36,7 @@ ct.main='<div class="submenu"><ul class="ext mdl-menu mdl-menu--bottom-right mdl
 edcb.htmlEscape=15
 
 NetworkList={}
-for i,v in ipairs(NetworkIndex()) do
+for i,v in ipairs(NetworkType()) do
   NetworkList[i]={}
 end
 
@@ -92,7 +92,7 @@ end
 
 for i,v in ipairs(CustomServiceList()) do
   if (ONESEG or not v.partialReceptionFlag) then
-    table.insert(NetworkList[NetworkIndex(v)],
+    table.insert(NetworkList[NetworkIndex(v.onid, v.partialReceptionFlag)],
       '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line'..(v.subCh and ' subCH hidden' or '')
         ..'" data-onid="'..v.onid
         ..'" data-tsid="'..v.tsid
@@ -118,7 +118,7 @@ ctt={}
 ct.tab=''
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.tab=ct.tab..'<a href="#tab'..i..'" class="mdl-layout__tab'..(i==1 and ' is-active' or '')..'">'..NetworkIndex()[i]..'</a>\n'
+    ct.tab=ct.tab..'<a href="#tab'..i..'" class="mdl-layout__tab'..(i==1 and ' is-active' or '')..'">'..NetworkType()[i]..'</a>\n'
     table.insert(ctt, '<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp mdl-layout__tab-panel'..(i==1 and ' is-active' or '')..'" id="tab'..i..'">\n'..table.concat(v)..'</ul>\n')
   end
 end

@@ -418,12 +418,12 @@ else
 end
 
 NetworkList={}
-for i,v in ipairs(NetworkIndex()) do
+for i,v in ipairs(NetworkType()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(ServiceList) do
   if GetChDataList[''..v.onid..'-'..v.tsid..'-'..v.sid] and (v.partialReceptionFlag or v.service_type==0x01 or v.service_type==0x02 or v.service_type==0xA5 or v.service_type==0xAD) then
-    table.insert(NetworkList[NetworkIndex(v)],
+    table.insert(NetworkList[NetworkIndex(v.onid, v.partialReceptionFlag)],
       '<li id="id-'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="mdl-list__item mdl-list__item--two-line">'
         ..'<span class="mdl-list__item-primary-content"><i class="material-icons mdl-list__item-icon handle">drag_handle</i>'
         ..'<span><input id="hide'..v.onid..'-'..v.tsid..'-'..v.sid..'" class="hidden" name="hide"'..Checkbox(v.hide, v.onid..'-'..v.tsid..'-'..v.sid)..'>'
@@ -442,7 +442,7 @@ end
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct.main=ct.main..'<a href="#tab'..i..'" class="mdl-tabs__tab'..(i==1 and ' is-active' or '')..'">'..NetworkIndex()[i]..'</a>\n'
+    ct.main=ct.main..'<a href="#tab'..i..'" class="mdl-tabs__tab'..(i==1 and ' is-active' or '')..'">'..NetworkType()[i]..'</a>\n'
     table.insert(ctt, '<div class="mdl-tabs__panel'..(i==1 and ' is-active' or '')..' mdl-grid mdl-grid--no-spacing mdl-cell--8-col" id="tab'..i..'"><ul class="mdl-list">\n'..table.concat(v)..'</ul></div>\n')
   end
 end

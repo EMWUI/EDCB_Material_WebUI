@@ -150,8 +150,8 @@ XCODE_OPTIONS={
   {
     --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)
     name='TS-Live!',
-    autoCinema=true,
     tslive=true,
+    autoCinema=true,
     xcoder='',
     option='',
     filter=':',
@@ -179,7 +179,7 @@ NVRAM_ZIP=edcb.GetPrivateProfile('NVRAM','ZIP','',INI)
 NVRAM_REGION=tonumber(edcb.GetPrivateProfile('NVRAM','REGION',0,INI))
 
 --ライブ実況表示機能を使うかどうか
---利用には実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
+--利用にはJKCNSL_PATHを設定するか、実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
 USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
 
 --jkcnslを直接呼び出してライブ実況する場合、その絶対パス。Windows以外ではコマンド名
@@ -304,14 +304,13 @@ function RecModeTextList()
   return {'全サービス','指定サービス','全サービス（デコード処理なし）','指定サービス（デコード処理なし）','視聴'}
 end
 
-function NetworkType(onid)
-  return not onid and {'地デジ','BS','110CS1','110CS2','124/128CS','その他'}
-    or NetworkType()[0x7880<=onid and onid<=0x7FE8 and 1 or onid==4 and 2 or onid==6 and 3 or onid==7 and 4 or onid==10 and 5 or 6]
+function NetworkType(onid, partial, divCS)
+  return not onid and {'地デジ','ワンセグ','BS','BS4K','CS','CS1','CS2','CS3','その他'}
+    or NetworkType()[NetworkIndex(onid, partial, divCS)]
 end
 
-function NetworkIndex(v)
-  return not v and {'地デジ','ワンセグ','BS','CS','124/128度CS','その他'}
-    or NetworkType(v.onid)=='地デジ' and ((v.service_type or v.serviceType)==0x01 and 1 or (v.partialReceptionFlag or v.partialFlag) and 2) or NetworkType(v.onid)=='BS' and 3 or NetworkType(v.onid):find('^110CS') and 4 or NetworkType(v.onid)=='124/128CS'and 5 or 6
+function NetworkIndex(onid, partial, divCS)
+  return 0x7880<=onid and onid<=0x7FE8 and (partial and 2 or 1) or onid==4 and 3 or onid==11 and 4 or not divCS and (onid==6 or onid==7) and 5 or onid==6 and 6 or onid==7 and 7 or onid==10 and 8 or 9
 end
 
 --表示するサービスを選択する
@@ -335,9 +334,9 @@ function SortServiceListInplace(r)
     end
   end
   table.sort(r,function(a,b) return
-    ('%04X%04X%04X%04X'):format((NetworkType(a.onid)~='地デジ' and 65535 or a.remote_control_key_id or 0),
+    ('%04X%04X%04X%04X'):format((NetworkType(a.onid)~='地デジ' and 65535 or a.remote_control_key_id or a.remoconID or 0),
                                 a.onid,(NetworkType(a.onid)=='BS' and bsmin[a.tsid] or a.tsid),a.sid)<
-    ('%04X%04X%04X%04X'):format((NetworkType(b.onid)~='地デジ' and 65535 or b.remote_control_key_id or 0),
+    ('%04X%04X%04X%04X'):format((NetworkType(b.onid)~='地デジ' and 65535 or b.remote_control_key_id or b.remoconID or 0),
                                 b.onid,(NetworkType(b.onid)=='BS' and bsmin[b.tsid] or b.tsid),b.sid) end)
   return r
 end
@@ -1126,8 +1125,8 @@ if LOGO_DIR then
   LOGO_DIR=edcb.GetPrivateProfile('SET','LOGO_DIR',TVTest..'\\Logo',INI)
 end
 
---予想ファイルサイズ
 BITRATE={}
+--予想ファイルサイズ
 function GetPredictionSize(v)
   local rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
   local size=nil
@@ -1295,7 +1294,7 @@ function GetRecSetting(post)
   return false
 end
 
---検索条件を取得
+--検索条件を取得  
 --文字列返却値(andKeyとnotKey)の実体参照変換はedcb.htmlEscapeに従う
 function GetSearchKey(post)
   local notKey=mg.get_var(post,'notKey') or ''
@@ -1359,7 +1358,7 @@ function GetSearchKey(post)
   return key
 end
 
---検索条件(キーワードのみ)を取得
+--検索条件(キーワードのみ)を取得  
 --文字列返却値(andKey)の実体参照変換はedcb.htmlEscapeに従う
 function GetSearchKeyKeyword(query)
   local key=GetSearchKey()

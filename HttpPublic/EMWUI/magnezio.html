@@ -291,19 +291,19 @@ $(function(){
 ]=])
 
 NetworkList={}
-for i,v in ipairs(NetworkIndex()) do
+for i,v in ipairs(NetworkType()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(CustomServiceList()) do
   if not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<div class="channel'..(v.subCh and ' subCH hidden' or '')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</span></div>')
+    table.insert(NetworkList[NetworkIndex(v.onid)], '<div class="channel'..(v.subCh and ' subCH hidden' or '')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.service_name..'</span></div>')
   end
 end
 
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    ct:Append('<a class="tag button" href="#network'..i..'">'..NetworkIndex()[i]..'</a>')
+    ct:Append('<a class="tag button" href="#network'..i..'">'..NetworkType()[i]..'</a>')
     table.insert(ctt, '<div id="network'..i..'"class="list'..(#ctt>0 and ' hidden' or '')..'">'..table.concat(v)..'<div></div></div>')
   end
 end

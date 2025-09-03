@@ -62,19 +62,19 @@ main={'<div class="menu"><ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu"
   ..'<li><a class="select mdl-menu__item mdl-color-text--accent" data-val="li">すべて</a></li>\n'}
 
 NetworkList={}
-for i,v in ipairs(NetworkIndex()) do
+for i,v in ipairs(NetworkType()) do
   NetworkList[i]={}
 end
 for i,v in ipairs(ServiceList) do
   if ONESEG or not v.partialReceptionFlag then
-    table.insert(NetworkList[NetworkIndex(v)], '<li class="network'..NetworkIndex(v)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
+    table.insert(NetworkList[NetworkIndex(v.onid, v.partialReceptionFlag)], '<li class="network'..NetworkIndex(v.onid, v.partialReceptionFlag)..(v.subCh and ' hidden' or '')..'"><a class="mdl-menu__item '..(st.onid==v.onid and st.tsid==v.tsid and st.sid==v.sid and ' mdl-color-text--accent' or '" href="epgweek.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..hrefGene)..'">'..v.service_name..'</a></li>\n')
   end
 end
 
 ctt={}
 for i,v in ipairs(NetworkList) do
   if #v>0 then
-    table.insert(main, '<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkIndex()[i]..'</a></li>\n')
+    table.insert(main, '<li><a class="select mdl-menu__item" data-val=".network'..i..'">'..NetworkType()[i]..'</a></li>\n')
     table.insert(ctt, table.concat(v))
   end
 end

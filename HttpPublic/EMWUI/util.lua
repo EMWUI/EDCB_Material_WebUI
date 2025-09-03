@@ -538,19 +538,19 @@ function SerchTemplate(si)
     ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="7">'
 
   local NetworkList={}
-  for i,v in ipairs(NetworkIndex()) do
+  for i,v in ipairs(NetworkType()) do
     NetworkList[i]=false
   end
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
-    NetworkList[NetworkIndex(v)]=true
-    s=s..'\n<option class="network'..NetworkIndex(v)..(not oneseg and NetworkIndex()[NetworkIndex(v)]=='ワンセグ' and ' hidden' or '')..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
+    NetworkList[NetworkIndex(v.onid, v.partialFlag, true)]=true
+    s=s..'\n<option class="network'..NetworkIndex(v.onid, v.partialFlag, true)..(not oneseg and NetworkType()[NetworkIndex(v.onid, v.partialFlag, true)]=='ワンセグ' and ' hidden' or '')..'" value="'..v.onid..'-'..v.tsid..'-'..v.sid..'"'
     for j,w in ipairs(si.serviceList) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         s=s..' selected'
         break
       end
     end
-    s=s..'>('..NetworkIndex()[NetworkIndex(v)]..') '..v.serviceName
+    s=s..'>('..NetworkType()[NetworkIndex(v.onid, v.partialFlag, true)]..') '..v.serviceName
   end
 
   s=s..'\n</select></div>\n'
@@ -561,7 +561,7 @@ function SerchTemplate(si)
     ..'<div class="mdl-cell--4-col-phone"><label for="image" class="mdl-checkbox mdl-js-checkbox"><input id="image" class="mdl-checkbox__input" type="checkbox" checked><span class="mdl-checkbox__label">映像のみ</span></label></div><div class="mdl-layout-spacer"></div>\n'
   for i,v in ipairs(NetworkList) do
     if v then
-      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input"'..Checkbox(oneseg or NetworkIndex()[i]~='ワンセグ','.network'..i)..'><span class="mdl-checkbox__label">'..NetworkIndex()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
+      s=s..'<div><label class="mdl-checkbox mdl-js-checkbox" for="EXT'..i..'"><input id="EXT'..i..'" class="extraction mdl-checkbox__input"'..Checkbox(oneseg or NetworkType()[i]~='ワンセグ','.network'..i)..'><span class="mdl-checkbox__label">'..NetworkType()[i]..'</span></label></div><div class="mdl-layout-spacer"></div>\n'
     end
   end
   s=s..'</div>\n'
@@ -674,11 +674,11 @@ function ManuAddTemplate(aa)
       found=true
       s=s..' selected'
     end
-    s=s..'>('..NetworkIndex()[NetworkIndex(v)]..') '..v.serviceName..'\n'
+    s=s..'>('..NetworkType()[NetworkIndex(v.onid, v.partialFlag)]..') '..v.serviceName..'\n'
   end
   if not found and aa and aa.onid then
     s=s..'<option value="'..aa.onid..'-'..aa.tsid..'-'..aa.sid..'" selected'
-      ..'>('..NetworkIndex()[NetworkIndex(aa)]..') '..aa.stationName..'\n'
+      ..'>('..NetworkType()[NetworkIndex(aa.onid, aa.partialFlag)]..') '..aa.stationName..'\n'
   end
   return s..'</select></div>\n</div></div>\n'
 end
@@ -1133,9 +1133,9 @@ function ConvertTitle(title)
   end):gsub('　', ' ')
 end
 
---検索等のリンクを派生
 CALENDAR_DETAILS=edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)
-SearchConverter=function(v, service_name)
+--検索等のリンクを派生
+function SearchConverter(v, service_name)
   local startTime=TimeWithZone(v.startTime)
   local endTime=v.durationSecond and startTime+v.durationSecond or startTime
   local text_char=v.shortInfo and v.shortInfo.text_char:gsub('\r?\n', '%%br%%'):gsub('%%', '%%%%') or ''
