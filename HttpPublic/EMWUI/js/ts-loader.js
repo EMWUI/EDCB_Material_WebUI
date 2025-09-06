@@ -622,7 +622,10 @@ class TsThumb{
 		if (video) this.#vid = video;
 		this.#reset();
 		if (!('createMiscWasmModule' in window)) return;
-		createMiscWasmModule().then(mod => this.#mod = mod);
+		createMiscWasmModule().then(mod => {
+			this.#mod = mod;
+			window.dispatchEvent(new Event('createdMiscWasmModule'));
+		});
 	}
 
 	get setThumb(){return this.#setThumb}
