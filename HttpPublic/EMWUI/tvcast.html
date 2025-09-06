@@ -52,9 +52,9 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
 <div class="mdl-card__menu"><a id="link_epginfo" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect"><i class="material-icons">open_in_new</i></a>
 </div></div></div>
 <div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
-<div id="apps-contener">
+<div id="apps-container">
 <input type="checkbox" id="apps" class="hidden">
-<div class="contener"><div class="contener"></div></div>
+<div class="container"><div class="container"></div></div>
 <label type="button" for="apps" class="tag mdl-chip"><span class="mdl-chip__text"><span class="material-icons">apps</span></span></label></div>
 <input type="radio" id="Network0" class="hidden" name="network">
 ]=]
@@ -76,8 +76,8 @@ for i,v in ipairs(ServiceList) do
         ..'">\n'
 
         ..'<div class="mdl-grid">\n'
-        ..'<div class="logo-contener"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"></div>\n'
-        ..'<div class="title-contener"><h6 class="title"></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
+        ..'<div class="logo-container"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"></div>\n'
+        ..'<div class="title-container"><h6 class="title"></h6>\n<div><span class="date"><span class="startTime"></span><span class="endTime"></span></span>'..v.service_name..'</div></div>\n'
         ..'<div class="event_text"></div></div>\n'
 
         ..'<div class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>'

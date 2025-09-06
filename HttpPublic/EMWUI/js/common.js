@@ -232,10 +232,16 @@ const toObj = {
 			if (programInfo){
 				d.text = programInfo[1];
 				d.text_ext = programInfo[2];
-				d.genre = programInfo[3];
-				d.video = programInfo[4];
-				d.audio = programInfo[5];
-				d.other = programInfo[6].replace(/\n\n/g,'\n');
+				d.genre = programInfo[3].split('\n').map(e=>[e, [/^ニュース／報道/,/^スポーツ/,/^情報／ワイドショー"/,/^ドラマ/,/^音楽/,/^バラエティ/,/^映画/,/^アニメ／特撮/,/^ドキュメンタリー／教養/,/^劇場／公演/,/^趣味／教育/,/^福祉/].findIndex(s=>s.test(e))+1||16]);
+				d.video = programInfo[4].split('\n');
+				d.audio = [];
+				let i = 0;
+				programInfo[5].split('\n').map(e => {
+					if (!d.audio[i]) d.audio[i] = [];
+					d.audio[i].push(e);
+					if (e.match('サンプリングレート')) i++;
+				});
+				d.other = programInfo[6].replace(/\n\n/g,'\n').split('\n');
 			}
 			d.recFilePath = e.txt('recFilePath');
 			d.comment = e.txt('comment');
@@ -503,6 +509,18 @@ const getList = new class {
 			return fn(Info.search[key]);
 		});
 	};
+}
+
+const mdlChip = {
+	color: ['red', 'pink', 'purple', 'deep-purple', 'indigo', 'blue', 'light-blue', 'cyan', 'green', 'light-green', 'lime', 'yellow', 'amber', 'orange', 'deep-orange', 'brown', 'blue-grey'],
+	getColorClass(s){
+		let n = 0;
+		for (let i = 0; i < s.length; i++) n += s.charCodeAt(i);
+		return `mdl-color--${this.color[n % this.color.length]}-100`;
+	},
+	tag(s, a, b){
+		return $('<span>', {class: `mdl-chip ${a||this.getColorClass(s)}`, append: $('<span>', {class: `mdl-chip__text${b ? ` ${b}` : ''}`, text: s})});
+	},
 }
 
 const createHtml = new class {
@@ -897,20 +915,19 @@ const setEpgInfo = (d, $e, id) => {
 	$('#summary p').html( ConvertText(d.text) );
 	$('#ext').html( ConvertText(d.text_ext) );
 
-	$('#genreInfo').html(() => !d.genre ? '' : typeof d.genre == 'string' ? `<li>${d.genre.replace(/\n/g,'<li>')}` : d.genre.map(e => `<li>${e.component_type_name}`));
-	$('#videoInfo').html(() => !d.video ? '' : typeof d.video == 'string' ? `<li>${d.video.replace(/\n/g,'<li>')}` : d.video.map(e => `<li>${e.component_type_name} ${e.text}`));
-	$('#audioInfo').html(() => !d.audio ? '' : typeof d.audio == 'string' ? `<li>${d.audio.replace(/\n/g,'<li>')}` : d.audio.map(e => `<li>${e.component_type_name} ${e.text}<li>サンプリングレート: ${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`));
+	const video = e => e.split('、').flatMap((e,i) => i ? e.split(' ').map(e => mdlChip.tag(e)) : mdlChip.tag(e));
+
+	$('#genreInfo').html(() => !d.genre ? '' : d.genre.map(e => d.id ? mdlChip.tag(e[0], `cont-${e[1]}`) : mdlChip.tag(e.component_type_name, `cont-${e.nibble1%16+1}`)));
+	$('#videoInfo').html(() => !d.video ? '' : d.video.flatMap(e => d.id ? video(e) : [...video(e.component_type_name), e.text ? mdlChip.tag(e.text) : null]));
+	$('#audioInfo').html(() => !d.audio ? '' : d.audio.map(e => d.id ? $('<div>', {append: e.map(e => mdlChip.tag(e))}) : $('<div>', {append: [mdlChip.tag(e.component_type_name), e.text ? mdlChip.tag(e.text) : null, mdlChip.tag(`${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`)]})));
 
 	if (d.errInfo){
-		$('#otherInfo').html(d.other ? `<li>${d.other.replace(/\n/g,'<li>')}` : '');
+		$('#otherInfo').html(d.other ? d.other.map(e=>mdlChip.tag(e)) : '');
 	}else{
-		$('#otherInfo').html(`
-			${d.onid<0x7880 || 0x7FE8<d.onid ? (d.freeCAFlag ? '<li>有料放送' : '<li>無料放送') : ''}
-			<li>OriginalNetworkID:${d.onid}(0x${zero(d.onid.toString(16).toUpperCase(), 4)})
-			<li>TransportStreamID:${d.tsid}(0x${zero(d.tsid.toString(16).toUpperCase(), 4)})
-			<li>ServiceID:${         d.sid}(0x${zero( d.sid.toString(16).toUpperCase(), 4)})
-			<li>EventID:${           d.eid}(0x${zero( d.eid.toString(16).toUpperCase(), 4)})
-		`);
+		$('#otherInfo').html([
+			d.onid<0x7880 || 0x7FE8<d.onid ? mdlChip.tag(d.freeCAFlag ? '有料放送' : '無料放送') : '',
+			mdlChip.tag(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
+		]);
 
 		$('[name=onid]').val(d.onid);
 		$('[name=tsid]').val(d.tsid);
@@ -1147,9 +1164,9 @@ const setRecInfo = async $e => {
 	setEpgInfo(d, $e);
 
 	$('#path').text(d.recFilePath);
-	$('#comment').text(d.comment);
-	$('#drops').text(d.drops);
-	$('#scrambles').text(d.scrambles);
+	$('#comment').text(d.comment).parent().removeClass((i,e)=>(e.match(/\bmdl-color\S+/g) || []).join(' ')).addClass(mdlChip.getColorClass(d.comment));
+	$('#drops').text(d.drops).parent().toggleClass('mdl-color-text--red-A700', Boolean(d.drops));
+	$('#scrambles').text(d.scrambles).parent().toggleClass('mdl-color-text--red-A700', Boolean(d.scrambles));
 
 	$('pre').text(d.errInfo);
 

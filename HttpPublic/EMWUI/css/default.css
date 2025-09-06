@@ -320,7 +320,7 @@ dialog {
 
 
 /* chip */
-.mdl-chip:not(:last-of-type) {
+.mdl-chip:not(:last-of-type:not(:has(+.container))) {
   margin-right: 5px; }
 .mdl-grid.chip-container {
   padding: 8px 0 0 }
@@ -573,26 +573,26 @@ h4 .mdl-button--icon {
 
 #detail>div {
   padding: 0 0 16px; }
-#detail>ul {
-  margin: 0 0 16px; }
-  #detail ul {
-    padding-left: 24px; }
-    #detail ul ul{
-      padding-left: 16px;
-      line-height: 16px; }
-#detail li>div {
+#detail>div>div {
   display: flex;
-  flex-wrap: wrap; }
-  #detail li>div>div {
+  align-items: center;
+  padding: 0 0 8px;
+  >div {
+    margin-left: 8px; }
+  >div:not(.container),
+  .container>div { 
+    display: flex;
+    flex-wrap: wrap; } }
+ #detail div>div>div:has(.mdl-textfield) {
     display: flex;
     max-width: 500px;
     width: 100%; }
-  #detail li>div>div .mdl-textfield {
+  #detail div>div>div .mdl-textfield {
     padding: 0;
     flex-grow: 1; }
-    #detail li>div>div .mdl-textfield__input {
+    #detail div>div>div .mdl-textfield__input {
       font-size: 14px; }
-    #detail li>div>div .mdl-textfield__label:after {
+    #detail div>div>div .mdl-textfield__label:after {
       bottom: 0; }
 
 #error pre {
@@ -991,50 +991,49 @@ h4 .mdl-button--icon {
   background: #283593; }
 
 
-.news {
-  background: #B3E5FC; }
+.cont-1 {
+  background: #B3E5FC!important; }
 
-.sports {
-  background: #FFF9C4; }
+.cont-2 {
+  background: #FFF9C4!important; }
 
-.information {
-  background: #BBDEFB; }
+.cont-3 {
+  background: #BBDEFB!important; }
 
-.drama {
-  background: #FFCDD2; }
+.cont-4 {
+  background: #FFCDD2!important; }
 
-.music {
-  background: #FFECB3; }
+.cont-5 {
+  background: #FFECB3!important; }
 
-.variety {
-  background: #E1BEE7; }
+.cont-6 {
+  background: #E1BEE7!important; }
 
-.movie {
-  background: #FFE0B2; }
+.cont-7 {
+  background: #FFE0B2!important; }
 
-.anime {
-  background: #F8BBD0; }
+.cont-8 {
+  background: #F8BBD0!important; }
 
-.documentary {
-  background: #C5CAE9; }
+.cont-9 {
+  background: #C5CAE9!important; }
 
-.theater {
-  background: #DCEDC8; }
+.cont-10 {
+  background: #DCEDC8!important; }
 
-.education {
-  background: #C8E6C9; }
+.cont-11 {
+  background: #C8E6C9!important; }
 
-.welfare {
-  background: #B2DFDB; }
+.cont-12 {
+  background: #B2DFDB!important; }
 
-.extension {
-  background: #FFFFFF; }
+.cont-13,
+.cont-14,
+.cont-15 {
+  background: #E0E0E0!important; }
 
-.other {
-  background: #F5F5F5; }
-
-.none {
-  background: #E0E0E0; }
+.cont-16 {
+  background: #F5F5F5!important; }
 
 .nothing {
   background: #9E9E9E; }
@@ -2162,28 +2161,28 @@ h4 .mdl-button--icon {
   #comment-control>button {
     margin-left: 10px; }
 
-#apps-contener,
-#apps-contener .contener {
+#apps-container,
+#apps-container .container {
   display: -webkit-flex;
   display:     -ms-flexbox;
   display:         flex; }
-#apps-contener,
-#apps-contener>.contener {
+#apps-container,
+#apps-container>.container {
   padding: 0 8px 8px;
   justify-content: flex-end;
   flex-direction: column;
   align-items: center; }
-  #apps-contener>.contener {
+  #apps-container>.container {
     --button-height: calc(8px + 2px + 32px);
     height: min(calc((100vh * 0.666666666667 - 16px * 2) - var(--button-height)), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16) - var(--button-height)));
     min-height: 200px; }
-  #apps-contener .contener {
+  #apps-container .container {
     width: 100%;
     justify-content: center;
     flex-grow: 1; }
-  #apps-contener>.contener>.contener{
+  #apps-container>.container>.container{
     overflow: auto; }
-  .contener>div::-webkit-scrollbar {
+  .container>div::-webkit-scrollbar {
     width: 3px; }
 
 [for=apps] {
@@ -2192,7 +2191,7 @@ h4 .mdl-button--icon {
   text-align: center; }
   .is-small-screen [for=apps] {
     margin-bottom: 0; }
-  #apps:not(:checked)~.contener {
+  #apps:not(:checked)~.container {
     display:none; }
 
 #player #jikkyo-comm {
@@ -2447,10 +2446,10 @@ h4 .mdl-button--icon {
   #ServiceList .title {
     font-weight: bold;
     margin: 0; }
-  #ServiceList .logo-contener {
+  #ServiceList .logo-container {
     padding: 8px;
     align-self: center; }
-  #ServiceList .title-contener {
+  #ServiceList .title-container {
     width: calc(100% - 80px); }
   #ServiceList .event_text{
     font-size: 12px; }

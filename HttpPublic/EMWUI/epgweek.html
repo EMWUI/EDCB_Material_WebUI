@@ -128,7 +128,7 @@ ct.side='<input type="checkbox" class="hidden" id="a">\n'
   for i=0,15 do
     nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
-      ct.side=ct.side..'<li><label class="mdl-radio mdl-js-radio" for="g-'..(i*256+255)..'"><input type="radio" id="g-'..(i*256+255)..'" class="genreToggle mdl-radio__button" name="genreToggle" value=".'..CATEGORY[i+1]..'"><span class="mdl-radio__label">'..nibble1..'</span></label></li>\n'
+      ct.side=ct.side..'<li><label class="mdl-radio mdl-js-radio" for="g-'..(i*256+255)..'"><input type="radio" id="g-'..(i*256+255)..'" class="genreToggle mdl-radio__button" name="genreToggle" value=".'..(i+1)..'"><span class="mdl-radio__label">'..nibble1..'</span></label></li>\n'
     end
   end
 ct.side=ct.side..'</ul>\n<div class="drawer-separator"></div>\n'

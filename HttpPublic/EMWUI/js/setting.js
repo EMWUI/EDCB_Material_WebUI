@@ -10,7 +10,7 @@ $(function(){
 		});
 	});
 	//背景色連動
-	$('.bgset').change(e => $($(e.currentTarget).attr('for')).not('.paint').css('background', $(e.currentTarget).val()));
+	$('.bgset').change(e => $($(e.currentTarget).attr('for')).not('.paint').css({'cssText': `background: ${$(e.currentTarget).val()}!important;`}));
 	//予約済み
 	$('.reserveset').change(e => $($(e.currentTarget).attr('for')).css($('#paint').prop('checked') ? 'background' : 'border-color', $(e.currentTarget).val()));
 	//一部録画・チューナー不足枠

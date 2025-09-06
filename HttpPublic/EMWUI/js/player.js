@@ -566,10 +566,10 @@ $(function(){
 		}
 	});
 	
-	$("#jikkyo-comm").appendTo('#apps-contener>.contener>.contener');
+	$("#jikkyo-comm").appendTo('#apps-container>.container>.container');
 	$('#apps').change(e => {
 		($(e.currentTarget).prop('checked'))
-			? $('#comment-control').insertAfter('#apps-contener>.contener>.contener')
+			? $('#comment-control').insertAfter('#apps-container>.container>.container')
 			: $('#comment-control').prependTo('.player-container');
 		localStorage.setItem('apps', $(e.currentTarget).prop('checked'));
 	});

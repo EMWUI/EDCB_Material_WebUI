@@ -35,11 +35,14 @@ if v then
     f:close()
   end
 
-  RecInfo='<li>結果:'
-    ..v.comment..'</li><li><div>録画ファイルパス:<div><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="ren" form="ren" value="'
-    ..v.recFilePath..'" id="pass"><label class="mdl-textfield__label" for="pass"></label></div><button class="submit mini-button mdl-button mdl-js-button mdl-button--colored" data-form="#ren">変更</button><form id="ren" method="POST" action="'..PathToRoot()..'api/SetRecInfo?id='..v.id..'"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form></div></div></li><li>ドロップ:'
-    ..v.drops..'</li><li>スクランブル:'
-    ..v.scrambles..'</li>'
+  RecInfo='<div><span class="material-icons">movie</span><div><div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="ren" form="ren" value="'
+    ..v.recFilePath..'" id="pass"><label class="mdl-textfield__label" for="pass"></label></div><button class="submit mini-button mdl-button mdl-js-button mdl-button--colored" data-form="#ren">変更</button><form id="ren" method="POST" action="'..PathToRoot()..'api/SetRecInfo?id='..v.id..'"><input type="hidden" name="ctok" value="'..CsrfToken('setrecinfo')..'"></form></div></div>\n'
+    ..'<div><span class="material-icons">description</span><div>'
+    ..MdlChip:tag(v.comment)
+    ..'<div class="container"><div>'
+    ..MdlChip:tag('ドロップ : '..v.drops, MdlChip:getColorClass('ドロップ : '), v.drops>0 and ' mdl-color-text--red-A700')
+    ..MdlChip:tag('スクランブル : '..v.scrambles, MdlChip:getColorClass('スクランブル : '), v.scrambles>0 and ' mdl-color-text--red-A700')
+    ..'</div></div></div></div>'
 
   if #v.programInfo==0 and v.eid~=65535 then
     --過去番組情報を探してみる
@@ -60,20 +63,68 @@ if v then
     else
       info,genreInfo,videoInfo,audioInfo,otherInfo=v.programInfo:match('^.-\r?\n\r?\n(.-)\r?\nジャンル : \r?\n(.*)\r?\n\r?\n映像 : (.*)\r?\n音声 : (.-)\r?\n\r?\n(.*)\r?\n$')
     end
-    audio={multi=audioInfo and audioInfo:find('（ステレオ）.*（ステレオ）'), dual=audioInfo and audioInfo:find('デュアルモノ')}
-    
+    if genreInfo then
+      local s=''
+      for i,v in ipairs(Split(genreInfo:gsub('\r?\n', '\n'), '\n')) do
+        s=s..MdlChip:tag(v, 'cont-'..(v:find('^ニュース／報道') and 1
+          or v:find('^スポーツ') and 2
+          or v:find('^情報／ワイドショー') and 3
+          or v:find('^ドラマ') and 4
+          or v:find('^音楽') and 5
+          or v:find('^バラエティ') and 6
+          or v:find('^映画') and 7
+          or v:find('^アニメ／特撮') and 8
+          or v:find('^ドキュメンタリー／教養') and 9
+          or v:find('^劇場／公演') and 10
+          or v:find('^趣味／教育') and 11
+          or v:find('^福祉') and 12 or 16))
+      end
+      genreInfo=s
+    end
+    if videoInfo then
+      local s=''
+      for i,v in ipairs(Split(videoInfo:gsub('\r?\n', '\n'), '\n')) do
+        for j,w in ipairs(Split(v, '、')) do
+          if i==0 then
+            s=s..MdlChip:tag(w)
+          else
+            for k,x in ipairs(Split(w, ' ')) do
+              s=s..MdlChip:tag(x)
+            end
+          end
+        end
+      end
+      videoInfo=s
+    end
+    if audioInfo then
+      local s=''
+      local wrap=true
+      for i,v in ipairs(Split(audioInfo:gsub('\r?\n', '\n'), '\n')) do
+         s=s..(wrap and '<div>' or '')..MdlChip:tag(v)..(v:match('サンプリングレート') and '</div>' or '')
+         wrap=v:match('サンプリングレート') and true or false
+      end
+      audioInfo=s
+    end
+    if otherInfo then
+      local s=''
+      for i,v in ipairs(Split(otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '\n'), '\n')) do
+        s=s..MdlChip:tag(v)
+      end
+      otherInfo=s
+    end
+   
     epgInfo='<div>\n<h4 class="mdl-typography--title">'
       ..ConvertTitle(v.title)..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
       ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'
       ..v.serviceName..'</span></span></span></span>'..SearchConverter(v, v.serviceName)..'</h4>\n<p>'
       ..(info or '')..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
       ..(extInfo and '<div class="mdl-typography--body-1">'..DecorateUri(extInfo):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
-      ..'<ul>'..RecInfo
-      ..(genreInfo and '<li>ジャンル<ul><li>'..genreInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
-      ..(videoInfo and '<li>映像<ul><li>'..videoInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
-      ..(audioInfo and '<li>音声<ul><li>'..audioInfo:gsub('\r?\n', '</li><li>')..'</li></ul></li>' or '')
-      ..(otherInfo and '<li>その他<ul><li>'..otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '</li>\n<li>')..'</li></ul></li>\n' or '')
-      ..'</ul></section>'
+      ..'<div>'..RecInfo
+      ..(genreInfo and '<div><span class="material-icons">category</span><div>'..genreInfo..'</div></div>\n' or '')
+      ..(videoInfo and '<div><span class="material-icons">videocam</span><div>'..videoInfo..'</div></div>\n' or '')
+      ..(audioInfo and '<div><span class="material-icons">headphones</span><div class="container">'..audioInfo..'</div></div>\n' or '')
+      ..(otherInfo and '<div><span class="material-icons">info</span><div>'..otherInfo..'</div></div>\n' or '')
+      ..'</div></section>'
   end
 
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
@@ -82,7 +133,7 @@ if v then
     
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"')
-      ..'<div class="is_cast hidden" '..(ori and 'data-id="'..video..'" data-meta=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-meta=\'{')..'"audio":'..((audio.multi or audio.dual) and '2' or '1')..'}\'></div>'
+      ..'<div class="is_cast hidden" '..(ori and 'data-id="'..video..'" data-meta=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-meta=\'{')..'"audio":'..(audio and #audio or audioInfo and (audioInfo:find('（ステレオ）.*（ステレオ）') or audioInfo:find('デュアルモノ')) and 2 or 1)..'}\'></div>'
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

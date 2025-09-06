@@ -57,7 +57,6 @@ function save(post)
   edcb.WritePrivateProfile('BACKGROUND', 'welfare', mg.get_var(post, 'welfare'),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'extension', mg.get_var(post, 'extension'),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'other', mg.get_var(post, 'other'),INI)
-  edcb.WritePrivateProfile('BACKGROUND', 'none', mg.get_var(post, 'none'),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),INI)
 
   edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,INI)
@@ -274,24 +273,6 @@ CATEGORY={
 }
 
 ct.css='<style>\n'
-  ..'.news{background:'..news
-  ..';}.sports{background:'..sports
-  ..';}.information{background:'..information
-  ..';}.drama{background:'..drama
-  ..';}.music{background:'..music
-  ..';}.variety{background:'..variety
-  ..';}.movie{background:'..movie
-  ..';}.anime{background:'..anime
-  ..';}.documentary{background:'..documentary
-  ..';}.theater{background:'..theater
-  ..';}.education{background:'..education
-  ..';}.welfare{background:'..welfare
-  ..';}.extension{background:'..extension
-  ..';}.other{background:'..other
-  ..';}.none{background:'..none
-  ..';}.nothing{background:'..nothing
-  ..';}\n'
-
   ..'.reserve{border: 3px dotted '..(paint and 'transparent' or reserve)..';}\n'
   ..'.disabled{border-color:'..(paint and 'transparent' or disabled)..';}\n'
   ..'.partially{background:'..partially..';border-color:'..partially_border..';}\n'
@@ -306,50 +287,47 @@ ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-sp
   ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ジャンル別背景色</div>\n<div class="background mdl-cell mdl-cell--9-col mdl-grid">\n'
-  ..'<div class="news mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ニュース/報道</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="news" value="'..news..'" for=".news"></div></div>\n'
+  ..'<div class="cont-1 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ニュース/報道</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="news" value="'..news..'" for=".cont-1"></div></div>\n'
 
-  ..'<div class="sports mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">スポーツ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="sports" value="'..sports..'" for=".sports"></div></div>\n'
+  ..'<div class="cont-2 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">スポーツ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="sports" value="'..sports..'" for=".cont-2"></div></div>\n'
 
-  ..'<div class="information mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">情報/ワイドショー</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="information" value="'..information..'" for=".information"></div></div>\n'
+  ..'<div class="cont-3 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">情報/ワイドショー</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="information" value="'..information..'" for=".cont-3"></div></div>\n'
 
-  ..'<div class="drama mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドラマ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="drama" value="'..drama..'" for=".drama"></div></div>\n'
+  ..'<div class="cont-4 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドラマ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="drama" value="'..drama..'" for=".cont-4"></div></div>\n'
 
-  ..'<div class="music mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">音楽</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="music" value="'..music..'" for=".music"></div></div>\n'
+  ..'<div class="cont-5 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">音楽</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="music" value="'..music..'" for=".cont-5"></div></div>\n'
 
-  ..'<div class="variety mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">バラエティ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="variety" value="'..variety..'" for=".variety"></div></div>\n'
+  ..'<div class="cont-6 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">バラエティ</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="variety" value="'..variety..'" for=".cont-6"></div></div>\n'
 
-  ..'<div class="movie mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">映画</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="movie" value="'..movie..'" for=".movie"></div></div>\n'
+  ..'<div class="cont-7 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">映画</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="movie" value="'..movie..'" for=".cont-7"></div></div>\n'
 
-  ..'<div class="anime mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">アニメ/特撮</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="anime" value="'..anime..'" for=".anime"></div></div>\n'
+  ..'<div class="cont-8 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">アニメ/特撮</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="anime" value="'..anime..'" for=".cont-8"></div></div>\n'
 
-  ..'<div class="documentary mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドキュメンタリー/教養</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="documentary" value="'..documentary..'" for=".documentary"></div></div>\n'
+  ..'<div class="cont-9 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドキュメンタリー/教養</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="documentary" value="'..documentary..'" for=".cont-9"></div></div>\n'
 
-  ..'<div class="theater mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">劇場/公演</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="theater" value="'..theater..'" for=".theater"></div></div>\n'
+  ..'<div class="cont-10 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">劇場/公演</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="theater" value="'..theater..'" for=".cont-10"></div></div>\n'
 
-  ..'<div class="education mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">趣味/教育</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="education" value="'..education..'" for=".education"></div></div>\n'
+  ..'<div class="cont-11 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">趣味/教育</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="education" value="'..education..'" for=".11"></div></div>\n'
 
-  ..'<div class="welfare mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">福祉</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="welfare" value="'..welfare..'" for=".welfare"></div></div>\n'
+  ..'<div class="cont-12 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">福祉</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="welfare" value="'..welfare..'" for=".12"></div></div>\n'
 
-  ..'<div class="extension mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">拡張</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="extension" value="'..extension..'" for=".extension"></div></div>\n'
+  ..'<div class="cont-13 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">拡張</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="extension" value="'..extension..'" for=".13"></div></div>\n'
 
-  ..'<div class="other mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">その他</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="other" value="'..other..'" for=".other"></div></div>\n'
-
-  ..'<div class="none mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">無指定</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="none" value="'..none..'" for=".none"></div></div>\n'
+  ..'<div class="cont-16 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">その他</div>\n'
+  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="other" value="'..other..'" for=".16"></div></div>\n'
 
   ..'<div class="nothing mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">EPGなし</div>\n'
   ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="nothing" value="'..nothing..'" for=".nothing"></div></div>\n'

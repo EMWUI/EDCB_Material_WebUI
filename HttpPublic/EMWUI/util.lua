@@ -1,12 +1,12 @@
 function Version(a)
   local ver={
-    css='250824',
-    common='250723',
+    css='250906',
+    common='250906',
     tvguide='250824',
-    player='250829',
+    player='250906',
     onair='250815',
     library='250815',
-    setting='241224',
+    setting='250906',
     tsloader='250829',
     hls='v1.5.20',
     aribb24='v1.11.5',
@@ -74,6 +74,7 @@ function Template(temp)
 ..(roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 
 -- css
+..ContentBackgroundStyle()
 ..(temp.css or '')
 
 -- javascript
@@ -228,73 +229,118 @@ end
   return s
 end
 
+function ContentBackgroundStyle()
+  local content={
+    {'news',       '#B3E5FC'},
+    {'sports',     '#FFF9C4'},
+    {'information','#BBDEFB'},
+    {'drama',      '#FFCDD2'},
+    {'music',      '#FFECB3'},
+    {'variety',    '#E1BEE7'},
+    {'movie',      '#FFE0B2'},
+    {'anime',      '#F8BBD0'},
+    {'documentary','#C5CAE9'},
+    {'theater',    '#DCEDC8'},
+    {'education',  '#C8E6C9'},
+    {'welfare',    '#B2DFDB'},
+    {'extension',  '#E0E0E0'},
+    {'extension',  '#E0E0E0'},
+    {'extension',  '#E0E0E0'},
+    {'other',      '#F5F5F5'},
+  }
+  local s=''
+  for i, v in ipairs(content) do
+    s=s..'.cont-'..i..'{background:'..edcb.GetPrivateProfile('BACKGROUND',v[1],v[2],INI)..'!important;}'
+  end
+  return '<style>'..s..'.nothing{background:'..edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)..'!important;}</style>\n'
+end
+
+MdlChip={
+  color={'red', 'pink', 'purple', 'deep-purple', 'indigo', 'blue', 'light-blue', 'cyan', 'green', 'light-green', 'lime', 'yellow', 'amber', 'orange', 'deep-orange', 'brown', 'blue-grey'},
+  getColorClass=function(self, s)
+    local n = 0
+    for i = 1, #s do n = n + s:byte(i) end
+    return 'mdl-color--'..self.color[n % #self.color + 1]..'-100' 
+  end,
+  tag=function(self, s, a, b)
+    return '<span class="mdl-chip '..(a or self:getColorClass(s))..'"><span class="mdl-chip__text'..(b or '')..'">'..s..'</span></span>\n'
+  end,
+}
+
 --EPG情報をTextに変換
 function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
-  local s, v, End = '', (type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)), true
-  if v then
-    local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
-    End=v.durationSecond and startTime+v.durationSecond<now
-    s='<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
-    if v.shortInfo then
-      s=s..'<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>'
-    end
-    s=s..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..(v.startTime and FormatTimeAndDuration(v.startTime, v.durationSecond)..(v.durationSecond and '' or '～未定') or '未定')..'</span>'
-    local service_name=''
+  local v=type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)
+  if not v then return '' end
+  local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
+  local service_name=''
+  local function ConvertService(v)
+    local s=''
     for i,w in ipairs(edcb.GetServiceList() or {}) do
       if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
         service_name=w.service_name
-        s=s..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span class="service">'..service_name..'</span></span>'
+        s=s..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span class="service">'..service_name..'</span></span>' 
         break
       end
     end
-    s=s..'</span>\n'
-      ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..(startTime*1000)..'" data-service="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
-      ..SearchConverter(v, service_name)..'</h4>\n'
-    if v.shortInfo then
-      s=s..'<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'
-    end
-
-    s=s..'</div>\n'
-
-      ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
-
-    if v.extInfo then
-      s=s..'<div class="mdl-typography--body-1">\n'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>\n')..'</div>\n'
-
-    end
-    s=s..'<ul>\n'
-      ..(type(tsidOrRecInfo)=='string' and tsidOrRecInfo or '')
-    if v.contentInfoList then
-      s=s..'<li>ジャンル\n<ul>'
-      for i,w in ipairs(v.contentInfoList) do
-        --0x0E00は番組付属情報、0x0E01はCS拡張用情報
-        local nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
-                     w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
-        s=s..'<li>'..edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble)..'\n'..'</li>\n'
-      end
-      s=s..'</ul></li>\n'
-    end
-    if v.componentInfo then
-      s=s..'<li>映像\n<ul><li>'..edcb.GetComponentTypeName(v.componentInfo.stream_content*256+v.componentInfo.component_type)..' '..v.componentInfo.text_char..'</li></ul></li>\n'
-    end
-    if v.audioInfoList then
-      s=s..'<li>音声\n<ul>'
-      for i,w in ipairs(v.audioInfoList) do
-        s=s..'<li>'..edcb.GetComponentTypeName(w.stream_content*256+w.component_type)..' '..w.text_char..'</li>\n<li>サンプリングレート : '
-          ..(({[1]='16',[2]='22.05',[3]='24',[5]='32',[6]='44.1',[7]='48'})[w.sampling_rate] or '?')..'kHz</li>\n'
-      end
-      s=s..'</ul></li>\n'
-    end
-    s=s..'<li>その他\n<ul>'
-      ..(NetworkType(v.onid)=='地デジ' and '' or v.freeCAFlag and '<li>有料放送</li>\n' or '<li>無料放送</li>\n')
-      ..('<li>OriginalNetworkID:%d(0x%04X)</li>\n'):format(v.onid,v.onid)
-      ..('<li>TransportStreamID:%d(0x%04X)</li>\n'):format(v.tsid,v.tsid)
-      ..('<li>ServiceID:%d(0x%04X)</li>\n'):format(v.sid,v.sid)
-      ..('<li>EventID:%d(0x%04X)</li>\n'):format(v.eid,v.eid)
-      ..'</ul></li>\n</ul>\n'
-      ..'</section>\n'
+    return s
   end
-  return s, v and v.audioInfoList, End
+  local function ConvertContent(v)
+    local s=''
+    for i,w in ipairs(v) do
+      --0x0E00は番組付属情報、0x0E01はCS拡張用情報
+      local nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
+                  w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
+      s=s..MdlChip:tag(edcb.GetGenreName(math.floor(nibble/256)*256+255)..' - '..edcb.GetGenreName(nibble), 'cont-'..(math.floor(w.content_nibble/256)%16+1))
+    end
+    return '<div><span class="material-icons">category</span><div>'..s..'</div></div>\n'
+  end
+  local function ConvertComponent(v)
+    local s=''
+    for i,w in ipairs(Split(edcb.GetComponentTypeName(v.stream_content*256+v.component_type),'、')) do
+      if i==1 then
+       s=s..MdlChip:tag(w)
+      else
+        for j,x in ipairs(Split(w)) do
+          s=s..MdlChip:tag(x)
+        end
+      end
+    end
+    return '<div><span class="material-icons">videocam</span><div>'..s
+      ..(#v.text_char>0 and MdlChip:tag(v.text_char) or '')..'</div></div>\n'
+  end
+  local function ConvertAudio(v)
+    local s=''
+    for i,w in ipairs(v) do
+      s=s..'<div>'..MdlChip:tag(edcb.GetComponentTypeName(w.stream_content*256+w.component_type))
+        ..(#w.text_char>0 and MdlChip:tag(w.text_char) or '')
+        ..MdlChip:tag((({[1]='16',[2]='22.05',[3]='24',[5]='32',[6]='44.1',[7]='48'})[w.sampling_rate] or '?')..'kHz')..'</div>\n'
+    end
+    return '<div><span class="material-icons">headphones</span><div class="container">'..s..'</div></div>\n'
+  end
+  return '<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
+    ..(v.shortInfo and '<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>' or '')
+    ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..(v.startTime and FormatTimeAndDuration(v.startTime, v.durationSecond)..(v.durationSecond and '' or '～未定') or '未定')..'</span>'
+    ..ConvertService(v)
+    ..'</span>\n'
+    ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..(startTime*1000)..'" data-service="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
+    ..SearchConverter(v, service_name)..'</h4>\n'
+    ..(v.shortInfo and '<p>'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>\n')..'</p>\n'or '')
+    ..'</div>\n'
+    ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
+    ..(v.extInfo and '<div class="mdl-typography--body-1">\n'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
+
+    ..'<div>'
+    ..(type(tsidOrRecInfo)=='string' and tsidOrRecInfo or '')
+    ..(v.contentInfoList and ConvertContent(v.contentInfoList) or '')
+    ..(v.componentInfo and ConvertComponent(v.componentInfo) or'')
+    ..(v.audioInfoList and ConvertAudio(v.audioInfoList) or '')
+
+    ..'<div><i class="material-icons">info</i><div>'
+    ..(NetworkType(v.onid)=='地デジ' and '' or MdlChip:tag(v.freeCAFlag and '有料放送' or '無料放送'))
+    ..MdlChip:tag(('%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
+    ..'</div></div>\n'
+    ..'</div></section>\n', 
+    v.audioInfoList, v.durationSecond and startTime+v.durationSecond<now
 end
 
 --録画設定フォームのテンプレート
@@ -723,16 +769,16 @@ function SidePanelTemplate(list)
 <input type="hidden" name="eid">
 <input type="hidden" id="action">
 <div id="ext" class="mdl-typography--body-1"></div>
-<ul>]=]..(list and [=[
-<li class="show-recinfo">結果:<span id="comment"></li>
-<li class="show-recinfo"><div>録画ファイルパス:<div id="path"></div></div></li>
-<li class="show-recinfo">ドロップ:<span id="drops"></li>
-<li class="show-recinfo">スクランブル:<span id="scrambles"></li>]=] or '')..[=[
-<li>ジャンル<ul id="genreInfo"></ul></li>
-<li>映像<ul id="videoInfo"></ul></li>
-<li>音声<ul id="audioInfo"></ul></li>
-<li>その他<ul id="otherInfo"></ul></li>
-</ul>
+<div>]=]..(list and [=[
+<div class="show-recinfo"><span class="material-icons">movie</span><div id="path"></div></div>
+<div class="show-recinfo"><span class="material-icons">description</span><div><span class="mdl-chip"><span id="comment" class="mdl-chip__text"></span></span>
+<div class="container"><div><span class="mdl-chip ]=]..(MdlChip:getColorClass('ドロップ : '))..[=["><span class="mdl-chip__text">ドロップ : <span id="drops"></span></span></span>
+<span class="mdl-chip ]=]..(MdlChip:getColorClass('スクランブル : '))..[=["><span class="mdl-chip__text">スクランブル : <span id="scrambles"></span></span></span></div></div></div></div>]=] or '')..[=[
+<div><span class="material-icons">category</span><div id="genreInfo"></div></div>
+<div><span class="material-icons">videocam</span><div id="videoInfo"></div></div>
+<div><span class="material-icons">headphones</span><div id="audioInfo" class="container"></div></div>
+<div><span class="material-icons">info</span><div id="otherInfo"></div></div>
+</div>
 </section>]=]..(list and [=[
 <section class="panel-swipe mdl-tabs__panel" id="search_">
 <div class="form mdl-grid mdl-grid--no-spacing">

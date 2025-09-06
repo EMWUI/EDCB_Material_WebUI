@@ -10,29 +10,6 @@ DEF_INTERVAL=25
 
 utc9Now=os.time()+9*3600
 
-CATEGORY={
-  'news',
-  'sports',
-  'information',
-  'drama',
-  'music',
-  'variety',
-  'movie',
-  'anime',
-  'documentary',
-  'theater',
-  'education',
-  'welfare',
-  'extension',
-  'extension',
-  'extension',
-  'other',
-}
-
-function Background(key,def)
-  return '.'..key..'{background:'..edcb.GetPrivateProfile('BACKGROUND',key,def,INI)..';}'
-end
-
 function EpgCssTemplate()
   local paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
   return '<style>'
@@ -41,23 +18,6 @@ function EpgCssTemplate()
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour','22',INI)
     ..'px;}#tv-guide{--ONE_MIN_PX:'..ONE_MIN_PX
     ..';}'
-
-    ..Background('news', '#B3E5FC')
-    ..Background('sports', '#FFF9C4')
-    ..Background('information', '#BBDEFB')
-    ..Background('drama', '#FFCDD2')
-    ..Background('music', '#FFECB3')
-    ..Background('variety', '#E1BEE7')
-    ..Background('movie', '#FFE0B2')
-    ..Background('anime', '#F8BBD0')
-    ..Background('documentary', '#C5CAE9')
-    ..Background('theater', '#DCEDC8')
-    ..Background('education', '#C8E6C9')
-    ..Background('welfare', '#B2DFDB')
-    ..Background('extension', '#FFFFFF')
-    ..Background('other', '#F5F5F5')
-    ..Background('none', '#E0E0E0')
-    ..Background('nothing', '#9E9E9E')
 
     ..'.content-wrap.reserve{'..(paint and 'border-color:transparent;background:' or 'border-color:')..edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',INI)
     ..';}.content-wrap.disabled{'..(paint and 'border-color:transparent;background:' or 'border-color:')..edcb.GetPrivateProfile('BACKGROUND','disable','#757575',INI)
@@ -88,7 +48,7 @@ function EpgJsTemplate(baseTime,NOW,date,lastTime)
 end
 
 function CellTemplate(v,op,id,custom)
-  local category=v.contentInfoList and #v.contentInfoList>0 and CATEGORY[math.floor(v.contentInfoList[1].content_nibble/256)%16+1] or 'none'	--背景色
+  local category=v.contentInfoList and #v.contentInfoList>0 and math.floor(v.contentInfoList[1].content_nibble/256)%16+1 or 16	--背景色
   local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
   local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
   local search=v.shortInfo and SearchConverter(v, op.service_name) or ''									--検索
@@ -104,7 +64,7 @@ function CellTemplate(v,op,id,custom)
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
   return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and '--l:'..(left..'/'..column)..';--t:'..lastPx..';' or '')..'--h:'..(endPx-lastPx)..';'..(width~=column and '--w:'..width..'/'..column..';' or '')..'">\n'
-    ..'<div class="content-wrap '..category..recmode..(NOW and date==0 and endTime<=utc9Now and ' end' or '')..'"><div class="content">\n'
+    ..'<div class="content-wrap cont-'..category..recmode..(NOW and date==0 and endTime<=utc9Now and ' end' or '')..'"><div class="content">\n'
 
     ..'<div class="sub_cont">'..(custom and '<img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'">' or '')..'<div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 

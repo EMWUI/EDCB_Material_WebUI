@@ -1449,6 +1449,25 @@ function GetLibraryPathList()
   return list
 end
 
+function Split(s, sep)
+    if not sep then sep=' ' end
+
+    local t = {}
+    local pos = 1
+
+    while true do
+        local start, stop = string.find(s, sep, pos, true)
+        if start then
+            table.insert(t, string.sub(s, pos, start - 1))
+            pos = stop + 1
+        else
+            table.insert(t, string.sub(s, pos))
+            break
+        end
+    end
+    return t
+end
+
 -- ios判定
 function Check_iOS()
   for hk,hv in pairs(mg.request_info.http_headers) do
