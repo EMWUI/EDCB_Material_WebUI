@@ -1,9 +1,6 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
---サムネ表示は以下のコメントアウトを外し有効化。また、サーバーからページを取得したのみ表示され自動更新などはそのまま
---test=true
-
 ct={title='録画結果'}
 
 focus=nil
@@ -39,23 +36,22 @@ end
 ctt={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
-  if test then
-    table.insert(ctt, '<div class="recinfo open-info" data-'..(SIDE_PANEL and 'recinfo="'..v.id or 'href="recinfodesc.html?id='..v.id)..'">'
-      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div class="thumb-container"><i class="material-icons">movie</i><canvas class="thumb" src="'..v.recFilePath..'"></canvas></div>' or '<div class="nofile mdl-cell--hide-phone mdl-cell--hide-tablet"><i class="material-icons">movie_off</i></div>')
-      ..'<div class="summary">'
-      ..'<div class="h6">'
+  if SHOW_THUMB_IN_RECINFO then
+    table.insert(ctt, '<div class="grid-container open-info" data-'..(SIDE_PANEL and 'recinfo="'..v.id or 'href="recinfodesc.html?id='..v.id)..'">'
+      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div class="thumb-container"><i class="material-icons">movie</i><canvas class="thumb" data-id="'..v.id..'"></canvas></div>' 
+        or '<div class="thumb-container mdl-cell--hide-phone"><i class="material-icons">movie_off</i></div>')
+      ..'<div class="summary mdl-typography--title">'
       ..'<span class="title'..(v.drops>0 and ' mdl-color-text--red-A700' or v.scrambles>0 and ' mdl-color-text--yellow-A700' or '')..'">'..ConvertTitle(v.title)
-      ..'</span><span class="subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
+      ..'</span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
       ..'</span><span class="service"><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName
       ..'</span></span></span></div><div class="tagchip">'
       ..MdlChip:tag(v.comment)..'<span class="container">'
-      ..MdlChip:tag('ドロップ : '..v.drops, MdlChip:getColorClass('ドロップ : '), v.drops>0 and ' mdl-color-text--red-A700')
-      ..MdlChip:tag('スクランブル : '..v.scrambles, MdlChip:getColorClass('スクランブル : '), v.scrambles>0 and ' mdl-color-text--red-A700')
-      ..'</span></div></div></div>\n')
+      ..MdlChip:tag('ドロップ : <span'..(v.drops>0 and ' class="mdl-color-text--red-A700">' or '>')..v.drops..'</span>', MdlChip:getColorClass('ドロップ : '))
+      ..MdlChip:tag('スクランブル : <span'..(v.scrambles>0 and ' class="mdl-color-text--red-A700">' or '>')..v.scrambles..'</span>', MdlChip:getColorClass('スクランブル : '), v.scrambles>0 and ' mdl-color-text--red-A700')
+      ..'</span></div></div>\n')
   else
-    table.insert(ctt, '<tr class="epginfo mdl-grid--no-spacing'..(v.drops>0 and ' drops' or v.scrambles>0 and ' scrambles' or '')..'" '
-      ..(SIDE_PANEL and 'data-recinfo="'..v.id
-                    or  'data-href="recinfodesc.html?id='..v.id)..'">\n'
+    table.insert(ctt, '<tr class="open-info mdl-grid--no-spacing'..(v.drops>0 and ' drops' or v.scrambles>0 and ' scrambles' or '')..'" data-'
+      ..(SIDE_PANEL and 'recinfo="'..v.id or 'href="recinfodesc.html?id='..v.id)..'">\n'
       ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
       ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName
@@ -72,14 +68,17 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..SidePanelTemplate(true)
 
-  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+  ..'<div class="mdl-layout__content">'..pageNav..'<div id="table" class="list mdl-grid mdl-grid--no-spacing"'..(SHOW_THUMB_IN_RECINFO and ' style="display: none;">' or '>')
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
-  ..(test and '</table></div>\n'
-    ..'<div class="mdl-grid">'
-    ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
-    ..table.concat(ctt)..'</div></div>\n'
-
+  ..(SHOW_THUMB_IN_RECINFO and '</table></div>\n'
+    ..'<div id="list" class="mdl-grid"><div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
+    ..'<div class="mdl-typography--text-right">'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</div>\n'
+    ..table.concat(ctt)
+    ..'</div></div>\n'
+    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
+    ..'<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'id\');'
+    ..'window.addEventListener(\'createdMiscWasmModule\', e => $(".thumb").each((i,e) => createHtml.thumb.setThumb(e, $(e).data("id"), 0.1)));</script>\n'
   or '<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
     ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
     ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'
@@ -91,133 +90,11 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
     ..'<tbody>\n'
 
     ..table.concat(ctt)
-    ..'</table>\n</div>\n'
-)
-
+    ..'</table>\n</div>\n')
 
   ..pageNav..'</div>\n'
 
   ..'<a id="add" class="hidden mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"><i class="material-icons">add</i></a>'
-
-  ..(test and [=[
-<script src="js/ts-live.lua?t=-misc.js"></script>
-<script src="js/ts-loader.js]=]..Version('tsloader')..[=["></script>
-<script>
-const thumb = 'createMiscWasmModule' in window && new TsThumb(`${ROOT}api/grabber`);
-window.addEventListener('createdMiscWasmModule', e => $('.thumb').each((i,e) => thumb.setThumb(e, $(e).attr('src'), 0.1)));
-$('.open-info').click(e => setRecInfo($(e.currentTarget)));
-</script>
-]=] or '')
-
-if test then
-  ct.css=[=[
-<style>
-.recinfo {position: relative;}
-.thumb-container,.nofile{
-  width:200px;
-  max-width: 40%;
-  flex-shrink: 0;
-}
-.nofile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 100px;
-  background: #eee;
-  border-radius: 8px;
-  align-self: self-start;
-  aspect-ratio: 16 / 9;
-  .material-icons {
-    align-items: center;
-    font-size: 50px;
-    color:#e0e0e0;
-  }
-}
-.thumb-container{
-  position: relative;
-  .material-icons {
-    background: #eee;
-    position: absolute;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    aspect-ratio: 16 / 9;
-    border-radius: 8px;
-    align-items: center;
-    font-size: 50px;
-    color:#e0e0e0;
-  }
-}
-.thumb{
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  z-index: 0;
-  position: relative;
-  border-radius: 8px;
-}
-.recinfo .title{
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-.tagchip {
-  display: flex;
-  justify-content:
-  flex-end;
-  margin-top: 12px;
-  flex-wrap: wrap;
-  .mdl-chip {
-    margin-right: 0!important;
-    &:not(:first-child),
-    +.container {
-      margin-left: 5px;} }
-  .container {display: flex;}
-}
-@media (min-width: 480px) {
-  .recinfo {
-    display: 
-    flex; padding: 
-    24px 40px!important;
-  }
-  .thumb-container,.nofile{
-    width:200px;
-    max-width: 40%;
-    margin-right:16px;
-    flex-shrink: 0;
-  }
-  .h6 {
-    font-weight: 400;
-    line-height: 24px;
-    font-size: 20px;
-    letter-spacing: .04em;
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-    margin: 0 0 16px;
-    .subhead {
-      font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 24px;
-      letter-spacing: .04em;
-    }
-  }
-  .summary{
-    display: flex;
-    justify-content: space-between;
-    flex-direction: column;
-    flex-grow: 1;
-  }
-}
-@media (max-width: 479px) {
-  .recinfo .title {font-size: 16px;}
-  .recinfo {padding: 16px!important;}
-  .thumb-container{margin-right:8px;float:left;}
-}
-
-</style>
-]=]
-end
-
 
 ct=Template(ct)
 

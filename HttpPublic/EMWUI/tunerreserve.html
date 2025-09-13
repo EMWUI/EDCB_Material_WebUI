@@ -30,7 +30,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
 
     pageNav=Pagination(page, a)
 
-    table.insert(ctt, '<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+    table.insert(ctt, '<div class="mdl-layout__content">'..pageNav..'<div id="table" class="list mdl-grid mdl-grid--no-spacing">'
 
       ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
       ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
@@ -48,7 +48,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
       w=a[i]
       size=GetPredictionSize(w)
 
-      table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
+      table.insert(ctt, '<tr class="reserve open-info mdl-grid--no-spacing'
         ..(w.recSetting.recMode==5 and ' disabled' or w.overlapMode==1 and ' partially' or w.overlapMode==2 and ' shortage' or '')
         ..'" data-startTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)-(w.recSetting.startMargin or 0))*1000 or '')
         ..'" data-endTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+w.durationSecond+(w.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
@@ -64,8 +64,8 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
         ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">priority_high</i></span>'..w.recSetting.priority
         ..'\n')
     end
-    
-    table.insert(ctt, '</table>\n</div>\n'..pageNav..'</div>\n')
+
+    table.insert(ctt, '</table>\n</div>\n'..ThumbContainerTemplate()..pageNav..'</div>\n')
   end
 end
 

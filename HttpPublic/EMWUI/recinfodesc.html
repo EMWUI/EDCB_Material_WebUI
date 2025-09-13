@@ -100,26 +100,29 @@ if v then
       local s=''
       local wrap=true
       for i,v in ipairs(Split(audioInfo:gsub('\r?\n', '\n'), '\n')) do
-         s=s..(wrap and '<div>' or '')..MdlChip:tag(v)..(v:match('サンプリングレート') and '</div>' or '')
-         wrap=v:match('サンプリングレート') and true or false
+        local a, b = v:gsub('サンプリングレート : ', '')
+        s=s..(wrap and '<div>' or '')..MdlChip:tag(a)..(b>0 and '</div>' or '')
+        wrap=b>0 and true or false
       end
       audioInfo=s
     end
     if otherInfo then
       local s=''
       for i,v in ipairs(Split(otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '\n'), '\n')) do
-        s=s..MdlChip:tag(v)
+        if not v:match('ID:%d*') then
+          s=s..MdlChip:tag(v)
+        end
       end
-      otherInfo=s
+      otherInfo=s..MdlChip:tag(v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid)
     end
-   
+
     epgInfo='<div>\n<h4 class="mdl-typography--title">'
       ..ConvertTitle(v.title)..'\n<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'
       ..FormatTimeAndDuration(v.startTime, v.durationSecond)..'</span><span class="service"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'
       ..v.serviceName..'</span></span></span></span>'..SearchConverter(v, v.serviceName)..'</h4>\n<p>'
       ..(info or '')..'</p>\n</div>\n<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
       ..(extInfo and '<div class="mdl-typography--body-1">'..DecorateUri(extInfo):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
-      ..'<div>'..RecInfo
+      ..'<div class="tagchip">'..RecInfo
       ..(genreInfo and '<div><span class="material-icons">category</span><div>'..genreInfo..'</div></div>\n' or '')
       ..(videoInfo and '<div><span class="material-icons">videocam</span><div>'..videoInfo..'</div></div>\n' or '')
       ..(audioInfo and '<div><span class="material-icons">headphones</span><div class="container">'..audioInfo..'</div></div>\n' or '')
@@ -130,7 +133,7 @@ if v then
   ct.main='<main class="tab-swipe mdl-layout__content">\n'
     ..'<div class="mdl-grid">\n<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">'
     ..epgInfo
-    
+
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"')
       ..'<div class="is_cast hidden" '..(ori and 'data-id="'..video..'" data-meta=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-meta=\'{')..'"audio":'..(audio and #audio or audioInfo and (audioInfo:find('（ステレオ）.*（ステレオ）') or audioInfo:find('デュアルモノ')) and 2 or 1)..'}\'></div>'

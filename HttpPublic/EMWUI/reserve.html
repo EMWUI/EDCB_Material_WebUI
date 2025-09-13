@@ -44,7 +44,7 @@ rate={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   size=GetPredictionSize(v)
-  table.insert(ctt, '<tr class="reserve epginfo mdl-grid--no-spacing'
+  table.insert(ctt, '<tr class="reserve open-info mdl-grid--no-spacing'
     ..(v.recSetting.recMode==5 and ' disabled' or v.overlapMode==1 and ' partially' or v.overlapMode==2 and ' shortage' or '')
     ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)-(v.recSetting.startMargin or 0))*1000 or '')
     ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
@@ -67,7 +67,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..SidePanelTemplate(true)
 
-  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+  ..'<div class="mdl-layout__content">'..pageNav..'<div id="table" class="list mdl-grid mdl-grid--no-spacing">'
 
   ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
   ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
@@ -83,7 +83,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..table.concat(ctt)
   
-  ..'</table>\n</div>\n'..pageNav..'</div>\n'
+  ..'</table>\n</div>\n'..ThumbContainerTemplate()..pageNav..'</div>\n'
 
   ..'<a id="add" class="hidden mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored"><i class="material-icons">add</i></a>'
 

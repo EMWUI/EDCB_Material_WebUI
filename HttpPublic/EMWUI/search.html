@@ -303,7 +303,7 @@ if #a>0 then
       rs=r.recSetting
     end
 
-    table.insert(ctt, '<tr class="epginfo search mdl-grid--no-spacing'
+    table.insert(ctt, '<tr class="open-info search mdl-grid--no-spacing'
       ..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)-(r.recSetting.startMargin or 0))*1000 or '')
       ..(not archive and '" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0) or '')
       ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(archive and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)

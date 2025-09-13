@@ -38,7 +38,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
       end
     end
   end
-  table.insert(ctt, '<tr class="epginfo'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
+  table.insert(ctt, '<tr class="open-info'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
     ..(SIDE_PANEL and 'data-autoadd="'..a[i].dataID
                    or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
@@ -57,7 +57,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..SidePanelTemplate(true)
 
-  ..'<div class="mdl-layout__content">'..pageNav..'<div class="list mdl-grid mdl-grid--no-spacing">'
+  ..'<div class="mdl-layout__content">'..pageNav..'<div id="table" class="list mdl-grid mdl-grid--no-spacing">'
 
   ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
   ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
@@ -73,7 +73,7 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
 
   ..table.concat(ctt)
 
-  ..'</table>\n</div>\n'..pageNav..'</div>\n'
+  ..'</table>\n</div>\n'..ThumbContainerTemplate()..pageNav..'</div>\n'
 
   ..'<a id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" href="autoaddepginfo.html"><i class="material-icons">add</i></a>'
 

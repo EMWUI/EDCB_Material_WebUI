@@ -228,20 +228,15 @@ const toObj = {
 
 		if (e.num('ID')){
 			d.id = e.num('ID');
-			const programInfo = e.txt('programInfo').match(/^[\s\S]*?\n\n([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
-			if (programInfo){
-				d.text = programInfo[1];
-				d.text_ext = programInfo[2];
-				d.genre = programInfo[3].split('\n').map(e=>[e, [/^ニュース／報道/,/^スポーツ/,/^情報／ワイドショー"/,/^ドラマ/,/^音楽/,/^バラエティ/,/^映画/,/^アニメ／特撮/,/^ドキュメンタリー／教養/,/^劇場／公演/,/^趣味／教育/,/^福祉/].findIndex(s=>s.test(e))+1||16]);
-				d.video = programInfo[4].split('\n');
-				d.audio = [];
-				let i = 0;
-				programInfo[5].split('\n').map(e => {
-					if (!d.audio[i]) d.audio[i] = [];
-					d.audio[i].push(e);
-					if (e.match('サンプリングレート')) i++;
+			if (e.txt('programInfo')){
+				e.txt('programInfo').split('\n-----------------------\n').map(e=>this.ProgramInfo(e)).filter(e=>e.eid==d.eid).forEach(e => {
+					d.text = e.text;
+					d.text_ext = e.text_ext;
+					d.genre = e.genre;
+					d.video = e.video;
+					d.audio = e.audio;
+					d.other = e.other;
 				});
-				d.other = programInfo[6].replace(/\n\n/g,'\n').split('\n');
 			}
 			d.recFilePath = e.txt('recFilePath');
 			d.comment = e.txt('comment');
@@ -249,6 +244,43 @@ const toObj = {
 			d.scrambles = e.num('scrambles');
 			d.errInfo = e.txt('errInfo');
 			d.protect = e.num('protect') == 1;
+		}
+
+		return d;
+	},
+	ProgramInfo(e){
+		const programInfo = e.match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
+		const id = programInfo[9].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
+		const date = programInfo[1].split(/ |～/);
+		const starttime = new Date(`${date[0]} ${date[1]}`).getTime();
+		const endtime = /未定/.test(date[2]) ? null : new Date(`${date[0]} ${date[2]}`).getTime();
+		const d = {
+			onid: Number(id[1]),
+			tsid: Number(id[2]),
+			sid:  Number(id[3]),
+			eid:  Number(id[4]),
+			service: programInfo[2],
+
+			starttime: starttime,
+
+			title: programInfo[3],
+			text: programInfo[4],
+			text_ext: programInfo[5],
+
+			genre: programInfo[6].split('\n').map(e=>[e, [/^ニュース／報道/,/^スポーツ/,/^情報／ワイドショー"/,/^ドラマ/,/^音楽/,/^バラエティ/,/^映画/,/^アニメ／特撮/,/^ドキュメンタリー／教養/,/^劇場／公演/,/^趣味／教育/,/^福祉/].findIndex(s=>s.test(e))+1||16]),
+			video: programInfo[7].split('\n'),
+			audio: [],
+			other: programInfo[9].replace(/\n\n/g,'\n').split('\n'),
+		};
+		let i = 0;
+		programInfo[8].split('\n').map(e => {
+			if (!d.audio[i]) d.audio[i] = [];
+			d.audio[i].push(e.replace('サンプリングレート : ',''));
+			if (e.match('サンプリングレート')) i++;
+		});
+		if (endtime){
+			d.endtime = endtime;
+			d.duration = (endtime - starttime)/1000;
 		}
 
 		return d;
@@ -429,6 +461,9 @@ const getList = new class {
 		if (this.#div != 200) this.#count = this.#div;
 	}
 
+	async getNotifyUpdateCount(key){
+		this.#notify[key] = await this.checkUpdate(key);
+	}
 	async checkUpdate(key){
 		const notify = await $.get(`${ROOT}api/Common`, {notify: this.#presets[key].notify}).then(r => $(r).num(), r=>this.#notify[key]) + 1;
 		if (notify != this.#notify[key]) return notify;
@@ -451,17 +486,15 @@ const getList = new class {
 		const sort = typeof any === 'string' ? any : null;
 		fn ??= typeof any === 'function' ? any : e=>e;
 
-		if (!notify && Info[key][index]){
+		if (!notify && Info[key] && Info[key][index]){
 			if (sort) Info[key][index] = new Map(this.sort(key, Info[key][index], sort));
 			return fn(Info[key]);
 		};
 
 		return await $.get(preset.url, {index: index, count: this.#count}).then(xml => {
 			const $xml = $(xml);
-			if (notify){
-				this.#notify[key] = notify;
-				Info[key] = preset.tabArray ? {} : {total: $xml.children().num('total')};
-			}
+			if (notify) this.#notify[key] = notify;
+			if (!Info[key]) Info[key] = preset.tabArray ? {} : {total: $xml.children().num('total')};
 
 			if (preset.tabArray){
 				(preset.tabArray($(xml))).forEach((e, i) => {
@@ -513,13 +546,13 @@ const getList = new class {
 
 const mdlChip = {
 	color: ['red', 'pink', 'purple', 'deep-purple', 'indigo', 'blue', 'light-blue', 'cyan', 'green', 'light-green', 'lime', 'yellow', 'amber', 'orange', 'deep-orange', 'brown', 'blue-grey'],
+	textEncoder: new TextEncoder(),
 	getColorClass(s){
-		let n = 0;
-		for (let i = 0; i < s.length; i++) n += s.charCodeAt(i);
-		return `mdl-color--${this.color[n % this.color.length]}-100`;
+		s = this.textEncoder.encode(s).reduce((n,i)=>n+=i);
+		return `mdl-color--${this.color[s % this.color.length]}-100`;
 	},
 	tag(s, a, b){
-		return $('<span>', {class: `mdl-chip ${a||this.getColorClass(s)}`, append: $('<span>', {class: `mdl-chip__text${b ? ` ${b}` : ''}`, text: s})});
+		return $('<span>', {class: `mdl-chip ${a||this.getColorClass(s)}`, append: $('<span>', {class: `mdl-chip__text${b ? ` ${b}` : ''}`, html: s})});
 	},
 }
 
@@ -547,7 +580,7 @@ const createHtml = new class {
 				this.#timerID[2] = setTimeout(() => this.popstate(), Math.min(...$.map($('tbody tr'), e => $(e).data('endtime'))) - Date.now());
 			},
 			sidePanel: '#detail,#recset',
-			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'} `,
+			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'}`,
 			data: d => ({id: d.id, onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid??65535, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000}),
 			click: e => {
 				if ($(e.target).is('.flag, .flag *')) return;
@@ -584,7 +617,7 @@ const createHtml = new class {
 				this.#timerID[2] = setTimeout(() => this.popstate(), Math.min(...$.map($('tbody tr'), e => $(e).data('endtime'))) - Date.now());
 			},
 			sidePanel: '#detail,#recset',
-			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'} `,
+			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'}`,
 			data: d => ({onid: d.onid, tsid: d.tsid, sid: d.sid, eid: d.eid??65535, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000}),
 			click: e => {
 				if ($(e.target).is('.flag, .flag *')) return;
@@ -615,6 +648,27 @@ const createHtml = new class {
 				{title: 'D', class: 'drop', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drops:</span>${d.drops}`, n: true},
 				{title: 'S', class: 'scramble', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>${d.scrambles}`, n: true},
 			],
+			getThumb: async (id, $container) => {
+				const thumb = document.createElement('canvas');
+				const done = await this.thumb.setThumb(thumb, id, 0.1);
+				if (done) $container.replaceWith($('<div>', {class: 'thumb-container', append: thumb}));
+			},
+			list(d){
+				const $thumb = $('<div>', {class: 'thumb-container mdl-cell--hide-phone mdl-cell--hide-tablet', append: $('<i>', {class: 'material-icons', text: 'movie_off'})});
+				this.getThumb(d.id, $thumb);
+				return $('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
+					$thumb,
+					$('<div>', {class: 'summary mdl-typography--title', append: [
+						$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
+						$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
+							$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
+							$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
+					$('<div>', {class: 'tagchip', append: [
+						mdlChip.tag(d.comment),
+						$('<span>', {class: 'container', append: [
+							mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
+							mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]})
+			},
 		},
 		autoaddepg: {
 			title: 'EPG予約',
@@ -704,11 +758,24 @@ const createHtml = new class {
 	#div = Math.round(200 / PAGE_COUNT);
 	constructor(){
 		this.#setFromURL();
-		if (!this.#preset) return;
+		if (!this.enabled) return;
 		$(window).on('popstate', () => this.popstate());
 		$(() => {
 			getList.service();
+
+			$('.mdl-navigation a').click(e => {
+				const key = $(e.currentTarget).attr('href').split('.')[0];
+				if (!this[key]) return;
+				e.preventDefault();
+				this[key]();
+			});
+
+			if (!this.#preset) return;
+
 			if (this.#preset.load) this.#preset.load();
+			this.#checkUpdate();
+			this.#resetSidePanel();
+			getList.getNotifyUpdateCount(this.#key);
 
 			$('.pagination a').click(e => {
 				e.preventDefault();
@@ -722,17 +789,6 @@ const createHtml = new class {
 				this.setPage(page);
 			});
 			//*/
-			if (!this.enabled) return;
-
-			this.#checkUpdate();
-			this.#resetSidePanel();
-
-			$('.mdl-navigation a').click(e => {
-				const key = $(e.currentTarget).attr('href').split('.')[0];
-				if (!this[key]) return;
-				e.preventDefault();
-				this[key]();
-			});
 			$('.mdl-layout__tab').click(e => {
 				const params = new URLSearchParams($(e.currentTarget).attr('href'));
 				if (!params.has('tab')) return;
@@ -752,7 +808,7 @@ const createHtml = new class {
 		this.#presets[this.#key].load();
 	}
 
-	#main(d){
+	#table(d){
 		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
 		return [
 			$('<caption>', {text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
@@ -762,6 +818,13 @@ const createHtml = new class {
 			$('<tbody>', {append: [...d[this.#index]].slice(i, i + PAGE_COUNT).map(e =>
 				$('<tr>', { class: `${this.#preset.class ? this.#preset.class(e[1]) : ''} mdl-grid--no-spacing`, data: this.#preset.data(e[1]), click: e => this.#preset.click(e), append: this.#preset.cell.map(cell =>
 					$('<td>', {class: `${cell.class}${cell.n?'':' mdl-data-table__cell--non-numeric'}${cell.col?` mdl-cell--${cell.col}-col-phone`:''}${cell.order?` mdl-cell--order-${cell.order}-phone`:''}`, data: cell.data && cell.data(e[1]), append: cell.text(e[1])}) )}) )})
+		];
+	}
+	#list(d){
+		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
+		return [
+			$('<div>', {class: 'mdl-typography--text-right', text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
+			...[...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]))
 		];
 	}
 	#pagination(d){
@@ -785,7 +848,15 @@ const createHtml = new class {
 
 		$('.mdl-layout__content').scrollTop(0);
 		$(`${this.#container} .pagination`).html(this.#pagination(d));
-		$(`${this.#container} table`).html(this.#main(d))
+		if (this.#preset.list && this.thumb){
+			$(`${this.#container} #table`).hide();
+			$(`${this.#container} .main-content`).html(this.#list(d));
+			$(`${this.#container} #list`).show();
+		}else{
+			$(`${this.#container} #list`).hide();
+			$(`${this.#container} table`).html(this.#table(d)).show();
+			$(`${this.#container} #table`).show();
+		}
 		componentHandler.upgradeDom();
 
 		if (this.#preset.load) this.#preset.load();
@@ -795,7 +866,7 @@ const createHtml = new class {
 	}
 	async sort(sort){
 		const d = await getList.fetchEX(this.#key, this.#index, sort);
-		$(`${this.#container} table`).html(this.#main(d));
+		$(`${this.#container} table`).html(this.#table(d));
 		componentHandler.upgradeDom();
 	}
 
@@ -922,7 +993,7 @@ const setEpgInfo = (d, $e, id) => {
 	$('#audioInfo').html(() => !d.audio ? '' : d.audio.map(e => d.id ? $('<div>', {append: e.map(e => mdlChip.tag(e))}) : $('<div>', {append: [mdlChip.tag(e.component_type_name), e.text ? mdlChip.tag(e.text) : null, mdlChip.tag(`${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`)]})));
 
 	if (d.errInfo){
-		$('#otherInfo').html(d.other ? d.other.map(e=>mdlChip.tag(e)) : '');
+		$('#otherInfo').html(d.other ? d.other.map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}) : '').append(mdlChip.tag(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`));
 	}else{
 		$('#otherInfo').html([
 			d.onid<0x7880 || 0x7FE8<d.onid ? mdlChip.tag(d.freeCAFlag ? '有料放送' : '無料放送') : '',
@@ -1423,7 +1494,7 @@ $(function(){
 	}
 
 	//一覧の行をリンクに
-	$('tr.epginfo').click(e => {
+	$('.open-info').click(e => {
 		const $e = $(e.currentTarget);
 		if ($(e.target).is('.flag, .flag *, .count a')) return;
 

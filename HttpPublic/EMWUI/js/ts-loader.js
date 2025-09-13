@@ -616,9 +616,13 @@ class TsThumb{
 	#api;
 	#e;
 	#vid;
+	#key ='fname';
 	constructor(api, canvas, video){
 		if (api) this.#api = api;
-		if (canvas) this.#e = canvas;
+		if (canvas) {
+			if (typeof canvas == 'string') this.#key = canvas;
+			else this.#e = canvas;
+		}
 		if (video) this.#vid = video;
 		this.#reset();
 		if (!('createMiscWasmModule' in window)) return;
@@ -663,7 +667,7 @@ class TsThumb{
 
 	#roll(canvas, path, offset = 0){
 		this.#e = canvas;
-		this.#url.searchParams.set('fname', path);
+		this.#url.searchParams.set(this.#key, path);
 		this.#rollLoop(offset);
 	}
 	#rollLoop(offset, range = 10){
@@ -686,7 +690,7 @@ class TsThumb{
 		if (!this.#mod) return;
 	
 		const url = path ? new URL(this.#api, location.href) : this.#url;
-		if (path) url.searchParams.set('fname', path);
+		if (path) url.searchParams.set(this.#key, path);
 		this.#value = value;
 
 		this.#loading = true;
@@ -833,6 +837,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			script.onload = () => {
 				this.#loaded = null;
 				this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
+				if (!this.#noWebBml) bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
 				return resolve();
 			}
 			script.onerror = () => reject();
@@ -1486,7 +1491,6 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src"))await this.#initWebBml();
 			this.#datacastState=this.#STATE.LOG;
 			this.#psc.startRead();
-			bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
 			bmlBrowserSetInvisible(false);
 			if(this.#psc.xhr)return;
 			this.#psc.xhr=new XMLHttpRequest();
@@ -1655,7 +1659,6 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(this.#loaded&&this.#loaded!=this.#e.initSrc.href)await this.#initWebBml();
 			this.#datacastState=this.#STATE.STREAM;
 			this.#params.set('psidata', 1);
-			bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
 			bmlBrowserSetInvisible(false);
 			if(this.#elems.indicator)this.#elems.indicator.innerText="接続中...";
 			if (open) this.#openSubStream();

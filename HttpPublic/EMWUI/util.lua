@@ -28,6 +28,7 @@ DIR_SEP=WIN32 and '\\' or '/'
 dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
 SIDE_PANEL=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,INI))~=0
+SHOW_THUMB_IN_RECINFO=true
 
 function Template(temp)
   local esc=edcb.htmlEscape
@@ -329,7 +330,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     ..'<div><section class="mdl-layout__tab-panel is-active" id="detail">\n'
     ..(v.extInfo and '<div class="mdl-typography--body-1">\n'..DecorateUri(v.extInfo.text_char):gsub('\r?\n', '<br>\n')..'</div>\n' or '')
 
-    ..'<div>'
+    ..'<div class="tagchip">'
     ..(type(tsidOrRecInfo)=='string' and tsidOrRecInfo or '')
     ..(v.contentInfoList and ConvertContent(v.contentInfoList) or '')
     ..(v.componentInfo and ConvertComponent(v.componentInfo) or'')
@@ -769,7 +770,7 @@ function SidePanelTemplate(list)
 <input type="hidden" name="eid">
 <input type="hidden" id="action">
 <div id="ext" class="mdl-typography--body-1"></div>
-<div>]=]..(list and [=[
+<div class="tagchip">]=]..(list and [=[
 <div class="show-recinfo"><span class="material-icons">movie</span><div id="path"></div></div>
 <div class="show-recinfo"><span class="material-icons">description</span><div><span class="mdl-chip"><span id="comment" class="mdl-chip__text"></span></span>
 <div class="container"><div><span class="mdl-chip ]=]..(MdlChip:getColorClass('ドロップ : '))..[=["><span class="mdl-chip__text">ドロップ : <span id="drops"></span></span></span>
@@ -1166,6 +1167,12 @@ function Pagination(page, a, href)
   return s..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></'..tag..'>\n<'
     ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..math.ceil(#a/pageCount-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></'..tag
     ..'>\n</div></div>\n'
+end
+
+function ThumbContainerTemplate()
+  if not SHOW_THUMB_IN_RECINFO then return '' end
+  return '<div id="list" class="mdl-grid" style="display: none;"><div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"></div></div>\n'
+    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'id\');</script>\n'
 end
 
 --タイトルのマークを装飾

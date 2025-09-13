@@ -5,9 +5,9 @@ ct=Template({
   main='  <main class="sidePanel-container mdl-layout__content">\n'
     ..SidePanelTemplate(true)
     ..'<div class="mdl-layout__content"><div class="pagination mdl-grid mdl-grid--no-spacing"></div>\n'
-    ..'<div class="list mdl-grid mdl-grid--no-spacing">'
+    ..'<div id="table" class="list mdl-grid mdl-grid--no-spacing">'
     ..'<table class="mdl-data-table mdl-js-data-table mdl-cell--4-col-phone mdl-shadow--4dp">\n'
-    ..'</table>\n</div>\n<div class="pagination mdl-grid mdl-grid--no-spacing"></div></div>\n',
+    ..'</table>\n</div>\n'..ThumbContainerTemplate()..'<div class="pagination mdl-grid mdl-grid--no-spacing"></div></div>\n',
 })
 
 mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len,ct.gzip)..'\r\n'))
