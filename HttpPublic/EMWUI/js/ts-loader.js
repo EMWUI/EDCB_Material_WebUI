@@ -700,6 +700,7 @@ class TsThumb{
 		}).then(r => {
 			const buffer = this.#mod.getGrabberInputBuffer(r.byteLength);
 			buffer.set(new Uint8Array(r));
+			if (id && id!=this.#id) return null;
 			return this.#mod.grabFirstFrame(r.byteLength);
 		}).catch(e => null);
 		this.#loading = false;

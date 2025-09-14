@@ -25,11 +25,11 @@ ct={
 }
 
 ct.main='<main id="tvcast" class="mdl-layout__content">\n'
-  ..'<div id="movie-theater-contner"></div>\n'
+  ..'<div id="movie-theater-container"></div>\n'
   ..'<div class="mdl-grid list">\n'
   ..'<div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">\n'
 
-  ..'<div id="movie-contner">\n'
+  ..'<div id="movie-container">\n'
   ..PlayerTemplate('', true)
   ..'</div>\n'
 
@@ -37,7 +37,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
 ..[=[
 <div id="epginfo" class="mdl-cell mdl-cell--12-col mdl-shadow--4dp hidden">
 <div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
-<div id="ext-contner" class="mdl-layout--large-screen-only">
+<div id="ext-container" class="mdl-layout--large-screen-only">
 <p id="ext" class="mdl-typography--body-1"></p>
 <!--
 <div id="InfoList" class="tagchip">
@@ -49,7 +49,7 @@ ct.main='<main id="tvcast" class="mdl-layout__content">\n'
 <button for="#InfoList" class="toggle mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">expand_more</i></button>
 -->
 </div>
-<button for="#ext-contner" class="toggle mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon mdl-layout--small-screen-only"><i class="material-icons">expand_more</i></button>
+<button for="#ext-container" class="toggle-info mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon mdl-layout--small-screen-only"><i class="material-icons">expand_more</i></button>
 <div class="mdl-card__menu"><a id="link_epginfo" class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect"><i class="material-icons">open_in_new</i></a>
 </div></div></div>
 <div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">

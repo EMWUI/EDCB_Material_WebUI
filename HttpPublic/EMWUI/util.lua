@@ -877,52 +877,7 @@ function PlayerTemplate(video, liveOrAudio)
   end
   return [=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
-]=]..(USE_DATACAST and [=[<div class="remote-control disabled">
-  <span class="navi">
-    <span>
-      <button class="draggable" disabled></button>
-      <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">north</span></button>
-      <button class="draggable" disabled></button>
-    </span><span>
-      <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">west</span></button>
-      <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary" disabled><span class="fill material-icons">circle</span></button>
-      <button id="key4" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">east</span></button>
-    </span><span>
-      <button id="key20" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">d</span></button>
-      <button id="key2" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">south</span></button>
-      <button id="key19" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">subdirectory_arrow_left</span></button>
-      <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="num"><input type="checkbox" id="num" class="mdl-icon-toggle__input"><i class="mdl-icon-toggle__label material-icons">123</i></label>
-    </span>
-  </span><span class="color">
-    <button id="key21" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
-    <button id="key22" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
-    <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
-    <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
-  </span>
-  <span class="num hidden">
-    <span>
-      <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>1</button>
-      <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>2</button>
-      <button id="key8" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>3</button>
-    </span><span>
-      <button id="key9" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>4</button>
-      <button id="key10" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>5</button>
-      <button id="key11" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>6</button>
-    </span><span>
-      <button id="key12" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>7</button>
-      <button id="key13" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>8</button>
-      <button id="key14" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>9</button>
-    </span><span>
-      <button id="key15" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>10</button>
-      <button id="key16" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>11</button>
-      <button id="key17" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>12</button>
-    </span><span>
-      <button id="key5" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>0</button>
-    </span>
-  </span>
-  <div class="remote-control-indicator"></div>
-</div>
-<div class="remote-control-status-container">
+]=]..(USE_DATACAST and [=[<div class="remote-control-status-container">
 <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
 <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
 <div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
@@ -931,7 +886,7 @@ function PlayerTemplate(video, liveOrAudio)
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">
-<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<script src="js/ts-live.lua?t=-misc.js"></script><span class="thumb-popup"><canvas id="vid-thumb" style="display: none;"></canvas></span><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0">')..[=[</div>
+<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<script src="js/ts-live.lua?t=-misc.js"></script><span class="thumb-popup"><canvas id="vid-thumb" style="display: none;"></canvas></span><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" disabled>')..[=[</div>
 <button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
 <div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon fill"><i class="material-icons fill">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span class="mdl-cell--hide-phone"><span> / </span><span class="duration videoTime">0:00</span></span></div>
@@ -968,7 +923,55 @@ function PlayerTemplate(video, liveOrAudio)
 <]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '') or 'video is="ts-hls"'..(ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or ''))..' ctok="'..CsrfToken(live and 'view' or 'xcode')..'" id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
 </div></div>
 </div></div>
-]=]
+]=]..(USE_DATACAST and [=[<div class="remocon-container">
+<div class="remote-control disabled">
+  <span class="color">
+    <button id="key21" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key22" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key23" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+    <button id="key24" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled></button>
+  </span><span class="navi">
+    <span>
+      <button class="draggable" disabled></button>
+      <button id="key1" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">north</span></button>
+      <button class="draggable" disabled></button>
+    </span><span>
+      <button id="key3" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">west</span></button>
+      <button id="key18" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--primary" disabled><span class="fill material-icons">circle</span></button>
+      <button id="key4" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">east</span></button>
+    </span><span>
+      <button id="key2" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">south</span></button>
+      <button id="key20" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">d</span></button>
+      <button id="key19" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled><span class="material-icons">subdirectory_arrow_left</span></button>
+      <label class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="num"><input type="checkbox" id="num" class="mdl-icon-toggle__input"><i class="mdl-icon-toggle__label material-icons">123</i></label>
+    </span>
+  </span>
+  <span class="num hidden">
+    <span>
+      <button id="key6" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>1</button>
+      <button id="key7" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>2</button>
+      <button id="key8" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>3</button>
+    </span><span>
+      <button id="key9" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>4</button>
+      <button id="key10" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>5</button>
+      <button id="key11" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>6</button>
+    </span><span>
+      <button id="key12" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>7</button>
+      <button id="key13" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>8</button>
+      <button id="key14" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>9</button>
+    </span><span>
+      <button id="key15" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>10</button>
+      <button id="key16" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>11</button>
+      <button id="key17" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>12</button>
+    </span><span>
+      <button id="key5" class="mdl-button mdl-js-button mdl-button--fab mdl-js-ripple-effect mdl-button--mini-fab" disabled>0</button>
+    </span>
+  </span>
+  <div class="remote-control-indicator"></div>
+</div>
+</div>
+]=] or '')
+
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
 
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'

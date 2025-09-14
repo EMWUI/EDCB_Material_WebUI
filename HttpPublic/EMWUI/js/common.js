@@ -1515,14 +1515,6 @@ $(function(){
 	$('dialog .close').click(e => dialog(e).close());	//閉じ
 
 	$('.mdl-layout__tab').click(() => $('main').scrollTop(0));
-	//再生タブ
-	$('#movie_tab').click(() => {
-		if ($('#video').data('loaded')) return;
-
-		if (!$('.is_cast').data('public')) loadMovie($('.is_cast'));
-		else $('#video').trigger('load');
-		$('#video').data('loaded', true);
-	});
 
 	//通知
 	if (!isMobile && !isTouch && 'Notification' in window){

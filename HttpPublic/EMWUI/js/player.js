@@ -149,6 +149,7 @@ const setbmlBrowserSize = () => {
 		width = playerUI.clientWidth;
 		height = width * (9/16);
 	}
+	if (!width||!height) return;
 	bmlBrowserSetVisibleSize(width,height);
 }
 
@@ -184,9 +185,9 @@ $(window).on('load resize', () => {
 
 	if (vid.theater || isSmallScreen()){
 		vid.theater = true;
-		$('#movie-contner #player').prependTo('#movie-theater-contner');
+		$('#movie-container #player').prependTo('#movie-theater-container');
 	}else{
-		$('#movie-theater-contner #player').prependTo('#movie-contner');
+		$('#movie-theater-container #player').prependTo('#movie-container');
 	}
 });
 
@@ -196,7 +197,6 @@ $(function(){
 
 	const $volume = $('#volume');
 	$volume.on('mdl-componentupgraded', () => $volume.get(0).MaterialSlider.change(vid.muted ? 0 : vid.volume));
-	$remocon.insertAfter('#movie-contner');
 
 
 	//閉じる
@@ -273,7 +273,7 @@ $(function(){
 				seek.MaterialProgress.setProgress(currentTime / d.meta.duration * 100);
 				$live.toggleClass('live', this.duration - this.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
-				if ($seek.data('touched')) return;
+				if (seek.seeking) return;
 
 				currentTime = this.currentTime * (this.fast || 1) + (this.ofssec || 0);
 				if (!this.offset) seek.MaterialSlider.change(currentTime);
@@ -319,34 +319,33 @@ $(function(){
 		input(){
 			$currentTime.text(getVideoTime(this.value));
 			if ($('.is_cast').data('canPlay')) vid.currentTime = this.value;
+		},
+		pointerenter(e){
+			if (!thumb || this.disabled) return;
 
-			if (!thumb || $(this).data('hover')) return;
-			thumb.seek(this.value, this.value/$(this).attr('max')*100);
-		},
-		mousedown(){$(this).data('touched', true)},
-		mouseenter(e){
-			if (!thumb) return;
-			$(this).data('hover', true);
 			vid_thumb.style.setProperty('--width', $player.width()+'PX');
 			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
+			e.currentTarget.setPointerCapture(e.pointerId);
 		},
-		touchstart(){
-			$(this).data('touched', true);
-			if (!thumb) return;
+		pointerdown(e){
+			if (e.button != 0 || this.disabled) return;
+
+			this.seeking = true;
 			stopTimer();
-			vid_thumb.style.setProperty('--width', $player.width()+'PX');
 		},
-		mousemove(e){
-			if (!thumb) return;
-			$(this).data('hover', false);
+		pointermove(e){
+			if (!thumb || this.disabled) return;
+
 			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
 		},
-		mouseup(){$(this).data('touched', false)},
-		touchend(){
-			$(this).data('touched', false);
-			if (thumb) thumb.hide();
+		pointerup(){
+			this.seeking = false;
+			hideBar(2000);
 		},
-		mouseleave(){if (thumb) thumb.hide();}
+		pointerleave(e){
+			if (thumb) thumb.hide();
+			e.currentTarget.releasePointerCapture(e.pointerId);
+		},
 	});
 
 	$volume.on('input', () => {
@@ -395,7 +394,7 @@ $(function(){
 			vid.fullscreen = false;
 			$('#fullscreen i').text('fullscreen');
 			$('.mdl-js-snackbar').appendTo('.mdl-layout');
-			$remocon.insertAfter('#movie-contner');
+			$remocon.appendTo('.remocon-container');
 		}
 	});
 	const enableDocumentPIP = 'documentPictureInPicture' in window;
@@ -439,23 +438,21 @@ $(function(){
 			
 			pipWindow.addEventListener('resize', () => setbmlBrowserSize());
 			pipWindow.addEventListener("pagehide", (event) => {
-				const pipContent = event.target.getElementById("player");
-				container.append(pipContent);
-				$remocon.insertAfter('#movie-contner');
-				if (vid.theater) $('#movie-theater-contner').height('');
-				else $('#movie-contner').height('').width('');
+				container.prepend(content);
+				$remocon.appendTo('.remocon-container');
+				$(container).height('');
 			});
 		});
 		$('#PIP_exit').click(() => documentPictureInPicture.window.close())
 	}
 	$('#defult').click(() => {
 		vid.theater = true;
-		$player.prependTo($('#movie-theater-contner'));
+		$player.prependTo($('#movie-theater-container'));
 		setbmlBrowserSize();
 	});
 	$('#theater').click(() => {
 		vid.theater = false;
-		$player.prependTo($('#movie-contner'));
+		$player.prependTo($('#movie-container'));
 		setbmlBrowserSize();
 	});
 
@@ -584,6 +581,16 @@ $(function(){
 		sentComment(){
 			$('#comment-control,#comment-control>div').removeClass('is-dirty');
 		}
+	});
+
+	//再生タブ
+	$('#movie_tab').click(() => {
+		if (vid.loaded) return;
+
+		if (!$('.is_cast').data('public')) loadMovie($('.is_cast'));
+		else $vid.trigger('load');
+		vid.loaded = true;
+		setTimeout(setbmlBrowserSize, 100);
 	});
 
 	//準備できてから再生開始
