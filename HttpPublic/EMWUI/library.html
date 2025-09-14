@@ -12,7 +12,9 @@ ct=Template({
 ]=],
 
   menu=[=[
-<li id="toggleView" class="mdl-menu__item"><i id="toggleViewIcon" class="material-icons fill">v</i><span></span></li>
+<li id="view1" data-val="1" class="viewmode mdl-menu__item"><i class="material-icons fill">view_module</i><span>グリッド</span></li>
+<li id="view2" data-val="2" class="viewmode mdl-menu__item"><i class="material-icons fill">lists</i><span>リスト</span></li>
+<li id="view3" data-val="3" class="viewmode mdl-menu__item mdl-menu__item--full-bleed-divider"><i class="material-icons fill">list</i><span>コンパクト</span></li>
 <!--<li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="$('#subheader').toggleClass('scroll');"><i class="material-icons">search</i>検索</li>-->
 <li id="sort_name" class="mdl-menu__item" data-val="name"><i class="material-icons">sort_by_alpha</i>名前順</li>
 <li id="sort_date" class="mdl-menu__item" data-val="date"><i class="material-icons">access_time</i>日付順</li>
@@ -35,7 +37,7 @@ ct=Template({
 <label type="button" for="apps" class="tag mdl-chip"><span class="mdl-chip__text"><span class="material-icons">apps</span></span></label></div>
 </div>
 </div>
-<div id="folder" class="library mdl-grid"></div><div id="file" class="library mdl-grid"></div>
+<div id="folder" class="library list mdl-grid"></div><div id="file" class="library mdl-grid"></div>
 ]=]
 
 })

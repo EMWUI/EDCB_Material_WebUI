@@ -1,5 +1,9 @@
 $(function(){
-	const isGrid = () => (localStorage.getItem('ViewMode') ?? 'grid') == 'grid';
+	const GRID = 1;
+	const LIST = 2;
+	const CONP = 3;
+	const isFolder = () => viewMode == GRID || viewMode == LIST;
+	const isList = () => viewMode == LIST || viewMode == CONP;
 
 	const thumb = 'createMiscWasmModule' in window && new TsThumb(`${ROOT}api/grabber`);
 	
@@ -85,7 +89,7 @@ $(function(){
 		else if (order == 'size') list.sort((a,b) => asc ? $(a).data().size > $(b).data().size ? 1 : -1 : $(a).data().size > $(b).data().size ? -1 : 1);
 
 		$('.item').remove();
-		$(`#file${isGrid() ? '' : ' ul'}`).append(list);
+		$(`#file${isList()?' .main-content':''}`).append(list);
 		localStorage.setItem('sortOrder', order);
 		localStorage.setItem('ascending', asc);
 	}
@@ -96,7 +100,7 @@ $(function(){
 		showSpinner(true);
 		$('.library').empty();
 		$('#folder').hide();
-		$('.library').toggleClass('list', isGrid());
+		$('#file').toggleClass('list', !isList());
 
 		const folder = [];
 		const file = [];
@@ -108,7 +112,7 @@ $(function(){
 
 		xml.children('dir, file').each((i, e) => {
 			const name = $(e).txt('name');
-			const $e = $((isGrid() ? '<div>' : '<li>'));
+			const $e = $((viewMode==CONP ? '<li>' : '<div>'));
 			const hash = [...baseHash];
 			if ($(e).children('index').length) hash.push({name: 'i', value: $(e).txt('index')});
 			if ($(e).prop('tagName') == 'dir'){
@@ -116,7 +120,7 @@ $(function(){
 				if ($(e).children('hash').length) hash.push({name: 'd', value: $(e).txt('hash')});
 
 				$e.addClass('folder').click(() => getLibrary(hash));
-				if (isGrid()) $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+				if (isFolder()) $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
 					$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
 					$('<div>', {class: 'foldername', text: name }) );
 				else $e.addClass('mdl-list__item').append(
@@ -148,53 +152,64 @@ $(function(){
 					playMovie($e);
 				});
 
+				const hover = {};
 				if (thumb){
 					let hovered = false;
-					$e.on({
-						'mouseenter touchstart': async () => {
+					Object.assign(hover, {
+						async pointerenter(e){
+							e.currentTarget.setPointerCapture(e.pointerId);
 							hovered = true;
 							await getMetadata($e, hash);
 							if (hovered) thumb.roll(rollCanvas, $e.data('path'));
 						},
-						'mouseleave  touchend': () => {
+						pointerleave(e){
 							hovered = false;
 							thumb.hide();
+							e.currentTarget.releasePointerCapture(e.pointerId);
 						}
 					});
 				}
 
 				const thumbHash = $(e).txt('thumb');
-				if (isGrid()){
-					if (!thumbHash){
-						if (thumb){
-							(async () => {
-								const thumbCanvas = document.createElement('canvas');
-								await getMetadata($e, hash);
-								const done = await thumb.setThumb(thumbCanvas, $e.data('path'));
-								if (done) rollCanvas.before(thumbCanvas);
-							})();
-						}
-						$e.append($('<div>', {class: 'mdl-card__title mdl-card--expand icon'}), $('<i>', {class: 'material-icons', text: 'movie_creation'}) );
-					}else $e.css('background-image', `url(\'${ROOT}video/thumbs/${thumbHash}.jpg\')`).append($('<div>', {class: 'mdl-card__title mdl-card--expand'}) );
+				const date = createViewDate($e.data('date'));
+				if (isFolder()){
+					if (!thumbHash && thumb) (async () => {
+						const thumbCanvas = document.createElement('canvas');
+						await getMetadata($e, hash);
+						const done = await thumb.setThumb(thumbCanvas, $e.data('path'), 0.1);
+						if (done) rollCanvas.before(thumbCanvas);
+					})();
 					
-					$e.addClass('mdl-card mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append($('<div>', {class: 'mdl-card__actions', html: $('<span>', {class: 'filename', text: name}) }), rollCanvas );
+					$e.addClass(`${['card','grid'][viewMode-1]}-container`).append([
+						$('<div>', {class: 'thumb-container', on: hover, append: [
+							thumbHash ? $('<img>', {src:  `${ROOT}video/thumbs/${thumbHash}.jpg`}) : $('<i>', {class: 'material-icons', text: 'movie_creation'}),
+							rollCanvas
+						]}),
+						$('<div>', {class: 'summary mdl-typography--title-color-contrast', append: [
+							$('<span>', {class: 'title', html: name}),
+							$('<span>', {class: 'mdl-typography--subhead', append:[
+								$('<span>', {class: 'date', html: `${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}),
+								$('<span>', {class: 'size', html: `${$(e).txt('size')}MB`}),
+							]})
+						]})
+					]);
 				}else{
-					const date = createViewDate($e.data('date'));
 					const avatar = (thumbHash != 0)
 						? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumbHash}.jpg\');`})
 						: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 					$e.addClass('mdl-list__item mdl-list__item--two-line').append(
 						$('<span>', {class: 'mdl-list__item-primary-content', append: [
 							avatar,
-							$('<span>', {text: name}),
+							$('<span>', {class: 'title', text: name}),
 							$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: `${$(e).txt('size')}MB ${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}) ]}) );
 				}
 				file.push($e);
 			}
 		});
 
-		if (isGrid()) $('#folder').show().append(folder);
-		else $('#file').append($('<ul class="main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp">').append(folder));
+		if (isList()) $('#file').append($(viewMode==LIST?'<div>':'<ul>', {class: 'main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp'}));
+		if (isFolder()) $('#folder').show().append(folder);
+		else $('#file ul').append(folder);
 
 		sortLibrary({file: file});
 
@@ -243,16 +258,10 @@ $(function(){
 		showSpinner();
 	}
 
-	//表示切替
-	const toggleView = load => {
-		if (!load) localStorage.setItem('ViewMode', isGrid() ? 'list' : 'grid');
-		$('#toggleViewIcon').text(isGrid() ? 'view_list' : 'view_module');
-		$('#toggleView').children('span').text(isGrid() ? 'リスト' : 'グリッド');
-		getLibrary();
-	}
-
 	$(window).on('popstate', () => getLibrary());
-	toggleView(true);
+	let viewMode = localStorage.getItem('ViewMode2') ?? GRID;
+	$(`#view${viewMode}`).addClass('mdl-color-text--accent');
+	getLibrary();
 	const play = new URLSearchParams(location.search).get('play');
 	if (play){
 		const $e = $('<div class="hidden is_cast">');
@@ -264,13 +273,20 @@ $(function(){
 	}
 
 	$('#menu_autoplay').removeClass('hidden');
-	$('#toggleView').click(() => toggleView());
 	$(`#sort_${order}`).addClass('mdl-color-text--accent');
 	$(asc ? '#des' : '#asc').hide();
+	$('.viewmode').click(e => {
+		$('.viewmode').removeClass('mdl-color-text--accent');
+		$(e.currentTarget).addClass('mdl-color-text--accent');
+		viewMode = $(e.currentTarget).data('val');
+		localStorage.setItem('ViewMode2', viewMode);
+		getLibrary();
+	})
 	$('[id^=sort_]').click(e => {
 		$('[id^=sort_]').removeClass('mdl-color-text--accent');
 		$(e.currentTarget).addClass('mdl-color-text--accent');
 		sortLibrary({order: $(e.currentTarget).data('val')});
+		getLibrary();
 	});
 	$('#sort').click(() => {
 		sortLibrary({asc: true});

@@ -2547,9 +2547,15 @@ h4 .mdl-button--icon {
 .library .mdl-list__item {
   transition-duration: .28s;
   transition-timing-function: cubic-bezier(.4,0,.2,1);
-  transition-property: background-color; }
-  .library .mdl-list__item:hover {
-    background-color: #eee; }
+  transition-property: background-color;
+  .title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden; }
+  &:hover {
+    background-color: #eee; } }
 
 .library .mdl-card {
   min-height: 150px;
@@ -2635,6 +2641,26 @@ h4 .mdl-button--icon {
   background: #fff; }
   .icon {
     padding: 0 16px; }
+
+.card-container {
+  margin: 8px;
+  width: calc(20% - 16px);
+  box-sizing: border-box;
+  .thumb-container {
+    margin-bottom: 8px;
+    .material-icons {
+      color: #757575;
+      font-size: 100px; } }
+  .summary .title {
+    font-size: 16px; }
+  @media (min-width: 480px) and (max-width:839px) {
+    width: calc(33.3333% - 16px); }
+  @media (max-width: 479px) {
+    margin: 8px 16px;
+    width: calc(100% - 32px); } }
+
+#file div.main-content:not(:has(div)){
+  display: none; }
 
 .filename {
   color: #fff;
