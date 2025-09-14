@@ -4,6 +4,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 ct=Template({
   title='ホーム',
   js='<script src="js/library.js'..Version('library')..'"></script>\n',
+  searchlinks=true,
 
   subheader=[=[
 <div class="path mdl-layout__tab-bar">
@@ -29,7 +30,22 @@ ct=Template({
 <div class="mdl-grid list">
 <div id="main-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--8-col mdl-cell--4-col-phone">
 <div id="movie-container">]=]..PlayerTemplate('><track id="vid-meta" kind="metadata" type="text/vtt" default')..[=[</div>
+<div id="epginfo" class="mdl-cell mdl-cell--12-col mdl-shadow--4dp hidden">
+<div id="summary"><h4 class="mdl-typography--title"><span id="title"></span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span id="info_date" class="date"></span><span id="service" class="service"></span></span><span id="links"></span></h4><p></p></div>
+<div id="ext-container" style="display: none;">
+<p id="ext" class="mdl-typography--body-1"></p>
+<!--
+<div id="InfoList" class="tagchip">
+<div><span class="material-icons">category</span><div id="genreInfo"></div></div>
+<div><span class="material-icons">videocam</span><div id="videoInfo"></div></div>
+<div><span class="material-icons">headphones</span><div id="audioInfo" class="container"></div></div>
+<div><span class="material-icons">info</span><div id="otherInfo"></div></div>
 </div>
+<button for="#InfoList" class="toggle-info mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">expand_more</i></button>
+-->
+</div>
+<button for="#ext-container" class="toggle-info mdl-grid mdl-grid--no-spacing mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">expand_more</i></button>
+</div></div>
 <div id="sub-column" class="mdl-grid--no-spacing mdl-cell mdl-cell--4-col mdl-cell--8-col-tablet mdl-cell--4-col-phone">
 <div id="apps-container">
 <input type="checkbox" id="apps" class="hidden">

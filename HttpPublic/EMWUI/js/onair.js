@@ -177,11 +177,6 @@ $(function(){
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
 
 	if ($('.onair.is_cast').length) vid.readyToAutoPlay = loadMovie;
-	$('.toggle').click(e => {
-		const $e = $(e.currentTarget).children();
-		const flag = $e.hasClass('flag');
-		$($(e.currentTarget).attr('for')).slideToggle(() => $e.text(`expand_${flag ? 'more' : 'less'}`).toggleClass('flag', !flag));
-	});
 	$('#subCH').change(e => $('.subCH').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
 
 	$('#forced').click(e => {

@@ -583,6 +583,11 @@ $(function(){
 		}
 	});
 
+	$('.toggle-info').click(e => {
+		const $e = $($(e.currentTarget).attr('for'));
+		$e.slideToggle(() => $(e.currentTarget).children().text(`expand_${$e.is(':hidden') ? 'more' : 'less'}`));
+	});
+
 	//再生タブ
 	$('#movie_tab').click(() => {
 		if (vid.loaded) return;

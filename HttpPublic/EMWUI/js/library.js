@@ -30,9 +30,9 @@ $(function(){
 		});
 	}
 
-	const getMetadata = async ($e, hash) => {
-		if ($e.data('path')) return;
-		await $.get(`${ROOT}api/Library`, hash).done(xml => {
+	const getMetadata = async ($e, hash, basic = true) => {
+		if ($e.data('path') && (!basic && $e.data('info'))) return;
+		await $.get(`${ROOT}api/Library${basic?'':'?basic=0'}`, hash).done(xml => {
 			xml = $(xml).find('file');
 			$e.data({
 				path: xml.txt('path'),
@@ -44,36 +44,7 @@ $(function(){
 				}
 			});
 
-			if (xml.txt('programInfo')){
-				const programInfo = xml.txt('programInfo').match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
-				const id = programInfo[9].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
-				const date = programInfo[1].split(/ ～ | /);
-				const starttime = new Date(`${date[0]} ${date[1]}`).getTime();
-				const endtime = /未定/.test(date[2]) ? null : new Date(`${date[0]} ${date[2]}`).getTime();
-				const data = {
-					onid: Number(id[1]),
-					tsid: Number(id[2]),
-					sid:  Number(id[3]),
-					eid:  Number(id[4]),
-					service: programInfo[2],
-
-					starttime: starttime,
-
-					title: programInfo[3],
-					text: programInfo[4],
-					text_ext: programInfo[5],
-
-					genre: programInfo[6],
-					video: programInfo[7],
-					audio: programInfo[8],
-					other: programInfo[9].replace(/\n\n/g,'\n'),
-				};
-				if (endtime){
-					data.endtime = endtime;
-					data.duration = endtime - starttime;
-				}
-				$e.data('info', data);
-			}
+			if (xml.txt('programInfo')) $e.data('info', Object.assign(toObj.ProgramInfo(xml.txt('programInfo')), {id: 65535}));
 		});
 	}
 
@@ -147,7 +118,11 @@ $(function(){
 					$('#playerUI').addClass('is-visible');
 					$audios.prop('checked', false);
 					$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-					await getMetadata($e, hash);
+					await getMetadata($e, hash, false);
+					if ($e.data('info')){
+						setEpgInfo($e.data('info'));
+						$('#epginfo').removeClass('hidden');
+					}else $('#epginfo').addClass('hidden');
 					showSpinner();
 					playMovie($e);
 				});
@@ -267,7 +242,11 @@ $(function(){
 		const $e = $('<div class="hidden is_cast">');
 		$('#tvcast').append($e);
 		vid.readyToAutoPlay = async () => {
-			await getMetadata($e, play);
+			await getMetadata($e, play, false);
+			if ($e.data('info')){
+				setEpgInfo($e.data('info'));
+				$('#epginfo').removeClass('hidden');
+			}
 			playMovie($e);
 		}
 	}
