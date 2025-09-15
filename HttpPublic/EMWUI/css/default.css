@@ -1477,6 +1477,8 @@ h4 .mdl-button--icon {
   grid-template-columns: minmax(auto, min(180px, 35%)) 1fr;
   gap: 12px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
   .thumb-container {
     grid-column: 1 / 2;
     grid-row: 1 / 3; }

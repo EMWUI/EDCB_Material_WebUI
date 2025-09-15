@@ -36,23 +36,38 @@ EDCB Material WebUI
         │   ├─ img/
         │   │   └─logo/
         │   ├─ video/
-        │   └─ index.html
+        │   ├─ index.html
+        │   :
+        │
         ├─ Tools/
-        │   ├─ ffmpeg.exe
-        │   ├─ ffprobe.exe
-        │   ├─ tsreadex.exe
+        │   ├─ ffmpeg/
+        │   │   ├─ ffmpeg.exe
+        │   │   ├─ ffprobe.exe
+        │   │   :
+        │   ├─ NVEncC/
+        │   │   :
+        │   ├─ QSVEncC/
+        │   │   :
         │   ├─ asyncbuf.exe
-        │   ├─ tsmemseg.exe
+        │   ├─ edcbnosuspend.exe
         │   ├─ psisiarc.exe
-        │   └─ edcbnosuspend.exe
+        │   ├─ psisimux.exe
+        │   ├─ tsmemseg.exe
+        │   ├─ tsreadex.exe
+        │   ├─ tspgtxt.exe
+        │   :
+        │
         ├─ Setting/
         │   ├─ XCODE_OPTIONS.lua
-        │   └─ HttpPublic.ini
+        │   ├─ HttpPublic.ini
+        │   :
+        │
         ├─ EpgDataCap_Bon.exe
         ├─ EpgTimerSrv.exe
         ├─ EpgTimer.exe
         ├─ lua52.dll
-        └─ SendTSTCP.dll
+        ├─ SendTSTCP.dll
+        :
 
 1. リモート視聴する場合EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
 1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ  
