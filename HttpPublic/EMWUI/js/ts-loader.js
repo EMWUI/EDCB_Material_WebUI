@@ -36,8 +36,8 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#ctrl;
 	#ctok;
 	#params;
-	constructor(notCustom, aribb24 = {}, autoCinema, ctok){
-		super();
+	constructor(notCustom, video, autoCinema, ctok, aribb24){
+		super(video);
 		this.#playbackRate = 1;
 		this.#paused = true;
 		this.#volume = 1;
@@ -46,17 +46,14 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#currentReader = null;
 		this.#params = new URLSearchParams();
 		if (notCustom){
-			this.#e = document.getElementById('video');
-			this.#ctok = ctok;
-			this.#muted = false;
-			this.#detelecine = autoCinema ? 2 : 0;
-			this.#initCap(aribb24.useSvg, aribb24.option, aribb24.container);
+			this.#e = video;
+			if (aribb24) this.#initCap(aribb24.useSvg, aribb24.option, aribb24.container);
 		}else{
 			this.#e = this;
-			this.#ctok = this.getAttribute('ctok');
-			this.#muted = this.hasAttribute('muted') ? true : false;
-			this.#detelecine = this.hasAttribute('autoCinema') ? 2 : 0;
 		}
+		this.#ctok = ctok || this.#e.getAttribute('ctok');
+		this.#muted = this.#e.hasAttribute('muted') ? true : false;
+		this.#detelecine = autoCinema || this.#e.hasAttribute('autoCinema') ? 2 : 0;
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		this.#createWasmModule();
@@ -199,7 +196,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#mod.reset();
 		this.#ctrl.abort();
 		//Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
-		if (!isMobile) this.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
+		if (!isMobile) this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
 	}
 
 	#setSrc(src){
@@ -362,8 +359,8 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 }
 
 class TsLive extends tsliveMixin(){
-	constructor(video, aribb24, autoCinema, ctok){
-		super(true, video, aribb24, autoCinema, ctok);
+	constructor(video, autoCinema, ctok, aribb24){
+		super(true, video, autoCinema, ctok, aribb24);
 	}
 }
 
@@ -375,27 +372,21 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#alwaysUseHls;
 	#params;
 	#fast;
-	#errorEvent;
-	constructor(notCustom, video, aribb24 = {}, alwaysUseHls, hls4, ctok){
-		super();
+	constructor(notCustom, video, alwaysUseHls, hls4, ctok, aribb24){
+		super(video);
 		this.#fast = 1;
 		this.#params = new URLSearchParams();
 		if (notCustom){
 			this.#e = video;
 			this.#e.params = this.params;
 			this.#e.fast = this.fast;
-			this.#ctok = ctok;
-			this.#hlsMp4Query = hls4 ? `&hls4=${hls4}` : '';
-			this.#alwaysUseHls = alwaysUseHls;
-			this.#initCap(aribb24.useSvg, aribb24.option, aribb24.vidMeta);
-			this.#errorEvent = 'hlserror';
+			if (aribb24) this.#initCap(aribb24.useSvg, aribb24.option, aribb24.vidMeta);
 		}else{
 			this.#e = this;
-			this.#ctok = this.getAttribute('ctok');
-			this.#hlsMp4Query = this.hasAttribute('hls4') ? `&hls4=${this.getAttribute('hls4')}` : '';
-			this.#alwaysUseHls = this.hasAttribute('alwaysUseHls') ? true : false;
-			this.#errorEvent = 'error';
 		}
+		this.#ctok = ctok || this.#e.getAttribute('ctok');
+		this.#hlsMp4Query = hls4 || this.#e.hasAttribute('hls4') ? `&hls4=${hls4||this.#e.getAttribute('hls4')}` : '';
+		this.#alwaysUseHls = alwaysUseHls || this.#e.hasAttribute('alwaysUseHls') ? true : false;
 		this.#initHls();
 	}
 
@@ -576,9 +567,9 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#src;
 	#interval = 200;
 	#delay = 500;
-	#onerror(){
+	#onerror = () => {
 		this.#error = {code: 0, message: 'HLS loading error'};
-		this.#e.dispatchEvent(new Event(this.#errorEvent));
+		this.#e.dispatchEvent(new Event('error'));
 	}
 	#waitForHlsStart(src, onerror = this.#onerror, onstart = this.#onstart){
 		this.#method = 'POST';
@@ -605,8 +596,8 @@ const hlsMixin = (Base = class {}) => class extends Base{
 }
 
 class HlsLoader extends hlsMixin(){
-	constructor(video, aribb24, alwaysUseHls, hls4, ctok){
-		super(true, video, aribb24, alwaysUseHls, hls4, ctok);
+	constructor(video, alwaysUseHls, hls4, ctok, aribb24){
+		super(true, video, alwaysUseHls, hls4, ctok, aribb24);
 	}
 }
 
@@ -1670,6 +1661,18 @@ const datacastMixin = (Base = class {}) => class extends Base{
 class Datacast extends datacastMixin(){
 	constructor(video, webBml, danmaku, ctok, replaceTag, api){
 		super(video, webBml, danmaku, ctok, replaceTag, api);
+	}
+}
+
+class TsLiveDatacast extends tsliveMixin(datacastMixin()){
+	constructor(video, autoCinema, ctok, aribb24){
+		super(true, video, autoCinema, ctok, aribb24);
+	}
+}
+
+class HlsDatacast extends hlsMixin(datacastMixin()){
+	constructor(video, alwaysUseHls, hls4, ctok, aribb24){
+		super(true, video, alwaysUseHls, hls4, ctok, aribb24);
 	}
 }
 

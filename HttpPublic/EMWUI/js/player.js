@@ -1,10 +1,14 @@
 const danmaku = document.getElementById("danmaku-container");
-const vid = document.getElementById("video");
-const $vid = $(vid);
+const video = document.getElementById("video");
+const $vid = $(video);
+
+//safariがis属性に対応しないための
+const vid = isSafari == 1 ? new TsLiveDatacast(video) : video;	//HTMLMediaElementメソッド用
+const ts  = isSafari == 2 ? new HlsDatacast(video) : vid;		//拡張メソッド用
 
 vid.muted = localStorage.getItem('muted') == 'true';
 vid.volume = localStorage.getItem('volume') || 1;
-if (vid.tslive){
+if (ts.tslive){
 	//自動再生ポリシー対策
 	const muted = vid.muted;
 	vid.muted = true;
@@ -14,7 +18,7 @@ if (vid.tslive){
 	});	
 }
 
-const thumb = 'createMiscWasmModule' in window && new TsThumb(`${ROOT}api/grabber`, document.querySelector('#vid-thumb'), vid);
+const thumb = 'createMiscWasmModule' in window && new TsThumb(`${ROOT}api/grabber`, document.querySelector('#vid-thumb'), video);
 
 const getVideoTime = t => {
 	if (!t && t != 0) return '--:--'
@@ -46,7 +50,7 @@ const stopTimer = () => {
 
 const $vid_meta = $('#vid-meta');
 const resetVid = () => {
-	vid.reset();
+	ts.reset();
 
 	$vid_meta.attr('src', '');
 	if (thumb) thumb.reset();
@@ -72,7 +76,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
 	d.canPlay = d.path ? document.createElement('video').canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
 
-	if ((!d.canPlay&&vid.toTslive) || !vid.canPlayType(`video/${!d.path || /\.(?:m?ts|m2ts?)$/.test(d.path) ? 'mp2t' : d.path.match(/[^\.]*$/)}`)){
+	if ((!d.canPlay&&ts.toTslive) || !ts.canPlayType(`video/${!d.path || /\.(?:m?ts|m2ts?)$/.test(d.path) ? 'mp2t' : d.path.match(/[^\.]*$/)}`)){
 		toggleTslive();
 		return;
 	}
@@ -94,9 +98,9 @@ const loadMovie = ($e = $('.is_cast')) => {
 		const path = `${ROOT}${!d.public ? `api/Movie?fname=${encodeURIComponent(d.path)}` : encodeURIComponent(d.path).replace('%2F','/')}`;
 		$vid.attr('src', path);
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
-		vid.loadSubData();
+		ts.loadSubData();
 	}else{
-		vid.loadSource(`${ROOT}api/${d.onid ? `view?n=${vid.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
+		ts.loadSource(`${ROOT}api/${d.onid ? `view?n=${ts.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
 		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
 
 		if (d.meta){
@@ -228,31 +232,31 @@ $(function(){
 
 			$vid.removeClass('is-loading');
 			$('.is_cast').removeClass('is_cast playing');
-			const errorcode = vid.networkState == 3  ? 5 : vid.error.code;
-			Snackbar(`Error : ${[vid.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
+			const errorcode = ts.networkState == 3  ? 5 : ts.error.code;
+			Snackbar(`Error : ${[ts.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
 		},
 		volumechange(){
-			this.onVolumeChange();
-			localStorage.setItem('volume', this.volume);
-			localStorage.setItem('muted', this.muted);
+			vid.onVolumeChange();
+			localStorage.setItem('volume', vid.volume);
+			localStorage.setItem('muted', vid.muted);
 		},
 		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		canplay(){
 			hideBar(2000);
 			$vid.removeClass('is-loading');
 
-			if (!this.doNotAutoplay){
-				const promise = this.play();
+			if (!vid.doNotAutoplay){
+				const promise = vid.play();
 				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
 				if (promise !== undefined){
 					promise.catch(error => {
-						this.muted = true;
-						this.play();
-						this.onVolumeChange();
+						vid.muted = true;
+						vid.play();
+						vid.onVolumeChange();
 						document.querySelector('#volume').MaterialSlider.change(0);
 						$(document).one('click', () => {
-							this.muted = false;
-							document.querySelector('#volume').MaterialSlider.change(this.volume);
+							vid.muted = false;
+							document.querySelector('#volume').MaterialSlider.change(vid.volume);
 						});
 					});
 				}
@@ -260,8 +264,8 @@ $(function(){
 			const d = $('.is_cast').data();
 			if (!d.canPlay) return;
 
-			$duration.text(getVideoTime(this.duration));
-			$seek.attr('max', this.duration);
+			$duration.text(getVideoTime(vid.duration));
+			$seek.attr('max', vid.duration);
 		},
 		timeupdate(){
 			const d = $('.is_cast').data();
@@ -271,12 +275,12 @@ $(function(){
 			if (d.onid){
 				currentTime = (Date.now() - d.meta.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.meta.duration * 100);
-				$live.toggleClass('live', this.duration - this.currentTime < 2);
+				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
 			}else if (d.path || d.id || d.reid){
 				if (seek.seeking) return;
 
-				currentTime = this.currentTime * (this.fast || 1) + (this.ofssec || 0);
-				if (!this.offset) seek.MaterialSlider.change(currentTime);
+				currentTime = vid.currentTime * (vid.fast || 1) + (vid.ofssec || 0);
+				if (!vid.offset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
 		},
@@ -314,7 +318,7 @@ $(function(){
 		change(){
 			if ($('.is_cast').data('canPlay')) return;
 
-			vid.setSeek(this.value, addClassLoadding);
+			ts.setSeek(this.value, addClassLoadding);
 		},
 		input(){
 			$currentTime.text(getVideoTime(this.value));
@@ -461,28 +465,28 @@ $(function(){
 	(() => {
 		const $e = localStorage.getItem('quality') ? $(`#${localStorage.getItem('quality')}`) : $('[name=quality]:first');
 		$e.prop('checked', true);
-		vid.setOption($e.val(), $e.hasClass('tslive'), vid.readyToAutoPlay ? () => vid.toTslive=true : toggleTslive);
+		ts.setOption($e.val(), $e.hasClass('tslive'), vid.readyToAutoPlay ? () => ts.toTslive=true : toggleTslive);
 	})()
 	
 	$('[name=quality]').change(e => {
 		const $e = $(e.currentTarget);
 		localStorage.setItem('quality', $e.attr('id'));
 
-		vid.setOption($e.val(), $e.hasClass('tslive'), toggleTslive, ()=>{if(localStorage.getItem('apk') != 'true')addClassLoadding();});
+		ts.setOption($e.val(), $e.hasClass('tslive'), toggleTslive, ()=>{if(localStorage.getItem('apk') != 'true')addClassLoadding();});
 	});
-	$('[name=audio]').change(e => vid.setAudioTrack($(e.currentTarget).val(), addClassLoadding));
-	$('#cinema').change(e => vid.setDetelecine(e.currentTarget.checked, addClassLoadding));
+	$('[name=audio]').change(e => ts.setAudioTrack($(e.currentTarget).val(), addClassLoadding));
+	$('#cinema').change(e => ts.setDetelecine(e.currentTarget.checked, addClassLoadding));
 	$('.rate').change(e => {
 		const $e = $(e.currentTarget);
-		vid.setFast($e.val(), $e.data('index'), addClassLoadding);
+		ts.setFast($e.val(), $e.data('index'), addClassLoadding);
 	});
 
-	vid.nwtv = $('[name=nwtv]:checked').val();
+	ts.nwtv = $('[name=nwtv]:checked').val();
 	$('[name=nwtv]').change(e => {
-		vid.nwtv = $(e.currentTarget).val();
+		ts.nwtv = $(e.currentTarget).val();
 
 		const url = new URL(location.href);
-		url.searchParams.set('n', vid.nwtv);
+		url.searchParams.set('n', ts.nwtv);
 		history.replaceState(null, null, url);
 	});
 
@@ -491,7 +495,7 @@ $(function(){
 
 
 	hideBar();
-	$player_container = $('.player-container>*').not('.remote-control');
+	const $player_container = $('.player-container>*').not('.remote-control');
 	if (!isMobile && !isTouch){
 		$player_container.hover(() => {
 			stopTimer();
@@ -507,7 +511,7 @@ $(function(){
 		$('#playerUI').prepend('<div id="center">');
 		$('#ctl-button .ctl-button').prependTo('#center');
 		$('#volume-container').addClass('hidden');
-		$('.player-container>*').not('.remote-control').click(() => {
+		$player_container.click(() => {
 			$('#playerUI').addClass('is-visible');
 			stopTimer();
 			hideBar(3000);
@@ -520,31 +524,32 @@ $(function(){
 	$subtitles.click(() => {
 		$subtitles.toggleClass('checked', !$subtitles.hasClass('checked'));
 		localStorage.setItem('subtitles', $subtitles.hasClass('checked'));
-		if (!vid.cap) return;
-		$subtitles.hasClass('checked') ? vid.cap.show() : vid.cap.hide();
+		if (!ts.cap) return;
+		$subtitles.hasClass('checked') ? ts.cap.show() : ts.cap.hide();
 	});
 	if (localStorage.getItem('subtitles') == 'true') $subtitles.addClass('checked');
+	else if (ts.cap) ts.cap.hide();
 
 	if (localStorage.getItem('datacast') == 'true') {
-		vid.datacast.enable();
+		ts.datacast.enable();
 		$remocon.removeClass('disabled').find('button').prop('disabled', false);
 	}
 	$datacast.click(() => {
-		const enabled = vid.toggleDatacast();
+		const enabled = ts.toggleDatacast();
 		$remocon.toggleClass('disabled', !enabled).find('button').prop('disabled', !enabled);
 		localStorage.setItem('datacast', enabled);
 	});
 
 	if (localStorage.getItem('danmaku') == 'true') $jikkyo.addClass('checked');
 	if (localStorage.getItem('Jikkyo') == 'true') $jikkyo.addClass('mdl-button--accent');
-	vid.toggleJikkyo($jikkyo.hasClass('checked'), $jikkyo.hasClass('mdl-button--accent'));
+	ts.toggleJikkyo($jikkyo.hasClass('checked'), $jikkyo.hasClass('mdl-button--accent'));
 	$jikkyo.on({
 		click(){
 			if (!this.longClick) return;
 			clearTimeout(this.longClick);
 			this.longClick = 0;
 
-			const enabled = vid.toggleJikkyo();
+			const enabled = ts.toggleJikkyo();
 			$jikkyo.toggleClass('checked', enabled);
 			localStorage.setItem('danmaku', enabled);
 		},
@@ -554,11 +559,11 @@ $(function(){
 			this.longClick = setTimeout(() => {
 				this.longClick = 0;
 
-				const enabled = !vid.jikkyo.loading;
+				const enabled = !ts.jikkyo.loading;
 				$jikkyo.toggleClass('mdl-button--accent', enabled);
 				localStorage.setItem('Jikkyo', enabled);
 
-				vid.toggleJikkyo(vid.jikkyo.showing, enabled);
+				ts.toggleJikkyo(ts.jikkyo.showing, enabled);
 			}, 1000);
 		}
 	});

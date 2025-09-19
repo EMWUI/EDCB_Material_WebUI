@@ -1722,6 +1722,7 @@ h4 .mdl-button--icon {
   &:not(:has(.remote-control)) {
     background: #000; }
   #player:not(:fullscreen) #video {
+    width: 100%;
     min-height: max(min(calc(100vh * 0.666666666667 - 16px * 2), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16))), 270px);
     max-height: calc(90vh - 70px); } }
   @media (max-width: 479px) {
@@ -1815,6 +1816,7 @@ h4 .mdl-button--icon {
   .is-small-screen .player-mode { 
     display: none; }
 #vid-cont {
+  flex-grow: 1;
   position: relative; }
 
 #titlebar {

@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='250914',
+    css='250920',
     common='250914',
     tvguide='250824',
-    player='250914',
+    player='250920',
     onair='250815',
     library='250914',
     setting='250906',
-    tsloader='250914',
+    tsloader='250920',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='7348e3b',
@@ -979,10 +979,11 @@ function PlayerTemplate(video, liveOrAudio)
   ..(tslive and '<script src="js/ts-live.lua?t=.js"></script>\n' or ALWAYS_USE_HLS and '<script src="js/hls.min.js'..Version('hls')..'"></script>\n' or '')
 
   ..'<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
+  ..'<script>const isSafari='..(not Check_iOS() and 0 or tslive and 1 or 2)..';</script>\n'
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
-  ..'<script>vid.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
-  ..(USE_DATACAST and 'vid.setWebBml("js/web_bml_play_ts.js'..Version('bml')..'", initRemocon);\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'vid.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
+  ..'<script>ts.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
+  ..(USE_DATACAST and 'ts.setWebBml("js/web_bml_play_ts.js'..Version('bml')..'", initRemocon);\n' or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'ts.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
   ..(not zip and prefecture==0 and '' or 'Datacast.setNvramDef('..(zip or 'null')..(prefecture==0 and '' or ','..prefecture..','..GetEwsRegionCode(prefecture))..')')
   ..'</script>\n'
 end
