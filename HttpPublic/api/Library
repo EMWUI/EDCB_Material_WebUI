@@ -295,7 +295,7 @@ else
         basic=(tonumber(mg.get_var(mg.request_info.query_string,'basic')) or 1)~=0
         if not basic then
           pgtxt=GetPgtxt(ref)
-          if pgtxt then table.insert(ct, '<programInfo>'..pgtxt..'</programInfo>') end
+          if pgtxt then table.insert(ct, '<programInfo>'..EdcbHtmlEscape(pgtxt)..'</programInfo>') end
         end
           
         if info.ists then
