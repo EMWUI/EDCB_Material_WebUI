@@ -1474,7 +1474,7 @@ h4 .mdl-button--icon {
 .grid-container {
   padding: 24px 40px!important;
   display: grid;
-  grid-template-columns: minmax(auto, min(180px, 35%)) 1fr;
+  grid-template-columns: minmax(auto, min(120px, 35%)) 1fr;
   gap: 12px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1691,7 +1691,9 @@ h4 .mdl-button--icon {
   max-width: 100%;
   max-height: 100vh;
   min-width: 300px;
-  min-height: 176px; }
+  min-height: 176px;
+  &:not(canvas) {
+    width: 100%; } }
   #video.is-loading {
     background: #000 center / cover no-repeat url('../img/noise.gif'); }
     @media all and (display-mode: picture-in-picture) {
@@ -1711,6 +1713,10 @@ h4 .mdl-button--icon {
     max-height: calc(90vh - 130px); }
   section#movie #stop {
     display: none; }
+  
+  .arib-video-container {
+    display: flex;
+    justify-content: center; }
 
 #movie-theater-container {
   background: #000;
@@ -1732,7 +1738,7 @@ h4 .mdl-button--icon {
     #movie-theater-container {
       position: sticky;
       top: 0;
-      z-index: 99;} }
+      z-index: 99; } }
 
 
 

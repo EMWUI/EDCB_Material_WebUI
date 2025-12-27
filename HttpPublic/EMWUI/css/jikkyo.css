@@ -129,19 +129,22 @@
   font-family: "Kosugi";
   font-style: normal;
   font-weight: 400;
-  src: url("Kosugi-Regular.woff2") format("woff2");
+  src: url("../Kosugi-Regular.woff2") format("woff2"),
+    url("Kosugi-Regular.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "Kosugi Maru";
   font-style: normal;
   font-weight: 400;
-  src: url("KosugiMaru-Regular.woff2") format("woff2");
+  src: url("../KosugiMaru-Regular.woff2") format("woff2"),
+    url("KosugiMaru-Regular.woff2") format("woff2");
 }
 
 @font-face {
   font-family: "Kosugi Maru Bold";
   font-style: normal;
   font-weight: 700;
-  src: url("KosugiMaru-Bold.woff2") format("woff2");
+  src: url("../KosugiMaru-Bold.woff2") format("woff2"),
+    url("KosugiMaru-Bold.woff2") format("woff2");
 }
