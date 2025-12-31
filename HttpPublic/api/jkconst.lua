@@ -375,3 +375,24 @@ function GetChatStreamName(jkID)
   local refugeID=id and (','..id):match(',([0-9A-Za-z_-]+)$')
   return name or chatID or refugeID,chatID,refugeID
 end
+
+-- GetChatStreamName()の戻り値のリストを取得する
+function GetChatStreamNameList()
+  local ret={}
+  for i,v in ipairs(DEFAULT_JKID_NAME_TABLE) do
+    local name,chatID,refugeID=GetChatStreamName(v[1])
+    if name then
+      ret[#ret+1]={v[1],name,chatID,refugeID}
+    end
+  end
+  for jkID,v in pairs(JKCNSL_CHAT_STREAMS) do
+    local i=BinarySearchBound(ret,{jkID},CompareFields(1))
+    if i>#ret or ret[i][1]~=jkID then
+      local name,chatID,refugeID=GetChatStreamName(jkID)
+      if name then
+        table.insert(ret,i,{jkID,name,chatID,refugeID})
+      end
+    end
+  end
+  return ret
+end

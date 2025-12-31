@@ -295,8 +295,8 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	}
 	#readNext(reader,ret){
 		if (reader==this.#currentReader&&ret&&ret.value){
-			var inputLen=Math.min(ret.value.length,1e6);
-			var buffer=this.#mod.getNextInputBuffer(inputLen);
+			const inputLen=Math.min(ret.value.length,1e6);
+			const buffer=this.#mod.getNextInputBuffer(inputLen);
 			if (!buffer){
 			  setTimeout(() => this.#readNext(reader,ret),1000);
 			  return;
@@ -577,7 +577,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		const poll = () => {
 			if (!this.#src) return;
 
-			var xhr = new XMLHttpRequest();
+			const xhr = new XMLHttpRequest();
 			xhr.open(this.#method, this.#src);
 			if (this.#method == 'POST') xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 			this.#method = 'GET';
@@ -972,13 +972,13 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			ctx.currTime=-1;
 		}
 		while(data.byteLength-ctx.pos>=ctx.trailerSize+32){
-			var pos=ctx.pos+ctx.trailerSize;
-			var timeListLen=data.getUint16(pos+10,true);
-			var dictionaryLen=data.getUint16(pos+12,true);
-			var dictionaryWindowLen=data.getUint16(pos+14,true);
-			var dictionaryDataSize=data.getUint32(pos+16,true);
-			var dictionaryBuffSize=data.getUint32(pos+20,true);
-			var codeListLen=data.getUint32(pos+24,true);
+			let pos=ctx.pos+ctx.trailerSize;
+			const timeListLen=data.getUint16(pos+10,true);
+			const dictionaryLen=data.getUint16(pos+12,true);
+			const dictionaryWindowLen=data.getUint16(pos+14,true);
+			const dictionaryDataSize=data.getUint32(pos+16,true);
+			const dictionaryBuffSize=data.getUint32(pos+20,true);
+			const codeListLen=data.getUint32(pos+24,true);
 			if(data.getUint32(pos)!=0x50737363||
 				data.getUint32(pos+4)!=0x0d0a9a0a||
 				dictionaryWindowLen<dictionaryLen||
@@ -986,16 +986,16 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				dictionaryWindowLen>65536-4096){
 				return null;
 			}
-			var chunkSize=32+timeListLen*4+dictionaryLen*2+Math.ceil(dictionaryDataSize/2)*2+codeListLen*2;
+			const chunkSize=32+timeListLen*4+dictionaryLen*2+Math.ceil(dictionaryDataSize/2)*2+codeListLen*2;
 			if(data.byteLength-pos<chunkSize)break;
-			var timeListPos=pos+32;
+			let timeListPos=pos+32;
 			pos+=32+timeListLen*4;
 			if(ctx.timeListCount<0){
-				var pids=[];
-				var dict=[];
-				var sectionListPos=0;
-				for(var i=0;i<dictionaryLen;i++,pos+=2){
-					var codeOrSize=data.getUint16(pos,true)-4096;
+				const pids=[];
+				const dict=[];
+				let sectionListPos=0;
+				for(let i=0;i<dictionaryLen;i++,pos+=2){
+					const codeOrSize=data.getUint16(pos,true)-4096;
 					if(codeOrSize>=0){
 						if(codeOrSize>=ctx.pids.length||ctx.pids[codeOrSize]<0)return null;
 						pids[i]=ctx.pids[codeOrSize];
@@ -1008,14 +1008,14 @@ const datacastMixin = (Base = class {}) => class extends Base{
 					}
 				}
 				sectionListPos+=pos;
-				for(var i=0;i<dictionaryLen;i++){
+				for(let i=0;i<dictionaryLen;i++){
 					if(pids[i]>=0)continue;
 					dict[i]=new Uint8Array(data.buffer.slice(sectionListPos,sectionListPos+pids[i]+4097));
 					sectionListPos+=pids[i]+4097;
 					pids[i]=data.getUint16(pos,true)&0x1fff;
 					pos+=2;
 				}
-				for(var i=dictionaryLen,j=0;i<dictionaryWindowLen;j++){
+				for(let i=dictionaryLen,j=0;i<dictionaryWindowLen;j++){
 					if(j>=ctx.pids.length)return null;
 					if(ctx.pids[j]<0)continue;
 					pids[i]=ctx.pids[j];
@@ -1031,22 +1031,22 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			pos+=ctx.codeListPos;
 			timeListPos+=ctx.timeListCount*4;
 			for(;ctx.timeListCount<timeListLen;ctx.timeListCount++,timeListPos+=4){
-				var initTime=ctx.initTime;
-				var currTime=ctx.currTime;
-				var absTime=data.getUint32(timeListPos,true);
+				let initTime=ctx.initTime;
+				let currTime=ctx.currTime;
+				const absTime=data.getUint32(timeListPos,true);
 				if(absTime==0xffffffff){
 					currTime=-1;
 				}else if(absTime>=0x80000000){
 					currTime=absTime&0x3fffffff;
 					if(initTime<0)initTime=currTime;
 				}else{
-					var n=data.getUint16(timeListPos+2,true)+1;
+					const n=data.getUint16(timeListPos+2,true)+1;
 					if(currTime>=0){
 						currTime+=data.getUint16(timeListPos,true);
-						var sec=((currTime+0x40000000-initTime)&0x3fffffff)/11250;
+						const sec=((currTime+0x40000000-initTime)&0x3fffffff)/11250;
 						if(sec>=(startSec||0)){
 							for(;ctx.codeCount<n;ctx.codeCount++,pos+=2,ctx.codeListPos+=2){
-								var code=data.getUint16(pos,true)-4096;
+								const code=data.getUint16(pos,true)-4096;
 								if(!proc(sec,ctx.dict,code,ctx.pids[code]))return false;
 							}
 							ctx.codeCount=0;
@@ -1068,10 +1068,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			ctx.codeListPos=0;
 			ctx.currTime=-1;
 		}
-		var ret=data.buffer.slice(ctx.pos);
+		const ret=data.buffer.slice(ctx.pos);
 		ctx.pos=0;
 		return ret;
 	}
+
 	#progressPsiDataChatMixedStream(readCount,response,ctx){
 		ctx=ctx||{};
 		if(!ctx.ctx){
@@ -1080,7 +1081,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			ctx.psiData=new Uint8Array(0);
 		}
 		while(readCount<response.length){
-			var i=response.indexOf("<",readCount);
+			let i=response.indexOf("<",readCount);
 			if(i==readCount){
 				i=response.indexOf("\n",readCount);
 				if(i<0)break;
@@ -1088,13 +1089,13 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				readCount=i+1;
 			}else{
 				i=i<0?response.length:i;
-				var n=Math.floor((i-readCount+ctx.atobRemain.length)/4)*4;
+				const n=Math.floor((i-readCount+ctx.atobRemain.length)/4)*4;
 				if(n){
-					var addData=atob(ctx.atobRemain+response.substring(readCount,readCount+n-ctx.atobRemain.length));
+					const addData=atob(ctx.atobRemain+response.substring(readCount,readCount+n-ctx.atobRemain.length));
 					ctx.atobRemain=response.substring(readCount+n-ctx.atobRemain.length,i);
-					var concatData=new Uint8Array(ctx.psiData.length+addData.length);
-					for(var j=0;j<ctx.psiData.length;j++)concatData[j]=ctx.psiData[j];
-					for(var j=0;j<addData.length;j++)concatData[ctx.psiData.length+j]=addData.charCodeAt(j);
+					const concatData=new Uint8Array(ctx.psiData.length+addData.length);
+					for(let j=0;j<ctx.psiData.length;j++)concatData[j]=ctx.psiData[j];
+					for(let j=0;j<addData.length;j++)concatData[ctx.psiData.length+j]=addData.charCodeAt(j);
 					ctx.psiData=this.#readPsiData(concatData.buffer,(sec,dict,code,pid)=>{
 						this.#dataStream.stream(pid,dict,code,Math.floor(sec*90000));
 						return true;
@@ -1108,53 +1109,54 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		}
 		return readCount;
 	}
+
 	static decodeB24CaptionFromCueText(text,work){
 		work=work||[];
-		text=text.replace(/\r?\n/g,'');
-		var re=/<v b24caption[0-8]>(.*?)<\/v>/g;
-		var src,ret=null;
+		text=text.replace(/\r?\n/g,"");
+		const re=/<v b24caption[0-8]>(.*?)<\/v>/g;
+		let src,ret=null;
 		while((src=re.exec(text))!==null){
-			src=src[1].replace(/<.*?>/g,'').replace(/&(?:amp|lt|gt|quot|apos);/g,function(m){
-				return m=='&amp;'?'&':m=='&lt;'?'<':m=='&gt;'?'>':m=='&quot;'?'"':'\'';
-			});
-			var brace=[],wl=0,hi=0;
-			for(var i=0;i<src.length;){
-				if(src[i]=='%'){
+			src=src[1].replace(/<.*?>/g,"").replace(/&(?:amp|lt|gt|quot|apos);/g,
+				m=>m=="&amp;"?"&":m=="&lt;"?"<":m=="&gt;"?">":m=="&quot;"?'"':"'");
+			const brace=[];
+			let wl=0,hi=0;
+			for(let i=0;i<src.length;){
+				if(src[i]=="%"){
 					if((++i)+2>src.length)return null;
-					var c=src[i++];
-					var d=src[i++];
-					if(c=='^'){
+					const c=src[i++];
+					const d=src[i++];
+					if(c=="^"){
 						work[wl++]=0xc2;
 						work[wl++]=d.charCodeAt(0)+64;
-					}else if(c=='='){
-						if(d=='{'){
+					}else if(c=="="){
+						if(d=="{"){
 							work[wl++]=0;
 							work[wl++]=0;
 							work[wl++]=0;
 							brace.push(wl);
-						}else if(d=='}'&&brace.length>0){
-							var pos=brace.pop();
+						}else if(d=="}"&&brace.length>0){
+							const pos=brace.pop();
 							work[pos-3]=wl-pos>>16&255;
 							work[pos-2]=wl-pos>>8&255;
 							work[pos-1]=wl-pos&255;
 						}else return null;
-					}else if(c=='+'){
-						if(d=='{'){
-							var pos=src.indexOf('%+}',i);
+					}else if(c=="+"){
+						if(d=="{"){
+							const pos=src.indexOf("%+}",i);
 							if(pos<0)return null;
 							try{
-								var buf=atob(src.substring(i,pos));
-								for(var j=0;j<buf.length;j++)work[wl++]=buf.charCodeAt(j);
+								const buf=atob(src.substring(i,pos));
+								for(let j=0;j<buf.length;j++)work[wl++]=buf.charCodeAt(j);
 							}catch(e){return null;}
 							i=pos+3;
 						}else return null;
 					}else{
-						var x=c.charCodeAt(0);
-						var y=d.charCodeAt(0);
+						const x=c.charCodeAt(0);
+						const y=d.charCodeAt(0);
 						work[wl++]=(x>=97?x-87:x>=65?x-55:x-48)<<4|(y>=97?y-87:y>=65?y-55:y-48);
 					}
 				}else{
-					var x=src.charCodeAt(i++);
+					let x=src.charCodeAt(i++);
 					if(x<0x80){
 						work[wl++]=x;
 					}else if(x<0x800){
@@ -1177,7 +1179,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			if(brace.length>0)return null;
 			if(3<=wl&&wl<=65520){
-				var r=new Uint8Array(wl+7);
+				const r=new Uint8Array(wl+7);
 				r[0]=0x80;
 				r[1]=0xff;
 				r[2]=0xf0;
@@ -1186,18 +1188,19 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				r[5]=work[2];
 				r[6]=wl-3>>8&255;
 				r[7]=wl-3&255;
-				for(var i=3;i<wl;i++)r[i+5]=work[i];
+				for(let i=3;i<wl;i++)r[i+5]=work[i];
 				ret=ret||[];
 				ret.push(r);
 			}
 		}
 		return ret;
 	}
+
 	#unescapeHtml(s){
-		return s.replace(/&(?:amp|lt|gt|quot|apos|#10|#13);/g,function(m){
-			return m[1]=="l"?"<":m[1]=="g"?">":m[1]=="q"?'"':m[3]=="p"?"&":m[3]=="o"?"'":m[3]=="0"?"\n":"\r";
-		});
+		return s.replace(/&(?:amp|lt|gt|quot|apos|#10|#13);/g,
+			m=>m[1]=="l"?"<":m[1]=="g"?">":m[1]=="q"?'"':m[3]=="p"?"&":m[3]=="o"?"'":m[3]=="0"?"\n":"\r");
 	}
+
 	#chatTagColors={
 		red:"#ff0000",
 		pink:"#ff8080",
@@ -1226,12 +1229,14 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		nobleviolet:"#6633cc",
 		black2:"#666666"
 	}
+
 	#getChatTagColorRe=new RegExp("(?:^| )(#[0-9A-Fa-f]{6}|"+Object.keys(this.#chatTagColors).join("|")+")(?: |$)");
+
 	#parseChatTag(tag){
-		var m=tag.match(/^<chat(?= )(.*)>(.*?)<\/chat>$/);
+		let m=tag.match(/^<chat(?= )(.*)>(.*?)<\/chat>$/);
 		if(m){
-			var a=m[1];
-			var r={text:this.#unescapeHtml(m[2])};
+			const a=m[1];
+			const r={text:this.#unescapeHtml(m[2])};
 			m=a.match(/ date="(\d+)"/);
 			if(m){
 				r.date=parseInt(m[1],10);
@@ -1253,6 +1258,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		}
 		return null;
 	}
+
 	#readJikkyoLog(text,proc,startSec,ctx){
 		ctx=ctx||{};
 		if(ctx.pos===undefined){
@@ -1260,10 +1266,10 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			ctx.currSec=-1;
 		}
 		for(;;){
-			var i=text.indexOf("\n",ctx.pos);
+			const i=text.indexOf("\n",ctx.pos);
 			if(i<0)break;
-			var tag=text.substring(ctx.pos,i);
-			var sec=ctx.currSec;
+			const tag=text.substring(ctx.pos,i);
+			let sec=ctx.currSec;
 			if(/^<!-- J=/.test(tag))sec++;
 			if(sec>=(startSec||0)&&!proc(sec,tag))break;
 			ctx.pos=i+1;
@@ -1309,25 +1315,25 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#addMessage("Error! ("+status+"|"+readCount+"Bytes)");
 		},
 		stream: tag => {
-			if(/^<chat /.test(tag)){
-				var c=this.#parseChatTag(this.#replaceTag(tag));
+			if(tag.startsWith("<chat ")){
+				const c=this.#parseChatTag(this.#replaceTag(tag));
 				if(c){
 					if(c.yourpost)c.border="2px solid #c00";
 					this.#scatter.push(c);
-					var dateSpan=document.createElement("span");
+					const dateSpan=document.createElement("span");
 					dateSpan.innerText=String(100+(Math.floor(c.date/3600)+9)%24).substring(1)+":"+
 										String(100+Math.floor(c.date/60)%60).substring(1)+":"+
 										String(100+c.date%60).substring(1);
-					var userSpan=document.createElement(c.yourpost?"b":"span");
+					const userSpan=document.createElement(c.yourpost?"b":"span");
 					userSpan.innerText="("+c.user.substring(c.user.substring(0,2)=="a:"?2:0).substring(0,3)+")";
 					userSpan.className=c.refuge?"refuge":"nico";
-					var span=document.createElement("span");
+					const span=document.createElement("span");
 					span.innerText=c.text;
 					if(c.color!=0xffffff){
 						span.style.backgroundColor=c.colorcode;
 						span.className=(c.color>>16)*3+(c.color>>8)%256*6+c.color%256<255?"dark":"light";
 					}
-					var div=document.createElement("div");
+					const div=document.createElement("div");
 					if(this.#closed){
 						div.className="closed";
 						this.#closed=false;
@@ -1337,37 +1343,36 @@ const datacastMixin = (Base = class {}) => class extends Base{
 					div.appendChild(span);
 					if(!this.#fragment)this.#fragment=document.createDocumentFragment();
 					this.#fragment.appendChild(div);
-					this.count++;
 				}
 				return;
-			}else if(/^<chat_result /.test(tag)){
-				var m=tag.match(/^[^>]*? status="(\d+)"/);
+			}else if(tag.startsWith("<chat_result ")){
+				const m=tag.match(/^[^>]*? status="(\d+)"/);
 				if(m&&m[1]!="0")this.#addMessage("Error! (chat_result="+m[1]+")");
 				return;
-			}else if(/^<x_room /.test(tag)){
-				var m=tag.match(/^[^>]*? nickname="(.*?)"/);
-				var nickname=m?m[1]:"";
-				var loggedIn=/^[^>]*? is_logged_in="1"/.test(tag);
-				var refuge=/^[^>]*? refuge="1"/.test(tag);
+			}else if(tag.startsWith("<x_room ")){
+				const m=tag.match(/^[^>]*? nickname="(.*?)"/);
+				const nickname=m?m[1]:"";
+				const loggedIn=/^[^>]*? is_logged_in="1"/.test(tag);
+				const refuge=/^[^>]*? refuge="1"/.test(tag);
 				this.#addMessage("Connected to "+(refuge?"refuge":"nicovideo")+" jk"+this.#jkID+" ("+(loggedIn?"login=":"")+nickname+")");
 				return;
-			}else if(/^<x_disconnect /.test(tag)){
-				var m=tag.match(/^[^>]*? status="(\d+)"/);
-				var refuge=/^[^>]*? refuge="1"/.test(tag);
+			}else if(tag.startsWith("<x_disconnect ")){
+				const m=tag.match(/^[^>]*? status="(\d+)"/);
+				const refuge=/^[^>]*? refuge="1"/.test(tag);
 				if(m)this.#addMessage("Disconnected from "+(refuge?"refuge":"nicovideo")+" (status="+m[1]+")");
 				return;
-			}else if(/^<!-- M=/.test(tag)){
+			}else if(tag.startsWith("<!-- M=")){
 				if(tag.substring(7,22)=="Closed logfile.")this.#closed=true;
 				else if(tag.substring(7,31)!="Started reading logfile:")this.#addMessage(tag.substring(7,tag.length-4));
 				return;
-			}else if(!/^<!-- J=/.test(tag)){
+			}else if(!tag.startsWith("<!-- J=")){
 				return;
 			}
 			this.#jkID=tag.match(/^<!-- J=(\d*)/)[1]||"?";
 			if(tag.indexOf(";T=")<0)this.#scatterInterval=90;
 			else this.#scatterInterval=Math.min(Math.max(this.#scatterInterval+(this.#scatter.length>0?-10:10),100),200);
 			setTimeout(()=>{
-				var scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
+				const scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
 				if(this.#fragment){
 					this.#elems.chats.appendChild(this.#fragment);
 					this.#fragment=null;
@@ -1376,9 +1381,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 					this.#danmaku.draw(this.#scatter);
 					this.#scatter.splice(0);
 				}
-				var n=Math.ceil(this.#scatter.length/5);
+				const n=Math.ceil(this.#scatter.length/5);
 				if(n>0){
-					for(var i=0;i<5;i++){
+					for(let i=0;i<5;i++){
 						setTimeout(()=>{
 							if(this.#scatter.length>0){
 								this.#danmaku.draw(this.#scatter.slice(0,n));
@@ -1407,48 +1412,49 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(getComputedStyle(this.#elems.comm).display=="none"){
 				this.#commHide=true;
 			}else{
-				var scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
+				const scroll=Math.abs(this.#elems.chats.scrollTop+this.#elems.chats.clientHeight-this.#elems.chats.scrollHeight)<this.#elems.chats.clientHeight/4;
 				if(this.#commHide||scroll)this.#elems.chats.scrollTop=this.#elems.chats.scrollHeight;
 				this.#commHide=false;
 			}
 		},1000);
 	}
 	#addMessage(text){
-		var b=document.createElement("strong");
+		const b=document.createElement("strong");
 		b.innerText=text;
-		var div=document.createElement("div");
+		const div=document.createElement("div");
 		div.appendChild(b);
 		this.#elems.chats.appendChild(div);
 	}
 
 	static oncuechangeB24Caption(cap,cues){
-		var work=[];
-		var dataList=[];
-		for(var i=0;i<cues.length;i++){
-			var ret=this.decodeB24CaptionFromCueText(cues[i].text,work);
-			if(!ret){return;}
-			for(var j=0;j<ret.length;j++){dataList.push({pts:cues[i].startTime,pes:ret[j]});}
+		const work=[];
+		const dataList=[];
+		for(const cue of cues){
+			const ret=this.decodeB24CaptionFromCueText(cue.text,work);
+			if(!ret)return;
+			for(const pes of ret){dataList.push({pts:cue.startTime,pes});}
 		}
 		dataList.reverse();
-		(function pushCap(){
-			for(var i=0;i<100;i++){
-				var data=dataList.pop();
-				if(!data){return;}
-				cap.pushRawData(data.pts,data.pes);
+		const pushCap=()=>{
+			for(let i=0;i<100;i++){
+			const data=dataList.pop();
+			if(!data)return;
+			cap.pushRawData(data.pts,data.pes);
 			}
 			setTimeout(pushCap,0);
-		})();
+		};
+		pushCap();
 	}
 
 	#psiData;
 	#psc = {
 		startRead: () => {
 			clearTimeout(this.#psc.readTimer);
-			var startSec=this.#e.currentTime;
+			const startSec=this.#e.currentTime;
 			this.#psc.videoLastSec=startSec;
-			var ctx={};
+			const ctx={};
 			const read=()=>{
-				var videoSec=this.#e.currentTime;
+				const videoSec=this.#e.currentTime;
 				if(videoSec<this.#psc.videoLastSec||this.#psc.videoLastSec+10<videoSec){
 					this.#psc.startRead();
 					return;
@@ -1506,11 +1512,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		offsetSec: 0,
 		startRead: () => {
 			clearTimeout(this.#jklog.readTimer);
-			var startSec=this.#e.currentTime+this.#jklog.offsetSec;
+			const startSec=this.#e.currentTime+this.#jklog.offsetSec;
 			this.#jklog.videoLastSec=startSec;
-			var ctx={};
+			const ctx={};
 			const read=()=>{
-				var videoSec=this.#e.currentTime+this.#jklog.offsetSec;
+				const videoSec=this.#e.currentTime+this.#jklog.offsetSec;
 				if(videoSec<this.#jklog.videoLastSec||this.#jklog.videoLastSec+10<videoSec){
 					this.#jklog.startRead();
 					return;
@@ -1571,7 +1577,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			return;
 		}
-		var xhr=new XMLHttpRequest();
+		const xhr=new XMLHttpRequest();
 		xhr.open("POST", this.#api.comment);
 		xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
 		xhr.onloadend=()=>{
@@ -1610,8 +1616,8 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			return;
 		}
 		if(!this.#e.initSrc||!this.#params.has('psidata')&&!this.#params.has('jikkyo'))return;
-		var readCount=0;
-		var ctx={};
+		let readCount=0;
+		const ctx={};
 		this.#xhr=new XMLHttpRequest();
 		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#fast || 1))}`);
 		this.#xhr.onloadend=()=>{

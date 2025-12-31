@@ -32,6 +32,7 @@ if hlsKey and not (ALLOW_HLS and option.outputHls) then
 end
 psidata=GetVarInt(query,'psidata')==1
 jikkyo=GetVarInt(query,'jikkyo')==1
+jkID=GetVarInt(query,'jkid',1,65535)
 hlsMsn=GetVarInt(query,'_HLS_msn',1)
 hlsPart=GetVarInt(query,'_HLS_part',0)
 
@@ -44,29 +45,8 @@ partConfigSec=0.8
 -- トランスコードを開始し、HLSの場合はインデックスファイルの情報、それ以外はMP4などのストリーム自体を返す
 function OpenTranscoder(pipeName,searchName,nwtvclose,targetSID)
   if XCODE_SINGLE then
-    -- トランスコーダーの親プロセスのリストを作る
-    local pids=nil
-    if WIN32 then
-      local pf=edcb.io.popen('wmic process where "name=\'tsreadex.exe\' and commandline like \'% -z edcb-legacy-%\'" get parentprocessid 2>nul | findstr /b [1-9]')
-      if pf then
-        for pid in (pf:read('*a') or ''):gmatch('[1-9][0-9]*') do
-          pids=(pids and pids..' or ' or '')..'processid='..pid
-        end
-        pf:close()
-      end
-    end
-    -- パイプラインの上流を終わらせる
+    -- パイプラインの上流をすべて終わらせる
     TerminateCommandlineLike('tsreadex',' -z edcb-legacy-')
-    if pids then
-      -- 親プロセスの終了を2秒だけ待つ。パイプラインの下流でストールしている可能性もあるので待ちすぎない
-      -- wmicコマンドのない環境では待たないがここの待機はさほど重要ではない
-      for i=1,4 do
-        edcb.Sleep(500)
-        if i==4 or not edcb.os.execute('wmic process where "'..pids..'" get processid 2>nul | findstr /b [1-9] >nul') then
-          break
-        end
-      end
-    end
   end
 
   local tools=PathAppend(EdcbModulePath(),'Tools')
@@ -115,14 +95,7 @@ function OpenTranscoder(pipeName,searchName,nwtvclose,targetSID)
     cmd=cmd..' | '..tsmemseg..(hls4>0 and ' -4' or '')..' -a 10 -m 8192 -d 3 -p '..partConfigSec..' '..(WIN32 and '' or '-g '..QuoteCommandArgForPath(EdcbModulePath(),hlsKey)..' ')
     if nwtvclose then
       cmd=cmd..(WIN32 and '-c "..\\EpgTimerSrv.exe /luapost ' or '-c "echo \\"')
-      if type(nwtvclose[2])=='string' then
-        -- 古い環境用
-        cmd=cmd.."if(edcb.GetPrivateProfile('NWTV','nwtv"..nwtvclose[1].."open','"..nwtvclose[2]
-          .."','Setting"..(WIN32 and '\\\\' or '/').."HttpPublic.ini')=='"..nwtvclose[2].."')"
-      else
-        cmd=cmd..'ok,pid,openID=edcb.IsOpenNetworkTV('..nwtvclose[1]..');if(ok)and(openID=='..nwtvclose[2]..')'
-      end
-      cmd=cmd..'then;edcb.CloseNetworkTV('..nwtvclose[1]..');end'
+        ..'ok,pid,openID=edcb.IsOpenNetworkTV('..nwtvclose[1]..');if(ok)and(openID=='..(nwtvclose[2] or 'nil')..')then;edcb.CloseNetworkTV('..nwtvclose[1]..');end'
         ..(WIN32 and '" ' or '\\" >>\\"'..PathAppend(EdcbModulePath(),'EpgTimerSrvLuaPost.fifo')..'\\"" ')
     end
     cmd=cmd..hlsKey..'_'
@@ -161,9 +134,9 @@ function OpenPsiDataArchiver(pipeName,targetSID)
   return edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd,'r'..POPEN_BINARY)
 end
 
-function OpenLiveJikkyo(pid,nid,sid)
+function OpenLiveJikkyo(pid,jkID,nid,sid)
   if JKCNSL_PATH then
-    if not nid and edcb.GetTunerProcessStatusAll then
+    if not jkID and not nid and edcb.GetTunerProcessStatusAll then
       -- 起動中のチューナのONIDとTSIDを調べ、チャンネル情報から適当にSIDを得る
       local t=nil
       for i,v in ipairs(edcb.GetTunerProcessStatusAll()) do
@@ -182,7 +155,7 @@ function OpenLiveJikkyo(pid,nid,sid)
         end
       end
     end
-    local jkID=nid and GetJikkyoID(nid,sid)
+    jkID=jkID or (nid and GetJikkyoID(nid,sid))
     if not jkID then
       return 'Unable to determine Jikkyo ID.'
     end
@@ -351,11 +324,6 @@ if onid then
         TerminateCommandlineLike('tsreadex',' -z edcb-legacy-nwtv-'..n..' ')
         -- NetworkTVモードを開始
         ok,pid,myOpenID=edcb.OpenNetworkTV(2,onid,tsid,sid,n)
-        if ok and not myOpenID then
-          -- 古い環境用
-          myOpenID='@'..os.time()
-          edcb.WritePrivateProfile('NWTV','nwtv'..n..'open',myOpenID,'Setting\\HttpPublic.ini')
-        end
       end
       if ok then
         -- 名前付きパイプができるまで待つ
@@ -391,7 +359,7 @@ if onid then
               end
             end
             if f and jikkyo then
-              f.jk,f.jkID,f.closeJK=OpenLiveJikkyo(pid,onid,sid)
+              f.jk,f.jkID,f.closeJK=OpenLiveJikkyo(pid,jkID,onid,sid)
               if not f.jk then
                 if f.psi then f.psi:close() end
                 f=nil
@@ -436,7 +404,7 @@ elseif n and n<=65535 then
         end
         if f and jikkyo then
           if tonumber(pid) then
-            f.jk,f.jkID,f.closeJK=OpenLiveJikkyo(tonumber(pid))
+            f.jk,f.jkID,f.closeJK=OpenLiveJikkyo(tonumber(pid),jkID)
           end
           if not f.jk then
             if f.psi then f.psi:close() end
@@ -453,10 +421,7 @@ elseif n and n<=65535 then
 end
 
 if not f then
-  ct=CreateContentBuilder()
-  ct:Append(DOCTYPE_HTML4_STRICT..'<title>view.lua</title><p><a href="index.html">メニュー</a></p>')
-  ct:Finish()
-  mg.write(ct:Pop(Response(404,'text/html','utf-8',ct.len)..'\r\n'))
+  mg.write(Response(404,nil,nil,0)..'\r\n')
 elseif psidata or jikkyo then
   -- PSI/SI、実況、またはその混合データストリームを返す
   mg.write(Response(200,mg.get_mime_type(fname),'utf-8')..'Content-Disposition: filename='..fname..'\r\n\r\n')
@@ -520,7 +485,7 @@ elseif hlsKey then
   ct:Finish()
   mg.write(ct:Pop(Response(200,'application/vnd.apple.mpegurl','utf-8',ct.len)..'\r\n'))
 else
-  mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: filename='..fname..'\r\n\r\n')
+  mg.write(Response(200,mg.get_mime_type(fname))..'Content-Disposition: attachment; filename='..fname..'\r\n\r\n')
   if mg.request_info.request_method~='HEAD' then
     while true do
       buf=f:read(188*128)
@@ -538,19 +503,12 @@ else
   if onid then
     -- NetworkTVモードを終了
     -- リロード時などの終了を防ぐ。厳密にはロックなどが必要だが概ねうまくいけば良い
-    if type(myOpenID)=='string' then
-      -- 古い環境用
-      if edcb.GetPrivateProfile('NWTV','nwtv'..n..'open',myOpenID,'Setting\\HttpPublic.ini')==myOpenID then
-        edcb.CloseNetworkTV(n)
-      end
-    else
-      ok,pid,openID=edcb.IsOpenNetworkTV(n)
-      if ok and openID==myOpenID then
-        -- チャンネル変更のため終了を遅らせる
-        edcb.os.execute((WIN32 and 'start "" /b cmd /s /c "timeout 5 & cd /d "'..EdcbModulePath()..'" && .\\EpgTimerSrv.exe /luapost ' or '(sleep 5 ; echo "')
-          ..'ok,pid,openID=edcb.IsOpenNetworkTV('..n..');if(ok)and(openID=='..myOpenID..')then;edcb.CloseNetworkTV('..n..');end'
-          ..(WIN32 and '"' or '" >>"'..PathAppend(EdcbModulePath(),'EpgTimerSrvLuaPost.fifo')..'") &'))
-      end
+    ok,pid,openID=edcb.IsOpenNetworkTV(n)
+    if ok and openID==myOpenID then
+      -- チャンネル変更のため終了を遅らせる
+      edcb.os.execute((WIN32 and 'start "" /b cmd /s /c "timeout 5 & cd /d "'..EdcbModulePath()..'" && .\\EpgTimerSrv.exe /luapost ' or '(sleep 5 ; echo "')
+        ..'ok,pid,openID=edcb.IsOpenNetworkTV('..n..');if(ok)and(openID=='..(myOpenID or 'nil')..')then;edcb.CloseNetworkTV('..n..');end'
+        ..(WIN32 and '"' or '" >>"'..PathAppend(EdcbModulePath(),'EpgTimerSrvLuaPost.fifo')..'") &'))
     end
   end
 end
