@@ -251,9 +251,9 @@ const toObj = {
 	ProgramInfo(e){
 		const programInfo = e.match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
 		const id = programInfo[9].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
-		const date = programInfo[1].split(/ |～/);
-		const starttime = new Date(`${date[0]} ${date[1]}`).getTime();
-		const endtime = /未定/.test(date[2]) ? null : new Date(`${date[0]} ${date[2]}`).getTime();
+		const date = programInfo[1].match(/(\d+)\/(\d+)\/(\d+)\D+([\d:]+)\s*～\s*(未定|[\d:]+)/);
+		const starttime = date ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[4]}+09:00`).getTime() : null;
+		const endtime = starttime && date[5] != '未定' ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[5]}+09:00`).getTime() : null;
 		const d = {
 			onid: Number(id[1]),
 			tsid: Number(id[2]),
@@ -279,7 +279,8 @@ const toObj = {
 			if (e.match('サンプリングレート')) i++;
 		});
 		if (endtime){
-			d.endtime = endtime;
+			//日を跨ぐ場合がある
+			d.endtime = endtime + (endtime < starttime ? 86400000 : 0);
 			d.duration = (endtime - starttime)/1000;
 		}
 
