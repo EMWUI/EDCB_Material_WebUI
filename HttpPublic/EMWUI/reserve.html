@@ -16,7 +16,7 @@ if post then
   focus=edcb.GetReserveData(GetVarInt(post,'del') or 0)
   if focus then
     edcb.DelReserveData(focus.reserveID)
-    ct.js=ct.js..'<script>Snackbar("削除しました");</script>'
+    ct.js=(ct.js or '')..'<script>Snackbar("削除しました");</script>'
   end
 end
 
