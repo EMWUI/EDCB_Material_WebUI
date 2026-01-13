@@ -1524,7 +1524,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				this.#jklog.videoLastSec=videoSec;
 				if(this.#logText){
 					this.#readJikkyoLog(this.#logText,(sec,tag)=>{
-						this.#jklog.stream(tag);
+						this.#jkStream.stream(tag);
 						return sec<videoSec;
 					},startSec,ctx);
 				}
