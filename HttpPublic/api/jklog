@@ -203,8 +203,8 @@ if JKRDLOG_PATH then
   if fpath then
     fpath=GetFilePath(mg.request_info.query_string)
   end
-    if fpath then
-      totList=nil
+  if fpath then
+    totList=nil
     ext=fpath:match('%.[0-9A-Za-z]+$') or ''
     extts=edcb.GetPrivateProfile('SET','TSExt','.ts','EpgTimerSrv.ini')
     if IsEqualPath(ext,extts) then
@@ -231,14 +231,14 @@ if JKRDLOG_PATH then
           totList,nid,sid=ExtractTotListAndServiceIDFromProgramText(f)
           f:close()
         end
-        end
       end
-      if totList and nid and sid then
-        code=404
+    end
+    if totList and nid and sid then
+      code=404
       jkID=GetVarInt(mg.request_info.query_string,'jkid',1,65535)
       jkID=jkID or GetJikkyoID(nid,sid)
-        if jkID then
-          code=200
+      if jkID then
+        code=200
         jkTM=GetVarInt(mg.request_info.query_string,'jktm',1)
         jkTM=jkTM and #totList>0 and jkTM-totList[1].tot or 0
       end

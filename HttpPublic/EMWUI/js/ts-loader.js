@@ -1102,7 +1102,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 					},0,ctx.ctx);
 					if(ctx.psiData)ctx.psiData=new Uint8Array(ctx.psiData);
 				}else{
-					atobRemain+=response.substring(readCount,i);
+					ctx.atobRemain+=response.substring(readCount,i);
 				}
 				readCount=i;
 			}
