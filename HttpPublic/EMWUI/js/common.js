@@ -281,7 +281,7 @@ const toObj = {
 		if (endtime){
 			//日を跨ぐ場合がある
 			d.endtime = endtime + (endtime < starttime ? 86400000 : 0);
-			d.duration = (endtime - starttime)/1000;
+			d.duration = (d.endtime - starttime)/1000;
 		}
 
 		return d;
