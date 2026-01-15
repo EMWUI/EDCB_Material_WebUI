@@ -649,26 +649,24 @@ const createHtml = new class {
 				{title: 'D', class: 'drop', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drops:</span>${d.drops}`, n: true},
 				{title: 'S', class: 'scramble', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>${d.scrambles}`, n: true},
 			],
-			getThumb: async (id, $container) => {
-				const thumb = document.createElement('canvas');
-				const done = await this.thumb.setThumb(thumb, id, 0.1);
-				if (done) $container.replaceWith($('<div>', {class: 'thumb-container', append: thumb}));
-			},
 			list(d){
 				const $thumb = $('<div>', {class: 'thumb-container mdl-cell--hide-phone mdl-cell--hide-tablet', append: $('<i>', {class: 'material-icons', text: 'movie_off'})});
-				this.getThumb(d.id, $thumb);
-				return $('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
-					$thumb,
-					$('<div>', {class: 'summary mdl-typography--title', append: [
-						$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
-						$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
-							$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
-							$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
-					$('<div>', {class: 'tagchip', append: [
-						mdlChip.tag(d.comment),
-						$('<span>', {class: 'container', append: [
-							mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
-							mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]})
+				const thumb = document.createElement('canvas');
+				return [
+					$('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
+						$thumb,
+						$('<div>', {class: 'summary mdl-typography--title', append: [
+							$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
+							$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
+								$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
+								$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
+						$('<div>', {class: 'tagchip', append: [
+							mdlChip.tag(d.comment),
+							$('<span>', {class: 'container', append: [
+								mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
+								mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]}),
+					{canvas: thumb, id: d.id, value: 0.1, done: () => $thumb.replaceWith($('<div>', {class: 'thumb-container', append: thumb}))}
+				];
 			},
 		},
 		autoaddepg: {
@@ -823,9 +821,18 @@ const createHtml = new class {
 	}
 	#list(d){
 		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
+		const a = [...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]));
+		(async () => {
+			const tests = await this.thumb.testThumbs(a.map(e => e[1].id));
+			if (tests){
+				for (let i = 0; i < tests.length; i++){
+					if (tests[i]) (async e => {if (await this.thumb.setThumb(e.canvas, e.id, e.value)) e.done();})(a[i][1]);
+				}
+			}
+		})();
 		return [
 			$('<div>', {class: 'mdl-typography--text-right', text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
-			...[...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]))
+			...a.map(e => e[0])
 		];
 	}
 	#pagination(d){
