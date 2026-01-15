@@ -251,9 +251,9 @@ const toObj = {
 	ProgramInfo(e){
 		const programInfo = e.match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
 		const id = programInfo[9].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
-		const date = programInfo[1].split(/ |～/);
-		const starttime = new Date(`${date[0]} ${date[1]}`).getTime();
-		const endtime = /未定/.test(date[2]) ? null : new Date(`${date[0]} ${date[2]}`).getTime();
+		const date = programInfo[1].match(/(\d+)\/(\d+)\/(\d+)\D+([\d:]+)\s*～\s*(未定|[\d:]+)/);
+		const starttime = date ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[4]}+09:00`).getTime() : null;
+		const endtime = starttime && date[5] != '未定' ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[5]}+09:00`).getTime() : null;
 		const d = {
 			onid: Number(id[1]),
 			tsid: Number(id[2]),
@@ -279,8 +279,9 @@ const toObj = {
 			if (e.match('サンプリングレート')) i++;
 		});
 		if (endtime){
-			d.endtime = endtime;
-			d.duration = (endtime - starttime)/1000;
+			//日を跨ぐ場合がある
+			d.endtime = endtime + (endtime < starttime ? 86400000 : 0);
+			d.duration = (d.endtime - starttime)/1000;
 		}
 
 		return d;
@@ -648,26 +649,24 @@ const createHtml = new class {
 				{title: 'D', class: 'drop', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drops:</span>${d.drops}`, n: true},
 				{title: 'S', class: 'scramble', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>${d.scrambles}`, n: true},
 			],
-			getThumb: async (id, $container) => {
-				const thumb = document.createElement('canvas');
-				const done = await this.thumb.setThumb(thumb, id, 0.1);
-				if (done) $container.replaceWith($('<div>', {class: 'thumb-container', append: thumb}));
-			},
 			list(d){
 				const $thumb = $('<div>', {class: 'thumb-container mdl-cell--hide-phone mdl-cell--hide-tablet', append: $('<i>', {class: 'material-icons', text: 'movie_off'})});
-				this.getThumb(d.id, $thumb);
-				return $('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
-					$thumb,
-					$('<div>', {class: 'summary mdl-typography--title', append: [
-						$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
-						$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
-							$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
-							$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
-					$('<div>', {class: 'tagchip', append: [
-						mdlChip.tag(d.comment),
-						$('<span>', {class: 'container', append: [
-							mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
-							mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]})
+				const thumb = document.createElement('canvas');
+				return [
+					$('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
+						$thumb,
+						$('<div>', {class: 'summary mdl-typography--title', append: [
+							$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
+							$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
+								$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
+								$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
+						$('<div>', {class: 'tagchip', append: [
+							mdlChip.tag(d.comment),
+							$('<span>', {class: 'container', append: [
+								mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
+								mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]}),
+					{canvas: thumb, id: d.id, value: 0.1, done: () => $thumb.replaceWith($('<div>', {class: 'thumb-container', append: thumb}))}
+				];
 			},
 		},
 		autoaddepg: {
@@ -822,9 +821,18 @@ const createHtml = new class {
 	}
 	#list(d){
 		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
+		const a = [...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]));
+		(async () => {
+			const tests = await this.thumb.testThumbs(a.map(e => e[1].id));
+			if (tests){
+				for (let i = 0; i < tests.length; i++){
+					if (tests[i]) (async e => {if (await this.thumb.setThumb(e.canvas, e.id, e.value)) e.done();})(a[i][1]);
+				}
+			}
+		})();
 		return [
 			$('<div>', {class: 'mdl-typography--text-right', text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
-			...[...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]))
+			...a.map(e => e[0])
 		];
 	}
 	#pagination(d){

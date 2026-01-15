@@ -624,6 +624,7 @@ class TsThumb{
 	}
 
 	get setThumb(){return this.#setThumb}
+	get testThumbs(){return this.#testThumbs}
 
 	get hide(){return this.#hide}
 
@@ -638,6 +639,25 @@ class TsThumb{
 		if (!frame) return;
 		this.#putImage(frame, canvas);
 		return true;
+	}
+
+	async #testThumbs(pathList){
+		//trueを返した項目はサムネを取得できる"かもしれない"。効率のため2項目以下は特別扱い
+		const tests = pathList.length == 2 ? [true, true] : pathList.length == 1 ? [true] : [];
+		if (pathList.length > 2){
+			const url = new URL(this.#api, location.href);
+			for (let i = 0; i < pathList.length; i++){
+				url.searchParams.append('test', `${this.#key}-${pathList[i]}`);
+				//APIの制限により100個まで
+				if (i == pathList.length - 1 || url.searchParams.size >= 100 || url.searchParams.toString().length >= 1000){
+					const r = await fetch(url).catch(() => null);
+					if (r && r.ok) tests.push(...JSON.parse(await r.text().catch(() => '[]')));
+					if (tests.length != i + 1) return null; //失敗
+					url.searchParams.delete('test');
+				}
+			}
+		}
+		return tests;
 	}
 
 	async #seek(value, offset){
@@ -1102,7 +1122,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 					},0,ctx.ctx);
 					if(ctx.psiData)ctx.psiData=new Uint8Array(ctx.psiData);
 				}else{
-					atobRemain+=response.substring(readCount,i);
+					ctx.atobRemain+=response.substring(readCount,i);
 				}
 				readCount=i;
 			}
@@ -1524,7 +1544,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				this.#jklog.videoLastSec=videoSec;
 				if(this.#logText){
 					this.#readJikkyoLog(this.#logText,(sec,tag)=>{
-						this.#jklog.stream(tag);
+						this.#jkStream.stream(tag);
 						return sec<videoSec;
 					},startSec,ctx);
 				}
