@@ -1131,15 +1131,13 @@ const dateList = new class {
 		$("#dateList_touch").empty();
 		$('[name=dateList]').val(
 			$('#dateList_select option').get().map((e, i) => {
-				this.add.touch(i, $(e).text());
 				return $(e).val();
 			})
 		);
 	}
 	//追加
-	add = {
-		select: (t, text) => $('#dateList_select').append(`<option value="${text ? `${t}">${text}` : `${t.startDayOfWeek}-${t.startTime}-${t.endDayOfWeek}-${t.endTime}">${t.startDayOfWeek} ${t.startTime} ～ ${t.endDayOfWeek} ${t.endTime}`}`),
-		touch: (i, text) => $("#dateList_touch").append($('<li>', {class: 'mdl-list__item', data: {count: i}, click: e => this.click(e), html: `<span class="mdl-list__item-primary-content">${text}</span>`}))
+	add(t, text){
+		$('#dateList_select').append(`<option value="${text ? `${t}">${text}` : `${t.startDayOfWeek}-${t.startTime}-${t.endDayOfWeek}-${t.endTime}">${t.startDayOfWeek} ${t.startTime} ～ ${t.endDayOfWeek} ${t.endTime}`}`);
 	}
 }
 
@@ -1162,8 +1160,7 @@ const setSerchSetting = s => {
 		s.dateList.map((e, i) => {
 			const val = `${Info.day[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${Info.day[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`;
 			const txt = `${Info.day[e.startDayOfWeek]} ${zero(e.startHour)}:${zero(e.startMin)} ～ ${Info.day[e.endDayOfWeek]} ${zero(e.endHour)}:${zero(e.endMin)}`
-			dateList.add.select(val, txt);
-			dateList.add.touch(i, txt);
+			dateList.add(val, txt);
 			return val;
 		}
 	));
@@ -1609,6 +1606,8 @@ $(function(){
 	//サービス
 	//全選択
 	$('.all_select').click(() => $('#serviceList option').not('.hidden').prop('selected', true));
+	//全選択解除
+	$('.s_celar').click(() => $('#serviceList option').prop('selected', false));
 	//映像のみ表示
 	$('#image').change(e => { 
 		if ($(e.currentTarget).prop('checked')) $('#serviceList option.data').addClass('hidden');
@@ -1638,7 +1637,7 @@ $(function(){
 		if ($('#dayList').prop('checked')){
 			date.startDayOfWeek = $('#startDayOfWeek').val();
 			date.endDayOfWeek = $('#endDayOfWeek').val();
-			dateList.add.select(date);
+			dateList.add(date);
 		}else if (date.startTime > date.endTime){
 			Snackbar('開始 > 終了です');
 			return;
@@ -1646,7 +1645,7 @@ $(function(){
 			$('.DayOfWeek:checked').each((i, e) => {
 				date.startDayOfWeek = $(e).val();
 				date.endDayOfWeek = $(e).val();
-				dateList.add.select(date);
+				dateList.add(date);
 			});
 		}
 		dateList.create();
@@ -1656,8 +1655,6 @@ $(function(){
 		$('#dateList_select option:selected').remove();
 		dateList.create();
 	});
-	//選択
-	$('#dateList_touch .mdl-list__item').click(e => dateList.click(e));
 	//編集表示
 	$('#add_dateList').prop('disabled', $('#dateList_edit').is(':hidden'));
 	$('#edit_dateList').click(() => {

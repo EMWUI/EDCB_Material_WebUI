@@ -49,7 +49,7 @@ $(function(){
 	}
 
 	let order = localStorage.getItem('sortOrder') ?? 'name';
-	let asc = localStorage.getItem('ascending')??'true' == 'true';
+	let asc = (localStorage.getItem('ascending')??'true') == 'true';
 	const sortLibrary = d => {
 		const list = d.file ?? $('.item').clone(true);
 		order = d.order ?? order
@@ -169,7 +169,7 @@ $(function(){
 						]})
 					]);
 				}else{
-					const avatar = (thumbHash != 0)
+					const avatar = (thumbHash && thumbHash != 0)
 						? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumbHash}.jpg\');`})
 						: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
 					$e.addClass('mdl-list__item mdl-list__item--two-line').append(

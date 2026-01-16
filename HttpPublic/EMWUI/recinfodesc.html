@@ -85,10 +85,10 @@ if v then
       local s=''
       for i,v in ipairs(Split(videoInfo:gsub('\r?\n', '\n'), '\n')) do
         for j,w in ipairs(Split(v, '、')) do
-          if i==0 then
+          if j==1 then
             s=s..MdlChip:tag(w)
           else
-            for k,x in ipairs(Split(w, ' ')) do
+            for k,x in ipairs(Split(w)) do
               s=s..MdlChip:tag(x)
             end
           end

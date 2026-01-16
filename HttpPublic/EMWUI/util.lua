@@ -1,11 +1,11 @@
 function Version(a)
   local ver={
-    css='251228',
-    common='260115',
+    css='260116',
+    common='260116',
     tvguide='250824',
     player='250920',
-    onair='250815',
-    library='250914',
+    onair='260116',
+    library='260116',
     setting='250906',
     tsloader='260115',
     hls='v1.5.20',
@@ -547,7 +547,7 @@ function SerchTemplate(si)
   end
   s=s..'</select></div>\n'
    ..'<div><button class="g_celar'..(si.search and ' advanced' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
-   ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="7">\n'
+   ..'<div class="has-button"><div class="mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="7">\n'
   for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
     local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
@@ -582,7 +582,7 @@ function SerchTemplate(si)
 
   s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
-    ..'<div class="has-button"><div class="multiple mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="7">'
+    ..'<div class="has-button"><div class="mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="7">'
 
   local NetworkList={}
   for i,v in ipairs(NetworkType()) do
@@ -601,7 +601,8 @@ function SerchTemplate(si)
   end
 
   s=s..'\n</select></div>\n'
-    ..'<div><button class="all_select mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">全選択</button></div>'
+    ..'<div><button class="all_select mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">全選択</button>'
+    ..'<button class="s_celar mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div>'
     ..'</div>\n'
 
     ..'<div class="mdl-grid mdl-grid--no-spacing">表示絞り込み：'
@@ -616,7 +617,7 @@ function SerchTemplate(si)
 
     ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">時間絞り込み</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div id="dateList" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
-    ..'<div id="dateList_main"><div class="multiple"><select id="dateList_select" multiple size="6">\n'
+    ..'<div id="dateList_main"><select id="dateList_select" multiple size="6">\n'
   local dateListValue, dateListSP = '', ''
   for i,v in ipairs(si.dateList) do
     local value=({'日','月','火','水','木','金','土',})[v.startDayOfWeek%7+1]..'-'..v.startHour..':'..v.startMin..'-'
@@ -629,9 +630,7 @@ function SerchTemplate(si)
     dateListValue=dateListValue..(i==1 and '' or ',')..value
     dateListSP=dateListSP..'<li class="mdl-list__item" data-count="'..(i-1)..'"><span class="mdl-list__item-primary-content">'..list..'</span></li>\n'
   end
-  s=s..'</select></div>\n'
-    ..'<div class="touch"><ul id="dateList_touch" class="mdl-list">\n'..dateListSP..'</ul></div>\n'
-    ..''
+  s=s..'</select>\n'
     ..'<div><button id="add_dateList" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">追加</button>'
     ..'<button id="del_dateList" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">削除</button></div>\n'
 

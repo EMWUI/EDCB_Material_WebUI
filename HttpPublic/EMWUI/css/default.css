@@ -1090,8 +1090,6 @@ h4 .mdl-button--icon {
   #sidePanel #dateList_main,
   #sidePanel #dateList_select {
     width: 100%; }
-  #sidePanel #dateList .multiple {
-    flex-grow: 1; }
   #sidePanel .form>div>div:first-child:not(.mdl-cell--middle) {
     line-height: 20px; }
   #sidePanel .mdl-cell--hide-desktop {
@@ -1374,38 +1372,8 @@ h4 .mdl-button--icon {
   @media (max-width: 699px) {
     #dateList_main {
       width: 100%; }
-    #dateList .multiple,
-    #dateList .touch {
-      flex-grow: 1; }
     #dateList_edit {
       display: none; } }
-
-  .touch {
-    display: none; }
-    @media (pointer: coarse) {
-      #dateList .multiple {
-        display: none; }
-      .touch {
-        display: block; } }
-
-@media (pointer: coarse) {
-  .multiple {
-    padding: 4px 0;
-    position: relative;
-    display: inline-block;
-    box-sizing: border-box; }
-    .multiple:before {
-      top: 16px;
-      right: 10px;
-      border: 5px solid transparent;
-      border-top-color: #9E9E9E;
-      pointer-events: none;
-      position: absolute;
-      content: ''; }
-    .multiple select {
-      border: none;
-      border-bottom: 1px solid rgba(0,0,0 ,0.12);
-      padding: 4px 24px 4px 0; } }
 
 
 

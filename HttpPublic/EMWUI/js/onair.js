@@ -14,9 +14,8 @@ $(function(){
 			//デュアルモノ
 			$audios.attr('disabled', false);
 			const text = audio[0].text.split('\n');
-			if (text.length < 2) text = ['日本語','英語'];
-			$audioText1.text(`[二] ${text[0]}`);
-			$audioText2.text(`[二] ${text[1]}`);
+			$audioText1.text(`[二] ${text.length < 2 ? '日本語' : text[0]}`);
+			$audioText2.text(`[二] ${text.length < 2 ? '英語' : text[1]}`);
 			if (!update) audio[0].main_component ? $audio1.prop('checked', true) : $audio2.prop('checked', true);
 		}else{
 			$audios.attr('disabled', true);

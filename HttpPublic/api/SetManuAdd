@@ -12,7 +12,7 @@ if post then
       for i=7,1,-1 do
         aa.dayOfWeekFlag=aa.dayOfWeekFlag*2+(GetVarInt(post,'checkDayOfWeek'..i)==1 and 1 or 0)
       end
-      aa.startTime=GetVarTime(post, 'starTtime')
+      aa.startTime=GetVarTime(post, 'startTime')
       aa.durationSecond=(GetVarTime(post, 'endTime')-aa.startTime)%(24*3600)
       aa.onid,aa.tsid,aa.sid=GetVarServiceID(post,'serviceID')
       if aa.onid then
@@ -28,7 +28,7 @@ if post then
     if done then
       messege='<success>プログラム予約を'..(dataID==0 and '追加' or '変更')..'しました</success>'
     else
-      messege='<err>プログラム予約を'..(dataID==0 and '追加' or '変更')..(aa.recSetting.recMode or 'B')..'できませんでした</err>'
+      messege='<err>プログラム予約を'..(dataID==0 and '追加' or '変更')..'できませんでした</err>'
     end
   elseif mg.get_var(post,'del') then
     edcb.DelManuAdd(aa.dataID)
