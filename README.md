@@ -81,8 +81,12 @@ EDCB Material WebUI
 配信機能の設定などは`HttpPublic.ini`と`XCODE_OPTIONS.lua`を編集してください  
 
 #### テーマカラー
-[MDL](http://www.getmdl.io/customize/index.html)で選択したテーマカラーに変更することができます  
-選んだテーマカラーの`css`をダウンロードし`material.min.css`を置き換えるか、`HttpPublic.ini`の`cssキー`を編集することで変更できます  
+~~[MDL](http://www.getmdl.io/customize/index.html)で~~選択したテーマカラーに変更することができます  
+選んだテーマカラーの`css`をダウンロードし`material.min.css`を置き換えることで変更できます
+
+MDLのサイトが**封鎖されたため**公式サイトから入手することができなくなりました  
+ですが、外部CDN [cdnjs](https://cdnjs.com/libraries/material-design-lite) などから入手可能なのなようです
+ 
 * 一部(border周り)が置き換えただけでは対応できない部分があります(`.mark`)  
 気になる方はcssを`user.css`に記述してください  
 * 色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)から選択することをお勧めします  
