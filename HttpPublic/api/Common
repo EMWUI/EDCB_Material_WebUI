@@ -55,7 +55,7 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
           f:close()
           messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
             ..v..'</name><text>'
-            ..(free and ('%.3f GiB / %.3f GiB'):format(free/1024/1024/1024,total/1024/1024/1024) or '不明')..'</text><free>'
+            ..(free and ConvertSize(free)..' / '..ConvertSize(total) or '不明')..'</text><free>'
             ..(free and 100-(free/total*100) or 0)..'</free></storage>'
         end
       end

@@ -1176,6 +1176,31 @@ function GetPredictionSize(v)
   return size
 end
 
+--ファイルサイズを、単位を付けテキストに  
+--第2引数は小数桁 (デフォルトは2)
+function ConvertSize(bytes,precision)
+  local units={'B','KB','MB','GB','TB','PB'}
+  local size=tonumber(bytes)
+
+  -- 入力が数値でない、または0以下の場合はそのまま返す
+  if not size or size<=0 then
+    return '0 B'
+  end
+
+  -- 単位のインデックスを決定する
+  local i=1
+  while size>=1024 and i<#units do
+    size=size/1024
+    i=i+1
+  end
+
+  if i==1 then
+    return string.format('%d %s',size,units[i])
+  else
+    return string.format('%.'..(precision or 2)..'f %s',size,units[i])
+  end
+end
+
 function HideServiceList()
   local st={}
   for i=0,1000 do
@@ -1478,6 +1503,7 @@ function GetLibraryPathList()
   return list
 end
 
+--スプリット関数、マルチバイト文字対応
 function Split(s, sep)
     if not sep then sep=' ' end
 

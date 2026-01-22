@@ -261,7 +261,7 @@ else
           ..EdcbHtmlEscape(v.name)..'</name><hash>'
           ..mg.md5(v.name)..'</hash><date>'
           ..TimeWithZone(v.mtime, 9*3600)..'</date><size>'
-          ..(v.isdir and '' or math.floor(v.size/1048576))..'</size>'
+          ..(v.isdir and '' or ConvertSize(v.size))..'</size>'
           ..(thumbHash and '<thumb>'..thumbHash..'</thumb>' or '')
           ..(v.isdir and '</dir>' or '</file>')
           ..'\n'

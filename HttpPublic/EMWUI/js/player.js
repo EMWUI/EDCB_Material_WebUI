@@ -340,7 +340,7 @@ $(function(){
 		pointermove(e){
 			if (!thumb || this.disabled) return;
 
-			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*e.offsetX/this.clientWidth),$(this).attr('max')), e.offsetX/this.clientWidth*100);
+			thumb.seek(Math.min(Math.max(0,$(this).attr('max')*(e.offsetX-6)/(this.clientWidth-12)),$(this).attr('max')), e.offsetX/this.clientWidth*100);
 		},
 		pointerup(){
 			this.seeking = false;

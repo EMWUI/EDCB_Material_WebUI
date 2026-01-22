@@ -164,7 +164,7 @@ $(function(){
 							$('<span>', {class: 'title', html: name}),
 							$('<span>', {class: 'mdl-typography--subhead', append:[
 								$('<span>', {class: 'date', html: `${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}),
-								$('<span>', {class: 'size', html: `${$(e).txt('size')}MB`}),
+								$('<span>', {class: 'size', html: `${$(e).txt('size')}`}),
 							]})
 						]})
 					]);

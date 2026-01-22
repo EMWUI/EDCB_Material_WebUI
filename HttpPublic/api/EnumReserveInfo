@@ -19,7 +19,7 @@ for i,v in ipairs(a) do
     ..v.eid..'</eventID><comment>'
     ..v.comment..'</comment><overlapMode>'
     ..v.overlapMode..'</overlapMode><size>'
-    ..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')..'</size>'
+    ..(size and ConvertSize(size,1) or '-')..'</size>'
     ..XmlRecSetting(v.recSetting)
     ..'</reserveinfo>\r\n')
 end

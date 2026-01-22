@@ -56,7 +56,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
     ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.stationName
     ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..v.comment
-    ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
+    ..'\n <td class="size">'..(size and ConvertSize(size,1) or '-')
     ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">grade</i></span>'..v.recSetting.priority
     ..'\n')
 end

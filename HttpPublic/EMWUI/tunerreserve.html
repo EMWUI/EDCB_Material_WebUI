@@ -60,7 +60,7 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
         ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(w.title)
         ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..w.onid..'&amp;sid='..w.sid..'"><span>'..w.stationName
         ..'\n <td class="comment mdl-data-table__cell--non-numeric">'..w.comment
-        ..'\n <td class="size">'..(size and ('%.1fGB'):format(size/1024/1024/1024) or '-')
+        ..'\n <td class="size">'..(size and ConvertSize(size,1) or '-')
         ..'\n <td class="priority"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">priority_high</i></span>'..w.recSetting.priority
         ..'\n')
     end
