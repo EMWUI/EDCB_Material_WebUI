@@ -260,8 +260,8 @@ else
         table.insert(ct, (v.isdir and '<dir>' or '<file>')..'<name>'
           ..EdcbHtmlEscape(v.name)..'</name><hash>'
           ..mg.md5(v.name)..'</hash><date>'
-          ..TimeWithZone(v.mtime, 9*3600)..'</date><size>'
-          ..(v.isdir and '' or ConvertSize(v.size))..'</size>'
+          ..TimeWithZone(v.mtime, 9*3600)..'</date>'
+          ..(v.isdir and '' or '<size>'..v.size..'</size><size_text>'..ConvertSize(v.size)..'</size_text>')
           ..(thumbHash and '<thumb>'..thumbHash..'</thumb>' or '')
           ..(v.isdir and '</dir>' or '</file>')
           ..'\n'
@@ -297,7 +297,7 @@ else
           pgtxt=GetPgtxt(ref)
           if pgtxt then table.insert(ct, '<programInfo>'..EdcbHtmlEscape(pgtxt)..'</programInfo>') end
         end
-          
+
         if info.ists then
           local tsreadex=FindToolsCommand('tsreadex')
           local ffprobe

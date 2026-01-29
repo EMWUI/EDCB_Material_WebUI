@@ -61,7 +61,7 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
       end
     else
       total=nil
-      f=edcb.io.popen('df -P -BM '..QuoteCommandArgForPath(v)..' 2>/dev/null | sed "s/  */ /g" | cut -f2-4 -d" "')
+      f=edcb.io.popen('df -P -B1 '..QuoteCommandArgForPath(v)..' 2>/dev/null | sed "s/  */ /g" | cut -f2-4 -d" "')
       if f then
         total,used,avail=f:read('*a'):match('(%d+)M (%d+)M (%d+)M')
         f:close()
@@ -69,7 +69,7 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
       if total then
         messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
         ..EdcbHtmlEscape(v)..'</name><text>'
-        ..('%.3f GiB (avail: %.3f GiB) / %.3f GiB'):format((total-used)/1024,avail/1024,total/1024)..'</text><free>'
+        ..ConvertSize(total-used)..' (avail: '..ConvertSize(avail)..') / '..ConvertSize(total)..'</text><free>'
         ..(100-((total-used)/total*100))..'</free></storage>'
       end
     end

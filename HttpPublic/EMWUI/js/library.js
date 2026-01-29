@@ -164,7 +164,7 @@ $(function(){
 							$('<span>', {class: 'title', html: name}),
 							$('<span>', {class: 'mdl-typography--subhead', append:[
 								$('<span>', {class: 'date', html: `${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}),
-								$('<span>', {class: 'size', html: `${$(e).txt('size')}`}),
+								$('<span>', {class: 'size', html: `${$(e).txt('size_text')}`}),
 							]})
 						]})
 					]);
@@ -176,7 +176,7 @@ $(function(){
 						$('<span>', {class: 'mdl-list__item-primary-content', append: [
 							avatar,
 							$('<span>', {class: 'title', text: name}),
-							$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: `${$(e).txt('size')}MB ${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}) ]}) );
+							$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: `${$(e).txt('size_text')} ${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}) ]}) );
 				}
 				file.push($e);
 			}

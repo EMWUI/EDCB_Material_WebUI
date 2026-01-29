@@ -5,7 +5,7 @@ function Version(a)
     tvguide='250824',
     player='260122',
     onair='260116',
-    library='260122',
+    library='260129',
     setting='250906',
     tsloader='260115',
     hls='v1.5.20',
