@@ -199,10 +199,7 @@ end
 code=500
 if JKRDLOG_PATH then
   code=404
-  fpath=mg.get_var(mg.request_info.query_string,'fname')
-  if fpath then
-    fpath=GetFilePath(mg.request_info.query_string)
-  end
+  fpath=GetFilePath(mg.request_info.query_string)
   if fpath then
     totList=nil
     ext=fpath:match('%.[0-9A-Za-z]+$') or ''
