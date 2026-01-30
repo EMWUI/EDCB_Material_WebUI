@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
     css='260116',
-    common='260116',
+    common='260130',
     tvguide='250824',
     player='260122',
     onair='260116',
@@ -517,13 +517,13 @@ function RecSettingTemplate(rs)
 end
 
 --検索フォームのテンプレート
-function SerchTemplate(si)
+function SerchTemplate(si, search)
   local subGenreOption=edcb.GetPrivateProfile('SET','subGenreoption','ALL',INI)
   local oneseg=tonumber(edcb.GetPrivateProfile('GUIDE','oneseg',false,INI))~=0
   local s='<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">検索キーワード</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="andKey mdl-textfield__input" type="text" name="andKey" value="'..ParseAndKey(si.andKey).andKey..'" size="25" id="andKey"><label class="mdl-textfield__label" for="andKey"></label></div></div>\n'
 
-    ..(si.search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'
+    ..(search and '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">NOTキーワード</div>\n'
         ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div class="mdl-cell--12-col mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="notKey" value="'..si.notKey..'" size="25" id="notKey"><label class="mdl-textfield__label" for="notKey"></label></div>\n'
       or '<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">NOTキーワード</div>\n'
           ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="text" name="notKey" value="'..ParseNotKey(si.notKey).notKey..'" size="25" id="notKey"><label class="mdl-textfield__label" for="notKey"></label></div></div>\n'
@@ -536,8 +536,8 @@ function SerchTemplate(si)
     ..'<div><label for="caseFlag" class="mdl-checkbox mdl-js-checkbox"><input id="caseFlag" class="mdl-checkbox__input" name="caseFlag"'..Checkbox(ParseAndKey(si.andKey).caseFlag)..'><span class="mdl-checkbox__label">大小文字区別</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div></div>\n'
 
-    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象ジャンル' or 'ジャンル絞り込み')..'</div>\n'
-    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop"><div class="has-button'..(si.search and ' advanced' or '')..'"><div class="pulldown mdl-layout-spacer"><select id="content">\n'
+    ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(search and '対象ジャンル' or 'ジャンル絞り込み')..'</div>\n'
+    ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop"><div class="has-button'..(search and ' advanced' or '')..'"><div class="pulldown mdl-layout-spacer"><select id="content">\n'
     ..'<option value="all">すべて表示\n'
   for i=0,15 do
     local nibble1=edcb.GetGenreName(i*256+255)
@@ -546,7 +546,7 @@ function SerchTemplate(si)
     end
   end
   s=s..'</select></div>\n'
-   ..'<div><button class="g_celar'..(si.search and ' advanced' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
+   ..'<div><button class="g_celar'..(search and ' advanced' or '')..' mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div></div>\n'
    ..'<div class="has-button"><div class="mdl-layout-spacer"><select id="contentList" name="contentList" multiple size="7">\n'
   for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
     local nibble1=edcb.GetGenreName(i*256+255)
@@ -575,12 +575,12 @@ function SerchTemplate(si)
     end
   end
   s=s..'</select></div>\n'
-    ..(si.search and '<div><button class="g_celar mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div>' or '')..'</div>\n'
+    ..(search and '<div><button class="g_celar mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="button">クリア</button></div>' or '')..'</div>\n'
     ..'<div class="mdl-grid mdl-grid--no-spacing"><div><label for="notcontet" class="mdl-checkbox mdl-js-checkbox"><input id="notcontet" class="mdl-checkbox__input" name="notContetFlag"'..Checkbox(si.notContetFlag)..'><span class="mdl-checkbox__label">NOT扱い</span></label></div><div class="mdl-layout-spacer"></div>\n'
-    ..'<div><label for="subGenre" class="mdl-checkbox mdl-js-checkbox"><input id="subGenre" class="mdl-checkbox__input"'..Checkbox((subGenreOption=='ALL' or (subGenreOption=='EPG' and not si.search)))..'><span class="mdl-checkbox__label">サブジャンル表示</span></label></div><div class="mdl-layout-spacer"></div>\n'
+    ..'<div><label for="subGenre" class="mdl-checkbox mdl-js-checkbox"><input id="subGenre" class="mdl-checkbox__input"'..Checkbox((subGenreOption=='ALL' or (subGenreOption=='EPG' and not search)))..'><span class="mdl-checkbox__label">サブジャンル表示</span></label></div><div class="mdl-layout-spacer"></div>\n'
     ..'</div></div>\n</div>\n'
 
-  s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(si.search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
+  s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">'..(search and '対象サービス' or 'サービス絞り込み')..'</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop">\n'
     ..'<div class="has-button"><div class="mdl-layout-spacer"><select id="serviceList" name="serviceList" multiple size="7">'
 
@@ -615,7 +615,7 @@ function SerchTemplate(si)
   s=s..'</div>\n'
     ..'</div></div>\n'
 
-    ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">時間絞り込み</div>\n'
+    ..'<div class="'..(search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">時間絞り込み</div>\n'
     ..'<div class="mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><div id="dateList" class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n'
     ..'<div id="dateList_main"><select id="dateList_select" multiple size="6">\n'
   local dateListValue, dateListSP = '', ''
@@ -663,13 +663,13 @@ function SerchTemplate(si)
     ..'<div><label class="mdl-checkbox mdl-js-checkbox" for="notdate"><input id="notdate" class="mdl-checkbox__input" name="notDateFlag"'..Checkbox(si.notDateFlag)..'><span class="mdl-checkbox__label">NOT扱い</span></label></div>\n'
     ..'</div><input type="hidden" name="dateList" value="'..dateListValue..'"></div>\n'
 
-    ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">スクランブル放送</div>\n'
+    ..'<div class="'..(search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">スクランブル放送</div>\n'
     ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="freeCAFlag">\n'
     ..'<option value="0"'..Selected(si.freeCAFlag==0)..'>無料、有料番組を対象とする\n'
     ..'<option value="1"'..Selected(si.freeCAFlag==1)..'>無料番組を対象とする\n'
     ..'<option value="2"'..Selected(si.freeCAFlag==2)..'>有料番組を対象とする\n'
     ..'</select></div></div>\n'
-    ..'<div class="'..(si.search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">番組長で絞り込み</div>\n'
+    ..'<div class="'..(search and 'advanced ' or '')..'mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">番組長で絞り込み</div>\n'
     ..'<div class="number mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="textfield-container mdl-cell--4-col-tablet mdl-cell--'..(si.side and 6 or 3)..'-col-desktop">\n<div class="text-right mdl-textfield mdl-js-textfield"><input id="DurationMin" class="mdl-textfield__input" type="number" name="chkDurationMin" value="'..si.chkDurationMin..'" min="0"><label class="mdl-textfield__label" for="DurationMin"></label><span class="mdl-textfield__error">Input is not a number!</span></div>分以上</div>\n'
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
@@ -677,9 +677,9 @@ function SerchTemplate(si)
     ..'<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div></div>\n'
     ..'<span class="mdl-tooltip" for="DurationMin">0分で絞り込み無し</span><span class="mdl-tooltip" for="DurationMax">0分で絞り込み無し</span></div>\n'
 
-  if si.search then
+  if search then
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">対象期間</div>\n'
-      ..'<div class="number textfield-container"><div id="tt-days" class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="days" value="'..key.days..'" min="0" id="days"><label class="mdl-textfield__label" for="days"></label><span class="mdl-textfield__error">Input is not a number!</span></div>×24時間以内</div>\n'
+      ..'<div class="number textfield-container"><div id="tt-days" class="text-right mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" type="number" name="days" value="'..si.days..'" min="0" id="days"><label class="mdl-textfield__label" for="days"></label><span class="mdl-textfield__error">Input is not a number!</span></div>×24時間以内</div>\n'
       ..'<span class="mdl-tooltip" for="tt-days">0で無期限</span></div>\n'
   else
     s=s..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">無効対象</div>\n'

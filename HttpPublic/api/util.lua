@@ -1068,6 +1068,16 @@ function GetVarDate(qs,n,occ)
   end
 end
 
+--クエリパラメータから開始時間の範囲を取得する
+function GetVarTimeRange(post)
+  local startDate=GetVarDate(post, 'startDate')
+  local endDate=GetVarDate(post, 'endDate')
+  if startDate and endDate then
+    startDate=startDate+GetVarTime(post, 'startTime')
+    return {startTime=os.date('!*t',startDate),durationSecond=endDate+GetVarTime(post, 'endTime')-startDate}
+  end
+end
+
 --クエリパラメータからサービスのIDを取得する
 function GetVarServiceID(qs,n,occ,leextra)
   local onid,tsid,sid,x=(mg.get_var(qs,n,occ) or ''):match('^([0-9]+)%-([0-9]+)%-([0-9]+)'..(leextra and '%-([0-9]+)' or '')..'$')
@@ -1357,6 +1367,8 @@ function GetSearchKey(post)
     notKey=':note:'..note:gsub('\\','\\\\'):gsub(' ','\\s'):gsub('　','\\m')..(#notKey>0 and ' '..notKey or '')
   end
   local key={
+    enabled=post and true or false,  --判別用
+    autoAdd=GetVarInt(post, 'id'),
     andKey=(mg.get_var(post, 'disableFlag') and '^!{999}' or '')
       ..(mg.get_var(post, 'caseFlag') and 'C!{999}' or '')
       ..EdcbHtmlEscape(mg.get_var(post, 'andKey') or ''),
@@ -1421,12 +1433,130 @@ function GetSearchKeyKeyword(query)
       table.insert(key.serviceList, {onid=v.onid, tsid=v.tsid, sid=v.sid})
     end
   end
+  key.enabled=mg.get_var(query, 'andKey') and true or false
   key.andKey=(mg.get_var(query, 'caseFlag') and 'C!{999}' or '')
     ..EdcbHtmlEscape(mg.get_var(query, 'andKey') or '')
   key.regExpFlag=mg.get_var(query, 'regExpFlag')~=nil
   key.titleOnlyFlag=mg.get_var(query, 'titleOnlyFlag')~=nil
   key.aimaiFlag=mg.get_var(query, 'aimaiFlag')~=nil
   return key
+end
+
+--検索条件(自動予約orプリセット)を取得  
+function GetSearchKeyPreset(query)
+  local key=nil
+  local dataID=GetVarInt(query, 'id') or 0
+  if dataID~=0 then
+    for i,v in ipairs(edcb.EnumAutoAdd()) do
+      if v.dataID==dataID then
+        key=v.searchInfo
+        key.enabled=true
+        key.autoAdd=dataID
+        return key
+      end
+    end
+  end
+
+  local preset=Split(edcb.GetPrivateProfile('search','list','',INI),',')[GetVarInt(query, 'preset')]
+  if preset then
+    local section=preset..'_Search'
+    key={
+      enabled=true,
+      preset=preset,
+      andKey=edcb.GetPrivateProfile(section,'andKey','',INI),
+      notKey=edcb.GetPrivateProfile(section,'notKey','',INI),
+      regExpFlag=tonumber(edcb.GetPrivateProfile(section,'regExpFlag',false,INI))~=0,
+      titleOnlyFlag=tonumber(edcb.GetPrivateProfile(section,'titleOnlyFlag',false,INI))~=0,
+      aimaiFlag=tonumber(edcb.GetPrivateProfile(section,'aimaiFlag',false,INI))~=0,
+      notContetFlag=tonumber(edcb.GetPrivateProfile(section,'notContetFlag',false,INI))~=0,
+      notDateFlag=tonumber(edcb.GetPrivateProfile(section,'notDateFlag',false,INI))~=0,
+      freeCAFlag=tonumber(edcb.GetPrivateProfile(section,'freeCAFlag',0,INI)),
+      chkRecEnd=tonumber(edcb.GetPrivateProfile(section,'chkRecEnd',false,INI))~=0,
+      chkRecDay=tonumber(edcb.GetPrivateProfile(section,'chkRecDay',0,INI)),
+      chkRecNoService=tonumber(edcb.GetPrivateProfile(section,'chkRecNoService',false,INI))~=0,
+      chkDurationMin=tonumber(edcb.GetPrivateProfile(section,'chkDurationMin',0,INI)),
+      chkDurationMax=tonumber(edcb.GetPrivateProfile(section,'chkDurationMax',0,INI)),
+      days=tonumber(edcb.GetPrivateProfile(section,'days',0,INI)),
+      contentList={},
+      serviceList={},
+      dateList={},
+      lock=tonumber(edcb.GetPrivateProfile(section,'lock',false,INI))~=0,
+    }
+
+    for i=0,1000 do
+      v=tonumber(edcb.GetPrivateProfile(section,'contentList'..i,0,INI))
+      if v==0 then break end
+      table.insert(key.contentList, {content_nibble=v})
+    end
+
+    for i=0,1000 do
+      v=edcb.GetPrivateProfile(section,'serviceList'..i,0,INI)
+      if v==0 then break end
+      m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
+      if #m==3 then
+        table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
+      end
+    end
+
+    for v in string.gmatch(edcb.GetPrivateProfile(section,'dateList','',INI), '[^,]+') do
+      m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
+      if #m==6 then
+        dateInfo={
+          startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
+          endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
+        }
+        if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
+          dateInfo.startHour=0+m[2]
+          dateInfo.startMin=0+m[3]
+          dateInfo.endHour=0+m[5]
+          dateInfo.endMin=0+m[6]
+          table.insert(key.dateList, dateInfo)
+        end
+      end
+    end
+    return key
+  end
+
+  if mg.get_var(query, 'Olympic') then
+    key=GetSearchKeyKeyword('andKey=(オ|パラ)リンピック|五輪|FIFAワールドカップ&regExpFlag=1&titleOnlyFlag=1')
+    key.title='オリンピック・FIFAワールドカップ'
+    key.chkDurationMin=10
+    key.contentList={{content_nibble=262}}
+    key.days=3
+    return key
+  end
+end
+
+--検索条件にマッチしたイベントを取得 ※時間ソート済み  
+--期間を指定していない場合は放送済みを除外  
+function SearchEpg(key,range,archive)
+  local a=nil
+  if archive then
+    a=edcb.SearchEpgArchive(key,range)
+  elseif range then
+    a=edcb.SearchEpg(key,range)
+  else
+    a={}
+    for i,v in ipairs(edcb.SearchEpg(key)) do
+      if v.startTime then
+        local startTime=TimeWithZone(v.startTime)
+        local endTime=v.durationSecond and startTime+v.durationSecond or startTime
+        if os.time()+9*3600<=endTime then
+          table.insert(a,v)
+        end
+      end
+    end
+  end
+
+  table.sort(a, function(a,b)
+    if (a.startTime and os.time(a.startTime) or 0)==(b.startTime and os.time(b.startTime) or 0) then
+      return a.sid<b.sid
+    else
+      return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0)
+    end
+  end)
+
+  return a
 end
 
 --検索キーワードをフラグとキーワード自身に分解

@@ -1690,7 +1690,7 @@ $(function(){
 	//検索プリセット
 	$('#save_preset').click(() => {
 		if ($('#lock').prop('checked')) $('#search').append('<input type="hidden" name="lock" value="1">');
-		$('#search').append('<input type="hidden" name="save" value="1">').attr('action', `search.html?preset=${encodeURIComponent($('#preset_name').val())}`).submit();
+		$('#search').append(`<input type="hidden" name="save" value="${$('#preset_name').val()}">`).submit();
 	});
 
 

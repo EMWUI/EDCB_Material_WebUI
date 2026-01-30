@@ -12,100 +12,11 @@ for i,v in ipairs(edcb.GetReserveData()) do
   rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
 end
 
-preset=mg.get_var(mg.request_info.query_string, 'preset')
-olympic=mg.get_var(mg.request_info.query_string, 'Olympic')
-
-_preset=nil
-presetList={}
-for v in edcb.GetPrivateProfile('search','list','',INI):gmatch('[^,]+') do
-  if v==preset then
-    _preset=preset..'_Search'
-  end
-  presetList[#presetList+1]=v
-end
-if not _preset then
-  --未登録
-  preset=nil
-end
-
-if preset then
-  key={
-    andKey=edcb.GetPrivateProfile(_preset,'andKey','',INI),
-    notKey=edcb.GetPrivateProfile(_preset,'notKey','',INI),
-    regExpFlag=tonumber(edcb.GetPrivateProfile(_preset,'regExpFlag',false,INI))~=0,
-    titleOnlyFlag=tonumber(edcb.GetPrivateProfile(_preset,'titleOnlyFlag',false,INI))~=0,
-    aimaiFlag=tonumber(edcb.GetPrivateProfile(_preset,'aimaiFlag',false,INI))~=0,
-    notContetFlag=tonumber(edcb.GetPrivateProfile(_preset,'notContetFlag',false,INI))~=0,
-    notDateFlag=tonumber(edcb.GetPrivateProfile(_preset,'notDateFlag',false,INI))~=0,
-    freeCAFlag=tonumber(edcb.GetPrivateProfile(_preset,'freeCAFlag',0,INI)),
-    chkRecEnd=tonumber(edcb.GetPrivateProfile(_preset,'chkRecEnd',false,INI))~=0,
-    chkRecDay=tonumber(edcb.GetPrivateProfile(_preset,'chkRecDay',0,INI)),
-    chkRecNoService=tonumber(edcb.GetPrivateProfile(_preset,'chkRecNoService',false,INI))~=0,
-    chkDurationMin=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMin',0,INI)),
-    chkDurationMax=tonumber(edcb.GetPrivateProfile(_preset,'chkDurationMax',0,INI)),
-    days=tonumber(edcb.GetPrivateProfile(_preset,'days',0,INI)),
-    contentList={},
-    serviceList={},
-    dateList={},
-    lock=tonumber(edcb.GetPrivateProfile(_preset,'lock',false,INI))~=0,
-  }
-
-  for i=0,1000 do
-    v=tonumber(edcb.GetPrivateProfile(_preset,'contentList'..i,0,INI))
-    if v==0 then break end
-    table.insert(key.contentList, {content_nibble=v})
-  end
-
-  for i=0,1000 do
-    v=edcb.GetPrivateProfile(_preset,'serviceList'..i,0,INI)
-    if v==0 then break end
-    m={string.match(v, '^(%d+)%-(%d+)%-(%d+)$')}
-    if #m==3 then
-      table.insert(key.serviceList, {onid=0+m[1], tsid=0+m[2], sid=0+m[3]})
-    end
-  end
-
-  for v in string.gmatch(edcb.GetPrivateProfile(_preset,'dateList','',INI), '[^,]+') do
-    m={string.match(v, '^(.-)%-(%d+):(%d+)%-(.-)%-(%d+):(%d+)$')}
-    if #m==6 then
-      dateInfo={
-        startDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[1]],
-        endDayOfWeek=({['日']=0,['月']=1,['火']=2,['水']=3,['木']=4,['金']=5,['土']=6})[m[4]]
-      }
-      if dateInfo.startDayOfWeek and dateInfo.endDayOfWeek then
-        dateInfo.startHour=0+m[2]
-        dateInfo.startMin=0+m[3]
-        dateInfo.endHour=0+m[5]
-        dateInfo.endMin=0+m[6]
-        table.insert(key.dateList, dateInfo)
-      end
-    end
-  end
-elseif post then
-  key=GetSearchKey(post)
-elseif olympic then
-  key=GetSearchKey()
-  key.andKey='(オ|パラ)リンピック|五輪|FIFAワールドカップ'
-  key.regExpFlag=true
-  key.titleOnlyFlag=true
-  key.chkDurationMin=10
-  key.contentList={{content_nibble=262}}
-  key.days=3
-  for i,v in ipairs(edcb.GetChDataList()) do
-    if v.searchFlag then table.insert(key.serviceList, v) end
-  end
-end
+key=post and GetSearchKey(post) or GetSearchKeyPreset(mg.request_info.query_string) or GetSearchKeyKeyword(mg.request_info.query_string)
 
 edcb.htmlEscape=15
 
-b=edcb.SearchEpg(key or {})
-table.sort(b, function(a,b)
-  if (a.startTime and os.time(a.startTime) or 0)==(b.startTime and os.time(b.startTime) or 0) then
-    return a.sid<b.sid
-  else
-    return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0)
-  end
-end)
+b=key.enabled and SearchEpg(key,range,archive) or {}
 
 st={}
 for i,v in ipairs(b)do
@@ -138,7 +49,7 @@ end
 
 
 ct={
-  title=EdcbHtmlEscape(preset or post and '検索 ('..ParseAndKey(key.andKey).andKey..')' or olympic and 'オリンピック・FIFAワールドカップ' or ''),
+  title=EdcbHtmlEscape(key.title or key.preset or post and '検索 ('..ParseAndKey(key.andKey).andKey..')' or ''),
   css=EpgCssTemplate(),
   menu=EpgMenuTemplate(),
   searchlinks=not SIDE_PANEL
@@ -155,13 +66,13 @@ ct.subheader='<div id="subheader">\n'
   ..'<div class="navigation__item navigation__icon"><a id="prev" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_less</i></a></div>\n'
   ..'<div class="dividers navigation__item navigation__icon"><a id="next" class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored"><i class="material-icons">expand_more</i></a></div>\n'
 
-  ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..EdcbHtmlEscape(preset or 'プリセット')..'</div>\n'
+  ..'<div id="preset" class="pulldown dividers navigation__item mdl-color-text--primary">'..EdcbHtmlEscape(key.preset or 'プリセット')..'</div>\n'
   ..'<div id="time" class="pulldown navigation__item mdl-color-text--primary">時間</div>\n'
 
 
 main={'<div class="menu"><ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="preset">\n'}
-for i,v in ipairs(presetList) do
-  table.insert(main, '<li><a class="mdl-menu__item'..(v==preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..mg.url_encode(v)..'">'..EdcbHtmlEscape(v)..'</a></li>\n')
+for i,v in ipairs(Split(edcb.GetPrivateProfile('search','list','',INI),',')) do
+  table.insert(main, '<li><a class="mdl-menu__item'..(v==key.preset and ' mdl-color-text--accent' or '')..'" href="epgcustom.html?preset='..i..'">'..EdcbHtmlEscape(v)..'</a></li>\n')
 end
 table.insert(main, '</ul>'
 
