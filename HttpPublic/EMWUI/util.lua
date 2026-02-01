@@ -273,18 +273,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
   local v=type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)
   if not v then return '' end
   local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
-  local service_name=''
-  local function ConvertService(v)
-    local s=''
-    for i,w in ipairs(edcb.GetServiceList() or {}) do
-      if w.onid==v.onid and w.tsid==v.tsid and w.sid==v.sid then
-        service_name=w.service_name
-        s=s..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span class="service">'..service_name..'</span></span>' 
-        break
-      end
-    end
-    return s
-  end
+  local service_name=GetServiceName(v) or ''
   local function ConvertContent(v)
     local s=''
     for i,w in ipairs(v) do
@@ -321,7 +310,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
   return '<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     ..(v.shortInfo and '<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>' or '')
     ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..(v.startTime and FormatTimeAndDuration(v.startTime, v.durationSecond)..(v.durationSecond and '' or '～未定') or '未定')..'</span>'
-    ..ConvertService(v)
+    ..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span class="service">'..service_name..'</span></span>'
     ..'</span>\n'
     ..'<a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-js-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..(startTime*1000)..'" data-service="'..service_name..'"'..(startTime-30<=now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=now and 'notifications' or 'add_alert')..'</i></a>'
     ..SearchConverter(v, service_name)..'</h4>\n'

@@ -70,12 +70,8 @@ else
   index=math.max(tonumber(mg.get_var(mg.request_info.query_string,'index')) or 0,0)
   count=math.max(tonumber(mg.get_var(mg.request_info.query_string,'count')) or 200,0)
   countTo=math.min(index+count,#a)
-  for i,v in ipairs(edcb.GetServiceList() or {}) do
-    if v.onid==a[1].onid and v.tsid==a[1].tsid and v.sid==a[1].sid then
-      service_name=v.service_name
-      break
-    end
-  end
+  service_name=GetServiceName(a[1]) or ''
+
   table.insert(ct, '<entry><total>'..#a..'</total><index>'..index..'</index><count>'..math.max(countTo-index,0)..'</count><items>\r\n')
   for i=index+1,countTo do
     v=a[i]
@@ -84,7 +80,7 @@ else
       ..v.tsid..'</TSID><SID>'
       ..v.sid..'</SID><eventID>'
       ..v.eid..'</eventID><service_name>'
-      ..(service_name or '')..'</service_name>')
+      ..service_name..'</service_name>')
     if v.startTime then
       table.insert(ct, string.format('<startDate>%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
                                      v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)

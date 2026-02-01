@@ -16,13 +16,7 @@ function EventInfo(r)
     r.startTime=eventInfo.startTime
     r.startTimeEpg=eventInfo.startTime
     r.durationSecond=eventInfo.durationSecond
-    r.stationName=''
-    for i,v in ipairs(edcb.GetServiceList() or {}) do
-      if v.onid==r.onid and v.tsid==r.tsid and v.sid==r.sid then
-        r.stationName=v.service_name
-        break
-      end
-    end
+    r.stationName=GetServiceName(r)
     return r
   end
   return false

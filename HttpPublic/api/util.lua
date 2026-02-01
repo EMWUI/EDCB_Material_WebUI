@@ -1576,6 +1576,13 @@ function ParseNotKey(notKey)
   return r
 end
 
+function GetServiceName(v)
+  local found=BinarySearch(edcb.GetServiceList() or {},v,CompareFields('onid',false,'tsid',false,'sid'))
+  if found then
+    return found.service_name
+  end
+end
+
 function GetFilePath(query)
   local fpath=edcb.GetRecFilePath((GetVarInt(query,'reid') or 0))
   if not fpath then

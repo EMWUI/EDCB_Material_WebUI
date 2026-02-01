@@ -63,7 +63,7 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
       total=nil
       f=edcb.io.popen('df -P -B1 '..QuoteCommandArgForPath(v)..' 2>/dev/null | sed "s/  */ /g" | cut -f2-4 -d" "')
       if f then
-        total,used,avail=f:read('*a'):match('(%d+)M (%d+)M (%d+)M')
+        total,used,avail=f:read('*a'):match('(%d+) (%d+) (%d+)')
         f:close()
       end
       if total then

@@ -55,6 +55,7 @@ if mg.get_var(post, 'save') then
   end
 elseif GetVarInt(post, 'del') then
   presetList[GetVarInt(post, 'del')]=''
+  if presetList[#presetList]=='' then table.remove(presetList) end
   edcb.WritePrivateProfile((presetList[GetVarInt(post, 'del')] or '')..'_Search', nil, '', INI)
   edcb.WritePrivateProfile('search', 'list', table.concat(presetList, ','), INI)
 end
