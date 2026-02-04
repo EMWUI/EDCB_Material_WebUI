@@ -10,7 +10,7 @@ function Version(a)
     tsloader='260115',
     hls='v1.5.20',
     aribb24='v1.11.5',
-    bml='7348e3b',
+    bml='288052c',
     danmaku='6c13364',
   }
   return '?ver='..ver[a]

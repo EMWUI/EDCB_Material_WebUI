@@ -37,6 +37,14 @@ SOFTWARE.
 
 
 /*!
+ * ECMAScript 2nd Edition Interpreter
+ * <https://github.com/otya128/es2>
+ *
+ * SPDX-FileCopyrightText: 2025 otya
+ * SPDX-License-Identifier: MIT
+ */
+
+/*!
  * The buffer module from node.js, for the browser.
  *
  * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
