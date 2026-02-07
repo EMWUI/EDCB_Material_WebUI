@@ -1,7 +1,7 @@
 function Version(a)
   local ver={
-    css='260116',
-    common='260130',
+    css='260207',
+    common='260207',
     tvguide='250824',
     player='260122',
     onair='260116',
@@ -266,15 +266,19 @@ MdlChip={
   tag=function(self, s, a, b)
     return '<span class="mdl-chip '..(a or self:getColorClass(s))..'"><span class="mdl-chip__text'..(b or '')..'">'..s..'</span></span>\n'
   end,
+  link=function (self, s, h, a, b)
+    return '<a class="mdl-chip '..(a or self:getColorClass(s))..'" href="'..h..'"><span class="mdl-chip__text'..(b or '')..'">'..s..'</span></a>\n'
+  end,
 }
 
 --EPG情報をTextに変換
 function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
   local v=type(onidOrEpg)=='table' and onidOrEpg or edcb.SearchEpg(onidOrEpg, tsidOrRecInfo, sid, eid)
-  if not v then return '' end
+  if not v then return end
   local now, startTime = os.time(), TimeWithZone(v.startTime, 9*3600)
   local service_name=GetServiceName(v) or ''
   local function ConvertContent(v)
+    if not v then return '' end
     local s=''
     for i,w in ipairs(v) do
       --0x0E00は番組付属情報、0x0E01はCS拡張用情報
@@ -285,6 +289,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     return '<div><span class="material-icons">category</span><div>'..s..'</div></div>\n'
   end
   local function ConvertComponent(v)
+    if not v then return '' end
     local s=''
     for i,w in ipairs(Split(edcb.GetComponentTypeName(v.stream_content*256+v.component_type),'、')) do
       if i==1 then
@@ -299,13 +304,22 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
       ..(#v.text_char>0 and MdlChip:tag(v.text_char) or '')..'</div></div>\n'
   end
   local function ConvertAudio(v)
+    if not v then return '' end
     local s=''
     for i,w in ipairs(v) do
       s=s..'<div>'..MdlChip:tag(edcb.GetComponentTypeName(w.stream_content*256+w.component_type))
         ..(#w.text_char>0 and MdlChip:tag(w.text_char) or '')
         ..MdlChip:tag((({[1]='16',[2]='22.05',[3]='24',[5]='32',[6]='44.1',[7]='48'})[w.sampling_rate] or '?')..'kHz')..'</div>\n'
     end
-    return '<div><span class="material-icons">headphones</span><div class="container">'..s..'</div></div>\n'
+    return '<div><span class="material-icons">speaker</span><div class="container">'..s..'</div></div>\n'
+  end
+  local function ConvertRelay(v)
+    if not v then return '' end
+    local s =''
+    for i,w in ipairs(v.eventDataList) do
+      s=s..MdlChip:link('<span class="material-icons">switch_access_2</span>'..(GetServiceName(w) or '')..('(%d-%d-%d-%d)'):format(w.onid,w.tsid,w.sid,w.eid),'epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid)
+    end
+    return s
   end
   return '<div>\n<h4 class="mdl-typography--title'..(now<startTime-30 and ' start_'..math.floor(startTime/10) or '')..'">'
     ..(v.shortInfo and '<span class="title">'..ConvertTitle(v.shortInfo.event_name)..'</span>' or '')
@@ -321,13 +335,14 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
 
     ..'<div class="tagchip">'
     ..(type(tsidOrRecInfo)=='string' and tsidOrRecInfo or '')
-    ..(v.contentInfoList and ConvertContent(v.contentInfoList) or '')
-    ..(v.componentInfo and ConvertComponent(v.componentInfo) or'')
-    ..(v.audioInfoList and ConvertAudio(v.audioInfoList) or '')
+    ..ConvertContent(v.contentInfoList)
+    ..ConvertComponent(v.componentInfo)
+    ..ConvertAudio(v.audioInfoList)
 
     ..'<div><i class="material-icons">info</i><div>'
-    ..(NetworkType(v.onid)=='地デジ' and '' or MdlChip:tag(v.freeCAFlag and '有料放送' or '無料放送'))
-    ..MdlChip:tag(('%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
+    ..(NetworkType(v.onid)=='地デジ' and '' or MdlChip:tag('<span class="material-icons">paid</span>'..(v.freeCAFlag and '有料放送' or '無料放送')))
+    ..MdlChip:tag(('<span class="material-icons">key</span>%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
+    ..ConvertRelay(v.eventRelayInfo)
     ..'</div></div>\n'
     ..'</div></section>\n', 
     v.audioInfoList, v.durationSecond and startTime+v.durationSecond<now
@@ -765,7 +780,7 @@ function SidePanelTemplate(list)
 <span class="mdl-chip ]=]..(MdlChip:getColorClass('スクランブル : '))..[=["><span class="mdl-chip__text">スクランブル : <span id="scrambles"></span></span></span></div></div></div></div>]=] or '')..[=[
 <div><span class="material-icons">category</span><div id="genreInfo"></div></div>
 <div><span class="material-icons">videocam</span><div id="videoInfo"></div></div>
-<div><span class="material-icons">headphones</span><div id="audioInfo" class="container"></div></div>
+<div><span class="material-icons">speaker</span><div id="audioInfo" class="container"></div></div>
 <div><span class="material-icons">info</span><div id="otherInfo"></div></div>
 </div>
 </section>]=]..(list and [=[

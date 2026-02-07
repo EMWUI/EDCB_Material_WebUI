@@ -321,12 +321,18 @@ dialog {
 
 
 /* chip */
-.mdl-chip:not(:last-of-type:not(:has(+.container))) {
+.mdl-chip:not(:last-child:not(:has(+.container))) {
   margin-right: 5px; }
 .mdl-grid.chip-container {
   padding: 8px 0 0 }
 .mdl-grid.chip-container>div {
   padding: 8px 8px 0 }
+.mdl-chip .material-icons {
+  font-size: 18px;
+  line-height: 19px;
+  vertical-align: middle;
+  margin-right: 2px;
+  color: #424242; }
 .chip-container+.mdl-grid {
   padding-top: 0; }
 @media (pointer: coarse) {

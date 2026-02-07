@@ -6,6 +6,7 @@ presetID=GetVarInt(mg.request_info.query_string,'presetID') or 65535
 
 if eid>0 then
   epgInfo, audio, End = ConvertEpgInfoText2(onid, tsid, sid, eid)
+  notfound=not epgInfo and ('<div><h4 class="mdl-typography--title"><span class="title">番組情報が見つかりません</span><span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing">%d-%d-%d-%d</h4></div>'):format(onid,tsid,sid,eid)
 else
   onid,tsid,sid,startTime=GetVarPastEventID(mg.request_info.query_string,'id')
   et=edcb.EnumEventInfoArchive({{onid=onid, tsid=tsid, sid=sid}}, {startTime=os.date('!*t',startTime), durationSecond=1})
@@ -39,7 +40,7 @@ ct.js='<script>$(function(){createSearchLinks(document);});</script>\n'
 ct.main='<main class="tab-swipe mdl-layout__content">\n'
   ..'<div class="mdl-grid">\n'
   ..'<div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp">\n'
-  ..(epgInfo or '')
+  ..(epgInfo or notfound or '')
 
 if not End and epgInfo then
 

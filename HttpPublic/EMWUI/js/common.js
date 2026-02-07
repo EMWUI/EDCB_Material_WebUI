@@ -5,7 +5,11 @@ const isSmallScreen = () => window.matchMedia(window.MaterialLayout.prototype.Co
 const showSpinner = (visible = false) => $('#spinner .mdl-spinner').toggleClass('is-active', visible);
 const errMessage = xml => xml.find('err').each((i, e) => Snackbar(`${i==0 ? 'Error : ' : ''}${$(e).text()}`));
 const zero = (e, n = 2) => (Array(n).join('0')+e).slice(-n);
-let Snackbar = d => setTimeout(Snackbar, 1000, d);
+const Snackbar = d => {
+	if (!/MaterialSnackbar/.test($('.mdl-js-snackbar').data('upgraded'))) setTimeout(Snackbar, 1000, d);
+	else document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar(typeof d === 'string' ? {message: d} : d);
+}
+
 
 $.fn.extend({
 	mdl_prop(prop, enable){
@@ -222,6 +226,13 @@ const toObj = {
 				sampling_rate: $(e).num('sampling_rate'),
 				text: $(e).txt('text'),
 				component_type_name: $(e).txt('component_type_name')
+			})),
+			relay: e.children('relayInfo').get().map(e => ({
+				onid: $(e).num('ONID'),
+				tsid: $(e).num('TSID'),
+				sid: $(e).num('SID'),
+				eid: $(e).num('eventID'),
+				service: $(e).txt('service_name'),
 			}))
 		}
 		if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
@@ -552,9 +563,12 @@ const mdlChip = {
 		s = this.textEncoder.encode(s).reduce((n,i)=>n+=i);
 		return `mdl-color--${this.color[s % this.color.length]}-100`;
 	},
-	tag(s, a, b){
-		return $('<span>', {class: `mdl-chip ${a||this.getColorClass(s)}`, append: $('<span>', {class: `mdl-chip__text${b ? ` ${b}` : ''}`, html: s})});
+	tag(s, a=this.getColorClass(s), b=''){
+		return $('<span>', {class: `mdl-chip ${a}`, append: $('<span>', {class: `mdl-chip__text${b}`, html: s})});
 	},
+	link(s, h, a=this.getColorClass(s), b=''){
+		return $('<a>', {class: `mdl-chip ${a}`, href: h, append: $('<span>', {class: `mdl-chip__text${b}`, html: s})});
+	}
 }
 
 const createHtml = new class {
@@ -1004,9 +1018,10 @@ const setEpgInfo = (d, $e, id) => {
 		$('#otherInfo').html(d.other ? d.other.map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}) : '').append(mdlChip.tag(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`));
 	}else{
 		$('#otherInfo').html([
-			d.onid<0x7880 || 0x7FE8<d.onid ? mdlChip.tag(d.freeCAFlag ? '有料放送' : '無料放送') : '',
-			mdlChip.tag(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
-		]);
+			d.onid<0x7880 || 0x7FE8<d.onid ? mdlChip.tag(`<span class="material-icons">paid</span>${d.freeCAFlag ? '有料放送' : '無料放送'}`) : '',
+			mdlChip.tag(`<span class="material-icons">key</span>${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
+			d.relay.map(e => mdlChip.link(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`, `epginfo.html?id=${e.onid}-${e.tsid}-${e.sid}-${e.eid}`))
+		].flat());
 
 		$('[name=onid]').val(d.onid);
 		$('[name=tsid]').val(d.tsid);
@@ -1479,8 +1494,6 @@ $(window).on('load resize', () => {
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("serviceworker.js");
 
 $(function(){
-	$('.mdl-js-snackbar').on('mdl-componentupgraded', () => Snackbar = d => document.querySelector('.mdl-js-snackbar').MaterialSnackbar.showSnackbar(typeof d === 'string' ? {message: d} : d));
-
 	//スワイプ
 	if (isTouch){
 		delete Hammer.defaults.cssProps.userSelect;
