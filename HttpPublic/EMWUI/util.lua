@@ -317,7 +317,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     if not v then return '' end
     local s =''
     for i,w in ipairs(v.eventDataList) do
-      s=s..MdlChip:link('<span class="material-icons">switch_access_2</span>'..(GetServiceName(w) or '')..('(%d-%d-%d-%d)'):format(w.onid,w.tsid,w.sid,w.eid),'epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid)
+      s=s..MdlChip:link('<span class="material-icons">switch_access_2</span>'..(GetServiceName(w) or ('%d-%d-%d-%d'):format(w.onid,w.tsid,w.sid,w.eid)),'epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid)
     end
     return s
   end
@@ -344,7 +344,7 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
     ..MdlChip:tag(('<span class="material-icons">key</span>%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
     ..ConvertRelay(v.eventRelayInfo)
     ..'</div></div>\n'
-    ..'</div></section>\n', 
+    ..'</div></section>\n',
     v.audioInfoList, v.durationSecond and startTime+v.durationSecond<now
 end
 

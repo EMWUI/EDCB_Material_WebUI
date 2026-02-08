@@ -144,7 +144,7 @@ else
       end
       if v.eventRelayInfo then
         for j,w in ipairs(v.eventRelayInfo.eventDataList) do
-          service_name=GetServiceName(w)
+          local service_name=GetServiceName(w)
           table.insert(ct, '<relayInfo><ONID>'
             ..w.onid..'</ONID><TSID>'
             ..w.tsid..'</TSID><SID>'
