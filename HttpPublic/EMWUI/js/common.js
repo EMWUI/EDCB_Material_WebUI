@@ -206,7 +206,7 @@ const toObj = {
 				nibble1: $(e).num('nibble1'),
 				nibble2: $(e).num('nibble2'),
 				component_type_name: $(e).txt('component_type_name')
-			})),			
+			})),
 			video: e.children('videoInfo').get().map(e => ({
 				stream_content: $(e).num('stream_content'),
 				component_type: $(e).num('component_type'),
@@ -247,6 +247,7 @@ const toObj = {
 					d.video = e.video;
 					d.audio = e.audio;
 					d.other = e.other;
+					d.relay = e.relay;
 				});
 			}
 			d.recFilePath = e.txt('recFilePath');
@@ -260,8 +261,8 @@ const toObj = {
 		return d;
 	},
 	ProgramInfo(e){
-		const programInfo = e.match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n([\s\S]*)\n$/);
-		const id = programInfo[9].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
+		const programInfo = e.match(/^(.*?)\n(.*?)\n(.*?)\n+([\s\S]*?)\n+(?:詳細情報\n)?([\s\S]*?)\n+ジャンル : \n([\s\S]*)\n\n映像 : ([\s\S]*)\n音声 : ([\s\S]*?)\n\n(?:イベントリレーあり : ([\s\S]*)\n\n)?([\s\S]*)\n$/);
+		const id = programInfo[10].match(/OriginalNetworkID:(\d+)\(0x[0-9A-F]+\)\nTransportStreamID:(\d+)\(0x[0-9A-F]+\)\nServiceID:(\d+)\(0x[0-9A-F]+\)\nEventID:(\d+)\(0x[0-9A-F]+\)/);
 		const date = programInfo[1].match(/(\d+)\/(\d+)\/(\d+)\D+([\d:]+)\s*～\s*(未定|[\d:]+)/);
 		const starttime = date ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[4]}+09:00`).getTime() : null;
 		const endtime = starttime && date[5] != '未定' ? new Date(`${date[1]}-${date[2]}-${date[3]}T${date[5]}+09:00`).getTime() : null;
@@ -281,7 +282,11 @@ const toObj = {
 			genre: programInfo[6].split('\n').map(e=>[e, [/^ニュース／報道/,/^スポーツ/,/^情報／ワイドショー"/,/^ドラマ/,/^音楽/,/^バラエティ/,/^映画/,/^アニメ／特撮/,/^ドキュメンタリー／教養/,/^劇場／公演/,/^趣味／教育/,/^福祉/].findIndex(s=>s.test(e))+1||16]),
 			video: programInfo[7].split('\n'),
 			audio: [],
-			other: programInfo[9].replace(/\n\n/g,'\n').split('\n'),
+			relay: programInfo[9]?programInfo[9].split('\n').map(e => {
+				e = e.match(/(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)(?:\s(.+))?/);
+				return {onid: Number(e[1]), tsid: Number(e[2]), sid: Number(e[3]), eid: Number(e[4]), service: e[5]}
+			}):[],
+			other: programInfo[10].replace(/\n\n/g,'\n').split('\n'),
 		};
 		let i = 0;
 		programInfo[8].split('\n').map(e => {
@@ -1014,13 +1019,17 @@ const setEpgInfo = (d, $e, id) => {
 	$('#videoInfo').html(() => !d.video ? '' : d.video.flatMap(e => d.id ? video(e) : [...video(e.component_type_name), e.text ? mdlChip.tag(e.text) : null]));
 	$('#audioInfo').html(() => !d.audio ? '' : d.audio.map(e => d.id ? $('<div>', {append: e.map(e => mdlChip.tag(e))}) : $('<div>', {append: [mdlChip.tag(e.component_type_name), e.text ? mdlChip.tag(e.text) : null, mdlChip.tag(`${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[e.sampling_rate]}kHz`)]})));
 
-	if (d.errInfo){
-		$('#otherInfo').html(d.other ? d.other.map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}) : '').append(mdlChip.tag(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`));
+	if (d.other){
+		$('#otherInfo').html([
+			d.other.map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}),
+			d.relay.map(e=>mdlChip.tag(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`)),
+			mdlChip.tag(`<span class="material-icons">key</span>${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
+		].flat());
 	}else{
 		$('#otherInfo').html([
 			d.onid<0x7880 || 0x7FE8<d.onid ? mdlChip.tag(`<span class="material-icons">paid</span>${d.freeCAFlag ? '有料放送' : '無料放送'}`) : '',
+			d.relay.map(e=>mdlChip.link(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`, `epginfo.html?id=${e.onid}-${e.tsid}-${e.sid}-${e.eid}`)),
 			mdlChip.tag(`<span class="material-icons">key</span>${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
-			d.relay.map(e => mdlChip.link(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`, `epginfo.html?id=${e.onid}-${e.tsid}-${e.sid}-${e.eid}`))
 		].flat());
 
 		$('[name=onid]').val(d.onid);
@@ -1362,7 +1371,7 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 	//検索ページ向け
 	if ($e.hasClass('search')){
 		//スイッチ追加
-		if (!$e.data('starttime')){		
+		if (!$e.data('starttime')){
 			$e.data('starttime', d.starttime - d.recSetting.startMargine * 1000);
 			const $switch = createSwitch(d);
 			componentHandler.upgradeElement($switch.children().get(0));
@@ -1432,7 +1441,7 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 			getList.reserve(r => {
 				r = r[0].get(id);
 				if (r){
-					if (!rid){															//追加されてた				
+					if (!rid){															//追加されてた
 						if ($e.hasClass('onair')) $e.data(`${d.next ? 'next' : ''}id`, r.id);
 						else if ($e.hasClass('reserve')) fixRecToggleSW(r);
 						else addRecMark(r, $('.open .addreserve'), $('.open .content-wrap'));
@@ -1443,7 +1452,7 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 						createHtml.create();
 					}else{
 						if ($e.hasClass('onair')) $e.removeData(`${d.next ? 'next' : ''}id`);
-		
+
 						setDefault(true);
 						$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 					}
@@ -1622,7 +1631,7 @@ $(function(){
 	//全選択解除
 	$('.s_celar').click(() => $('#serviceList option').prop('selected', false));
 	//映像のみ表示
-	$('#image').change(e => { 
+	$('#image').change(e => {
 		if ($(e.currentTarget).prop('checked')) $('#serviceList option.data').addClass('hidden');
 		else $('.extraction:checked').each((i, e) => $(`#serviceList ${$(e).val()}`).removeClass('hidden'))
 	});
@@ -1740,7 +1749,7 @@ $(function(){
 		$(e.currentTarget).parents('td').data('toggle', $(e.currentTarget).prop('checked') ? 1 : 0);
 		addReserve($(e.currentTarget));
 	});
-	
+
 	//検索ページ向け
 	//予約追加ボタン
 	$('.add').click(e => addReserve($(e.currentTarget)));

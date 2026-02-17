@@ -341,8 +341,8 @@ function ConvertEpgInfoText2(onidOrEpg, tsidOrRecInfo, sid, eid)
 
     ..'<div><i class="material-icons">info</i><div>'
     ..(NetworkType(v.onid)=='地デジ' and '' or MdlChip:tag('<span class="material-icons">paid</span>'..(v.freeCAFlag and '有料放送' or '無料放送')))
-    ..MdlChip:tag(('<span class="material-icons">key</span>%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
     ..ConvertRelay(v.eventRelayInfo)
+    ..MdlChip:tag(('<span class="material-icons">key</span>%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
     ..'</div></div>\n'
     ..'</div></section>\n',
     v.audioInfoList, v.durationSecond and startTime+v.durationSecond<now

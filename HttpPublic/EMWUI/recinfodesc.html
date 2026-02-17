@@ -111,9 +111,13 @@ if v then
       for i,v in ipairs(Split(otherInfo:gsub('\r?\n\r?\n', '\n'):gsub('\r?\n', '\n'), '\n')) do
         if not v:match('ID:%d*') then
           s=s..MdlChip:tag(v)
+        elseif v:match('イベントリレーあり') then
+          local w=v:match('%d+%(0x[0-9A-F]+%)%-%d+%(0x[0-9A-F]+%)%-%d+%(0x[0-9A-F]+%)%-%d+%(0x[0-9A-F]+%)(.+)')
+          s=s..MdlChip:tag('<span class="material-icons">switch_access_2</span>'
+            ..(w or ('%d-%d-%d-%d'):format(v:match('(%d+)%(0x[0-9A-F]+%)%-(%d+)%(0x[0-9A-F]+%)%-(%d+)%(0x[0-9A-F]+%)%-(%d+)%(0x[0-9A-F]+%)'))))
         end
       end
-      otherInfo=s..MdlChip:tag(v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid)
+      otherInfo=s..MdlChip:tag(('<span class="material-icons">key</span>%d-%d-%d-%d'):format(v.onid,v.tsid,v.sid,v.eid))
     end
 
     epgInfo='<div>\n<h4 class="mdl-typography--title">'
