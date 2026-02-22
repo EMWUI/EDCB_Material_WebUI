@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
     css='260207',
-    common='260207',
+    common='260217',
     tvguide='250824',
-    player='260122',
+    player='260222',
     onair='260116',
     library='260129',
     setting='250906',
-    tsloader='260115',
+    tsloader='260222',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -261,7 +261,7 @@ MdlChip={
   getColorClass=function(self, s)
     local n = 0
     for i = 1, #s do n = n + s:byte(i) end
-    return 'mdl-color--'..self.color[n % #self.color + 1]..'-100' 
+    return 'mdl-color--'..self.color[n % #self.color + 1]..'-100'
   end,
   tag=function(self, s, a, b)
     return '<span class="mdl-chip '..(a or self:getColorClass(s))..'"><span class="mdl-chip__text'..(b or '')..'">'..s..'</span></span>\n'
@@ -757,7 +757,7 @@ function SidePanelTemplate(list)
       s=s..'<option value="'..v.id..'">'..v.name..'\n'
     end
   end
-  
+
   return [=[
 <div id="sidePanel" class="sidePanel mdl-layout__drawer mdl-tabs mdl-js-tabs">
 <div class="sidePanel_headder mdl-color--primary"><i class="material-icons">info</i><span class="sidePanel_title">番組情報</span><div class="mdl-layout-spacer"></div><a id="link_epginfo" class="mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">open_in_new</i></a><button class="close_info mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">close</i></button></div>
@@ -854,12 +854,15 @@ function PlayerTemplate(video, liveOrAudio)
         ..'<li class="ext mdl-menu__item"><input type="radio" id="audio2" name="audio" value="1"><label for="audio2" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="audio2">副音声</label></li>\n'
     end
   end
-  local autoCinema
+  local autoCinema,deinterlace
   local function option()
     local s=''
     for i,v in ipairs(XCODE_OPTIONS) do
       if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
-        if v.tslive then autoCinema=v.autoCinema end
+        if v.tslive then
+          autoCinema=v.autoCinema
+          deinterlace=v.deinterlace
+        end
         local id = 'q_'..mg.md5(v.name)
         s=s..'<li class="ext mdl-menu__item'..(v.tslive and ' tslive' or '')..'"><input id="'..id..'" name="quality"'..Radiobtn(i==1,i)..(v.tslive and ' class="tslive"' or '')..'><label for="'..id..'" class="mdl-layout-spacer"><i class="material-icons">check</i></label><label for="'..id..'">'..EdcbHtmlEscape(v.name)..'</label></li>\n'
       end
@@ -878,6 +881,24 @@ function PlayerTemplate(video, liveOrAudio)
     end
     return s
   end
+  local function jikkyo()
+    local s='<div id="jikkyo-comm" class="jikkyo-comments"><div id="jikkyo-chats"></div>'
+    --[=[最低限だけので
+    dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'jkconst.lua')
+    local jkList=GetChatStreamNameList()
+    if jkList then
+      s=s..'<div id="jikkyo-config"><select name="id">\n'
+        ..'<option value="0" selected>jk? (初期値)\n'
+      for i,v in ipairs(jkList) do
+        s=s..'<option value="'..v[1]..'">jk'..v[1]..' ('..EdcbHtmlEscape(v[2])..')\n'
+      end
+      s=s..'</select>'
+    end
+    s=s..'<input class="mdl-slider mdl-js-slider" type="range" id="jikkyo-opacity" min="0.1" max="1" value="1" step="0.1">'
+      ..'<input class="mdl-slider mdl-js-slider" type="range" id="jikkyo-fontsize" min="24" max="100" value="'..JK_COMMENT_HEIGHT..'"></div>'
+    --]=]
+    return s..'</div><div id="danmaku-container"></div>'
+  end
   return [=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
 ]=]..(USE_DATACAST and [=[<div class="remote-control-status-container">
@@ -885,7 +906,7 @@ function PlayerTemplate(video, liveOrAudio)
 <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
 <div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
 ]=] or '')..(live and USE_LIVEJK and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="nico mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')
-..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<div id="jikkyo-comm" class="jikkyo-comments"><div id="jikkyo-chats"></div></div><div id="danmaku-container"></div>' or '')..[=[
+..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and jikkyo() or '')..[=[
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">
@@ -893,7 +914,7 @@ function PlayerTemplate(video, liveOrAudio)
 <button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
 <div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon fill"><i class="material-icons fill">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span class="mdl-cell--hide-phone"><span> / </span><span class="duration videoTime">0:00</span></span></div>
-]=]..(live and '<div id="live"><span>&#8226;</span><small>ライブ</small></div>' or '')..[=[
+]=]..(live and not tslive and '<div id="live"><span>&#8226;</span><small>ライブ</small></div>' or '')..[=[
 <p class="mdl-layout-spacer"></p>
 ]=]..(USE_DATACAST and '<button id="datacast" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">settings_remote</i></button>\n' or '')
   ..(ALLOW_HLS and '<button id="subtitles" class="ctl-button marker mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">subtitles</i></button>\n' or '')
@@ -905,16 +926,12 @@ function PlayerTemplate(video, liveOrAudio)
 <li class="ext mdl-menu__item audio" id="audio" disabled><button class="audio" disabled><span class="mdl-layout-spacer">音声</span><i class="material-icons">navigate_next</i></button>
 <li class="ext mdl-menu__item quality" id="quality"><button class="quality"><span class="mdl-layout-spacer">画質</span><i class="material-icons">navigate_next</i></button></li>
 <li class="ext mdl-menu__item rate" id="rate"><button class="rate"><span class="mdl-layout-spacer">速度</span><i class="material-icons">navigate_next</i></button></li>
-</ul>]=]..(live and [=[<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="nwtv">
-]=]..nwtv()..[=[
-</ul>]=] or '')..[=[<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">
-]=]..audio()..[=[
-</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
-<li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
-]=]..option()..[=[
-</ul><ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">
-]=]..rate()..[=[
 </ul>
+]=]..(live and '<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="nwtv">\n'..nwtv()..'</ul>\n' or '')
+..'<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="audio">\n'..audio()..[=[</ul>
+<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="quality">
+<li class="ext mdl-menu__item" id="menu_cinema"><label for="cinema" class="mdl-layout-spacer">逆テレシネ</label><span><label class="mdl-switch mdl-js-switch" for="cinema"><input type="checkbox" id="cinema" class="mdl-switch__input" value="1"></label></span></li>
+]=]..option()..'</ul>\n<ul class="mdl-menu mdl-menu--top-right mdl-js-menu" for="rate">'..rate()..[=[</ul>
 <button id="PIP" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">picture_in_picture</i><span class="mdl-tooltip" data-mdl-for="PIP">ピクチャーインピクチャー</span></button>
 <button id="PIP_exit" class="only-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">pip_exit</i><span class="mdl-tooltip" data-mdl-for="PIP_exit">タブに戻る</span></button>
 <button id="defult" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_7_5</i><span class="mdl-tooltip" data-mdl-for="defult">シアターモード</span></button>
@@ -922,8 +939,12 @@ function PlayerTemplate(video, liveOrAudio)
 <button id="fullscreen" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
 </div>
 </div>
-<div class="arib-video-invisible-container" id="vid-cont"><div class="arib-video-container">
-<]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '') or 'video is="ts-hls"'..(ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or ''))..' ctok="'..CsrfToken(live and 'view' or 'xcode')..'" id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
+<div class="arib-video-invisible-container"><div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer">
+<]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '') or 'video is="ts-hls"'..(ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or ''))
+  ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON)
+  ..(zip and '" data-absent-zip="'..zip or '')..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" data-comment-ctok="'..CsrfToken('comment')..'" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
+  ..'" ctok="'..CsrfToken(live and 'view' or 'xcode')..'" id="video" '..video..'></'..(tslive and 'canvas' or 'video')..[=[>
 </div></div>
 </div></div>
 ]=]..(USE_DATACAST and [=[<div class="remocon-container">
@@ -976,6 +997,7 @@ function PlayerTemplate(video, liveOrAudio)
 ]=] or '')
 
   ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
+  ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'" id="webBml"></script>\n' or '')
 
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'
 
@@ -984,11 +1006,6 @@ function PlayerTemplate(video, liveOrAudio)
   ..'<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
   ..'<script>const isSafari='..(not Check_iOS() and 0 or tslive and 1 or 2)..';</script>\n'
   ..'<script src="js/player.js'..Version('player')..'"></script>\n'
-  ..'<script>ts.createCap('..(ARIBB24_USE_SVG and 'true' or 'false')..',{'..ARIBB24_JS_OPTION..'});\n'
-  ..(USE_DATACAST and 'ts.setWebBml("js/web_bml_play_ts.js'..Version('bml')..'", initRemocon);\n' or '')
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and 'ts.createDanmaku({container:danmaku,height:'..JK_COMMENT_HEIGHT..',duration:'..JK_COMMENT_DURATION..'},\''..CsrfToken('comment')..'\',function replaceTag(tag){'..JK_CUSTOM_REPLACE..'return tag;},{jklog:`${ROOT}api/jklog`,comment:`${ROOT}api/comment`});\n' or '')
-  ..(not zip and prefecture==0 and '' or 'Datacast.setNvramDef('..(zip or 'null')..(prefecture==0 and '' or ','..prefecture..','..GetEwsRegionCode(prefecture))..')')
-  ..'</script>\n'
 end
 
 function MacroTemplate()

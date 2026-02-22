@@ -25,6 +25,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#muted;
 	#volume;
 	#detelecine;
+	#deinterlace;
 	#src;
 	#networkState;
 	#mod;
@@ -36,7 +37,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#ctrl;
 	#ctok;
 	#params;
-	constructor(notCustom, video, autoCinema, ctok, aribb24){
+	constructor(video){
 		super(video);
 		this.#playbackRate = 1;
 		this.#paused = true;
@@ -45,15 +46,12 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#sameStatsCount = 0;
 		this.#currentReader = null;
 		this.#params = new URLSearchParams();
-		if (notCustom){
-			this.#e = video;
-			if (aribb24) this.#initCap(aribb24.useSvg, aribb24.option, aribb24.container);
-		}else{
-			this.#e = this;
-		}
-		this.#ctok = ctok || this.#e.getAttribute('ctok');
-		this.#muted = this.#e.hasAttribute('muted') ? true : false;
-		this.#detelecine = autoCinema || this.#e.hasAttribute('autoCinema') ? 2 : 0;
+		this.#e = video || this;
+		this.#initCap();
+		this.#ctok = this.#e.getAttribute('ctok');
+		this.#muted = this.#e.hasAttribute('muted');
+		this.#detelecine = this.#e.hasAttribute('autoCinema') ? 2 : 0;
+		this.#deinterlace = this.#e.getAttribute('deinterlace');
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		this.#createWasmModule();
@@ -109,6 +107,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 				this.#mod = mod;
 				mod.setAudioGain(this.#muted?0:this.#volume);
 				mod.setDetelecineMode(this.#detelecine);
+				mod.setDeinterlace&&this.#deinterlace&&mod.setDeinterlace(this.#deinterlace);
 				mod.pause();
 				mod.setCaptionCallback((pts,ts,data) => this.#cap&&this.#cap.pushRawData(this.#statsTime+ts,data.slice()));
 				mod.setStatsCallback(stats => {
@@ -152,7 +151,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 
 	#cap;
 	#container = document.getElementById("vid-cont");
-	#initCap(useSvg = false, option = {}, container){
+	#initCap(useSvg = this.#e.dataset.aribb24UseSvg, option = JSON.parse(decodeURIComponent(this.#e.dataset.aribb24OptionJson||'{}')), container){
 		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
 		if (container) this.#container = container;
 	}
@@ -359,8 +358,8 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 }
 
 class TsLive extends tsliveMixin(){
-	constructor(video, autoCinema, ctok, aribb24){
-		super(true, video, autoCinema, ctok, aribb24);
+	constructor(video){
+		super(video);
 	}
 }
 
@@ -372,21 +371,19 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#alwaysUseHls;
 	#params;
 	#fast;
-	constructor(notCustom, video, alwaysUseHls, hls4, ctok, aribb24){
+	constructor(video){
 		super(video);
 		this.#fast = 1;
 		this.#params = new URLSearchParams();
-		if (notCustom){
-			this.#e = video;
+		this.#e = video || this;
+		if (video){
 			this.#e.params = this.params;
 			this.#e.fast = this.fast;
-			if (aribb24) this.#initCap(aribb24.useSvg, aribb24.option, aribb24.vidMeta);
-		}else{
-			this.#e = this;
 		}
-		this.#ctok = ctok || this.#e.getAttribute('ctok');
-		this.#hlsMp4Query = hls4 || this.#e.hasAttribute('hls4') ? `&hls4=${hls4||this.#e.getAttribute('hls4')}` : '';
-		this.#alwaysUseHls = alwaysUseHls || this.#e.hasAttribute('alwaysUseHls') ? true : false;
+		this.#initCap();
+		this.#ctok = this.#e.getAttribute('ctok');
+		this.#hlsMp4Query = this.#e.hasAttribute('hls4') ? `&hls4=${this.#e.getAttribute('hls4')}` : '';
+		this.#alwaysUseHls = this.#e.hasAttribute('alwaysUseHls');
 		this.#initHls();
 	}
 
@@ -455,7 +452,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 
 	#cap;
 	#cue;
-	#initCap(useSvg = false, option = {}, vidMeta = document.getElementById('vid-meta')){
+	#initCap(useSvg = this.#e.dataset.aribb24UseSvg, option = JSON.parse(decodeURIComponent(this.#e.dataset.aribb24OptionJson)||'{}'), vidMeta = document.getElementById('vid-meta')){
 		option.enableAutoInBandMetadataTextTrackDetection = !this.#alwaysUseHls || !Hls.isSupported();
 		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
 		if (vidMeta) vidMeta.oncuechange = e => this.#cuechangeB24Caption(e);
@@ -596,8 +593,8 @@ const hlsMixin = (Base = class {}) => class extends Base{
 }
 
 class HlsLoader extends hlsMixin(){
-	constructor(video, alwaysUseHls, hls4, ctok, aribb24){
-		super(true, video, alwaysUseHls, hls4, ctok, aribb24);
+	constructor(video){
+		super(video);
 	}
 }
 
@@ -752,15 +749,19 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#webBmlSrc;
 	#noWebBml;
 	#noDanmaku;
-	constructor(video, webBml, danmaku, ctok, replaceTag, api){
+	constructor(video){
 		super();
-		this.#e = video||this;
+		this.#e = video || this;
 		this.#fast = 1;
 		this.#params = new URLSearchParams();
-		this.#webBmlSrc = webBml;
 		this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
+		if (!this.#noWebBml) this.#webBmlSrc = document.getElementById('webBml').getAttribute('src');
+		Datacast.setNvramDef(this.#e.dataset.absentZip, this.#e.dataset.absentPrefecture, this.#e.dataset.absentRegion);
 		this.#noDanmaku = typeof Danmaku === 'undefined';
-		if (danmaku) this.#initDanmaku(danmaku, ctok, replaceTag, api);
+		if (this.#noDanmaku) return;
+		this.#initDanmaku();
+		this.#ctok = this.#e.dataset.commentCtok;
+		Object.assign(this.#api, JSON.parse(decodeURIComponent(this.#e.dataset.commentApi||'{}')));
 	}
 
 
@@ -772,9 +773,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	get loadSubData(){return this.#loadSubData}
 	get setFast(){return this.#setFast}
 
-	get createDanmaku(){return this.#initDanmaku}
-	get setWebBml(){return this.#setWebBml};
+	set setRemoconEvent(fn){this.#setRemoconEvent(fn)}
 	get shiftJikkyo(){return this.#shiftJikkyo}
+	set jkID(id){this.#setJkID(id)}
 
 	get setElemsList(){return this.#setElems}
 
@@ -784,59 +785,66 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		if (/^[0-9]{7}$/.test(zip)) localStorage.setItem(`${this.prefix}zipcode`,btoa(zip));
 		else localStorage.removeItem(`${this.prefix}zipcode`);
 	}
-	static setNvramPrefecture(prefecture, regioncode){
+	static setNvramPrefecture(prefecture){
 		if (!prefecture) return;
-		if (prefecture&&prefecture!=="255-0x0"){
-			localStorage.setItem(`${this.prefix}prefecture`,btoa(String.fromCharCode(parseInt(prefecture))));
-			regioncode??=parseInt(regioncode.split("-0x")[1],16);
-			localStorage.setItem(`${this.prefix}regioncode`,btoa(String.fromCharCode(regioncode>>8,regioncode&0xff)));
-		}else{
-			localStorage.removeItem(`${this.prefix}prefecture`);
-			localStorage.removeItem(`${this.prefix}regioncode`);
-		}
-
+		if (prefecture!=="0") localStorage.setItem(`${this.prefix}prefecture`,btoa(String.fromCharCode(prefecture)));
+		else localStorage.removeItem(`${this.prefix}prefecture`);
+	}
+	static setNvramRegioncode(regioncode){
+		if (!regioncode) return;
+		if (regioncode!=="0") localStorage.setItem(`${this.prefix}regioncode`,btoa(String.fromCharCode(regioncode>>8,regioncode&0xff)));
+		else localStorage.removeItem(`${this.prefix}regioncode`);
 	}
 	static setNvramDef(zip, prefecture, regioncode){
 		if(!localStorage.getItem(`${this.prefix}zipcode`)) this.setNvramZip(zip);
-		if(!localStorage.getItem(`${this.prefix}prefecture`)) this.setNvramPrefecture(prefecture, regioncode);
+		if(!localStorage.getItem(`${this.prefix}prefecture`)) this.setNvramPrefecture(prefecture);
+		if(!localStorage.getItem(`${this.prefix}regioncode`)) this.setNvramPrefecture(regioncode);
 	}
 
 
 
 	#ctok;
-	#replaceTag;
+	#customReplace;
 	#danmaku;
-	#danmakuOption = {
-		container:this.#elems.vcont,
-		opacity:1,
-		callback:function(){},
-		error:function(msg){},
-		apiBackend:{read:function(opt){opt.success([]);}},
-		height:32,
-		duration:5,
-		paddingTop:10,
-		paddingBottom:10,
-		unlimited:false,
-		api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
-	};
 	#api = {
 		jklog: 'jklog',
 		comment: 'comment',
 	}
-	#initDanmaku(danmaku = {}, ctok, replaceTag, api = {}){
-		if (this.#noDanmaku) return;
-		Object.assign(this.#danmakuOption, danmaku);
-		Object.assign(this.#api, api);
-		this.#ctok = ctok;
-		this.#replaceTag = replaceTag;
-		this.#danmaku = new Danmaku(this.#danmakuOption);
+	#initDanmaku(){
+		try{
+			this.#customReplace = JSON.parse(decodeURIComponent(this.#e.dataset.customReplaceJson||'[]'));
+			for(const rep of this.#customReplace){
+				rep.regex = new RegExp(rep.pattern,rep.flags);
+			}
+		}catch(e){
+			console.warn("customReplaceJson:",e);
+			this.#customReplace = [];
+		}
+		this.#danmaku = new Danmaku({
+			container:document.getElementById("danmaku-container")||this.#elems.vcont,
+			opacity:1,
+			callback:function(){},
+			error:function(msg){},
+			apiBackend:{read:function(opt){opt.success([]);}},
+			height:+this.#e.dataset.commentHeight||32,
+			duration:+this.#e.dataset.commentDuration||5,
+			paddingTop:10,
+			paddingBottom:10,
+			unlimited:false,
+			api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
+		});
 		if (this.#elems.commInput) this.#addSendComment();
 	}
+	#replaceTag = tag => {
+		for(const rep of this.#customReplace){
+			tag = tag.replace(rep.regex,rep.replace);
+		}
+		return tag;
+	}
 	#initRemocon = () => {}
-	#setWebBml(src, initRemocon){
-		this.#webBmlSrc = src;
-		this.#initRemocon = initRemocon;
-		this.#initWebBml();
+	#setRemoconEvent(fn){
+		this.#initRemocon = fn;
+		fn(this.#elems.remocon);
 	}
 	async #initWebBml(){
 		return new Promise((resolve, reject) => {
@@ -1306,6 +1314,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#jkID="?";
 	#jkStream = {
 		clear: () => {
+			this.#params.delete('jkID');
 			clearInterval(this.#checkScrollID);
 			this.#checkScrollID=0;
 			if (!this.#elems.bcomm) return;
@@ -1424,6 +1433,10 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#shiftJikkyo(sec){
 		this.#jklog.offsetSec+=sec;
 		this.#addMessage("Offset "+this.#jklog.offsetSec+"sec");
+	}
+	#setJkID(id){
+		this.#params.set('jkID', id);
+		this.#openSubStream();
 	}
 	#chatsScroller(){
 		clearInterval(this.#checkScrollID);
@@ -1685,20 +1698,20 @@ const datacastMixin = (Base = class {}) => class extends Base{
 }
 
 class Datacast extends datacastMixin(){
-	constructor(video, webBml, danmaku, ctok, replaceTag, api){
-		super(video, webBml, danmaku, ctok, replaceTag, api);
+	constructor(video){
+		super(video);
 	}
 }
 
 class TsLiveDatacast extends tsliveMixin(datacastMixin()){
-	constructor(video, autoCinema, ctok, aribb24){
-		super(true, video, autoCinema, ctok, aribb24);
+	constructor(video){
+		super(video);
 	}
 }
 
 class HlsDatacast extends hlsMixin(datacastMixin()){
-	constructor(video, alwaysUseHls, hls4, ctok, aribb24){
-		super(true, video, alwaysUseHls, hls4, ctok, aribb24);
+	constructor(video){
+		super(video);
 	}
 }
 

@@ -19,6 +19,7 @@
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
 --editorOptionFastFunc:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを返す関数を指定する
 --autoCinema:TS-Live!方式専用。Cinema(逆テレシネ)モードを自動切り替え
+--deinterlace:TS-Live!方式専用。デインタレース方式。'none'か'yadif'か'bwdif'
 XCODE_OPTIONS={
   {
     --ffmpegの例。-b:vでおおよその最大ビットレートを決め、-qminで動きの少ないシーンのデータ量を節約する
@@ -157,6 +158,7 @@ XCODE_OPTIONS={
     name='TS-Live!',
     tslive=true,
     autoCinema=true,
+    deinterlace='bwdif',
     xcoder='',
     option='',
     filter=':',
@@ -167,10 +169,12 @@ XCODE_OPTIONS={
 
 
 
---字幕表示のオプション https://github.com/monyone/aribb24.js#options
-ARIBB24_JS_OPTION=[=[
-  normalFont:'"Rounded M+ 1m for ARIB","Kosugi Maru",sans-serif',
-  drcsReplacement:true
+--字幕表示のオプション(JSON表記) https://github.com/monyone/aribb24.js#options
+ARIBB24_OPTION_JSON=[=[
+{
+  "normalFont":"'Rounded M+ 1m for ARIB','Kosugi Maru',sans-serif",
+  "drcsReplacement":true
+}
 ]=]
 
 
@@ -198,11 +202,14 @@ JK_CHANNELS={
   --[0x40065]=-1,
 }
 
---chatタグ表示前の置換(JavaScript)
-JK_CUSTOM_REPLACE=[=[
-  // 広告などを下コメにする
-  tag = tag.replace(/^<chat(?![^>]*? mail=)/, '<chat mail=""');
-  tag = tag.replace(/^(<chat[^>]*? premium="3"[^>]*?>\/nicoad )(\{[^<]*?"totalAdPoint":)(\d+)/, "$1$3$2");
-  tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/nicoad (\d*)\{[^<]*?"message":("[^<]*?")[,}][^<]*/, '<chat align="right"$1shita small yellow $2$4($3pt)');
-  tag = tag.replace(/^<chat(?=[^>]*? premium="3")([^>]*? mail=")([^>]*?>)\/spi /, '<chat align="right"$1shita small white2 $2');
+--chatタグ表示前の置換リスト(JSON表記)
+--`tag=tag.replace(new RegExp(pattern,flags),replace)`をリストの順に処理する。flagsは省略可
+--広告などを下コメにする例
+JK_CUSTOM_REPLACE_JSON=[=[
+[
+  {"pattern":"^<chat(?![^>]*? mail=)", "replace":"<chat mail=\"\""},
+  {"pattern":"^(<chat[^>]*? premium=\"3\"[^>]*?>/nicoad )(\\{[^<]*?\"totalAdPoint\":)(\\d+)", "replace":"$1$3$2"},
+  {"pattern":"^<chat(?=[^>]*? premium=\"3\")([^>]*? mail=\")([^>]*?>)/nicoad (\\d*)\\{[^<]*?\"message\":(\"[^<]*?\")[,}][^<]*", "replace":"<chat align=\"right\"$1shita small yellow $2$4($3pt)"},
+  {"pattern":"^<chat(?=[^>]*? premium=\"3\")([^>]*? mail=\")([^>]*?>)/spi ", "replace":"<chat align=\"right\"$1shita small white2 $2"}
+]
 ]=]

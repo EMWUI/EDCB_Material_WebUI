@@ -1,4 +1,3 @@
-const danmaku = document.getElementById("danmaku-container");
 const video = document.getElementById("video");
 const $vid = $(video);
 
@@ -157,7 +156,7 @@ const setbmlBrowserSize = () => {
 	bmlBrowserSetVisibleSize(width,height);
 }
 
-const initRemocon = remocon => {
+ts.setRemoconEvent = remocon => {
 	remocon.querySelectorAll('.mdl-button,.mdl-icon-toggle').forEach(e => componentHandler.upgradeElement(e));
 
 	remocon.transform = {X: 0, Y: 0};
@@ -579,6 +578,9 @@ $(function(){
 
 	$('#comment-control').hover(e => $(e.currentTarget).addClass('is-visible'), e => $(e.currentTarget).removeClass('is-visible'));
 
+	$('#jikkyo-config select[name=id]').change(e => ts.jkID = $(e.currentTarget).val());
+	$('#jikkyo-opacity').on({input:e => ts.jikkyo.danmaku.opacity($(e.currentTarget).val())});
+	$('#jikkyo-fontsize').on({input:e => ts.jikkyo.danmaku.options.height = $(e.currentTarget).val()});
 	$('#comm').focus(() => $('#comment-control').addClass('is-focused')
 		).blur(() => $('#comment-control').removeClass('is-focused')
 		).change(e => $('#comment-control').toggleClass('is-dirty', $(e.currentTarget).val()!='')

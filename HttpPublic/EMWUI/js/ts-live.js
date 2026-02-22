@@ -733,8 +733,8 @@ var tempI64;
 // end include: runtime_debug.js
 // === Body ===
 var ASM_CONSTS = {
-  461708: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
-  461767: ($0, $1, $2) => {
+  468900: () => Module.myAudio && Module.myAudio.discard ? 0 : 1,
+  468959: ($0, $1, $2) => {
     if (Module.myAudio && Module.myAudio.discard) {
       const buffer0 = GROWABLE_HEAP_F32().slice($0 >> 2, ($0 >> 2) + $2);
       const buffer1 = GROWABLE_HEAP_F32().slice($1 >> 2, ($1 >> 2) + $2);
@@ -757,7 +757,7 @@ var ASM_CONSTS = {
       }, [ buffer0.buffer, buffer1.buffer ]);
     }
   },
-  462461: () => {
+  469653: () => {
     if (Module.myAudio && Module.myAudio.discard) {
       Module.myAudio.discard = {
         samples: []
@@ -771,21 +771,21 @@ var ASM_CONSTS = {
       });
     }
   },
-  462700: () => {
+  469892: () => {
     if (Module.myAudio && Module.myAudio.node) {
       Module.myAudio.node.port.postMessage({
         type: "pause"
       });
     }
   },
-  462806: () => {
+  469998: () => {
     if (Module.myAudio && Module.myAudio.node) {
       Module.myAudio.node.port.postMessage({
         type: "resume"
       });
     }
   },
-  462913: $0 => {
+  470105: $0 => {
     if (Module.myAudio && Module.myAudio.discard) {
       const discard = Module.myAudio.discard;
       if ($0) {
@@ -805,7 +805,7 @@ var ASM_CONSTS = {
       Module.setBufferedAudioSamples(sum);
     }
   },
-  463470: $0 => {
+  470662: $0 => {
     if ($0 == 0 && !Module.myAudio) {
       Module.myAudio = {
         discard: {
@@ -815,12 +815,14 @@ var ASM_CONSTS = {
     }
     if (Module.myAudio && Module.myAudio.gain) Module.myAudio.gain.gain.setValueAtTime($0, Module.myAudio.ctx.currentTime);
   },
-  463675: ($0, $1, $2) => {
+  470867: ($0, $1, $2) => {
     (async function() {
       const audioContext = new AudioContext({
         sampleRate: 48e3
       });
-      await audioContext.audioWorklet.addModule(`data:text/javascript,${encodeURI(UTF8ToString($0))}`);
+      await audioContext.audioWorklet.addModule(URL.createObjectURL(new Blob([ UTF8ToString($0) ], {
+        type: "text/javascript"
+      })));
       const audioNode = new AudioWorkletNode(audioContext, "audio-feeder-processor", {
         numberOfInputs: 0,
         numberOfOutputs: 1,
@@ -7603,7 +7605,7 @@ var dynCall_iiiiijj = Module["dynCall_iiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a
 
 var dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = (a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) => (dynCall_iiiiiijj = Module["dynCall_iiiiiijj"] = wasmExports["dynCall_iiiiiijj"])(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
 
-var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 289976;
+var ___emscripten_embedded_file_data = Module["___emscripten_embedded_file_data"] = 297160;
 
 // include: postamble.js
 // === Auto-generated postamble setup entry stuff ===
