@@ -741,6 +741,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		commInput: document.getElementById("comm"),
 		commBtn: document.getElementById("commSend"),
 		bcomm: document.getElementById("comment-control"),
+		shiftJikkyo: document.querySelectorAll(".jikkyo-shift"),
+		selectID: document.querySelector('#jikkyo-config select[name="id"]'),
+		inputTM: document.querySelector('#jikkyo-config input[name="tm"]'),
+		inputTMSec: document.querySelector('#jikkyo-config select[name="tmsec"]'),
+		btnConfig: document.querySelector("#jikkyo-TM button"),
 		webBmlContainer: document.querySelector(".data-broadcasting-browser-container"),
 		remocon: document.querySelector(".remote-control"),
 		indicator: document.querySelector(".remote-control-indicator"),
@@ -775,7 +780,8 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	set setRemoconEvent(fn){this.#setRemoconEvent(fn)}
 	get shiftJikkyo(){return this.#shiftJikkyo}
-	set jkID(id){this.#setJkID(id)}
+	set jkID(id){this.#setJK(id)}
+	set jkTM(tm){this.#setJK(null,tm)}
 
 	get setElemsList(){return this.#setElems}
 
@@ -833,7 +839,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			unlimited:false,
 			api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
 		});
-		if (this.#elems.commInput) this.#addSendComment();
+		this.#addJikkyoEvent();
 	}
 	#replaceTag = tag => {
 		for(const rep of this.#customReplace){
@@ -924,7 +930,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#enableJikkyo(){
 		this.#jikkyoState = this.#STATE.ENABLED;
 		if (this.#noDanmaku) return;
-		if (this.#e.initSrc) this.#jkStream.enable(true);
+		if (this.#e.initSrc&&!this.#shiftable) this.#jkStream.enable(true);
 		else this.#jklog.enable();
 	}
 	#disableJikkyo(){
@@ -956,11 +962,12 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		return this.jikkyo.showing;
 	}
 	#loadSubData(){
+		this.#shiftable=this.#e.initSrc.searchParams.has('shiftable');
 		if (!this.#noWebBml && this.#datacastState!=this.#STATE.DISABLED)
 			if (this.#e.initSrc) this.#dataStream.enable();
 			else this.#psc.enable();
 		if (!this.#noDanmaku && this.#jikkyoState!=this.#STATE.DISABLED)
-			if (this.#e.initSrc) this.#jkStream.enable();
+			if (this.#e.initSrc&&!this.#shiftable) this.#jkStream.enable();
 			else this.#jklog.enable();
 		if (this.#e.initSrc) this.#openSubStream();
 	}
@@ -978,9 +985,13 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	}
 	#setElems(elems){
 		Object.assign(this.#elems, elems);
-		this.#addSendComment();
+		this.#addJikkyoEvent();
 	}
-	#addSendComment(){
+	#addJikkyoEvent(){
+		this.#elems.shiftJikkyo.forEach(e=>e.onclick=()=>this.#shiftJikkyo(+e.dataset.sec));
+		if (this.#elems.selectID) this.#elems.selectID.onchange=()=>this.#setJK(this.#elems.selectID.value);
+		if (this.#elems.btnConfig) this.#elems.btnConfig.onclick=()=>this.#setJK(null,this.#elems.inputTM.value?Math.floor(Date.parse(this.#elems.inputTM.value+"Z")/60000)*60+this.#elems.inputTMSec.selectedIndex-32400:0);
+		if (!this.#elems.commInput) return;
 		this.#elems.commInput.onkeydown = e => {if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter") this.#sendComment();}
 		this.#elems.commBtn.onclick = () => this.#sendComment();
 	}
@@ -1113,7 +1124,21 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(i==readCount){
 				i=response.indexOf("\n",readCount);
 				if(i<0)break;
-				this.#jkStream.stream(response.substring(readCount,i));
+				const s=response.substring(readCount,i);
+				if(!this.#mHeader&&!!(this.#mHeader=s.match(/^<!-- J=([0-9]+)(?:;T=([0-9]+))?/))){
+					for(const opt of this.#elems.selectID.options){
+						if(opt.value==this.#mHeader[1]){
+							opt.selected=true;
+							break;
+						}
+					}
+					if(this.#mHeader[2]){
+						const tm=this.#mHeader[2]-this.#e.ofssec+Math.floor(this.#e.currentTime*(this.#e.fast||1));
+						if(this.#elems.inputTM)this.#elems.inputTM.value==new Date(1000*tm+32400000).toISOString().substring(0,16);
+						if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[tm%60].selected=true;
+					}
+				}
+				this.#jkStream.stream(s);
 				readCount=i+1;
 			}else{
 				i=i<0?response.length:i;
@@ -1305,6 +1330,74 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		}
 	}
 
+	#getJikkyoLogStats(text){
+		let sec=0;
+		for(let pos=0;;){
+			const i=text.indexOf("\n",pos);
+			if(i<0)break;
+			if(text.startsWith("<!-- J=",pos))++sec;
+			pos=i+1;
+		}
+		const windowSec=Math.max(Math.floor(sec/400),5);
+		sec=0;
+		let counts=[0],maxCount=0;
+		for(let pos=0;;){
+			const i=text.indexOf("\n",pos);
+			if(i<0)break;
+			if(text.startsWith("<!-- J=",pos)){
+			if(++sec%windowSec==0){
+				maxCount=Math.max(counts[counts.length-1],maxCount);
+				counts.push(0);
+			}
+			}else if(text.startsWith("<chat ",pos)){
+			counts[counts.length-1]++;
+			}
+			pos=i+1;
+		}
+		return {sec,windowSec,counts,maxCount};
+	}
+
+	#drawStatsGraph(stats,now,ofs){
+		if(!stats||!(stats.maxCount>0))return;
+		const w=stats.counts.length;
+		const h=50;
+		now/=stats.sec;
+		now=Math.floor((now>0?Math.min(now,1):0)*w);
+		ofs/=stats.sec;
+		ofs=Math.floor((ofs>0?Math.min(ofs,1):ofs<0?Math.max(ofs,-1):0)*w);
+		if(!stats.canvas){
+			stats.canvas=document.createElement("canvas");
+			stats.canvas.width=w;
+			stats.canvas.height=h;
+		}else if(stats.now==now&&stats.ofs==ofs){
+			//No redraw required
+			return;
+		}
+		stats.now=now;
+		stats.ofs=ofs;
+		const ctx=stats.canvas.getContext("2d");
+		ctx.clearRect(0,0,w,h);
+		ctx.fillStyle="#888";
+		if(ofs>0)ctx.fillRect(0,0,ofs,h);
+		else if(ofs<0)ctx.fillRect(w+ofs,0,w,h);
+		ctx.strokeStyle="#07d";
+		ctx.lineWidth=1;
+		for(let x=0;x<w;x++){
+			ctx.beginPath();
+			ctx.moveTo(x+0.5,h);
+			ctx.lineTo(x+0.5,h-Math.floor(stats.counts[x]/stats.maxCount*h));
+			ctx.closePath();
+			ctx.stroke();
+		}
+		ctx.strokeStyle="#f00";
+		ctx.lineWidth=2;
+		ctx.beginPath();
+		ctx.moveTo(now,0);
+		ctx.lineTo(now,h);
+		ctx.closePath();
+		ctx.stroke();
+	}
+
 	#commHide;
 	#checkScrollID;
 	#fragment;
@@ -1315,10 +1408,14 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	#jkStream = {
 		clear: () => {
 			this.#params.delete('jkID');
+			this.#params.delete('jkTM');
+			if(this.#stats&&this.#stats.canvas){
+				this.#elems.comm.removeChild(this.#stats.canvas);
+				this.#stats=null;
+			}
 			clearInterval(this.#checkScrollID);
 			this.#checkScrollID=0;
-			if (!this.#elems.bcomm) return;
-			this.#elems.bcomm.style.display="none";
+			if (this.#elems.bcomm) this.#elems.bcomm.style.display="none";
 			while (this.#elems.chats.firstChild) this.#elems.chats.removeChild(this.#elems.chats.firstChild);
 		},
 		disable: () => {
@@ -1434,9 +1531,16 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#jklog.offsetSec+=sec;
 		this.#addMessage("Offset "+this.#jklog.offsetSec+"sec");
 	}
-	#setJkID(id){
-		this.#params.set('jkID', id);
-		this.#openSubStream();
+	#setJK(id, tm){
+		if (this.#jklog.xhr&&this.#jklog.xhr.readyState!=4) return;
+		if (id) this.#params.set('jkID', id);
+		if (tm) this.#params.set('jkTM', tm);
+		if (this.#e.initSrc&&!this.#shiftable) this.#openSubStream();
+		else{
+			this.#logText=null;
+			this.#jklog.xhr=null;
+			this.#jklog.enable();
+		}
 	}
 	#chatsScroller(){
 		clearInterval(this.#checkScrollID);
@@ -1541,6 +1645,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	}
 
 	#logText;
+	#mHeader;
+	#stats;
+	#shiftable;
 	#jklog = {
 		offsetSec: 0,
 		startRead: () => {
@@ -1560,6 +1667,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 						this.#jkStream.stream(tag);
 						return sec<videoSec;
 					},startSec,ctx);
+					this.#drawStatsGraph(this.#stats,videoSec,this.#jklog.offsetSec);
 				}
 				this.#jklog.readTimer=setTimeout(()=>read(),200);
 			}
@@ -1586,8 +1694,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#chatsScroller();
 			this.#jklog.startRead();
 			if(this.#jklog.xhr)return;
+			this.#mHeader=null;
 			this.#jklog.xhr=new XMLHttpRequest();
-			this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${this.#fname().replace(/^(?:\.\.\/)+/,"")}`);
+			this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${this.#fname().replace(/^(?:\.\.\/)+/,"")}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}`);
 			this.#jklog.xhr.onloadend=()=>{
 				if(!this.#logText){
 					this.#jkStream.error(this.#jklog.xhr.status,0);
@@ -1596,6 +1705,25 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#jklog.xhr.onload=()=>{
 				if(this.#jklog.xhr.status!=200||!this.#jklog.xhr.response)return;
 				this.#logText=this.#jklog.xhr.response;
+				const m=this.#logText.match(/^<!-- J=([0-9]+);T=([0-9]+)/);
+				if(m){
+				for(const opt of this.#elems.selectID.options){
+					if(opt.value==m[1]){
+						opt.selected=true;
+						break;
+					}
+				}
+				if(this.#elems.inputTM)this.#elems.inputTM.value=new Date(1000*m[2]+32400000).toISOString().substring(0,16);
+				if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[m[2]%60].selected=true;
+				}
+				if(this.#stats&&this.#stats.canvas){
+					this.#elems.comm.removeChild(this.#stats.canvas);
+				}
+				this.#stats=this.#getJikkyoLogStats(this.#logText);
+				this.#drawStatsGraph(this.#stats);
+				if(this.#stats.canvas){
+					this.#elems.comm.insertBefore(this.#stats.canvas,this.#elems.comm.firstChild);
+				}
 			};
 			this.#jklog.xhr.send();
 		}
@@ -1651,6 +1779,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		if(!this.#e.initSrc||!this.#params.has('psidata')&&!this.#params.has('jikkyo'))return;
 		let readCount=0;
 		const ctx={};
+		this.#mHeader=null;
 		this.#xhr=new XMLHttpRequest();
 		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#fast || 1))}`);
 		this.#xhr.onloadend=()=>{

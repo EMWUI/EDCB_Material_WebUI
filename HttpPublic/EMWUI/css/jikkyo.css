@@ -3,6 +3,9 @@
   border: 1px solid #ccc;
   flex: 0 0 25%;
   margin-left: 1px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 #jikkyo-comm.minimized {
@@ -10,23 +13,61 @@
   width: 0;
 }
 
-#jikkyo-comm > button {
-  display: none;
-  margin: 0;
+#jikkyo-comm {
+    margin: 0;
 }
 
-#jikkyo-comm.shiftable > button {
-  display: unset;
+#jikkyo-comm > canvas {
+  height: 1.5em;
+  vertical-align: top;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  z-index: -1;
 }
 
+#jikkyo-config {
+  padding: 16px 16px 0;
+  > div {
+    padding: 4px 0;
+  } 
+  button {
+    border: 1px solid;
+  }
+}
+#jikkyo-TM {
+  display: flex;
+  align-items: center;
+  > *:not(:last-child) {
+    margin-right: 8px;
+  }
+}
+
+#jikkyo-setting {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+}
+
+#jikkyo-config > input {
+  margin: 0.1em;
+}
+
+#jikkyo-config,
+#jikkyo-comm.minimized > #jikkyo-config,
 #jikkyo-comm.minimized > button {
   display: none;
 }
 
+#jikkyo-config.display {
+  display: inline-block;
+}
+
 #jikkyo-chats {
   font-size: small;
+  line-break: anywhere;
   overflow: auto;
-  height: 100%;
+  word-break: break-all;
 }
 
 #jikkyo-chats > .closed {

@@ -110,7 +110,10 @@
     .mdl-textfield.has-icon .material-icons {
       top: 12px; } }
 }
-.mdl-textfield:has(input[type=date]),
+.mdl-textfield:has(+.pulldown) {
+  min-width: 130px;
+  padding: 0px; }
+.mdl-textfield:has(input[type^=date]),
 .mdl-textfield:has(input[type=time]) {
   width: auto; }
 .form {
@@ -2227,7 +2230,7 @@ h4 .mdl-button--icon {
   #apps-container>.container {
     --button-height: calc(8px + 2px + 32px);
     height: min(calc((100vh * 0.666666666667 - 16px * 2) - var(--button-height)), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16) - var(--button-height)));
-    min-height: 200px; }
+    min-height: 300px; }
   #apps-container .container {
     width: 100%;
     justify-content: center;

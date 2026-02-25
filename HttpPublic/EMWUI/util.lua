@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260207',
+    css='260225',
     common='260217',
     tvguide='250824',
-    player='260222',
+    player='260225',
     onair='260116',
     library='260129',
     setting='250906',
-    tsloader='260222',
+    tsloader='260225',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -882,22 +882,35 @@ function PlayerTemplate(video, liveOrAudio)
     return s
   end
   local function jikkyo()
-    local s='<div id="jikkyo-comm" class="jikkyo-comments"><div id="jikkyo-chats"></div>'
-    --[=[最低限だけので
+    local s='<div id="jikkyo-comm" class="jikkyo-comments">'
+      ..'<button id="jikkyo-setting" class="mdl-button mdl-js-button mdl-button--icon mdl-button--primary"><i class="material-icons">settings</i></button>'
+      ..'<div id="jikkyo-config">'
+    if not live and JKRDLOG_PATH then
+      s=s..'<div>'
+      for i,v in ipairs({-15,-1,1,15}) do
+        s=s..'<button class="jikkyo-shift mdl-button mdl-js-button mdl-button--primary" data-sec="'..v..'">'..(v>0 and '+' or '')..v..'</button>'
+      end
+      s=s..'</div>'
+    end
     dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'jkconst.lua')
     local jkList=GetChatStreamNameList()
     if jkList then
-      s=s..'<div id="jikkyo-config"><select name="id">\n'
-        ..'<option value="0" selected>jk? (初期値)\n'
+      s=s..'<div class="pulldown"><select name="id">\n<option value="0" selected>jk? (初期値)\n'
       for i,v in ipairs(jkList) do
         s=s..'<option value="'..v[1]..'">jk'..v[1]..' ('..EdcbHtmlEscape(v[2])..')\n'
       end
-      s=s..'</select>'
+      local i=0
+      s=s..'</select></div>'
+      if not live and JKRDLOG_PATH then
+        s=s..'<div id="jikkyo-TM"><div class="mdl-textfield mdl-js-textfield"><input name="tm" id="dateFormat" type="datetime-local" class="mdl-textfield__input"><label class="mdl-textfield__label" for="dateFormat"></label></div><div class="pulldown"><select name="tmsec"><option selected>00s'
+          ..('_'):rep(59):gsub('_',function() i=i+1 return ('<option>%02ds'):format(i) end)
+          ..'</select></div><button type="button" class="mdl-button mdl-js-button mdl-button--primary">変更</button></div>'
+      end
     end
-    s=s..'<input class="mdl-slider mdl-js-slider" type="range" id="jikkyo-opacity" min="0.1" max="1" value="1" step="0.1">'
-      ..'<input class="mdl-slider mdl-js-slider" type="range" id="jikkyo-fontsize" min="24" max="100" value="'..JK_COMMENT_HEIGHT..'"></div>'
-    --]=]
-    return s..'</div><div id="danmaku-container"></div>'
+    return s..'<div id="jikkyo-opacity"><div>透過率 <span>1</span></div><input class="mdl-slider mdl-js-slider" type="range" min="0.1" max="1" value="1" step="0.1"></div>'
+      ..'<div id="jikkyo-fontsize"><div>サイズ <span>'..JK_COMMENT_HEIGHT..'</span></div><input class="mdl-slider mdl-js-slider" type="range" min="24" max="100" value="'..JK_COMMENT_HEIGHT..'"></div></div>'
+      ..'<div id="jikkyo-chats" class="mdl-layout-spacer"></div></div><div id="danmaku-container"></div>'
+      ..(live and USE_LIVEJK and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="nico mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')
   end
   return [=[<div id="player">
 <div class="player-container mdl-grid mdl-grid--no-spacing">
@@ -905,8 +918,7 @@ function PlayerTemplate(video, liveOrAudio)
 <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
 <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div></div>
 <div class="data-broadcasting-browser-container"><div class="data-broadcasting-browser-content"></div></div>
-]=] or '')..(live and USE_LIVEJK and '<div id="comment-control" style="display:none"><div class="mdl-textfield mdl-js-textfield"><input class="nico mdl-textfield__input" type="text" id="comm"><label class="mdl-textfield__label" for="comm"></label></div><button id="commSend" class="mdl-button mdl-js-button mdl-button--fab mdl-button--mini-fab mdl-button--primary"><i class="material-icons">send</i></button></div>\n' or '')
-..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and jikkyo() or '')..[=[
+]=] or '')..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and jikkyo() or '')..[=[
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">

@@ -100,7 +100,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		ts.loadSubData();
 	}else{
 		ts.loadSource(`${ROOT}api/${d.onid ? `view?n=${ts.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
-		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}` }`);
+		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}${!d.okkake ? '&shiftable=1' : ''}` }`);
 
 		if (d.meta){
 			if (d.meta.duration){
@@ -578,9 +578,17 @@ $(function(){
 
 	$('#comment-control').hover(e => $(e.currentTarget).addClass('is-visible'), e => $(e.currentTarget).removeClass('is-visible'));
 
-	$('#jikkyo-config select[name=id]').change(e => ts.jkID = $(e.currentTarget).val());
-	$('#jikkyo-opacity').on({input:e => ts.jikkyo.danmaku.opacity($(e.currentTarget).val())});
-	$('#jikkyo-fontsize').on({input:e => ts.jikkyo.danmaku.options.height = $(e.currentTarget).val()});
+	$('#jikkyo-setting').click(e => $('#jikkyo-config').toggle());
+	$('#jikkyo-opacity input').on({input:e => {
+		const val = $(e.currentTarget).val();
+		$('#jikkyo-opacity span').text(val);
+		ts.jikkyo.danmaku.opacity(val)
+	}});
+	$('#jikkyo-fontsize input').on({input:e => {
+		const val = $(e.currentTarget).val();
+		$('#jikkyo-fontsize span').text(val);
+		ts.jikkyo.danmaku.options.height = val;
+	}});
 	$('#comm').focus(() => $('#comment-control').addClass('is-focused')
 		).blur(() => $('#comment-control').removeClass('is-focused')
 		).change(e => $('#comment-control').toggleClass('is-dirty', $(e.currentTarget).val()!='')
