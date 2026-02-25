@@ -1,34 +1,13 @@
 -- vim:set ft=lua:
+hour=true
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
-date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or GetVarDate(mg.request_info.query_string,'date') or 0
-hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or 4
---hour=-1で現在時刻-MARGIN_HOUR時間を基準
-interval=GetVarInt(mg.request_info.query_string,'interval',0,25) or DEF_INTERVAL
-
 onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
-
-baseDate=math.floor((utc9Now-4*3600)/24/3600)
-if date>1000 then
-  date=math.floor(date/24/3600)-baseDate
-end
-baseDate=baseDate+date
-Hour=hour<0 and math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
-if Hour<4-(hour==0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
-Hour=Hour+interval>29 and 29-interval or Hour
-baseTime=(baseDate*24+Hour)*3600
-
-NOW=baseTime<utc9Now and utc9Now<baseTime+interval*3600
 
 hrefGene=(hour~=4 and '&amp;hour='..hour or '')..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')
 
 
 edcb.htmlEscape=15
-
-rt={}
-for i,v in ipairs(edcb.GetReserveData()) do
-  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
-end
 
 ServiceList=CustomServiceList()
 st=ServiceList[1]
@@ -94,7 +73,7 @@ if st then
     minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
   end
   ct.subheader=ct.subheader..'<div class="dividers navigation__item mdl-color-text--primary"><form id="date_input" action="epgweek.html">'
-    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" id="dateFormat" type="date" name="date" value="'..os.date('%Y-%m-%d', baseDate*24*3600)..(minTime and '" min="'..os.date('%Y-%m-%d', minTime) or '')..(maxTime and '" max="'..os.date('%Y-%m-%d', maxTime-7*24*3600) or '')..'"><label class="mdl-textfield__label" for="dateFormat"></label></div>'
+    ..'<div class="mdl-textfield mdl-js-textfield"><input class="mdl-textfield__input" id="dateFormat" type="date" name="date" value="'..os.date('%Y-%m-%d', pageDate*24*3600)..(minTime and '" min="'..os.date('%Y-%m-%d', minTime) or '')..(maxTime and '" max="'..os.date('%Y-%m-%d', maxTime-7*24*3600) or '')..'"><label class="mdl-textfield__label" for="dateFormat"></label></div>'
     ..'<input type="hidden" name="id" value="'..st.onid..'-'..st.tsid..'-'..st.sid..'">'
     ..(hour~=4 and '<input type="hidden" name="hour" value="'..hour..'">' or '')
     ..(interval~=DEF_INTERVAL and '<input type="hidden" name="interval" value="'..interval..'">' or '')
@@ -104,10 +83,10 @@ if st then
 
   table.insert(main, '<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 
-  n=interval>=25 and Hour or 4
+  n=interval>=25 and baseHour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
-    j=(interval==25 and Hour or 4)+i
-    if Hour<=i and i<Hour+interval then
+    j=(interval==25 and baseHour or 4)+i
+    if baseHour<=i and i<baseHour+interval then
       table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
     else
       table.insert(main, '<li><a class="mdl-menu__item" href="epgweek.html?id='..st.onid..'-'..st.tsid..'-'..st.sid..'&amp;hour='..(i%24)..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')..(date~=0 and '&amp;date='..date or '')..'">'..(i%24+(i%24<4 and 24 or 0))..'時</a></li>\n')
@@ -140,18 +119,18 @@ for i=0,6 do
   table.insert(ctt, '<div class="station" data-service_id="'..st.onid..'-'..st.tsid..'-'..st.sid..'" data-service="'..st.service_name..'"><div>\n')
   lastPx=0
   total=0
-  b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',baseTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}
+  b=edcb.EnumEventInfo({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',pageTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}
   for j,w in ipairs(edcb.EnumEventInfoArchive and
-      edcb.EnumEventInfoArchive({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',baseTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}) do
+      edcb.EnumEventInfoArchive({{onid=st.onid, tsid=st.tsid, sid=st.sid}}, {startTime=os.date('!*t',pageTime+(i*24-6)*3600), durationSecond=(interval+6)*3600}) or {}) do
     w.past=true
     table.insert(b, w)
   end
   table.sort(b, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   for j,w in ipairs(b) do
     startTime=TimeWithZone(w.startTime)
-    startPx=math.min(math.floor((startTime-baseTime-i*24*3600)/60), 60*interval)
+    startPx=math.min(math.floor((startTime-pageTime-i*24*3600)/60), 60*interval)
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
-    endPx=math.min(math.floor((endTime-baseTime-i*24*3600)/60), 60*interval)
+    endPx=math.min(math.floor((endTime-pageTime-i*24*3600)/60), 60*interval)
     if startPx-lastPx>0 then
       table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
@@ -178,7 +157,7 @@ table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">
   ..'<div id="tv-guide-container"><div id="tv-guide">'
   ..'<div id="tv-guide-header" class="mdl-color--primary mdl-shadow--4dp">\n<div class="hour-container"></div>\n')
   for i=0,6 do
-    d=os.date('!*t', ((i+baseDate)*24)*3600)
+    d=os.date('!*t', ((i+pageDate)*24)*3600)
     d=d.month..'/'..d.day..'('..({'日','月','火','水','木','金','土'})[d.wday]..')'
     table.insert(main, '<a class="station mdl-typography--body-2 mdl-color-text--primary-contrast">'..d..'</a>\n')
   end
@@ -186,7 +165,7 @@ table.insert(main, '</div>\n'
 
   ..'<div id="tv-guide-main">\n'
   ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n')
-  for i=Hour,Hour+interval-1 do
+  for i=baseHour,baseHour+interval-1 do
     j=i%24
     table.insert(main, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j<4 and j+24 or j)..'時</tt></div>')
   end
@@ -200,7 +179,7 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList" value="'..onid..'-'..tsid..'-'..sid..'">\n'
   ..'</form>\n'
-  ..EpgJsTemplate(Hour,NOW)
+  ..EpgJsTemplate()
 
 ct=Template(ct)
 

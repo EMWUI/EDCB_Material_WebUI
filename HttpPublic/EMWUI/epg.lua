@@ -7,8 +7,26 @@ MARGIN_HOUR=edcb.GetPrivateProfile('GUIDE','MARGIN_HOUR','1',INI)
 MARGIN_MIN=edcb.GetPrivateProfile('GUIDE','MARGIN_MIN','30',INI)
 DEF_CH_COUNT=tonumber(edcb.GetPrivateProfile('GUIDE','CH_COUNT','0',INI))
 DEF_INTERVAL=25
+DEF_HOUR=4
 
 utc9Now=os.time()+9*3600
+--UTC+9の今日の始まりの日付。現在時刻が深夜4時までは前日になることに注意
+baseDate=math.floor((utc9Now-DEF_HOUR*3600)/24/3600)
+
+date=GetVarDate(mg.request_info.query_string,'date')
+date=date and math.floor(date/24/3600)-baseDate or GetVarInt(mg.request_info.query_string,'date',-10000,1000) or 0
+hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or hour and DEF_HOUR or -1
+interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or DEF_INTERVAL
+
+--hour=-1で現在時刻-MARGIN_HOUR時間を基準
+baseHour=hour<0 and math.floor((utc9Now%(24*3600))/3600)-MARGIN_HOUR or hour
+baseHour=baseHour<DEF_HOUR-(hour<0 and MARGIN_HOUR or 0) and baseHour+24 or baseHour
+baseTime=(baseDate*24+baseHour)*3600
+
+pageDate=baseDate+date
+pageTime=(pageDate*24+baseHour)*3600
+
+NOW=pageTime<utc9Now and utc9Now<pageTime+interval*3600
 
 function EpgCssTemplate()
   local paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
@@ -31,20 +49,25 @@ function EpgCssTemplate()
     ..'</style>\n'
 end
 
-function EpgJsTemplate(baseTime,NOW,date,lastTime)
+function EpgJsTemplate(lastTime)
   local titleControl=tonumber(edcb.GetPrivateProfile('GUIDE','titleControl',1+4+2+32,INI))
   return '<script src="js/tvguide.js'..Version('tvguide')..'"></script>\n'
     ..'<script>new TvGuide('
     ..ONE_MIN_PX..','
-    ..baseTime..','
+    ..(pageTime-9*3600)..','
     ..MARGIN_MIN..','
-    ..(lastTime and lastTime or 'null')..','
+    ..(lastTime and pageTime+(interval-9)*3600 or 'null')..','
     ..titleControl..','
     ..(HOVER and 'true,' or 'false,')
     ..(NOW and 'true,' or 'false,')
-    ..(date and 'true,' or 'false,')
+    ..(date==0 and 'true,' or 'false,')
     ..');const ctok=\''..CsrfToken('setreserve')
     ..'\';</script>\n'
+end
+
+rt={}
+for i,v in ipairs(edcb.GetReserveData()) do
+  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v
 end
 
 function CellTemplate(v,op,id,custom)
@@ -53,12 +76,8 @@ function CellTemplate(v,op,id,custom)
   local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
   local search=v.shortInfo and SearchConverter(v, op.service_name) or ''									--検索
 
-  local r=nil
-  local rid=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
-  if rid then
-    r=edcb.GetReserveData(rid)
-  end
-  local rs=r and r.recSetting or nil
+  local r=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]
+  local rs=r and r.recSetting
 
   local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
@@ -76,7 +95,7 @@ function CellTemplate(v,op,id,custom)
       ..(SIDE_PANEL and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime or 'eid="'..v.eid)
                     or '" href="'..op.url)..'">番組詳細</a>'
     ..(endTime~=startTime and utc9Now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
-      ..(r and '" data-toggle="'..(rs.recMode==5 and 1 or 0)..'" data-id="'..rid..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+      ..(r and '" data-toggle="'..(rs.recMode==5 and 1 or 0)..'" data-id="'..r.reserveID..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
             or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
     ..'<a class="autoepg mdl-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
     ..'</p>'

@@ -2,25 +2,10 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
 tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkType()) or 0
-date=GetVarInt(mg.request_info.query_string,'date',-10000,1000) or GetVarDate(mg.request_info.query_string,'date') or 0
-hour=GetVarInt(mg.request_info.query_string,'hour',-1,27) or -1
---hour=-1で現在時刻-MARGIN_HOUR時間を基準
-interval=GetVarInt(mg.request_info.query_string,'interval',0,100) or DEF_INTERVAL
 CH_COUNT=GetVarInt(mg.request_info.query_string,'chcount') or DEF_CH_COUNT
 pageIndex=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 
---UTC+9の今日の始まりの日付。現在時刻が深夜4時までは前日になることに注意
-baseDate=math.floor((utc9Now-4*3600)/24/3600)
-if date>1000 then
-  date=math.floor(date/24/3600)-baseDate
-end
-Hour=hour<0 and math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24 or hour
-if Hour<4-(hour<0 and MARGIN_HOUR or 0) then Hour=Hour+24 end
-pageDate=baseDate+date
-pageTime=(pageDate*24+Hour)*3600
 Date=os.date('!*t', pageDate*24*3600)
-
-NOW=pageTime<utc9Now and utc9Now<pageTime+interval*3600
 
 function hrefGene(href)
   href=href or {}
@@ -30,22 +15,16 @@ function hrefGene(href)
       hour=math.floor(href%(24*3600)/3600)
     }
   end
-  local s='?tab='..(href.tab or tab)
+  return '?tab='..(href.tab or tab)
     ..'&amp;date='..(href.date or date)
     ..((hour>=0 or href.hour and href.hour>=0) and '&amp;hour='..(href.hour or hour) or '')
     ..((href.chpage~=0 and (pageIndex~=0 or href.chpage)) and '&amp;page='..(href.chpage or pageIndex) or '')
     ..(CH_COUNT~=DEF_CH_COUNT and '&amp;chcount='..CH_COUNT or '')
     ..(interval~=DEF_INTERVAL and '&amp;interval='..interval or '')
-  return s
 end
 
 
 edcb.htmlEscape=15
-
-rt={}
-for i,v in ipairs(edcb.GetReserveData()) do
-  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
-end
 
 minTime=nil
 maxTime=nil
@@ -79,7 +58,6 @@ for i,v in ipairs(CustomServiceList()) do
     table.sort(st[#st].et, function(a,b) return os.time(a.startTime)<os.time(b.startTime) end)
   end
 end
-
 
 ct={
   title='番組表',
@@ -116,7 +94,7 @@ if 0<CH_COUNT then
 
   if CH_COUNT<n then
     ct.subheader=ct.subheader..'<div id="page" class="pulldown dividers navigation__item mdl-color-text--primary">ページ '..(pageIndex+1)..'</div>\n'
-    
+
     table.insert(main, '<ul class="mdl-menu mdl-menu--bottom-right mdl-js-menu" for="page">\n')
     for i=0, math.ceil(n/CH_COUNT-1) do
       table.insert(main, '<li><a class="mdl-menu__item'..(pageIndex==i and ' mdl-color-text--accent' or '" href="epg.html'..hrefGene({chpage=i}))..'">ページ '..(i+1)..'</a></li>\n')
@@ -165,11 +143,11 @@ if minTime then
 
   table.insert(main, '</ul>\n<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
 
-  n=interval>=25 and Hour or 4
+  n=interval>=25 and baseHour or 4
   for i=n, n+math.max(interval-2, 23) ,2 do
     j=i%24
     if j<4 then j=j+24 end
-    if Hour<=i and i<Hour+interval then
+    if baseHour<=i and i<baseHour+interval then
       d=os.date('!*t', (pageDate*24+i)*3600)
       table.insert(main, '<li><a class="scroller mdl-menu__item'..(interval<25 and ' mdl-color-text--accent' or '')..'" href="#H'..i..'">'..(d.day~=Date.day and (j==4 or j==5) and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..j..'時</a></li>\n')
     else
@@ -189,7 +167,7 @@ ct.side='<input type="checkbox" class="hidden" id="a">\n'
   ..'<label class="drop-down mdl-navigation__link" for="a">サービス</label>\n'
   ..'<ul>\n'
 
-WIDE={ 
+WIDE={
   --少し拡幅する
   ['32391-32391-23608']=true, --MX
 }
@@ -303,7 +281,7 @@ table.insert(main, '</div><main class="sidePanel-container mdl-layout__content">
 
   ..'<div id="tv-guide-main">\n'
   ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n')
-  for i=Hour,Hour+interval-1 do
+  for i=baseHour,baseHour+interval-1 do
     j=i%24
     d=os.date('!*t', ((pageDate*24)+i)*3600)
     table.insert(main, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and Date.day~=d.day and d.day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
@@ -318,7 +296,7 @@ ct.main=table.concat(main)..(NOW and '<div id="line"><span></span></div>' or '')
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
-  ..EpgJsTemplate(pageTime-9*3600,NOW,date==0,(NOW and pageTime+(interval-9)*3600 or false))
+  ..EpgJsTemplate(NOW)
 
 ct=Template(ct)
 

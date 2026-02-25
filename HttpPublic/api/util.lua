@@ -1077,12 +1077,20 @@ function GetVarDate(qs,n,occ)
 end
 
 --クエリパラメータから開始時間の範囲を取得する
-function GetVarTimeRange(post)
-  local startDate=GetVarDate(post, 'startDate')
-  local endDate=GetVarDate(post, 'endDate')
+function GetVarTimeRange(qs)
+  local startDate=GetVarDate(qs, 'startDate')
+  local endDate=GetVarDate(qs, 'endDate')
   if startDate and endDate then
-    startDate=startDate+GetVarTime(post, 'startTime')
-    return {startTime=os.date('!*t',startDate),durationSecond=endDate+GetVarTime(post, 'endTime')-startDate}
+    startDate=startDate+GetVarTime(qs, 'startTime')
+    return {startTime=os.date('!*t',startDate),durationSecond=endDate+GetVarTime(qs, 'endTime')-startDate}
+  elseif mg.get_var(qs, 'date') then
+    local BASE=4 --日の始まりの時刻
+    local utc9Now=os.time()+9*3600
+    local interval=GetVarInt(qs,'interval',0,100) or 25
+    local date=GetVarDate(qs,'date') or (GetVarInt(qs,'date',-10000,1000)+math.floor((utc9Now-BASE*3600)/(24*3600)))*24*3600
+    local hour=GetVarInt(qs,'hour',-1,27) or BASE  -- -1は現在時刻
+    hour=hour<0 and math.floor((utc9Now%(24*3600))/3600) or hour<BASE and hour+24 or hour
+    return {startTime=os.date('!*t',date+hour*3600),durationSecond=interval*3600}
   end
 end
 

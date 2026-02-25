@@ -1,22 +1,12 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'epg.lua')
 
-baseDate=math.floor((utc9Now-MARGIN_HOUR*3600)/24/3600)
-Hour=math.floor(((utc9Now%(24*3600))/3600)-MARGIN_HOUR)%24
-baseTime=(baseDate*24+Hour)*3600
-
 post=AssertPost()
-
-rt={}
-for i,v in ipairs(edcb.GetReserveData()) do
-  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
-end
-
 key=post and GetSearchKey(post) or GetSearchKeyPreset(mg.request_info.query_string) or GetSearchKeyKeyword(mg.request_info.query_string)
 
 edcb.htmlEscape=15
 
-b=key.enabled and SearchEpg(key,range,archive) or {}
+b=key.enabled and SearchEpg(key) or {}
 
 st={}
 for i,v in ipairs(b)do
@@ -77,17 +67,17 @@ end
 table.insert(main, '</ul>'
 
   ..'<ul class="widemenu text-right mdl-menu mdl-menu--bottom-right mdl-js-menu" for="time">\n')
-if Hour<4 then
+if baseHour<4 then
   table.insert(main, '<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
     ..'<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n'
-    ..'<li class="scroller mdl-menu__item" data-scroll="0">'..(Hour+24)..'時</li>\n')
+    ..'<li class="scroller mdl-menu__item" data-scroll="0">'..(baseHour+24)..'時</li>\n')
 end
-for i=4,Hour+interval,8 do
+for i=4,baseHour+interval,8 do
   j=i%24
-  if i<=Hour-8  then
+  if i<=baseHour-8  then
       table.insert(main, '<li class="mdl-menu__item mdl-cell--hide-phone"></li>\n')
-  elseif i<Hour then
-      table.insert(main, '<li><a class="scroller mdl-menu__item" href="#H'..Hour..'">'..Hour..'時</a></li>\n')
+  elseif i<baseHour then
+      table.insert(main, '<li><a class="scroller mdl-menu__item" href="#H'..baseHour..'">'..baseHour..'時</a></li>\n')
   else
     d=os.date('!*t', ((baseDate*24)+i)*3600)
     table.insert(main, '<li><a class="scroller mdl-menu__item" href="#H'..i..'">'..(j==4 and d.day..'日('..({'日','月','火','水','木','金','土'})[d.wday]..') ' or '')..(j<4 and j+24 or j)..'時'..'</a></li>\n')
@@ -102,7 +92,7 @@ ctt={'<div id="tv-guide-container"><div id="tv-guide">'
   ..'<div id="tv-guide-main">\n'
 
   ..'<div class="hour-container mdl-color-text--white mdl-shadow--2dp">\n'}
-for i=Hour,Hour+interval-1 do
+for i=baseHour,baseHour+interval-1 do
   j=i%24
   table.insert(ctt, '<div id="H'..i..'" class="hour t'..j..'"><tt>'..(j==4 and os.date('!*t', ((baseDate*24)+i)*3600).day..'日' or '')..(j<4 and j+24 or j)..'時</tt></div>\n')
 end
@@ -149,7 +139,7 @@ ct.main=table.concat(main)..'</div><main class="sidePanel-container mdl-layout__
   ..'<input type="hidden" name="andKey">\n'
   ..'<input type="hidden" name="serviceList">\n'
   ..'</form>\n'
-  ..EpgJsTemplate(baseTime-9*3600,true)
+  ..EpgJsTemplate()
 
 ct=Template(ct)
 
