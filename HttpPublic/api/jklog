@@ -245,31 +245,44 @@ end
 
 if code==200 then
   ct=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
-  currSec=1
-  for i,v in ipairs(totList) do
-    if v.tot<v.totEnd then
-      cmd=(WIN32 and QuoteCommandArgForPath(JKRDLOG_PATH) or FindToolsCommand(JKRDLOG_PATH))..' jk'..jkID..' '..(v.tot+jkTM)..' '..(v.totEnd+jkTM)
-      f=edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd)
-      if f then
-        while true do
-          buf=ReadJikkyoChunk(f)
-          if not buf then break end
-          if currSec<v.sec then
-            -- ヘッダを余分に挿入してチャンクの数と秒数を一致させる
-            extraHead=buf:match('^<!%-%- J=[0-9]+')
-            if extraHead then
-              extraHead=extraHead..';T='..(v.tot+jkTM)..';L=0;N=0'
-              extraHead=extraHead..(' '):rep(76-#extraHead)..'-->\n'
-              while currSec<v.sec do
-                ct:Append(extraHead)
-                currSec=currSec+1
+  if GetVarInt(mg.request_info.query_string,'kakolog')==1 then
+    JKIMLOG_PATH=JKRDLOG_PATH:gsub('jkrdlog','jkimlog')
+    xml=JKIMLOG_PATH:gsub('[^\\/]*$','')..'jk'..jkID..'.xml'
+    for i,v in ipairs(totList) do
+      if v.tot<v.totEnd then
+        edcb.os.execute('curl "https://jikkyo.tsukumijima.net/api/kakolog/jk'..jkID..'?starttime='..(v.tot+jkTM)..'^&endtime='..(v.totEnd+jkTM)..'^&format=xml" -o "'..xml..'"')
+        cmd=(WIN32 and QuoteCommandArgForPath(JKIMLOG_PATH) or FindToolsCommand(JKIMLOG_PATH))..' "'..xml..'"'
+        edcb.os.execute(WIN32 and '"'..cmd..'"' or cmd)
+      end
+    end
+    ct:Append('done')
+  else
+    currSec=1
+    for i,v in ipairs(totList) do
+      if v.tot<v.totEnd then
+        cmd=(WIN32 and QuoteCommandArgForPath(JKRDLOG_PATH) or FindToolsCommand(JKRDLOG_PATH))..' jk'..jkID..' '..(v.tot+jkTM)..' '..(v.totEnd+jkTM)
+        f=edcb.io.popen(WIN32 and '"'..cmd..'"' or cmd)
+        if f then
+          while true do
+            buf=ReadJikkyoChunk(f)
+            if not buf then break end
+            if currSec<v.sec then
+              -- ヘッダを余分に挿入してチャンクの数と秒数を一致させる
+              extraHead=buf:match('^<!%-%- J=[0-9]+')
+              if extraHead then
+                extraHead=extraHead..';T='..(v.tot+jkTM)..';L=0;N=0'
+                extraHead=extraHead..(' '):rep(76-#extraHead)..'-->\n'
+                while currSec<v.sec do
+                  ct:Append(extraHead)
+                  currSec=currSec+1
+                end
               end
             end
+            ct:Append(buf)
+            currSec=currSec+1
           end
-          ct:Append(buf)
-          currSec=currSec+1
+          f:close()
         end
-        f:close()
       end
     end
   end

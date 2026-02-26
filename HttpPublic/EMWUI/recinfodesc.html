@@ -141,6 +141,7 @@ if v then
     ..(video and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"')
       ..'<div class="is_cast hidden" '..(ori and 'data-id="'..video..'" data-meta=\'{"duration":'..(dur or v.durationSecond)..',' or 'src="'..video..'" data-public="true" data-meta=\'{')..'"audio":'..(audio and #audio or audioInfo and (audioInfo:find('（ステレオ）.*（ステレオ）') or audioInfo:find('デュアルモノ')) and 2 or 1)..'}\'></div>'
+      ..'<div id="apps-container"><div class="container"><div class="container"></div></div></div>'
       ..'</div>\n</section>\n' or '')
 
     ..(#v.errInfo>0 and '<section class="mdl-layout__tab-panel" id="error">\n<div>\n<pre>'..v.errInfo..'</pre>\n</div>\n</section>\n' or '')

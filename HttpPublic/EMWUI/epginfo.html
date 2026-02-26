@@ -80,7 +80,8 @@ if not End and epgInfo then
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"', audio)
-      ..'<div class="is_cast hidden" data-reid="'..r.reserveID..'" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
+      ..'<div class="is_cast hidden" data-reid="'..r.reserveID..'" data-okkake="true" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
+      ..'<div id="apps-container"><div class="container"><div class="container"></div></div></div>'
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'
 

@@ -23,7 +23,6 @@
   width: 100%;
   position: absolute;
   bottom: 0;
-  z-index: -1;
 }
 
 #jikkyo-config {
@@ -47,6 +46,7 @@
   position: absolute;
   top: 5px;
   right: 5px;
+  z-index: 20;
 }
 
 #jikkyo-config > input {
@@ -68,6 +68,7 @@
   line-break: anywhere;
   overflow: auto;
   word-break: break-all;
+  z-index: 10;
 }
 
 #jikkyo-chats > .closed {
@@ -75,14 +76,14 @@
 }
 
 #jikkyo-chats > div > .nico {
-  background: #fff;
+  /*background: #fff;*/
   color: #00a;
   margin-left: 0.2em;
   margin-right: 0.2em;
 }
 
 #jikkyo-chats > div > .refuge {
-  background: #fff;
+  /*background: #fff;*/
   color: #900;
   margin-left: 0.2em;
   margin-right: 0.2em;

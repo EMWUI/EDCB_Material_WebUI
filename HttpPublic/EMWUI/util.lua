@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260225',
+    css='260226',
     common='260217',
     tvguide='250824',
     player='260225',
     onair='260116',
     library='260129',
     setting='250906',
-    tsloader='260225',
+    tsloader='260226',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -905,6 +905,7 @@ function PlayerTemplate(video, liveOrAudio)
         s=s..'<div id="jikkyo-TM"><div class="mdl-textfield mdl-js-textfield"><input name="tm" id="dateFormat" type="datetime-local" class="mdl-textfield__input"><label class="mdl-textfield__label" for="dateFormat"></label></div><div class="pulldown"><select name="tmsec"><option selected>00s'
           ..('_'):rep(59):gsub('_',function() i=i+1 return ('<option>%02ds'):format(i) end)
           ..'</select></div><button type="button" class="mdl-button mdl-js-button mdl-button--primary">変更</button></div>'
+          ..'<button id="kakolog" type="button" class="mdl-button mdl-js-button mdl-button--primary">ログ取得</button>'
       end
     end
     return s..'<div id="jikkyo-opacity"><div>透過率 <span>1</span></div><input class="mdl-slider mdl-js-slider" type="range" min="0.1" max="1" value="1" step="0.1"></div>'

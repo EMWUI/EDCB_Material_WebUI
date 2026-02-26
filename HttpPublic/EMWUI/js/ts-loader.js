@@ -746,6 +746,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		inputTM: document.querySelector('#jikkyo-config input[name="tm"]'),
 		inputTMSec: document.querySelector('#jikkyo-config select[name="tmsec"]'),
 		btnConfig: document.querySelector("#jikkyo-TM button"),
+		kakolog: document.getElementById("kakolog"),
 		webBmlContainer: document.querySelector(".data-broadcasting-browser-container"),
 		remocon: document.querySelector(".remote-control"),
 		indicator: document.querySelector(".remote-control-indicator"),
@@ -962,7 +963,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		return this.jikkyo.showing;
 	}
 	#loadSubData(){
-		this.#shiftable=this.#e.initSrc.searchParams.has('shiftable');
+		this.#shiftable=this.#e.initSrc&&this.#e.initSrc.searchParams.has('shiftable');
 		if (!this.#noWebBml && this.#datacastState!=this.#STATE.DISABLED)
 			if (this.#e.initSrc) this.#dataStream.enable();
 			else this.#psc.enable();
@@ -980,8 +981,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	#fname(){
 		const src = this.#e.initSrc||new URL(this.#e.getAttribute('src'), location.href);
-		if (src.searchParams.has('fname')) return src.searchParams.get('fname');
-		else return this.#e.getAttribute('src')||'';
+		return src.searchParams.has('id') ? `id=${src.searchParams.get('id')}`
+			: src.searchParams.has('reid') ? `reid=${src.searchParams.get('reid')}`
+			: `fname=${src.searchParams.has('fname') ? encodeURIComponent(src.searchParams.get('fname')) : src.pathname.replace(/^(?:\/)+/,"")}`;
 	}
 	#setElems(elems){
 		Object.assign(this.#elems, elems);
@@ -991,6 +993,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#elems.shiftJikkyo.forEach(e=>e.onclick=()=>this.#shiftJikkyo(+e.dataset.sec));
 		if (this.#elems.selectID) this.#elems.selectID.onchange=()=>this.#setJK(this.#elems.selectID.value);
 		if (this.#elems.btnConfig) this.#elems.btnConfig.onclick=()=>this.#setJK(null,this.#elems.inputTM.value?Math.floor(Date.parse(this.#elems.inputTM.value+"Z")/60000)*60+this.#elems.inputTMSec.selectedIndex-32400:0);
+		if (this.#elems.kakolog) this.#elems.kakolog.onclick=()=>this.#kakolog();
 		if (!this.#elems.commInput) return;
 		this.#elems.commInput.onkeydown = e => {if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter") this.#sendComment();}
 		this.#elems.commBtn.onclick = () => this.#sendComment();
@@ -1696,7 +1699,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			if(this.#jklog.xhr)return;
 			this.#mHeader=null;
 			this.#jklog.xhr=new XMLHttpRequest();
-			this.#jklog.xhr.open("GET",`${this.#api.jklog}?fname=${this.#fname().replace(/^(?:\.\.\/)+/,"")}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}`);
+			this.#jklog.xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}`);
 			this.#jklog.xhr.onloadend=()=>{
 				if(!this.#logText){
 					this.#jkStream.error(this.#jklog.xhr.status,0);
@@ -1727,6 +1730,25 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			};
 			this.#jklog.xhr.send();
 		}
+	}
+
+	#kakolog(){
+		if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
+		const text=this.#elems.kakolog.innerText;
+		this.#elems.kakolog.innerText="取得中...";
+		this.#elems.kakolog.disabled=true;
+		const xhr=new XMLHttpRequest();
+		xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}&kakolog=1`);
+		xhr.onloadend=()=>{
+			if(xhr.status==200||xhr.response){
+				this.#logText=null;
+				this.#jklog.xhr=null;
+				this.#jklog.enable();
+			}
+			this.#elems.kakolog.innerText=text;
+			this.#elems.kakolog.disabled=false;
+		}
+		xhr.send();
 	}
 	
 	#sendComment(){
