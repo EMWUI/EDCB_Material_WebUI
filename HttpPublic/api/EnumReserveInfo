@@ -1,32 +1,34 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
-edcb.htmlEscape=15
-a=edcb.GetReserveData()
-ct={'<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n'}
-for i,v in ipairs(a) do
-  size=GetPredictionSize(v)
-  table.insert(ct, '<reserveinfo><ID>'
-    ..v.reserveID..'</ID><title>'
-    ..v.title..'</title><startDate>'
-    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
-                    v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)
-    ..(v.startTime.wday-1)..'</startDayOfWeek><duration>'
-    ..v.durationSecond..'</duration><service_name>'
-    ..v.stationName..'</service_name><ONID>'
-    ..v.onid..'</ONID><TSID>'
-    ..v.tsid..'</TSID><SID>'
-    ..v.sid..'</SID><eventID>'
-    ..v.eid..'</eventID><comment>'
-    ..v.comment..'</comment><overlapMode>'
-    ..v.overlapMode..'</overlapMode><size>'
-    ..(size and ConvertSize(size,1) or '-')..'</size>'
-    ..XmlRecSetting(v.recSetting)
-    ..'</reserveinfo>\r\n')
-end
-table.insert(ct, '</items></entry>')
-cl=0
-for i,v in ipairs(ct) do cl=cl+#v end
-mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  for i,v in ipairs(ct) do mg.write(v) end
+
+if GetVarInt(mg.request_info.query_string,'json',0,1)==1 then
+  ResponseJson(edcb.GetReserveData(),mg.request_info.query_string)
+else
+  edcb.htmlEscape=15
+  a=edcb.GetReserveData()
+  ct=CreateContentBuilder()
+  ct:Append('<?xml version="1.0" encoding="UTF-8" ?><entry><total>'..#a..'</total><index>0</index><count>'..#a..'</count><items>\r\n')
+  for i,v in ipairs(a) do
+    size=GetPredictionSize(v)
+    ct:Append('<reserveinfo><ID>'
+      ..v.reserveID..'</ID><title>'
+      ..v.title..'</title><startDate>'
+      ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                      v.startTime.year, v.startTime.month, v.startTime.day, v.startTime.hour, v.startTime.min, v.startTime.sec)
+      ..(v.startTime.wday-1)..'</startDayOfWeek><duration>'
+      ..v.durationSecond..'</duration><service_name>'
+      ..v.stationName..'</service_name><ONID>'
+      ..v.onid..'</ONID><TSID>'
+      ..v.tsid..'</TSID><SID>'
+      ..v.sid..'</SID><eventID>'
+      ..v.eid..'</eventID><comment>'
+      ..v.comment..'</comment><overlapMode>'
+      ..v.overlapMode..'</overlapMode><size>'
+      ..(size and ConvertSize(size,1) or '-')..'</size>'
+      ..XmlRecSetting(v.recSetting)
+      ..'</reserveinfo>\r\n')
+  end
+  ct:Append('</items></entry>')
+  ct:Finish()
+  mg.write(ct:Pop(Response(200,'text/xml','utf-8',ct.len)..'\r\n'))
 end

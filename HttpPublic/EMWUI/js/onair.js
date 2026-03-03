@@ -61,6 +61,7 @@ $(function(){
 				$e.find('.startTime').text(ConvertTime(_d.starttime)).next('.endTime').text(`～${ConvertTime(_d.endtime)}`);
 				$e.find('.title').html(ConvertTitle(_d.title));
 				$e.find('.event_text').html(_d.text);
+				$e.find('.nextstartTime,.nextendTime,.nexttitle').empty();
 			});
 		}).fail(() => d.update = false);
 	}

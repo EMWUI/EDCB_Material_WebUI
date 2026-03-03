@@ -1581,6 +1581,8 @@ function ParseAndKey(andKey)
   r.disableFlag=andKey:match('^^!{999}(.*)')
   r.caseFlag=(r.disableFlag or andKey):match('^C!{999}(.*)')
   r.andKey=r.caseFlag or r.disableFlag or andKey
+  r.caseFlag=r.caseFlag and true or false
+  r.disableFlag=r.disableFlag and true or false
   return r
 end
 
@@ -1688,4 +1690,165 @@ function Check_iOS()
       break
     end
   end
+end
+
+--テーブルをXMLに変換  
+--日付はISO 8601形式に
+function ConvertXml(val, key)
+  key=key or 'entry'
+  local t=type(val)
+
+  --日付テーブルはISO 8601形式に
+  if t=='table' and val.year and val.month and val.day and val.hour then
+    val=string.format('%04d-%02d-%02dT%02d:%02d:%02d',
+      val.year, val.month, val.day, val.hour, val.min, val.sec)
+    t='string'
+  end
+
+  if t=='table' then
+    local is_array=true
+    local n=0
+    -- 配列かチェック
+    for k,v in pairs(val) do
+      n=n+1
+      if type(k)~="number" or k~=n then
+        is_array=false
+        break
+      end
+    end
+
+    local res={}
+    if is_array then
+      -- Array: [1, 2, 3]
+      for i=1,n do
+        table.insert(res,ConvertXml(val[i],'item'))
+      end
+    else
+      -- Object: {key:value}
+      for k,v in pairs(val) do
+        table.insert(res,ConvertXml(v,k))
+      end
+    end
+    return '<'..key..'>'..table.concat(res)..'</'..key..'>'
+  else
+    return '<'..key..'>'..(t=='boolean' and (t and '1' or '0') or EdcbHtmlEscape(tostring(val)))..'</'..key..'>'
+  end
+end
+
+--XML形式のHTTPレスポンスに変換して送信
+function ResponseXml(a)
+  edcb.htmlEscape=15
+  local ct=CreateContentBuilder()
+  ct:Append('<?xml version="1.0" encoding="UTF-8" ?>'..ConvertXml(a))
+  ct:Finish()
+  mg.write(ct:Pop(Response(200,'text/xml','utf-8',ct.len)..'\r\n'))
+end
+
+--テーブルをJSONに変換  
+--ジャンルなどに文字列追加など補完、日付はISO 8601形式に
+function ConvertJson(val)
+  local t=type(val)
+
+  if t=='table' then
+    --日付テーブルはISO 8601形式に
+    if val.year and val.month and val.day and val.hour then
+      return string.format('"%04d-%02d-%02dT%02d:%02d:%02d"', 
+          val.year, val.month, val.day, val.hour, val.min, val.sec)
+    end
+    --予約にサイズ予想を追加
+    if val.reserveID then
+      local size=GetPredictionSize(val)
+      if size then val.size=ConvertSize(size,1) end
+    end
+    if val.recMode then
+      val.recEnabled=val.recMode~=5
+      val.recMode=val.recMode~=5 and val.recMode or val.NoRecMode or 1
+    end
+
+    local is_array=true
+    local n=0
+    -- 配列かチェック
+    for k,v in pairs(val) do
+      n=n+1
+      if type(k)~='number' or k~=n then
+        is_array=false
+        break
+      end
+    end
+
+    local res={}
+    if is_array then
+      -- Array: [1, 2, 3]
+      for i=1,n do
+        table.insert(res,ConvertJson(val[i]))
+      end
+      return '['..table.concat(res,',')..']'
+    else
+      -- Object: {key:value}
+      for k,v in pairs(val) do
+        --ジャンル文字列を追加
+        if k=='contentInfoList' then
+          for j,w in pairs(v) do
+            local nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
+                        w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
+            v[j].nibble1=math.floor(w.content_nibble/256)
+            v[j].nibble2=w.content_nibble%256
+            v[j].component_type_name={
+              nibble1=edcb.GetGenreName(math.floor(nibble/256)*256+255),
+              nibble2=edcb.GetGenreName(nibble)
+            }
+          end
+        --コンポーネント記述子の文字列を追加
+        elseif k=='componentInfo' then
+          v.component_type_name=edcb.GetComponentTypeName(v.stream_content*256+v.component_type)
+        elseif k=='audioInfoList' then
+          for j,w in pairs(v) do
+            v[j].component_type_name=edcb.GetComponentTypeName(w.stream_content*256+w.component_type)
+          end
+        end
+
+        if k=='andKey' then
+          for j,w in pairs(ParseAndKey(v)) do
+            table.insert(res,ConvertJson(tostring(j))..':'..ConvertJson(w))
+          end
+        elseif k=='notKey' then
+          for j,w in pairs(ParseNotKey(v)) do
+            table.insert(res,ConvertJson(tostring(j))..':'..ConvertJson(w))
+          end
+        else
+          table.insert(res,ConvertJson(tostring(k))..':'..ConvertJson(v))
+        end
+      end
+      return '{'..table.concat(res,',')..'}'
+    end
+  elseif t=='string' then
+    local escapes={['"']='\\"',['\\']='\\\\',['\b']='\\b',['\f']='\\f',['\n']='\\n',['\r']='\\r',['\t']='\\t'}
+    -- 制御文字（%c）と " と \ を置換
+    return '"'..val:gsub('[%c\\"]', function(c)
+      return escapes[c] or string.format('\\u%04x', string.byte(c))
+    end)..'"'
+  elseif t=='number' or t=='boolean' then
+    return tostring(val)
+  else
+    return 'null'
+  end
+end
+
+--JSON形式のHTTPレスポンスに変換して送信
+function ResponseJson(a,query)
+  local b=nil
+  local ct=CreateContentBuilder()
+  if query then
+    local index=GetVarInt(query,'index',0) or 0
+    local count=GetVarInt(query,'count',0) or 200
+    local countTo=math.min(index+count,#a)
+    b={total=#a,index=index,count=math.max(countTo-index,0),items={}}
+    for i=index+1,countTo do
+      table.insert(b.items,a[i])
+    end
+  end
+  ct:Append(ConvertJson(b or a))
+
+  ct:Finish()
+  mg.write(ct:Pop(Response(200,'application/json','utf-8',ct.len)..'\r\n'))
 end

@@ -1,6 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
+a={err='不正値入力'}
 post=AssertPost()
 if post then
   dataID=GetVarInt(mg.request_info.query_string,'id') or 0
@@ -26,19 +27,18 @@ if post then
       end
     end
     if done then
-      messege='<success>プログラム予約を'..(dataID==0 and '追加' or '変更')..'しました</success>'
+      a={success='プログラム予約を'..(dataID==0 and '追加' or '変更')..'しました'}
     else
-      messege='<err>プログラム予約を'..(dataID==0 and '追加' or '変更')..'できませんでした</err>'
+      a={err='プログラム予約を'..(dataID==0 and '追加' or '変更')..'できませんでした'}
     end
   elseif mg.get_var(post,'del') then
     edcb.DelManuAdd(aa.dataID)
-    messege='<success>プログラム予約を削除しました</success>'
+    a={success='プログラム予約を削除しました'}
   end
 end
 
-
-ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
-mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  mg.write(ct)
+if GetVarInt(mg.request_info.query_string,'json')==1 then
+  ResponseJson(a)
+else
+  ResponseXml(a)
 end

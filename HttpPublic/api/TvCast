@@ -7,7 +7,7 @@ query=AssertPost()
 if not query then
   -- POSTでなくてもよい
   query=mg.request_info.query_string
-  AssertCsrf(query)
+  if query then AssertCsrf(query) end
 end
 
 n=GetVarInt(query,'n') or 0
@@ -17,21 +17,21 @@ if onid==0 and tsid==0 and sid==0 then
   onid=nil
 end
 
+a={err='不正値入力'}
 if onid then
   if sid==0 then
     -- NetworkTVモードを終了
     edcb.CloseNetworkTV(n)
-    ok='停止'
+    a={success='停止'}
   else
     -- NetworkTVモードを開始
     ok,pid=edcb.OpenNetworkTV(mode,onid,tsid,sid,n)
-    if ok then ok='起動' end
+    if ok then a={success='起動'} end
   end
 end
 
-if ok then
-  ct='<?xml version="1.0" encoding="UTF-8" ?'..'><entry><success>'..ok..'</success></entry>'
-  mg.write(Response(200,'text/xml', 'utf-8', #ct) ..'\r\n'..(mg.request_info.request_method~='HEAD' and ct or ''))
+if GetVarInt(mg.request_info.query_string,'json')==1 then
+  ResponseJson(a)
 else
-  mg.write(Response(404,'text/html','utf-8')..'\r\n')
+  ResponseXml(a)
 end

@@ -16,13 +16,12 @@ $(function(){
 			history.pushState(null, null, `?${params.toString()}`);
 		}
 		showSpinner(true);
-		$.get(`${ROOT}api/Library${location.search}`).done(xml => {
-			if ($(xml).find('error').length){
-				Snackbar($(xml).find('error').text());
+		$.get(`${ROOT}api/Library${location.search}`, {json:1}).done(d => {
+			if (!d.error) generateLibrary(d);
+			else{
+				Snackbar(d.error);
 				showSpinner();
 				history.back();
-			}else{
-				generateLibrary($(xml));
 			}
 		}).fail(() => {
 			Snackbar('取得に失敗しました');
@@ -31,20 +30,10 @@ $(function(){
 	}
 
 	const getMetadata = async ($e, hash, basic = true) => {
-		if ($e.data('path') && (!basic && $e.data('info'))) return;
-		await $.get(`${ROOT}api/Library${basic?'':'?basic=0'}`, hash).done(xml => {
-			xml = $(xml).find('file');
-			$e.data({
-				path: xml.txt('path'),
-				name: xml.txt('name'),
-				public: xml.num('public') == 1,
-				meta: {
-					duration: xml.children('meta').num('duration'),
-					audio: xml.children('meta').num('audio')
-				}
-			});
-
-			if (xml.txt('programInfo')) $e.data('info', Object.assign(toObj.ProgramInfo(xml.txt('programInfo')), {id: 65535}));
+		if ($e.data('path') && basic || $e.data('info')) return;
+		await $.get(`${ROOT}api/Library?json=1${basic?'':'&basic=0'}`, hash).done(d => {
+			$e.data(d);
+			if (d.programInfo) $e.data('info', Object.assign(toObj.ProgramInfo(d.programInfo), {id: 65535}));
 		});
 	}
 
@@ -66,120 +55,114 @@ $(function(){
 	}
 
 	//ライブラリ表示
-	const generateLibrary = xml => {
-		xml = xml.find('entry');
+	const generateLibrary = d => {
 		showSpinner(true);
 		$('.library').empty();
 		$('#folder').hide();
 		$('#file').toggleClass('list', !isList());
 
-		const folder = [];
-		const file = [];
 		const baseHash = [];
-		const index = xml.num('index');
-		if (index) baseHash.push({name: 'i', value: index});
+		if (d.index) baseHash.push({name: 'i', value: d.index});
 		const path = [...baseHash];
-		if (xml.children('pathhash').length) xml.txt('pathhash').split(',').forEach(e => baseHash.push({name: 'p', value: e}) );
+		if (d.path) d.path.forEach(e => baseHash.push({name: 'p', value: e.hash}) );
 
-		xml.children('dir, file').each((i, e) => {
-			const name = $(e).txt('name');
-			const $e = $((viewMode==CONP ? '<li>' : '<div>'));
+		const folder = d.dir.map(e => {
 			const hash = [...baseHash];
-			if ($(e).children('index').length) hash.push({name: 'i', value: $(e).txt('index')});
-			if ($(e).prop('tagName') == 'dir'){
-				if (xml.children('dirhash').length) hash.push({name: 'p', value: xml.txt('dirhash')});
-				if ($(e).children('hash').length) hash.push({name: 'd', value: $(e).txt('hash')});
+			if (e.index) hash.push({name: 'i', value: e.index});
+			if (d.dirhash) hash.push({name: 'p', value: d.dirhash});
+			if (e.hash) hash.push({name: 'd', value: e.hash});
 
-				$e.addClass('folder').click(() => getLibrary(hash));
-				if (isFolder()) $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
-					$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
-					$('<div>', {class: 'foldername', text: name }) );
-				else $e.addClass('mdl-list__item').append(
-					$('<span>', {class: 'mdl-list__item-primary-content', append: [
-						$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
-						$('<span>', {text: name}) ]}) );
-				folder.push($e);
-			}else{
-				if (xml.children('dirhash').length) hash.push({name: 'd', value: xml.txt('dirhash')});
-				hash.push({name: 'h', value: $(e).txt('hash')});
-				const rollCanvas = document.createElement('canvas');
+			const $e = $((viewMode==CONP ? '<li>' : '<div>'), {class: 'folder', click: () => getLibrary(hash)});
+			if (isFolder()) $e.addClass('mdl-button mdl-js-button mdl-js-ripple-effect mdl-cell mdl-cell--2-col mdl-shadow--2dp').append(
+				$('<div>', {class: 'icon', html: $('<i>', {class: 'material-icons fill', text: 'folder'}) }),
+				$('<div>', {class: 'foldername', text: e.name }) );
+			else $e.addClass('mdl-list__item').append(
+				$('<span>', {class: 'mdl-list__item-primary-content', append: [
+					$('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'folder'}),
+					$('<span>', {text: e.name}) ]}) );
+			return $e;
+		})
+		const file = d.file.map(e => {
+			const hash = [...baseHash];
+			if (d.dirhash) hash.push({name: 'd', value: d.dirhash});
+			hash.push({name: 'h', value: e.hash});
+			const rollCanvas = document.createElement('canvas');
 
-				$e.addClass('item').data({
-					name: name,
-					date: $(e).txt('date')*1000,
-					size: $(e).num('size'),
-					public: $(e).children('public').length > 0,
-				}).click(async () => {
-					showSpinner(true);
-					const params = new URLSearchParams(location.search);
-					params.set('play', $.param(hash));
-					history.replaceState(null, null, `?${params.toString()}`);
-					$('#popup').addClass('is-visible');
-					$('#playerUI').addClass('is-visible');
-					$audios.prop('checked', false);
-					$('#tvcast').animate({scrollTop:0}, 500, 'swing');
-					await getMetadata($e, hash, false);
-					if ($e.data('info')){
-						setEpgInfo($e.data('info'));
-						$('#epginfo').removeClass('hidden');
-					}else $('#epginfo').addClass('hidden');
-					showSpinner();
-					playMovie($e);
-				});
+			const $e = $((viewMode==CONP ? '<li>' : '<div>'), {class: 'item', data: {
+				name: e.name,
+				date: new Date(e.mtime),
+				size: e.size,
+				public: e.public,
+			}, click: async () => {
+				showSpinner(true);
+				const params = new URLSearchParams(location.search);
+				params.set('play', $.param(hash));
+				history.replaceState(null, null, `?${params.toString()}`);
+				$('#popup').addClass('is-visible');
+				$('#playerUI').addClass('is-visible');
+				$audios.prop('checked', false);
+				$('#tvcast').animate({scrollTop:0}, 500, 'swing');
+				await getMetadata($e, hash, false);
+				if ($e.data('info')){
+					setEpgInfo($e.data('info'));
+					$('#epginfo').removeClass('hidden');
+				}else $('#epginfo').addClass('hidden');
+				showSpinner();
+				playMovie($e);
+			}});
 
-				const hover = {};
-				if (thumb){
-					let hovered = false;
-					Object.assign(hover, {
-						async pointerenter(e){
-							e.currentTarget.setPointerCapture(e.pointerId);
-							hovered = true;
-							await getMetadata($e, hash);
-							if (hovered) thumb.roll(rollCanvas, $e.data('path'));
-						},
-						pointerleave(e){
-							hovered = false;
-							thumb.hide();
-							e.currentTarget.releasePointerCapture(e.pointerId);
-						}
-					});
-				}
-
-				const thumbHash = $(e).txt('thumb');
-				const date = createViewDate($e.data('date'));
-				if (isFolder()){
-					if (!thumbHash && thumb) (async () => {
-						const thumbCanvas = document.createElement('canvas');
+			const hover = {};
+			if (thumb){
+				let hovered = false;
+				Object.assign(hover, {
+					async pointerenter(e){
+						e.currentTarget.setPointerCapture(e.pointerId);
+						hovered = true;
 						await getMetadata($e, hash);
-						const done = await thumb.setThumb(thumbCanvas, $e.data('path'), 0.1);
-						if (done) rollCanvas.before(thumbCanvas);
-					})();
-					
-					$e.addClass(`${['card','grid'][viewMode-1]}-container`).append([
-						$('<div>', {class: 'thumb-container', on: hover, append: [
-							thumbHash ? $('<img>', {src:  `${ROOT}video/thumbs/${thumbHash}.jpg`}) : $('<i>', {class: 'material-icons', text: 'movie_creation'}),
-							rollCanvas
-						]}),
-						$('<div>', {class: 'summary mdl-typography--title-color-contrast', append: [
-							$('<span>', {class: 'title', html: name}),
-							$('<span>', {class: 'mdl-typography--subhead', append:[
-								$('<span>', {class: 'date', html: `${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}),
-								$('<span>', {class: 'size', html: `${$(e).txt('size_text')}`}),
-							]})
-						]})
-					]);
-				}else{
-					const avatar = (thumbHash && thumbHash != 0)
-						? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumbHash}.jpg\');`})
-						: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
-					$e.addClass('mdl-list__item mdl-list__item--two-line').append(
-						$('<span>', {class: 'mdl-list__item-primary-content', append: [
-							avatar,
-							$('<span>', {class: 'title', text: name}),
-							$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: `${$(e).txt('size_text')} ${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}) ]}) );
-				}
-				file.push($e);
+						if (hovered) thumb.roll(rollCanvas, $e.data('path'));
+					},
+					pointerleave(e){
+						hovered = false;
+						thumb.hide();
+						e.currentTarget.releasePointerCapture(e.pointerId);
+					}
+				});
 			}
+
+			const thumbHash = e.thumb;
+			const date = createViewDate($e.data('date'));
+			if (isFolder()){
+				if (!thumbHash && thumb) (async () => {
+					const thumbCanvas = document.createElement('canvas');
+					await getMetadata($e, hash);
+					const done = await thumb.setThumb(thumbCanvas, $e.data('path'), 0.1);
+					if (done) rollCanvas.before(thumbCanvas);
+				})();
+				
+				$e.addClass(`${['card','grid'][viewMode-1]}-container`).append([
+					$('<div>', {class: 'thumb-container', on: hover, append: [
+						thumbHash ? $('<img>', {src:  `${ROOT}video/thumbs/${thumbHash}.jpg`}) : $('<i>', {class: 'material-icons', text: 'movie_creation'}),
+						rollCanvas
+					]}),
+					$('<div>', {class: 'summary mdl-typography--title-color-contrast', append: [
+						$('<span>', {class: 'title', html: e.name}),
+						$('<span>', {class: 'mdl-typography--subhead', append:[
+							$('<span>', {class: 'date', html: `${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}),
+							$('<span>', {class: 'size', html: `${e.sizeText}`}),
+						]})
+					]})
+				]);
+			}else{
+				const avatar = (thumbHash && thumbHash != 0)
+					? $('<i>', {class: 'mdl-list__item-avatar mdl-color--primary', style: `background-image:url(\'${ROOT}video/thumbs/${thumbHash}.jpg\');`})
+					: $('<i>', {class: 'material-icons mdl-list__item-avatar mdl-color--primary', text: 'movie_creation'});
+				$e.addClass('mdl-list__item mdl-list__item--two-line').append(
+					$('<span>', {class: 'mdl-list__item-primary-content', append: [
+						avatar,
+						$('<span>', {class: 'title', text: e.name}),
+						$('<span>', {class: 'mdl-list__item-sub-title mdl-cell--hide-phone', text: `${e.sizeText} ${date.getUTCFullYear()}/${zero(date.getUTCMonth()+1)}/${zero(date.getUTCDate())} ${zero(date.getUTCHours())}:${zero(date.getUTCMinutes())}:${zero(date.getUTCSeconds())}`}) ]}) );
+			}
+			return $e;
 		});
 
 		if (isList()) $('#file').append($(viewMode==LIST?'<div>':'<ul>', {class: 'main-content mdl-list mdl-cell mdl-cell--12-col mdl-shadow--4dp'}));
@@ -201,30 +184,20 @@ $(function(){
 		const createTab = (id, text, hash, active) => $('<span>', {id: `l_${id}`, class: `mdl-layout__tab${active ? ' is-active' : ''}`, text: text, data: {hash: hash}, click(){getLibrary(hash)}});
 		const chevron_right = '<i class="mdl-layout__tab material-icons">chevron_right'
 
-		const dirname = xml.txt('dirname');
-		$('.mdl-layout__header-row .mdl-layout-title').text(dirname);
+		$('.mdl-layout__header-row .mdl-layout-title').text(d.dirname);
 		if (!$(`#l_${id}`).length){
-			$('.path').html(createTab('home', 'ホーム', [], dirname == 'ホーム'));
+			$('.path').html(createTab('home', 'ホーム', [], d.dirname == 'ホーム'));
 
-			if (xml.children('pathname').length){
-				xml.txt('pathname').split('/').forEach((e, i) => {
-					const dir = [...path];
-					let pathhash = `index${index}`;
-					if (xml.children('pathhash').length && i > 0){
-						pathhash = xml.txt('pathhash').split(',')[i-1];
-						path.push({name: 'p', value: pathhash});
-						dir.push({name: 'd', value: pathhash});
-					}
-					$('.path').append(chevron_right).append(createTab(pathhash, e, dir));
-				});
-			}
+			if (d.iname) $('.path').append(chevron_right).append(createTab(`index${d.index}`, d.iname, [...path]));
+			if (d.path) d.path.forEach((e, i) =>{
+				const dir = [...path];
+				path.push({name: 'p', value: e.hash});
+				dir.push({name: 'd', value: e.hash});
+				$('.path').append(chevron_right).append(createTab(e.hash, e.name, dir));
+			});
 
-			let dirhash = `index${index}`;
-			if (xml.children('dirhash').length){
-				dirhash = xml.txt('dirhash');
-				path.push({name: 'd', value: dirhash});
-			}
-			if (dirname != 'ホーム') $('.path').append(chevron_right).append(createTab(dirhash, dirname, path, true));
+			if (d.dirhash) path.push({name: 'd', value: d.dirhash});
+			if (d.dirname != 'ホーム') $('.path').append(chevron_right).append(createTab(d.dirhash||`index${d.index}`, d.dirname, path, true));
 		}else{
 			$('.mdl-layout__tab').removeClass('is-active');
 			$(`#l_${id}`).addClass('is-active');
@@ -286,9 +259,9 @@ $(function(){
 	$('.thumbs').click(e => {
 		showSpinner(true);
 		Snackbar('サムネの作成を開始します');
-		$.get(`${ROOT}api/Library`, $(e.currentTarget).data()).done(xml => {
+		$.get(`${ROOT}api/Library?json=1`, $(e.currentTarget).data()).done(d => {
 			showSpinner();
-			Snackbar($(xml).find('info').text());
+			Snackbar(d.info);
 		});
 	});
 });

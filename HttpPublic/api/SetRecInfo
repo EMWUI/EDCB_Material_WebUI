@@ -1,6 +1,7 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
+a={err='不正値入力'}
 post=AssertPost()
 if post then
   id=GetVarInt(mg.request_info.query_string,'id') or 0
@@ -9,9 +10,9 @@ if post then
     if ri then
       protect=mg.get_var(post,'protect')=='1'
       edcb.ChgProtectRecFileInfo(ri.id, protect)
-      messege='<success>録画情報をプロテクト'..(protect and '' or 'を解除')..'しました</success>'
+      a={success='録画情報をプロテクト'..(protect and '' or 'を解除')..'しました'}
     else
-      messege='<err>録画情報のプロテクトを変更できませんでした</err>'
+      a={err='録画情報のプロテクトを変更できませんでした'}
     end
   elseif mg.get_var(post,'ren') then
     ren=mg.get_var(post,'ren')
@@ -28,26 +29,25 @@ if post then
         edcb.os.rename(ori..'.program.txt', chg..'.program.txt')
         edcb.os.rename(ori..'.err', chg..'.err')
         edcb.ChgPathRecFileInfo(ri.id, ren)
-        messege='<success>録画ファイルパスを変更しました</success>'
+        a={success='録画ファイルパスを変更しました'}
       else
-        messege='<err>ファイルを移動できませんでした</err>'
+        a={err='ファイルを移動できませんでした'}
       end
     else
-      messege='<err>'..(ri and 'ファイル' or '録画情報')..'がみつかりませんでした</err>'
+      a={err=(ri and 'ファイル' or '録画情報')..'がみつかりませんでした'}
     end
   elseif mg.get_var(post,'del') then
     if ri and not ri.protectFlag then
       edcb.DelRecFileInfo(ri.id)
-      messege='<success>録画情報を削除しました</success>'
+      a={success='録画情報を削除しました'}
     else
-      messege='<err>録画情報を削除できませんでした</err>'
+      a={err='録画情報を削除できませんでした'}
     end
   end
 end
 
-
-ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
-mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  mg.write(ct)
+if GetVarInt(mg.request_info.query_string,'json')==1 then
+  ResponseJson(a)
+else
+  ResponseXml(a)
 end

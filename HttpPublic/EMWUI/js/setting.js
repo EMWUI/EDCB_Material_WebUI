@@ -1,11 +1,10 @@
 $(function(){
 	//ストレージ容量
 	$('.mdl-js-progress:first').on('mdl-componentupgraded', () => {
-		$.get(`${ROOT}api/Common`, {storage: 1}).done(xml => {
-			$(xml).find('storage').each((i, e) => {
-				const id = $(e).txt('id');
-				$(`#d_${id} .text`).text($(e).txt('text'));
-				$(`#d_${id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress($(e).txt('free'));
+		$.get(`${ROOT}api/Common`, {storage: 1, json: 1}).done(d => {
+			d.forEach(d => {
+				$(`#d_${d.id} .text`).text(d.text);
+				$(`#d_${d.id} .mdl-progress`).removeClass('mdl-progress__indeterminate').get(0).MaterialProgress.setProgress(100-(d.free/d.total*100));
 			})
 		});
 	});

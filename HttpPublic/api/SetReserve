@@ -6,7 +6,6 @@ function RecSetting(r,post)
   if r.recSetting then
     return r
   end
-  return false
 end
 
 function EventInfo(r)
@@ -19,7 +18,6 @@ function EventInfo(r)
     r.stationName=GetServiceName(r)
     return r
   end
-  return false
 end
 
 post=AssertPost()
@@ -27,16 +25,12 @@ post=AssertPost()
 id=GetVarInt(mg.request_info.query_string,'id') or 0
 add=mg.get_var(post,'add')
 change=mg.get_var(post,'change')
-del=mg.get_var(post,'del')
-OneClick=GetVarInt(mg.request_info.query_string,'oneclick',0,1)==1
+oneClick=GetVarInt(mg.request_info.query_string,'oneclick',0,1)==1
 toggle=GetVarInt(mg.request_info.query_string,'toggle',0,1)
 
 if post then
   if add then
-    onid=GetVarInt(post, 'onid') or 0
-    tsid=GetVarInt(post, 'tsid') or 0
-    sid=GetVarInt(post, 'sid') or 0
-    eid=GetVarInt(post, 'eid') or 0
+    onid,tsid,sid,eid=GetVarEventID(post)
     r=RecSetting({onid=onid,tsid=tsid,sid=sid,eid=eid},post)
     if r then
       r=EventInfo(r)
@@ -87,20 +81,18 @@ if post then
     else
       err='予約が見つかりません'
     end
-  elseif del then
+  elseif mg.get_var(post,'del') then
     if edcb.GetReserveData(id) then
       edcb.DelReserveData(id)
-      messege='<success>予約を削除しました</success>'
+      del='予約を削除しました'
     else
       err='予約が見つかりません'
     end
   end
-elseif OneClick then
+elseif oneClick then
+  add=true
   AssertCsrf(mg.request_info.query_string)
-  onid=GetVarInt(mg.request_info.query_string,'onid') or 0
-  tsid=GetVarInt(mg.request_info.query_string,'tsid') or 0
-  sid=GetVarInt(mg.request_info.query_string,'sid') or 0
-  eid=GetVarInt(mg.request_info.query_string,'eid') or 0
+  onid,tsid,sid,eid=GetVarEventID(mg.request_info.query_string)
   r={onid=onid,tsid=tsid,sid=sid,eid=eid}
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do
     if v.id==0 then
@@ -115,6 +107,7 @@ elseif OneClick then
     err='イベント情報が見つかりません'
   end
 elseif toggle then
+  change=true
   AssertCsrf(mg.request_info.query_string)
   r=edcb.GetReserveData(id)
   if r then
@@ -125,46 +118,49 @@ elseif toggle then
   end
 end
 
-if done then
-  edcb.htmlEscape=15
-  if add or OneClick then
-    for i,v in ipairs(edcb.GetReserveData()) do
-      if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
-        id=v.reserveID
-        break
-      end
+function ReserveID()
+  for i,v in ipairs(edcb.GetReserveData()) do
+    if v.onid==onid and v.tsid==tsid and v.sid==sid and v.eid==eid then
+      return v.reserveID
     end
   end
-  r=edcb.GetReserveData(id)
-
-  messege='<success>予約を'..((add or OneClick) and '追加' or '変更')..'しました</success>'
-    ..'<reserveinfo><ID>'
-    ..r.reserveID..'</ID><title>'
-    ..r.title..'</title><startDate>'
-    ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
-                    r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
-    ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
-    ..r.durationSecond..'</duration><service_name>'
-    ..r.stationName..'</service_name><ONID>'
-    ..r.onid..'</ONID><TSID>'
-    ..r.tsid..'</TSID><SID>'
-    ..r.sid..'</SID><eventID>'
-    ..r.eid..'</eventID><comment>'
-    ..r.comment..'</comment><overlapMode>'
-    ..r.overlapMode..'</overlapMode>'
-    ..XmlRecSetting(r.recSetting)
-    ..'</reserveinfo>\r\n'
-elseif err then
-  messege='<err>予約を'..(
-        (add or OneClick)  and '追加'
-     or (change or toggle) and '変更'
-                            or '削除')
-    ..'できませんでした</err><err>'..err..'</err>'
 end
 
+if GetVarInt(mg.request_info.query_string,'json',0,1)==1 then
+  ResponseJson(del and {success=del}
+           or done and {success='予約を'..(add and '追加' or '変更')..'しました',reserve=edcb.GetReserveData(add and ReserveID() or id)}
+                    or {err=err and {'予約を'..(add and '追加' or change and '変更' or '削除')..'できませんでした',err}
+                                 or '不正値入力'})
+else
+  ct=CreateContentBuilder()
+  ct:Append('<?xml version="1.0" encoding="UTF-8" ?><entry>')
+  if done then
+    edcb.htmlEscape=15
+    r=edcb.GetReserveData(add and ReserveID() or id)
 
-ct='<?xml version="1.0" encoding="UTF-8" ?><entry>'..(messege or '<err>不正値入力</err>')..'</entry>'
-mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  mg.write(ct)
+    ct:Append('<success>予約を'..(add and '追加' or '変更')..'しました</success>'
+      ..'<reserveinfo><ID>'
+      ..r.reserveID..'</ID><title>'
+      ..r.title..'</title><startDate>'
+      ..string.format('%d/%02d/%02d</startDate><startTime>%02d:%02d:%02d</startTime><startDayOfWeek>',
+                      r.startTime.year, r.startTime.month, r.startTime.day, r.startTime.hour, r.startTime.min, r.startTime.sec)
+      ..(r.startTime.wday-1)..'</startDayOfWeek><duration>'
+      ..r.durationSecond..'</duration><service_name>'
+      ..r.stationName..'</service_name><ONID>'
+      ..r.onid..'</ONID><TSID>'
+      ..r.tsid..'</TSID><SID>'
+      ..r.sid..'</SID><eventID>'
+      ..r.eid..'</eventID><comment>'
+      ..r.comment..'</comment><overlapMode>'
+      ..r.overlapMode..'</overlapMode>'
+      ..XmlRecSetting(r.recSetting)
+      ..'</reserveinfo>\r\n')
+  else
+    ct:Append(del and '<success>'..del..'</success>' or
+              err and '<err>予約を'..(add and '追加' or change and '変更' or '削除')..'できませんでした</err><err>'..err..'</err>'
+                  or '<err>不正値入力</err>')
+  end
+  ct:Append('</entry>')
+  ct:Finish()
+  mg.write(ct:Pop(Response(200,'text/xml','utf-8',ct.len)..'\r\n'))
 end

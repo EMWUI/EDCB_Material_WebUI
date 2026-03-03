@@ -1,17 +1,11 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-ct={'<?xml version="1.0" encoding="UTF-8" ?><entry>'}
+query=mg.request_info.query_string
 
 LIBRARY_LIST=GetLibraryPathList()
-MEDIA_EXTENSION_LIST={}
-for v in edcb.GetPrivateProfile('SET','MEDIA_EXTENSION_LIST','.mp4,.webm',INI):gmatch('[^,]+') do
-  MEDIA_EXTENSION_LIST[#MEDIA_EXTENSION_LIST+1]=v
-end
-HIDE_DIR_LIST={}
-for v in edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',INI):gmatch('[^,]+') do
-  HIDE_DIR_LIST[#HIDE_DIR_LIST+1]=v
-end
+MEDIA_EXTENSION_LIST=Split(edcb.GetPrivateProfile('SET','MEDIA_EXTENSION_LIST','.mp4,.webm',INI),',')
+HIDE_DIR_LIST=Split(edcb.GetPrivateProfile('SET','HIDE_DIR_LIST','chapters',INI),',')
 
 
 tools=PathAppend(EdcbModulePath(),'Tools')
@@ -116,8 +110,8 @@ end
 tsx=edcb.GetPrivateProfile('SET','TSExt','.ts','EpgTimerSrv.ini')
 xlist={tsx,table.unpack(MEDIA_EXTENSION_LIST)}
 
-if mg.get_var(mg.request_info.query_string,'thumbs') then
-  AssertCsrf(mg.request_info.query_string)
+if mg.get_var(query,'thumbs') then
+  AssertCsrf(query)
 
   thumbsUsing={}
 
@@ -169,24 +163,24 @@ if mg.get_var(mg.request_info.query_string,'thumbs') then
     end
   end
 
-  table.insert(ct, '<info>サムネを作成しました</info></entry>')
+  a={info='サムネを作成しました'}
 else
   dirname=nil
-  index=GetVarInt(mg.request_info.query_string,'i',1,#LIBRARY_LIST)
+  index=GetVarInt(query,'i',1,#LIBRARY_LIST)
   if index then
     dir=LIBRARY_LIST[index]
     if dir then
-      dirhash=mg.get_var(mg.request_info.query_string,'d')
+      dirhash=mg.get_var(query,'d')
       if dirhash then
-        pathname=LIBRARY_LIST[index]
+        name=LIBRARY_LIST[index]
+        path={}
         for j=0,10000 do
-          local w=mg.get_var(mg.request_info.query_string, 'p', j)
+          local w=mg.get_var(query, 'p', j)
           if not w then break end
-          pathhash=(pathhash and pathhash..',' or '')..w
           for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
             if v.isdir and not v.name:find('^%.') and mg.md5(v.name)==w then
               dir=PathAppend(dir,v.name)
-              pathname=pathname..'/'..v.name
+              table.insert(path,{hash=w,name=v.name})
               break
             end
           end
@@ -206,20 +200,15 @@ else
 
   if not dirname then
     if dirhash then
-      table.insert(ct, '<error>見つかりませんでした</error>')
+      a={err='見つかりませんでした'}
     else
-      table.insert(ct, '<dirname>ホーム</dirname>')
-
-      edcb.htmlEscape=15
+      a={dirname='ホーム',dir={},file={}}
       for i,v in ipairs(LIBRARY_LIST) do
-        table.insert(ct, '<dir><index>'
-          ..i..'</index><name>'
-          ..EdcbHtmlEscape(NativeToDocumentPath(v) or v)..'</name></dir>\n'
-        )
+        table.insert(a.dir,{index=i,name=NativeToDocumentPath(v) or v})
       end
     end
   else
-    hash=mg.get_var(mg.request_info.query_string,'h')
+    hash=mg.get_var(query,'h')
     if not hash then
       ff={}
       for i,v in ipairs(edcb.FindFile(PathAppend(dir,'*'),0) or {}) do
@@ -242,63 +231,61 @@ else
         end
       end
 
-      edcb.htmlEscape=15
-      table.insert(ct, '<index>'
-        ..index..'</index><dirname>'
-        ..EdcbHtmlEscape(NativeToDocumentPath(dirname) or dirname)..'</dirname>'
-        ..(dirhash and '<dirhash>'..dirhash..'</dirhash>' or '')
-        ..(pathname and '<pathname>'..EdcbHtmlEscape(pathname)..'</pathname>' or '')
-        ..(pathhash and '<pathhash>'..EdcbHtmlEscape(pathhash)..'</pathhash>' or '')
-        ..(NativeToDocumentPath(dir) and '<public>1</public>' or '')
-        ..'\n'
-      )
+      a={
+        index=index,
+        iname=name,
+        path=path,
+        dirname=NativeToDocumentPath(dirname) or dirname,
+        dirhash=dirhash,
+        paublic=NativeToDocumentPath(dir) and true or false,
+        dir={},
+        file={},
+      }
       for i,v in ipairs(ff) do
         local thumbHash
         if not v.isdir then
           thumbHash=MakeThumbs(PathAppend(dir,v.name), true)
         end 
-        table.insert(ct, (v.isdir and '<dir>' or '<file>')..'<name>'
-          ..EdcbHtmlEscape(v.name)..'</name><hash>'
-          ..mg.md5(v.name)..'</hash><date>'
-          ..TimeWithZone(v.mtime, 9*3600)..'</date>'
-          ..(v.isdir and '' or '<size>'..v.size..'</size><size_text>'..ConvertSize(v.size)..'</size_text>')
-          ..(thumbHash and '<thumb>'..thumbHash..'</thumb>' or '')
-          ..(v.isdir and '</dir>' or '</file>')
-          ..'\n'
-        )
+        v.hash=mg.md5(v.name)
+        v.sizeText=not v.isdir and ConvertSize(v.size) or nil
+        v.thumb=thumbHash
+        table.insert(a[v.isdir and 'dir' or 'file'],v)
       end
     else
-      info=nil
       for i,v in ipairs(xlist) do
         for j,w in ipairs(edcb.FindFile(PathAppend(dir,'*'..v),0) or {}) do
           if not w.isdir and mg.md5(w.name)==hash then
-            info=w
-            info.ists=v==tsx
+            a=w
+            a.ists=v==tsx
             break
           end
         end
-        if info then
+        if a then
           break
         end
       end
-      if info then
-        edcb.htmlEscape=15
-        ref=PathAppend(dir,info.name)
-        table.insert(ct, '<file><path>'
-            ..(NativeToDocumentPath(ref) and EdcbHtmlEscape(NativeToDocumentPath(ref))..'</path><public>1</public>'
-                                          or EdcbHtmlEscape(ref)..'</path>\n')..'<name>'
-          ..EdcbHtmlEscape(info.name)..'</name><hash>'
-          ..mg.md5(info.name)..'</hash><date>'
-          ..TimeWithZone(info.mtime, 9*3600)..'</date><size>'
-          ..math.floor(info.size/1048576)..'</size>'
-        )
-        basic=(tonumber(mg.get_var(mg.request_info.query_string,'basic')) or 1)~=0
+      if a then
+        ref=PathAppend(dir,a.name)
+        a.path=NativeToDocumentPath(ref) or ref
+        a.public=NativeToDocumentPath(ref) and true or false
+        a.hash=mg.md5(a.name)
+        basic=(tonumber(mg.get_var(query,'basic')) or 1)~=0
         if not basic then
           pgtxt=GetPgtxt(ref)
-          if pgtxt then table.insert(ct, '<programInfo>'..EdcbHtmlEscape(pgtxt)..'</programInfo>') end
+          if pgtxt then a.programInfo=pgtxt end
+          for i,v in ipairs({dir,PathAppend(dir,'chapters')}) do
+            chap=PathAppend(v,a.name:gsub('%.[0-9A-Za-z]+$','')..'.chapter')
+            if EdcbFindFilePlain(chap) then
+              f=edcb.io.open(chap,'r')
+              if f then
+                a.chapters=f:read('*a')
+                f:close()
+              end
+            end
+          end
         end
 
-        if info.ists then
+        if a.ists then
           local tsreadex=FindToolsCommand('tsreadex')
           local ffprobe
           if WIN32 then
@@ -315,6 +302,12 @@ else
           if f then
             audio=0
             fsec,fsize=GetDurationSec(f)
+            if JKRDLOG_PATH then
+              dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'jkconst.lua')
+              --終端が現在時刻よりも昔ならば実況を逐次取得する必要はないのでshiftableにする
+              tot=GetTotAndServiceID(f)
+              a.okkake=not (tot and tot+fsec+60<os.time())
+            end
             f:close()
             if ffprobe then
               offset=math.floor(fsize*10/100/188)*188
@@ -327,23 +320,23 @@ else
                 end
               end
             end
-            table.insert(ct, '<meta>'..(fsec~=0 and '<duration>'..fsec..'</duration>' or '')..'<audio>'..audio..'</audio></meta>')
+            a.meta={
+              duration=fsec,
+              audio=audio
+            }
           end
         end
-        table.insert(ct, '</file>\n')
       else
-        table.insert(ct, '<error>見つかりませんでした</error>')
+        a={err='見つかりませんでした'}
       end
     end
   end
-  table.insert(ct, '</entry>')
 end
 
-cl=0
-for i,v in ipairs(ct) do cl=cl+#v end
-mg.write(Response(200, 'text/xml', 'utf-8', cl) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  for i,v in ipairs(ct) do mg.write(v) end
+if GetVarInt(query,'json')==1 then
+  ResponseJson(a)
+else
+  ResponseXml(a)
 end
 
 -- 未作成のサムネを作成

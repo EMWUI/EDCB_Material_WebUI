@@ -1,12 +1,8 @@
 -- vim:set ft=lua:
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
-edcb.htmlEscape=15
-
+a={err='不正値入力'}
 post=AssertPost()
-
-edcbnosuspend=EdcbModulePath()..'\\Tools\\edcbnosuspend.exe'
-
 if post then
   if mg.get_var(post,'suspend') or mg.get_var(post,'hibernate') then
     if INDEX_ENABLE_SUSPEND then
@@ -25,23 +21,23 @@ if post then
         edcb.Sleep(10)
       end
     end
-    messege='スタンバイに移行'..(ok and 'します' or 'できません (もうすぐ予約が始まるなど)')
+    a={info='スタンバイに移行'..(ok and 'します' or 'できません (もうすぐ予約が始まるなど)')}
   elseif mg.get_var(post,'epgcap') then
-    messege='EPG取得を開始'..(edcb.EpgCapNow() and 'しました' or 'できませんでした')
+    a={info='EPG取得を開始'..(edcb.EpgCapNow() and 'しました' or 'できませんでした')}
   elseif mg.get_var(post,'epgreload') then
-    messege='EPG再読み込みを開始'..(edcb.ReloadEpg() and 'しました' or 'できませんでした')
+    a={info='EPG再読み込みを開始'..(edcb.ReloadEpg() and 'しました' or 'できませんでした')}
   elseif mg.get_var(post,'nosuspend')=='y' then
-    edcb.os.execute('start "" /b "'..edcbnosuspend..'" -')
-    messege='edcbnosuspend.exeを起動しました'
+    edcb.os.execute('start "" /b "'..EdcbModulePath()..'\\Tools\\edcbnosuspend.exe" -')
+    a={info='edcbnosuspend.exeを起動しました'}
   elseif mg.get_var(post,'nosuspend')=='n' then
     TerminateCommandlineLike('edcbnosuspend','%')
-    messege='edcbnosuspend.exeを停止しました'
+    a={info='edcbnosuspend.exeを停止しました'}
   end
-elseif mg.get_var(mg.request_info.query_string,'notify') then
-    messege=edcb.GetNotifyUpdateCount(mg.get_var(mg.request_info.query_string,'notify'))
+elseif GetVarInt(mg.request_info.query_string,'notify',1,5) then
+  a=edcb.GetNotifyUpdateCount(GetVarInt(mg.request_info.query_string,'notify',1,5))
 elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ容量を得る
   checked={}
-  messege=''
+  a={}
   for i,v in ipairs(EdcbRecFolderPathList()) do
     if WIN32 then
       v=v:match('^%a:\\')
@@ -53,10 +49,14 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
           --最近のfsutilは数値に桁区切りがつく。さらに最近のものは項目が増えた。
           free,total,avail=f:read('*a'):gsub("[%s',.]",''):match(':(%d+).-:(%d+).-:(%d+)')
           f:close()
-          messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
-            ..v..'</name><text>'
-            ..(free and ConvertSize(free)..' / '..ConvertSize(total) or '不明')..'</text><free>'
-            ..(free and 100-(free/total*100) or 0)..'</free></storage>'
+          table.insert(a,{
+            id=mg.md5(v),
+            name=v,
+            text=free and ConvertSize(free)..' / '..ConvertSize(total) or '不明',
+            free=free,
+            total=total,
+            avail=avail
+          })
         end
       end
     else
@@ -67,18 +67,21 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
         f:close()
       end
       if total then
-        messege=messege..'<storage><id>'..mg.md5(v)..'</id><name>'
-        ..EdcbHtmlEscape(v)..'</name><text>'
-        ..ConvertSize(total-used)..' (avail: '..ConvertSize(avail)..') / '..ConvertSize(total)..'</text><free>'
-        ..(100-((total-used)/total*100))..'</free></storage>'
+        table.insert(a,{
+          id=mg.md5(v),
+          name=v,
+          text=ConvertSize(total-used)..' (avail: '..ConvertSize(avail)..') / '..ConvertSize(total),
+          free=total-used,
+          total=total,
+          avail=avail
+        })
       end
     end
   end
 end
 
-ct='<?xml version="1.0" encoding="UTF-8" ?><entry><info>'
-  ..(messege or '不正値入力')..'</info></entry>'
-mg.write(Response(200, 'text/xml', 'utf-8', #ct) ..'\r\n')
-if mg.request_info.request_method~='HEAD' then
-  mg.write(ct)
+if GetVarInt(mg.request_info.query_string,'json')==1 then
+  ResponseJson(a)
+else
+  ResponseXml(a)
 end
