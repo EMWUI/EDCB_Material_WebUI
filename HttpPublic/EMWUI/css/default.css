@@ -1671,11 +1671,15 @@ h4 .mdl-button--icon {
   min-height: 176px;
   &:not(canvas) {
     width: 100%; } }
-  #video.is-loading {
-    background: #000 center / cover no-repeat url('../img/noise.gif'); }
+  #is-loading {
+    background: #000 center / cover no-repeat url('../img/noise.gif');
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2; }
     @media all and (display-mode: picture-in-picture) {
-      #video.is-loading {
-        background-image: url('img/noise.gif'); } }
+      #is-loading {
+        background: url('img/noise.gif'); } }
   @media (min-width: 700px) {
     #video {
       min-width: 480px;
@@ -1748,7 +1752,8 @@ h4 .mdl-button--icon {
   position: absolute;
   width: 100%;
   height: 100%;
-  z-index: 3; }
+  z-index: 3;
+  pointer-events: none; }
 #playerUI {
   width: 100%;
   color: #EEEEEE;
@@ -1813,8 +1818,9 @@ h4 .mdl-button--icon {
   #titlebar.is-visible {
     opacity: 1!important; }
 #center {
+  top: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 29px);
   position: absolute;
   color: #FFFFFF;
   display: -webkit-flex;
@@ -2030,10 +2036,12 @@ h4 .mdl-button--icon {
   #seek-container .mdl-slider {
     width: calc(100% - 12px);
     margin: 0 6px; }
-  #seek-container .mdl-slider__background-flex {
-    width: calc(100% - 24px);
-    margin: 0 12px; }
-  #player:not(.is-small) #seek-container .mdl-slider__background-flex {
+  #seek-container {
+    .mdl-slider__background-flex,
+    #chapMaker-container {
+      width: calc(100% - 24px);
+      margin: 0 12px; } }
+  #player:not(.is-small) #seek-container .mdl-slider__background-flex:not(#chapMaker-container) {
     height: 5px;
     -webkit-transform: translate(0, -2.5px);
             transform: translate(0, -2.5px); }

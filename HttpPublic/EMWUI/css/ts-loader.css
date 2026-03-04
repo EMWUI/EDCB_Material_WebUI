@@ -152,6 +152,66 @@
   will-change: visibility;
 }
 
+#chapMaker-container {
+  width: 100%;
+  position: absolute;
+  transform: translate(0, -20px);
+}
+.chapMaker {
+  position: absolute;
+  left: calc(var(--ms) / var(--dur) * 100%);
+  padding: 5px;
+  transform: translateX(-50%);
+  cursor: pointer;
+  > div {
+    background: #d50000;
+    width: 15px;
+    height: 15px;
+    clip-path: polygon(0 0, 50% 100%, 100% 0);
+    transition-duration: .2s;
+    transition-timing-function: cubic-bezier(.4,0,.2,1);
+  }
+  > span {
+position: absolute;
+    min-width: 25px;
+    padding: 0 5px;
+    top: 50%;
+    left: 50%;
+    color: #EEEEEE;
+    background: rgba(0, 0, 0, .56);
+    font-size: 16px;
+    text-align: center;
+    line-height: 25px;
+    border-radius: 3px;
+    opacity: 0;
+    transform: translate(-50%, -30px) scale(0.5);
+    transition-duration: .2s;
+    transition-timing-function: cubic-bezier(.4, 0, .2, 1);
+  }
+  +:hover{
+    > div {
+      transform: scale(1.5);
+      transform-origin: bottom;
+    }
+    > span {
+      opacity: 1;
+      transform: translate(-50%, -50px) scale(1);
+    }
+  }
+  &.c-start > div {
+    clip-path: polygon(0% 0%, 50% 0, 100% 0, 50% 20%, 50% 100%);
+  }
+  &.c-end > div {
+    clip-path: polygon(0% 0%, 50% 0, 100% 0, 50% 100%, 50% 20%);
+  }
+  &.c-in > div {
+    clip-path: polygon(0 0, 50% 100%, 50% 0);
+  }
+  &.c-out > div {
+    clip-path: polygon(50% 0, 50% 100%, 100% 0);
+  }
+}
+
 @keyframes danmaku {
   from {
     transform: translateX(100%);

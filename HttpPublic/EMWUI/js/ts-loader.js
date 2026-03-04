@@ -182,8 +182,6 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#e.src = '';
 		this.#e.removeAttribute('src');
 		this.#e.initSrc = null;
-		this.#e.offset = null;
-		this.#e.ofssec = null;
 		this.#cap&&this.#cap.detachMedia();
 	}
 	#reset(){
@@ -259,13 +257,13 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#setCurrentTime(Math.floor(this.#currentTime));
 	}
 	#setCurrentTime(ofssec){
-		if (!Number(ofssec)) return;
+		if (ofssec==null || isNaN(ofssec)) return;
 		this.#currentTime = Math.floor(ofssec);
 		this.#src.searchParams.set('ofssec', ofssec);
 		this.#resetRead();
 	}
 	#setOffset(offset){
-		if (!Number(offset)) return;
+		if (offset==null || isNaN(offset)) return;
 		this.#src.searchParams.set('offset', offset);
 		this.#resetRead();
 	}
@@ -408,6 +406,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	get setAudioTrack(){return this.#setAudioTrack}
 	get setDetelecine(){return this.#setDetelecine}
 
+	get fixCurrentTime(){return this.#currentTime()}
 	set audioTrack(n){this.#setAudioTrack(n)}
 	set detelecine(b){this.#setDetelecine(b)}
 
@@ -464,14 +463,15 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		Datacast.oncuechangeB24Caption(this.#cap, e.target.track.cues);
 	}
 
+	#ofssec = 0;
+	#offset = 0;
 	#reset(){
 		this.#src = '';
 		this.#hls&&this.#hls.loadSource('');
 		this.#cap&&this.#cap.detachMedia();
-		['ofssec','offset'].forEach(e => {
-			this.#e[e] = null;
-			this.#params.delete(e);
-		});
+		this.#ofssec = 0;
+		this.#offset = 0;
+		['ofssec','offset'].forEach(e => this.#params.delete(e));
 	}
 	#clear(){
 		this.#reset();
@@ -494,7 +494,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		this.#params.set('load', this.#createRandom());
 		this.#onload();
 	}
-	#reload(onload = ()=>{}, seek = this.#e.currentTime * this.#fast + (this.#e.ofssec || 0)){
+	#reload(onload = ()=>{}, seek = this.#currentTime()){
 		if (!this.#e.initSrc) return;
 		onload();
 
@@ -503,20 +503,23 @@ const hlsMixin = (Base = class {}) => class extends Base{
 			this.#params.delete('load');
 		}
 
-		this.#e.doNotAutoplay = this.#e.paused;
 		this.#reset();
 		if (seek){
-			const key = seek<1 ? 'offset' : 'ofssec';
-			this.#e[key] = Math.floor(seek*(seek<1?100:1));
-			this.#params.set(key, this.#e[key]);
+			if (seek < 1){
+				this.#offset = Math.floor(seek*100);
+				this.#params.set('offset', this.#offset);
+			}else{
+				this.#ofssec = Math.floor(seek);
+				this.#params.set('ofssec', this.#ofssec);
+			}
 		}
 
 		this.#onload();
 	}
 
 	#setSeek(val, onload){
-		if (1 < val && this.#e.ofssec < val && val < this.#e.ofssec + this.#e.duration){
-			this.#e.currentTime = val - this.#e.ofssec;
+		if (1 < val && this.#ofssec < val && val < this.#ofssec + this.#e.duration){
+			this.#e.currentTime = val - this.#ofssec;
 			return;
 		}
 		this.#reload(onload, val);
@@ -551,6 +554,9 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#canPlayType(s){
 		if (/video\/mp2t/.test(s)) return 'maybe';
 		else return super.canPlayType ? super.canPlayType(s) : this.#e.canPlayType(s);
+	}
+	#currentTime(){
+		return this.#e.currentTime * this.#fast + this.#ofssec;
 	}
 
 	#apk(src, onerror, onstart){
@@ -993,7 +999,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#elems.shiftJikkyo.forEach(e=>e.onclick=()=>this.#shiftJikkyo(+e.dataset.sec));
 		if (this.#elems.selectID) this.#elems.selectID.onchange=()=>this.#setJK(this.#elems.selectID.value);
 		if (this.#elems.btnConfig) this.#elems.btnConfig.onclick=()=>this.#setJK(null,this.#elems.inputTM.value?Math.floor(Date.parse(this.#elems.inputTM.value+"Z")/60000)*60+this.#elems.inputTMSec.selectedIndex-32400:0);
-		if (this.#elems.kakolog) this.#elems.kakolog.onclick=()=>this.#kakolog();
+		if (this.#elems.kakolog) this.#elems.kakolog.onclick=()=>this.#jklog.kakolog();
 		if (!this.#elems.commInput) return;
 		this.#elems.commInput.onkeydown = e => {if(!e.isComposing&&e.keyCode!=229&&e.key=="Enter") this.#sendComment();}
 		this.#elems.commBtn.onclick = () => this.#sendComment();
@@ -1136,7 +1142,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 						}
 					}
 					if(this.#mHeader[2]){
-						const tm=this.#mHeader[2]-this.#e.ofssec+Math.floor(this.#e.currentTime*(this.#e.fast||1));
+						const tm=this.#mHeader[2]-Math.floor(this.#e.fixCurrentTime||this.#e.currentTime);
 						if(this.#elems.inputTM)this.#elems.inputTM.value==new Date(1000*tm+32400000).toISOString().substring(0,16);
 						if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[tm%60].selected=true;
 					}
@@ -1625,7 +1631,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#psc.videoLastSec=0;
 		},
 		enable: async () => {
-			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
+			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
 			if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src"))await this.#initWebBml();
 			this.#datacastState=this.#STATE.LOG;
 			this.#psc.startRead();
@@ -1655,11 +1661,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		offsetSec: 0,
 		startRead: () => {
 			clearTimeout(this.#jklog.readTimer);
-			const startSec=this.#e.currentTime+this.#jklog.offsetSec;
+			const startSec=(this.#e.fixCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
 			this.#jklog.videoLastSec=startSec;
 			const ctx={};
 			const read=()=>{
-				const videoSec=this.#e.currentTime+this.#jklog.offsetSec;
+				const videoSec=(this.#e.fixCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
 				if(videoSec<this.#jklog.videoLastSec||this.#jklog.videoLastSec+10<videoSec){
 					this.#jklog.startRead();
 					return;
@@ -1692,7 +1698,8 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#jkID="?";
 		},
 		enable: () => {
-			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
+			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
+			console.log(this.#e.getAttribute("src")||this.#e.initSrc);
 			this.#jikkyoState=this.#STATE.LOG;
 			this.#chatsScroller();
 			this.#jklog.startRead();
@@ -1729,27 +1736,27 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				}
 			};
 			this.#jklog.xhr.send();
+		},
+		kakolog: () => {
+			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
+			const text=this.#elems.kakolog.innerText;
+			this.#elems.kakolog.innerText="取得中...";
+			this.#elems.kakolog.disabled=true;
+			const xhr=new XMLHttpRequest();
+			xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}&kakolog=1`);
+			xhr.onloadend=()=>{
+				if(xhr.status==200||xhr.response){
+					this.#logText=null;
+					this.#jklog.xhr=null;
+					this.#jklog.enable();
+				}
+				this.#elems.kakolog.innerText=text;
+				this.#elems.kakolog.disabled=false;
+			}
+			xhr.send();
 		}
 	}
 
-	#kakolog(){
-		if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith('blob:'))return;
-		const text=this.#elems.kakolog.innerText;
-		this.#elems.kakolog.innerText="取得中...";
-		this.#elems.kakolog.disabled=true;
-		const xhr=new XMLHttpRequest();
-		xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}&kakolog=1`);
-		xhr.onloadend=()=>{
-			if(xhr.status==200||xhr.response){
-				this.#logText=null;
-				this.#jklog.xhr=null;
-				this.#jklog.enable();
-			}
-			this.#elems.kakolog.innerText=text;
-			this.#elems.kakolog.disabled=false;
-		}
-		xhr.send();
-	}
 	
 	#sendComment(){
 		if(!this.#elems.commInput.value) return;
@@ -1803,7 +1810,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		const ctx={};
 		this.#mHeader=null;
 		this.#xhr=new XMLHttpRequest();
-		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${(this.#e.ofssec || 0)+Math.floor(this.#e.currentTime * (this.#fast || 1))}`);
+		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${Math.floor(this.#e.fixCurrentTime||this.#e.currentTime)}`);
 		this.#xhr.onloadend=()=>{
 			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
 				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
@@ -1877,3 +1884,190 @@ customElements.define('ts-hls', class extends hlsMixin(datacastMixin(HTMLVideoEl
 		super();
 	}
 }, {extends: 'video'});
+
+
+/*
+TvtPlayのチャプターによるループやスキップ機能
+
+本家と以下の違いに注意
+＊スキップ区間(ix-ox)ではループしない
+＊次のチャプターを検索する際、スキップ開始(ix)を無視する
+（OP-CM-Aのような構成でCMを無視）
+*/
+class chapterTvT{
+	#vid;
+	#disabled = false;
+	#repeat = true;
+	#skip = true;
+	#ignoreXIN = true;
+	#hasSeeked;
+	#lastTime = 0;
+	#container = document.getElementById('chapMaker-container');
+	#currentTime(){return this.#vid.fixCurrentTime || this.#vid.currentTime}
+	constructor(video){
+		this.#vid = video;
+		document.getElementById('nextChap').addEventListener('click', () => this.#navigate());
+		document.getElementById('prevChap').addEventListener('click', () => this.#navigate(false));
+		video.addEventListener('timeupdate', () => {
+			if (this.#disabled || !this.#chapters) return;
+
+			const currentTime = this.#currentTime();
+
+			// 判定内に手動シークした場合に移動されるのを防ぐ
+			if (this.#hasSeeked){
+				if (this.#hasSeeked.isLoop ? currentTime < this.#hasSeeked.end || currentTime >= this.#hasSeeked.end + 1 : currentTime >= this.#hasSeeked.start + 1)
+					this.#hasSeeked = null; // 判定を抜けたのでリセット
+				else return;
+			}
+
+			const diff = currentTime - this.#lastTime;
+			this.#lastTime = currentTime;
+
+			//シークを検出
+			if (Math.abs(diff) > 1){
+				this.#hasSeeked = this.#intervals.find(inter => Math.ceil(currentTime) >= inter.start - 1 && Math.floor(currentTime) < inter.end + 1);
+				return;
+			}
+
+			for (const interval of this.#intervals){
+				// 現在の再生時間が1秒以内で移動判定
+				if (this.#repeat && interval.isLoop){
+					if (currentTime >= interval.end && currentTime < interval.end + 1){
+						this.#seek(interval.start);
+						break;
+					}
+				}else if (this.#skip && currentTime >= interval.start && currentTime < interval.start + 1){
+					this.#seek(interval.end);
+					break;
+				}
+			}
+		});
+		//公開フォルダ内はここで直接取得すべきだが。。。
+	}
+
+	get reset(){return this.#reset}
+	get setChapters(){return this.#parse}
+	get navigate(){return this.#navigate}
+	set setSeek(fn){this.#setSeek(fn)}
+
+	#reset(){
+		this.#lastTime = 0;
+		this.#chapters = null;
+		this.#intervals = [];
+		while (this.#container.firstChild) this.#container.removeChild(this.#container.firstChild);
+	}
+	#setSeek(fn){this.#seek = fn}
+	#seek = val => this.#vid.currentTime = val;
+
+	#TYPE = {
+		IN: 1,
+		OUT: 2,
+		XIN: 3,
+		XOUT: 4,
+	}
+	#raw;
+	#chapters;
+	#intervals;
+	#parse(chap = '', dur){
+		this.#raw = chap;
+		// 前後の 'c' を除去して '-' で各セグメントに分割
+		const segments = chap.replace(/^c|c$/g, '').split('-').filter(s => s.length > 0);
+
+		this.#chapters = segments.map(segment => {
+			const cIndex = segment.indexOf('c');
+			
+			let timePart, infoPart;
+			if (cIndex === -1){
+				// 'c' がないイレギュラーなケース
+				timePart = segment;
+				infoPart = "";
+			}else{
+				timePart = segment.substring(0, cIndex);
+				infoPart = segment.substring(cIndex + 1);
+			}
+
+			let time;
+			let info = infoPart;
+			let last = false;
+
+			// 1. 時間の判定と 0e (終端) の処理
+			if (timePart.includes('0e')){
+				time = dur;
+				// 0e 以外の文字（oxなど）があれば info の先頭に結合
+				info = timePart.replace('0e', '') + info;
+				last = true;
+			}else time = +timePart;
+
+			// 2. 属性とチャプター名の分離
+			let type = 0;
+			let label = info;
+
+			// 属性判定（長い順）
+			if (info.startsWith('ix')){
+				type = this.#TYPE.XIN;
+				label = info.substring(2);
+			}else if (info.startsWith('ox')){
+				type = this.#TYPE.XOUT;
+				label = info.substring(2);
+			}else if (info.startsWith('i')){
+				type = this.#TYPE.IN;
+				label = info.substring(1);
+			}else if (info.startsWith('o')){
+				type = this.#TYPE.OUT;
+				label = info.substring(1);
+			}
+
+			const marker = document.createElement('div');
+			marker.className = `chapMaker c-${['point','in','out','start','end'][type]}`;
+			marker.style = `--ms:${time??'var(--dur)'};`
+			marker.onclick = () => this.#seek(Math.floor(time / 1000 - 0.5));
+			marker.appendChild(document.createElement('div'));
+			const name = document.createElement('span')
+			name.innerText = label;
+			marker.appendChild(name);
+			this.#container.appendChild(marker);
+
+			return {
+				time_ms: time,
+				type: type,
+				name: label,
+				last: last
+			};
+		});
+		if (dur) this.#container.style=`--dur:${dur};`;
+
+		this.#intervals = this.#chapters.map((e,i)=>[e,i]).filter(e => e[0].type === this.#TYPE.XIN || e[0].type === this.#TYPE.IN).map(e => {
+			const startCh = e[0];
+			const endCh = this.#chapters.slice(e[1]).find(ch => startCh.type === this.#TYPE.XIN && ch.type === this.#TYPE.XOUT || startCh.type === this.#TYPE.IN && ch.type === this.#TYPE.OUT) || {time_ms: dur, last: true};
+			return {
+				// ミリ秒を秒に変換し、頭、尻切れしないように丸める
+				start: Math.ceil(startCh.time_ms / 1000),
+				end: Math.floor(endCh.time_ms / 1000 - (endCh.last ? 2 : 0.5)),
+				isLoop: (startCh.type === this.#TYPE.IN)
+			}
+		// 開始と終了が同じ秒になった場合は不要（あるいは最低1秒確保）
+		}).filter(e => e.end > e.start);
+
+		return [this.#chapters, this.#intervals];
+	}
+
+	#navigate(next = true){
+		if (!this.#chapters || this.#chapters.length === 0) return;
+
+		const currentTimeMs = this.#currentTime() * 1000;
+		let ch = null;
+
+		// 現在地より「後ろ」にあるチャプターの中で、一番近いものを探す スキップ開始は無視する
+		if (next) ch = this.#chapters.find(ch => ch.last || ch.time_ms > currentTimeMs + 500 && !(this.#ignoreXIN && ch.type === this.#TYPE.XIN)); 
+			// +100ms しているのは、チャプター地点にいる時に連打して同じ場所に留まらないようにするため
+		// 配列を後ろから検索して、現在地より前のものを見つける
+		else ch = this.#chapters.toReversed().find(ch => ch.time_ms < currentTimeMs - 2000);
+			// -2000ms しているのは、チャプター開始直後に「前」を押したら
+			// 同じチャプターの頭ではなく、さらに一つ前に戻るため
+
+		if (ch) this.#seek(Math.floor(ch.time_ms != null ? ch.time_ms / 1000 - 0.5 : this.#vid.duration - 2));
+		else if(!next) this.#seek(0);	// 前にチャプターがない場合は動画の先頭へ
+	}
+
+}
+

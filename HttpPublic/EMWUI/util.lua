@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260226',
+    css='260304',
     common='260217',
     tvguide='250824',
-    player='260225',
-    onair='260116',
-    library='260129',
-    setting='250906',
-    tsloader='260226',
+    player='260304',
+    onair='260304',
+    library='260303',
+    setting='2260303',
+    tsloader='260304',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -923,8 +923,8 @@ function PlayerTemplate(video, liveOrAudio)
 <div id="playerUI" class="is-visible">
 <div id="titlebar" class="bar"></div>
 <div id="control" class="bar">
-<div id="seek-container">]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<script src="js/ts-live.lua?t=-misc.js"></script><span class="thumb-popup"><canvas id="vid-thumb" style="display: none;"></canvas></span><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" disabled>')..[=[</div>
-<button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
+<div id="seek-container"><div id="chapMaker-container"></div>]=]..(live and '<div class="progress mdl-slider__container"><div id="seek" class="mdl-progress mdl-js-progress"></div></div>' or '<script src="js/ts-live.lua?t=-misc.js"></script><span class="thumb-popup"><canvas id="vid-thumb" style="display: none;"></canvas></span><input class="mdl-slider mdl-js-slider" type="range" id="seek" min="0" max="100" value="0" disabled>')..[=[</div>
+<button id="stop" class="stop ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">stop</i></button><span id="ctl-button"><button id="playprev" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_previous</i></button><button id="prevChap" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">arrow_left</i></button><button id="play" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">play_arrow</i></button><button id="nextChap" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">arrow_right</i></button><button id="playnext" class="ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons fill">skip_next</i></button></span>
 <div id="volume-wrap"><button id="volume-icon" class="ctl-button mdl-button mdl-js-button mdl-button--icon fill"><i class="material-icons fill">volume_up</i></button><p id="volume-container" class="mdl-cell--hide-phone"><input class="mdl-slider mdl-js-slider" type="range" id="volume" min="0" max="1" value="0" step="0.01"></p></div>
 <div class="Time-wrap"><span class="currentTime videoTime">0:00</span><span class="mdl-cell--hide-phone"><span> / </span><span class="duration videoTime">0:00</span></span></div>
 ]=]..(live and not tslive and '<div id="live"><span>&#8226;</span><small>ライブ</small></div>' or '')..[=[
@@ -951,7 +951,7 @@ function PlayerTemplate(video, liveOrAudio)
 <button id="theater" class="player-mode ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons mdl-cell--hide-phone">crop_landscape</i><span class="mdl-tooltip" data-mdl-for="theater">デフォルト表示</span></button>
 <button id="fullscreen" class="hide-pip ctl-button mdl-button mdl-js-button mdl-button--icon"><i class="material-icons">fullscreen</i></button>
 </div>
-</div>
+</div><div id="is-loading" class="hidden"></div>
 <div class="arib-video-invisible-container"><div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer">
 <]=]..(tslive and 'canvas is="ts-live"'..(autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '') or 'video is="ts-hls"'..(ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or ''))
   ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON)
@@ -1009,7 +1009,7 @@ function PlayerTemplate(video, liveOrAudio)
 </div>
 ]=] or '')
 
-  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/jikkyo.css">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
+  ..((live and USE_LIVEJK or not live and JKRDLOG_PATH) and '<link rel="stylesheet" href="css/ts-loader.css'..Version('tsloader')..'">\n<script src="js/danmaku.js'..Version('danmaku')..'"></script>\n' or '')
   ..(USE_DATACAST and '<script src="js/web_bml_play_ts.js'..Version('bml')..'" id="webBml"></script>\n' or '')
 
   ..'<script src="js/aribb24.js'..Version('aribb24')..'"></script>\n'

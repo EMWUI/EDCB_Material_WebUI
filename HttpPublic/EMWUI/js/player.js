@@ -1,5 +1,6 @@
 const video = document.getElementById("video");
 const $vid = $(video);
+const chap = new chapterTvT(video);
 
 //safariがis属性に対応しないための
 const vid = isSafari == 1 ? new TsLiveDatacast(video) : video;	//HTMLMediaElementメソッド用
@@ -53,6 +54,7 @@ const resetVid = () => {
 
 	$vid_meta.attr('src', '');
 	if (thumb) thumb.reset();
+	chap.reset();
 }
 
 const toggleTslive = () => {
@@ -70,7 +72,8 @@ const $titlebar = $('#titlebar');
 const $datacast = $('#datacast');
 const $remocon = $('.remote-control');
 const $jikkyo = $('#jikkyo');
-const addClassLoadding = () => $vid.addClass('is-loading');
+const addClassLoadding = () => {$('#is-loading').removeClass('hidden');}
+chap.setSeek = val => $('.is_cast').data('canPlay') ? vid.currentTime = val : ts.setSeek(val, addClassLoadding);
 const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
 	d.canPlay = d.path ? document.createElement('video').canPlayType(`video/${d.path.match(/[^\.]*$/)}`).length > 0 : false;
@@ -100,7 +103,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 		ts.loadSubData();
 	}else{
 		ts.loadSource(`${ROOT}api/${d.onid ? `view?n=${ts.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
-		                            		: `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}${!d.okkake ? '&shiftable=1' : ''}` }`);
+										   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}${!d.okkake ? '&shiftable=1' : ''}` }`);
 
 		if (d.meta){
 			if (d.meta.duration){
@@ -115,6 +118,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 			if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 		}
 	}
+	chap.setChapters(d.chapters, d.meta&&(d.meta.duration*1000));
 
 	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
 		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
@@ -229,7 +233,7 @@ $(function(){
 		error(){
 			if ($vid.attr('src') == '') return;
 
-			$vid.removeClass('is-loading');
+			$('#is-loading').addClass('hidden');
 			$('.is_cast').removeClass('is_cast playing');
 			const errorcode = ts.networkState == 3  ? 5 : ts.error.code;
 			Snackbar(`Error : ${[ts.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
@@ -242,29 +246,28 @@ $(function(){
 		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		canplay(){
 			hideBar(2000);
-			$vid.removeClass('is-loading');
+			$('#is-loading').addClass('hidden');
 
-			if (!vid.doNotAutoplay){
-				const promise = vid.play();
-				//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
-				if (promise !== undefined){
-					promise.catch(error => {
-						vid.muted = true;
-						vid.play();
-						vid.onVolumeChange();
-						document.querySelector('#volume').MaterialSlider.change(0);
-						$(document).one('click', () => {
-							vid.muted = false;
-							document.querySelector('#volume').MaterialSlider.change(vid.volume);
-						});
+			const promise = vid.play();
+			//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
+			if (promise !== undefined){
+				promise.catch(error => {
+					vid.muted = true;
+					vid.play();
+					vid.onVolumeChange();
+					document.querySelector('#volume').MaterialSlider.change(0);
+					$(document).one('click', () => {
+						vid.muted = false;
+						document.querySelector('#volume').MaterialSlider.change(vid.volume);
 					});
-				}
+				});
 			}
 			const d = $('.is_cast').data();
 			if (!d.canPlay) return;
 
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
+			$('#chapMaker-container').css('--dur', `${vid.duration*1000}`);
 		},
 		timeupdate(){
 			const d = $('.is_cast').data();
@@ -278,7 +281,7 @@ $(function(){
 			}else if (d.path || d.id || d.reid){
 				if (seek.seeking) return;
 
-				currentTime = vid.currentTime * (vid.fast || 1) + (vid.ofssec || 0);
+				currentTime = vid.fixCurrentTime || vid.currentTime;
 				if (!vid.offset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
@@ -612,6 +615,8 @@ $(function(){
 		vid.loaded = true;
 		setTimeout(setbmlBrowserSize, 100);
 	});
+	$('#seek').on('mdl-componentupgraded', () => $('#seek').after($('#chapMaker-container')));
+	
 
 	//準備できてから再生開始
 	if (!vid.readyToAutoPlay) return;

@@ -175,6 +175,7 @@ $(function(){
 	});
 	$('#playprev').click(e => $('.is_cast').removeClass('is_cast').prevAll(':visible').first().find('.cast').click());
 	$('#playnext').click(e => $('.is_cast').removeClass('is_cast').nextAll(':visible').first().find('.cast').click());
+	$('#nextChap,#prevChap').hide();
 
 	if ($('.onair.is_cast').length) vid.readyToAutoPlay = loadMovie;
 	$('#subCH').change(e => $('.subCH').toggleClass('hidden', !$(e.currentTarget).prop('checked')));
