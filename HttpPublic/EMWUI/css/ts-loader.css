@@ -159,7 +159,7 @@
 }
 .chapMaker {
   position: absolute;
-  left: calc(var(--ms) / var(--dur) * 100%);
+  left: calc(var(--sec) / var(--dur) * 100%);
   padding: 5px;
   transform: translateX(-50%);
   cursor: pointer;
@@ -172,7 +172,7 @@
     transition-timing-function: cubic-bezier(.4,0,.2,1);
   }
   > span {
-position: absolute;
+    position: absolute;
     min-width: 25px;
     padding: 0 5px;
     top: 50%;

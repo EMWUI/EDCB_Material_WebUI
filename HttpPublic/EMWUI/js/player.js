@@ -118,7 +118,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 			if (d.meta.audio) $audios.attr('disabled', d.meta.audio == 1);
 		}
 	}
-	chap.setChapters(d.chapters, d.meta&&(d.meta.duration*1000));
+	chap.setChapters(d.chapters, d.meta&&(d.meta.duration));
 
 	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
 		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
@@ -267,7 +267,7 @@ $(function(){
 
 			$duration.text(getVideoTime(vid.duration));
 			$seek.attr('max', vid.duration);
-			$('#chapMaker-container').css('--dur', `${vid.duration*1000}`);
+			$('#chapMaker-container').css('--dur', `${vid.duration}`);
 		},
 		timeupdate(){
 			const d = $('.is_cast').data();

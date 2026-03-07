@@ -811,7 +811,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 	static setNvramDef(zip, prefecture, regioncode){
 		if(!localStorage.getItem(`${this.prefix}zipcode`)) this.setNvramZip(zip);
 		if(!localStorage.getItem(`${this.prefix}prefecture`)) this.setNvramPrefecture(prefecture);
-		if(!localStorage.getItem(`${this.prefix}regioncode`)) this.setNvramPrefecture(regioncode);
+		if(!localStorage.getItem(`${this.prefix}regioncode`)) this.setNvramRegioncode(regioncode);
 	}
 
 
@@ -1970,10 +1970,30 @@ class chapterTvT{
 	#intervals;
 	#parse(chap = '', dur){
 		this.#raw = chap;
+		if (dur) this.#container.style=`--dur:${dur};`;
+
+		this.#chapters = chap.startsWith('CHAPTER') ? this.#parseOgm(chap) : this.#parseTvT(chap, dur);
+
+		this.#intervals = this.#chapters.map((e,i)=>[e,i]).filter(e => e[0].type === this.#TYPE.XIN || e[0].type === this.#TYPE.IN).map(e => {
+			const startCh = e[0];
+			const endCh = this.#chapters.slice(e[1]).find(ch => startCh.type === this.#TYPE.XIN && ch.type === this.#TYPE.XOUT || startCh.type === this.#TYPE.IN && ch.type === this.#TYPE.OUT) || {sec: dur, last: true};
+			return {
+				// ミリ秒を秒に変換し、頭、尻切れしないように丸める
+				start: Math.ceil(startCh.sec),
+				end: Math.floor(endCh.sec - (endCh.last ? 2 : 0.5)),
+				isLoop: (startCh.type === this.#TYPE.IN)
+			}
+		// 開始と終了が同じ秒になった場合は不要（あるいは最低1秒確保）
+		}).filter(e => e.end > e.start);
+
+		return [this.#chapters, this.#intervals];
+	}
+
+	#parseTvT(chap, dur){
 		// 前後の 'c' を除去して '-' で各セグメントに分割
 		const segments = chap.replace(/^c|c$/g, '').split('-').filter(s => s.length > 0);
 
-		this.#chapters = segments.map(segment => {
+		return segments.map(segment => {
 			const cIndex = segment.indexOf('c');
 			
 			let timePart, infoPart;
@@ -1996,7 +2016,7 @@ class chapterTvT{
 				// 0e 以外の文字（oxなど）があれば info の先頭に結合
 				info = timePart.replace('0e', '') + info;
 				last = true;
-			}else time = +timePart;
+			}else time = timePart / 1000;
 
 			// 2. 属性とチャプター名の分離
 			let type = 0;
@@ -2017,55 +2037,72 @@ class chapterTvT{
 				label = info.substring(1);
 			}
 
-			const marker = document.createElement('div');
-			marker.className = `chapMaker c-${['point','in','out','start','end'][type]}`;
-			marker.style = `--ms:${time??'var(--dur)'};`
-			marker.onclick = () => this.#seek(Math.floor(time / 1000 - 0.5));
-			marker.appendChild(document.createElement('div'));
-			const name = document.createElement('span')
-			name.innerText = label;
-			marker.appendChild(name);
-			this.#container.appendChild(marker);
+			this.#addMarker(time, label, type);
 
 			return {
-				time_ms: time,
+				sec: time,
 				type: type,
 				name: label,
 				last: last
 			};
 		});
-		if (dur) this.#container.style=`--dur:${dur};`;
+	}
+	#parseOgm(chap){
+		const lines = chap.split(/\r?\n/).filter(line => line.trim() !== "");
+		const chapters = [];
 
-		this.#intervals = this.#chapters.map((e,i)=>[e,i]).filter(e => e[0].type === this.#TYPE.XIN || e[0].type === this.#TYPE.IN).map(e => {
-			const startCh = e[0];
-			const endCh = this.#chapters.slice(e[1]).find(ch => startCh.type === this.#TYPE.XIN && ch.type === this.#TYPE.XOUT || startCh.type === this.#TYPE.IN && ch.type === this.#TYPE.OUT) || {time_ms: dur, last: true};
-			return {
-				// ミリ秒を秒に変換し、頭、尻切れしないように丸める
-				start: Math.ceil(startCh.time_ms / 1000),
-				end: Math.floor(endCh.time_ms / 1000 - (endCh.last ? 2 : 0.5)),
-				isLoop: (startCh.type === this.#TYPE.IN)
+		// 2行1組（時間設定と名前設定）でループを回す
+		for (let i = 0; i < lines.length; i += 2){
+			const timeLine = lines[i];     // CHAPTER01=00:00:00.000
+			const nameLine = lines[i + 1]; // CHAPTER01NAME=Opening
+
+			if (!timeLine || !nameLine) break;
+
+			// 値の部分を抽出
+			const timeStr = timeLine.split('=')[1];
+			const nameStr = nameLine.split('=')[1];
+
+			if (timeStr && nameStr){
+				const [h, m, s] = timeStr.split(':');
+				const time = (parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s));
+				this.#addMarker(time, nameStr);
+				chapters.push({
+					sec: time,
+					type: 0,
+					name: nameStr
+				});
 			}
-		// 開始と終了が同じ秒になった場合は不要（あるいは最低1秒確保）
-		}).filter(e => e.end > e.start);
+		}
+		return chapters;
+	}
 
-		return [this.#chapters, this.#intervals];
+	#addMarker(sec, label, type = 0){
+		const marker = document.createElement('div');
+		marker.className = `chapMaker c-${['point','in','out','start','end'][type]}`;
+		marker.style = `--sec:${sec??'var(--dur)'};`
+		marker.onclick = () => this.#seek(Math.floor(sec - 0.5));
+		marker.appendChild(document.createElement('div'));
+		const name = document.createElement('span')
+		name.innerText = label;
+		marker.appendChild(name);
+		this.#container.appendChild(marker);
 	}
 
 	#navigate(next = true){
 		if (!this.#chapters || this.#chapters.length === 0) return;
 
-		const currentTimeMs = this.#currentTime() * 1000;
+		const currentTime = this.#currentTime();
 		let ch = null;
 
 		// 現在地より「後ろ」にあるチャプターの中で、一番近いものを探す スキップ開始は無視する
-		if (next) ch = this.#chapters.find(ch => ch.last || ch.time_ms > currentTimeMs + 500 && !(this.#ignoreXIN && ch.type === this.#TYPE.XIN)); 
-			// +100ms しているのは、チャプター地点にいる時に連打して同じ場所に留まらないようにするため
+		if (next) ch = this.#chapters.find(ch => ch.last || ch.sec > currentTime + 0.5 && !(this.#ignoreXIN && ch.type === this.#TYPE.XIN)); 
+			// +0.5s しているのは、チャプター地点にいる時に連打して同じ場所に留まらないようにするため
 		// 配列を後ろから検索して、現在地より前のものを見つける
-		else ch = this.#chapters.toReversed().find(ch => ch.time_ms < currentTimeMs - 2000);
-			// -2000ms しているのは、チャプター開始直後に「前」を押したら
+		else ch = this.#chapters.toReversed().find(ch => ch.sec < currentTime - 2);
+			// -2s しているのは、チャプター開始直後に「前」を押したら
 			// 同じチャプターの頭ではなく、さらに一つ前に戻るため
 
-		if (ch) this.#seek(Math.floor(ch.time_ms != null ? ch.time_ms / 1000 - 0.5 : this.#vid.duration - 2));
+		if (ch) this.#seek(Math.floor(ch.sec != null ? ch.sec - 0.5 : this.#vid.duration - 2));
 		else if(!next) this.#seek(0);	// 前にチャプターがない場合は動画の先頭へ
 	}
 

@@ -683,7 +683,7 @@ const createHtml = new class {
 							mdlChip.tag(d.comment),
 							$('<span>', {class: 'container', append: [
 								mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
-								mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0 ? ' mdl-color-text--red-A700' : null) ]}) ]}) ]}),
+								mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0&&' mdl-color-text--red-A700') ]}) ]}) ]}),
 					{canvas: thumb, id: d.id, value: 0.1, done: () => $thumb.replaceWith($('<div>', {class: 'thumb-container', append: thumb}))}
 				];
 			},
@@ -697,6 +697,7 @@ const createHtml = new class {
 				if ($(e.target).is('.count a')) return;
 				$('#sidePanel').length ? setAutoAdd($(e.currentTarget)) : location.href = `autoaddepginfo.html?id=${$(e.currentTarget).data('id')}`;
 			},
+			class: d => d.searchSetting.disableFlag ? ' disabled' : '',
 			cell: [
 				{title: 'キーワード', class: 'keyword', col: 4, text: d => d.searchSetting.andKey},
 				{title: 'NOTキーワード', class: 'notkeyword', col: 3, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'block'})}), d.searchSetting.notKey]},
