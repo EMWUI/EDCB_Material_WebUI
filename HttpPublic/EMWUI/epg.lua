@@ -31,7 +31,7 @@ NOW=pageTime<utc9Now and utc9Now<pageTime+interval*3600
 function EpgCssTemplate()
   local paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
   return '<style>'
-    ..'main{background:'..edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
+    ..'#tv-guide{--background:'..edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
     ..';}.station{--width:'..edcb.GetPrivateProfile('GUIDE','service','210',INI)
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour','22',INI)
     ..'px;}#tv-guide{--ONE_MIN_PX:'..ONE_MIN_PX

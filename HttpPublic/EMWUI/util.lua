@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260304',
-    common='260217',
-    tvguide='250824',
+    css='260307',
+    common='260307',
+    tvguide='260307',
     player='260304',
     onair='260304',
     library='260303',
     setting='2260303',
-    tsloader='260304',
+    tsloader='260307',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -251,9 +251,9 @@ function ContentBackgroundStyle()
   }
   local s=''
   for i, v in ipairs(content) do
-    s=s..'.cont-'..i..'{background:'..edcb.GetPrivateProfile('BACKGROUND',v[1],v[2],INI)..'!important;}'
+    s=s..';--cont-'..i..':'..edcb.GetPrivateProfile('BACKGROUND',v[1],v[2],INI)
   end
-  return '<style>'..s..'.nothing{background:'..edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)..'!important;}</style>\n'
+  return '<style>[class*=cont-]{--cont-0:'..edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)..s..';}</style>\n'
 end
 
 MdlChip={

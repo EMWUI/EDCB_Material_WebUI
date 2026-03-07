@@ -132,7 +132,7 @@ for i=0,6 do
     endTime=w.durationSecond and startTime+w.durationSecond or (j<#b and os.time(b[j+1].startTime) or startTime) --終了時間未定
     endPx=math.min(math.floor((endTime-pageTime-i*24*3600)/60), 60*interval)
     if startPx-lastPx>0 then
-      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..'"><div class="content-wrap cont-0"><div class="content"></div></div></div>\n')
       total=total+startPx-lastPx
       lastPx=startPx
     end
@@ -145,7 +145,7 @@ for i=0,6 do
     end
   end
   if total<interval*60 then
-    table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..'"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+    table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..'"><div class="content-wrap cont-0"><div class="content"></div></div></div>\n')
   end
   table.insert(ctt, '</div></div>\n')
 end

@@ -207,7 +207,7 @@ for i,v in ipairs(st) do
       endPx=math.min(math.floor((endTime-pageTime)/60), 60*interval)
       if startPx-lastPx>0 then
         if not v.subCh then
-          table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..';"><div class="content-wrap nothing"><div class="content'..(NOW and date==0 and startTime<=utc9Now and ' end' or '')..'"></div></div></div>\n')
+          table.insert(ctt, '<div class="cell" data-endtime="'..(startTime-9*3600)..'" style="--h:'..(startPx-lastPx)..';"><div class="content-wrap cont-0"><div class="content'..(NOW and date==0 and startTime<=utc9Now and ' end' or '')..'"></div></div></div>\n')
         end
         total=total+startPx-lastPx
         lastPx=startPx
@@ -246,7 +246,7 @@ for i,v in ipairs(st) do
       end
     end
     if not v.subCh and total<interval*60 then
-      table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..';top:'..total..'px;"><div class="content-wrap nothing"><div class="content"></div></div></div>\n')
+      table.insert(ctt, '<div class="cell" style="--h:'..(interval*60-total)..';top:'..total..'px;"><div class="content-wrap cont-0"><div class="content"></div></div></div>\n')
     end
     table.insert(ctt, '</div>')
     if i==#st or not st[i+1].subCh then

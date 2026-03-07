@@ -1,6 +1,6 @@
 #jikkyo-comm {
   /* The top/bottom border of #jikkyo-comm must be 1px */
-  border: 1px solid #ccc;
+  border: 1px solid light-dark(#ccc, #333);
   flex: 0 0 25%;
   margin-left: 1px;
   position: relative;
@@ -77,14 +77,14 @@
 
 #jikkyo-chats > div > .nico {
   /*background: #fff;*/
-  color: #00a;
+  color: light-dark(#00a, #66c);
   margin-left: 0.2em;
   margin-right: 0.2em;
 }
 
 #jikkyo-chats > div > .refuge {
   /*background: #fff;*/
-  color: #900;
+  color: light-dark(#900, #c66);
   margin-left: 0.2em;
   margin-right: 0.2em;
 }
