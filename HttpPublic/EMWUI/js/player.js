@@ -1,6 +1,6 @@
 const video = document.getElementById("video");
 const $vid = $(video);
-const chap = new chapterTvT(video);
+const chap = new chapterTvt(video);
 
 //safariがis属性に対応しないための
 const vid = isSafari == 1 ? new TsLiveDatacast(video) : video;	//HTMLMediaElementメソッド用
@@ -281,7 +281,7 @@ $(function(){
 			}else if (d.path || d.id || d.reid){
 				if (seek.seeking) return;
 
-				currentTime = vid.fixCurrentTime || vid.currentTime;
+				currentTime = vid.fixedCurrentTime || vid.currentTime;
 				if (!vid.offset) seek.MaterialSlider.change(currentTime);
 			}
 			$currentTime.text(getVideoTime(currentTime));
