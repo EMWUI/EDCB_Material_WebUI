@@ -21,6 +21,13 @@ function save(post)
     titleControl=titleControl+v
   end
 
+  local fav={}
+  for i=0,14 do
+    local v=mg.get_var(post,'fav',i)
+    if not v then break end
+    table.insert(fav,v)
+  end
+
   --edcb.WritePrivateProfile('SET', 'tkntrec', GetVarInt(post,'tkntrec')==1,INI)
   edcb.WritePrivateProfile('SET', 'Roboto', GetVarInt(post,'Roboto')==1,INI)
   edcb.WritePrivateProfile('SET', 'subGenreoption', mg.get_var(post,'subGenreoption'),INI)
@@ -60,6 +67,8 @@ function save(post)
   edcb.WritePrivateProfile('BACKGROUND', 'nothing', mg.get_var(post, 'nothing'),INI)
 
   edcb.WritePrivateProfile('BACKGROUND', 'paint', GetVarInt(post,'paint')==1,INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'line', GetVarInt(post,'line')~=1,INI)
+  edcb.WritePrivateProfile('BACKGROUND', 'fav', table.concat(fav, ','),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'reserved', mg.get_var(post, 'reserved'),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'disable', mg.get_var(post, 'disable'),INI)
   edcb.WritePrivateProfile('BACKGROUND', 'partially', mg.get_var(post, 'partially'),INI)
@@ -80,8 +89,19 @@ function save(post)
     if not v then break end
     edcb.WritePrivateProfile('HIDE', 'hide'..i, v,INI)
   end
+end
 
-  return '保存しました'
+post=AssertPost()
+if post then
+  reset=mg.get_var(post,'reset')
+  if reset then
+    messege={messege=format(reset) or '初期化できませんでした'}
+  else
+    save(post)
+    messege={messege='保存しました'}
+  end
+  ResponseJson(messege)
+  return
 end
 
 ct={
@@ -109,17 +129,6 @@ ct.main='<main class="tab-swipe mdl-layout__content">\n<div class="mdl-grid">\n<
   ..'<input type="hidden" name="ctok" value="'..CsrfToken()..'">\n'
 
   ..'<section class="mdl-layout__tab-panel is-active mdl-grid mdl-grid--no-spacing form" id="whole">\n'
-
-post=AssertPost()
-if post then
-  reset=mg.get_var(post,'reset')
-  if reset then
-    messege=format(reset) or '初期化できませんでした'
-  else
-    messege=save(post) or '保存できませんでした'
-  end
-  ct.js=ct.js..'<script>Snackbar({message: "'..messege..'", timeout:5000});</script>'
-end
 
 SIDE_PANEL=tonumber(edcb.GetPrivateProfile('GUIDE','sidePanel',true,INI))~=0
 roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,INI))~=0
@@ -232,24 +241,8 @@ ct.main=ct.main..'<section class="mdl-layout__tab-panel mdl-grid mdl-grid--no-sp
 
 background=edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
 
-news=edcb.GetPrivateProfile('BACKGROUND','news','#B3E5FC',INI)
-sports=edcb.GetPrivateProfile('BACKGROUND','sports','#FFF9C4',INI)
-information=edcb.GetPrivateProfile('BACKGROUND','information','#BBDEFB',INI)
-drama=edcb.GetPrivateProfile('BACKGROUND','drama','#FFCDD2',INI)
-music=edcb.GetPrivateProfile('BACKGROUND','music','#FFECB3',INI)
-variety=edcb.GetPrivateProfile('BACKGROUND','variety','#E1BEE7',INI)
-movie=edcb.GetPrivateProfile('BACKGROUND','movie','#FFE0B2',INI)
-anime=edcb.GetPrivateProfile('BACKGROUND','anime','#F8BBD0',INI)
-documentary=edcb.GetPrivateProfile('BACKGROUND','documentary','#C5CAE9',INI)
-theater=edcb.GetPrivateProfile('BACKGROUND','theater','#DCEDC8',INI)
-education=edcb.GetPrivateProfile('BACKGROUND','education','#C8E6C9',INI)
-welfare=edcb.GetPrivateProfile('BACKGROUND','welfare','#B2DFDB',INI)
-extension=edcb.GetPrivateProfile('BACKGROUND','extension','#FFFFFF',INI)
-other=edcb.GetPrivateProfile('BACKGROUND','other','#F5F5F5',INI)
-none=edcb.GetPrivateProfile('BACKGROUND','none','#E0E0E0',INI)
-nothing=edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)
-
 paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
+line=tonumber(edcb.GetPrivateProfile('BACKGROUND','line',false,INI))~=0
 reserve=edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',INI)
 disabled=edcb.GetPrivateProfile('BACKGROUND','disable','#757575',INI)
 partially=edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)
@@ -258,98 +251,73 @@ shortage=edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)
 shortage_border=edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',INI)
 
 CATEGORY={
-  'news',
-  'sports',
-  'information',
-  'drama',
-  'music',
-  'variety',
-  'movie',
-  'anime',
-  'documentary',
-  'theater',
-  'education',
-  'welfare',
+  {1,'news','#B3E5FC'},
+  {2,'sports','#FFF9C4'},
+  {3,'information','#BBDEFB'},
+  {4,'drama','#FFCDD2'},
+  {5,'music','#FFECB3'},
+  {6,'variety','#E1BEE7'},
+  {7,'movie','#FFE0B2'},
+  {8,'anime','#F8BBD0'},
+  {9,'documentary','#C5CAE9'},
+  {10,'theater','#DCEDC8'},
+  {11,'education','#C8E6C9'},
+  {12,'welfare','#B2DFDB'},
+  {13,'extension','#FFFFFF','拡張'},
+  {16,'other','#F5F5F5'},
+  {0,'nothing','#9E9E9E','EPGなし'}
 }
 
 ct.css='<style>\n'
-  ..'.reserve{border: 3px dotted '..(paint and 'transparent' or reserve)..';}\n'
-  ..'.disabled{border-color:'..(paint and 'transparent' or disabled)..';}\n'
-  ..'.partially{background:'..partially..';border-color:'..partially_border..';}\n'
-  ..'.shortage{background:'..shortage..';border-color:'..shortage_border..';}\n'
+  ..'[class*=cont-]{margin: 4px 8px;'
+  ..'--reserve:'..reserve..';--disabled:'..disabled
+  ..';--partially:'..partially..';--partially_sub:'..partially_border
+  ..';--shortage:'..shortage..';--shortage_sub:'..shortage_border..';}\n'
+  ..'[class*=cont-]:not(.reserve){background: linear-gradient(to right, var(--bg-line) 5px, var(--color) 5px) border-box !important;}'
 
-  ..'.background{color-scheme:light;color:var(--main);background:'..background..';}\n'
-
-  ..'#set .background>div{margin: 4px 8px;}\n'
+  ..'.background{color-scheme:light;color:var(--main);background:var(--color);--color:'..background..';}\n'
+  ..'[for*=fav-]{cursor: pointer;}'
   ..'</style>\n'
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'
 
   ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">ジャンル別背景色</div>\n<div class="background mdl-cell mdl-cell--9-col mdl-grid">\n'
-  ..'<div class="cont-1 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ニュース/報道</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="news" value="'..news..'" for=".cont-1"></div></div>\n'
 
-  ..'<div class="cont-2 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">スポーツ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="sports" value="'..sports..'" for=".cont-2"></div></div>\n'
+Fav=Split(edcb.GetPrivateProfile('BACKGROUND','fav','4,7,8',INI),',')
+function checkFav(n)
+  for i, v in ipairs(Fav) do
+    if n==tonumber(v) then return true end
+  end
+end
 
-  ..'<div class="cont-3 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">情報/ワイドショー</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="information" value="'..information..'" for=".cont-3"></div></div>\n'
+for i, v in ipairs(CATEGORY) do
+  ct.main=ct.main..'<div class="cont-'..v[1]..' mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">'
+    ..'<label class="mdl-icon-toggle mdl-js-icon-toggle" for="fav-'..v[1]..'"><input'..Checkbox(checkFav(v[1]),v[1])..' name="fav" id="fav-'..v[1]..'" class="mdl-icon-toggle__input"><i class="fill mdl-icon-toggle__label material-icons">star</i></label>'
+    ..'<label for="fav-'..v[1]..'">'..(v[4] or edcb.GetGenreName((v[1])*256-1))..'</label></div>\n'
+    ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="'..v[2]..'" value="'..edcb.GetPrivateProfile('BACKGROUND',v[2],v[3],INI)..'" for=".cont-'..v[1]..'"></div></div>\n'
+end
 
-  ..'<div class="cont-4 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドラマ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="drama" value="'..drama..'" for=".cont-4"></div></div>\n'
-
-  ..'<div class="cont-5 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">音楽</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="music" value="'..music..'" for=".cont-5"></div></div>\n'
-
-  ..'<div class="cont-6 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">バラエティ</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="variety" value="'..variety..'" for=".cont-6"></div></div>\n'
-
-  ..'<div class="cont-7 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">映画</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="movie" value="'..movie..'" for=".cont-7"></div></div>\n'
-
-  ..'<div class="cont-8 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">アニメ/特撮</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="anime" value="'..anime..'" for=".cont-8"></div></div>\n'
-
-  ..'<div class="cont-9 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">ドキュメンタリー/教養</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="documentary" value="'..documentary..'" for=".cont-9"></div></div>\n'
-
-  ..'<div class="cont-10 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">劇場/公演</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="theater" value="'..theater..'" for=".cont-10"></div></div>\n'
-
-  ..'<div class="cont-11 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">趣味/教育</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="education" value="'..education..'" for=".cont-11"></div></div>\n'
-
-  ..'<div class="cont-12 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">福祉</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="welfare" value="'..welfare..'" for=".cont-12"></div></div>\n'
-
-  ..'<div class="cont-13 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">拡張</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="extension" value="'..extension..'" for=".cont-13"></div></div>\n'
-
-  ..'<div class="cont-16 mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">その他</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="other" value="'..other..'" for=".cont-16"></div></div>\n'
-
-  ..'<div class="nothing mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">EPGなし</div>\n'
-  ..'<div class="mdl-layout-spacer"></div><div><input class="bgset" type="color" name="nothing" value="'..nothing..'" for=".nothing"></div></div>\n'
+ct.main=ct.main..'<div style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="cb-line"><input id="cb-line" class="mdl-checkbox__input" name="line"'..Checkbox(not line)..'><span class="mdl-checkbox__label">塗りつぶす</span></label></div>\n'
   ..'</div></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画予約済</div>\n<div class="mdl-cell mdl-cell--9-col mdl-grid background">\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">録画予約済</div>\n<div class="mdl-cell mdl-cell--9-col mdl-grid background'..(paint and ' bg-paint' or '')..(line and ' bg-line' or '')..'">\n'
 
-  ..'<div class="'..(paint and 'paint ' or '')..'mdl-cell mdl-cell--12-col mdl-grid" style="margin: 0; padding: 0; width: 100%;">\n'
-  ..'<div id="reserve" class="reserve '..CATEGORY[math.random(1,12)]..' mdl-cell mdl-cell--4-col mdl-grid" style="margin: 4px 8px;"><div class="mdl-cell--middle">予約済み</div>\n<div class="mdl-layout-spacer"></div>'
-  ..'<div><input class="reserveset" type="color" name="reserved" value="'..reserve..'" for="#reserve"></div></div>\n'
+  ..'<div class="mdl-cell mdl-cell--12-col mdl-grid" style="margin: 0; padding: 0; width: 100%;">\n'
+  ..'<div id="reserve" class="reserve cont-'..math.random(1,12)..' mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">予約済み</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="reserved" value="'..reserve..'" for="reserve"></div></div>\n'
 
-  ..'<div id="disabled" class="'..(paint and 'paint ' or '')..'reserve disabled '..CATEGORY[math.random(1,12)]..' mdl-cell mdl-cell--4-col mdl-grid" style="margin: 4px 8px;"><div class="mdl-cell--middle">予約無効</div>\n<div class="mdl-layout-spacer"></div>'
-  ..'<div><input class="reserveset" type="color" name="disable" value="'..disabled..'" for="#disabled"></div></div>\n'
+  ..'<div id="disabled" class="reserve disabled cont-'..math.random(1,12)..' mdl-cell mdl-cell--4-col mdl-grid"><div class="mdl-cell--middle">予約無効</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="disable" value="'..disabled..'" for="disabled"></div></div>\n'
 
-  ..'<div class="mdl-cell mdl-cell--4-col mdl-grid mdl-cell--middle" style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="paint"><input id="paint" class="mdl-checkbox__input" name="paint"'..Checkbox(paint)..'><span class="mdl-checkbox__label">塗りつぶし</span></label></div>\n'
+  ..'<div class="mdl-cell mdl-cell--4-col mdl-grid mdl-cell--middle" style="margin: 0 8px; padding: 0 8px;"><label class="mdl-checkbox mdl-js-checkbox" for="paint"><input id="paint" class="mdl-checkbox__input" name="paint"'..Checkbox(paint)..'><span class="mdl-checkbox__label">塗りつぶす</span></label></div>\n'
   ..'</div>\n'
 
-  ..'<div id="partially" class="reserve partially mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">一部録画</div>\n<div class="mdl-layout-spacer"></div>'
-  ..'<div><input class="bgset" type="color" name="partially" value="'..partially..'" for=".partially"> 枠 <input class="border" id="partially_border" type="color" name="partially_border" value="'..partially_border..'" for="#partially"></div></div>\n'
+  ..'<div id="partially" class="reserve partially cont-1 mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">一部録画</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="partially" value="'..partially..'" for="partially"> 枠 <input class="border" id="partially_border" type="color" name="partially_border" value="'..partially_border..'" for="partially"></div></div>\n'
 
-  ..'<div id="shortage" class="reserve shortage mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">チューナー不足</div>\n<div class="mdl-layout-spacer"></div>'
-  ..'<div><input class="bgset" type="color" name="shortage" value="'..shortage..'" for=".shortage"> 枠 <input class="border" id="shortage_border" type="color" name="shortage_border" value="'..shortage_border..'" for="#shortage"></div></div>\n'
+  ..'<div id="shortage" class="reserve shortage cont-1 mdl-cell mdl-cell--4-col mdl-cell--4-col-tablet mdl-grid"><div class="mdl-cell--middle">チューナー不足</div>\n<div class="mdl-layout-spacer"></div>'
+  ..'<div><input class="reserveset" type="color" name="shortage" value="'..shortage..'" for="shortage"> 枠 <input class="border" id="shortage_border" type="color" name="shortage_border" value="'..shortage_border..'" for="shortage"></div></div>\n'
   ..'</div></div>\n'
   ..'</section>\n'
 
@@ -431,7 +399,7 @@ ct.main=ct.main..'</div>\n'..table.concat(ctt)..[=[
 <button class="init tvguide sort mdl-button mdl-js-button mdl-button--primary">初期化</button>
 <div class="mdl-layout-spacer"></div>
 <button id="reinstate" class="mdl-button mdl-js-button mdl-button--primary" type="button">元に戻す</button>
-<button type="submit" class="mdl-button mdl-js-button mdl-button--primary" form="set">保存</button>
+<button id="save" type="submit" class="mdl-button mdl-js-button mdl-button--primary" form="set">保存</button>
 </div>
 <form id="reset" method="POST" action="setting.html"><input type="hidden" name="ctok" value="]=]..CsrfToken()..[=["><input type="hidden" name="reset"></form>
 </div>

@@ -48,7 +48,7 @@ if mg.get_var(post, 'save') then
     if not v then break end
     edcb.WritePrivateProfile(section, 'contentList'..i, v,INI)
   end
-  for i=1,10000 do
+  for i=0,10000 do
     v=mg.get_var(post, 'serviceList', i)
     if not v then break end
     edcb.WritePrivateProfile(section, 'serviceList'..i, v,INI)

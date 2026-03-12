@@ -1,12 +1,12 @@
 function Version(a)
   local ver={
-    css='260307',
-    common='260307',
+    css='260312',
+    common='260312',
     tvguide='260307',
     player='260304',
     onair='260304',
     library='260303',
-    setting='2260303',
+    setting='2260312',
     tsloader='260307',
     hls='v1.5.20',
     aribb24='v1.11.5',
@@ -1217,7 +1217,7 @@ function ConvertTitle(title)
   --2か3バイトの[]で囲われた文字列
   return title:gsub('%[[^%]][^%]][^%]]?%]', function(a)
     if ('[新][終][再][交][映][手][声][多][字][二][Ｓ][Ｂ][SS][無][Ｃ][S1][S2][S3][MV][双][デ][Ｄ][Ｎ][Ｗ][Ｐ][HV][SD][天][解][料][前][後][初][生][販][吹][PPV][演][移][他][収]'):find(a, 1, true) then
-      return '<span class="mark mdl-color--accent mdl-color-text--accent-contrast">'..a:sub(2, #a-1)..'</span>'
+      return '<span class="mark">'..a:sub(2, #a-1)..'</span>'
     end
     return nil
   end):gsub('　', ' ')

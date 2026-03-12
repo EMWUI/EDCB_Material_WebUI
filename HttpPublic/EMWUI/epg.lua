@@ -29,7 +29,10 @@ pageTime=(pageDate*24+baseHour)*3600
 NOW=pageTime<utc9Now and utc9Now<pageTime+interval*3600
 
 function EpgCssTemplate()
-  local paint=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0
+  local fav
+  for i,v in ipairs(Split(edcb.GetPrivateProfile('BACKGROUND','fav','4,7,8',INI),',')) do
+    fav=(fav and fav..',' or '')..'.cont-'..v
+  end
   return '<style>'
     ..'#tv-guide{--background:'..edcb.GetPrivateProfile('BACKGROUND','background','#EEEEEE',INI)
     ..';}.station{--width:'..edcb.GetPrivateProfile('GUIDE','service','210',INI)
@@ -37,11 +40,13 @@ function EpgCssTemplate()
     ..'px;}#tv-guide{--ONE_MIN_PX:'..ONE_MIN_PX
     ..';}'
 
-    ..'.content-wrap.reserve{'..(paint and 'border-color:transparent;background:' or 'border-color:')..edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',INI)
-    ..';}.content-wrap.disabled{'..(paint and 'border-color:transparent;background:' or 'border-color:')..edcb.GetPrivateProfile('BACKGROUND','disable','#757575',INI)
-    ..';}.content-wrap.partially{background:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)..';border-color:'..edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',INI)
-    ..';}.content-wrap.shortage{background:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)..';border-color:'..edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',INI)
+    ..'[class*=cont-]{--reserve:'..edcb.GetPrivateProfile('BACKGROUND','reserved','#FF3D00',INI)
+    ..';--disabled:'..edcb.GetPrivateProfile('BACKGROUND','disable','#757575',INI)
+    ..';--partially:'..edcb.GetPrivateProfile('BACKGROUND','partially','#FFFF00',INI)..';--partially_sub:'..edcb.GetPrivateProfile('BACKGROUND','partially_border','#FF3D00',INI)
+    ..';--shortage:'..edcb.GetPrivateProfile('BACKGROUND','shortage','#FF5252',INI)..';--shortage_sub:'..edcb.GetPrivateProfile('BACKGROUND','shortage_border','#FFEA00',INI)
     ..';}'
+
+    ..'.bg-line{'..fav..'{--bg-main:var(--bg-fav);}}'
 
     ..'@media screen and (max-width:479px){.station{--width:'..edcb.GetPrivateProfile('GUIDE','service_sp','125',INI)
     ..'px;}.hour-container{width:'..edcb.GetPrivateProfile('GUIDE','hour_sp','16',INI)
@@ -63,6 +68,12 @@ function EpgJsTemplate(lastTime)
     ..(date==0 and 'true,' or 'false,')
     ..');const ctok=\''..CsrfToken('setreserve')
     ..'\';</script>\n'
+end
+
+function EpgBgClassName()
+  local name=tonumber(edcb.GetPrivateProfile('BACKGROUND','paint',false,INI))~=0 and 'bg-paint'
+  name=tonumber(edcb.GetPrivateProfile('BACKGROUND','line',false,INI))~=0 and (name and name..' ' or '')..'bg-line' or name
+  return name and ' class="'..name..'"' or ''
 end
 
 rt={}

@@ -9,20 +9,14 @@ $(function(){
 		});
 	});
 	//背景色連動
-	$('.bgset').change(e => $($(e.currentTarget).attr('for')).not('.paint').css({'cssText': `background: ${$(e.currentTarget).val()}!important;`}));
+	$('.bgset').change(e => $($(e.currentTarget).attr('for')).css(`--color`, $(e.currentTarget).val()));
 	//予約済み
-	$('.reserveset').change(e => $($(e.currentTarget).attr('for')).css($('#paint').prop('checked') ? 'background' : 'border-color', $(e.currentTarget).val()));
+	$('.reserveset').change(e => $(`#${$(e.currentTarget).attr('for')}`).css(`--${$(e.currentTarget).attr('for')}`, $(e.currentTarget).val()));
 	//一部録画・チューナー不足枠
-	$('.border').change(e => $($(e.currentTarget).attr('for')).css('border-color', $(e.currentTarget).val()));
+	$('.border').change(e => $(`#${$(e.currentTarget).attr('for')}`).css(`--${$(e.currentTarget).attr('for')}_sub`, $(e.currentTarget).val()));
 	//塗潰し
-	$('#paint').change(e => {
-		$('#reserve').toggleClass('paint', $(e.currentTarget).prop('checked')).css('background', $(e.currentTarget).prop('checked') ? $('#reserve .reserveset').val() : '').css('border-color', $(e.currentTarget).prop('checked') ? 'transparent' : $('#reserve .reserveset').val());
-		$('#disabled').toggleClass('paint', $(e.currentTarget).prop('checked')).css('background', $(e.currentTarget).prop('checked') ? $('#disabled .reserveset').val() : '').css('border-color', $(e.currentTarget).prop('checked') ? 'transparent' : $('#disabled .reserveset').val());
-	});
-	if ($('#paint').prop('checked')){
-		$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
-		$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
-	}
+	$('#paint').change(e => $('.background').toggleClass('bg-paint'));
+	$('#cb-line').change(e => $('.background').toggleClass('bg-line'));
 
 	//並び替え
 	$('#sort ul').sortable({handle: '.handle'});
@@ -36,11 +30,9 @@ $(function(){
 		//設定
 		$('#set')[0].reset();
 		//見た目
-		$('.mdl-cell').css('background', '').css('border-color', '');
-		if ($('#paint').prop('checked')){
-			$('#reserve').addClass('paint').css('background', $('#reserve .reserveset').val());
-			$('#disabled').addClass('paint').css('background', $('#disabled .reserveset').val());
-		}
+		$('[class*=cont-],.background').removeAttr('style');
+		$('.background').toggleClass('bg-paint', $('#paint').prop('checked'));
+		$('.background').toggleClass('bg-line', $('#cb-line').prop('checked'));
 		$('#set input').not('.hidden').each((i, e) => $(e).parent().toggleClass('is-checked', $(e).prop('checked')));
 		//並び替え
 		$('#sort .mdl-list').each((i, e) => $(e).data('sort').split(',').forEach(v => $(`#${v}`).appendTo(e)) );
@@ -52,6 +44,24 @@ $(function(){
 		$('.init').hide().data('text', $(e.currentTarget).text());
 		$(`.${val}`).show();
 		$('[name=reset]').val(val);
+	});
+
+	$('#reset').submit(e => {
+		e.preventDefault();
+		fetch('setting.html', {
+			method: 'POST',
+			body: new URLSearchParams(new FormData(e.currentTarget))
+		}).then(r=>r.json()).then(r=>{
+			Snackbar(r.messege);
+			location.reload();
+		});
+	});
+	$('#set').submit(e => {
+		e.preventDefault();
+		fetch('setting.html', {
+			method: 'POST',
+			body: new URLSearchParams(new FormData(e.currentTarget))
+		}).then(r=>r.json()).then(r=>Snackbar(r.messege));
 	});
 
 	//初期化
