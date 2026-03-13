@@ -1994,16 +1994,19 @@ class chapterTvt{
 		const segments = chap.replace(/^c|c$/g, '').split('-').filter(s => s.length > 0);
 
 		return segments.map(segment => {
-			const cIndex = segment.indexOf('c');
+			const match = segment.match(/^(\d+)([cd])/);
 			
-			let timePart, infoPart;
-			if (cIndex === -1){
-				// 'c' がないイレギュラーなケース
+			let timePart, unitChar, infoPart;
+
+			if (!match){
+				// 数字+単位の形式ではないイレギュラーなケース
 				timePart = segment;
+				unitChar = 'c'; // デフォルト
 				infoPart = "";
 			}else{
-				timePart = segment.substring(0, cIndex);
-				infoPart = segment.substring(cIndex + 1);
+				timePart = match[1]; // 数字部分
+				unitChar = match[2]; // 'c' または 'd'
+				infoPart = segment.substring(match[0].length); // 単位文字より後ろすべて
 			}
 
 			let time;
@@ -2016,7 +2019,10 @@ class chapterTvt{
 				// 0e 以外の文字（oxなど）があれば info の先頭に結合
 				info = timePart.replace('0e', '') + info;
 				last = true;
-			}else time = timePart / 1000;
+			}else{
+				const divisor = (unitChar === 'c') ? 1000 : 10;
+				time = Number(timePart) / divisor;
+			}
 
 			// 2. 属性とチャプター名の分離
 			let type = 0;

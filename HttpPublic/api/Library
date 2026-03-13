@@ -274,14 +274,19 @@ else
           pgtxt=GetPgtxt(ref)
           if pgtxt then a.programInfo=pgtxt end
           for i,v in ipairs({dir,PathAppend(dir,'chapters')}) do
-            chap=PathAppend(v,a.name:gsub('%.[0-9A-Za-z]+$','')..'.chapter')
-            if EdcbFindFilePlain(chap) then
-              f=edcb.io.open(chap,'r')
-              if f then
-                a.chapters=f:read('*a')
-                f:close()
+            chap=PathAppend(v,a.name:gsub('%.[0-9A-Za-z]+$',''))
+            for i,v in ipairs({'.chapter','.txt'}) do
+              chap=chap..v
+              if EdcbFindFilePlain(chap) then
+                f=edcb.io.open(chap,'r')
+                if f then
+                  a.chapters=f:read('*a')
+                  f:close()
+                  break
+                end
               end
             end
+            if a.chapters then break end
           end
         end
 
