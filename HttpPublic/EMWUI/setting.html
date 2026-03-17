@@ -268,7 +268,7 @@ CATEGORY={
   {0,'nothing','#9E9E9E','EPGなし'}
 }
 
-ct.css='<style>\n'
+ct.css=''
   ..'[class*=cont-]{margin: 4px 8px;'
   ..'--reserve:'..reserve..';--disabled:'..disabled
   ..';--partially:'..partially..';--partially_sub:'..partially_border
@@ -276,8 +276,7 @@ ct.css='<style>\n'
   ..'[class*=cont-]:not(.reserve){background: linear-gradient(to right, var(--bg-line) 5px, var(--color) 5px) border-box !important;}'
 
   ..'.background{color-scheme:light;color:var(--main);background:var(--color);--color:'..background..';}\n'
-  ..'[for*=fav-]{cursor: pointer;}'
-  ..'</style>\n'
+  ..'[for*=fav-]{cursor: pointer;}\n'
 
 ct.main=ct.main..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet">背景色</div>\n<div class="mdl-cell mdl-cell--9-col mdl-cell--6-col-tablet mdl-grid background">\n<div class="mdl-layout-spacer mdl-cell--hide-desktop mdl-cell--hide-tablet"></div>\n'
   ..'<div style="margin: 0 16px;"><input class="bgset" type="color" name="background" value="'..background..'" for=".background"></div></div></div>\n'

@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260312',
+    css='260317',
     common='260312',
     tvguide='260307',
-    player='260304',
+    player='260317',
     onair='260304',
     library='260303',
     setting='2260312',
-    tsloader='260307',
+    tsloader='260317',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -35,7 +35,7 @@ function Template(temp)
   edcb.htmlEscape=0
   local path=temp.path or ''
   local roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,INI))~=0
-  local css=edcb.GetPrivateProfile('SET','css','<link rel="stylesheet" href="'..path..'css/material.min.css">',INI)..'\n'
+  local theme=Split(edcb.GetPrivateProfile('SET','theme','',INI),',')
   local olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,INI))~=0
   local suspend=''
   local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
@@ -63,20 +63,23 @@ function Template(temp)
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
-<meta name="theme-color" content="]=]..edcb.GetPrivateProfile('SET','theme','#3f51b5',INI)..[=[">
+<meta name="theme-color" content="]=]..(#theme==3 and theme[1] or '#3f51b5')..[=[">
 <title>EpgTimer</title>
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
 <link rel="manifest" href="]=]..path..[=[manifest.json" crossorigin="use-credentials">
-]=]..css..[=[
+<link rel="stylesheet" href="]=]..path..[=[css/material.min.css">
 <link rel="stylesheet" href="]=]..path..[=[css/default.css]=]..Version('css')..[=[">
 <link rel="stylesheet" href="]=]..path..[=[css/user.css">
 ]=]
 ..(roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 
 -- css
+..'<style>\n'
+..(#theme==3 and ':root{--primary-color:'..theme[1]..';--accent-color:'..theme[2]..';--A700:'..theme[3]..';}\n' or '')
 ..ContentBackgroundStyle()
 ..(temp.css or '')
+..'</style>\n'
 
 -- javascript
 ..[=[
@@ -253,7 +256,7 @@ function ContentBackgroundStyle()
   for i, v in ipairs(content) do
     s=s..';--cont-'..i..':'..edcb.GetPrivateProfile('BACKGROUND',v[1],v[2],INI)
   end
-  return '<style>[class*=cont-]{--cont-0:'..edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)..s..';}</style>\n'
+  return '[class*=cont-]{--cont-0:'..edcb.GetPrivateProfile('BACKGROUND','nothing','#9E9E9E',INI)..s..';}\n'
 end
 
 MdlChip={

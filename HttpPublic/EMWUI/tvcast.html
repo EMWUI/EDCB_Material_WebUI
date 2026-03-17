@@ -89,7 +89,7 @@ end
 
 ctt={}
 label={}
-ct.css='<style>\n'
+ct.css=''
 for i,v in ipairs(NetworkList) do
   if #v>0 then
     ct.main=ct.main..'<input id="Network'..i..'" class="hidden" name="network"'..Radiobtn(NetworkType()[i]==NetworkType()[NetworkIndex(st.onid)])..'>\n'
@@ -98,7 +98,6 @@ for i,v in ipairs(NetworkList) do
     table.insert(ctt, table.concat(v))
   end
 end
-ct.css=ct.css..'</style>\n'
 
 ct.main=ct.main..'<div id="network" class="tag">\n'
   ..'<label type="button" for="Network0" class="mdl-chip"><span class="mdl-chip__text">すべて</span></label>\n'..table.concat(label)
