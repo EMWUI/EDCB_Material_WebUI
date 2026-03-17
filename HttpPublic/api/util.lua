@@ -315,7 +315,7 @@ function GetTranscodeQueries(qs)
     tslive=XCODE_OPTIONS[option or 1].tslive,
     autoCinema=XCODE_OPTIONS[option or 1].autoCinema,
     deinterlace=(XCODE_OPTIONS[option or 1].deinterlace or ''):match('^[0-9A-Za-z]+$'),
-    offset=GetVarInt(qs,'offset',0,100),
+    offset=GetVarInt(qs,'offset',-100000,100),
     audio2=GetVarInt(qs,'audio2')==1,
     cinema=GetVarInt(qs,'cinema')==1,
     --0は明示的に等速を表す

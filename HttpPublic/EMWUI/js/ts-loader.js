@@ -1972,13 +1972,13 @@ class chapterTvt{
 		this.#raw = chap;
 		if (dur) this.#container.style=`--dur:${dur};`;
 
-		this.#chapters = chap.startsWith('CHAPTER') ? this.#parseOgm(chap) : this.#parseTvt(chap, dur);
+		this.#chapters = this.#parseOgm(chap) || this.#parseTvt(chap, dur) || [];
 
 		this.#intervals = this.#chapters.map((e,i)=>[e,i]).filter(e => e[0].type === this.#TYPE.XIN || e[0].type === this.#TYPE.IN).map(e => {
 			const startCh = e[0];
 			const endCh = this.#chapters.slice(e[1]).find(ch => startCh.type === this.#TYPE.XIN && ch.type === this.#TYPE.XOUT || startCh.type === this.#TYPE.IN && ch.type === this.#TYPE.OUT) || {sec: dur, last: true};
 			return {
-				// ミリ秒を秒に変換し、頭、尻切れしないように丸める
+				// 頭、尻切れしないように丸める
 				start: Math.ceil(startCh.sec),
 				end: Math.floor(endCh.sec - (endCh.last ? 2 : 0.5)),
 				isLoop: (startCh.type === this.#TYPE.IN)
@@ -1990,6 +1990,7 @@ class chapterTvt{
 	}
 
 	#parseTvt(chap, dur){
+		if (!chap.startsWith('c-')) return;
 		// 前後の 'c' を除去して '-' で各セグメントに分割
 		const segments = chap.replace(/^c|c$/g, '').split('-').filter(s => s.length > 0);
 
@@ -2025,23 +2026,7 @@ class chapterTvt{
 			}
 
 			// 2. 属性とチャプター名の分離
-			let type = 0;
-			let label = info;
-
-			// 属性判定（長い順）
-			if (info.startsWith('ix')){
-				type = this.#TYPE.XIN;
-				label = info.substring(2);
-			}else if (info.startsWith('ox')){
-				type = this.#TYPE.XOUT;
-				label = info.substring(2);
-			}else if (info.startsWith('i')){
-				type = this.#TYPE.IN;
-				label = info.substring(1);
-			}else if (info.startsWith('o')){
-				type = this.#TYPE.OUT;
-				label = info.substring(1);
-			}
+			const [type, label] = this.#chapterType(info);
 
 			this.#addMarker(time, label, type);
 
@@ -2054,6 +2039,8 @@ class chapterTvt{
 		});
 	}
 	#parseOgm(chap){
+		if (!chap.startsWith('CHAPTER')) return;
+
 		const lines = chap.split(/\r?\n/).filter(line => line.trim() !== "");
 		const chapters = [];
 
@@ -2071,15 +2058,25 @@ class chapterTvt{
 			if (timeStr && nameStr){
 				const [h, m, s] = timeStr.split(':');
 				const time = (parseInt(h) * 3600 + parseInt(m) * 60 + parseFloat(s));
-				this.#addMarker(time, nameStr);
+				const [type, label] = this.#chapterType(nameStr);
+				this.#addMarker(time, label, type);
 				chapters.push({
 					sec: time,
-					type: 0,
-					name: nameStr
+					type: type,
+					name: label
 				});
 			}
 		}
 		return chapters;
+	}
+
+	#chapterType(info){
+		// 属性判定（長い順）
+		if (info.startsWith('ix')) return [this.#TYPE.XIN, info.substring(2)];
+		else if (info.startsWith('ox')) return [this.#TYPE.XOUT, info.substring(2)];
+		else if (info.startsWith('i')) return [this.#TYPE.IN ,info.substring(1)];
+		else if (info.startsWith('o')) return [this.#TYPE.OUT ,info.substring(1)];
+		return [0, info]
 	}
 
 	#addMarker(sec, label, type = 0){

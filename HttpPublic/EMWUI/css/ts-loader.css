@@ -181,6 +181,7 @@
     background: rgba(0, 0, 0, .56);
     font-size: 16px;
     text-align: center;
+     white-space: nowrap;
     line-height: 25px;
     border-radius: 3px;
     opacity: 0;
@@ -188,7 +189,7 @@
     transition-duration: .2s;
     transition-timing-function: cubic-bezier(.4, 0, .2, 1);
   }
-  +:hover{
+  &:hover{
     > div {
       transform: scale(1.5);
       transform-origin: bottom;

@@ -273,20 +273,27 @@ else
         if not basic then
           pgtxt=GetPgtxt(ref)
           if pgtxt then a.programInfo=pgtxt end
-          for i,v in ipairs({dir,PathAppend(dir,'chapters')}) do
-            chap=PathAppend(v,a.name:gsub('%.[0-9A-Za-z]+$',''))
-            for i,v in ipairs({'.chapter','.txt'}) do
-              chap=chap..v
-              if EdcbFindFilePlain(chap) then
-                f=edcb.io.open(chap,'r')
-                if f then
-                  a.chapters=f:read('*a')
-                  f:close()
-                  break
+          for i,ext in ipairs({'.chapter','.chapters.txt','.chapter.txt'}) do
+            for j,dir in ipairs({'%1chapters',''}) do
+              local f=edcb.io.open(ref:gsub('(['..DIR_SEPS..'])([^'..DIR_SEPS..']*)$',dir..'%1%2'):gsub('%.[0-9A-Za-z]+$','')..ext,'rb')
+              if f then
+                local s=f:read('*a')
+                if ext=='.chapter' or s:find('^\xef\xbb\xbf') then
+                  --.chapterまたはBOMありはUTF-8
+                  a.chapters=s:gsub('^\xef\xbb\xbf','')
+                else
+                  --BOMがなければShift_JISと仮定。変換できなければASCII文字だけ抽出
+                  a.chapters=edcb.Convert('utf-8','cp932',s) or s:gsub('[\x80-\xff]','')
                 end
+                f:close()
+                break
               end
             end
             if a.chapters then break end
+          end
+          if not a.chapters then
+            --もしあればファイル名から抽出
+            a.chapters=a.name:match('([Cc]%-.*)%.[0-9A-Za-z]+$')
           end
         end
 

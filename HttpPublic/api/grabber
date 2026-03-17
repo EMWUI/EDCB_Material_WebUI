@@ -31,8 +31,8 @@ if not fpath then
   end
   fpath=nil
 end
-offset=GetVarInt(query,'offset',0,100) or 0
-ofssec=GetVarInt(query,'ofssec',0,100000)
+offset=GetVarInt(mg.request_info.query_string,'offset',-100000,100) or 0
+ofssec=GetVarInt(mg.request_info.query_string,'ofssec',0,100000) or offset<0 and -offset
 
 stream=nil
 if fpath then

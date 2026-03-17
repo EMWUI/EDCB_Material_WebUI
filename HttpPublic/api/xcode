@@ -14,8 +14,8 @@ if fpath then
   fname=mg.md5(fpath:upper()):sub(27)
 end
 
-offset=GetVarInt(query,'offset',0,100) or 0
-ofssec=GetVarInt(query,'ofssec',0,100000)
+offset=GetVarInt(query,'offset',-100000,100) or 0
+ofssec=GetVarInt(query,'ofssec',0,100000) or offset<0 and -offset
 option=XCODE_OPTIONS[GetVarInt(query,'option',1,#XCODE_OPTIONS) or 1]
 audio2=(GetVarInt(query,'audio2',0,1) or 0)+(option.audioStartAt or 0)
 fastRate=GetVarInt(query,'fast',1,#XCODE_FAST_RATES)
