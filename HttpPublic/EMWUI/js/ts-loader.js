@@ -152,8 +152,13 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#cap;
 	#container = document.getElementById("vid-cont");
 	#initCap(useSvg = this.#e.dataset.aribb24UseSvg, option = JSON.parse(decodeURIComponent(this.#e.dataset.aribb24OptionJson||'{}')), container){
-		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
-		if (container) this.#container = container;
+		try{
+			this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
+			if (container) this.#container = container;
+		}catch(e){
+			this.#cap = null;
+			console.warn("aribb24js:",e);
+		}	
 	}
 
 	#loadSource(src){
@@ -383,6 +388,10 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		this.#hlsMp4Query = this.#e.hasAttribute('hls4') ? `&hls4=${this.#e.getAttribute('hls4')}` : '';
 		this.#alwaysUseHls = this.#e.hasAttribute('alwaysUseHls');
 		this.#initHls();
+		this.#e.addEventListener('loadedmetadata', () => {
+			// 映像の幅と高さが0なら音声のみとみなす
+			if (this.#e.videoWidth === 0 && this.#e.videoHeight === 0) this.#poster('SOUND ONLY');
+		});
 	}
 
 
@@ -452,9 +461,14 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#cap;
 	#cue;
 	#initCap(useSvg = this.#e.dataset.aribb24UseSvg, option = JSON.parse(decodeURIComponent(this.#e.dataset.aribb24OptionJson)||'{}'), vidMeta = document.getElementById('vid-meta')){
-		option.enableAutoInBandMetadataTextTrackDetection = !this.#alwaysUseHls || !Hls.isSupported();
-		this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
-		if (vidMeta) vidMeta.oncuechange = e => this.#cuechangeB24Caption(e);
+		try{
+			option.enableAutoInBandMetadataTextTrackDetection = !this.#alwaysUseHls || !Hls.isSupported();
+			this.#cap = useSvg ? new aribb24js.SVGRenderer(option) : new aribb24js.CanvasRenderer(option);
+			if (vidMeta) vidMeta.oncuechange = e => this.#cuechangeB24Caption(e);
+		}catch(e){
+			this.#cap = null;
+			console.warn("aribb24js:",e);
+		}	
 	}
 	#cuechangeB24Caption(e){
 		if (this.#cue) return;
@@ -476,6 +490,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#clear(){
 		this.#reset();
 		this.#e.src = '';
+		this.#e.poster = '';
 		this.#e.initSrc = null;
 		this.#e.defaultPlaybackRate = this.#fast;
 		this.#error = null;
@@ -558,7 +573,25 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#currentTime(){
 		return this.#e.currentTime * this.#fast + this.#ofssec;
 	}
-
+	#poster(text = 'Loading...', width = 1280, height = 720){
+		try{
+			const canvas=document.createElement("canvas");
+			canvas.width=width;
+			canvas.height=height;
+			const ctx=canvas.getContext("2d");
+			ctx.fillStyle="#121212";
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			ctx.shadowColor = '#ff0000';
+			ctx.shadowBlur = 10;
+			ctx.fillStyle="#ff1a1a";
+			ctx.textAlign="center";
+			ctx.font=canvas.height/10+"px sans-serif";
+			ctx.fillText(text,canvas.width/2,canvas.height/2);
+			this.#e.poster=canvas.toDataURL(); 
+		}catch(e){
+			console.warn("poster:",e);
+		}
+	}
 	#apk(src, onerror, onstart){
 		src = new URL(src, location.href);
 		src.searchParams.set('ctok', this.#ctok);
@@ -1631,7 +1664,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#psc.videoLastSec=0;
 		},
 		enable: async () => {
-			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
+			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith("blob")&&!this.#e.initSrc)return;
 			if(this.#loaded&&this.#loaded!=this.#e.getAttribute("src"))await this.#initWebBml();
 			this.#datacastState=this.#STATE.LOG;
 			this.#psc.startRead();
@@ -1698,8 +1731,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#jkID="?";
 		},
 		enable: () => {
-			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
-			console.log(this.#e.getAttribute("src")||this.#e.initSrc);
+			if(!this.#e.getAttribute("src")||this.#e.getAttribute("src").startsWith("blob")&&!this.#e.initSrc)return;
 			this.#jikkyoState=this.#STATE.LOG;
 			this.#chatsScroller();
 			this.#jklog.startRead();

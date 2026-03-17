@@ -72,7 +72,8 @@ const $titlebar = $('#titlebar');
 const $datacast = $('#datacast');
 const $remocon = $('.remote-control');
 const $jikkyo = $('#jikkyo');
-const addClassLoadding = () => {$('#is-loading').removeClass('hidden');}
+const $loading = $('#is-loading');
+const addClassLoadding = () => {$loading.removeClass('hidden');}
 chap.setSeek = val => $('.is_cast').data('canPlay') ? vid.currentTime = val : ts.setSeek(val, addClassLoadding);
 const loadMovie = ($e = $('.is_cast')) => {
 	const d = $e.data();
@@ -233,7 +234,7 @@ $(function(){
 		error(){
 			if ($vid.attr('src') == '') return;
 
-			$('#is-loading').addClass('hidden');
+			$loading.addClass('hidden');
 			$('.is_cast').removeClass('is_cast playing');
 			const errorcode = ts.networkState == 3  ? 5 : ts.error.code;
 			Snackbar(`Error : ${[ts.error.message,'MEDIA_ERR_ABORTED','MEDIA_ERR_NETWORK','MEDIA_ERR_DECODE','MEDIA_ERR_SRC_NOT_SUPPORTED','NETWORK_NO_SOURCE'][errorcode]}`);
@@ -246,7 +247,7 @@ $(function(){
 		//ratechange(){if (sessionStorage.getItem('autoplay') == 'true') vid.defaultPlaybackRate = vid.playbackRate;},
 		canplay(){
 			hideBar(2000);
-			$('#is-loading').addClass('hidden');
+			$loading.addClass('hidden');
 
 			const promise = vid.play();
 			//自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
@@ -304,7 +305,7 @@ $(function(){
 		params.delete('id');
 		params.delete('play');
 		history.replaceState(null,null,`${params.size>0?`?${params.toString()}`:location.pathname}`);
-		$vid.removeClass('is-loading');
+		$loading.addClass('hidden');
 		$epginfo.addClass('hidden');
 		$('.is_cast').removeClass('is_cast');
 		$('.playing').removeClass('playing');
@@ -497,14 +498,13 @@ $(function(){
 
 
 	hideBar();
-	const $player_container = $('.player-container>*').not('.remote-control');
 	if (!isMobile && !isTouch){
-		$player_container.hover(() => {
+		$player.hover(() => {
 			stopTimer();
 			$playerUI.addClass('is-visible');
 		}, () => hideBar());
 
-		$player_container.mousemove(() => {
+		$player.mousemove(() => {
 			stopTimer();
 			hideBar(3000);
 			$playerUI.addClass('is-visible');
@@ -513,7 +513,7 @@ $(function(){
 		$('#playerUI').prepend('<div id="center">');
 		$('#ctl-button .ctl-button').prependTo('#center');
 		$('#volume-container').addClass('hidden');
-		$player_container.click(() => {
+		$player.click(() => {
 			$('#playerUI').addClass('is-visible');
 			stopTimer();
 			hideBar(3000);

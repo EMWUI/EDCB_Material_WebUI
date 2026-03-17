@@ -13,7 +13,7 @@
 --xcoder:トランスコーダーのToolsフォルダからの相対パス。'|'で複数候補を指定可。見つからなければ最終候補にパスが通っているとみなす
 --       Windows以外では".exe"が除去されて最終候補のみ参照される
 --option:$OUTPUTは必須、再生時に適宜置換される。標準入力からMPEG2-TSを受け取るようにオプションを指定する
---※EMWUIでの倍速再生はHTMLMediaElement APIを使用しているため以下の設定は直接パラメータを指定等しない限り呼び出されない
+--poster:【※未使用】初期画像のサイズとメッセージ。省略時は'1280x720,Loading...'
 --filter(Cinema):等速再生用、filterCinemaは未定義でもよい。特別に':'とするとトランスコードを省略してそのまま出力する
 --filter*FastFunc:倍速再生用、未定義でもよい。倍率に応じたオプションを返す関数を指定する
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
@@ -26,6 +26,7 @@ XCODE_OPTIONS={
     name='432p/h264/ffmpeg',
     xcoder='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
     option='-f mpegts -analyzeduration 1M -i - -map 0:v:0? -vcodec libx264 -flags:v +cgop -profile:v main -level 31 -b:v 2400k -qmin 23 -maxrate 5M -bufsize 5M -preset veryfast $FILTER -s 768x432 -map 0:a:$AUDIO -acodec aac -ac 2 -b:a 160k $CAPTION -max_interleave_delta 500k $OUTPUT',
+    poster='768x432,Loading...',
     filter='-g 120 -vf yadif=0:-1:1',
     filterCinema='-g 96 -vf pullup -r 24000/1001',
     filterFastFunc=function(rate) return '-g 120 -vf yadif=0:-1:1,setpts=PTS/'..rate..' -af atempo='..rate..' -bsf:s setts=ts=TS/'..rate end,
@@ -152,6 +153,19 @@ XCODE_OPTIONS={
     captionHls='--sub-copy',
     output={'mp4','-f mp4 --no-mp4opt -m movflags:frag_keyframe+empty_moov -o -'},
     outputHls={'m2t','-f mpegts -o -'},
+  },
+  {
+    --音声のみの例
+    name='Audio-only/ffmpeg',
+    xcoder='ffmpeg\\ffmpeg.exe|ffmpeg.exe',
+    option='-f mpegts -analyzeduration 1M -i - -vn $FILTER -map 0:a:$AUDIO -acodec aac -ac 2 -b:a 96k $CAPTION -max_interleave_delta 500k $OUTPUT',
+    poster='1280x720,Audio-only',
+    filter='',
+    filterFastFunc=function(rate) return '-af atempo='..rate..' -bsf:s setts=ts=TS/'..rate end,
+    captionNone='-sn',
+    captionHls='-map 0:s? -scodec copy',
+    output={'mp4','-f mp4 -movflags empty_moov -frag_duration 4M -'},
+    outputHls={'m2t','-f mpegts -'},
   },
   {
     --TS-Live!方式の例。そのまま転送。トランスコーダー不要(tsreadex.exeは必要)

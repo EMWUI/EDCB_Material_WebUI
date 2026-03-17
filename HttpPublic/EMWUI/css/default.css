@@ -1876,7 +1876,7 @@ h4 .mdl-button--icon {
     z-index: 2; }
     @media all and (display-mode: picture-in-picture) {
       #is-loading {
-        background: url('img/noise.gif'); } }
+        background-image: url('img/noise.gif'); } }
   @media (min-width: 700px) {
     #video {
       min-width: 480px;
