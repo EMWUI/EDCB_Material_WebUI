@@ -35,6 +35,7 @@ function Template(temp)
   edcb.htmlEscape=0
   local path=temp.path or ''
   local roboto=tonumber(edcb.GetPrivateProfile('SET','Roboto',false,INI))~=0
+  local mdl=edcb.GetPrivateProfile('SET','mdl','material.min.css',INI)
   local theme=Split(edcb.GetPrivateProfile('SET','theme','',INI),',')
   local olympic=tonumber(edcb.GetPrivateProfile('SET','Olympic',false,INI))~=0
   local suspend=''
@@ -68,9 +69,8 @@ function Template(temp)
 <link rel="icon" href="]=]..path..[=[img/EpgTimer.ico">
 <link rel="apple-touch-icon" sizes="256x256" href="]=]..path..[=[img/apple-touch-icon.png">
 <link rel="manifest" href="]=]..path..[=[manifest.json" crossorigin="use-credentials">
-<link rel="stylesheet" href="]=]..path..[=[css/material.min.css">
+<link rel="stylesheet" href="]=]..path..[=[css/]=]..mdl..[=[">
 <link rel="stylesheet" href="]=]..path..[=[css/default.css]=]..Version('css')..[=[">
-<link rel="stylesheet" href="]=]..path..[=[css/user.css">
 ]=]
 ..(roboto and '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">\n' or '')
 

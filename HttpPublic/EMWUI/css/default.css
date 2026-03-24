@@ -111,10 +111,13 @@ html {
 .mdl-checkbox.is-focused .mdl-checkbox__focus-helper {
   background-color: light-dark(rgba(0, 0, 0, .1), rgb(255, 255, 255, .1));
 }
-.mdl-button:hover {
+.mdl-button:hover,
+.mdl-button--raised {
   background-color: light-dark(rgba(158,158,158,.2), rgba(97, 97, 97, .2));   
 }
-.mdl-button:active {
+.mdl-button:active,
+.mdl-button--raised:active,
+.mdl-button--raised:focus:not(:active) {
   background-color: light-dark(rgba(158,158,158,.4), rgba(97, 97, 97, .4));
 }
 
@@ -131,6 +134,29 @@ html {
 .mdl-tabs__tab-bar {
   border-color: var(--bg-hover);
 }
+.mdl-slider.is-upgraded.is-lowest-value::-webkit-slider-thumb,
+.mdl-slider.is-upgraded.is-lowest-value:active::-webkit-slider-thumb,
+.mdl-slider.is-upgraded:disabled:focus::-webkit-slider-thumb,.mdl-slider.is-upgraded:disabled:active::-webkit-slider-thumb,.mdl-slider.is-upgraded:disabled::-webkit-slider-thumb,
+.mdl-slider.is-upgraded.is-lowest-value:disabled:focus::-webkit-slider-thumb,.mdl-slider.is-upgraded.is-lowest-value:disabled:active::-webkit-slider-thumb,.mdl-slider.is-upgraded.is-lowest-value:disabled::-webkit-slider-thumb {
+  border-color: var(--disabled);
+}
+.mdl-slider.is-upgraded.is-lowest-value:active::-moz-range-thumb,
+.mdl-slider.is-upgraded:disabled:focus::-moz-range-thumb,.mdl-slider.is-upgraded:disabled:active::-moz-range-thumb,.mdl-slider.is-upgraded:disabled::-moz-range-thumb,
+.mdl-slider.is-upgraded.is-lowest-value:disabled:focus::-moz-range-thumb,.mdl-slider.is-upgraded.is-lowest-value:disabled:active::-moz-range-thumb,.mdl-slider.is-upgraded.is-lowest-value:disabled::-moz-range-thumb {
+  border-color: var(--disabled);
+}
+.mdl-slider.is-upgraded:disabled:focus::-moz-range-thumb,.mdl-slider.is-upgraded:disabled:active::-moz-range-thumb,.mdl-slider.is-upgraded:disabled::-moz-range-thumb {
+  background-color: var(--disabled);
+}
+.mdl-slider.is-upgraded:disabled:focus::-webkit-slider-thumb,.mdl-slider.is-upgraded:disabled:active::-webkit-slider-thumb,.mdl-slider.is-upgraded:disabled::-webkit-slider-thumb {
+  background-color: var(--disabled);
+}
+.mdl-slider.is-upgraded.is-lowest-value:focus:not(:active)::-webkit-slider-thumb {
+  border-color: var(--border);
+}
+.mdl-slider.is-upgraded.is-lowest-value:focus:not(:active)::-moz-range-thumb {
+  border-color: var(--border);
+}
 
 .mdl-button[disabled][disabled],.mdl-button.mdl-button--disabled.mdl-button--disabled,
 .mdl-button--colored[disabled][disabled],.mdl-button--colored.mdl-button--disabled.mdl-button--disabled,
@@ -145,11 +171,12 @@ fieldset[disabled] .mdl-radio .mdl-radio__label,.mdl-radio.is-disabled .mdl-radi
 .mdl-button--raised[disabled][disabled],.mdl-button--raised.mdl-button--disabled.mdl-button--disabled,
 fieldset[disabled] .mdl-checkbox.is-checked .mdl-checkbox__tick-outline,.mdl-checkbox.is-checked.is-disabled .mdl-checkbox__tick-outline,
 fieldset[disabled] .mdl-radio .mdl-radio__inner-circle,.mdl-radio.is-disabled .mdl-radio__inner-circle,
-.mdl-switch__track fieldset[disabled] .mdl-switch,.mdl-switch.is-disabled .mdl-switch__track {
+.mdl-switch__track fieldset[disabled] .mdl-switch,.mdl-switch.is-disabled .mdl-switch__track,
+.mdl-slider.is-upgraded:disabled+.mdl-slider__background-flex>.mdl-slider__background-lower {
   background-color: var(--disabled);
 }
 fieldset[disabled] .mdl-textfield .mdl-textfield__input,.mdl-textfield.is-disabled .mdl-textfield__input,
-fieldset[disabled] .mdl-checkbox .mdl-checkbox__box-outline,.mdl-checkbox.is-disabled .mdl-checkbox__box-outline{
+fieldset[disabled] .mdl-checkbox .mdl-checkbox__box-outline,.mdl-checkbox.is-disabled .mdl-checkbox__box-outline {
   border-color: var(--disabled);
 }
 
@@ -1250,19 +1277,19 @@ h4 .mdl-button--icon {
   &.disabled {
     --bg-main: var(--disabled); } }
 [class*=cont-].reserve {
-  border: 3px dotted var(--border);
-  --border: var(--reserve);
+  border: 3px dotted var(--r-border);
+  --r-border: var(--reserve);
   &.view {
-    --border: var(--view); }
+    --r-border: var(--view); }
   &.disabled {
-    --border: var(--disabled); }
+    --r-border: var(--disabled); }
   &.partially {
-    --border: var(--partially_sub);
+    --r-border: var(--partially_sub);
     --bg-main: var(--partially);
     .content {
       color-scheme: light !important; } }
   &.shortage {
-    --border: var(--shortage_sub);
+    --r-border: var(--shortage_sub);
     --bg-main: var(--shortage); } }
 
 

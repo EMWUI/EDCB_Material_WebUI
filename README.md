@@ -82,7 +82,7 @@ EDCB Material WebUI
 
 #### テーマカラー
 ~~[MDL](http://www.getmdl.io/customize/index.html)で~~選択したテーマカラーに変更することができます  
-選んだテーマカラーの`css`をダウンロードし`material.min.css`を置き換えることで変更できます
+選んだテーマカラーの`css`を`material.min.css`と同じフォルダに置き、設定ファイルでファイル名を指定してくださ
 
 MDLのサイトが**封鎖されたため**公式サイトから入手することができなくなりました  
 ですが、外部CDN [cdnjs](https://cdnjs.com/libraries/material-design-lite) などから入手可能なのなようです
