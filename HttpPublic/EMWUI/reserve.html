@@ -47,9 +47,9 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   table.insert(ctt, '<tr class="reserve open-info mdl-grid--no-spacing'
     ..(v.recSetting.recMode==5 and ' disabled' or v.overlapMode==1 and ' partially' or v.overlapMode==2 and ' shortage' or '')
     ..'" data-startTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)-(v.recSetting.startMargin or 0))*1000 or '')
-    ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
-    ..(SIDE_PANEL and 'data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid
-                   or 'data-href="reserveinfo.html?id='..v.reserveID or '')..'">'
+    ..'" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(v.recSetting.endMargin or 0)+20)*1000 or 0)
+    ..(SIDE_PANEL and '" data-id="'..(v.eid == 65535 and v.reserveID..'" data-program="true' or (v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid))
+                   or '" data-href="reserveinfo.html?id='..v.reserveID or '')..'">'
 
     ..'\n <td class="flag mdl-data-table__cell--non-numeric" data-id="'..v.reserveID..'"><span><label for="reserve'..v.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..v.reserveID..'" class="mdl-switch__input"'..Checkbox(v.recSetting.recMode~=5)..'></label></span>'
     ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)

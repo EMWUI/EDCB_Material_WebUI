@@ -37,8 +37,8 @@ ctt={}
 for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   if SHOW_THUMB_IN_RECINFO then
-    table.insert(ctt, '<div class="grid-container open-info" data-'..(SIDE_PANEL and 'recinfo="'..v.id or 'href="recinfodesc.html?id='..v.id)..'">'
-      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div class="thumb-container"><i class="material-icons">movie</i><canvas class="thumb" data-id="'..v.id..'"></canvas></div>' 
+    table.insert(ctt, '<div class="grid-container open-info" data-recid="'..v.id..'">'
+      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div class="thumb-container"><i class="material-icons">movie</i><canvas class="thumb" data-recid="'..v.id..'"></canvas></div>' 
         or '<div class="thumb-container mdl-cell--hide-phone"><i class="material-icons">movie_off</i></div>')
       ..'<div class="summary mdl-typography--title">'
       ..'<span class="title'..(v.drops>0 and ' mdl-color-text--red-A700' or v.scrambles>0 and ' mdl-color-text--yellow-A700' or '')..'">'..ConvertTitle(v.title)
@@ -50,8 +50,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
       ..MdlChip:tag('スクランブル : <span'..(v.scrambles>0 and ' class="mdl-color-text--red-A700">' or '>')..v.scrambles..'</span>', MdlChip:getColorClass('スクランブル : '), v.scrambles>0 and ' mdl-color-text--red-A700')
       ..'</span></div></div>\n')
   else
-    table.insert(ctt, '<tr class="open-info mdl-grid--no-spacing'..(v.drops>0 and ' drops' or v.scrambles>0 and ' scrambles' or '')..'" data-'
-      ..(SIDE_PANEL and 'recinfo="'..v.id or 'href="recinfodesc.html?id='..v.id)..'">\n'
+    table.insert(ctt, '<tr class="open-info mdl-grid--no-spacing'..(v.drops>0 and ' drops' or v.scrambles>0 and ' scrambles' or '')..'" data-id="'..v.id..'">\n'
       ..' <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime, v.durationSecond)
       ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ConvertTitle(v.title)
       ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..v.serviceName
@@ -77,8 +76,8 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
     ..table.concat(ctt)
     ..'</div></div>\n'
     ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
-    ..'<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'id\');'
-    ..'window.addEventListener(\'createdMiscWasmModule\', e => $(".thumb").each((i,e) => createHtml.thumb.setThumb(e, $(e).data("id"), 0.1)));</script>\n'
+    ..'<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'recid\');'
+    ..'window.addEventListener(\'createdMiscWasmModule\', e => $(".thumb").each((i,e) => createHtml.thumb.setThumb(e, $(e).data("recid"), 0.1)));</script>\n'
   or '<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
     ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
     ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'

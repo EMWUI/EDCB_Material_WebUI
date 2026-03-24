@@ -322,7 +322,7 @@ class TvGuide{
 						const messege = addRecMark(xml, $e, $e.parents('.content-wrap'));
 						Snackbar(`予約を${add ? '追加' : `${messege}に`}しました`);
 				},
-				end: () => $e.parents('.cell').removeClass('clicked')
+				err: () => $e.parents('.cell').removeClass('clicked')
 			});
 		});
 

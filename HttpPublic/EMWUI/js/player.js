@@ -103,8 +103,8 @@ const loadMovie = ($e = $('.is_cast')) => {
 		$vid_meta.attr('src', `${path.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`);
 		ts.loadSubData();
 	}else{
-		ts.loadSource(`${ROOT}api/${d.onid ? `view?n=${ts.nwtv}&id=${d.onid}-${d.tsid}-${d.sid}`
-										   : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.id ? `id=${d.id}` : d.reid ? `reid=${d.reid}` : ''}${!d.okkake ? '&shiftable=1' : ''}` }`);
+		ts.loadSource(`${ROOT}api/${d.id ? `view?n=${ts.nwtv}&id=${d.id}`
+										 : `xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}${!d.okkake ? '&shiftable=1' : ''}` }`);
 
 		if (d.meta){
 			if (d.meta.duration){
@@ -121,8 +121,7 @@ const loadMovie = ($e = $('.is_cast')) => {
 	}
 	chap.setChapters(d.chapters, d.meta&&(d.meta.duration));
 
-	$titlebar.html(d.name || (!(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}` in Info.EventInfo) ? '' :
-		`${ConvertService(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`])}<span>${ConvertTitle(Info.EventInfo[`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`].title)}</span>`));
+	$titlebar.html(d.name || (!d.epg ? '' : `${ConvertService(d.epg)}<span>${ConvertTitle(d.epg.title)}</span>`));
 }
 
 const $currentTime_duration = $('.currentTime,.duration');
@@ -275,11 +274,11 @@ $(function(){
 			if (!d) return;
 
 			let currentTime;
-			if (d.onid){
+			if (d.id){
 				currentTime = (Date.now() - d.meta.starttime) / 1000;
 				seek.MaterialProgress.setProgress(currentTime / d.meta.duration * 100);
 				$live.toggleClass('live', vid.duration - vid.currentTime < 2);
-			}else if (d.path || d.id || d.reid){
+			}else if (d.path || d.recid || d.rid){
 				if (seek.seeking) return;
 
 				currentTime = vid.fixedCurrentTime || vid.currentTime;

@@ -79,33 +79,34 @@ for i,v in ipairs(edcb.GetReserveData()) do
   rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v
 end
 
-function CellTemplate(v,op,id,custom)
+function CellTemplate(v,op,custom)
+  local id=v.onid..'-'..v.tsid..'-'..v.sid..'-'..(v.past and startTime or v.eid)
   local category=v.contentInfoList and #v.contentInfoList>0 and math.floor(v.contentInfoList[1].content_nibble/256)%16+1 or 16	--背景色
   local title=v.shortInfo and ConvertTitle(v.shortInfo.event_name) or ''									--番組タイトル
   local info=v.shortInfo and '<div class="shortInfo mdl-typography--caption-color-contrast">'..DecorateUri(v.shortInfo.text_char):gsub('\r?\n', '<br>')..'</div>' or ''						--番組詳細
   local search=v.shortInfo and SearchConverter(v, op.service_name) or ''									--検索
 
-  local r=not v.past and rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]
+  local r=not v.past and rt[id]
   local rs=r and r.recSetting
 
   local mark=r and '<span class="mark reserve">'..(rs.recMode==5 and '無' or r.overlapMode==1 and '部' or r.overlapMode==2 and '不' or rs.recMode==4 and '視'or '録')..'</span>' or ''	--録画マーク
   local recmode=r and ' reserve'..(rs.recMode==5 and ' disabled' or r.overlapMode==1 and ' partially' or r.overlapMode==2 and ' shortage' or rs.recMode==4 and ' view' or '') or ''	--録画モード
 
-  return '<div '..(id or '')..'class="cell eid_'..v.eid..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and '--l:'..(left..'/'..column)..';--t:'..lastPx..';' or '')..'--h:'..(endPx-lastPx)..';'..(width~=column and '--w:'..width..'/'..column..';' or '')..'">\n'
+  return '<div id="id_'..id..'" class="cell '..(startTime<utc9Now and utc9Now<endTime and ' now ' or ' ')..(custom and 'custom'or '')..'" data-endtime="'..(endTime-9*3600)..'" style="'..(left and left>0 and '--l:'..(left..'/'..column)..';--t:'..lastPx..';' or '')..'--h:'..(endPx-lastPx)..';'..(width~=column and '--w:'..width..'/'..column..';' or '')..'">\n'
     ..'<div class="content-wrap cont-'..category..recmode..(NOW and date==0 and endTime<=utc9Now and ' end' or '')..'"><div class="content">\n'
 
     ..'<div class="sub_cont">'..(custom and '<img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'">' or '')..'<div class="startTime">'..('%02d'):format(v.startTime.min)..'</div>'..mark..'</div>'
 
     ..'<div class="main_cont"><span class="mdl-typography--body-1-force-preferred-font">'..title..'</span>'..(v.durationSecond and v.durationSecond>=30*60 and info..'<div class="popup">' or '<div class="popup">'..info)
-    ..'<span class="links"><a class="notify_'..v.eid..' notification notify hidden mdl-button mdl-button--icon" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'" data-startTime="'..((startTime-9*3600)*1000)..'"'..(startTime-30<=utc9Now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=utc9Now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
+    ..'<span class="links"><a class="n_'..id..' notification notify hidden mdl-button mdl-button--icon" data-id="'..id..'" data-startTime="'..((startTime-9*3600)*1000)..'"'..(startTime-30<=utc9Now and ' disabled' or '')..'><i class="material-icons">'..(startTime-30<=utc9Now and 'notifications' or 'add_alert')..'</i></a>'..search..'</span>\n'
 
     ..'<p class="tool mdl-typography--caption-color-contrast">'
     ..'<a class="mdl-button mdl-button--raised'
-      ..(SIDE_PANEL and ' open_info" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(v.past and 'startTime="'..startTime or 'eid="'..v.eid)
+      ..(SIDE_PANEL and ' open_info" data-id="'..id..(v.past and '" data-archive="true' or '')
                     or '" href="'..op.url)..'">番組詳細</a>'
-    ..(endTime~=startTime and utc9Now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid								--終了前
-      ..(r and '" data-toggle="'..(rs.recMode==5 and 1 or 0)..'" data-id="'..r.reserveID..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
-            or '" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
+    ..(endTime~=startTime and utc9Now<endTime and '<a class="addreserve mdl-button mdl-button--raised" data-id="'							--終了前
+      ..(r and r.reserveID..'" data-toggle="'..(rs.recMode==5 and 1 or 0)..'">'..(rs.recMode==5 and '有効' or '無効')										--予約あり有効無効
+            or id..'" data-oneclick="1">録画予約')..'</a>' or '')		--なし新規追加
     ..'<a class="autoepg mdl-button mdl-button--raised" data-andkey="'..(v.shortInfo and v.shortInfo.event_name or '')..'">EPG予約</a>'
     ..'</p>'
 

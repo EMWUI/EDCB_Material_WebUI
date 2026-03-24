@@ -13,7 +13,7 @@ if not fpath then
     if not fpath then break end
     tests=tests or {}
     tests[i+1]=false
-    if not fpath:find('^fname%-') and not fpath:find('^id%-') and not fpath:find('^reid%-') then
+    if not fpath:find('^fname%-') and not fpath:find('^recid%-') and not fpath:find('^rid%-') then
       -- 接頭辞が不正
       tests={}
       break

@@ -48,10 +48,10 @@ if not End and epgInfo then
 
   ct.main=ct.main..'<section class="mdl-layout__tab-panel" id="recset">\n'
 
-    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SetReserve'..(r and '?id='..r.reserveID or '')..'" data-action="add" data-onid="'..onid..'" data-tsid="'..tsid..'" data-sid="'..sid..'" data-eid="'..eid..'">\n'
+    ..'<form id="set" method="POST" action="'..PathToRoot()..'api/SetReserve'..(r and '?id='..r.reserveID or '')..'" data-action="add" data-id="'..onid..'-'..tsid..'-'..sid..'-'..eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-reserve="'..r.reserveID..'"' or '')..'>\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID"'..(r and ' data-rid="'..r.reserveID..'"' or '')..'>\n'
   preset=false
   rs=r and r.recSetting or nil
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do
@@ -80,7 +80,7 @@ if not End and epgInfo then
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"', audio)
-      ..'<div class="is_cast hidden" data-reid="'..r.reserveID..'" data-okkake="true" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
+      ..'<div class="is_cast hidden" data-rid="'..r.reserveID..'" data-okkake="true" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
       ..'<div id="apps-container"><div class="container"><div class="container"></div></div></div>'
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'

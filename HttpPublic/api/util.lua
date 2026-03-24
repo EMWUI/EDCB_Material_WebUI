@@ -1618,9 +1618,9 @@ function GetServiceName(v)
 end
 
 function GetFilePath(query)
-  local fpath=edcb.GetRecFilePath((GetVarInt(query,'reid') or 0))
+  local fpath=edcb.GetRecFilePath((GetVarInt(query,'rid') or 0))
   if not fpath then
-    fpath=edcb.GetRecFileInfo((GetVarInt(query,'id') or 0))
+    fpath=edcb.GetRecFileInfo((GetVarInt(query,'recid') or 0))
     if fpath then
       fpath=fpath.recFilePath
     else

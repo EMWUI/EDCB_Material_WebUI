@@ -770,10 +770,7 @@ function SidePanelTemplate(list)
 <div class="mdl-tabs__tab-bar"><a href="#detail" class="mdl-tabs__tab is-active">番組詳細</a>]=]..(list and '<a href="#search_" class="mdl-tabs__tab">検索条件</a><a href="#manuadd" class="mdl-tabs__tab">予約条件</a><a href="#error" class="mdl-tabs__tab">エラーログ</a>' or '')..[=[<a href="#recset" class="mdl-tabs__tab">録画設定</a></div>
 <section class="panel-swipe mdl-tabs__panel is-active" id="detail">
 <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
-<input type="hidden" name="onid">
-<input type="hidden" name="tsid">
-<input type="hidden" name="sid">
-<input type="hidden" name="eid">
+<input type="hidden" name="id">
 <input type="hidden" id="action">
 <div id="ext" class="mdl-typography--body-1"></div>
 <div class="tagchip">]=]..(list and [=[
@@ -1212,7 +1209,7 @@ end
 function ThumbContainerTemplate()
   if not SHOW_THUMB_IN_RECINFO then return '' end
   return '<div id="list" class="mdl-grid" style="display: none;"><div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"></div></div>\n'
-    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'id\');</script>\n'
+    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'recid\');</script>\n'
 end
 
 --タイトルのマークを装飾

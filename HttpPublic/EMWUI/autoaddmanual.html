@@ -34,9 +34,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   end
 
   endTime=(a[i].startTime+a[i].durationSecond)%(24*3600)
-  table.insert(ctt, '<tr class="open-info mdl-grid--no-spacing" '
-    ..(SIDE_PANEL and 'data-manuadd="'..a[i].dataID..'"'
-                   or 'data-href="autoaddmanualinfo.html?id='..a[i].dataID)..'">'
+  table.insert(ctt, '<tr class="open-info mdl-grid--no-spacing" data-manuid="'..a[i].dataID..'">'
     ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..a[i].title
     ..'\n <td class="mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..dayOfWeek
     ..('\n <td class="mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">%02d:%02d:%02d ～ %02d:%02d:%02d'):format(math.floor(a[i].startTime/3600),math.floor(a[i].startTime/60)%60,a[i].startTime%60,math.floor(endTime/3600),math.floor(endTime/60)%60,endTime%60)

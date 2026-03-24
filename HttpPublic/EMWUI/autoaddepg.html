@@ -39,9 +39,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
     end
     serviceName='<img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.serviceList[1].onid..'&amp;sid='..v.serviceList[1].sid..'"><span>'..serviceName..(#v.serviceList>1 and '<small>.他'..(#v.serviceList-1)..'ch</small>' or '')
   end
-  table.insert(ctt, '<tr class="open-info'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" '
-    ..(SIDE_PANEL and 'data-autoadd="'..a[i].dataID
-                   or 'data-href="autoaddepginfo.html?id='..a[i].dataID)..'">'
+  table.insert(ctt, '<tr class="open-info'..(ParseAndKey(v.andKey).disableFlag and ' disabled' or '')..' mdl-grid--no-spacing" data-autoid="'..a[i].dataID..'">'
     ..'\n <td class="keyword mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..ParseAndKey(v.andKey).andKey
     ..'\n <td class="notkeyword mdl-data-table__cell--non-numeric mdl-cell--3-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">block</i></span>'..ParseNotKey(v.notKey).notKey
     ..'\n <td class="note mdl-data-table__cell--non-numeric mdl-cell--1-col-phone"><span class="inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet"><i class="material-icons">note</i></span>'..ParseNotKey(v.notKey).note

@@ -1020,8 +1020,8 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
 	#fname(){
 		const src = this.#e.initSrc||new URL(this.#e.getAttribute('src'), location.href);
-		return src.searchParams.has('id') ? `id=${src.searchParams.get('id')}`
-			: src.searchParams.has('reid') ? `reid=${src.searchParams.get('reid')}`
+		return src.searchParams.has('recid') ? `recid=${src.searchParams.get('recid')}`
+			: src.searchParams.has('rid') ? `rid=${src.searchParams.get('rid')}`
 			: `fname=${src.searchParams.has('fname') ? encodeURIComponent(src.searchParams.get('fname')) : src.pathname.replace(/^(?:\/)+/,"")}`;
 	}
 	#setElems(elems){

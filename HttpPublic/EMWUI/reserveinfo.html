@@ -28,11 +28,11 @@ if r then
         ..'<span class="mdl-typography--subhead mdl-grid mdl-grid--no-spacing"><span class="date">'..FormatTimeAndDuration(r.startTime, r.durationSecond)..'</span>\n'
         ..'<span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..r.onid..'&amp;sid='..r.sid..'"><span class="service">'..r.stationName..'</span></span>\n</span></h4>\n</div>\n<div>')
     ..'<section class="mdl-layout__tab-panel'..(not epgInfo and ' is-active' or '')..'" id="recset">\n'
-    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID..'" data-onid="'..r.onid..'" data-tsid="'..r.tsid..'" data-sid="'..r.sid..'" data-eid="'..r.eid..'">\n'
+    ..'<form id="set" class="api" method="POST" action="'..PathToRoot()..'api/SetReserve?id='..r.reserveID..'" data-id="'..r.onid..'-'..r.tsid..'-'..r.sid..'-'..r.eid..'">\n'
     ..'<div class="form mdl-grid mdl-grid--no-spacing">\n'
 
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--3-col mdl-cell--2-col-tablet mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-reserve="'..(r.eid==65535 and r.reserveID or r.onid..'-'..r.tsid..'-'..r.sid..'-'..r.eid)..'">\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-rid="'..(r.eid==65535 and r.reserveID or r.onid..'-'..r.tsid..'-'..r.sid..'-'..r.eid)..'">\n'
   presetID=GetVarInt(mg.request_info.query_string,'presetID') or 65535
   preset=false
   rs=r.recSetting
@@ -56,7 +56,7 @@ if r then
 
     ..(recording and '<section class="mdl-layout__tab-panel" id="movie">\n<div class="mdl-grid mdl-grid--no-spacing">\n'
       ..PlayerTemplate('preload="none"', audio)
-      ..'<div class="is_cast hidden" data-reid="'..r.reserveID..'" data-okkake="true" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
+      ..'<div class="is_cast hidden" data-rid="'..r.reserveID..'" data-okkake="true" data-meta=\'{"duration":'..r.durationSecond..', "audio":'..#audio..'}\'></div>'
       ..'<div id="apps-container"><div class="container"><div class="container"></div></div></div>'
       ..'</div>\n</section>\n' or '')
     ..'</div>\n'

@@ -203,10 +203,10 @@ if #a>0 then
     table.insert(ctt, '<tr class="open-info search mdl-grid--no-spacing'
       ..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)-(r.recSetting.startMargin or 0))*1000 or '')
       ..(not archive and '" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0) or '')
-      ..'" data-'..(SIDE_PANEL and 'onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-'..(archive and 'startTime="'..TimeWithZone(v.startTime) or 'eid="'..v.eid)
+      ..'" data-'..(SIDE_PANEL and 'id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..(archive and TimeWithZone(v.startTime)..'" data-archive="true' or v.eid)
                                 or 'href="epginfo.html?id='..v.onid..'-'..v.tsid..'-'..v.sid..'-'..(archive and TimeWithZone(v.startTime) or v.eid)..(page~=0 and '&amp;page='..page or ''))..'">'
 
-      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and (rs.recMode==5 and ' disabled' or '')..'" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-onid="'..v.onid..'" data-tsid="'..v.tsid..'" data-sid="'..v.sid..'" data-eid="'..v.eid..'"><span'
+      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and (rs.recMode==5 and ' disabled' or '')..'" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid..'"><span'
         ..(r and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
               or ' class="add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>')..'</span>' or '')
 

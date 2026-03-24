@@ -69,12 +69,7 @@ end
 for i,v in ipairs(ServiceList) do
   if not v.partialReceptionFlag then
     table.insert(NetworkList[NetworkIndex(v.onid)],
-      '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v.onid)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')
-        ..'" data-onid="'..v.onid
-        ..'" data-tsid="'..v.tsid
-        ..'" data-sid="'..v.sid
-
-        ..'">\n'
+      '<div class="onair mdl-cell mdl-cell--12-col mdl-shadow--4dp Network'..NetworkIndex(v.onid)..(onid==v.onid and tsid==v.tsid and sid==v.sid and ' is_cast' or '')..(v.subCh and ' subCH hidden' or '')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
 
         ..'<div class="mdl-grid">\n'
         ..'<div class="logo-container"><img src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"></div>\n'

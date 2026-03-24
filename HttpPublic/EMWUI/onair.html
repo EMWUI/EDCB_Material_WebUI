@@ -93,12 +93,7 @@ end
 for i,v in ipairs(CustomServiceList()) do
   if (ONESEG or not v.partialReceptionFlag) then
     table.insert(NetworkList[NetworkIndex(v.onid, v.partialReceptionFlag)],
-      '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line'..(v.subCh and ' subCH hidden' or '')
-        ..'" data-onid="'..v.onid
-        ..'" data-tsid="'..v.tsid
-        ..'" data-sid="'..v.sid
-
-        ..'">\n'
+      '<li class="onair mdl-list__item mdl-list__item--'..(webPanel and 'two' or 'three')..'-line'..(v.subCh and ' subCH hidden' or '')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'">\n'
 
         ..'<span class="mdl-list__item-primary-content">'
         ..'<i class="mdl-list__item-avatar material-icons mdl-color--primary"'..(Logo(v.onid,v.sid) and ' style="background-image:url('..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..');">' or '>tv')..'</i>'..v.service_name

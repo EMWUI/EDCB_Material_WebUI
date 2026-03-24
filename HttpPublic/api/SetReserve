@@ -30,7 +30,7 @@ toggle=GetVarInt(mg.request_info.query_string,'toggle',0,1)
 
 if post then
   if add then
-    onid,tsid,sid,eid=GetVarEventID(post)
+    onid,tsid,sid,eid=GetVarEventID(post,'id')
     r=RecSetting({onid=onid,tsid=tsid,sid=sid,eid=eid},post)
     if r then
       r=EventInfo(r)
@@ -92,7 +92,7 @@ if post then
 elseif oneClick then
   add=true
   AssertCsrf(mg.request_info.query_string)
-  onid,tsid,sid,eid=GetVarEventID(mg.request_info.query_string)
+  onid,tsid,sid,eid=GetVarEventID(mg.request_info.query_string,'id')
   r={onid=onid,tsid=tsid,sid=sid,eid=eid}
   for i,v in ipairs(edcb.EnumRecPresetInfo()) do
     if v.id==0 then

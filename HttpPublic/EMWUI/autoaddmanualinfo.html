@@ -32,7 +32,7 @@ if aa.dayOfWeekFlag then
 
     ..'<section class="mdl-layout__tab-panel" id="recset">\n<div class="form mdl-grid mdl-grid--no-spacing">'
     ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing"><div class="mdl-cell mdl-cell--2-col mdl-cell--3-col-desktop mdl-cell--middle">プリセット</div>\n'
-    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-manuadd="'..aa.dataID..'">\n'
+    ..'<div class="pulldown mdl-cell mdl-cell--6-col mdl-cell--9-col-desktop mdl-grid mdl-grid--no-spacing"><select name="presetID" data-manuid="'..aa.dataID..'">\n'
   presetID=aa.dataID==0 and 0 or 65535
   preset=false
   rs=aa.recSetting

@@ -117,7 +117,7 @@ for i,v in ipairs(st) do
         service_name=SERVICE[('%04X%04X%04X'):format(w.onid, w.tsid, w.sid)] or '',
         url='epginfo.html?id='..w.onid..'-'..w.tsid..'-'..w.sid..'-'..(w.past and startTime or w.eid)
       }
-      table.insert(ctt, CellTemplate(w, op, (i==1 and 'id="id'..j..'" ' or nil), true))
+      table.insert(ctt, CellTemplate(w, op, true))
 
       total=total+endPx-lastPx
       lastPx=endPx
