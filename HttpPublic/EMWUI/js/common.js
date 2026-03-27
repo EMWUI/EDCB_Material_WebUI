@@ -651,24 +651,22 @@ const createHtml = new class {
 				{title: 'D', class: 'drop', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Drops:</span>${d.drops}`, n: true},
 				{title: 'S', class: 'scramble', col: 2, text: d => `<span class="mdl-cell--hide-desktop mdl-cell--hide-tablet">Scrambles:</span>${d.scrambles}`, n: true},
 			],
+			observer: () => this.#observer,
 			list(d){
-				const $thumb = $('<div>', {class: 'thumb-container mdl-cell--hide-phone mdl-cell--hide-tablet', append: $('<i>', {class: 'material-icons', text: 'movie_off'})});
-				const thumb = document.createElement('canvas');
-				return [
-					$('<div>', {class: 'grid-container', data: this.data(d), click: e => this.click(e), append: [
-						$thumb,
-						$('<div>', {class: 'summary mdl-typography--title', append: [
-							$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
-							$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
-								$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
-								$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
-						$('<div>', {class: 'tagchip', append: [
-							mdlChip.tag(d.comment),
-							$('<span>', {class: 'container', append: [
-								mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
-								mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0&&' mdl-color-text--red-A700') ]}) ]}) ]}),
-					{canvas: thumb, id: d.recid, value: 0.1, done: () => $thumb.replaceWith($('<div>', {class: 'thumb-container', append: thumb}))}
-				];
+				const $thumb = $('<div>', {class: `thumb-container${d.thumb ? '' : ' mdl-cell--hide-phone mdl-cell--hide-tablet`'}`, data: this.data(d), append: $('<i>', {class: 'material-icons', text: d.thumb ? 'movie' : 'movie_off'})});
+				if (d.thumb) this.observer().observe($thumb.get(0));
+				return $('<div>', {class: 'grid-container', data: this.data(d), click: this.click, append: [
+					$thumb,
+					$('<div>', {class: 'summary mdl-typography--title', append: [
+						$('<span>', {class: `title${d.drops>0 ? ' mdl-color-text--red-A700' : d.scrambles>0 ? ' mdl-color-text--red-A700' : ''}`, html: ConvertTitle(d.title)}),
+						$('<span>', {class: 'mdl-typography--subhead mdl-grid mdl-grid--no-spacing', append: [
+							$('<span>', {class: 'date', html: `${ConvertTime(d.starttime, false, true)}～${ConvertTime(d.endtime)}`}),
+							$('<span>', {class: 'service', html: '<span>'+ConvertService(d)}) ]}) ]}),
+					$('<div>', {class: 'tagchip', append: [
+						mdlChip.tag(d.comment),
+						$('<span>', {class: 'container', append: [
+							mdlChip.tag(`ドロップ : <span${d.drops>0 ? ' class="mdl-color-text--red-A700"' : ''}>${d.drops}</span>`, mdlChip.getColorClass('ドロップ : ')),
+							mdlChip.tag(`スクランブル : ${d.scrambles}`, mdlChip.getColorClass('スクランブル : '), d.scrambles>0&&' mdl-color-text--red-A700') ]}) ]}) ]});
 			},
 		},
 		autoaddepg: {
@@ -685,7 +683,7 @@ const createHtml = new class {
 				{title: 'キーワード', class: 'keyword', col: 4, text: d => d.searchSetting.andKey},
 				{title: 'NOTキーワード', class: 'notkeyword', col: 3, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'block'})}), d.searchSetting.notKey]},
 				{title: 'メモ', class: 'note', col: 1, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'note'})}), d.searchSetting.note]},
-				{title: '登録数', class: 'count', col: 2, order: 1, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'search'})}), $('<a>', {text: d.addCount, href: `search.html?id=${d.id}`})], n: true},
+				{title: '登録数', class: 'count', col: 2, order: 1, text: d => [$('<span>', {class: 'inline-icons mdl-cell--hide-desktop mdl-cell--hide-tablet', html: $('<i>', {class: 'material-icons', text: 'search'})}), $('<a>', {text: d.addCount, href: `search.html?id=${d.autoid}`})], n: true},
 				{title: 'サービス', class: 'servicelist', col: 2, text: d => '<span>'+ConvertServiceList(d.searchSetting)},
 				{title: 'ジャンル', class: 'category', col: 2, text: d => d.searchSetting.contentList.length ? $(`#contentList [value="${d.searchSetting.contentList[0].content_nibble}"]`).text() : '全ジャンル'},
 				{title: '録画モード', class: 'mode', col: 2, text: d => this.#recMode[d.recSetting.recMode]}
@@ -766,6 +764,11 @@ const createHtml = new class {
 
 			if (!this.#preset || !this.#preset.ori){
 				window.onpopstate = () => this.#popstate();
+				if ('createMiscWasmModule' in window){
+					this.#thumb = new TsThumb(`${ROOT}api/grabber`, 'recid');
+					window.addEventListener('createdMiscWasmModule', e => $('.has-thumb').each((i, e) => this.#observer.observe(e)));
+				}
+
 				$('.mdl-navigation a').click(e => {
 					const key = $(e.currentTarget).attr('href').split('.')[0];
 					if (!this[key]) return;
@@ -807,6 +810,19 @@ const createHtml = new class {
 		this.#presets[this.#key].load();
 	}
 
+	#thumb;
+	#observer = new IntersectionObserver(e => {
+		e.forEach(e => {
+			if (!e.isIntersecting) return;
+			(async $e => {
+				const thumb = document.createElement('canvas');
+				await this.#thumb.setThumb(thumb, $e.data('recid'), 0.1);
+				$e.replaceWith($('<div>', {class: 'thumb-container', append: thumb}));
+			})($(e.target))
+		
+			this.#observer.unobserve(e.target);
+		});
+	});
 	#table(d){
 		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
 		return [
@@ -819,20 +835,14 @@ const createHtml = new class {
 					$('<td>', {class: `${cell.class}${cell.n?'':' mdl-data-table__cell--non-numeric'}${cell.col?` mdl-cell--${cell.col}-col-phone`:''}${cell.order?` mdl-cell--order-${cell.order}-phone`:''}`, data: cell.data && cell.data(e[1]), append: cell.text(e[1])}) )}) )})
 		];
 	}
-	#list(d){
+	async #list(d){
 		const i = (this.#preset.div ? this.#page % this.#div : this.#page) * PAGE_COUNT;
-		const a = [...d[this.#index]].slice(i, i + PAGE_COUNT).map(e => this.#preset.list(e[1]));
-		(async () => {
-			const tests = await this.thumb.testThumbs(a.map(e => e[1].id));
-			if (tests){
-				for (let i = 0; i < tests.length; i++){
-					if (tests[i]) (async e => {if (await this.thumb.setThumb(e.canvas, e.id, e.value)) e.done();})(a[i][1]);
-				}
-			}
-		})();
+		const a = [...d[this.#index]].slice(i, i + PAGE_COUNT);
+		const tests = await this.#thumb.testThumbs(a.map(e => e[1].recid));
+		tests.forEach((e, i) => a[i][1].thumb = e);
 		return [
 			$('<div>', {class: 'mdl-typography--text-right', text: `${d.total} 件中 ${Math.min(d.total, this.#page * PAGE_COUNT + 1)} － ${Math.min(d.total, (this.#page + 1) * PAGE_COUNT)} 件`}),
-			...a.map(e => e[0])
+			...a.map(e => this.#preset.list(e[1]))
 		];
 	}
 	#pagination(d){
@@ -847,25 +857,28 @@ const createHtml = new class {
 					{text: 'last_page', page: max, disabled: this.#page>=max}
 				].map(d => $(`<${!d.disabled&&!this.#form ? 'a' : 'button'}>`, {class: `mdl-button mdl-js-button mdl-button--icon ${d.class ?? ''}`, href: !d.disabled ? `${this.#key}.html${d.page>0 ? `?page=${d.page}` : ''}` : null, disabled: d.disabled, click: e => {e.preventDefault();this.setPage(d.page);}, html: typeof d.text == 'number' ? d.text : $('<i>', {class: 'material-icons', text: d.text}) })) });
 	}
-	async create(notify){
+	create(){this.#create(false);}
+	async #create(reset = true, notify){
 		showSpinner(true);
 		this.#clearTimeout();
 
 		const d = this.#key=='search' ? await getList.search(this.#form, this.#index)
-			: await getList.fetchEX(this.#key, this.#index, notify, d => this.#preset.tab?d[this.#tab]:d);
+			: await getList.fetchEX(this.#key, this.#preset.tab?this.#tab:this.#index, notify, d => this.#preset.tab?d[this.#tab]:d);
 
-		$('.mdl-layout__content').scrollTop(0);
 		$(`${this.#container} .pagination`).html(this.#pagination(d));
-		if (this.#preset.list && this.thumb){
+		if (this.#preset.list && this.#thumb){
 			$(`${this.#container} #table`).hide();
-			$(`${this.#container} .main-content`).html(this.#list(d));
 			$(`${this.#container} #list`).show();
+			$(`${this.#container} .main-content`).html(await this.#list(d));
 		}else{
 			$(`${this.#container} #list`).hide();
-			$(`${this.#container} table`).html(this.#table(d)).show();
 			$(`${this.#container} #table`).show();
+			$(`${this.#container} table`).html(this.#table(d));
 		}
 		componentHandler.upgradeDom();
+
+		$('.list,.pagination').removeClass('hidden');
+		if (reset) $('.mdl-layout__content').scrollTop($('.pagination').position().top+$('main>.mdl-layout__content').scrollTop()-100);
 
 		if (this.#preset.load) this.#preset.load();
 		this.#checkUpdate();
@@ -881,7 +894,7 @@ const createHtml = new class {
 	#checkUpdate(){
 		this.#timerID[0] = setTimeout(async ()=> {
 			const notify = await getList.checkUpdate(this.#key);
-			if (notify) this.create(notify);
+			if (notify) this.#create(true, notify);
 			else this.#checkUpdate();
 		}, 10*60*1000);
 	}
@@ -945,19 +958,19 @@ const createHtml = new class {
 		this.#tab = tab;
 		this.#resetSidePanel();
 		history.pushState(null, null, `${this.#key}.html?${this.#params.toString()}`);
-		this.create();
+		this.#create();
 	}
-	async #setParams(page){
+	#setParams(page){
 		this.#page = page;
 		history.pushState(null, null, `?${this.#params.toString()}`);
-		await this.create();
+		this.#create();
 	}
 	#popstate(){
 		this.#setFromURL() && this.#resetSidePanel();
 		if (this.#key=='index'){
 			$(this.#container).find('.pagination,table').empty();
 			$('header .mdl-layout-title').text('');
-		}else this.create();
+		}else this.#create();
 	}
 
 	reserve(page = 0){this.#setToURL('reserve', page)}
@@ -1348,12 +1361,12 @@ const fixRecToggleSW = (d, $e = $('.open')) => {
 	//検索ページ向け
 	if ($e.hasClass('search')){
 		//スイッチ追加
-		if (!$e.data('starttime')){
+		if (!$input.length){
 			$e.data('starttime', d.starttime - d.recSetting.startMargine * 1000);
 			const $switch = createSwitch(d);
 			componentHandler.upgradeElement($switch.children().get(0));
 
-			$e.find('.flag').data('id', d.id).removeData('oneclick').html($switch);
+			$e.find('.flag').data('id', d.rid).data('oneclick', 0).html($switch);
 			createHtml.load();
 		}
 		$e = $e.find('.flag');

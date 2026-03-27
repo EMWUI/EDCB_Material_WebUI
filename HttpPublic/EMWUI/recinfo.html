@@ -38,7 +38,7 @@ for i=page*pageCount+1,math.min(#a,(page+1)*pageCount) do
   v=a[i]
   if SHOW_THUMB_IN_RECINFO then
     table.insert(ctt, '<div class="grid-container open-info" data-recid="'..v.id..'">'
-      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div class="thumb-container"><i class="material-icons">movie</i><canvas class="thumb" data-recid="'..v.id..'"></canvas></div>' 
+      ..(EdcbFindFilePlain(b[i].recFilePath) and '<div data-recid="'..v.id..'" class="has-thumb thumb-container"><i class="material-icons">movie</i></div>'
         or '<div class="thumb-container mdl-cell--hide-phone"><i class="material-icons">movie_off</i></div>')
       ..'<div class="summary mdl-typography--title">'
       ..'<span class="title'..(v.drops>0 and ' mdl-color-text--red-A700' or v.scrambles>0 and ' mdl-color-text--yellow-A700' or '')..'">'..ConvertTitle(v.title)
@@ -76,8 +76,6 @@ ct.main='<main class="sidePanel-container mdl-layout__content">\n'
     ..table.concat(ctt)
     ..'</div></div>\n'
     ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
-    ..'<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'recid\');'
-    ..'window.addEventListener(\'createdMiscWasmModule\', e => $(".thumb").each((i,e) => createHtml.thumb.setThumb(e, $(e).data("recid"), 0.1)));</script>\n'
   or '<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
     ..'<thead class="mdl-cell--hide-phone">\n<tr>\n'
     ..' <th class="date mdl-data-table__cell--non-numeric ">日付\n'

@@ -571,7 +571,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		else return super.canPlayType ? super.canPlayType(s) : this.#e.canPlayType(s);
 	}
 	#currentTime(){
-		return this.#e.currentTime * this.#fast + this.#ofssec;
+		return this.#e.currentTime * (this.#e.initSrc?this.#fast:1) + this.#ofssec;
 	}
 	#poster(text = 'Loading...', width = 1280, height = 720){
 		try{

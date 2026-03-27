@@ -1209,7 +1209,7 @@ end
 function ThumbContainerTemplate()
   if not SHOW_THUMB_IN_RECINFO then return '' end
   return '<div id="list" class="mdl-grid" style="display: none;"><div class="main-content mdl-cell mdl-cell--12-col mdl-shadow--4dp"></div></div>\n'
-    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n<script>createHtml.thumb = \'createMiscWasmModule\' in window && new TsThumb(`${ROOT}api/grabber`, \'recid\');</script>\n'
+    ..'<script src="js/ts-live.lua?t=-misc.js"></script>\n<script src="js/ts-loader.js'..Version('tsloader')..'"></script>\n'
 end
 
 --タイトルのマークを装飾
