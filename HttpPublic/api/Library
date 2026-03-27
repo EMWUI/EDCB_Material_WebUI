@@ -277,15 +277,16 @@ else
             for j,dir in ipairs({'%1chapters',''}) do
               local f=edcb.io.open(ref:gsub('(['..DIR_SEPS..'])([^'..DIR_SEPS..']*)$',dir..'%1%2'):gsub('%.[0-9A-Za-z]+$','')..ext,'rb')
               if f then
-                local s=f:read('*a')
+                local s=(f:seek('end') or math.huge)<1024*1024 and f:seek('set') and f:read('*a')
+                f:close()
                 if ext=='.chapter' or s:find('^\xef\xbb\xbf') then
                   --.chapterまたはBOMありはUTF-8
                   a.chapters=s:gsub('^\xef\xbb\xbf','')
                 else
-                  --BOMがなければShift_JISと仮定。変換できなければASCII文字だけ抽出
-                  a.chapters=edcb.Convert('utf-8','cp932',s) or s:gsub('[\x80-\xff]','')
+                  --BOMがなければShift_JISと仮定、往復変換できなければUTF-8(化けるかもしれない)
+                  local conv=edcb.Convert('utf-8','cp932',s) or ''
+                  a.chapters=s==edcb.Convert('cp932','utf-8',conv) and conv or edcb.Convert('utf-8','utf-8',s)
                 end
-                f:close()
                 break
               end
             end
