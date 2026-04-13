@@ -1015,8 +1015,8 @@ const setEpgInfo = (d, $e) => {
 
 	if (d.recid){
 		$('#otherInfo').html([
-			d.other.map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}),
-			d.relay.map(e=>mdlChip.tag(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`)),
+			(d.other||[]).map(e=>{if (!e.match('ID:')) return mdlChip.tag(e);}),
+			(d.relay||[]).map(e=>mdlChip.tag(`<span class="material-icons">switch_access_2</span>${e.service||`${e.onid}-${e.tsid}-${e.sid}-${e.eid}`}`)),
 			mdlChip.tag(`<span class="material-icons">key</span>${d.onid}-${d.tsid}-${d.sid}-${d.eid}`),
 		].flat());
 	}else{
