@@ -1563,8 +1563,8 @@ h4 .mdl-button--icon {
 
   #dayList:not(:checked) + span *,
   #dayList:not(:checked) + span .pulldown:before {
-    color: rgba(0,0,0,.26);
-    border-top-color: rgba(0,0,0,.26); }
+    color: var(--disabled);
+    border-top-color: var(--border); }
 
   #edit_dateList {
     position: absolute;

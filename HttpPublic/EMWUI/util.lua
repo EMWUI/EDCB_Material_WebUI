@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260327',
-    common='260327',
+    css='260413',
+    common='260413',
     tvguide='260327',
     player='260327',
     onair='260327',
     library='260303',
     setting='2260312',
-    tsloader='260327',
+    tsloader='260413',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -443,7 +443,7 @@ function RecSettingTemplate(rs)
       s=s..'<div class="preset mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">'
         ..'<div class="delPreset mdl-button mdl-button--icon mdl-button--mini-icon mdl-js-button"><i class="material-icons">delete</i></div>'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">フォルダ</div>\n'
-        ..'<div class="mdl-cell mdl-textfield mdl-js-textfield"><input class="has-icon mdl-textfield__input" type="text" name="recFolder" value="'..v.recFolder..'" id="recFolder'..i..'"><label class="mdl-textfield__label" for="recFolder'..i..'">!Default</label></div></div>\n'
+        ..'<div class="mdl-cell mdl-textfield mdl-js-textfield"><input class="has-icon mdl-textfield__input" type="text" name="partialrecFolder" value="'..v.recFolder..'" id="recFolder'..i..'"><label class="mdl-textfield__label" for="recFolder'..i..'">!Default</label></div></div>\n'
         ..'<div class="mdl-cell mdl-cell--12-col mdl-grid mdl-grid--no-spacing">\n<div class="mdl-cell mdl-cell--middle">出力PlugIn</div>\n'
         ..'<div class="pulldown mdl-cell mdl-grid mdl-grid--no-spacing"><select name="partialwritePlugIn">\n'
       for j,w in ipairs(EnumPlugInFileName('Write')) do

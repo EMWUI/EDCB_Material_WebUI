@@ -55,6 +55,10 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		this.#createWasmModule();
+
+		document.addEventListener("visibilitychange", () => {
+			if (this.#wakeLock && document.visibilityState === 'visible') this.#requestWakeLock();
+		});
 	}
 
 
@@ -138,6 +142,10 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 			this.#e.dispatchEvent(new Event('error'));
 			throw e;
 		});
+	}
+
+	async #requestWakeLock() {
+		this.#wakeLock = await navigator.wakeLock.request('screen');
 	}
 
 	#initialize(){
@@ -348,7 +356,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 			this.#currentReader = response.body.getReader();
 			this.#readNext(this.#currentReader,null);
 			//Prevent screen sleep
-			if (!this.#wakeLock) navigator.wakeLock.request("screen").then(lock => this.#wakeLock = lock);
+			if (!this.#wakeLock) this.#requestWakeLock();
 		});
 		['ofssec','offset'].forEach(e => this.#src.searchParams.delete(e));
 	}

@@ -52,8 +52,9 @@ for i,v in ipairs(edcb.GetTunerReserveAll()) do
         ..(w.recSetting.recMode==5 and ' disabled' or w.overlapMode==1 and ' partially' or w.overlapMode==2 and ' shortage' or '')
         ..'" data-startTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)-(w.recSetting.startMargin or 0))*1000 or '')
         ..'" data-endTime="'..(w.durationSecond and (TimeWithZone(w.startTime,9*3600)+w.durationSecond+(w.recSetting.endMargin or 0)+20)*1000 or 0)..'" '
-        ..(SIDE_PANEL and 'data-id="'..w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid
-                       or 'data-href="reserveinfo.html?id='..w.reserveID..'&amp;tuner=&amp;page='..page)..'">'
+        ..'" data-id="'..(w.eid == 65535 and w.reserveID..'" data-program="true' or w.onid..'-'..w.tsid..'-'..w.sid..'-'..w.eid)
+        ..'" data-rid="'..w.reserveID
+        ..'">'
 
         ..'\n <td class="flag mdl-data-table__cell--non-numeric" data-id="'..w.reserveID..'"><span><label for="reserve'..w.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..w.reserveID..'" class="mdl-switch__input"'..Checkbox(w.recSetting.recMode~=5)..'></label></span>'
         ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(w.startTime, w.durationSecond)

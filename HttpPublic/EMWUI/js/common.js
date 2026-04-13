@@ -234,7 +234,7 @@ const toObj = {
 				service: $(e).txt('service_name'),
 			}))
 		}
-		if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
+		d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 
 		if (!e.num('ID')) d.id = `${d.onid}-${d.tsid}-${d.sid}-${archive ? createViewDate(d.starttime).getTime()/1000 : d.eid}`;
 		else{
@@ -352,7 +352,7 @@ const toObj = {
 				d.eid = e.num('eventID');
 				d.program = d.eid == 65535;
 				d.id = d.program ? d.rid : `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
-				if (d.duration) d.endtime = new Date(d.starttime + d.duration*1000).getTime();
+				d.endtime = new Date(d.starttime + d.duration*1000).getTime();
 				d.comment = e.txt('comment');
 				d.overlapMode = e.num('overlapMode');
 				d.size = e.txt('size');
@@ -522,9 +522,10 @@ const getList = new class {
 			if (!Info[key]) Info[key] = preset.tabArray ? {} : {total: $xml.children().num('total')};
 
 			if (preset.tabArray){
+				Info[key][index] = [];
 				(preset.tabArray($(xml))).forEach((e, i) => {
 					e[0][index] = new Map(this.sort(key, preset.toArray($(e[1])), sort));
-					Info[key][i+1] = e[0];
+					Info[key][index][i+1] = e[0];
 				});
 			}else Info[key][index] = new Map(this.sort(key, preset.toArray($xml), sort));
 
@@ -576,11 +577,11 @@ const mdlChip = {
 		s = this.textEncoder.encode(s).reduce((n,i)=>n+=i);
 		return `mdl-color--${this.color[s % this.color.length]}-100`;
 	},
-	tag(s, a=this.getColorClass(s), b=''){
-		return $('<span>', {class: `mdl-chip ${a}`, append: $('<span>', {class: `mdl-chip__text${b}`, html: s})});
+	tag(s, a=this.getColorClass(s), b){
+		return $('<span>', {class: `mdl-chip ${a}`, append: $('<span>', {class: `mdl-chip__text${b||''}`, html: s})});
 	},
-	link(s, h, a=this.getColorClass(s), b=''){
-		return $('<a>', {class: `mdl-chip ${a}`, href: h, append: $('<span>', {class: `mdl-chip__text${b}`, html: s})});
+	link(s, h, a=this.getColorClass(s), b){
+		return $('<a>', {class: `mdl-chip ${a}`, href: h, append: $('<span>', {class: `mdl-chip__text${b||''}`, html: s})});
 	}
 }
 
@@ -609,10 +610,10 @@ const createHtml = new class {
 			},
 			sidePanel: '#detail,#recset',
 			class: d => `reserve${d.recSetting.recEnabled ? '' : ' disabled'}`,
-			data: d => ({id: d.id, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000, program: d.program}),
+			data: d => ({id: d.id, rid: d.rid, starttime: d.starttime - d.recSetting.startMargine * 1000, endtime: d.endtime + (d.recSetting.endMargine + 20) * 1000, program: d.program}),
 			click: e => {
 				if ($(e.target).is('.flag, .flag *')) return;
-				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `reserveinfo.html?id=${$(e.currentTarget).data('id')}`;
+				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `reserveinfo.html?id=${$(e.currentTarget).data('rid')}`;
 			},
 			cell: [
 				{title: '録画', class: 'flag', text: d => createSwitch(d), data: d => ({id: d.rid})},
@@ -863,7 +864,7 @@ const createHtml = new class {
 		this.#clearTimeout();
 
 		const d = this.#key=='search' ? await getList.search(this.#form, this.#index)
-			: await getList.fetchEX(this.#key, this.#preset.tab?this.#tab:this.#index, notify, d => this.#preset.tab?d[this.#tab]:d);
+			: await getList.fetchEX(this.#key, this.#index, notify, d => this.#preset.tab?d[this.#index][this.#tab]:d);
 
 		$(`${this.#container} .pagination`).html(this.#pagination(d));
 		if (this.#preset.list && this.#thumb){
@@ -945,7 +946,7 @@ const createHtml = new class {
 			this.#key = key;
 			$('.mdl-layout__tab-bar-container').remove();
 			if (this.#preset.tab){
-				$('header').append($('<div>', {class:'mdl-layout__tab-bar', append: Object.values(await getList[this.#key]()).map((d,i)=>this.#preset.tab(d,i+1))}));
+				$('header').append($('<div>', {class:'mdl-layout__tab-bar', append: Object.values((await getList[this.#key]())[this.#index]).map((d,i)=>this.#preset.tab(d,i+1))}));
 				const btn = document.querySelector('.mdl-layout__drawer-button');
 				const clonedBtn = btn.cloneNode(true);
 				btn.replaceWith(clonedBtn);
@@ -1028,7 +1029,6 @@ const setEpgInfo = (d, $e) => {
 
 		$('[name=id]').val(d.id);
 
-		$('#link_epginfo').attr('href', $e&&$e.find('.flag').data('id') ? `reserveinfo.html?id=${$e.find('.flag').data('id')}` : `epginfo.html?id=${d.id}`);
 		$('#set').data('id', d.id);
 	}
 }
@@ -1261,8 +1261,8 @@ const setRecInfo = async $e => {
 
 	$('pre').text(d.errInfo);
 
-	$('#del').attr('action', `${ROOT}api/SetRecInfo?id=${d.id}`).next('button').prop('disabled', d.protect);
-	$('#link_epginfo').attr('href', `recinfodesc.html?id=${d.id}`);
+	$('#del').attr('action', `${ROOT}api/SetRecInfo?id=${d.recid}`).next('button').prop('disabled', d.protect);
+	$('#link_epginfo').attr('href', `recinfodesc.html?id=${d.recid}`);
 
 	$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 }
@@ -1402,7 +1402,7 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 				setEpgInfo(r, $e);
 				setReserve(r);
 
-				$('#link_epginfo').attr('href', `reserveinfo.html?id=${d.rid}`);
+				$('#link_epginfo').attr('href', `reserveinfo.html?id=${d.id}`);
 				$('[href="#detail"], #detail').removeClass('is-active');
 				$('[href="#recset"], #recset').addClass('is-active');
 			}else{
@@ -1421,12 +1421,13 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 		});
 		if (info){
 			setEpgInfo(info, $e);
+			$('#link_epginfo').attr('href', `epginfo.html?id=${d.id}`);
 			if (d.archive){
 				$('#sidePanel, .close_info.mdl-layout__obfuscator').addClass('is-visible');
 				showSpinner();
 				return;
 			};
-			const has = d.rid || !$e.find('.addreserve,.flag').data('oneclick');
+			const has = d.rid || $e.find('.addreserve,.flag').length&&!$e.find('.addreserve,.flag').data('oneclick');
 			getList.reserve(r => {
 				r = r[0].get(d.id);
 				if (r){
@@ -1621,6 +1622,7 @@ $(function(){
 	});
 	//時間絞り込み
 	//切替
+	$('#DayOfWeek').next().find('input').mdl_prop('disabled', true);
 	$('[name=dayList]').change(() => {
 		$('[name=dayList]').each((i, e) => {
 			$(e).next().find('select').prop('disabled', !$(e).prop('checked'));
