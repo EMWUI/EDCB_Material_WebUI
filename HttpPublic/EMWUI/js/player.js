@@ -191,7 +191,6 @@ $(window).on('load resize', () => {
 	if (vid.fullscreen) return;
 
 	if (vid.theater || isSmallScreen()){
-		vid.theater = true;
 		$('#movie-container #player').prependTo('#movie-theater-container');
 	}else{
 		$('#movie-theater-container #player').prependTo('#movie-container');
