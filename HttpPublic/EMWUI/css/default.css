@@ -756,10 +756,6 @@ main {
     display: -webkit-flex;
     display:     -ms-flexbox;
     display:         flex; }
-  .main-content>.mdl-card__actions {
-    position: sticky;
-    bottom: 0;
-    background: var(--bg-summary); }
   .main-content>.mdl-card__actions>button {
     margin-right: 8px;
     height: 36px; }
