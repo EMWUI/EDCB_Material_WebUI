@@ -756,6 +756,10 @@ main {
     display: -webkit-flex;
     display:     -ms-flexbox;
     display:         flex; }
+  .main-content>.mdl-card__actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-summary); }
   .main-content>.mdl-card__actions>button {
     margin-right: 8px;
     height: 36px; }
@@ -1917,9 +1921,9 @@ h4 .mdl-button--icon {
   #movie #player {
     width: 100%; }
   #movie #player:not(:fullscreen) #video {
-    min-height: min(calc((100vw - 16px) * (9 / 16)), calc(90vh - 130px));
-    max-height: calc(90vh - 130px);
-    max-width: min(100%, calc((90vh - 130px) / 9 * 16)); }
+    min-height: min(calc(100vw * (9 / 16)), calc(100vh - 130px));
+    max-height: calc(100vh - 130px);
+    max-width: min(100%, calc((100vh - 130px) * 16 / 9)); }
   section#movie #stop {
     display: none; }
   
@@ -2471,6 +2475,8 @@ h4 .mdl-button--icon {
     width: 100%;
     >.container {
       height: 300px; } }
+  #movie #apps-container:not(:has(#jikkyo-comm)) {
+    display: none; }
   #apps-container .container {
     width: 100%;
     justify-content: center;
