@@ -1402,7 +1402,7 @@ const getEpgInfo = async ($e, d = $e.data()) => {
 				setEpgInfo(r, $e);
 				setReserve(r);
 
-				$('#link_epginfo').attr('href', `reserveinfo.html?id=${d.id}`);
+				$('#link_epginfo').attr('href', `reserveinfo.html?id=${d.rid}`);
 				$('[href="#detail"], #detail').removeClass('is-active');
 				$('[href="#recset"], #recset').addClass('is-active');
 			}else{

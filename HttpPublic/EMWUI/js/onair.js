@@ -33,13 +33,13 @@ $(function(){
 
 			$.map($(xml).find('eventinfo'), e => toObj.EpgInfo($(e))).map((_d, i) => {
 				if (i>0){
-					d.next = Info.EventInfo[d.id] = _d;
+					d.next = Info.EventInfo[_d.id] = _d;
 					$e.find('.nextstartTime').text(ConvertTime(_d.starttime)).next('.nextendTime').text(`～${ConvertTime(_d.endtime)}`);
 					$e.find('.nexttitle').html(ConvertTitle(_d.title));
 					return;
 				}
 
-				d.epg = Info.EventInfo[d.id] = _d;
+				d.epg = Info.EventInfo[_d.id] = _d;
 				if ($e.hasClass('is_cast')){
 					setEpgInfo(_d);
 					$('#epginfo').removeClass('hidden');

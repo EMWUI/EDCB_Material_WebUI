@@ -154,6 +154,8 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#networkState = this.#networkStateCode.EMPTY;
 		this.#currentTime = 0;
 		this.#done = false;
+		if (!this.#wakeLock) return;
+		this.#wakeLock.release();
 		this.#wakeLock = null;
 	}
 
