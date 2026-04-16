@@ -1774,7 +1774,7 @@ h4 .mdl-button--icon {
     white-space: normal;
     border-bottom: 1px solid var(--border);
     box-sizing: border-box; }
-    .list .mdl-data-table tbody tr:has(.flag) {
+    .list .mdl-data-table tbody tr:has(.flag:not(.hidden)) {
       padding-left: 60px; }
     .mdl-data-table tbody tr:hover {
       background-color: transparent; }

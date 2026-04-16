@@ -17,13 +17,15 @@ if mg.get_var(post, 'save') then
     if v==key.preset then
       --上書き
       edcb.WritePrivateProfile(section, nil, '', INI)
+      key.presetId=i
       add=false
       break
     end
   end
   if add then
     --追加
-    presetList[#presetList+1]=key.preset
+    key.presetId=#presetList+1
+    presetList[key.presetId]=key.preset
     edcb.WritePrivateProfile('search', 'list', table.concat(presetList, ','), INI)
   end
 
@@ -94,7 +96,7 @@ if not key.autoAdd then
   for i,v in ipairs(presetList) do
     if v~='' then
       lock=tonumber(edcb.GetPrivateProfile(v..'_Search','lock',false,INI))~=0
-      ct.main=ct.main..'<a class="mdl-chip mdl-chip--contact'..(lock and '' or ' mdl-chip--deletable')..'" href="search.html?preset='..i..'">'
+      ct.main=ct.main..'<a class="preset mdl-chip mdl-chip--contact'..(lock and '' or ' mdl-chip--deletable')..'" href="search.html?preset='..i..'">'
         ..'<span class="mdl-chip__contact mdl-color--teal mdl-color-text--white">'..EdcbHtmlEscape(v:sub(1,(v:match('^[%w%p]') and 1 or 3)))..'</span>'
         ..'<span class="mdl-chip__text">'..EdcbHtmlEscape(v)..'</span>'
         ..(lock and '' or '<button class="mdl-chip__action" type="submit" form="preset'..i..'"><i class="material-icons">cancel</i></button>')
@@ -133,6 +135,7 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
   ..'<input type="hidden" name="ctok" class="ctok" value="'..CsrfToken()..'">\n'
   ..'<input type="hidden" name="ctok" class="ctok" id="custom" value="'..CsrfToken('epgcustom.html')..'" disabled>\n'
   ..'<input type="hidden" name="ctok" class="ctok" id="api" value="'..CsrfToken('searchevent')..'" disabled>\n'
+  ..'<input type="hidden" name="ctok" class="ctok" id="autoaddepg" value="'..CsrfToken('autoaddepginfo.html')..'" disabled>\n'
 
   ..SerchTemplate(key, not key.autoAdd)
 
@@ -149,12 +152,14 @@ ct.main=ct.main..'<div class="mdl-grid">\n<form id="search" method="POST" action
 
 
 
-page=GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
+page=#a>0 and GetVarInt(mg.request_info.query_string,'page',0,100000) or 0
 pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
 if pageCount==0 then pageCount=#a end
 
-if #a>0 then
-  pageNav='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n'
+if (key.preset) then
+  pageNav=Pagination(page, a, '&amp;preset='..key.presetId)
+else
+  pageNav='<div class="pagination mdl-grid mdl-grid--no-spacing'..(#a>0 and '' or ' hidden')..'"><div class="mdl-grid mdl-grid--no-spacing">\n'
     ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'formaction="search.html'..(key.autoAdd and '?id='..key.autoAdd or '')..'"' or 'disabled')..'><i class="material-icons">first_page</i></button>\n'
     ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'formaction="search.html?page='..(page-1)..(key.autoAdd and '&amp;id='..key.autoAdd or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></button>\n'
 
@@ -166,63 +171,62 @@ if #a>0 then
   pageNav=pageNav..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'formaction="search.html?page='..(page+1)..(key.autoAdd and '&amp;id='..key.autoAdd or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></button>\n'
     ..'<button type="submit" form="hidden" class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'formaction="search.html?page='..math.ceil(#a/pageCount-1)..(key.autoAdd and '&amp;id='..key.autoAdd or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></button>\n'
     ..'</div></div>\n'
-
-  ct.main=ct.main..pageNav..'<div class="list mdl-grid">'
-
-    ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
-    ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
-    ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
-    ..(not archive and ' <th class="flag mdl-data-table__cell--non-numeric">録画\n' or '')
-    ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
-    ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
-    ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
-    ..' <th class="info mdl-data-table__cell--non-numeric">番組内容\n'
-    ..'<tbody>\n'
-
-  rt={}
-  for i,v in ipairs(edcb.GetReserveData()) do
-    rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
-  end
-
-  sn={}
-  for i,v in ipairs(edcb.GetServiceList() or {}) do
-    sn[v.onid..'-'..v.tsid..'-'..v.sid]=v.service_name
-  end
-
-  ctt={}
-  for i=math.max(1,page*pageCount+1),math.min(#a,(page+1)*pageCount) do
-    v=a[i]
-    service_name=sn[v.onid..'-'..v.tsid..'-'..v.sid] or ''
-    r=nil
-    id=rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
-    if id then
-      r=edcb.GetReserveData(id)
-      rs=r.recSetting
-    end
-
-    table.insert(ctt, '<tr class="open-info search mdl-grid--no-spacing'
-      ..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)-(r.recSetting.startMargin or 0))*1000 or '')
-      ..(not archive and '" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0) or '')
-      ..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..(archive and TimeWithZone(v.startTime) or v.eid)
-      ..(archive and '" data-archive="true' or '')
-      ..'">'
-
-      ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and (rs.recMode==5 and ' disabled' or '')..'" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid..'"><span'
-        ..(r and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
-              or ' class="add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>')..'</span>' or '')
-
-      ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime)
-      ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
-      ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..service_name
-      ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')
-      ..'\n')
-  end
-
-  ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..pageNav
 end
-ct.main=ct.main..'\n</div>\n'
 
-if key.enabled then
+ct.main=ct.main..pageNav..'<div class="list mdl-grid'..(#a>0 and '' or ' hidden')..'">'
+
+  ..'<table class="reserve mdl-data-table mdl-js-data-table mdl-shadow--4dp">\n'
+  ..'<caption>'..#a..' 件中 '..math.min(#a,page*pageCount+1)..' － '..math.min(#a,(page+1)*pageCount)..' 件</caption>\n'
+  ..'<thead class="mdl-cell--hide-phone">\n<tr class=header>\n'
+  ..(not archive and ' <th class="flag mdl-data-table__cell--non-numeric">録画\n' or '')
+  ..' <th class="date mdl-data-table__cell--non-numeric">日付\n'
+  ..' <th class="title mdl-data-table__cell--non-numeric">番組名\n'
+  ..' <th class="service mdl-data-table__cell--non-numeric">サービス\n'
+  ..' <th class="info mdl-data-table__cell--non-numeric">番組内容\n'
+  ..'<tbody>\n'
+
+rt={}
+for i,v in ipairs(edcb.GetReserveData()) do
+  rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid]=v.reserveID
+end
+
+sn={}
+for i,v in ipairs(edcb.GetServiceList() or {}) do
+  sn[v.onid..'-'..v.tsid..'-'..v.sid]=v.service_name
+end
+
+ctt={}
+for i=math.max(1,page*pageCount+1),math.min(#a,(page+1)*pageCount) do
+  v=a[i]
+  service_name=sn[v.onid..'-'..v.tsid..'-'..v.sid] or ''
+  r=nil
+  id=rt[v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid] or nil
+  if id then
+    r=edcb.GetReserveData(id)
+    rs=r.recSetting
+  end
+
+  table.insert(ctt, '<tr class="open-info search mdl-grid--no-spacing'
+    ..(r and r.durationSecond and '" data-startTime="'..(TimeWithZone(r.startTime,9*3600)-(r.recSetting.startMargin or 0))*1000 or '')
+    ..(not archive and '" data-endTime="'..(v.durationSecond and (TimeWithZone(v.startTime,9*3600)+v.durationSecond+(r and r.recSetting.endMargin or 0))*1000 or 0) or '')
+    ..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..(archive and TimeWithZone(v.startTime) or v.eid)
+    ..(archive and '" data-archive="true' or '')
+    ..'">'
+
+    ..(not archive and '\n <td class="flag mdl-data-table__cell--non-numeric'..(r and (rs.recMode==5 and ' disabled' or '')..'" data-id="'..r.reserveID or '" data-oneclick="1')..'" data-id="'..v.onid..'-'..v.tsid..'-'..v.sid..'-'..v.eid..'"><span'
+      ..(r and '><label for="reserve'..r.reserveID..'" class="mdl-switch mdl-js-switch"><input id="reserve'..r.reserveID..'" class="search mdl-switch__input"'..Checkbox(rs.recMode~=5)..'></label>'
+            or ' class="add mdl-button mdl-js-button mdl-button--fab mdl-button--colored"><i class="material-icons">add</i>')..'</span>' or '')
+
+    ..'\n <td class="date mdl-data-table__cell--non-numeric">'..FormatTimeAndDuration(v.startTime)
+    ..'\n <td class="title mdl-data-table__cell--non-numeric mdl-cell--4-col-phone">'..(v.shortInfo and ConvertTitle(v.shortInfo.event_name) or '')
+    ..'\n <td class="service mdl-data-table__cell--non-numeric"><span><img class="logo" src="'..PathToRoot()..'api/logo?onid='..v.onid..'&amp;sid='..v.sid..'"><span>'..service_name
+    ..'\n <td class="info mdl-data-table__cell--non-numeric">'..(v.shortInfo and v.shortInfo.text_char or '')
+    ..'\n')
+end
+
+ct.main=ct.main..table.concat(ctt)..'</table>\n</div>\n'..pageNav..'\n</div>\n'
+
+if key.enabled and not key.preset then
   ct.main=ct.main..'<form id="hidden" method="POST">\n'
     ..(key.autoAdd and '<input type="hidden" name="id" value="'..key.autoAdd..'">\n' or '')
     ..'<input type="hidden" class="ctok" name="ctok" value="'..CsrfToken()..'">\n'
@@ -274,9 +278,9 @@ if key.enabled then
   ct.main=ct.main..'</form>\n'
 end
 
-ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored submitEX" form="hidden" data-ctok="#autoaddepg" '
-  ..(key.autoAdd and 'formaction="autoaddepginfo.html?id='..key.autoAdd..'"><i class="material-icons">edit'
-                  or (not archive and key.enabled and 'formaction="autoaddepginfo.html"' or 'disabled')..'><i class="material-icons">add')
+ct.main=ct.main..'<button id="add" class="mdl-button mdl-js-button mdl-button--fab mdl-button--raised mdl-button--colored" form="hidden" data-ctok="#autoaddepg" formaction="autoaddepginfo.html'
+  ..(key.autoAdd and '?id='..key.autoAdd..'"><i class="material-icons">edit'
+                  or (not archive and key.enabled and '"' or '" disabled')..'><i class="material-icons">add')
   ..'</i></button>\n'
 
 ct=Template(ct)

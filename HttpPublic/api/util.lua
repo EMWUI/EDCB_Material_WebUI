@@ -1767,6 +1767,7 @@ function GetSearchKeyPreset(query)
     key={
       enabled=true,
       preset=preset,
+      presetId=GetVarInt(query, 'preset'),
       andKey=edcb.GetPrivateProfile(section,'andKey','',INI),
       notKey=edcb.GetPrivateProfile(section,'notKey','',INI),
       regExpFlag=tonumber(edcb.GetPrivateProfile(section,'regExpFlag',false,INI))~=0,

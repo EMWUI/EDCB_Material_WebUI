@@ -22,6 +22,33 @@ $.fn.extend({
 	num(a){
 		return Number(this.txt(a));
 	},
+	deserialize(serializedString){
+		var $form = this;
+		var params = new URLSearchParams(serializedString);
+
+		$form.find(':input').each(function(){
+			var $this = $(this);
+			var name = $this.attr('name');
+
+			if (name){
+				if ($this.is(':checkbox') || $this.is(':radio')){
+					var values = params.getAll(name);
+					$this.mdl_prop('checked', values.includes($this.val()));
+				} else if (params.has(name)){
+					var values = params.getAll(name);
+					if ($this.is('select[multiple]')) {
+						$this.find('option').each(function(){
+							$(this).prop('selected', values.includes($(this).val()));
+						});
+					}else{
+						$this.val(values[0]);
+					}
+				}
+			}
+		});
+
+		return $form;
+	},
 });
 
 const Info = {
@@ -465,7 +492,14 @@ const getList = new class {
 		},
 		search: {
 			url: `${ROOT}api/SearchEvent`,
-			toArray: ($xml, archive) => $.map($xml.find('eventinfo'), e => toObj.EpgInfo(e)).map(d => [d.id, d]),
+			toArray: ($xml, archive) => $.map($xml.find('eventinfo'), e => toObj.EpgInfo(e, archive)).map(d => {
+				const r = Info.reserve[0].get(d.id);
+				if (r){
+					d.rid = r.rid;
+					d.recSetting = r.recSetting;
+				}
+				return [d.id, d];
+			}),
 		},
 		recpreset: {
 			url: `${ROOT}api/EnumRecPreset`,
@@ -550,23 +584,21 @@ const getList = new class {
 	autoaddmanual = fn => this.fetchEX('autoaddmanual', 0, fn);
 	recpreset = fn => this.fetch('recpreset', fn);
 	service = fn => this.fetch('service', fn);
-	async search(form, index = 0, fn = e=>e){
+	async search(key, index = 0, fn = e=>e){
 		await this.reserve();
+		if (!key) return fn({total: 0, 0: new Map()});
 		const preset = this.#presets.search;
-		$(`#${form}`).find('.ctok').prop('disabled', true).filter('#api').prop('disabled', false);
 		Info.search ??= {};
-		const key = $(`#${form}`).serialize();
-		if (Info.search[key] && Info.search[key][index]) return fn(Info.search[key]);
+		if (Info?.search[key]?.[index]) return fn(Info.search[key]);
 		const params = new URLSearchParams();
 		if (index) params.set('index', index);
 		if (this.#count) params.set('count', this.#count);
-		return await $.post(`${preset.url}?${params.toString()}`, $(`#${form}`).serializeArray()).then(xml => {
-			const $xml = $(xml);
-			const d = new Map(this.sort('search', preset.toArray($xml, $('#archive').prop('checked'))));
-			Info.search[key] ??= {total:  $xml.children().num('total'), archive: $('#archive').prop('checked')};
-			Info.search[key][index] = d;
-			return fn(Info.search[key]);
-		});
+		const r = !isNaN(key) ? await $.get(`${preset.url}?preset=${key}${params.toString()}`) : await $.post(`${preset.url}?${params.toString()}`, key);
+		const $xml = $(r);
+		const d = new Map(this.sort('search', preset.toArray($xml, $('#archive').prop('checked'))));
+		Info.search[key] ??= {total:  $xml.children().num('total'), archive: $('#archive').prop('checked')};
+		Info.search[key][index] = d;
+		return fn(Info.search[key]);
 	};
 }
 
@@ -705,9 +737,71 @@ const createHtml = new class {
 			],
 		},
 		search: {
-			ori: true,
+			ori: () => {
+				const submit = e => {
+					$(e.form).find('.ctok').prop('disabled', true).filter($(e).data('ctok')).prop('disabled', false);
+					$(e.form).attr('action', e.formAction).submit();
+				}
+				$('.submitEX').click(e => {
+					e.preventDefault();
+					submit(e.currentTarget);
+				});
+				$('#add').click(e => {
+					e = e.currentTarget;
+					const d = $(e).data('search');
+					if (!d) submit(e);
+					else{
+						const $form =$('<form>', {action: e.formAction, method: 'post'});
+						d.split('&').forEach(e => {
+							const pair = e.split('=');
+							$form.append($('<input>', {
+								type: 'hidden',
+								name: decodeURIComponent(pair[0]),
+								value: decodeURIComponent(pair[1] || '')
+							}));
+						});
+						
+						$form.appendTo('body').submit();
+					}
+				});
+				/*
+				$('.preset').click(e =>{
+					e.preventDefault();
+					this.#params.set('preset', Number(new URL($(e.currentTarget).attr('href'), location.href).searchParams.get('preset')));
+					this.#setParams(0);
+				});
+				*/
+				$('#search').submit(e => {
+					if (!e.originalEvent) return;
+					e.preventDefault();
+					$('#search').find('.ctok').prop('disabled', true).filter('#api').prop('disabled', false);
+					const key = $('#search').serialize();
+
+					if (!Info?.search?.[key]) this.#search.push(key);
+
+					this.#page = 0;
+					this.#form = this.#search.indexOf(key);
+					this.#params.delete('preset');
+					this.#setParams(0);
+					$('#search').find('.ctok').prop('disabled', true).filter($('#add').data('ctok')).prop('disabled', false);
+					$('#add').prop('disabled', false).data('search', $('#search').serialize());
+				});
+				$('#hidden').submit(e => {
+					if (!e.originalEvent) return;
+					e.preventDefault();
+					$('#hidden').find('.ctok').prop('disabled', true).filter('#api').prop('disabled', false);
+					const key = $('#hidden').serialize();
+
+					if (!Info?.search?.[key]) this.#search.push(key);
+
+					this.#form = this.#search.indexOf(key);
+					const page = Number(new URL($(e.originalEvent.submitter).attr('formaction'), location.href).searchParams.get('page') ?? 0);
+					this.#setParams(page);
+				});
+			},
 			div: true,
 			load: () => {
+				$('.flag').toggleClass('hidden', $('#archive').prop('checked'));
 				if (!$('tbody tr').length) return;
 				const sortedStartTime = $.map($('tbody tr').filter((i,a) => !$(a).find('.flag').data('oneclick')), e=>e).sort((a,b) => $(a).data('starttime') - $(b).data('starttime'));
 				const onStart = () => {
@@ -734,8 +828,9 @@ const createHtml = new class {
 				}
 				onEnd();
 			},
+			sidePanel: '#detail,#recset',
 			class: () => 'search',
-			data: d => ({id: d.id, archive: d.archive, endtime: d.endtime, starttime: d.rid?d.starttime:undefined}),
+			data: d => ({id: d.id, archive: d.archive, endtime: d.endtime, starttime: d.archive?createViewDate(d.starttime).getTime()/1000:d.rid?d.starttime:undefined}),
 			click: e => {
 				if ($(e.target).is('.flag, .flag *')) return;
 				$('#sidePanel').length ? getEpgInfo($(e.currentTarget)) : location.href = `epginfo.html?id=${$(e.currentTarget).data('id')}`;
@@ -754,7 +849,7 @@ const createHtml = new class {
 	#clearTimeout = () => this.#timerID.forEach(e => clearTimeout(e));
 
 	#key;
-	#form;
+	#search = [''];
 	#container = 'div.mdl-layout__content';
 	#div = Math.round(200 / PAGE_COUNT);
 	constructor(){
@@ -764,7 +859,6 @@ const createHtml = new class {
 			getList.service();
 
 			if (!this.#preset || !this.#preset.ori){
-				window.onpopstate = () => this.#popstate();
 				if ('createMiscWasmModule' in window){
 					this.#thumb = new TsThumb(`${ROOT}api/grabber`, 'recid');
 					window.addEventListener('createdMiscWasmModule', e => $('.has-thumb').each((i, e) => this.#observer.observe(e)));
@@ -779,17 +873,14 @@ const createHtml = new class {
 				if (!this.#preset) return;
 			}
 
+			window.onpopstate = () => this.#popstate();
 			$('.open-info').click(e => this.#preset.click(e));
 			if (this.#preset.load) this.#preset.load();
-			if (!this.#preset.ori){
+			if (this.#preset.ori) this.#preset.ori();
+			else{
 				this.#checkUpdate();
 				this.#resetSidePanel();
 				getList.getNotifyUpdateCount(this.#key);
-
-				$('.pagination a').click(e => {
-					e.preventDefault();
-					this.setPage(new URL($(e.currentTarget).attr('href'), location.href).searchParams.get('page') ?? 0);
-				});
 
 				$('.mdl-layout__tab').click(e => {
 					const params = new URLSearchParams($(e.currentTarget).attr('href'));
@@ -798,6 +889,11 @@ const createHtml = new class {
 					this.setTab(params.get('tab'));
 				});
 			}
+
+			$('.pagination a').click(e => {
+				e.preventDefault();
+				this.setPage(new URL($(e.currentTarget).attr('href'), location.href).searchParams.get('page') ?? 0);
+			});
 		});
 	}
 
@@ -863,7 +959,7 @@ const createHtml = new class {
 		showSpinner(true);
 		this.#clearTimeout();
 
-		const d = this.#key=='search' ? await getList.search(this.#form, this.#index)
+		const d = this.#key=='search' ? await getList.search(this.#params.get('preset')||this.#search[this.#form], this.#index)
 			: await getList.fetchEX(this.#key, this.#index, notify, d => this.#preset.tab?d[this.#index][this.#tab]:d);
 
 		$(`${this.#container} .pagination`).html(this.#pagination(d));
@@ -931,6 +1027,8 @@ const createHtml = new class {
 		this.#tab = tab;
 		this.#setParams(0);
 	}
+	get #form(){return Number(this.#params.get('form'))};
+	set #form(form){this.#params.set('form', form)};
 
 	#params;
 	#setFromURL(){
@@ -1738,12 +1836,6 @@ $(function(){
 		$('#startDate,#endDate').attr('required', checked);
 		$('#startDate').parent().toggleClass('is-invalid', checked && $('#startDate').val()=='');
 		$('#endDate').parent().toggleClass('is-invalid', checked && $('#endDate').val()=='');
-	});
-	$('.submitEX').click(e => {
-		e.preventDefault();
-		e = e.currentTarget;
-		$(e.form).find('.ctok').prop('disabled', true).filter($(e).data('ctok')).prop('disabled', false);
-		$(e.form).attr('action', e.formAction).submit();
 	});
 
 	//通信エラー

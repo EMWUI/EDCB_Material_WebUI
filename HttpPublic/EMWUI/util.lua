@@ -1,13 +1,13 @@
 function Version(a)
   local ver={
-    css='260413',
-    common='260413',
+    css='260415',
+    common='260415',
     tvguide='260327',
     player='260327',
-    onair='260327',
+    onair='260415',
     library='260303',
     setting='2260312',
-    tsloader='260413',
+    tsloader='260415',
     hls='v1.5.20',
     aribb24='v1.11.5',
     bml='288052c',
@@ -1187,22 +1187,22 @@ function MacroTemplate()
 ]=]
 end
 
-function Pagination(page, a, href)
-  if (not href) then href = mg.script_name:match('[^\\/]*$') end
+function Pagination(page, a, query)
+  local href = mg.script_name:match('[^\\/]*$')
   local pageCount=tonumber(edcb.GetPrivateProfile('SET','PAGE_COUNT','30',INI))
   local tag=page>0 and 'a' or 'button'
   local s='<div class="pagination mdl-grid mdl-grid--no-spacing"><div class="mdl-grid mdl-grid--no-spacing">\n<'
     ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="'..href..'"' or 'disabled')..'><i class="material-icons">first_page</i></'..tag..'>\n<'
-    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="'..href..'?page='..(page-1)..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></'..tag..'>\n<'
+    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page>0 and 'href="'..href..'?page='..(page-1)..(query or '')..'"' or 'disabled')..'><i class="material-icons">chevron_left</i></'..tag..'>\n<'
 
   local n=math.max(math.min(page-2,math.floor(#a/pageCount)-4),0)
   for i=n, n+4 do
-    s=s..((i==page or i<#a/pageCount) and (i==page and 'button' or 'a')..' class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="'..href..'?page='..i)..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</'..(i==page and 'button' or 'a')..'>\n<' or '')
+    s=s..((i==page or i<#a/pageCount) and (i==page and 'button' or 'a')..' class="mdl-button mdl-js-button mdl-button--icon'..(i==page and ' mdl-color--accent mdl-color-text--accent-contrast' or '" href="'..href..'?page='..i..(query or ''))..'"'..(i==page and ' disabled' or '')..'>'..(i+1)..'</'..(i==page and 'button' or 'a')..'>\n<' or '')
   end
 
   tag=page<(#a/pageCount-1) and 'a' or 'button'
-  return s..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..(page+1)..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></'..tag..'>\n<'
-    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..math.ceil(#a/pageCount-1)..'"' or 'disabled')..'><i class="material-icons">last_page</i></'..tag
+  return s..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..(page+1)..(query or '')..'"' or 'disabled')..'><i class="material-icons">chevron_right</i></'..tag..'>\n<'
+    ..tag..' class="mdl-button mdl-js-button mdl-button--icon" '..(page<(#a/pageCount-1) and 'href="'..href..'?page='..math.ceil(#a/pageCount-1)..(query or '')..'"' or 'disabled')..'><i class="material-icons">last_page</i></'..tag
     ..'>\n</div></div>\n'
 end
 
