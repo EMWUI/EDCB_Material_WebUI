@@ -2041,7 +2041,7 @@ function ConvertJson(val)
   if t=='table' then
     --日付テーブルはISO 8601形式に
     if val.year and val.month and val.day and val.hour then
-      return string.format('"%04d-%02d-%02dT%02d:%02d:%02d"', 
+      return string.format('"%04d-%02d-%02dT%02d:%02d:%02d+09:00"', 
           val.year, val.month, val.day, val.hour, val.min, val.sec)
     end
     --予約にサイズ予想を追加
@@ -2051,7 +2051,17 @@ function ConvertJson(val)
     end
     if val.recMode then
       val.recEnabled=val.recMode~=5
-      val.recMode=val.recMode~=5 and val.recMode or val.NoRecMode or 1
+      val.recMode=val.recMode~=5 and val.recMode or val.noRecMode or 1
+    end
+    if val.recNamePlugIn then
+      local recNameDll, recNameOp=val.recNamePlugIn:match('^(.+%.'..(WIN32 and 'dll' or 'so')..')%?(.*)')
+      val.recNamePlugIn=recNameDll
+      val.recNameOp=recNameOp
+    end
+    if val.batFilePath then
+      local batFilePath, batFileTag=val.batFilePath:match('^([^*]*)%*?(.*)$')
+      val.batFilePath=batFilePath
+      val.batFileTag=batFileTag
     end
 
     local is_array=true
@@ -2128,12 +2138,14 @@ function ResponseJson(a,query)
   local b=nil
   local ct=CreateContentBuilder()
   if query then
-    local index=GetVarInt(query,'index',0) or 0
-    local count=GetVarInt(query,'count',0) or 200
-    local countTo=math.min(index+count,#a)
-    b={total=#a,index=index,count=math.max(countTo-index,0),items={}}
-    for i=index+1,countTo do
-      table.insert(b.items,a[i])
+    local count=GetVarInt(query,'count',0) or 0
+    if count>0 then
+      local index=GetVarInt(query,'index',0) or 0
+      local countTo=math.min(index+count,#a)
+      b={total=#a,index=index,count=math.max(countTo-index,0),items={}}
+      for i=index+1,countTo do
+        table.insert(b.items,a[i])
+      end
     end
   end
   ct:Append(ConvertJson(b or a))

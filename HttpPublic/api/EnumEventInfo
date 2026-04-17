@@ -67,7 +67,7 @@ else
   --一覧
   range=GetVarTimeRange(mg.request_info.query_string)
   a=edcb.EnumEventInfo(id,range)
-  if range then
+  if a and #a~=0 and range then
     for i,v in ipairs(edcb.EnumEventInfoArchive(id,range)) do
       v.past=true
       a[#a+1]=v
@@ -92,7 +92,11 @@ end
 
 if json then
   if a and #a~=0 then
-    ResponseJson(a,mg.request_info.query_string)
+    if eid>0 or startTime>0 then
+      ResponseJson(a[1])
+    else
+      ResponseJson(a,mg.request_info.query_string)
+    end
   else
     ResponseJson({err='EPGデータを読み込み中、または存在しません'})
   end

@@ -53,9 +53,9 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
             id=mg.md5(v),
             name=v,
             text=free and ConvertSize(free)..' / '..ConvertSize(total) or '不明',
-            free=free,
-            total=total,
-            avail=avail
+            free=tonumber(free),
+            total=tonumber(total),
+            avail=tonumber(avail)
           })
         end
       end
@@ -72,12 +72,14 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
           name=v,
           text=ConvertSize(total-used)..' (avail: '..ConvertSize(avail)..') / '..ConvertSize(total),
           free=total-used,
-          total=total,
-          avail=avail
+          total=tonumber(total),
+          avail=tonumber(avail),
         })
       end
     end
   end
+elseif mg.get_var(mg.request_info.query_string,'tuner') then
+  a=edcb.GetTunerProcessStatusAll()
 end
 
 if GetVarInt(mg.request_info.query_string,'json')==1 then

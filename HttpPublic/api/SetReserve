@@ -20,6 +20,42 @@ function EventInfo(r)
   end
 end
 
+function Program(r)
+  startdate={string.match(mg.get_var(post,'startdate'), '^(%d+)%-(%d+)%-(%d+)$')}
+  startTime={string.match(mg.get_var(post,'starttime'), '^(%d+):(%d+):(%d+)$')}
+  r.startTime={
+    year=startdate[1],
+    month=startdate[2],
+    day=startdate[3],
+    hour=startTime[1],
+    min=startTime[2],
+    sec=startTime[3]
+  }
+  endHour,endMin,endSec=string.match(mg.get_var(post,'endtime'), '^(%d+):(%d+):(%d+)$')
+  --正当な日時か検査
+  if r.startTime.year and r.startTime.month and r.startTime.day and
+      r.startTime.hour and r.startTime.min and r.startTime.sec and
+      os.time(r.startTime) and endHour and endMin and endSec
+  then
+    if mg.get_var(post,'title') then
+      r.title=mg.get_var(post,'title')
+    end
+    if mg.get_var(post,'service') then
+      onid,tsid,sid=GetVarServiceID(post,'service')
+      if (onid and tsid and sid) then
+        r.onid=onid
+        r.tsid=tsid
+        r.sid=sid
+        r.stationName=GetServiceName(r)
+      end
+    end
+    r.eid=65535
+    r.durationSecond=(endHour-r.startTime.hour)*3600+(endMin-r.startTime.min)*60+endSec-r.startTime.sec
+    r.durationSecond=r.durationSecond+(r.durationSecond<0 and 24*3600 or 0)
+    return r
+  end
+end
+
 post=AssertPost()
 
 id=GetVarInt(mg.request_info.query_string,'id') or 0
@@ -30,45 +66,52 @@ toggle=GetVarInt(mg.request_info.query_string,'toggle',0,1)
 
 if post then
   if add then
-    onid,tsid,sid,eid=GetVarEventID(post,'id')
-    r=RecSetting({onid=onid,tsid=tsid,sid=sid,eid=eid},post)
-    if r then
-      r=EventInfo(r)
-      if r then
-        done=edcb.AddReserveData(r)
+    if mg.get_var(post,'startdate') then
+      r=Program({})
+      if not r then
+        err='不正な日時です'
       else
-        err='イベント情報が見つかりません'
+        r.startTimeEpg=r.startTime
+        r=RecSetting(r,post)
+        if r then
+          done=edcb.AddReserveData(r)
+        else
+          err='録画設定が正しくありません'
+        end
       end
     else
-      err='録画設定が正しくありません'
+      onid,tsid,sid,eid=GetVarEventID(post,'id')
+      r=RecSetting({onid=onid,tsid=tsid,sid=sid,eid=eid},post)
+      if r then
+        r=EventInfo(r)
+        if r then
+          done=edcb.AddReserveData(r)
+        else
+          err='イベント情報が見つかりません'
+        end
+      else
+        err='録画設定が正しくありません'
+      end
     end
   elseif change then
     r=edcb.GetReserveData(id)
     if r then
       if mg.get_var(post,'startdate') then
-        startdate={string.match(mg.get_var(post,'startdate'), '^(%d+)%-(%d+)%-(%d+)$')}
-        startTime={string.match(mg.get_var(post,'starttime'), '^(%d+):(%d+):(%d+)$')}
-        r.startTime={
-          year=startdate[1],
-          month=startdate[2],
-          day=startdate[3],
-          hour=startTime[1],
-          min=startTime[2],
-          sec=startTime[3]
-        }
-        endHour,endMin,endSec=string.match(mg.get_var(post,'endtime'), '^(%d+):(%d+):(%d+)$')
-        --正当な日時か検査
-        if r.startTime.year and r.startTime.month and r.startTime.day and
-           r.startTime.hour and r.startTime.min and r.startTime.sec and
-           os.time(r.startTime) and endHour and endMin and endSec
-        then
-          --プログラム予約化
-          r.eid=65535
-          r.durationSecond=(endHour-r.startTime.hour)*3600+(endMin-r.startTime.min)*60+endSec-r.startTime.sec
-          r.durationSecond=r.durationSecond+(r.durationSecond<0 and 24*3600 or 0)
-          done=edcb.ChgReserveData(r)
-        else
+        r=Program(r)
+        if not r then
           err='不正な日時です'
+        else
+          --録画設定あったら反映する
+          if mg.get_var(post,'recMode') then
+            r=RecSetting(r,post)
+            if r then
+              done=edcb.ChgReserveData(r)
+            else
+              err='録画設定が正しくありません'
+            end
+          else
+            done=edcb.ChgReserveData(r)
+          end
         end
       else
         r=RecSetting(r,post)
@@ -128,7 +171,7 @@ end
 
 if GetVarInt(mg.request_info.query_string,'json',0,1)==1 then
   ResponseJson(del and {success=del}
-           or done and {success='予約を'..(add and '追加' or '変更')..'しました',reserve=edcb.GetReserveData(add and ReserveID() or id)}
+           or done and {success='予約を'..(add and '追加' or '変更')..'しました'}
                     or {err=err and {'予約を'..(add and '追加' or change and '変更' or '削除')..'できませんでした',err}
                                  or '不正値入力'})
 else

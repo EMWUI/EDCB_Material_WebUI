@@ -15,7 +15,11 @@ end
 
 if json then
   if a then
-    ResponseJson(a,mg.request_info.query_string)
+    if id then
+      ResponseJson(a[1])
+    else
+      ResponseJson(a,mg.request_info.query_string)
+    end
   else
     ResponseJson({err='録画結果が存在しません'})
   end

@@ -2,7 +2,7 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 if GetVarInt(mg.request_info.query_string,'json',0,1)==1 then
-  ResponseJson(edcb.GetTunerReserveAll(),mg.request_info.query_string)
+  ResponseJson(edcb.GetTunerReserveAll())
 else
   edcb.htmlEscape=15
   a=edcb.GetTunerReserveAll()

@@ -3,7 +3,7 @@ dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 
 if GetVarInt(mg.request_info.query_string,'json',0,1)==1 then
   if edcb.GetServiceList() then
-    ResponseJson(edcb.GetServiceList(),mg.request_info.query_string)
+    ResponseJson(SortServiceListInplace(edcb.GetServiceList()))
   else
     ResponseJson({err='EPGデータを読み込み中、または存在しません'})
   end
