@@ -1,214 +1,54 @@
-EDCB Material WebUI
-===================
+# EMWUI 3
 
-**EDCBのWebUIを、Material Design Liteを使いマテリアルデザインに沿うように表示できます**  
-
-予約の追加確認、番組表の表示などの基本的な機能の他、リモート視聴・ファイル再生、PWAなどに対応しています  
-
-[Legacy WebUI](https://github.com/xtne6f/EDCB/tree/work-plus-s/ini/HttpPublic/legacy)をベースとして、多くの部分を流用し、作成しています  
-`view` `mp4init.lua` `segment.lua` `comment` `legacy.script.js` は一部ファイル名を変えて流用、  
-`logo`をTvTestの設定の読み込み部分など、 `xcode`を公開フォルダ外のファイルにアクセスできるよう変更し使わせて頂きました  
-
-おかげさまでド素人にも作成することができました。**xtne6f氏に感謝します**
-
-
-# 導入
-最低限の動作に必要なファイルは、EDCBの[releases](https://github.com/xtne6f/EDCB/releases)の`EDCB-work-plus-s-bin.zip`で入手可能です  
-リモート視聴を行う場合は、別途使用するトランスコーダが必要です  
-1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)をよく読む
-1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
-   * `EnableHttpSrv=1`
-   * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
-1. http://localhost:5510/ などにアクセス、サーバー機能が有効になったことを確認  
-※ ここでうまく行かない場合はEDCBの設定の問題だと思われます
-1. ファイルを適切に設置 (下記の配置例を参照)  
-   `HttpPublic`と`Setting`のフォルダをEDCBフォルダに入れる  
-   ※ 配置例 (EMWUI、legacyは任意にリネーム等可)
-
-       EDCB/
-        ├─ HttpPublic/
-        │   ├─ api/
-        │   ├─ EMWUI/
-        │   │   ├─js/
-        │   │   :  ├─ts-live.js
-        │   │      └─ts-live.wasm
-        │   ├─ legacy/
-        │   ├─ img/
-        │   │   └─logo/
-        │   ├─ video/
-        │   ├─ index.html
-        │   :
-        │
-        ├─ Tools/
-        │   ├─ ffmpeg/
-        │   │   ├─ ffmpeg.exe
-        │   │   ├─ ffprobe.exe
-        │   │   :
-        │   ├─ NVEncC/
-        │   │   :
-        │   ├─ QSVEncC/
-        │   │   :
-        │   ├─ asyncbuf.exe
-        │   ├─ edcbnosuspend.exe
-        │   ├─ psisiarc.exe
-        │   ├─ psisimux.exe
-        │   ├─ tsmemseg.exe
-        │   ├─ tsreadex.exe
-        │   ├─ tspgtxt.exe
-        │   :
-        │
-        ├─ Setting/
-        │   ├─ XCODE_OPTIONS.lua
-        │   ├─ HttpPublic.ini
-        │   :
-        │
-        ├─ EpgDataCap_Bon.exe
-        ├─ EpgTimerSrv.exe
-        ├─ EpgTimer.exe
-        ├─ lua52.dll
-        ├─ SendTSTCP.dll
-        :
-
-1. リモート視聴する場合EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
-1. http://localhost:5510/EMWUI/ にアクセス出来たら準備完了、設定へ  
-
-* 更新の際は`HttpPublic`のフォルダのみを上書きしてください  
-* PWAを使用する場合は追加の設定や別途ファイルが必要です
-
-
-# 設定
-番組表などの基本的な設定は[設定ページ](http://localhost:5510/EMWUI/setting)で  
-配信機能の設定などは`HttpPublic.ini`と`XCODE_OPTIONS.lua`を編集してください  
-
-#### テーマカラー
-~~[MDL](http://www.getmdl.io/customize/index.html)で~~選択したテーマカラーに変更することができます  
-選んだテーマカラーの`css`を`material.min.css`と同じフォルダに置き、設定ファイルでファイル名を指定してくださ
-
-MDLのサイトが**封鎖されたため**公式サイトから入手することができなくなりました  
-ですが、外部CDN [cdnjs](https://cdnjs.com/libraries/material-design-lite) などから入手可能なのなようです
+Geminiにモダンにと一から作り直してもらいました。
  
-* 置き換えただけではごく一部対応しきれない部分があるので、気になる場合は設定ファイルの`theme`でプライマリーカラー、アクセントカラー、A700の色を指定してください
-* 色は[Material design](http://www.google.com/design/spec/style/color.html#color-color-palette)をなどで参照してください  
+## 主な特徴
 
+*   **SPA (Single Page Application)**
+    *   ページ遷移を最小限に抑え、ネイティブアプリのようなスムーズな操作感を提供。
+*   **SSE (Server-Sent Events) によるリアルタイム更新**
+    *   番組情報の更新や録画ステータスの変化をリアルタイムに反映。
+*   **Material 3 デザイン**
+    *   最新の [M3](https://m3.material.io/) デザインシステムを採用。
 
-# PWA
-PWA（プログレッシブウェブアプリ）に対応しアプリとしてインストールすることができます  
-* SSL/TLSによる通信が必須となります
-* [*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)を参照してSSL/TLSを有効にしてください
+## 使用フレームワーク
 
+*   [Alpine.js](https://alpinejs.dev/) - 軽量でパワフルな JavaScript フレームワーク
+*   [Beer CSS](https://www.beercss.com/) - Material 3 に準拠した CSS フレームワーク
 
-# 視聴機能
-Legacy WebUIの配信機能を移植し、以下の事が可能となりました  
-* HLSでの配信
-* TS-Live!モジュールでMPEG2を直接再生
-* web-bmlによるデータ放送の表示
-* aribb24.jsによる字幕表示
-* 実況の表示
+> [!NOTE]
+> 現在のベーター版では CDN を使用していますが、正式リリース版でローカルに移行します。
 
-[EDCB Legacy WebUIについて](http://localhost:5510/legacy/about.html)にも目を通してください
+## 注意事項
 
-### 注意
-* トランスコードオプションは`XCODE_OPTIONS.lua`を編集してください
-* コメントボタンを長押しすると常時取得が有効になります
-* ~~**データ放送がリセットできない**ため、一度データ放送を読み込みチャンネルを変更すると、リモコンボタンは無効化されます  
-上記の理由から常時取得有効中でも、リモコンボタンを一度押すまでデータ放送は読み込まれません~~  
-力技で対応しました
-* データ放送のNVRAM設定はLegacy WebUIと共通です、今のところ Legacy WebUI の[NVRAM設定](http://localhost:5510/legacy/nvram.html)でできます  
-初期値は`HttpPublic.ini`から指定できるようになりました
-* 倍速読み込みはトランスコードオプションの`filterFast`を有効にします
+*   SSEにより、CivetWebのスレッドを接続毎に1つ常時消費します。  
+    *   デフォルトのスレッド数は5です。つまり6個以上開いた場合は確実に応答なし状態になります。  
+        スレッド数を増やすことで解決することができますが、開発版ではSSEがゾンビ化しないことを確認したいのでそのままで使用し、もし複数開いてないのに応答なしになるなど、ゾンビ化の可能性がありましたら報告をお願いします。
+*   各データをキャッシュし、LocalStorageに保存します。  
+    *   録画結果は日々増え、膨大になるため200件に制御してますが、予約情報は全件キャッシュしています。  
+        全録環境のは方は注意してください。動作状況や改善点をお待ちしています。
 
+## 開発状況
 
-## リモート視聴
-* **EpgDataCap_BonなどのTCP送信先にSrvPipeが追加されている必要があります**  
-* NetworkTVモードでEpgDataCap_Bonなどを起動しています  
-他にNetworkTVモードを使用している場合は注意してください  
+- [x] SPA 構造の基本設計
+- [x] SSE による通知の実装
+- [x] Beer CSS (Material 3) 
+- [x] 予約等の一覧
+- [ ] 一覧のブラッシュアップ
+- [ ] ページネーション
+- [x] 詳細表示
+- [x] 予約の追加、変更
+- [ ] 番組表
+- [ ] 配信機能
+- [ ] 設定画面の拡充
+- [ ] PWA
+- [ ] ローカルアセットへの移行
 
-## ファイル再生
-* **TvtPlayのチャプター機能を再現**
-* 対応形式や読み込み順など模してますが、一部挙動を変更しています
-* 開始時間を指定し、再度トランスコードすることでシークっぽい動作をしています
-* 録画結果ページでは録画結果(`GetRecFileInfo()`)からファイパスを取得し、ファイルの確認をし表示します
-* `ffprobe.exe`がToolsフォルダにある場合、メタ情報が取得可能となり、より正確な処理ができます
+### 不具合、改善点
 
-## ライブラリ
-* 録画保存フォルダのビデオファイル(`ts`,`mp4`,`webm`等)を表示・再生します  
-`HttpPublic.ini`で任意のフォルダ指定が可能です  
-* 公開フォルダ外のファイルはスクリプトを経由するためシークできるブラウザとできないブラウザあるようです  
+- [ ] スタンバイ移行時のオフライン判定
 
-* サムネ  
-HttpPublicFolderのvideo\thumbsフォルダの`md5ハッシュ.jpg`を、またはTS-Live!が有効な場合に表示できます  
-`md5ハッシュ.jpg`はフォルダにアクセスした際に自動的に、またはライブラリページのメニューからまとめて作成することができます
+## 支援
 
-
-# 補足
-
-### 局ロゴ
-EDCBのロゴに対応しています  
-* ロゴフォルダにない場合、TVTestのロゴを検索するかどうか`HttpPublic.ini`で設定できます  
-* LogoData.iniが見つからない場合のみ公開フォルダ下の`img\logo\ONIDSID{.png|.bmp}`(4桁で16進数)を表示(旧仕様互換)  
-
-### 放送中ページ
-URLに`?webPanel=`を追加すると無駄をそぎ落としたデザインになります  
-* VivaldiのWEBパネルに追加して使用することを想定しています
-
-### 番組表の隠しコマンド
-以下をGETメゾットで取得しますのでURLに含めてください  
-* `hour=整数`  
-開始時間を指定
-* `interval=整数`  
-表示間隔を指定  
-  * デフォルト値 `PC=25` `スマホ=13`
-* `chcount=整数`  
-読み込むチャンネル数を一時的に変更  
-  * デフォルト値 `PC=0(無制限)` `スマホ=15`  
-  * showが有効時は非表示のチャンネルを含みます
-* `show=`  
-非表示指定したチャンネルを読み込む(サイドバーで表示・非表示)  
-  * 値は指定する必要はありません
-* `subch=`  
-サービス一覧でサブチャンネルを表示します  
-
-`chcount`と`show`は週間番組表では使えません
-
-### お知らせ機能
-※PCでのみでの機能です  
-* 登録した番組の開始30秒前にデスクトップ通知します  
-* videoフォルダにnotification.mp3を用意すると通知音が出ます  
-各自で用意してください
-
-### 注意
-チャンネルが増えたりしたら設定を保存しなおしてください(番組表に表示されません)  
-
-
-# 動作確認
-- Windows
-  - Chrome
-  - Vivaldi
-  - firefox
-- Android
-  - Chrome
-
-
-# その他
-* **iOS、スカパープレミアムの環境はありません。**  
-* バグ報告は詳細に、上記の環境ない箇所の場合は特に詳細に、対処できません  
-* [欲しい物リスト](https://www.amazon.co.jp/hz/wishlist/ls/1FFBR5ZLZK8EY?ref_=wl_share)を公開しておりますので気に入ったらよろしくお願いします 
-* このプログラムを使用し不利益が生じても一切の責任を負いません  
-* また改変・再配布などはご自由にどうぞ  
-
-### Framework & JavaScriptライブラリ
-
-* [Material Design Lite](http://www.getmdl.io)
-* [Material Symbols](https://github.com/google/material-design-icons)
-* [jQuery](https://jquery.com)
-* [jQuery UI](https://jqueryui.com)
-* [jQuery UI Touch Punch](http://touchpunch.furf.com)
-* [Hammer.JS](http://hammerjs.github.io)
-* [jquery.hammer.js](https://github.com/hammerjs/jquery.hammer.js)
-* [hls.js](https://github.com/video-dev/hls.js)
-* [web_bml_play_ts.js](https://github.com/xtne6f/web-bml)
-* [TS-Live!](https://github.com/xtne6f/ts-live)
-* [aribb24.js](https://github.com/xtne6f/aribb24.js)
-* [danmaku.js](https://github.com/DIYgod/DPlayer)
-
-This software includes the work that is distributed in the Apache License 2.0.
+プロジェクトを応援いただける方は、以下のリストからご支援いただけると励みになります。
+* [欲しい物リスト](https://www.amazon.co.jp/hz/wishlist/ls/1FFBR5ZLZK8EY?ref_=wl_share)

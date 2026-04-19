@@ -1,0 +1,1321 @@
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+ct=CreateContentBuilder()
+ct:Append([=[
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E3</title>
+  <link rel="icon" href="./img/EpgTimer.ico">
+  <link rel="apple-touch-icon" sizes="256x256" href="./img/apple-touch-icon.png">
+  
+  <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.css" rel="stylesheet" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+
+  <script>
+    const ROOT = ']=]..PathToRoot()..[=[';
+  </script>
+  
+  <script src="./js/app.js?ver=0.1.0" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+    select[multiple] {
+      overflow-y: auto;
+      padding-block-start: 7px !important;
+      cursor: default;
+      option:checked {
+        background-color: var(--secondary-container);
+        color: var(--on-primary-container);
+      }
+    }
+    button>input {
+      display: none;
+    }
+
+    .chip+menu>li {
+      padding: 0;
+      justify-content: center;
+      min-block-size: 1.75rem;
+    }
+
+    .title {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+    .mark {
+      border: 0.1em solid var(--on-primary);
+      font-size: 0.7em;
+      font-family: "HG丸ｺﾞｼｯｸM-PRO", "Roboto", "Helvetica", "Arial", sans-serif;
+      font-weight: bold;
+      background: var(--primary);
+      color: var(--primary-container);
+      margin: 0 0.1em;
+      padding: 0.1em;
+      border-radius: 3px;
+      vertical-align: top;
+    }
+
+    .status {
+      height: 45px;
+      line-height: 45px;
+    }
+    /* 録画中の点滅 */
+    .blink {
+      animation: blink-animation 3s infinite;
+    }
+    @keyframes blink-animation {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    fieldset,
+    :is(nav,.row):not(.wrap)>.max {
+      min-width: 0;
+    }
+    :is(nav,.row)>.chip {
+      max-width: 100%;
+      >span {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+  </style>
+</head>
+
+<body class="dark" x-data="edcbApp">
+  <nav class="surface-container left m l scroll" :class="{ 'max': sidebarActive }">
+    <header>
+      <button class="extra circle transparent" @click="sidebarActive = !sidebarActive">
+        <i x-text="sidebarActive ? 'menu_open' : 'menu'"></i>
+      </button>
+    </header>
+]=]..link..[=[
+  </nav>
+
+  <nav class="bottom s scroll">
+    <a data-ui="#drawer">
+      <i>menu</i><span>メニュー</span>
+    </a>
+]=]..link_bottom..[=[
+    <a @click="debug=!debug" :class="{ active: debug }">
+      <i>bug_report</i><span>確認</span>
+    </a>
+  </nav>
+
+  <header class="fixed top no-padding">
+    <nav class="padding">
+      <div class="max">
+        <h5 x-text="getPageTitle()"></h5>
+      </div>
+      
+      <span class="chip outline small no-mouse" 
+            x-show="totalCount !== null" 
+            x-transition>
+        <span x-text="totalCount !== null ? totalCount + ' 件' : ''"></span>
+      </span>
+
+      <button class="circle transparent" @click="openNewEntry()">
+        <i>add</i>
+      </button>
+
+      <div>
+        <button class="circle transparent">
+          <i>more_vert</i>
+        </button>
+        <menu class="left no-wrap">
+          <li @click="refreshStaticData()">データ更新</li>
+        </menu>
+      </div>
+    </nav>
+
+    <template x-if="page === '#tunerreserve'">
+      <div class="tabs minscroll primary-text no-margin scroll">
+        <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="tuner.tunerID">
+          <a :class="activeTunerId === tuner.tunerID ? 'active': ''" @click="activeTunerId = tuner.tunerID">
+            <span x-text="tuner.tunerName"></span>
+            <label class="badge none" x-text="tuner.reserveList.length" x-show="tuner.reserveList.length > 0"></label>
+          </a>
+        </template>
+      </div>
+    </template>
+    <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
+  </header>
+
+  <main class="responsive">
+    <template x-if="page === '#dashboard'">
+      <div class="padding">
+       
+        <div class="grid" style="justify-items: center;">
+          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+            <i class="primary-text extra">event_available</i>
+            <h5 class="max">
+              <div class="medium-text no-margin secondary-text">予約件数</div>
+              <div class="status bold"><span x-text="dashboardData.reservesCount">--</span><span class="large-text left-margin small-margin">件</span></div>
+            </h5>
+          </div>
+
+          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+            <i class="extra" :class="dashboardData.isRecording ? 'error-text blink' : ''" x-text="dashboardData.isRecording ? 'fiber_manual_record' : dashboardData.isEpgCap ? 'sensors' : dashboardData.activeTuners ? 'fiber_manual_record' : 'bedtime'"></i>
+            <h5 class="max">
+              <div class="medium-text no-margin secondary-text">チューナー</div>
+              <div class="status bold" x-text="dashboardData.isRecording ? '録画中' : dashboardData.isEpgCap ? '取得中' : dashboardData.activeTuners ? '待機中' : '停止中'">--</div>
+            </h5>
+          </div>
+
+          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+            <i class="extra" :class="isOnline ? 'secondary-text' : 'error-text'">info</i>
+            <h5 class="max">
+              <div class="medium-text no-margin secondary-text">システム</div>
+              <div class="status bold"
+                  :class="isOnline ? '' : 'error-text'"
+                  x-text="isOnline ? 'Online' : 'Offline'">--</div>
+            </h5>
+          </div>
+        </div>
+        
+        <div class="grid large-space">
+          <div class="s12 m6">
+            <h6 class="row padding">
+              <span class="max">直近の予約</span>
+              <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
+            </h6>
+            <div class="list border">
+              <template x-for="(d, i) in dashboardData.reserves" :key="d.reserveID">
+                <div class="row tiny-line" :class="{'m l' : i >= 3}">
+                  <img class="round tiny border" :src="getLogoPath(d)">
+                  <div class="title bold max" x-html="convert.title(d.title)"></div>
+                  <div class="secondary-text" x-text="convert.date(d.startTime, true)"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="s12 m6">
+            <h6 class="row padding">
+              <span class="max">最近の録画結果</span>
+              <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
+            </h6>
+            <div class="list border">
+              <template x-for="(d, i) in dashboardData.recs" :key="d.id">
+                <div class="row tiny-line" :class="{'m l' : i >= 3}">
+                  <img class="round tiny border" :src="getLogoPath(d)">
+                  <div class="max">
+                    <div class="title small-text bold" x-html="convert.title(d.title)"></div>
+                    <div class="secondary-text small-text" x-text="d.comment"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="row padding">
+          <h6 class="max no-margin">ストレージ</h6>
+          <button class="transparent circle" @click="updateStorage()" :disabled="!isOnline || loadingStorage">
+            <i :class="loading ? 'spin' : ''">refresh</i>
+          </button>
+        </div>
+
+        <div class="grid">
+          <template x-for="drive in dashboardData.storage" :key="drive.name">
+            <div class="s12 m6">
+              <div class="card round border padding no-shadow">
+                <div class="row no-wrap">
+                  <i class="secondary-text">storage</i>
+                  <div class="max">
+                    <div class="row">
+                      <h6 class="max primary-text bold" x-text="drive.name"></h6>
+                      <div class="secondary-text">
+                        <span x-text="drive.freeText"></span> / <span x-text="drive.totalText"></span>
+                      </div>
+                    </div>
+                    <progress class="no-margin" :value="drive.usedPercent" max="100" 
+                              :class="{ 'error-text': !loadingStorage&&drive.usedPercent > 90 , 'indeterminate': loadingStorage }"></progress>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <template id="reserveList-template">
+      <div class="row no-margin no-wrap">
+        <div x-data="{ startTime: new Date(d.startTime).getTime() }">
+          <template x-if="startTime < now" >
+            <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_unchecked'"></i>
+          </template>
+          <template x-if="startTime > now">
+            <label class="checkbox icon" @click.stop>
+              <input type="checkbox" :checked="d.recSetting?.recEnabled" @change="toggleReserve(d)">
+              <span :class="!d.recSetting?.recEnabled ? '' : startTime > now ? 'error-text' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
+                <i>block</i>
+                <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
+              </span>
+            </label>
+          </template>
+
+        </div>
+        <div class="max" :class="!d.recSetting?.recEnabled ? 'medium-opacity' : ''">
+          <div class="title bold large-text">
+            <img class="space right-margin tiny-margin" :src="getLogoPath(d)">
+            <span class="" x-html="convert.title(d.title)"></span>
+          </div>
+          <div class="secondary-text">
+            <span x-html="convert.date(d.startTime,true,true)"></span> | 
+            <span x-text="d.stationName"></span> | 
+            <i class="tiny">star</i><span x-text="d.recSetting.priority"></span> | 
+            <span x-text="d.size"></span>
+            <template x-if="d.comment"><span> | <span x-text="d.comment"></span></span></template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="page === '#reserve'">
+      <ul class="list medium-space">
+        <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+        <template x-for="d in displayList" :key="d.reserveID">
+          <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+        </template>
+        <div x-intersect="loadMore()"></div>
+      </ul>
+    </template>
+
+    <template x-if="page === '#tunerreserve'">
+      <div>
+        <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+        <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
+          <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }">
+            <template x-if="d">
+              <ul class="list medium-space">
+                <template x-for="d in d.displayList" :key="d.reserveID">
+                  <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+                </template>
+                <div x-intersect="loadMoreTuner(tuner.tunerID)"></div>
+              </ul>
+            </template>
+
+            <template x-if="tuner.reserveList.length === 0">
+              <div class="center-align padding mt-8">
+                <i class="extra secondary-text">event_busy</i>
+                <p class="secondary-text">割り当てられた予約はありません</p>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <template x-if="page === '#autoaddepg'">
+      <ul class="list medium-space">
+        <template x-for="d in displayList" :key="d.dataID">
+          <li class="ripple" @click="openAutoaddDetail(d)">
+            <div class="row no-margin no-wrap">
+              <div>
+                <i class="primary-text" x-text="d.searchInfo.disableFlag ? 'block' : 'auto_awesome'"></i>
+              </div>
+              <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
+                <div class="title bold large-text" x-text="d.searchInfo?.andKey || '(全取得)'"></div>
+                <div class="secondary-text">
+                  <span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length + ' サービス' : '全サービス'"></span> |
+                  <span x-text="recModeText[d.recSetting?.recMode]"></span>
+                </div>
+              </div>
+            </div>
+          </li>
+        </template>
+      </ul>
+      <div x-intersect="loadMore()"></div>
+    </template>
+
+    <template x-if="page === '#autoaddmanual'">
+      <ul class="list medium-space">
+        <template x-for="d in displayList" :key="d.dataID">
+          <li class="ripple" @click="openAutoaddDetail(d)">
+            <div class="row no-margin no-wrap"
+              :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
+              <div>
+                <i class="secondary-text" 
+                  x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
+              </div>
+              <div class="max">
+                <div class="title bold large-text" x-html="d.title"></div>
+                <div class="secondary-text">
+                  <span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span> |
+                  <span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span> |
+                  <img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span> | 
+                  <span x-text="recModeText[d.recSetting?.recMode]"></span>
+                </div>
+              </div>
+            </div>
+          </li>
+        </template>
+        <div x-intersect="loadMore()"></div>
+      </div>
+    </template>
+
+    <template x-if="page === '#recinfo'">
+      <ul class="list medium-space">
+        <template x-for="d in displayList" :key="d.id">
+          <li class="ripple" @click="openRecinfoDetail(d)">
+            <div class="row no-margin no-wrap">
+              <div class="min flex center-align">
+                <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
+              </div>
+              <div class="max">
+                <div class="title bold large-text" 
+                    :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''"
+                    x-html="convert.title(d.title)">
+                </div>
+                <div class="secondary-text">
+                  <span x-html="convert.date(d.startTime,true,true)"></span> | 
+                  <img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span> | 
+                  <span x-text="d.comment"></span>
+                  <span class="error-text" x-text="'(ドロップ: ' + d.drops + ')'" x-show="d.drops > 0"></span>
+                  <span class="error-text" x-text="'(スクランブル: ' + d.scrambles + ')'" x-show="d.scrambles > 0"></span>
+                </div>
+              </div>
+            </div>
+          </li>
+        </template>
+        <div x-intersect="loadMore()"></div>
+      </ul>
+    </template>
+
+    <template x-if="!['#dashboard', '#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual'].includes(page)">
+      <div class="flex center-align middle-align">
+        <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
+      </div>
+    </template>
+
+  </main>
+
+  <div class="overlay s" @click="sidePanel.close()"></div>
+  <dialog id="sidePanel" class="right no-padding" style="width:600px;max-width:min(90vw, 600px)" x-data="sidePanel">
+    <template id="serviceList-template">
+]=]..GetServiceOption()..[=[
+    </template>
+
+    <header class="small-padding secondary-container">
+      <nav>
+        <button type="button" class="circle transparent" data-ui="#sidePanel">
+          <i>close</i>
+        </button>
+        <div class="max">
+          <h6 x-text="title()"></h6>
+        </div>
+      </nav>
+    </header>
+
+    <main class="responsive scroll" :class="{ 'no-padding': isSmallScreen }" x-init="$watch('detail', v => d = clone(v))">
+      <template x-if="!isSmallScreen">
+        <nav class="tabbed small m l" style="position: sticky;top:0;z-index:11;">
+          <a data-ui="#info" x-show="isInfo || isRecinfo">
+            <i>info</i>
+            <span>番組詳細</span>
+          </a>
+          <a data-ui="#searchInfo" x-show="d.searchInfo">
+            <i>search</i>
+            <span>検索設定</span>
+          </a>
+          <a data-ui="#recSetting" x-show="d.recSetting">
+            <i>settings_applications</i>
+            <span>録画設定</span>
+          </a>
+          <a data-ui="#erroLog" x-show="isRecinfo">
+            <i>report</i>
+            <span>エラーログ</span>
+          </a>
+        </nav>
+      </template>
+
+      <div id="info" class="page left padding">
+        <template x-if="isInfo || isRecinfo">
+          <div>
+            <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
+            <template x-if="isInfo">
+              <div>
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+                <input type="hidden" :value="`SetReserve?id=${d.reserveID}`" id="api_action">
+                <input type="hidden" name="id" :value="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
+                <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
+              </div>
+            </template>
+            <template x-if="isRecinfo">
+              <div>
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setrecinfo')..[=[">
+                <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
+              </div>
+            </template>
+            <nav class="wrap no-margin" style="row-gap: 0rem;">
+              <span class="chip primary">
+                <i>event</i>
+                <span x-text="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
+              </span>
+              <span><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName||getServiceName(d)"><span></span>
+            </nav>
+            <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
+            <hr class="medium">
+            <p class="secondary-text" x-html="convert.text(d.extInfo?.text_char)"></p>
+            <div class="space small-space"></div>
+            <div>
+              <template x-if="isRecinfo">
+                <div>
+                  <div class="row top-margin small-margin">
+                    <i>movie</i>
+                    <nav class="max no-space">
+                      <div class="field small max">
+                        <input id="recFilePath" type="text" x-model="d.recFilePath">
+                      </div>
+                      <button class="small right-round" @click="apiFetch(`${ROOT}api/SetRecInfo?id=${d.id}`, new URLSearchParams({ ren: document.getElementById('recFilePath').value}))"><i>edit</i></button>
+                    </nav>
+                  </div>
+                  <div class="row top-margin small-margin">
+                    <i>description</i>
+                    <nav class="max wrap" style="gap: 0.5rem;">
+                      <span class="chip"><span x-text="d.comment"></span></span>
+                      <span class="chip" x-text="`ドロップ : ${d.drops}`"></span>
+                      <span class="chip" x-text="`スクランブル : ${d.scrambles}`"></span>
+                    </nav>
+                  </div>
+                </div>
+              </template>
+              <div class="row top-margin small-margin">
+                <i>category</i>
+                <nav class="max wrap" style="gap: 0.5rem;">
+                  <template x-for="d in d.contentInfoList">
+                    <span class="chip"><span x-text="`${d.component_type_name.nibble1} - ${d.component_type_name.nibble2}`"></span></span>
+                  </template>
+                </nav>
+              </div>
+              <div class="row top-margin small-margin">
+                <i>videocam</i>
+                <nav class="max wrap" style="gap: 0.5rem;">
+                  <template x-for="d in d.componentInfo?.component_type_name.split(/、| /)">
+                    <span class="chip" x-text="d"></span>
+                  </template>
+                </nav>
+              </div>
+              <div class="row top-margin small-margin">
+                <i>speaker</i>
+                <nav class="vertical max" style="gap: 0.5rem;">
+                  <template x-for="d in d.audioInfoList">
+                    <nav class="max wrap" style="gap: 0.25rem;">
+                      <span class="chip" x-text="d.component_type_name"></span>
+                      <template x-if="d.text_char">
+                        <span class="chip" x-text="d.text_char"></span>
+                      </template>
+                      <span class="chip" x-text="d.sampling_rate_txt || `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[d.sampling_rate]}kHz`"></span>
+                    </nav>
+                  </template>
+                </nav>
+              </div>
+              <div class="row top-margin small-margin">
+                <i>info</i>
+                <nav class="max wrap" style="gap: 0.5rem;">
+                  <template x-if="d.onid<0x7880 || 0x7FE8<d.onid">
+                    <span class="chip">
+                      <i>paid</i>
+                      <span x-text="d.freeCAFlag ? '有料放送' : '無料放送'"></span>
+                    </span>
+                  </template>
+                  <span class="chip">
+                    <i>key</i>
+                    <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
+                  </span>
+                  <template x-for="d in d.eventRelayInfo?.eventDataList">
+                    <span class="chip">
+                      <i>switch_access_2</i>
+                      <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
+                    </span>
+                  </template>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div id="searchInfo" class="page left padding">
+        <template x-if="d.searchInfo">
+          <div class="grid no-margin" x-data="{ s: d.searchInfo }" x-init="$watch('d', d => s = d.searchInfo)">
+            <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[">
+            <input type="hidden" :value="`SetAutoAdd?id=${d.dataID || 0}`" id="api_action">
+            <input type="hidden" name="addchg">
+            <div class="s12">
+              <div class="field middle-align">
+                <nav>
+                  <div class="max">
+                    <h6><label class="large-text" for="disableFlag">自動予約無効</label></h6>
+                  </div>
+                  <label class="switch icon">
+                    <input id="disableFlag" type="checkbox" name="disableFlag" x-model="s.disableFlag">
+                    <span>
+                      <i>block</i>
+                    </span>
+                  </label>
+                </nav>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field label border">
+                <input type="text" name="andKey" x-model="s.andKey">
+                <label>検索キーワード</label>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field label border">
+                <input type="text" name="notKey" x-model="s.notKey">
+                <label>NOTキーワード</label>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field label border">
+                <input type="text" name="note" x-model="s.note">
+                <label>メモ</label>
+              </div>
+              <nav class="group center-align secondary-container top-margin small-margin">
+                <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
+                  <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
+                  <i>regular_expression</i>
+                  <span class="m l">正規表現</span>
+                </button>
+                <button class="small no-round" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
+                  <input type="checkbox" name="aimaiFlag" x-model="s.aimaiFlag">
+                  <i>search_check</i>
+                  <span class="m l">あいまい</span>
+                </button>
+                <button class="small no-round" :class="{ active: s.titleOnlyFlag }" @click="s.titleOnlyFlag = !s.titleOnlyFlag">
+                  <input type="checkbox" name="titleOnlyFlag" x-model="s.titleOnlyFlag">
+                  <i>find_in_page</i>
+                  <span class="m l">番組名のみ</span>
+                </button>
+                <button class="small right-round" :class="{ active: s.caseFlag }" @click="s.caseFlag = !s.caseFlag">
+                  <input type="checkbox" name="caseFlag" x-model="s.caseFlag">
+                  <i>match_case</i>
+                  <span class="m l">大小文字区別</span>
+                </button>
+              </nav>
+            </div>
+
+            <div class="s12">
+            </div>
+            <div class="s12">
+              <fieldset>
+                <legend>ジャンル表示絞り込み</legend>
+                <nav class="scroll">
+]=]..GetGenreChip()..[=[
+                </nav>
+                <label class="checkbox">
+                  <input type="checkbox" x-model="set.subGenre">
+                  <span>サブジャンル</span>
+                </label>
+              </fieldset>
+              <div class="field label border" x-data="{ selectedValues: [] }"
+                x-init="
+                  const init = () => selectedValues = (s.contentList||[]).map(i => i.content_nibble);
+                  init();
+                  $watch('s', () => init());
+                ">
+                <select name="contentList" multiple size="7" x-model="selectedValues" @change="s.contentList = selectedValues.map(e => ({ content_nibble: Number(e) }))">
+]=]..GetGenreOption()..[=[
+                </select>
+                <label>ジャンル</label>
+              </div>
+              <label class="checkbox">
+                <input type="checkbox" name="notContetFlag" x-model="s.notContetFlag">
+                <span>NOT扱い</span>
+              </label>
+            </div>
+
+            <div class="s12">
+              <div class="field label border"
+                x-data="{ selectedValues: [] }"
+                x-init="
+                  const init = () => selectedValues = s.serviceList ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`) : getDefSearchService();
+                  $watch('s', () => init());
+                  $nextTick(() => init());
+                ">
+                <select name="serviceList" multiple size="7" x-model="selectedValues"
+                  @change="s.serviceList = selectedValues.map(e => {
+                    const [onid, tsid, sid] = e.split('-').map(Number);
+                    return { onid: onid, tsid: tsid, sid: sid };
+                  })"
+                  x-html="document.getElementById('serviceList-template').innerHTML">
+                </select>
+                <label>サービス</label>
+              </div>
+            </div>
+
+            <div class="s12">
+              <fieldset>
+                <legend>時間絞り込み</legend>
+                <input type="hidden" name="dateList" :value="(s.dateList||[]).map(e => `${dayText[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${dayText[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`).join(',')">
+                <div x-text="(s.dateList||[]).map(e => `${dayText[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${dayText[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`).join(',')"></div>
+                <div>
+                  <ul class="list no-space border">
+                    <template x-for="(e, i) in s.dateList" :key="i">
+                      <li class="tiny-space scroll" x-data="{ start: `${convert.zero(e.startHour)}:${convert.zero(e.startMin)}`, end: `${convert.zero(e.endHour)}:${convert.zero(e.endMin)}`}">
+                        <div>
+                          <button class="chip round">
+                            <span x-text="dayText[e.startDayOfWeek]"></span>
+                            <i class="m l">arrow_drop_down</i>
+                          </button>
+                          <menu class="min">
+                              <template x-for="(v, i) in dayText">
+                                <li :value="i" x-text="v" :class="{ active: e.startDayOfWeek === i }" @click="e.startDayOfWeek = i"></li>
+                              </template>
+                          </menu>
+                        </div>
+                        <div>
+                          <div class="chip round" x-text="start"></div>
+                          <input type="time" x-model="start" @change="[e.startHour, e.startMin] = $event.target.value.split(':').map(Number)">
+                        </div>
+                        <div>～</div>
+                        <div>
+                          <button class="chip round">
+                            <span x-text="dayText[e.endDayOfWeek]"></span>
+                            <i class="m l">arrow_drop_down</i>
+                          </button>
+                          <menu class="min">
+                            <template x-for="(v, i) in dayText">
+                              <li :value="i" x-text="v" :class="{ active: e.endDayOfWeek === i }" @click="e.endDayOfWeek = i"></li>
+                            </template>
+                          </menu>
+                        </div>
+                        <div>
+                          <div class="chip round" x-text="end"></div>
+                          <input type="time" x-model="end" @change="[e.endHour, e.endMin] = $event.target.value.split(':').map(Number)">
+                        </div>
+                        <div class="max"></div>
+                        <button type="button" class="circle transparent small error" @click="s.dateList.splice(i, 1)">
+                          <i>delete</i>
+                        </button>
+                      </li>
+                    </template>
+                  </ul>
+                  <button class="responsive small top-margin small-margin"
+                    @click="
+                      s.dateList ??= [];
+                      s.dateList.push({ startDayOfWeek: 0, startHour: 0, startMin: 0, endDayOfWeek: 0, endHour: 23, endMin: 59 });
+                    ">
+                    <i>add</i>
+                    <span>追加</span>
+                  </button>
+                </div>
+
+                <label class="checkbox">
+                  <input type="checkbox" name="notDateFlag" x-model="s.notDateFlag">
+                  <span>NOT扱い</span>
+                </label>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <div class="field label border">
+                <select name="freeCAFlag" x-model.number="s.freeCAFlag">
+                  <option value="0">無料、有料番組を対象とする</option>
+                  <option value="1">無料番組を対象とする</option>
+                  <option value="2">有料番組を対象とする</option>
+                </select>
+                <label>スクランブル放送</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
+
+            <div class="s12">
+              <fieldset>
+                <legend>番組長で絞り込み</legend>
+                <div class="row responsive">
+                  <div class="max"></div>
+                  <div class="field label border small" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
+                    <input type="number" name="chkDurationMin" x-model="s.chkDurationMin" style="width: 7rem;">
+                    <label>最小（分）</label>
+                  </div>
+                  <span>〜</span>
+                  <div class="field label border small" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
+                    <input type="number" name="chkDurationMax" x-model="s.chkDurationMax" style="width: 7rem;">
+                    <label>最大（分）</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <fieldset>
+                <legend>無効対象</legend>
+                <div>
+                  <label class="checkbox">
+                    <input type="checkbox" name="chkRecEnd" x-model="s.chkRecEnd">
+                    <span>同一番組名の録画結果があれば無効登録</span>
+                  </label>
+                </div>
+                <div>
+                  <label class="checkbox">
+                    <input type="checkbox" name="chkRecNoService" x-model="s.chkRecNoService">
+                    <span>全てのサービスで無効</span>
+                  </label>
+                </div>
+                <div class="row">
+                  <h6 class="large-text">確認対象期間</h6>
+                  <div class="max"></div>
+                  <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
+                    <input type="number" name="chkRecDay" x-model="s.chkRecDay" style="width: 5rem;">
+                  </div>
+                  日前まで
+                </div>
+              </fieldset>
+            </div>
+
+            <template x-if="s.days">
+              <div class="s12">
+                <fieldset>
+                  <legend>対象期間</legend>
+                  <div class="row">
+                    <div class="max"></div>
+                    <div class="field border small">
+                      <input type="number" name="days" :value="s.days" style="width: 3rem;">
+                    </div>
+                    日間
+                  </div>
+                </fieldset>
+              </div>
+            </template>
+
+          </div>
+        </template>
+      </div>
+
+      <div id="recSetting" class="page right padding">
+        <template x-if="d.recSetting">
+          <div class="grid no-margin" x-data="{ r: d.recSetting }" x-init="$watch('d', d => r = d.recSetting)">
+            <template  x-if="isReserve">
+              <div style="display: contents;">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+                <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
+                <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
+
+                <div class="s12">
+                  <div class="field label border">
+                    <input type="text" name="title" x-model="d.title">
+                    <label>タイトル</label>
+                  </div>
+                </div>
+
+                <div class="s12">
+                  <div class="field label border">
+                    <select name="service" :value="value" x-data="{ value: '' }"
+                      x-init="
+                        const init = () => value = `${d.onid}-${d.tsid}-${d.sid}`;
+                        $watch('d', () => init());
+                        $nextTick(() => init());
+                      "
+                      @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
+                      x-html="document.getElementById('serviceList-template').innerHTML">
+                    </select>
+                    <label>サービス</label>
+                    <i>arrow_drop_down</i>
+                  </div>
+                </div>
+
+                <div class="s12">
+                  <fieldset class="padding" x-data="{ date: new Date(d.startTime ?? Math.floor(now / 60000) * 60000) }" x-init="$watch('d.startTime', v => date = new Date(v ?? Math.floor(now / 60000) * 60000))">
+                    <legend>日時</legend>
+                    <nav class="wrap">
+                      <div class="field label prefix border small">
+                        <i>today</i>
+                        <input type="date" name="startdate" :value="date.toLocaleDateString('sv')">
+                        <label>開始日</label>
+                      </div>
+                      <div class="field label prefix border small">
+                        <i>schedule</i>
+                        <input type="time" name="starttime" step="1" :value="date.toTimeString().slice(0, 8)">
+                        <label>開始時間</label> 
+                      </div>
+                      ～
+                      <div class="row max">
+                        <div class="max s"></div>
+                        <div class="field label prefix border small">
+                          <i>schedule</i>
+                          <input type="time" name="endtime" step="1" :value="new Date(date.getTime() + (d.durationSecond ?? 30*60)*1000).toTimeString().slice(0, 8)">
+                          <label>終了時間</label>
+                        </div>
+                      </div>
+                    </nav>
+                  </fieldset>
+                </div>
+                <hr class="s12 large">
+              </div>
+            </template>
+
+            <template x-if="isAutoaddmanual">
+              <div style="display: contents;">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setmanuadd')..[=[">
+                <input type="hidden" :value="`SetManuAdd?id=${d.dataID}`" id="api_action">
+                <input type="hidden" name="addchg" value="1">
+                <div class="s12">
+                  <fieldset class="padding no-margin">
+                    <legend>日時</legend>
+                    <nav class="group connected secondary-container">
+                      <input type="hidden" name="dayOfWeekFlag" x-model="d.dayOfWeekFlag">
+                      <template x-for="(v, i) in dayText">
+                        <button :class="{ 'small': isSmallScreen, 'left-round': i == 0, 'right-round': i == dayText.length - 1, 'active': !!(d.dayOfWeekFlag & (1 << i)) }" @click="d.dayOfWeekFlag ^= (1 << i)">
+                          <span x-text="v"></span>
+                        </button>
+                      </template>
+                    </nav>
+                    <nav class="wrap">
+                      <div class="field label prefix border small">
+                        <i>schedule</i>
+                        <input type="time" name="startTime" step="1" :value="convert.time(d.startTime||0)">
+                        <label>開始時間</label> 
+                      </div>
+                      ～
+                      <div class="row max">
+                        <div class="max s"></div>
+                        <div class="field label prefix border small">
+                          <i>schedule</i>
+                          <input type="time" name="endTime" step="1" :value="convert.time((d.startTime||0) + (d.durationSecond||0))">
+                          <label>終了時間</label>
+                        </div>
+                      </div>
+                    </nav>
+                  </fieldset>
+                </div>
+
+                <div class="s12">
+                  <div class="field label border">
+                    <input type="text" name="title" x-model="d.title">
+                    <label>タイトル</label>
+                  </div>
+                </div>
+
+                <div class="s12">
+                  <div class="field label border">
+                    <select name="serviceID" :value="value" x-data="{ value: '' }"
+                      x-init="
+                        const init = () => { value = `${d.onid}-${d.tsid}-${d.sid}` };
+                        $watch('d', () => init());
+                        $nextTick(() => init());
+                      "
+                      @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
+                      x-html="document.getElementById('serviceList-template').innerHTML">
+                    </select>
+                    <label>サービス</label>
+                    <i>arrow_drop_down</i>
+                  </div>
+                </div>
+                <hr class="s12 large">
+              </div>
+            </template>
+
+            <div class="s12">
+              <div class="field label border">
+                <select @change="
+                    const presetId = parseInt($event.target.value);
+                    if (presetId === 65535) {
+                      r = clone(detail.recSetting);
+                    } else {
+                      const preset = allData.recpreset.get(presetId);
+                      if (preset) {
+                        r = clone(preset.recSetting);
+                      }
+                    }
+                  ">
+                  <template x-for="d in Array.from(allData.recpreset.values())" :key="d.id">
+                    <option :value="d.id" x-text="d.name" :selected="!(d.reserveID || d.dataID) && d.id === 0"></option>
+                  </template>
+                  <option value="65535" :selected="d.reserveID || d.dataID" x-show="d.reserveID || d.dataID">予約時</option>
+                </select>
+                <label>プリセット</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field middle-align">
+                <nav>
+                  <div class="max">
+                    <h6><label class="large-text" for="recEnabled">録画有効</label></h6>
+                  </div>
+                  <label class="switch icon">
+                  <input id="recEnabled" type="checkbox" name="recEnabled" x-model="r.recEnabled">
+                    <span>
+                      <i>mode_off_on</i>
+                    </span>
+                  </label>
+                </nav>
+              </div>
+            </div>
+
+            <div class="s7">
+              <div class="field label border">
+                <select name="recMode" x-model.number="r.recMode">
+                  <template x-for="(name, i) in recModeText">
+                    <option :value="i" x-text="name" :selected="r.recMode === i"></option>
+                  </template>
+                </select>
+                <label>録画モード</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
+
+            <div class="s5">
+              <div class="field label border">
+                <select name="priority" x-model.number="r.priority">
+                  <template x-for="p in [1,2,3,4,5]">
+                    <option :value="p" x-text="p" :selected="r.priority === p"></option>
+                  </template>
+                </select>
+                <label>優先度</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field middle-align">
+                <nav>
+                  <div class="max">
+                    <h6><label class="large-text" for="tuijyuuFlag">イベントリレー追従</label></h6>
+                  </div>
+                  <label class="switch">
+                    <input id="tuijyuuFlag" type="checkbox" name="tuijyuuFlag" x-model="r.tuijyuuFlag">
+                    <span></span>
+                  </label>
+                </nav>
+              </div>
+            </div>
+
+            <div class="s12">
+              <div class="field middle-align">
+                <nav>
+                  <div class="max">
+                    <h6><label class="large-text" for="pittariFlag">ぴったり（？）録画</label></h6>
+                  </div>
+                  <label class="switch">
+                    <input id="pittariFlag" type="checkbox" name="pittariFlag" x-model="r.pittariFlag">
+                    <span></span>
+                  </label>
+                </nav>
+              </div>
+            </div>
+
+            <div class="s12">
+              <fieldset class="padding"
+                x-data="{
+                  startMarginUseDef: r.startMargin == null, 
+                  def: { start: ]=]..(rsdef and rsdef.startMargin or 0)..[=[, end: ]=]..(rsdef and rsdef.endMargin or 0)..[=[ }
+                }"
+                x-init="
+                  let lastProcessed = null;
+                  const init = v => {
+                    const raw = Alpine.raw(v);
+                    if (raw === lastProcessed) return;
+                    lastProcessed = raw;
+                    startMarginUseDef = v.startMargin == null;
+                    v.startMargin ??= def.start;
+                    v.endMargin ??= def.end;
+                  };
+                  init(r);
+                  $watch('r', v => init(v));
+                ">
+                <legend>録画マージン</legend>
+                <div class="field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="useDefMarginFlag">デフォルト設定で使用</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="useDefMarginFlag" type="checkbox" name="useDefMarginFlag" x-model="startMarginUseDef">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="row small-margin" :class="!startMarginUseDef && 'disabled'">
+                  <div class="max"></div>
+                  <div class="field label border small">
+                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="startMarginUseDef" style="width: 7rem;">
+                    <label>開始（秒前）</label>
+                  </div>
+                  <div class="field label border small">
+                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="startMarginUseDef" style="width: 7rem;">
+                    <label>終了（秒後）</label>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <fieldset class="padding">
+                <legend>指定サービス対象データ</legend>
+                <div class="field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="serviceMode">デフォルト設定で使用</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="serviceMode" type="checkbox" name="serviceMode" 
+                        :checked="r.serviceMode % 2 === 0"
+                        @change="r.serviceMode = $event.target.checked ? (r.serviceMode & ~1) : (r.serviceMode | 1)">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <nav class="row wrap no-margin" style="row-gap: 0;" :class="(r.serviceMode % 2 === 0) && 'disabled'" x-data="{ def: ]=]..rsdef.serviceMode..[=[ }">
+                  <div class="max m l"></div>
+                  <label class="checkbox">
+                    <input type="checkbox" name="serviceMode_1" :disabled="r.serviceMode % 2 === 0"
+                      :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 16"
+                      @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 16) : (r.serviceMode & ~16)">
+                    <span>字幕を含める</span>
+                  </label>
+                  <label class="checkbox">
+                    <input type="checkbox" name="serviceMode_2" :disabled="r.serviceMode % 2 === 0"
+                      :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 32"
+                      @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 32) : (r.serviceMode & ~32)"
+                    >
+                    <span>データカルーセルを含める</span>
+                  </label>
+                </nav>
+              </fieldset>
+            </div>
+
+            <template id="recFolder-template">
+              <fieldset>
+                <legend>ファイル出力</legend>
+                <nav>
+                  <div class="max field label border small">
+                    <input type="text" :name="`${partial ? 'partial' : ''}recFolder`" x-model="v.recFolder">
+                    <label>フォルダ</label>
+                  </div>
+                  <button class="circle left-round bottom-round small" @click="(partial ? r.partialRecFolder : r.recFolderList).splice(i, 1)">
+                    <i>delete</i>
+                  </button>
+                </nav>
+                <div class="field label border small">
+                  <select :name="`${partial ? 'partial' : ''}writePlugIn`" x-model="v.writePlugIn">
+]=]..GetPlugInFileNameOption('Write')..[=[
+                  </select>
+                  <label>出力PlugIn</label>
+                  <i>arrow_drop_down</i>
+                </div>
+                <div class="field label border small">
+                  <select :name="`${partial ? 'partial' : ''}recNamePlugIn`" x-model="v.recNamePlugIn">
+                    <option value="">なし</option>
+]=]..GetPlugInFileNameOption('RecName')..[=[
+                  </select>
+                  <label>ファイル名PlugIn</label>
+                  <i>arrow_drop_down</i>
+                </div>
+                <nav class="no-space">
+                  <div class="max field label border small">                  
+                    <input type="text" :name="`${partial ? 'partial' : ''}recName`" x-model="v.recNameOp">
+                    <label>オプション</label>
+                  </div>
+                  <button class="tertiary right-round" @click="ui('#macro')"><i>add</i></button>
+                </nav>
+              </fieldset>
+            </template>
+
+            <div class="s12">
+              <template x-for="(v, i) in r.recFolderList" :key="i" x-data="{ partial: false }">
+                <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
+              </template>
+              <button class="responsive secondary small top-margin small-margin"
+                @click="r.recFolderList.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                <i>add</i>
+                <span>追加</span>
+              </button>
+            </div>
+
+            <div class="s12">
+              <fieldset class="padding">
+                <legend>部分受信サービス</legend>
+                <nav>
+                  <div class="max">
+                    <label for="partialRecFlag"><h6 class="large-text">別ファイルに同時出力する</h6></label>
+                  </div>
+                  <label class="switch">
+                    <input id="partialRecFlag" type="checkbox" name="partialRecFlag" x-model="r.partialRecFlag">
+                    <span></span>
+                  </label>
+                </nav>
+                <template x-for="(v, i) in r.partialRecFolder" :key="i" x-data="{ partial: true }">
+                  <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
+                </template>
+                <button class="responsive secondary small top-margin small-margin"
+                  @click="r.partialRecFolder.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                  <i>add</i>
+                  <span>追加</span>
+                </button>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <fieldset>
+                <legend>連続録画動作</legend>
+                <nav>
+                  <div class="max">
+                    <h6><label class="large-text" for="continueRecFlag">後ろの予約を同一ファイルで出力する</label></h6>
+                  </div>
+                  <label class="switch">
+                    <input id="continueRecFlag" type="checkbox" name="continueRecFlag" x-model="r.continueRecFlag" value="1">
+                    <span></span>
+                  </label>
+                </nav>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <div class="field label border">
+                <select name="tunerID" x-model.number="r.tunerID">
+                  ]=]..GetTunerIDOption()..[=[
+                </select>
+                <label>使用チューナー強制指定</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
+            
+            <div class="s12">
+              <fieldset>
+                <legend>録画後動作</legend>
+                <div class="field border small">
+                  <select name="suspendMode" x-model.number="r.suspendMode">
+                    <option value="0">デフォルト</option>
+                    <option value="1">スタンバイ</option>
+                    <option value="2">休止</option>
+                    <option value="3">シャットダウン</option>
+                    <option value="4">何もしない</option>
+                  </select>
+                  <i>arrow_drop_down</i>
+                </div>
+                <label class="checkbox">
+                  <input type="checkbox" name="rebootFlag" x-model="r.rebootFlag">
+                  <span>復帰後再起動する</span>
+                </label>
+              </fieldset>
+            </div>
+
+            <div class="s12">
+              <fieldset>
+                <legend>録画後実行bat</legend>
+                <div class="field label border small">
+                  <select type="text" name="batFilePath" x-model="r.batFilePath">
+]=]..GetBatFilePathOption('RecName')..[=[
+                  </select>
+                  <label>ファイルパス</label>
+                  <i>arrow_drop_down</i>
+                </div>
+                <div class="field label border small">
+                  <input name="batFileTag" list="batFileTagList" x-model="r.batFileTag">
+                  <label>録画タグ</label>
+                  ]=]..GetbatFileTagList()..[=[
+                </div>
+              </fieldset>
+            </div>
+
+          </div>
+        </template>
+      </div>
+
+      <div id="erroLog" class="page right padding">
+        <template x-if="isRecinfo">
+          <pre class="scroll" x-text="d.errInfo"></pre>
+        </template>
+      </div>
+    </main>
+
+    <template x-if="isSmallScreen">
+      <nav class="bottom tools max s">
+        <a data-ui="#info" x-show="isInfo || isRecinfo">
+          <i>info</i>
+          <span>番組詳細</span>
+        </a>
+        <a data-ui="#searchInfo" x-show="d.searchInfo">
+          <i>search</i>
+          <span>検索設定</span>
+        </a>
+        <a data-ui="#recSetting" x-show="d.recSetting">
+          <i>settings_applications</i>
+          <span>録画設定</span>
+        </a>
+        <a data-ui="#erroLog" x-show="isRecinfo">
+          <i>report</i>
+          <span>エラーログ</span>
+        </a>
+      </nav>
+    </template>
+    <footer class="horizontal-padding light-align">
+      <nav>
+        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo"></button>
+        <div class="max"></div>
+        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry">削除</button>
+     </nav>
+    </footer>
+  </dialog>
+
+  <div class="overlay"></div>
+  <dialog id="drawer" class="surface-container left">
+    <header>
+      <nav>
+        <h6 class="max">EpgTimer</h6>
+      </nav>
+    </header>
+
+    <ul class="list">
+]=]..link_drawer..[=[
+    </ul>
+  </dialog>
+
+  <div id="error-snackbar" class="snackbar error" x-html="snackbarText" style="word-break: break-word;"></div>
+  <div id="snackbar" class="snackbar" x-html="snackbarText" style="word-break: break-word;"></div>
+  <dialog id="debug" class="snackbar error bottom" x-html="confirmText" style="word-break: break-word;" @click="ui('#debug',0)"></dialog>
+  <dialog id="macro" class="bottom">
+    <header>
+      <h6>マクロ一覧</h6>
+    </header>
+  </dialog>
+
+  <!--確認用-->
+  <div class="fixed middle right margin large-margin" x-show="debug">
+    <nav class="toolbar vertical">
+      <span>
+        <button class="circle">
+          <i>palette</i>
+        </button>
+        <input type="color" @change="ui('theme', $event.target.value)">
+      </span>
+      <a class="circle" @click="dark = ui('mode') === 'dark';ui('mode', dark ? 'light' : 'dark');mode = dark ? 'dark_mode' : 'light_mode'" x-data="{mode:'light_mode'}">
+        <i x-text="mode"></i>
+      </a>
+      <a :class="{active: dashboardData.isRecording}" @click="dashboardData.isRecording = !dashboardData.isRecording">
+        <i>fiber_manual_record</i>
+      </a>
+      <a :class="{active: !isOnline}" @click="isOnline = !isOnline">
+        <i>cloud_off</i>
+      </a>
+      <a :class="{active: loading}" @click="loading = !loading">
+        <i>refresh</i>
+      </a>
+    </nav>
+  </div>
+</body>
+</html>
+]=])
+ct:Finish()
+mg.write(ct:Pop(Response(200,'text/html','utf-8',ct.len)..'\r\n'))

@@ -1,0 +1,60 @@
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+mg.write("HTTP/1.1 200 OK\r\n")
+mg.write("Content-Type: text/event-stream\r\n")
+mg.write("Cache-Control: no-cache\r\n")
+mg.write("Connection: keep-alive\r\n\r\n")
+
+local notifies = {
+  { id = 1, label = "epg" },
+  { id = 2, label = "reserve" },
+  { id = 3, label = "recinfo" },
+  { id = 4, label = "auto_add" },
+  { id = 5, label = "manual_add" }
+}
+
+local last_counts = {}
+for _, n in ipairs(notifies) do
+  last_counts[n.id] = edcb.GetNotifyUpdateCount(n.id) or 0
+end
+
+-- チューナー状態の比較用（前回のJSON文字列を保持）
+local last_tuner_json = ConvertJson(edcb.GetTunerProcessStatusAll())
+
+-- メインループ
+while true do
+  -- 2秒待機 (edcb.Sleepがtrueならサーバー終了)
+  if edcb.Sleep(2000) then break end
+
+  local changes = {}
+  for _, n in ipairs(notifies) do
+    local current = edcb.GetNotifyUpdateCount(n.id) or 0
+    if current ~= last_counts[n.id] then
+      table.insert(changes, '"' .. n.label .. '": ' .. current)
+      last_counts[n.id] = current
+    end
+  end
+
+  -- 2. チューナー全体の変化検知ロジック
+  -- GetTunerProcessStatusAll で全チューナーの状態を取得
+  -- 配列をJSON文字列に変換して比較（変化があったか一括判定）
+  local current_tuner_json = ConvertJson(edcb.GetTunerProcessStatusAll())
+
+  if current_tuner_json ~= last_tuner_json then
+    -- 何らかの変化（録画開始、終了、チャンネル変更、チューナー増減）があった
+    table.insert(changes, '"tuner": true')
+    last_tuner_json = current_tuner_json
+  end
+
+  if #changes > 0 then
+    local json_payload = "data: {" .. table.concat(changes, ", ") .. "}\n\n"
+    -- 書き込み失敗（nil or 0）なら即座にループを抜けてスレッドを解放
+    if not mg.write(json_payload) then
+      break
+    end
+  else
+    -- 接続維持用のキープアライブ
+    if not mg.write(": keep-alive\n\n") then
+      break
+    end
+  end
+end
