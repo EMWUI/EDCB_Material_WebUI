@@ -1917,7 +1917,6 @@ h4 .mdl-button--icon {
   #movie #player {
     width: 100%; }
   #movie #player:not(:fullscreen) #video {
-    min-height: min(calc(100vw * (9 / 16)), calc(100vh - 130px));
     max-height: calc(100vh - 130px);
     max-width: min(100%, calc((100vh - 130px) * 16 / 9)); }
   section#movie #stop {
@@ -1938,7 +1937,7 @@ h4 .mdl-button--icon {
     background: #000; }
   #player:not(:fullscreen) #video {
     width: 100%;
-    min-height: max(min(calc(90vh - 70px), calc((100vw - 340px) * (9 / 16))), 270px);
+    min-height: max(min(calc(100vh * 0.666666666667 - 16px * 2), calc((100vw * 0.666666666667 - 16px * 2) * (9 / 16))), 270px);
     max-height: calc(90vh - 70px); } }
   @media (max-width: 479px) {
     #movie-container #video {
@@ -2703,7 +2702,7 @@ h4 .mdl-button--icon {
   justify-content: center; }
 .mdl-layout:not(.is-small-screen) #main-column {
   min-width: min(480px, 100%);
-  max-width: calc((90vh - 70px) * (16 / 9)); }
+  max-width: calc((66.6666666667vh - 16px * 2) * (16 / 9)); }
 .mdl-layout:not(.is-small-screen) #sub-column {
   max-width: 450px; }
 .is-small-screen #main-column,
