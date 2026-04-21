@@ -124,10 +124,8 @@ ct:Append([=[
         <h5 x-text="getPageTitle()"></h5>
       </div>
       
-      <span class="chip outline small no-mouse" 
-            x-show="totalCount !== null" 
-            x-transition>
-        <span x-text="totalCount !== null ? totalCount + ' 件' : ''"></span>
+      <span class="chip outline small no-mouse" x-show="totalCount != null" x-transition>
+        <span x-text="totalCount != null ? totalCount + ' 件' : ''"></span>
       </span>
 
       <button class="circle transparent" @click="openNewEntry()">
@@ -662,11 +660,11 @@ ct:Append([=[
                   $nextTick(() => init());
                 ">
                 <select name="serviceList" multiple size="7" x-model="selectedValues"
-                  @change="s.serviceList = selectedValues.map(e => {
-                    const [onid, tsid, sid] = e.split('-').map(Number);
-                    return { onid: onid, tsid: tsid, sid: sid };
-                  })"
-                  x-html="document.getElementById('serviceList-template').innerHTML">
+                        @change="s.serviceList = selectedValues.map(e => {
+                          const [onid, tsid, sid] = e.split('-').map(Number);
+                          return { onid: onid, tsid: tsid, sid: sid };
+                        })"
+                        x-html="document.getElementById('serviceList-template').innerHTML">
                 </select>
                 <label>サービス</label>
               </div>
@@ -720,10 +718,10 @@ ct:Append([=[
                     </template>
                   </ul>
                   <button class="responsive small top-margin small-margin"
-                    @click="
-                      s.dateList ??= [];
-                      s.dateList.push({ startDayOfWeek: 0, startHour: 0, startMin: 0, endDayOfWeek: 0, endHour: 23, endMin: 59 });
-                    ">
+                          @click="
+                            s.dateList ??= [];
+                            s.dateList.push({ startDayOfWeek: 0, startHour: 0, startMin: 0, endDayOfWeek: 0, endHour: 23, endMin: 59 });
+                          ">
                     <i>add</i>
                     <span>追加</span>
                   </button>
@@ -918,12 +916,12 @@ ct:Append([=[
                 <div class="s12">
                   <div class="field label border">
                     <select name="serviceID" :value="value" x-data="{ value: '' }"
-                      x-init="
-                        const init = () => { value = `${d.onid}-${d.tsid}-${d.sid}` };
-                        $watch('d', () => init());
-                        $nextTick(() => init());
-                      "
-                      @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
+                            x-init="
+                              const init = () => { value = `${d.onid}-${d.tsid}-${d.sid}` };
+                              $watch('d', () => init());
+                              $nextTick(() => init());
+                            "
+                            @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
                       x-html="document.getElementById('serviceList-template').innerHTML">
                     </select>
                     <label>サービス</label>
@@ -937,16 +935,16 @@ ct:Append([=[
             <div class="s12">
               <div class="field label border">
                 <select @change="
-                    const presetId = parseInt($event.target.value);
-                    if (presetId === 65535) {
-                      r = clone(detail.recSetting);
-                    } else {
-                      const preset = allData.recpreset.get(presetId);
-                      if (preset) {
-                        r = clone(preset.recSetting);
-                      }
-                    }
-                  ">
+                          const presetId = parseInt($event.target.value);
+                          if (presetId === 65535) {
+                            r = clone(detail.recSetting);
+                          } else {
+                            const preset = allData.recpreset.get(presetId);
+                            if (preset) {
+                              r = clone(preset.recSetting);
+                            }
+                          }
+                        ">
                   <template x-for="d in Array.from(allData.recpreset.values())" :key="d.id">
                     <option :value="d.id" x-text="d.name" :selected="!(d.reserveID || d.dataID) && d.id === 0"></option>
                   </template>
@@ -1090,15 +1088,14 @@ ct:Append([=[
                   <div class="max m l"></div>
                   <label class="checkbox">
                     <input type="checkbox" name="serviceMode_1" :disabled="r.serviceMode % 2 === 0"
-                      :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 16"
-                      @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 16) : (r.serviceMode & ~16)">
+                           :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 16"
+                           @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 16) : (r.serviceMode & ~16)">
                     <span>字幕を含める</span>
                   </label>
                   <label class="checkbox">
                     <input type="checkbox" name="serviceMode_2" :disabled="r.serviceMode % 2 === 0"
-                      :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 32"
-                      @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 32) : (r.serviceMode & ~32)"
-                    >
+                           :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 32"
+                           @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 32) : (r.serviceMode & ~32)">
                     <span>データカルーセルを含める</span>
                   </label>
                 </nav>
@@ -1147,7 +1144,7 @@ ct:Append([=[
                 <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
               </template>
               <button class="responsive secondary small top-margin small-margin"
-                @click="r.recFolderList.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                      @click="r.recFolderList.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
                 <i>add</i>
                 <span>追加</span>
               </button>
@@ -1169,7 +1166,7 @@ ct:Append([=[
                   <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
                 </template>
                 <button class="responsive secondary small top-margin small-margin"
-                  @click="r.partialRecFolder.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                        @click="r.partialRecFolder.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
                   <i>add</i>
                   <span>追加</span>
                 </button>
