@@ -102,7 +102,7 @@ document.addEventListener('alpine:init', () => {
         if (document.visibilityState === 'visible') {
           // 戻ってきたときに接続状態を確認
           if (this.eventSource.readyState === EventSource.CLOSED || this.eventSource.readyState === EventSource.CONNECTING) {
-            // this.snackbar(this.eventSource.readyState + ' visibilitychange');
+            // this.snackbar.add({ text: this.eventSource.readyState + ' visibilitychange'});
             this.isOnline = false;
           }
         }
@@ -122,7 +122,7 @@ document.addEventListener('alpine:init', () => {
       this.eventSource = new EventSource(`${this.ROOT}api/SSE`);
 
       this.eventSource.onopen = async () => {
-        // this.snackbar('onopen');
+        // this.snackbar.add({ text: 'onopen' });
         this.isOnline = true;
 
         this.loading = true;
@@ -142,7 +142,7 @@ document.addEventListener('alpine:init', () => {
         }
       }
       this.eventSource.onerror = () => {
-        // this.snackbar('onerror');
+        // this.snackbar.add({ text: 'onerror' });
         this.isOnline = false;
       }
       this.eventSource.onmessage = async e => {
@@ -751,19 +751,22 @@ document.addEventListener('alpine:init', () => {
       return res;
     },
 
-    snackbarText: '',
-    confirmText: '',
-    error(s) {
-      this.snackbarText = s;
-      ui('#error-snackbar');
-    },
-    snackbar(s) {
-      this.snackbarText = s;
-      ui('#snackbar');
-    },
-    confirm(s) {
-      this.confirmText = s;
-      ui('#debug');
+    snackbar: {
+      list: [],
+      active: null,
+      add(d) {
+        this.list.push(d);
+        if (!this.active) this.show();
+      },
+      show() {
+        this.active = this.list.shift();
+        if (!this.active) return;
+
+        const time = this.active.time || 2500;
+        ui('#snackbar', time);
+        // 表示時間 + アニメーション用のバッファ（500ms）を待ってから次を表示
+        setTimeout(() => this.show(), time + 500);
+      },
     },
 
     // 通信用共通メソッド
@@ -786,13 +789,13 @@ document.addEventListener('alpine:init', () => {
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         return r.json();
       }).then(d => {
-        if (d.err) this.error(d.err);
-        else this.snackbar(d.success);
+        if (d.err) this.snackbar.add({ text: d.err, error: true });
+        else this.snackbar.add({ text: d.success });
       }).catch(err => {
         console.error('通信失敗:', err);
         // ctokエラーを想定してリロード
-        this.error('トークン切れ？リロードします');
-        location.reload();
+        const t = setTimeout(location.reload, 3000);
+        this.snackbar.add({ text: 'トークン切れ？リロードします', action: () => clearTimeout(t), time: 2500, error: true});
       });
     },
     toggleReserve(d) {

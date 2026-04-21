@@ -1282,9 +1282,14 @@ ct:Append([=[
     </ul>
   </dialog>
 
-  <div id="error-snackbar" class="snackbar error" x-html="snackbarText" style="word-break: break-word;"></div>
-  <div id="snackbar" class="snackbar" x-html="snackbarText" style="word-break: break-word;"></div>
-  <dialog id="debug" class="snackbar error bottom" x-html="confirmText" style="word-break: break-word;" @click="ui('#debug',0)"></dialog>
+  <div id="snackbar" class="snackbar" :class="{ error: active?.error }" x-data="snackbar">
+    <div class="max" x-text="active?.text"></div>
+    <template x-if="active?.action != null">
+      <a class="inverse-primary-text"
+         x-text="active?.action_text || 'キャンセル'" 
+         @click="active.action()"></a>
+    </template>
+  </div>
   <dialog id="macro" class="bottom">
     <header>
       <h6>マクロ一覧</h6>
