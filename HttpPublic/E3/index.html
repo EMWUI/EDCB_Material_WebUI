@@ -89,6 +89,12 @@ ct:Append([=[
         text-overflow: ellipsis;
       }
     }
+    .wrap.tiny-space {
+      row-gap: 0;
+      .middle-align {
+        gap: .2rem;
+      }
+    }
   </style>
 </head>
 
@@ -272,12 +278,12 @@ ct:Append([=[
             <img class="space right-margin tiny-margin" :src="getLogoPath(d)">
             <span class="" x-html="convert.title(d.title)"></span>
           </div>
-          <div class="secondary-text">
-            <span x-html="convert.date(d.startTime,true,true)"></span> | 
-            <span x-text="d.stationName"></span> | 
-            <i class="tiny">star</i><span x-text="d.recSetting.priority"></span> | 
-            <span x-text="d.size"></span>
-            <template x-if="d.comment"><span> | <span x-text="d.comment"></span></span></template>
+          <div class="row wrap tiny-space no-margin secondary-text no-line">
+            <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
+            <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.stationName"></span></span>
+            <span class="middle-align"><i class="tiny">star</i><span x-text="d.recSetting.priority"></span></span>
+            <span class="middle-align"><i class="tiny">storage</i><span x-text="d.size"></span></span>
+            <template x-if="d.comment"><span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span></template>
           </div>
         </div>
       </div>
@@ -328,9 +334,13 @@ ct:Append([=[
               </div>
               <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
                 <div class="title bold large-text" x-text="d.searchInfo?.andKey || '(全取得)'"></div>
-                <div class="secondary-text">
-                  <span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length + ' サービス' : '全サービス'"></span> |
-                  <span x-text="recModeText[d.recSetting?.recMode]"></span>
+                <div class="row wrap tiny-space no-margin secondary-text no-line">
+                  <span class="middle-align"><i class="tiny">block</i><span x-text="d.searchInfo.notKey"></span></span>
+                  <span class="middle-align"><i class="tiny">note</i><span x-text="d.searchInfo.note"></span></span>
+                  <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length : ''"></span></span>
+                  <span class="middle-align"><i class="tiny">category</i><span x-text="d.searchInfo?.contentList?.length > 0 ? d.searchInfo.contentList.length : '全'"></span></span>
+                  <span class="middle-align"><i class="tiny">search</i><span x-text="d.addCount"></span></span>
+                  <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span></span>
                 </div>
               </div>
             </div>
@@ -352,11 +362,11 @@ ct:Append([=[
               </div>
               <div class="max">
                 <div class="title bold large-text" x-html="d.title"></div>
-                <div class="secondary-text">
-                  <span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span> |
-                  <span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span> |
-                  <img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span> | 
-                  <span x-text="recModeText[d.recSetting?.recMode]"></span>
+                <div class="row wrap tiny-space no-margin secondary-text no-line">
+                  <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
+                  <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
+                  <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
+                  <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
                 </div>
               </div>
             </div>
@@ -379,12 +389,12 @@ ct:Append([=[
                     :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''"
                     x-html="convert.title(d.title)">
                 </div>
-                <div class="secondary-text">
-                  <span x-html="convert.date(d.startTime,true,true)"></span> | 
-                  <img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span> | 
-                  <span x-text="d.comment"></span>
-                  <span class="error-text" x-text="'(ドロップ: ' + d.drops + ')'" x-show="d.drops > 0"></span>
-                  <span class="error-text" x-text="'(スクランブル: ' + d.scrambles + ')'" x-show="d.scrambles > 0"></span>
+                <div class="row wrap tiny-space no-margin secondary-text no-line">
+                  <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
+                  <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
+                  <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
+                  <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
+                  <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
                 </div>
               </div>
             </div>
