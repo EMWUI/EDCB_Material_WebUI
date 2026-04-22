@@ -579,8 +579,8 @@ document.addEventListener('alpine:init', () => {
       } else {
         const r = this.allData.reserve.get(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`);
         if (r) {
-          this.detail.reserveID = d.reserveID;
-          this.detail.recSetting = d.recSetting;
+          this.detail.reserveID = r.reserveID;
+          this.detail.recSetting = r.recSetting;
         } else {
           this.detail.recSetting = this.allData.recpreset.get(0).recSetting;
         }
