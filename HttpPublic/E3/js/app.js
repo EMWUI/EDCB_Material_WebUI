@@ -40,6 +40,17 @@ document.addEventListener('alpine:init', () => {
       autoaddmanual: 0
     },
 
+    lastUpdated: {
+      epg: 0,
+      reserve: 0,
+      recinfo: 0,
+      autoaddepg: 0,
+      autoaddmanual: 0,
+      tunerreserve: 0,
+      service: 0,
+      recpreset: 0,
+    },
+
     set: {
       subGenre: false,
       genreMask: -1044262913,
@@ -79,6 +90,7 @@ document.addEventListener('alpine:init', () => {
       const saved = localStorage.getItem('edcb_full_cache');
       if (saved) {
         const cache = JSON.parse(saved);
+        if (cache.lastUpdated) this.lastUpdated = { ...this.lastUpdated, ...cache.lastUpdated };
         if (cache.totals) this.totals = { ...this.totals, ...cache.totals };
         if (cache.allData) {
           Object.entries(cache.allData).forEach(([key, list]) => {
@@ -187,6 +199,8 @@ document.addEventListener('alpine:init', () => {
         const map = this.allData[internalKey];
         map.clear();
         list.forEach(item => map.set(this.getDataKey(item, internalKey), item));
+        this.lastUpdated[internalKey] = Date.now();
+        if (internalKey === 'reserve') this.loadEpg();
         this.totals[internalKey] = data.total ?? list.length;
 
         // ダッシュボードや表示リストへの反映
@@ -212,6 +226,8 @@ document.addEventListener('alpine:init', () => {
         (serviceRes || []).forEach(s => this.allData.service.set(this.getDataKey(s, 'service'), s));
         this.allData.recpreset.clear();
         (presetRes || []).forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
+        this.lastUpdated.service = Date.now();
+        this.lastUpdated.recpreset = Date.now();
 
         // キャッシュを更新
         this.saveCache();
@@ -416,7 +432,7 @@ document.addEventListener('alpine:init', () => {
       return JSON.parse(JSON.stringify(obj));
     },
     saveCache() {
-      const cache = { totals: this.totals, allData: {} };
+      const cache = { totals: this.totals, lastUpdated: this.lastUpdated, allData: {} };
       Object.entries(this.allData).forEach(([key, map]) => {
         cache.allData[key] = Array.from(map.values());
       });
