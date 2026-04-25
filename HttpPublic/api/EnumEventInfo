@@ -10,7 +10,11 @@ if eid==0 then
   if startTime==0 then
     onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
   end
-  id={{onid=onid, tsid=tsid, sid=sid}}
+  if onid==65535 and tsid==65535 and sid==65535 then
+    id=SelectChDataList(edcb.GetChDataList())
+  else
+    id={{onid=onid, tsid=tsid, sid=sid}}
+  end
 end
 
 edcb.htmlEscape=json and 0 or 15
@@ -67,24 +71,26 @@ else
   --一覧
   range=GetVarTimeRange(mg.request_info.query_string)
   a=edcb.EnumEventInfo(id,range)
-  if a and #a~=0 and range then
+  if range then
     for i,v in ipairs(edcb.EnumEventInfoArchive(id,range)) do
       v.past=true
       a[#a+1]=v
     end
-    table.sort(a,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
-    --指定時刻跨ぎの番組を探す
-    if a[1].startTime and os.time(a[1].startTime)>os.time(range.startTime) then
-      range={startTime=os.date('!*t',TimeWithZone(range.startTime)-24*3600), durationSecond=24*3600}
-      b=edcb.EnumEventInfo(id,range)
-      for i,v in ipairs(edcb.EnumEventInfoArchive(id,range)) do
-        v.past=true
-        b[#b+1]=v
-      end
-      table.sort(b,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
-      b=b[#b]
-      if b.startTime and b.durationSecond and os.time(b.startTime)+b.durationSecond==os.time(a[1].startTime) then
-        table.insert(a,1,b)
+    if a and #a~=0 then
+      table.sort(a,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
+      --指定時刻跨ぎの番組を探す
+      if a[1].startTime and os.time(a[1].startTime)>os.time(range.startTime) and #id==1 then
+        range={startTime=os.date('!*t',TimeWithZone(range.startTime)-24*3600), durationSecond=24*3600}
+        b=edcb.EnumEventInfo(id,range)
+        for i,v in ipairs(edcb.EnumEventInfoArchive(id,range)) do
+          v.past=true
+          b[#b+1]=v
+        end
+        table.sort(b,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
+        b=b[#b]
+        if b.startTime and b.durationSecond and os.time(b.startTime)+b.durationSecond==os.time(a[1].startTime) then
+          table.insert(a,1,b)
+        end
       end
     end
   end
