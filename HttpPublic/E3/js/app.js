@@ -78,7 +78,21 @@ document.addEventListener('alpine:init', () => {
     async init() {
       setInterval(() => this.now = Date.now(), 1000);
       this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
+
+      const d = new Date(this.now);
+      d.setMinutes(0, 0, 0);
+      this.epg.epgStartTime = d.getTime();
+
+      this.epg.minTime = EPG_MIN_TIME;
+      this.epg.maxTime = EPG_MAX_TIME;
+
       window.addEventListener('hashchange', () => {
+        // ページ移動時はクエリをリセット
+        if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
+        this.page = window.location.hash || '#dashboard';
+        this.loadAll();
+      });
+      window.addEventListener('popstate', () => {
         this.page = window.location.hash || '#dashboard';
         this.loadAll();
       });
@@ -91,14 +105,40 @@ document.addEventListener('alpine:init', () => {
       if (saved) {
         const cache = JSON.parse(saved);
         if (cache.lastUpdated) this.lastUpdated = { ...this.lastUpdated, ...cache.lastUpdated };
+        if (cache.networkMask) this.epg.networkMask = cache.networkMask | 1;
         if (cache.totals) this.totals = { ...this.totals, ...cache.totals };
         if (cache.allData) {
           Object.entries(cache.allData).forEach(([key, list]) => {
             if (this.allData[key] instanceof Map) {
-              list.forEach(item => this.allData[key].set(this.getDataKey(item, key), item));
+              list.forEach(val => {
+                if (key === 'epg' && Array.isArray(val) && val.length > 0) {
+                  // 局ごとのMapとして復元
+                  const serviceId = `${val[0].onid}-${val[0].tsid}-${val[0].sid}`;
+                  this.allData.epg.set(serviceId, new Map(val.map(v => [v.eid, v])));
+                } else {
+                  this.allData[key].set(this.getDataKey(val, key), val);
+                }
+              });
             }
           });
+          // キャッシュから復元したデータの時間範囲を特定（コア範囲）
+          let min = Infinity, max = 0;
+          this.allData.epg.forEach(m => m.forEach(v => {
+            min = Math.min(min, v.startTimeInt);
+            max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
+          }));
+          this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
         }
+        // 「すべて」(bit 0)を保証
+        if ((this.epg.networkMask & 1) === 0) this.epg.networkMask |= 1;
+        // キャッシュに他ネットワークの情報がない場合、データから再計算
+        if (this.epg.networkMask === 1 && this.allData.epg.size > 0) {
+          this.allData.epg.forEach((_, serviceId) => {
+            const s = this.allData.service.get(serviceId);
+            if (s) this.epg.networkMask |= (1 << this.getNetworkIndex(s.onid, s.partialReceptionFlag));
+          });
+        }
+
         this.syncDashboardData();
         this.updateStorage();
       }
@@ -145,7 +185,8 @@ document.addEventListener('alpine:init', () => {
             this.refreshData('#recinfo'),
             this.refreshData('#autoaddepg'),
             this.refreshData('#autoaddmanual'),
-            this.updateTunerStatus()
+            this.updateTunerStatus(),
+            this.refreshEpg()
           ]);
         } catch (e) {
           console.error("Reconnection sync failed", e);
@@ -161,10 +202,7 @@ document.addEventListener('alpine:init', () => {
         const data = JSON.parse(e.data);
         
         // 通知が来たら pageMap に基づいて再取得
-        if (data.epg) {
-          this.allData.epg.clear();
-          this.saveCache();
-        }
+        if (data.epg) await this.refreshEpg();
         if (data.reserve) {
           await Promise.all([
             this.refreshData('#reserve'),
@@ -213,6 +251,97 @@ document.addEventListener('alpine:init', () => {
         console.error(`Refresh failed for ${pageHash}`, e);
       }
     },
+    async refreshEpg() {
+      try {
+        // 現在時刻の6時間前から取得を開始
+        const d = new Date(this.now - 6 * 3600 * 1000);
+        const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        const hour = d.getHours();
+        const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=36`;
+
+        // id65535-65535-65535でリクエストを1回だけ送り、全サービスの番組情報を取得する
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535${rangeQuery}`);
+
+        const list = await res.json();
+
+        if (list.err) throw new Error(list.err);
+
+        const grouped = new Map();
+        let mask = 1; // 'すべて' (index 0) は常に有効
+        (Array.isArray(list) ? list : []).forEach(v => {
+          // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
+          v.startTimeInt = new Date(v.startTime).getTime();
+          const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
+
+          const s = this.allData.service.get(serviceId);
+          if (s) {
+            mask |= (1 << this.getNetworkIndex(s.onid, s.partialReceptionFlag));
+          }
+
+          if (!grouped.has(serviceId)) {
+            grouped.set(serviceId, new Map());
+          }
+          grouped.get(serviceId).set(v.eid, v);
+        });
+
+        this.allData.epg = grouped;
+
+        // コアキャッシュの範囲を更新
+        let min = Infinity, max = 0;
+        grouped.forEach(m => m.forEach(v => {
+          min = Math.min(min, v.startTimeInt);
+          max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
+        }));
+        this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
+
+        this.lastUpdated.epg = Date.now();
+        this.epg.networkMask = mask;
+        this.saveCache();
+
+        // this.snackbar.add({ text: 'EPG updated' });
+
+        this.loadEpg();
+      } catch (e) {
+        console.error("Failed to refresh epg", e);
+      }
+    },
+    // 指定範囲のEPGを単発取得し、再利用可能な形でメモリに保持する
+    async fetchEpgForRange(startTime) {
+      this.loading = true;
+      try {
+        // 指定時間の3時間前から取得を開始
+        const d = new Date(startTime - 3 * 3600 * 1000);
+        let hour = d.getHours();
+        // 4時を日またぎの基準とするAPIの仕様（0-3時を前日の24-27時として扱う）に合わせる
+        if (hour < 4) {
+          d.setDate(d.getDate() - 1);
+          hour += 24;
+        }
+        const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        // 27時間分を取得
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535&date=${dateStr}&hour=${hour}&interval=27`);
+        const list = await res.json();
+        
+        if (list.err) throw new Error(list.err);
+
+        const grouped = new Map();
+        (Array.isArray(list) ? list : []).forEach(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
+          if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
+          grouped.get(serviceId).set(v.eid, v);
+        });
+
+        // 再利用可能な形式で保存（例: '2026-1-1-4'）
+        const key = this.getEpgKey(startTime);
+        this.epg.extraData.set(key, grouped);
+        this.loadEpg();
+      } catch (e) {
+        console.error("Failed to fetch epg for range", e);
+      } finally {
+        this.loading = false;
+      }
+    },
     async refreshStaticData() {
       this.loading = true;
       try {
@@ -247,6 +376,54 @@ document.addEventListener('alpine:init', () => {
       if (this.page === '#dashboard') {
         this.syncDashboardData();
         //if (this.isOnline) await this.updateStorage();
+        return;
+      }
+      if (this.page === '#epg') {
+        const params = new URLSearchParams(window.location.search);
+        // タブ選択の同期
+        const tab = parseInt(params.get('tab'));
+        if (!isNaN(tab)) this.epg.activeNetwork = tab;
+
+        // 放送日付の基準（4時を境界とする）
+        const nowD = new Date(this.now);
+        let base = new Date(this.now);
+        if (base.getHours() < 4) base.setDate(base.getDate() - 1);
+        base.setHours(4, 0, 0, 0);
+
+        const dateParam = params.get('date');
+        const hourParam = params.get('hour');
+
+        let d;
+        if (dateParam === null) {
+          // 指定なし：現在の時間（1時間境界）
+          d = new Date(this.now);
+          d.setMinutes(0, 0, 0);
+        } else if (/^-?\d+$/.test(dateParam)) {
+          // 相対指定（0:今日, 1:明日...）
+          const offset = parseInt(dateParam);
+          // 今日(0)かつhour指定なしなら現在時刻、それ以外なら04:00開始
+          if (offset === 0 && hourParam === null) {
+            d = new Date(this.now);
+            d.setMinutes(0, 0, 0, 0);
+          } else {
+            d = new Date(base);
+            d.setDate(d.getDate() + offset);
+            d.setHours(4, 0, 0, 0);
+          }
+        } else {
+          // 絶対指定（YYYY-MM-DD）
+          d = new Date(dateParam);
+          if (isNaN(d.getTime())) d = new Date(this.now);
+          d.setHours(4, 0, 0, 0);
+        }
+
+        if (hourParam !== null) {
+          const h = parseInt(hourParam);
+          if (!isNaN(h)) d.setHours(h, 0, 0, 0);
+        }
+        this.epg.epgStartTime = d.getTime();
+
+        this.loadEpg();
         return;
       }
       this.updateDisplayList();
@@ -356,7 +533,7 @@ document.addEventListener('alpine:init', () => {
 
           // 追加分をソート
           this.sortList(newList, config);
-          
+
           // 【重要】allData(キャッシュ)自体を更新する
           // これにより、他のページから参照しているデータも拡張される
           newList.forEach(item => this.allData[internalKey].set(this.getDataKey(item, internalKey), item));
@@ -432,9 +609,14 @@ document.addEventListener('alpine:init', () => {
       return JSON.parse(JSON.stringify(obj));
     },
     saveCache() {
-      const cache = { totals: this.totals, lastUpdated: this.lastUpdated, allData: {} };
+      const cache = { totals: this.totals, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, allData: {} };
       Object.entries(this.allData).forEach(([key, map]) => {
-        cache.allData[key] = Array.from(map.values());
+        if (key === 'epg') {
+          // serviceId毎のMapを配列に戻して保存
+          cache.allData[key] = Array.from(map.values()).map(m => Array.from(m.values()));
+        } else {
+          cache.allData[key] = Array.from(map.values());
+        }
       });
       localStorage.setItem('edcb_full_cache', JSON.stringify(cache));
     },
@@ -460,12 +642,23 @@ document.addEventListener('alpine:init', () => {
       return d.id || d.reserveID || d.dataID;
     },
     async getEpgById(id) {
-      let epg = this.allData.epg.get(id);
+      // id: "onid-tsid-sid-eid"
+      const parts = id.split('-');
+      if (parts.length < 4) return null;
+
+      const serviceId = parts.slice(0, 3).join('-');
+      const eid = parseInt(parts[3]);
+
+      // ネストした Map から取得
+      const serviceMap = this.allData.epg.get(serviceId);
+      let epg = serviceMap ? serviceMap.get(eid) : null;
+
       if (!epg && this.isOnline) {
         try{
           this.loading = true;
           epg = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
-          if (epg) this.allData.epg.set(id, epg);
+          // 単発取得時は既存の配列を汚さないよう個別に扱うか検討が必要ですが、
+          // 基本的に refreshEpg で一括取得されている前提とします
         } catch (e) {
           console.error(e);
         } finally {
@@ -523,8 +716,278 @@ document.addEventListener('alpine:init', () => {
     getServiceName(d) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || '不明';
     },
+    getNetworkIndex(onid, partial) {
+      if (0x7880 <= onid && onid <= 0x7FE8) return partial ? 2 : 1;
+      if (onid === 4) return 3;
+      if (onid === 11) return 4;
+      if (!this.divCS && (onid === 6 || onid === 7)) return 5;
+      if (onid === 6) return 6;
+      if (onid === 7) return 7;
+      if (onid === 10) return 8;
+      return 9;
+    },
     getDefSearchService(){
       return [...document.getElementById('serviceList-template').content.querySelectorAll('.def')].map(e => e.value);
+    },
+
+    epg: {
+      epgMinHeight: 4,
+      epgStartTime: 0,
+      minTime: 0,
+      maxTime: 0,
+      servicesToDisplay: [],
+      activeNetwork: 1,
+      networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
+      networkMask: 1,
+      lastLoadedNetwork: -1,
+      coreRange: { start: 0, end: 0 },
+      extraData: new Map(), // 追加取得したデータの保管庫
+      lastLoadedData: 0,
+      lastLoadedReserve: 0,
+      loadId: 0,
+      lastLoadedKey: '',
+    },
+    getEpgKey(time) {
+      const d = new Date(time);
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
+    },
+    loadEpg(){
+      const gridStart = this.epg.epgStartTime;
+      const gridEnd = gridStart + 24 * 3600 * 1000;
+      const slotKey = this.getEpgKey(gridStart);
+
+      // データソースの決定
+      let dataMap = null;
+      if (gridStart >= this.epg.coreRange.start && gridEnd <= this.epg.coreRange.end) {
+        dataMap = this.allData.epg;
+      } else {
+        dataMap = this.epg.extraData.get(slotKey);
+        // キャッシュになければ取得
+        if (!dataMap && this.isOnline) {
+          this.fetchEpgForRange(gridStart);
+          return;
+        }
+      }
+
+      // 基準時間、ネットワークフィルタ、EPGデータ更新のいずれも変化がなければ処理をスキップ
+      if (this.epg.lastLoadedStart === gridStart &&
+          this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
+          this.epg.lastLoadedData === this.lastUpdated.epg &&
+          this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
+          this.epg.lastLoadedKey === slotKey &&
+          this.epg.servicesToDisplay.length > 0) {
+        return;
+      }
+      const timeChanged = this.epg.lastLoadedStart !== gridStart;
+      const networkChanged = this.epg.lastLoadedNetwork !== this.epg.activeNetwork;
+
+      // 中断と新規 ID 発行
+      const currentLoadId = ++this.epg.loadId;
+      this.epg.lastLoadedStart = gridStart;
+      this.epg.lastLoadedNetwork = this.epg.activeNetwork;
+      this.epg.lastLoadedData = this.lastUpdated.epg;
+      this.epg.lastLoadedReserve = this.lastUpdated.reserve;
+      this.epg.lastLoadedKey = slotKey;
+
+      // 1. サービスリストの準備
+      if (networkChanged || this.epg.servicesToDisplay.length === 0) {
+        let services = Array.from(this.allData.service.values());
+        if (this.epg.activeNetwork > 0) {
+          services = services.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === this.epg.activeNetwork);
+        }
+        this.epg.servicesToDisplay = services.map((s, i, arr) => {
+          const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
+          const prev = arr[i - 1];
+          const isSub = (ni === 1 || ni === 3) && prev && s.onid === prev.onid && s.tsid === prev.tsid;
+          return { ...s, subCh: isSub, displayEvents: [] };
+        });
+      } else if (timeChanged) {
+        // 時間枠（1時間ごとの境界）が変わった場合のみクリアする。
+        this.epg.servicesToDisplay.forEach(s => s.displayEvents = []);
+      }
+
+      // 代入後にプロキシ化された参照を取得する（比較用）
+      const currentServices = this.epg.servicesToDisplay;
+
+      if (timeChanged || networkChanged) document.querySelector('main').scrollTo(0,0);
+
+      // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
+      let index = 0;
+
+      const processNext = () => {
+        // 別の loadEpg (フィルタ切り替え等) が開始されていたらこのループを中止
+        if (this.epg.loadId !== currentLoadId) return;
+
+        const frameStart = performance.now();
+
+        while (index < currentServices.length) {
+          const s = currentServices[index];
+          const serviceId = this.getDataKey(s, 'service');
+          const eventMap = dataMap ? dataMap.get(serviceId) : null;
+          const displayEvents = [];
+          let lastPos = gridStart;
+
+          if (eventMap) {
+            for (const v of eventMap.values()) {
+              const start = v.startTimeInt;
+              const end = start + (v.durationSecond * 1000);
+              if (end <= gridStart || start >= gridEnd) continue;
+
+              // サーバー側で時間順にソート済みのため、表示枠を超えたらこの局の計算は終了できる
+              if (start >= gridEnd) break;
+              if (end <= gridStart) continue;
+
+              const vStart = Math.max(start, gridStart);
+              const vEnd = Math.min(end, gridEnd);
+              const startMin = Math.floor((vStart - gridStart) / 60000);
+              const endMin = Math.floor((vEnd - gridStart) / 60000);
+              const lastMin = Math.floor((lastPos - gridStart) / 60000);
+
+              if (startMin < lastMin) continue;
+              if (startMin > lastMin) {
+                displayEvents.push({ isGap: true, minutes: startMin - lastMin });
+              }
+              const minutes = endMin - startMin;
+              if (minutes > 0) {
+                const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+                displayEvents.push({ ...v, isGap: false, minutes, reserve });
+                lastPos = Math.max(lastPos, vEnd);
+              }
+            }
+          }
+
+        const finalMin = Math.floor((gridEnd - gridStart) / 60000);
+        const lastMin = Math.floor((lastPos - gridStart) / 60000);
+        if (finalMin > lastMin) {
+          displayEvents.push({ isGap: true, minutes: finalMin - lastMin });
+        }
+
+          // リアクティブに個別の番組リストを更新
+          currentServices[index].displayEvents = displayEvents;
+          index++;
+
+          // 予算を4msに短縮。残りの12ms程度をブラウザの描画（プログレスバー等）に明け渡す。
+          if (performance.now() - frameStart > 4) {
+            setTimeout(processNext, 0);
+            return;
+          }
+        }
+      };
+      setTimeout(processNext, 0);
+    },
+    // ネットワーク（タブ）を切り替え、履歴に追加する
+    setNetwork(index) {
+      if (this.epg.activeNetwork === index) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', index);
+      history.pushState(null, '', url.toString());
+      this.epg.activeNetwork = index;
+      this.loadEpg();
+    },
+    // 日付を前後にずらす (24時間単位)
+    shiftDate(days) {
+      const target = this.epg.epgStartTime + days * 24 * 3600 * 1000;
+      if (target < this.epg.minTime || target > this.epg.maxTime) return;
+      
+      const d = new Date(target);
+      this.setDate(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`, d.getHours());
+    },
+    // 移動可能か判定
+    canShift(days) {
+      const target = this.epg.epgStartTime + days * 24 * 3600 * 1000;
+      return target >= this.epg.minTime && target <= this.epg.maxTime;
+    },
+    // 表示中の日を基準にした日付リストを取得（前後10日間、かつ有効範囲内）
+    getEpgDateList() {
+      const current = new Date(this.epg.epgStartTime);
+      if (current.getHours() < 4) current.setDate(current.getDate() - 1);
+      current.setHours(4, 0, 0, 0);
+
+      const list = [];
+      for (let i = -2; i <= 7; i++) {
+        const d = new Date(current.getTime());
+        d.setDate(d.getDate() + i);
+        if (d.getTime() >= this.epg.minTime && d.getTime() <= this.epg.maxTime) {
+          list.push(d);
+        }
+      }
+      return list;
+    },
+    // 指定の日付・時間に移動する
+    setDate(date, hour) {
+      const url = new URL(window.location.href);
+      if (date instanceof Date) {
+        const d = date;
+        date = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        hour = d.getHours();
+      }
+      url.searchParams.set('date', date);
+      if (hour !== undefined && hour !== null) url.searchParams.set('hour', hour);
+      else url.searchParams.delete('hour');
+      history.pushState(null, '', url.toString());
+      this.loadAll();
+    },
+    // ヘッダー表示用の日付テキスト
+    getEpgDateText() {
+      if (!this.epg.epgStartTime) return '';
+      const d = new Date(this.epg.epgStartTime);
+      const h = d.getHours();
+      // 4時までは前日扱いとして表示
+      const logical = new Date(d.getTime());
+      if (h < 4) logical.setDate(logical.getDate() - 1);
+      return `${logical.getMonth() + 1}/${logical.getDate()}(${this.dayText[logical.getDay()]})`;
+    },
+    // メニュー用の相対日付ラベル
+    getDateLabel(targetDate) {
+      const target = new Date(targetDate.getTime());
+      if (target.getHours() < 4) target.setDate(target.getDate() - 1);
+      target.setHours(4, 0, 0, 0);
+
+      const d = new Date(this.now);
+      if (d.getHours() < 4) d.setDate(d.getDate() - 1);
+      d.setHours(4, 0, 0, 0);
+
+      const diff = Math.round((target.getTime() - d.getTime()) / (24 * 3600 * 1000));
+      const m = target.getMonth() + 1;
+      const date = target.getDate();
+      const w = this.dayText[target.getDay()];
+      return `${m}/${date}(${w})`;
+    },
+    // 表示している日付（offset）が現在選択されているものか判定
+    isDateActive(targetDate) {
+      if (!this.epg.epgStartTime) return false;
+
+      const target = new Date(targetDate.getTime());
+      if (target.getHours() < 4) target.setDate(target.getDate() - 1);
+      target.setHours(4, 0, 0, 0);
+
+      // 現在表示中の論理日
+      const currentShowDay = new Date(this.epg.epgStartTime);
+      if (currentShowDay.getHours() < 4) currentShowDay.setDate(currentShowDay.getDate() - 1);
+      currentShowDay.setHours(4, 0, 0, 0);
+
+      return target.getTime() === currentShowDay.getTime();
+    },
+    // 現在時刻の線の位置（px）を取得。範囲外なら -1
+    getNowLinePos() {
+      const start = this.epg.epgStartTime;
+      const end = start + 24 * 3600 * 1000;
+      if (this.now < start || this.now > end) return -1;
+      return Math.floor((this.now - start) / 60000) * this.epg.epgMinHeight;
+    },
+    // 現在時刻の位置までスクロールする
+    scrollToNow() {
+      const pos = this.getNowLinePos();
+      if (pos < 0) {
+        // 表示範囲外なら「今日」へ移動（loadAllが走り、現在時刻開始のグリッドになる）
+        this.setDate(0);
+      } else {
+        // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
+        const main = document.querySelector('main');
+        if (main) {
+          main.scrollTo({ top: pos - this.epg.epgMinHeight * 15, behavior: 'smooth' });
+        }
+      }
     },
 
     detail: {},
@@ -571,9 +1034,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     // 番組詳細を開くメイン関数
-    openNewEntry(){
+    openNewEntry(e){
       this.detail = { recSetting: this.allData.recpreset.get(0).recSetting };
-      if (this.page == '#autoaddepg') this.detail.searchInfo = {};
+      if (e)  this.detail.searchInfo = { andKey: e.shortInfo.event_name, serviceList: [{onid: e.onid, tsid: e.tsid, sid: e.sid }] };
+      else if (this.page == '#autoaddepg') this.detail.searchInfo = {};
       else if (this.page == '#autoaddmanual') this.detail.dataID = 0;
       else this.detail.eid = 65535;
 
@@ -588,7 +1052,7 @@ document.addEventListener('alpine:init', () => {
       else ui("#info");
       this.sidePanel.show();
 
-      if (d.archive || d.eid === 65535) return;
+      if (d.past ||  d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
 
       if (d.reserveID){
         this.detail = { ...d, ...await this.getEpgById(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`)||{} };
@@ -813,6 +1277,10 @@ document.addEventListener('alpine:init', () => {
         const t = setTimeout(location.reload, 3000);
         this.snackbar.add({ text: 'トークン切れ？リロードします', action: () => clearTimeout(t), time: 2500, error: true});
       });
+    },
+    addReserve(e) {
+      const fd = new URLSearchParams({ id: `${e.onid}-${e.tsid}-${e.sid}-${e.eid}`, oneClick: 1 });
+      this.apiFetch(`${this.ROOT}api/SetReserve`, fd, 'GET');
     },
     toggleReserve(d) {
       const fd = new URLSearchParams({ id: d.reserveID, toggle: Number(!d.recSetting.recEnabled) });
