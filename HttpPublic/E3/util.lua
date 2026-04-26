@@ -1,3 +1,5 @@
+ver='0.2.1'
+
 --Windowsかどうか
 WIN32=not package.config:find('^/')
 
@@ -9,7 +11,6 @@ DIR_SEP=WIN32 and '\\' or '/'
 
 dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
-ver='0.2.0'
 rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
 
 -- ナビゲーション項目の定義

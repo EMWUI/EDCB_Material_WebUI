@@ -1,4 +1,56 @@
 document.addEventListener('alpine:init', () => {
+  // ARIB ジャンル・コンポーネント定義データ EpgTimerUtil.cppより
+  const ARIB_GENRE = {
+    l1: { 0x0:'ニュース／報道', 0x1:'スポーツ', 0x2:'情報／ワイドショー', 0x3:'ドラマ', 0x4:'音楽', 0x5:'バラエティ', 0x6:'映画', 0x7:'アニメ／特撮', 0x8:'ドキュメンタリー／教養', 0x9:'劇場／公演', 0xA:'趣味／教育', 0xB:'福祉', 0xE:'拡張', 0xF:'その他' },
+    l2: {
+      0x0: {0:'定時・総合', 1:'天気', 2:'特集・ドキュメント', 3:'政治・国会', 4:'経済・市況', 5:'海外・国際', 6:'解説', 7:'討論・会談', 8:'報道特番', 9:'ローカル・地域', 10:'交通', 15:'その他'},
+      0x1: {0:'スポーツニュース', 1:'野球', 2:'サッカー', 3:'ゴルフ', 4:'その他の球技', 5:'相撲・格闘技', 6:'オリンピック・国際大会', 7:'マラソン・陸上・水泳', 8:'モータースポーツ', 9:'マリン・ウィンタースポーツ', 10:'競馬・公営競技', 15:'その他'},
+      0x2: {0:'芸能・ワイドショー', 1:'ファッション', 2:'暮らし・住まい', 3:'健康・医療', 4:'ショッピング・通販', 5:'グルメ・料理', 6:'イベント', 7:'番組紹介・お知らせ', 15:'その他'},
+      0x3: {0:'国内ドラマ', 1:'海外ドラマ', 2:'時代劇', 15:'その他'},
+      0x4: {0:'国内ロック・ポップス', 1:'海外ロック・ポップス', 2:'クラシック・オペラ', 3:'ジャズ・フュージョン', 4:'歌謡曲・演歌', 5:'ライブ・コンサート', 6:'ランキング・リクエスト', 7:'カラオケ・のど自慢', 8:'民謡・邦楽', 9:'童謡・キッズ', 10:'民族音楽・ワールドミュージック', 15:'その他'},
+      0x5: {0:'クイズ', 1:'ゲーム', 2:'トークバラエティ', 3:'お笑い・コメディ', 4:'音楽バラエティ', 5:'旅バラエティ', 6:'料理バラエティ', 15:'その他'},
+      0x6: {0:'洋画', 1:'邦画', 2:'アニメ', 15:'その他'},
+      0x7: {0:'国内アニメ', 1:'海外アニメ', 2:'特撮', 15:'その他'},
+      0x8: {0:'社会・時事', 1:'歴史・紀行', 2:'自然・動物・環境', 3:'宇宙・科学・医学', 4:'カルチャー・伝統文化', 5:'文学・文芸', 6:'スポーツ', 7:'ドキュメンタリー全般', 8:'インタビュー・討論', 15:'その他'},
+      0x9: {0:'現代劇・新劇', 1:'ミュージカル', 2:'ダンス・バレエ', 3:'落語・演芸', 4:'歌舞伎・古典', 15:'その他'},
+      0xA: {0:'旅・釣り・アウトドア', 1:'園芸・ペット・手芸', 2:'音楽・美術・工芸', 3:'囲碁・将棋', 4:'麻雀・パチンコ', 5:'車・オートバイ', 6:'コンピュータ・ＴＶゲーム', 7:'会話・語学', 8:'幼児・小学生', 9:'中学生・高校生', 10:'大学生・受験', 11:'生涯教育・資格', 12:'教育問題', 15:'その他'},
+      0xB: {0:'高齢者', 1:'障害者', 2:'社会福祉', 3:'ボランティア', 4:'手話', 5:'文字（字幕）', 6:'音声解説', 15:'その他'},
+      0x60: {0:'中止の可能性あり', 1:'延長の可能性あり', 2:'中断の可能性あり', 3:'別話数放送の可能性あり', 4:'編成未定枠', 5:'繰り上げの可能性あり', 0xFF:'編成情報'},
+      0x61: {0:'中断ニュースあり', 1:'臨時サービスあり', 0xFF:'特性情報'},
+      0x62: {0:'3D映像あり', 0xFF:'3D映像'},
+      0x70: {0:'テニス', 1:'バスケットボール', 2:'ラグビー', 3:'アメリカンフットボール', 4:'ボクシング', 5:'プロレス', 15:'その他', 0xFF:'スポーツ(CS)'},
+      0x71: {0:'アクション', 1:'SF／ファンタジー', 2:'コメディー', 3:'サスペンス／ミステリー', 4:'恋愛／ロマンス', 5:'ホラー／スリラー', 6:'ウエスタン', 7:'ドラマ／社会派ドラマ', 8:'アニメーション', 9:'ドキュメンタリー', 10:'アドベンチャー／冒険', 11:'ミュージカル／音楽映画', 12:'ホームドラマ', 15:'その他', 0xFF:'洋画(CS)'},
+      0x72: {0:'アクション', 1:'SF／ファンタジー', 2:'お笑い／コメディー', 3:'サスペンス／ミステリー', 4:'恋愛／ロマンス', 5:'ホラー／スリラー', 6:'青春／学園／アイドル', 7:'任侠／時代劇', 8:'アニメーション', 9:'ドキュメンタリー', 10:'アドベンチャー／冒険', 11:'ミュージカル／音楽映画', 12:'ホームドラマ', 15:'その他', 0xFF:'邦画(CS)'},
+    }
+  };
+
+  const ARIB_COMPONENT = {
+    // Video (MPEG-2)
+    0x0101:['480i', '4:3', false], 0x0102:['480i', '16:9', true], 0x0103:['480i', '16:9', false], 0x0104:['480i', '>16:9', false],
+    0x0191:['2160p', '4:3', false], 0x0192:['2160p', '16:9', true], 0x0193:['2160p', '16:9', false], 0x0194:['2160p', '>16:9', false],
+    0x01A1:['480p', '4:3', false], 0x01A2:['480p', '16:9', true], 0x01A3:['480p', '16:9', false], 0x01A4:['480p', '>16:9', false],
+    0x01B1:['1080i', '4:3', false], 0x01B2:['1080i', '16:9', true], 0x01B3:['1080i', '16:9', false], 0x01B4:['1080i', '>16:9', false],
+    0x01C1:['720p', '4:3', false], 0x01C2:['720p', '16:9', true], 0x01C3:['720p', '16:9', false], 0x01C4:['720p', '>16:9', false],
+    0x01D1:['240p', '4:3', false], 0x01D2:['240p', '16:9', true], 0x01D3:['240p', '16:9', false], 0x01D4:['240p', '>16:9', false],
+    0x01E1:['1080p', '4:3', false], 0x01E2:['1080p', '16:9', true], 0x01E3:['1080p', '16:9', false], 0x01E4:['1080p', '>16:9', false],
+    // Video (H.264/AVC)
+    0x0501:['H.264 480i', '4:3', false], 0x0502:['H.264 480i', '16:9', true], 0x0503:['H.264 480i', '16:9', false], 0x0504:['H.264 480i', '>16:9', false],
+    0x0591:['H.264 2160p', '4:3', false], 0x0592:['H.264 2160p', '16:9', true], 0x0593:['H.264 2160p', '16:9', false], 0x0594:['H.264 2160p', '>16:9', false],
+    0x05A1:['H.264 480p', '4:3', false], 0x05A2:['H.264 480p', '16:9', true], 0x05A3:['H.264 480p', '16:9', false], 0x05A4:['H.264 480p', '>16:9', false],
+    0x05B1:['H.264 1080i', '4:3', false], 0x05B2:['H.264 1080i', '16:9', true], 0x05B3:['H.264 1080i', '16:9', false], 0x05B4:['H.264 1080i', '>16:9', false],
+    0x05C1:['H.264 720p', '4:3', false], 0x05C2:['H.264 720p', '16:9', true], 0x05C3:['H.264 720p', '16:9', false], 0x05C4:['H.264 720p', '>16:9', false],
+    0x05D1:['H.264 240p', '4:3', false], 0x05D2:['H.264 240p', '16:9', true], 0x05D3:['H.264 240p', '16:9', false], 0x05D4:['H.264 240p', '>16:9', false],
+    0x05E1:['H.264 1080p', '4:3', false], 0x05E2:['H.264 1080p', '16:9', true], 0x05E3:['H.264 1080p', '16:9', false], 0x05E4:['H.264 1080p', '>16:9', false],
+    // Video (H.265/HEVC)
+    0x0982:['H.265 1080i', '16:9', false], 0x09B2:['H.265 1080p', '16:9', false], 0x0993:['H.265 2160p', '16:9', false], 0x0983:['H.265 4320p', '16:9', false],
+    // Audio
+    0x0201:['1/0', 'シングルモノ'], 0x0202:['1/0+1/0', 'デュアルモノ'], 0x0203:['2/0', 'ステレオ'], 0x0204:['2/1', ''], 0x0205:['3/0', ''],
+    0x0206:['2/2', ''], 0x0207:['3/1', ''], 0x0208:['3/2', ''], 0x0209:['3/2+LFE', '3/2.1モード'], 0x020A:['3/3.1', ''],
+    0x020B:['2/0/0-2/0/2-0.1', ''], 0x020C:['5/2.1', ''], 0x020D:['3/2/2.1', ''], 0x020E:['2/0/0-3/0/2-0.1', ''],
+    0x020F:['0/2/0-3/0/2-0.1', ''], 0x0210:['2/0/0-3/2/3-0.2', ''], 0x0211:['3/3/3-5/2/3-3/0/0.2', ''],
+    0x0240:['', '視覚障害者用音声解説'], 0x0241:['', '聴覚障害者用音声']
+  };
+
   const  dayText = ['日','月','火','水','木','金','土'];
   Alpine.data('edcbApp', () => ({
     debug: true,
@@ -667,7 +719,52 @@ document.addEventListener('alpine:init', () => {
       }
       return epg;
     },
-
+    getGenre(w) {
+      if (!w || w.content_nibble === undefined) return { nibble1: 15, nibble2: 15, name1: '', name2: '' };
+      let ln = w.content_nibble;
+      if (ln === 0x0E00) ln = (w.user_nibble || 0) + 0x6000;
+      else if (ln === 0x0E01) ln = (w.user_nibble || 0) + 0x7000;
+      const ln1 = (ln >> 8) & 0xFF;
+      const ln2 = ln & 0xFF;
+      return {
+        nibble1: (w.content_nibble >> 8) & 0xFF,
+        nibble2: w.content_nibble & 0xFF,
+        name1: ARIB_GENRE.l1[ln1] || ARIB_GENRE.l2[ln1]?.[0xFF] || '',
+        name2: ARIB_GENRE.l2[ln1]?.[ln2] || ''
+      };
+    },
+    getComponent(info) {
+      const empty = { text: '', toString() { return ''; } };
+      if (!info) return empty;
+      if (info.quality || info.aspect || info.mode) return info;
+      if (typeof info.component_type_name === 'string') return { text: info.component_type_name, text_char: info.text_char, toString() { return this.text; } };
+      if (info.stream_content === undefined) return empty;
+      const id = (info.stream_content << 8) | info.component_type;
+      const data = ARIB_COMPONENT[id];
+      if (Array.isArray(data)) {
+        if (info.stream_content !== 2) {
+          // Video: [resolution, aspect, pan]
+          return {
+            quality: data[0],
+            aspect: data[1],
+            pan: data[2],
+            text: `${data[0]}、アスペクト比${data[1]} パンベクトル${data[2] ? 'あり' : 'なし'}`,
+            text_char: info.text_char,
+            toString() { return this.text; }
+          };
+        } else {
+          // Audio: [mode, info]
+          return {
+            mode: data[0],
+            info: data[1],
+            text: data[0] + (data[0] && data[1] ? ` (${data[1]})` : data[1]),
+            text_char: info.text_char,
+            toString() { return this.text; }
+          };
+        }
+      }
+      return { text: data || `タイプ 0x${id.toString(16)}`, toString() { return this.text; } };
+    },
     recModeText: ['全サービス','指定サービス','全サービス（デコード処理なし）','指定サービス（デコード処理なし）','視聴'],
     dayText: dayText,
     convert: {
@@ -1187,16 +1284,27 @@ document.addEventListener('alpine:init', () => {
         other_raw: getSection('OriginalNetworkID:'),
         //*/
         contentInfoList: getSection('ジャンル : ').split('\n').filter(v => v).map(e => {
-          const nibble = e.split(' - ');
+          const names = e.split(' - ');
+          const n1 = Object.keys(ARIB_GENRE.l1).find(k => ARIB_GENRE.l1[k] === names[0]);
+          const n2 = n1 !== undefined ? Object.keys(ARIB_GENRE.l2[n1] || {}).find(k => ARIB_GENRE.l2[n1][k] === names[1]) : undefined;
           return {
-            nibble1: [/^ニュース／報道/,/^スポーツ/,/^情報／ワイドショー/,/^ドラマ/,/^音楽/,/^バラエティ/,/^映画/,/^アニメ／特撮/,/^ドキュメンタリー／教養/,/^劇場／公演/,/^趣味／教育/,/^福祉/].findIndex(s => s.test(e)) || 16,
-            component_type_name: {
-              nibble1: nibble[0],
-              nibble2: nibble[1]
-            }
-          }
+            content_nibble: (parseInt(n1 || 0x0F) << 8) | parseInt(n2 || 0x0F)
+          };
         }),
-        componentInfo: { component_type_name: getSection('映像 : ') },
+        componentInfo: (() => {
+          const text = getSection('映像 : ');
+          const lines = text.split('\n');
+          const firstLine = lines[0] || '';
+          const m = firstLine.match(/^(.+?)、アスペクト比([\d:>]+)\s*(.*)/);
+          return m ? {
+            quality: m[1],
+            aspect: m[2],
+            pan: m[3].includes('あり'),
+            text_char: lines.slice(1).join('\n').trim(),
+            text: firstLine,
+            toString() { return this.text; }
+          } : { component_type_name: text, text: text, toString() { return this.text; } };
+        })(),
         audioInfoList: [],
         
         // ID類 (other_rawから抽出)
@@ -1221,11 +1329,17 @@ document.addEventListener('alpine:init', () => {
       }
 
       let i = 0;
-      getSection('音声 : ').split('\n').filter(v => v).map(e => {
+      getSection('音声 : ').split('\n').filter(v => v.trim()).forEach(e => {
         if (!res.audioInfoList[i]) res.audioInfoList[i] = {};
-        const key = e.match('サンプリングレート') ? 'sampling_rate_txt' : Object.keys(res.audioInfoList[i]).length ? 'text_char' : 'component_type_name'
-        res.audioInfoList[i][key] = e.replace('サンプリングレート : ','');
-        if (e.match('サンプリングレート')) i++;
+        const isSampling = e.includes('サンプリングレート');
+        const key = isSampling ? 'sampling_rate_txt' : res.audioInfoList[i].component_type_name ? 'text_char' : 'component_type_name';
+        const val = e.replace('サンプリングレート : ', '').trim();
+        if (key === 'text_char' && res.audioInfoList[i][key]) {
+          res.audioInfoList[i][key] += '\n' + val;
+        } else {
+          res.audioInfoList[i][key] = val;
+        }
+        if (isSampling) i++;
       });
 
       return res;

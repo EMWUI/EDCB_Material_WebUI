@@ -135,14 +135,16 @@ ct:Append([=[
       background-color: var(--m3-container) !important;
       color: var(--m3-on-container) !important;
 
-      /* 左端のアクセントだけ */
-      /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important;  */
+      &:not(.chip) {
+        /* 左端のアクセントだけ */
+        /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important;  */
 
-      /* 左端から右へ消え込むグラデーション */
-      background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%) !important;
+        /* 左端から右へ消え込むグラデーション */
+        background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%) !important;
 
-      /* 塗りつぶし */
-      /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; */
+        /* 塗りつぶし */
+        /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; */
+      }
 
       &.reserve {
         position: relative;
@@ -621,7 +623,7 @@ ct:Append([=[
                            'shortage': event.reserve?.overlapMode === 2,
                            'view': event.reserve?.recSetting.recMode === 5,
                            'large-elevate': !event.isGap && active === event.eid,
-                           [event.isGap ? 'cont-0' : (event.contentInfoList?.length > 0 ? 'cont-' + (Math.floor(event.contentInfoList[0].content_nibble / 256) % 16 + 1) : 'cont-16')]: true                         }">
+                           [event.isGap ? 'cont-0' : (event.contentInfoList?.length > 0 ? 'cont-' + (getGenre(event.contentInfoList[0]).nibble1 + 1) : 'cont-16')]: true                         }">
                       <template x-if="!event.isGap">
                         <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">
                           <div>
@@ -908,9 +910,18 @@ ct:Append([=[
                   <div class="row top-margin small-margin">
                     <i>description</i>
                     <nav class="max wrap" style="gap: 0.5rem;">
-                      <span class="chip"><span x-text="d.comment"></span></span>
-                      <span class="chip" x-text="`ドロップ : ${d.drops}`"></span>
-                      <span class="chip" x-text="`スクランブル : ${d.scrambles}`"></span>
+                      <span class="chip">
+                        <i>description</i>
+                        <span x-text="d.comment"></span>
+                      </span>
+                      <span class="chip">
+                        <i>water_drop</i>
+                        <span x-text="d.drops"></span>
+                      </span>
+                      <span class="chip">
+                        <i>encrypted</i>
+                        <span x-text="d.scrambles"></span>
+                      </span>
                     </nav>
                   </div>
                 </div>
@@ -918,29 +929,68 @@ ct:Append([=[
               <div class="row top-margin small-margin">
                 <i>category</i>
                 <nav class="max wrap" style="gap: 0.5rem;">
-                  <template x-for="d in d.contentInfoList">
-                    <span class="chip"><span x-text="`${d.component_type_name.nibble1} - ${d.component_type_name.nibble2}`"></span></span>
+                  <template x-for="g in d.contentInfoList">
+                    <span class="chip" :class="'cont-' + (getGenre(g).nibble1 + 1)">
+                      <i>label</i>
+                      <span x-text="`${getGenre(g).name1} - ${getGenre(g).name2}`"></span>
+                    </span>
                   </template>
                 </nav>
               </div>
               <div class="row top-margin small-margin">
                 <i>videocam</i>
-                <nav class="max wrap" style="gap: 0.5rem;">
-                  <template x-for="d in d.componentInfo?.component_type_name.split(/、| /)">
-                    <span class="chip" x-text="d"></span>
+                <nav class="max wrap" style="gap: 0.5rem;" x-data="{ v: {} }" x-effect="v = getComponent(d?.componentInfo)">
+                  <template x-if="v.quality">
+                    <span class="chip">
+                      <i>high_quality</i>
+                      <span x-text="v.quality"></span>
+                    </span>
+                  </template>
+                  <template x-if="v.aspect">
+                    <span class="chip">
+                      <i>aspect_ratio</i>
+                      <span x-text="v.aspect"></span>
+                    </span>
+                  </template>
+                  <template x-if="v.pan">
+                    <span class="chip">
+                      <i>pan_tool</i>
+                      <span>パンベクトルあり</span>
+                    </span>
+                  </template>
+                  <template x-if="v.text_char">
+                    <span class="chip">
+                      <i>description</i>
+                      <span x-text="v.text_char"></span>
+                    </span>
+                  </template>
+                  <template x-if="!v.quality && v.text">
+                    <span class="chip">
+                      <i>videocam</i>
+                      <span x-text="v.text"></span>
+                    </span>
                   </template>
                 </nav>
               </div>
               <div class="row top-margin small-margin">
                 <i>speaker</i>
                 <nav class="vertical max" style="gap: 0.5rem;">
-                  <template x-for="d in d.audioInfoList">
-                    <nav class="max wrap" style="gap: 0.25rem;">
-                      <span class="chip" x-text="d.component_type_name"></span>
-                      <template x-if="d.text_char">
-                        <span class="chip" x-text="d.text_char"></span>
+                  <template x-for="a in d.audioInfoList">
+                    <nav class="max wrap" style="gap: 0.25rem;" x-data="{ v: {} }" x-effect="v = getComponent(a)">
+                      <span class="chip">
+                        <i>volume_up</i>
+                        <span x-text="v.text"></span>
+                      </span>
+                      <template x-if="v.text_char">
+                        <span class="chip">
+                          <i>description</i>
+                          <span x-text="v.text_char"></span>
+                        </span>
                       </template>
-                      <span class="chip" x-text="d.sampling_rate_txt || `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[d.sampling_rate]}kHz`"></span>
+                      <span class="chip">
+                        <i>graphic_eq</i>
+                        <span x-text="a.sampling_rate_txt || `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[a.sampling_rate]}kHz`"></span>
+                      </span>
                     </nav>
                   </template>
                 </nav>
@@ -958,10 +1008,10 @@ ct:Append([=[
                     <i>key</i>
                     <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
                   </span>
-                  <template x-for="d in d.eventRelayInfo?.eventDataList">
+                  <template x-for="rel in d.eventRelayInfo?.eventDataList">
                     <span class="chip">
                       <i>switch_access_2</i>
-                      <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
+                      <span x-text="`${rel.onid}-${rel.tsid}-${rel.sid}-${rel.eid}`"></span>
                     </span>
                   </template>
                 </nav>
