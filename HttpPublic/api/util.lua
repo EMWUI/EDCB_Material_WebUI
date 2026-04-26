@@ -2034,7 +2034,7 @@ function ResponseXml(a)
 end
 
 --テーブルをJSONに変換  
---ジャンルなどに文字列追加など補完、日付はISO 8601形式に
+--一部補完、日付はISO 8601形式に
 function ConvertJson(val)
   local t=type(val)
 
@@ -2085,27 +2085,6 @@ function ConvertJson(val)
     else
       -- Object: {key:value}
       for k,v in pairs(val) do
-        --ジャンル文字列を追加
-        if k=='contentInfoList' then
-          for j,w in pairs(v) do
-            local nibble=w.content_nibble==0x0E00 and w.user_nibble+0x6000 or
-                        w.content_nibble==0x0E01 and w.user_nibble+0x7000 or w.content_nibble
-            v[j].nibble1=math.floor(w.content_nibble/256)
-            v[j].nibble2=w.content_nibble%256
-            v[j].component_type_name={
-              nibble1=edcb.GetGenreName(math.floor(nibble/256)*256+255),
-              nibble2=edcb.GetGenreName(nibble)
-            }
-          end
-        --コンポーネント記述子の文字列を追加
-        elseif k=='componentInfo' then
-          v.component_type_name=edcb.GetComponentTypeName(v.stream_content*256+v.component_type)
-        elseif k=='audioInfoList' then
-          for j,w in pairs(v) do
-            v[j].component_type_name=edcb.GetComponentTypeName(w.stream_content*256+w.component_type)
-          end
-        end
-
         if k=='andKey' then
           for j,w in pairs(ParseAndKey(v)) do
             table.insert(res,ConvertJson(tostring(j))..':'..ConvertJson(w))
