@@ -239,20 +239,27 @@ ct:Append([=[
     #epg-grid {
       display: flex;
       min-width: 100%;
+      position: absolute;
     }
     .epg-time-col {
+      width: 2.5rem;
       position: sticky;
       left: 0;
       z-index: 5;
-      width: 2rem;
     }
     .epg-service-col {
       position: relative;
       flex-grow: 1;
     }
     .epg-service-header {
+      height: 90px;
       position: sticky;
       top: 0;
+      z-index: 9;
+    }
+    .epg-time-col.epg-service-header {
+      line-height: 1.1;
+      margin-right: -2.5rem;
       z-index: 10;
     }
     .epg-event {
@@ -285,7 +292,7 @@ ct:Append([=[
       right: 0;
       height: 1px;
       background: var(--error);
-      z-index: 6;
+      z-index: 7;
       pointer-events: none;
       &::before {
         content: "";
@@ -298,30 +305,28 @@ ct:Append([=[
       }
     }
 
-    .epg-time-col {
-      /* 時間帯ごとの色相(Hue)と彩度(Chroma)の定義 */
-      .t4, .t5 { --h: 220; --c: 0.05; } /* 早朝: ブルー */
-      .t6, .t7 { --h: 170; --c: 0.05; } /* 朝: ティール */
-      .t8, .t9, .t10 { --h: 130; --c: 0.06; } /* 午前: グリーン */
-      .t11, .t12, .t13 { --h: 85; --c: 0.07; } /* 昼: イエロー/アンバー */
-      .t14, .t15, .t16 { --h: 40; --c: 0.07; } /* 午後: オレンジ */
-      .t17, .t18, .t19 { --h: 25; --c: 0.08; } /* 夕方: レッド */
-      .t20, .t21, .t22 { --h: 290; --c: 0.06; } /* 夜: パープル */
-      .t23, .t0, .t1, .t2, .t3 { --h: 260; --c: 0.06; } /* 深夜: インディゴ */
+    /* 時間帯ごとの色相(Hue)と彩度(Chroma)の定義 */
+    .hour-4, .hour-5 { --h: 220; --c: 0.05; } /* 早朝: ブルー */
+    .hour-6, .hour-7 { --h: 170; --c: 0.05; } /* 朝: ティール */
+    .hour-8, .hour-9, .hour-10 { --h: 130; --c: 0.06; } /* 午前: グリーン */
+    .hour-11, .hour-12, .hour-13 { --h: 85; --c: 0.07; } /* 昼: イエロー/アンバー */
+    .hour-14, .hour-15, .hour-16 { --h: 40; --c: 0.07; } /* 午後: オレンジ */
+    .hour-17, .hour-18, .hour-19 { --h: 25; --c: 0.08; } /* 夕方: レッド */
+    .hour-20, .hour-21, .hour-22 { --h: 290; --c: 0.06; } /* 夜: パープル */
+    .hour-23, .hour-0, .hour-1, .hour-2, .hour-3 { --h: 260; --c: 0.06; } /* 深夜: インディゴ */
 
-      /* 時間軸のモード別スタイル定義 */
-      div[class*="t"] {
-        /* デフォルト（ライトモード） */
-        --l-container: 92%;
-        --l-on-container: 20%;
+    /* 時間軸のモード別スタイル定義 */
+    [class*="hour-"] {
+      /* デフォルト（ライトモード） */
+      --l-container: 92%;
+      --l-on-container: 20%;
 
-        background-color: oklch(var(--l-container) var(--c) var(--h)) !important;
-        color: oklch(var(--l-on-container) var(--c) var(--h)) !important;
-      }
-
+      background-color: oklch(var(--l-container) var(--c) var(--h)) !important;
+      color: oklch(var(--l-on-container) var(--c) var(--h)) !important;
     }
+
     /* ダークモード時の明度調整 */
-    :is(body.dark, :root.dark) .epg-time-col div[class*="t"] {
+    :is(body.dark, :root.dark) [class*="hour-"] {
       --l-container: 25%;
       --l-on-container: 90%;
     }
@@ -578,19 +583,21 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#epg'">
-      <div id="epg-grid" class="absolute" x-data="{ active: null, clickTimeout: null }" :style="`--min: ${epg.epgMinHeight};`">
+      <div id="epg-grid" x-data="{ active: null, clickTimeout: null }" :style="`--min: ${epg.epgMinHeight};`">
+        <!-- 固定の角（日付） -->
+        <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
+        <!-- 時間軸 -->
+        <div class="epg-time-col">
+          <div class="epg-service-header surface-container small-round border"></div> <!-- ヘッダー分 -->
+          <template x-for="h in 24" :key="h">
+            <div class="center-align small-round border" :class="`hour-${ (new Date(epg.epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epg.epgStartTime).getHours() + h - 1 + 20) % 24 + 4)" style="height: calc(60 * var(--min) * 1px);"></div>
+          </template>
+        </div>
         <!-- 現在時刻の線 -->
         <template x-if="getNowLinePos() >= 0">
           <div id="epg-now-line" :style="`top: ${getNowLinePos() + 90}px`" x-transition></div>
         </template>
 
-        <!-- 時間軸 -->
-        <div class="epg-time-col">
-          <div class="surface-container center-align small-round border" style="height:90px;"></div> <!-- ヘッダー分 -->
-          <template x-for="h in 24" :key="h">
-            <div class="center-align small-round border" :class="`t${ (new Date(epg.epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epg.epgStartTime).getHours() + h - 1 + 20) % 24 + 4)" :style="`height: ${epg.epgMinHeight * 60}px`"></div>
-          </template>
-        </div>
         <!-- サービス列 -->
         <template x-for="service in epg.servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
           <template x-if="!service.subCh">
