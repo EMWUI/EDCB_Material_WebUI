@@ -422,7 +422,7 @@ document.addEventListener('alpine:init', () => {
     // ページ切り替え時に呼ばれる
     async loadAll() {
       this.totalCount = null;
-      window.scrollTo(0, 0);
+      document.querySelector('main').scrollTo(0,0);
       this.sidePanel.close();
 
       if (this.page === '#dashboard') {

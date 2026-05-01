@@ -32,6 +32,10 @@ ct:Append([=[
       initial-value: #ba1a1a;
     }
 
+    main>.absolute{
+      width: 100%;
+    }
+
     select[multiple] {
       overflow-y: auto;
       padding-block-start: 7px !important;
@@ -483,7 +487,7 @@ ct:Append([=[
     <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
   </header>
 
-  <main :class="{ responsive: page !== '#epg', 'no-padding scroll': page === '#epg' }">
+  <main class="scroll no-padding">
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
@@ -708,118 +712,138 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#reserve'">
-      <ul class="list medium-space">
-        <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
-        <template x-for="d in displayList" :key="d.reserveID">
-          <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
-        </template>
-        <div x-intersect="loadMore()"></div>
-      </ul>
+      <div class="absolute">
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+            <template x-for="d in displayList" :key="d.reserveID">
+              <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+            </template>
+            <div x-intersect="loadMore()"></div>
+          </ul>
+        </section>
+      </div>
     </template>
 
     <template x-if="page === '#tunerreserve'">
-      <div>
-        <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
-        <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
-          <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }">
-            <template x-if="d">
-              <ul class="list medium-space">
-                <template x-for="d in d.displayList" :key="d.reserveID">
-                  <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+      <div class="absolute">
+        <section class="responsive">
+          <div>
+            <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+            <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
+              <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }">
+                <template x-if="d">
+                  <ul class="list medium-space vertical-margin">
+                    <template x-for="d in d.displayList" :key="d.reserveID">
+                      <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+                    </template>
+                    <div x-intersect="loadMoreTuner(tuner.tunerID)"></div>
+                  </ul>
                 </template>
-                <div x-intersect="loadMoreTuner(tuner.tunerID)"></div>
-              </ul>
-            </template>
 
-            <template x-if="tuner.reserveList.length === 0">
-              <div class="center-align padding mt-8">
-                <i class="extra secondary-text">event_busy</i>
-                <p class="secondary-text">割り当てられた予約はありません</p>
+                <template x-if="tuner.reserveList.length === 0">
+                  <div class="center-align padding mt-8">
+                    <i class="extra secondary-text">event_busy</i>
+                    <p class="secondary-text">割り当てられた予約はありません</p>
+                  </div>
+                </template>
               </div>
             </template>
           </div>
-        </template>
+        </section>
       </div>
     </template>
 
     <template x-if="page === '#autoaddepg'">
-      <ul class="list medium-space">
-        <template x-for="d in displayList" :key="d.dataID">
-          <li class="ripple" @click="openAutoaddDetail(d)">
-            <div class="row no-margin no-wrap">
-              <div>
-                <i class="primary-text" x-text="d.searchInfo.disableFlag ? 'block' : 'auto_awesome'"></i>
-              </div>
-              <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
-                <div class="title bold large-text" x-text="d.searchInfo?.andKey || '(全取得)'"></div>
-                <div class="row wrap tiny-space no-margin secondary-text no-line">
-                  <span class="middle-align"><i class="tiny">block</i><span x-text="d.searchInfo.notKey"></span></span>
-                  <span class="middle-align"><i class="tiny">note</i><span x-text="d.searchInfo.note"></span></span>
-                  <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length : ''"></span></span>
-                  <span class="middle-align"><i class="tiny">category</i><span x-text="d.searchInfo?.contentList?.length > 0 ? d.searchInfo.contentList.length : '全'"></span></span>
-                  <span class="middle-align"><i class="tiny">search</i><span x-text="d.addCount"></span></span>
-                  <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span></span>
+      <div class="absolute">
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <template x-for="d in displayList" :key="d.dataID">
+              <li class="ripple" @click="openAutoaddDetail(d)">
+                <div class="row no-margin no-wrap">
+                  <div>
+                    <i class="primary-text" x-text="d.searchInfo.disableFlag ? 'block' : 'auto_awesome'"></i>
+                  </div>
+                  <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
+                    <div class="title bold large-text" x-text="d.searchInfo?.andKey || '(全取得)'"></div>
+                    <div class="row wrap tiny-space no-margin secondary-text no-line">
+                      <span class="middle-align"><i class="tiny">block</i><span x-text="d.searchInfo.notKey"></span></span>
+                      <span class="middle-align"><i class="tiny">note</i><span x-text="d.searchInfo.note"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length : ''"></span></span>
+                      <span class="middle-align"><i class="tiny">category</i><span x-text="d.searchInfo?.contentList?.length > 0 ? d.searchInfo.contentList.length : '全'"></span></span>
+                      <span class="middle-align"><i class="tiny">search</i><span x-text="d.addCount"></span></span>
+                      <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span></span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </li>
-        </template>
-      </ul>
-      <div x-intersect="loadMore()"></div>
+              </li>
+            </template>
+          </ul>
+          <div x-intersect="loadMore()"></div>
+        </section>
+      </div>
     </template>
 
     <template x-if="page === '#autoaddmanual'">
-      <ul class="list medium-space">
-        <template x-for="d in displayList" :key="d.dataID">
-          <li class="ripple" @click="openAutoaddDetail(d)">
-            <div class="row no-margin no-wrap"
-              :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
-              <div>
-                <i class="secondary-text" 
-                  x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
-              </div>
-              <div class="max">
-                <div class="title bold large-text" x-html="d.title"></div>
-                <div class="row wrap tiny-space no-margin secondary-text no-line">
-                  <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
-                  <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
-                  <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
-                  <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
+      <div class="absolute">
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <template x-for="d in displayList" :key="d.dataID">
+              <li class="ripple" @click="openAutoaddDetail(d)">
+                <div class="row no-margin no-wrap"
+                  :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
+                  <div>
+                    <i class="secondary-text" 
+                      x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
+                  </div>
+                  <div class="max">
+                    <div class="title bold large-text" x-html="d.title"></div>
+                    <div class="row wrap tiny-space no-margin secondary-text no-line">
+                      <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
+                      <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
+                      <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </li>
-        </template>
-        <div x-intersect="loadMore()"></div>
+              </li>
+            </template>
+            <div x-intersect="loadMore()"></div>
+          </ul>
+        </section>
       </div>
     </template>
 
     <template x-if="page === '#recinfo'">
-      <ul class="list medium-space">
-        <template x-for="d in displayList" :key="d.id">
-          <li class="ripple" @click="openRecinfoDetail(d)">
-            <div class="row no-margin no-wrap">
-              <div class="min flex center-align">
-                <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
-              </div>
-              <div class="max">
-                <div class="title bold large-text" 
-                    :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''"
-                    x-html="convert.title(d.title)">
+      <div class="absolute">
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <template x-for="d in displayList" :key="d.id">
+              <li class="ripple" @click="openRecinfoDetail(d)">
+                <div class="row no-margin no-wrap">
+                  <div class="min flex center-align">
+                    <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
+                  </div>
+                  <div class="max">
+                    <div class="title bold large-text" 
+                        :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''"
+                        x-html="convert.title(d.title)">
+                    </div>
+                    <div class="row wrap tiny-space no-margin secondary-text no-line">
+                      <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
+                      <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
+                      <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
+                      <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
+                    </div>
+                  </div>
                 </div>
-                <div class="row wrap tiny-space no-margin secondary-text no-line">
-                  <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
-                  <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
-                  <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
-                  <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
-                  <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
-                </div>
-              </div>
-            </div>
-          </li>
-        </template>
-        <div x-intersect="loadMore()"></div>
-      </ul>
+              </li>
+            </template>
+            <div x-intersect="loadMore()"></div>
+          </ul>
+        </section>
+      </div>
     </template>
 
     <template x-if="!['#dashboard', '#epg', '#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual'].includes(page)">
