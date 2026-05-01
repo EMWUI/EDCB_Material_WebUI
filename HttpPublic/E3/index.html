@@ -239,6 +239,16 @@ ct:Append([=[
       }
     }
 
+    .row:has(>article) {
+      align-items: stretch;
+    }
+    article.small-width {
+      inline-size: 15rem!important;
+      +button {
+        align-self: center;
+      }
+    }
+
     /* EPG Grid styles */
     #epg-grid {
       display: flex;
@@ -519,70 +529,116 @@ ct:Append([=[
           </div>
         </div>
         
-        <div class="grid large-space">
-          <div class="s12 m6">
-            <h6 class="row padding">
-              <span class="max">直近の予約</span>
-              <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
-            </h6>
-            <div class="list border">
-              <template x-for="(d, i) in dashboardData.reserves" :key="d.reserveID">
-                <div class="row tiny-line" :class="{'m l' : i >= 3}">
-                  <img class="round tiny border" :src="getLogoPath(d)">
-                  <div class="title bold max" x-html="convert.title(d.title)"></div>
-                  <div class="secondary-text" x-text="convert.date(d.startTime, true)"></div>
-                </div>
-              </template>
-            </div>
-          </div>
-
-          <div class="s12 m6">
-            <h6 class="row padding">
-              <span class="max">最近の録画結果</span>
-              <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
-            </h6>
-            <div class="list border">
-              <template x-for="(d, i) in dashboardData.recs" :key="d.id">
-                <div class="row tiny-line" :class="{'m l' : i >= 3}">
-                  <img class="round tiny border" :src="getLogoPath(d)">
-                  <div class="max">
-                    <div class="title small-text bold" x-html="convert.title(d.title)"></div>
-                    <div class="secondary-text small-text" x-text="d.comment"></div>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div class="row padding">
-          <h6 class="max no-margin">ストレージ</h6>
-          <button class="transparent circle" @click="updateStorage()" :disabled="!isOnline || loadingStorage">
-            <i :class="loading ? 'spin' : ''">refresh</i>
-          </button>
-        </div>
-
-        <div class="grid">
-          <template x-for="drive in dashboardData.storage" :key="drive.name">
-            <div class="s12 m6">
-              <div class="card round border padding no-shadow">
-                <div class="row no-wrap">
-                  <i class="secondary-text">storage</i>
-                  <div class="max">
-                    <div class="row">
-                      <h6 class="max primary-text bold" x-text="drive.name"></h6>
-                      <div class="secondary-text">
-                        <span x-text="drive.freeText"></span> / <span x-text="drive.totalText"></span>
-                      </div>
+        <h6 class="row padding">
+          <span class="max">放送中の番組</span>
+          <button class="transparent circle" @click="location.hash = '#epg'"><i>arrow_forward</i></button>
+        </h6>
+        <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
+          <div class="vertical-margin" x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))">
+            <div class="tiny-text bold secondary-text" x-text="networkName"></div>
+            <div class="row scroll">
+              <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+                <article class="small-width border ripple tiny-line small-text" style="overflow: hidden;"
+                      x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
+                      @click="if (entry) openProgramDetail(entry.current)">
+                  <div class="row">
+                    <img class="round tiny border" :src="getLogoPath(s)">
+                    <div class="max secondary-text">
+                      <div x-text="s.service_name"></div>
+                      <template x-if="entry">
+                        <div x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                      </template>
                     </div>
-                    <progress class="no-margin" :value="drive.usedPercent" max="100" 
-                              :class="{ 'error-text': !loadingStorage&&drive.usedPercent > 90 , 'indeterminate': loadingStorage }"></progress>
+                  </div>
+                  <div>
+                    <template x-if="entry">
+                      <div class="title bold" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                    </template>
+                    <template x-if="!entry">
+                      <div class="middle-align center-align">
+                        <progress class="circle small"></progress>
+                      </div>
+                    </template>
+                  </div>
+                  <template x-if="entry">
+                    <progress class="absolute bottom left right" :value="getPercent(entry.current)" max="100"></progress>
+                  </template>
+                </article>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <h6 class="row padding">
+          <span class="max">直近の予約</span>
+          <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
+        </h6>
+        <div class="row scroll">
+          <template x-for="(d, i) in dashboardData.reserves" :key="d.reserveID">
+            <article class="small-width border ripple tiny-line small-text" @click="openProgramDetail(d)">
+              <div class="row">
+                <img class="round tiny border" :src="getLogoPath(d)">
+                <div class="max secondary-text">
+                  <div x-text="d.stationName"></div>
+                  <div class="secondary-text" x-text="`${convert.date(d.startTime, true)}～${convert.date(new Date(d.startTime) + d.durationSecond*1000, true)}`"></div>
+                </div>
+              </div>
+              <div class="title bold max" x-html="convert.title(d.title)"></div>
+            </article>
+          </template>
+          <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
+        </div>
+
+        <h6 class="row padding">
+          <span class="max">最近の録画結果</span>
+          <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
+        </h6>
+        <div class="row scroll">
+          <template x-for="(d, i) in dashboardData.recs" :key="d.id">
+            <article class="small-width border ripple tiny-line small-text" @click="openRecinfoDetail(d)">
+              <div class="row">
+                <img class="round tiny border" :src="getLogoPath(d)">
+                <div class="max secondary-text">
+                  <div x-text="d.serviceName"></div>
+                  <div class="secondary-text" x-text="d.comment"></div>
+                </div>
+              </div>
+              <div class="title bold max" x-html="convert.title(d.title)"></div>
+            </article>
+          </template>
+          <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
+        </div>
+
+        <section class="responsive">
+          <div class="row padding">
+            <h6 class="max no-margin">ストレージ</h6>
+            <button class="transparent circle" @click="updateStorage()" :disabled="!isOnline || loadingStorage">
+              <i :class="loading ? 'spin' : ''">refresh</i>
+            </button>
+          </div>
+
+          <div class="grid">
+            <template x-for="drive in dashboardData.storage" :key="drive.name">
+              <div class="s12 m6">
+                <div class="card round border padding no-shadow">
+                  <div class="row no-wrap">
+                    <i class="secondary-text">storage</i>
+                    <div class="max">
+                      <div class="row">
+                        <h6 class="max primary-text bold" x-text="drive.name"></h6>
+                        <div class="secondary-text">
+                          <span x-text="drive.freeText"></span> / <span x-text="drive.totalText"></span>
+                        </div>
+                      </div>
+                      <progress class="no-margin" :value="drive.usedPercent" max="100" 
+                                :class="{ 'error-text': !loadingStorage&&drive.usedPercent > 90 , 'indeterminate': loadingStorage }"></progress>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </template>
-        </div>
+            </template>
+          </div>
+        </section>
       </div>
     </template>
 
@@ -676,7 +732,7 @@ ct:Append([=[
         </template>
       </div>
     </template>
-      
+
     <template x-if="page === '#onair'">
       <div class="absolute" x-data="{ onairNetwork: 1 }">
         <nav class="tabbed small top-margin" style="position: sticky;top:1rem;z-index:11;">

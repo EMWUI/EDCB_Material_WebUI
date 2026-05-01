@@ -571,9 +571,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     syncDashboardData() {
-      this.dashboardData.reserves = Array.from(this.allData.reserve.values()).slice(0, 5);
+      this.dashboardData.reserves = Array.from(this.allData.reserve.values()).slice(0, 10);
       this.dashboardData.reservesCount = this.totals.reserve;
-      this.dashboardData.recs = Array.from(this.allData.recinfo.values()).slice(0, 5);
+      this.dashboardData.recs = Array.from(this.allData.recinfo.values()).slice(0, 10);
     },
 
     formatSize(bytes) {
