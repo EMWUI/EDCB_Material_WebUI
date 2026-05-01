@@ -56,6 +56,7 @@ document.addEventListener('alpine:init', () => {
     debug: true,
     ROOT: ROOT || '',
     page: window.location.hash || '#dashboard',
+    params: {},
     now: Date.now(),
     isOnline: false,
     isSmallScreen: false,
@@ -128,8 +129,17 @@ document.addEventListener('alpine:init', () => {
       'recpreset': { api: 'EnumRecPreset', itemKey: 'id' },
     },
 
+    // クエリパラメータを解析して params オブジェクトを更新
+    updateParams() {
+      const newParams = Object.fromEntries(new URLSearchParams(window.location.search));
+      // 既存のオブジェクトの内容を更新してリアクティブな参照を維持する
+      for (const k in this.params) if (!(k in newParams)) delete this.params[k];
+      Object.assign(this.params, newParams);
+    },
+
     async init() {
       setInterval(() => this.now = Date.now(), 1000);
+      this.updateParams();
       this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
 
       const d = new Date(this.now);
@@ -143,10 +153,12 @@ document.addEventListener('alpine:init', () => {
         // ページ移動時はクエリをリセット
         if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
         this.page = window.location.hash || '#dashboard';
+        this.updateParams();
         this.loadAll();
       });
       window.addEventListener('popstate', () => {
         this.page = window.location.hash || '#dashboard';
+        this.updateParams();
         this.loadAll();
       });
       window.addEventListener('resize', () => {
@@ -442,22 +454,20 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.page === '#epg') {
-        const params = new URLSearchParams(window.location.search);
         // タブ選択の同期
-        const tab = parseInt(params.get('tab'));
+        const tab = parseInt(this.params.tab);
         if (!isNaN(tab)) this.epg.activeNetwork = tab;
 
         // 放送日付の基準（4時を境界とする）
-        const nowD = new Date(this.now);
         let base = new Date(this.now);
         if (base.getHours() < 4) base.setDate(base.getDate() - 1);
         base.setHours(4, 0, 0, 0);
 
-        const dateParam = params.get('date');
-        const hourParam = params.get('hour');
+        const dateParam = this.params.date;
+        const hourParam = this.params.hour;
 
         let d;
-        if (dateParam === null) {
+        if (dateParam === undefined) {
           // 指定なし：現在の時間（1時間境界）
           d = new Date(this.now);
           d.setMinutes(0, 0, 0);
@@ -480,7 +490,7 @@ document.addEventListener('alpine:init', () => {
           d.setHours(4, 0, 0, 0);
         }
 
-        if (hourParam !== null) {
+        if (hourParam !== undefined) {
           const h = parseInt(hourParam);
           if (!isNaN(h)) d.setHours(h, 0, 0, 0);
         }
@@ -995,6 +1005,7 @@ document.addEventListener('alpine:init', () => {
       url.searchParams.set('tab', index);
       history.pushState(null, '', url.toString());
       this.epg.activeNetwork = index;
+      this.updateParams();
       this.loadEpg();
     },
     // 日付を前後にずらす (24時間単位)
@@ -1038,6 +1049,7 @@ document.addEventListener('alpine:init', () => {
       if (hour !== undefined && hour !== null) url.searchParams.set('hour', hour);
       else url.searchParams.delete('hour');
       history.pushState(null, '', url.toString());
+      this.updateParams();
       this.loadAll();
     },
     // ヘッダー表示用の日付テキスト
