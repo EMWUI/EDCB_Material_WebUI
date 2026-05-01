@@ -13,6 +13,16 @@ dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'uti
 
 rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
 
+function GetScript(minTime,maxTime)
+  return [=[
+  <script>
+    const ROOT = ']=]..PathToRoot()..[=[';
+    const EPG_MIN_TIME = ]=]..(minTime * 1000)..[=[;
+    const EPG_MAX_TIME = ]=]..(maxTime * 1000)..[=[;
+  </script>
+]=]
+end
+
 -- ナビゲーション項目の定義
 navList={
   {hash='#epg', icon='calendar_view_month', title='番組表', bottom=true},

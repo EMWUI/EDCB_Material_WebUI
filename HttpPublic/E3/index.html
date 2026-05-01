@@ -15,11 +15,7 @@ ct:Append([=[
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
 
-  <script>
-    const ROOT = ']=]..PathToRoot()..[=[';
-    const EPG_MIN_TIME = ]=]..minTime..[=[ * 1000;
-    const EPG_MAX_TIME = ]=]..maxTime..[=[ * 1000;
-  </script>
+]=]..GetScript(minTime,maxTime)..[=[
   
   <script src="./js/app.js?ver=]=]..ver..[=[" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
