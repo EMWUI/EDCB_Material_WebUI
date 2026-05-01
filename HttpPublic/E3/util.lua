@@ -1,4 +1,4 @@
-ver='0.2.1'
+ver='0.2.4'
 
 --Windowsかどうか
 WIN32=not package.config:find('^/')

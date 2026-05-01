@@ -677,7 +677,65 @@ ct:Append([=[
       </div>
     </template>
       
+    <template x-if="page === '#onair'">
+      <div class="absolute" x-data="{ onairNetwork: 1 }">
+        <nav class="tabbed small top-margin" style="position: sticky;top:1rem;z-index:11;">
+          <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
+            <a :class="onairNetwork === networkIndex ? 'active': ''" 
+              x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))"
+              @click="onairNetwork = networkIndex">
+              <span x-text="networkName"></span>
+            </a>
+          </template>
+        </nav>
 
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === onairNetwork)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+              <li class="ripple" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }" @click="if (entry) openProgramDetail(entry.current)">
+                <div class="max row no-margin no-wrap" style="max-width: 100%;">
+                  <div class="min flex center-align">
+                    <img class="round border tiny" :src="getLogoPath(s)">
+                  </div>
+                  <div class="max">
+                    <div class="row no-margin no-wrap">
+                      <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
+                      <template x-if="entry">
+                        <div class="secondary-text small-text" x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                      </template>
+                    </div>
+                    <template x-if="entry">
+                      <div>
+                        <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                        <progress class="no-margin" :value="getPercent(entry.current)" max="100" value="0"></progress>
+
+                        <template x-if="entry.next">
+                          <div class="row no-margin padding-top middle-align">
+                            <i class="small secondary-text">skip_next</i>
+                            <div class="max secondary-text small-text truncate">
+                              <span class="bold" x-text="convert.date(entry.next.startTimeInt)"></span>
+                              <span x-html="convert.title(entry.next.shortInfo?.event_name)"></span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <template x-if="!entry">
+                      <div class="middle-align center-align padding">
+                        <progress class="circle small"></progress>
+                      </div>
+                    </template>
+                  </div>
+                  <button class="circle front" @click.stop="openPage('#cast', { id: `${s.onid}-${s.tsid}-${s.sid}` })">
+                    <i>cast</i>
+                  </button>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </section>
+      </div>
+    </template>
     <template id="reserveList-template">
       <div class="row no-margin no-wrap">
         <div x-data="{ startTime: new Date(d.startTime).getTime() }">
@@ -846,7 +904,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="!['#dashboard', '#epg', '#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual'].includes(page)">
+    <template x-if="['#epgweek', '#tvcast', '#library', '#search', '#setting'].includes(page)">
       <div class="flex center-align middle-align">
         <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
       </div>

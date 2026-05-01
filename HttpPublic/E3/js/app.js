@@ -70,7 +70,7 @@ document.addEventListener('alpine:init', () => {
     activeTunerId: 1,
     sidebarActive: false,
     dashboardData: {
-      reserves: [], recs: [],
+      reserves: [], recs: [], nowOnAir: {},
       reservesCount: 0, 
       activeTuners: 0, isRecording: false, isEpgCap: false,
       diskGB: 0, diskPercent: 0
@@ -137,9 +137,37 @@ document.addEventListener('alpine:init', () => {
       Object.assign(this.params, newParams);
     },
 
-    async init() {
-      setInterval(() => this.now = Date.now(), 1000);
+    // リロードなしでページとパラメータを切り替える
+    openPage(page, params = {}) {
+      const url = new URL(window.location.href);
+      url.hash = page;
+      // パラメータをリセットして設定
+      url.search = '';
+      for (const [k, v] of Object.entries(params)) {
+        url.searchParams.set(k, v);
+      }
+      history.pushState(null, '', url.toString());
+      this.page = page;
       this.updateParams();
+      this.loadAll();
+    },
+
+    async init() {
+      this.updateParams();
+      setInterval(() => {
+        this.now = Date.now();
+        // 放送中の番組が終了したかチェック
+        let needSync = false;
+        for (const id in this.dashboardData.nowOnAir) {
+          const entry = this.dashboardData.nowOnAir[id];
+          const p = entry.current;
+          if (p && this.now >= p.startTimeInt + p.durationSecond * 1000) {
+            needSync = true;
+            break;
+          }
+        }
+        if (needSync) this.syncNowOnAir();
+      }, 1000);
       this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
 
       const d = new Date(this.now);
@@ -369,6 +397,7 @@ document.addEventListener('alpine:init', () => {
         // this.snackbar.add({ text: 'EPG updated' });
 
         this.loadEpg();
+        this.syncNowOnAir();
       } catch (e) {
         console.error("Failed to refresh epg", e);
       }
@@ -497,6 +526,9 @@ document.addEventListener('alpine:init', () => {
         this.epg.epgStartTime = d.getTime();
 
         this.loadEpg();
+        return;
+      }
+      if (this.page === '#onair') {
         return;
       }
       this.updateDisplayList();
@@ -834,10 +866,72 @@ document.addEventListener('alpine:init', () => {
     getServiceName(d) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || '不明';
     },
-    get serviceList() {
-      const list = Array.from(this.allData.service.values());
-      return (this.set.oneseg ? list : list.filter(s => !s.partialReceptionFlag))
-        .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
+    getPercent(p) {
+      if (!p || !p.durationSecond) return 0;
+      const elapsed = this.now - p.startTimeInt;
+      return Math.min(100, Math.max(0, Math.floor((elapsed / (p.durationSecond * 1000)) * 100)));
+    },
+    get nowOnAirList() {
+      // サービス一覧の並び順に従って、放送中・次の番組ペアの配列を返す
+      return this.serviceList.map(s => this.dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`]).filter(v => v);
+    },
+    syncNowOnAir() {
+      const now = this.now;
+      const res = {};
+
+      const createDummy = (s, start, duration) => ({
+        onid: s.onid, tsid: s.tsid, sid: s.sid, eid: 65535,
+        startTimeInt: start,
+        durationSecond: Math.max(0, Math.floor(duration)),
+        shortInfo: { event_name: '番組情報なし' },
+        stationName: s.service_name,
+        isDummy: true
+      });
+
+      this.allData.epg.forEach((eventsMap, serviceId) => {
+        const s = this.allData.service.get(serviceId);
+        if (!s || (!this.set.oneseg && s.partialReceptionFlag)) return;
+
+        const events = Array.from(eventsMap.values()).sort((a, b) => a.startTimeInt - b.startTimeInt);
+        let current = null;
+        let next = null;
+
+        const currentIndex = events.findIndex(v => v.startTimeInt <= now && v.startTimeInt + v.durationSecond * 1000 > now);
+
+        if (currentIndex !== -1) {
+          // 現在放送中の番組が見つかった場合
+          current = { ...events[currentIndex], stationName: s.service_name };
+          const nextStart = current.startTimeInt + current.durationSecond * 1000;
+          const nextActual = events[currentIndex + 1];
+
+          if (nextActual && nextActual.startTimeInt === nextStart) {
+            // 次の番組が連続している場合
+            next = { ...nextActual, stationName: s.service_name };
+          } else {
+            // 次の番組との間に隙間がある、または次の番組がない
+            const duration = nextActual ? (nextActual.startTimeInt - nextStart) / 1000 : 3600;
+            next = createDummy(s, nextStart, duration);
+          }
+        } else {
+          // 現在放送中の番組がない場合（隙間期間）
+          const nextIdx = events.findIndex(v => v.startTimeInt > now);
+          if (nextIdx !== -1) {
+            // 次の番組は存在するので、前の番組の終了（または現在時刻）からその開始までをダミーに
+            const nextActual = events[nextIdx];
+            const prevActual = events[nextIdx - 1];
+            const gapStart = prevActual ? (prevActual.startTimeInt + prevActual.durationSecond * 1000) : now;
+            current = createDummy(s, gapStart, (nextActual.startTimeInt - gapStart) / 1000);
+            next = { ...nextActual, stationName: s.service_name };
+          } else {
+            // 現在も将来も番組情報がない場合
+            current = createDummy(s, now, 3600);
+            next = createDummy(s, now + 3600000, 3600);
+          }
+        }
+
+        res[serviceId] = { current, next };
+      });
+      this.dashboardData.nowOnAir = res;
     },
     get serviceList() {
       const list = Array.from(this.allData.service.values());
