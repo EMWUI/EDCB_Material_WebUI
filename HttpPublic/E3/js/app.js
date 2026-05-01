@@ -104,6 +104,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     set: {
+      oneseg: false,
       subGenre: false,
       genreMask: -1044262913,
     },
@@ -187,7 +188,10 @@ document.addEventListener('alpine:init', () => {
         if (this.epg.networkMask === 1 && this.allData.epg.size > 0) {
           this.allData.epg.forEach((_, serviceId) => {
             const s = this.allData.service.get(serviceId);
-            if (s) this.epg.networkMask |= (1 << this.getNetworkIndex(s.onid, s.partialReceptionFlag));
+            if (s) {
+              const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
+              if (this.set.oneseg || ni !== 2) this.epg.networkMask |= (1 << ni);
+            }
           });
         }
 
@@ -319,20 +323,20 @@ document.addEventListener('alpine:init', () => {
         if (list.err) throw new Error(list.err);
 
         const grouped = new Map();
+        const now = this.now;
         let mask = 1; // 'すべて' (index 0) は常に有効
         (Array.isArray(list) ? list : []).forEach(v => {
           // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
           v.startTimeInt = new Date(v.startTime).getTime();
           const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
-
           const s = this.allData.service.get(serviceId);
           if (s) {
-            mask |= (1 << this.getNetworkIndex(s.onid, s.partialReceptionFlag));
+            const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
+            if (this.set.oneseg || ni !== 2) {
+              mask |= (1 << ni);
+            }
           }
-
-          if (!grouped.has(serviceId)) {
-            grouped.set(serviceId, new Map());
-          }
+          if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
         });
 
@@ -404,7 +408,14 @@ document.addEventListener('alpine:init', () => {
         ]);
 
         this.allData.service.clear();
-        (serviceRes || []).forEach(s => this.allData.service.set(this.getDataKey(s, 'service'), s));
+        const services = serviceRes || [];
+        services.forEach((s, i) => {
+          const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
+          const prev = services[i - 1];
+          s.subCh = (ni === 1 || ni === 3) && prev && s.onid === prev.onid && s.tsid === prev.tsid;
+          this.allData.service.set(this.getDataKey(s, 'service'), s);
+        });
+
         this.allData.recpreset.clear();
         (presetRes || []).forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.service = Date.now();
@@ -813,6 +824,16 @@ document.addEventListener('alpine:init', () => {
     getServiceName(d) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || '不明';
     },
+    get serviceList() {
+      const list = Array.from(this.allData.service.values());
+      return (this.set.oneseg ? list : list.filter(s => !s.partialReceptionFlag))
+        .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
+    },
+    get serviceList() {
+      const list = Array.from(this.allData.service.values());
+      return (this.set.oneseg ? list : list.filter(s => !s.partialReceptionFlag))
+        .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
+    },
     getNetworkIndex(onid, partial) {
       if (0x7880 <= onid && onid <= 0x7FE8) return partial ? 2 : 1;
       if (onid === 4) return 3;
@@ -888,16 +909,11 @@ document.addEventListener('alpine:init', () => {
 
       // 1. サービスリストの準備
       if (networkChanged || this.epg.servicesToDisplay.length === 0) {
-        let services = Array.from(this.allData.service.values());
+        let services = this.serviceList;
         if (this.epg.activeNetwork > 0) {
           services = services.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === this.epg.activeNetwork);
         }
-        this.epg.servicesToDisplay = services.map((s, i, arr) => {
-          const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
-          const prev = arr[i - 1];
-          const isSub = (ni === 1 || ni === 3) && prev && s.onid === prev.onid && s.tsid === prev.tsid;
-          return { ...s, subCh: isSub, displayEvents: [] };
-        });
+        this.epg.servicesToDisplay = services.map(s => ({ ...s, displayEvents: [] }));
       } else if (timeChanged) {
         // 時間枠（1時間ごとの境界）が変わった場合のみクリアする。
         this.epg.servicesToDisplay.forEach(s => s.displayEvents = []);
