@@ -946,7 +946,7 @@ ct:Append([=[
                     <div class="row wrap tiny-space no-margin secondary-text no-line">
                       <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
                       <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
-                      <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
+                      <span class="middle-align" style="max-width: 100%;"><i class="tiny">description</i><span x-text="d.comment"></span></span>
                       <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
                       <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
                     </div>
