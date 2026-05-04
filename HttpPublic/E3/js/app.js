@@ -235,6 +235,7 @@ document.addEventListener('alpine:init', () => {
           });
         }
 
+        this.syncNowOnAir();
         this.syncDashboardData();
         this.updateStorage();
       }
