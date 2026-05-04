@@ -866,10 +866,9 @@ document.addEventListener('alpine:init', () => {
     getServiceName(d) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || '不明';
     },
-    getPercent(p) {
+    getElapsedTime(p) {
       if (!p || !p.durationSecond) return 0;
-      const elapsed = this.now - p.startTimeInt;
-      return Math.min(100, Math.max(0, Math.floor((elapsed / (p.durationSecond * 1000)) * 100)));
+      return (this.now - p.startTimeInt) / 1000;
     },
     get nowOnAirList() {
       // サービス一覧の並び順に従って、放送中・次の番組ペアの配列を返す

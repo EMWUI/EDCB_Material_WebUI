@@ -561,7 +561,7 @@ ct:Append([=[
                     </template>
                   </div>
                   <template x-if="entry">
-                    <progress class="absolute bottom left right" :value="getPercent(entry.current)" max="100"></progress>
+                    <progress class="absolute bottom left right" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
                   </template>
                 </article>
               </template>
@@ -763,7 +763,7 @@ ct:Append([=[
                     <template x-if="entry">
                       <div>
                         <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
-                        <progress class="no-margin" :value="getPercent(entry.current)" max="100" value="0"></progress>
+                        <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
 
                         <template x-if="entry.next">
                           <div class="row no-margin padding-top middle-align">
