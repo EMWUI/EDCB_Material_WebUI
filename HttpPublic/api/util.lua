@@ -1417,23 +1417,26 @@ function GetVarPastEventID(qs,n,occ)
 end
 
 --CSRFトークンを取得する
---※このトークンを含んだコンテンツを圧縮する場合はBREACH攻撃に少し気を配る
-function CsrfToken(m,t)
-  --メッセージに時刻をつける
-  m=(m or mg.script_name:match('[^\\/]*$'):lower())..'/legacy/'..(math.floor(os.time()/3600/12)+(t or 0))
+function CsrfToken(m,t,s)
+  --メッセージに時刻をつける。saltはBREACH攻撃対策のため
+  local salt=shared.csrfSalt or '00000000'
+  m=(m or mg.script_name:match('[^\\/]*$'):lower())..'/legacy/'..(math.floor(os.time()/3600/12)+(t or 0))..'/'..(s or salt)
   local kip,kop=('\54'):rep(48),('\92'):rep(48)
   for k in edcb.serverRandom:sub(1,32):gmatch('..') do
     kip=string.char(bit32.bxor(tonumber(k,16),54))..kip
     kop=string.char(bit32.bxor(tonumber(k,16),92))..kop
   end
   --HMAC-MD5(hex)
-  return mg.md5(kop..mg.md5(kip..m))
+  m=mg.md5(kop..mg.md5(kip..m))
+  if not s then shared.csrfSalt=m:sub(1,8) end
+  return (s or salt)..m:sub(9)
 end
 
 --CSRFトークンを検査する
 --※サーバに変更を加える要求(POSTに限らない)を処理する前にこれを呼ぶべき
 function AssertCsrf(qs)
-  assert(mg.get_var(qs,'ctok')==CsrfToken() or mg.get_var(qs,'ctok')==CsrfToken(nil,-1))
+  local ctok=mg.get_var(qs,'ctok')
+  assert(ctok and #ctok>=8 and (ctok==CsrfToken(nil,0,ctok:sub(1,8)) or ctok==CsrfToken(nil,-1,ctok:sub(1,8))))
 end
 
 --県域コード(1～50)に対応する緊急情報信号の地域符号を返す
