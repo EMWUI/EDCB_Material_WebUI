@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* CSS変数を「色」として登録することで、アニメーションの補間を有効にする */
+@property --color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #ba1a1a;
+}
+
+main>.absolute{
+  width: 100%;
+}
+
+.contents { display: contents; }
+.no-row-gap { row-gap: 0; }
+.tiny-gap { gap: .25rem }
+.small-gap { gap: .5rem }
+.around-align { justify-content: space-around; }
+
+nav.tabbed.fixed {
+  position: sticky;
+  top: 0;
+  z-index:11;
+}
+nav.tabbed.fixed.top-margin { top: var(--_margin); }
+
+li>.max, .row.wrap>.middle-align { max-width: 100%; }
+
+input[type=number] { inline-size: 7rem; }
+
+select[multiple] {
+  overflow-y: auto;
+  padding-block-start: 7px !important;
+  cursor: default;
+  option:checked {
+    background-color: var(--secondary-container);
+    color: var(--on-primary-container);
+  }
+}
+button>input { display: none; }
+
+.chip+menu>li {
+  padding: 0;
+  justify-content: center;
+  min-block-size: 1.75rem;
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.mark {
+  border: 0.1em solid var(--on-primary);
+  font-size: 0.7em;
+  font-family: "HG丸ｺﾞｼｯｸM-PRO", "Roboto", "Helvetica", "Arial", sans-serif;
+  font-weight: bold;
+  background: var(--primary);
+  color: var(--primary-container);
+  margin: 0 0.1em;
+  padding: 0.1em;
+  border-radius: 3px;
+  vertical-align: top;
+}
+.mark.enabled {
+  background: var(--error);
+  color: var(--error-container);
+  border-color: var(--on-error);
+}
+.mark.disabled {
+  background: var(--on-surface);
+  color: var(--surface-variant);
+  border-color: var(--surface);
+}
+
+
+#sidePanel { width: 600px; max-width: min(90vw, 600px); }
+fieldset, :is(nav,.row):not(.wrap)>.max { min-width: 0; }
+:is(nav,.row)>.chip { max-width: 100%; }
+:is(nav,.row)>.chip>span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.wrap.tiny-space { row-gap: 0; }
+.wrap.tiny-space .middle-align { gap: .2rem; }
+.row:has(>article) { align-items: stretch; }
+article.small-width { inline-size: 15rem!important; overflow: hidden; }
+article.small-width+button { align-self: center; }
+
+
+/* ジャンルごとの Hue(色相) と Chroma(彩度) の定義 */
+/* 旧 */
+.cont-1  { --h: 230; --c: 0.05; } /* ニュース/報道 (#B3E5FC) */
+.cont-2  { --h: 100; --c: 0.04; } /* スポーツ (#FFF9C4) */
+.cont-3  { --h: 250; --c: 0.05; } /* 情報/ワイドショー (#BBDEFB) */
+.cont-4  { --h: 15;  --c: 0.06; } /* ドラマ (#FFCDD2) */
+.cont-5  { --h: 85;  --c: 0.06; } /* 音楽 (#FFECB3) */
+.cont-6  { --h: 305; --c: 0.07; } /* バラエティ (#E1BEE7) */
+.cont-7  { --h: 75;  --c: 0.06; } /* 映画 (#FFE0B2) */
+.cont-8  { --h: 350; --c: 0.08; } /* アニメ/特撮 (#F8BBD0) */
+.cont-9  { --h: 270; --c: 0.06; } /* ドキュメンタリー/教養 (#C5CAE9) */
+.cont-10 { --h: 135; --c: 0.06; } /* 劇場/公演 (#DCEDC8) */
+.cont-11 { --h: 145; --c: 0.06; } /* 趣味/教育 (#C8E6C9) */
+.cont-12 { --h: 185; --c: 0.05; } /* 福祉 (#B2DFDB) */
+.cont-13 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
+.cont-14 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
+.cont-15 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
+.cont-16 { --h: 0;   --c: 0;    } /* その他 (#F5F5F5) */
+
+.cont-1  { --h: 225; --c: 0.08; } /* ニュース/報道 */
+.cont-2  { --h: 145; --c: 0.09; } /* スポーツ */
+.cont-3  { --h: 195; --c: 0.07; } /* 情報/ワイドショー */
+.cont-4  { --h: 20;  --c: 0.10; } /* ドラマ */
+.cont-5  { --h: 285; --c: 0.08; } /* 音楽 */
+.cont-6  { --h: 320; --c: 0.09; } /* バラエティ */
+.cont-7  { --h: 45;  --c: 0.08; } /* 映画 */
+.cont-8  { --h: 345; --c: 0.11; } /* アニメ/特撮 */
+.cont-9  { --h: 255; --c: 0.07; } /* ドキュメンタリー/教養 */
+.cont-10 { --h: 120; --c: 0.06; } /* 劇場/公演 */
+.cont-11 { --h: 85;  --c: 0.08; } /* 趣味/教育 */
+.cont-12 { --h: 175; --c: 0.06; } /* 福祉 */
+.cont-13, .cont-14, .cont-15 { --h: 0; --c: 0; } /* 予備 */
+.cont-16 { --h: 0; --c: 0; } /* その他 */
+
+[class*="cont-"] {
+  --l-primary: 40%;
+  --l-container: 95%;
+  --l-on-container: 10%;
+  --m3-primary: oklch(var(--l-primary) var(--c) var(--h));
+  --m3-container: oklch(var(--l-container) var(--c) var(--h));
+  --m3-on-container: oklch(var(--l-on-container) var(--c) var(--h));
+  background-color: var(--m3-container) !important;
+  color: var(--m3-on-container) !important;
+}
+
+[class*="cont-"]:not(.chip) {
+  /* 左端のアクセントだけ */
+  /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important;  */
+
+  /* 左端から右へ消え込むグラデーション */
+  background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%) !important;
+
+  /* 塗りつぶし */
+  /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; */
+}
+
+[class*="cont-"].reserve {
+  position: relative;
+  isolation: isolate;
+  --color: #ba1a1a;
+}
+
+[class*="cont-"].reserve::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 -5px;
+  mask-image: linear-gradient(to right, transparent 10px, #000 10px);
+  -webkit-mask-image: linear-gradient(to right, transparent 10px, #000 10px);
+  box-shadow: inset 0 0 1rem 0.5rem var(--color), inset 1.5rem 0 1.5rem -0.5rem var(--color) !important;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+[class*="cont-"].reserve.disabled { --color: var(--outline); }
+[class*="cont-"].reserve.partially { --color: #f9a825; }
+[class*="cont-"].reserve.shortage { --color: #ff1744; animation: shortage-blink 2s infinite ease-in-out; }
+[class*="cont-"].reserve.view { --color: #00c853; }
+
+:is(body.dark, :root.dark) [class*="cont-"] {
+  --l-primary: 80%;
+  --l-container: 20%;
+  --l-on-container: 90%;
+}
+
+@keyframes shortage-blink {
+  0%, 100% { --color: #ff1744; }
+  50% { --color: color-mix(in oklch, var(--m3-container), #ff1744 50%); }
+}
+
+.status { height: 45px; line-height: 45px; }
+.blink { animation: blink-animation 3s infinite; }
+@keyframes blink-animation {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+#epg-grid { display: flex; min-width: 100%; position: absolute; --header: 90px; }
+.epg-time-col { width: 2.5rem; position: sticky; left: 0; z-index: 5; }
+.epg-time-col>div:not(.epg-service-header) { height: calc(60 * var(--min) * 1px); }
+.epg-time-col.epg-service-header { line-height: 1.1; margin-right: -2.5rem; z-index: 10; }
+.epg-service-col { position: relative; flex-grow: 1; }
+.isSmallScreen .epg-service-col { inline-size: 8rem!important; }
+.epg-service-header { height: var(--header); position: sticky; top: 0; z-index: 9; }
+.epg-service-header img { inline-size: auto; }
+.epg-event { width: 100%; overflow: visible; cursor: pointer; height: calc( var(--h) * var(--min) * 1px); }
+.epg-event > div { padding: 0 0.3rem; height: 100%; }
+.epg-event > div.large-elevate { height: auto; min-height: 100%; z-index: 8; }
+.epg-event :is(nav,.row).vertical { width: fit-content; margin-inline: auto; align-items: stretch; }
+.epg-event nav.vertical button { justify-content: normal; }
+.epg-event nav.vertical button span { flex-grow: 1; }
+.epg-content {
+  position: sticky;
+  top: var(--header);
+  align-items: start;
+  gap: .2rem;
+  overflow: hidden;
+  max-height: 100%;
+  user-select: none;
+}
+
+#epg-now-line {
+  position: absolute;
+  top: calc( var(--t) + var(--header));
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--error);
+  z-index: 7;
+  pointer-events: none;
+}
+#epg-now-line::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -4px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid var(--error);
+}
+
+.hour-4, .hour-5 { --h: 220; --c: 0.05; }
+.hour-6, .hour-7 { --h: 170; --c: 0.05; }
+.hour-8, .hour-9, .hour-10 { --h: 130; --c: 0.06; }
+.hour-11, .hour-12, .hour-13 { --h: 85; --c: 0.07; }
+.hour-14, .hour-15, .hour-16 { --h: 40; --c: 0.07; }
+.hour-17, .hour-18, .hour-19 { --h: 25; --c: 0.08; }
+.hour-20, .hour-21, .hour-22 { --h: 290; --c: 0.06; }
+.hour-23, .hour-0, .hour-1, .hour-2, .hour-3 { --h: 260; --c: 0.06; }
+
+[class*="hour-"] {
+  --l-container: 92%;
+  --l-on-container: 20%;
+  background-color: oklch(var(--l-container) var(--c) var(--h)) !important;
+  color: oklch(var(--l-on-container) var(--c) var(--h)) !important;
+}
+:is(body.dark, :root.dark) [class*="hour-"] {
+  --l-container: 25%;
+  --l-on-container: 90%;
+}
+

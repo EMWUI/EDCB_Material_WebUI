@@ -17,339 +17,14 @@ ct:Append([=[
 
 ]=]..GetScript(minTime,maxTime)..[=[
   
-  <script src="./js/app.js?ver=]=]..ver..[=[" defer></script>
+  <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
+  <script src="js/app.js?ver=]=]..ver..[=[" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
-
-    /* CSS変数を「色」として登録することで、アニメーションの補間を有効にする */
-    @property --color {
-      syntax: "<color>";
-      inherits: true;
-      initial-value: #ba1a1a;
-    }
-
-    main>.absolute{
-      width: 100%;
-    }
-
-    select[multiple] {
-      overflow-y: auto;
-      padding-block-start: 7px !important;
-      cursor: default;
-      option:checked {
-        background-color: var(--secondary-container);
-        color: var(--on-primary-container);
-      }
-    }
-    button>input {
-      display: none;
-    }
-
-    .chip+menu>li {
-      padding: 0;
-      justify-content: center;
-      min-block-size: 1.75rem;
-    }
-
-    .title {
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
-    }
-    .mark {
-      border: 0.1em solid var(--on-primary);
-      font-size: 0.7em;
-      font-family: "HG丸ｺﾞｼｯｸM-PRO", "Roboto", "Helvetica", "Arial", sans-serif;
-      font-weight: bold;
-      background: var(--primary);
-      color: var(--primary-container);
-      margin: 0 0.1em;
-      padding: 0.1em;
-      border-radius: 3px;
-      vertical-align: top;
-      &.enabled {
-        background: var(--error);
-        color: var(--error-container);
-        border-color: var(--on-error);
-      }
-      &.disabled {
-        background: var(--on-surface);
-        color: var(--surface-variant);
-        border-color: var(--surface);
-      }
-    }
-
-
-    /* ジャンルごとの Hue(色相) と Chroma(彩度) の初期値 */
-    /* 旧 */
-    .cont-1  { --h: 230; --c: 0.05; } /* ニュース/報道 (#B3E5FC) */
-    .cont-2  { --h: 100; --c: 0.04; } /* スポーツ (#FFF9C4) */
-    .cont-3  { --h: 250; --c: 0.05; } /* 情報/ワイドショー (#BBDEFB) */
-    .cont-4  { --h: 15;  --c: 0.06; } /* ドラマ (#FFCDD2) */
-    .cont-5  { --h: 85;  --c: 0.06; } /* 音楽 (#FFECB3) */
-    .cont-6  { --h: 305; --c: 0.07; } /* バラエティ (#E1BEE7) */
-    .cont-7  { --h: 75;  --c: 0.06; } /* 映画 (#FFE0B2) */
-    .cont-8  { --h: 350; --c: 0.08; } /* アニメ/特撮 (#F8BBD0) */
-    .cont-9  { --h: 270; --c: 0.06; } /* ドキュメンタリー/教養 (#C5CAE9) */
-    .cont-10 { --h: 135; --c: 0.06; } /* 劇場/公演 (#DCEDC8) */
-    .cont-11 { --h: 145; --c: 0.06; } /* 趣味/教育 (#C8E6C9) */
-    .cont-12 { --h: 185; --c: 0.05; } /* 福祉 (#B2DFDB) */
-    .cont-13 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-14 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-15 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-16 { --h: 0;   --c: 0;    } /* その他 (#F5F5F5) */
-
-    .cont-1  { --h: 225; --c: 0.08; } /* ニュース/報道: 信頼のブルー */
-    .cont-2  { --h: 145; --c: 0.09; } /* スポーツ: 鮮やかなフィールドグリーン */
-    .cont-3  { --h: 195; --c: 0.07; } /* 情報/ワイドショー: 清潔感のあるスカイブルー */
-    .cont-4  { --h: 20;  --c: 0.10; } /* ドラマ: 華やかなローズ/レッド */
-    .cont-5  { --h: 285; --c: 0.08; } /* 音楽: 芸術的なパープル */
-    .cont-6  { --h: 320; --c: 0.09; } /* バラエティ: 賑やかなマゼンタ */
-    .cont-7  { --h: 45;  --c: 0.08; } /* 映画: 温かみのあるアンバー/オレンジ */
-    .cont-8  { --h: 345; --c: 0.11; } /* アニメ/特撮: ポップなピンク */
-    .cont-9  { --h: 255; --c: 0.07; } /* ドキュメンタリー/教養: 知的なインディゴ */
-    .cont-10 { --h: 120; --c: 0.06; } /* 劇場/公演: シックなグリーン */
-    .cont-11 { --h: 85;  --c: 0.08; } /* 趣味/教育: 明るいライム */
-    .cont-12 { --h: 175; --c: 0.06; } /* 福祉: 穏やかなティール */
-    .cont-13 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-14 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-15 { --h: 0;   --c: 0;    } /* 予備 (#E0E0E0) */
-    .cont-16 { --h: 0;   --c: 0;    } /* その他: ニュートラルグレー */
-
-    /* M3ロジックをクラスに紐付け */
-    [class*="cont-"] {
-      /* デフォルト（ライトモード）の明度(Tone)設計 */
-      --l-primary: 40%;
-      --l-container: 95%;
-      --l-on-container: 10%;
-
-      --m3-primary: oklch(var(--l-primary) var(--c) var(--h));
-      --m3-container: oklch(var(--l-container) var(--c) var(--h));
-      --m3-on-container: oklch(var(--l-on-container) var(--c) var(--h));
-
-      background-color: var(--m3-container) !important;
-      color: var(--m3-on-container) !important;
-
-      &:not(.chip) {
-        /* 左端のアクセントだけ */
-        /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important;  */
-
-        /* 左端から右へ消え込むグラデーション */
-        background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%) !important;
-
-        /* 塗りつぶし */
-        /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; */
-      }
-
-      &.reserve {
-        position: relative;
-        isolation: isolate; /* 影を文字の下に、背景の上に配置するための設定 */
-        --color: #ba1a1a; /* 標準の予約赤 */
-
-        &::after {
-          content: "";
-          position: absolute;
-          /* 角丸の隙間を消すために左に5px拡張 */
-          inset: 0 0 0 -5px;
-          /* 拡張分(5px) + アクセント分(5px) = 10pxをマスク */
-          mask-image: linear-gradient(to right, transparent 10px, #000 10px);
-          -webkit-mask-image: linear-gradient(to right, transparent 10px, #000 10px);
-          /* 基本のグロー(0 0 1rem)に加えて、左側から右へ1.5rem分押し出した影を重ねて、左端の厚みを強調 */
-          box-shadow: inset 0 0 1rem 0.5rem var(--color), 
-                      inset 1.5rem 0 1.5rem -0.5rem var(--color) !important;
-          pointer-events: none; /* 下にある文字の選択やクリックを邪魔しない */
-          border-radius: inherit;
-          z-index: -1; /* 文字（.epg-content）より下に潜り込ませる */
-        }
-
-        /* 外枠のグラデーション（予約あり共通） */
-        /* background-image: linear-gradient(to right,  var(--m3-primary) 5px, transparent 5px),
-                          linear-gradient(to right,  var(--color), transparent  1.4rem),
-                          linear-gradient(to left,   var(--color), transparent  1rem),
-                          linear-gradient(to bottom, var(--color), transparent  1rem),
-                          linear-gradient(to top,    var(--color), transparent  1rem)!important; */
-
-        &.disabled {
-          --color: var(--outline); /* 目立たないグレー */
-        }
-        &.partially {
-          --color: #f9a825; /* 警告のアンバー */
-        }
-        &.shortage {
-          --color: #ff1744; /* 深刻な不足の明るい赤（マゼンタ寄り） */
-          animation: shortage-blink 2s infinite ease-in-out;
-        }
-        &.view {
-          --color: #00c853; /* 視聴予約の鮮やかな緑 */
-        }
-      }
-    }
-
-    /* ダークモード時の明度(Tone)定義を反転 */
-    :is(body.dark, :root.dark) [class*="cont-"] {
-      --l-primary: 80%;        /* 暗い背景に映える明るいアクセント */
-      --l-container: 20%;      /* 深い背景色（M3のTone 20相当） */
-      --l-on-container: 90%;   /* 読みやすい明るい文字（M3のTone 90相当） */
-    }
-
-    /* 枠線の色（--color）のみを、エラー赤と「背景色＋赤50%」の間でゆっくり変化させる */
-    @keyframes shortage-blink {
-      0%, 100% {
-        --color: #ff1744;
-      }
-      50% {
-        --color: color-mix(in oklch, var(--m3-container), #ff1744 50%);
-      }
-    }
-
-    .status {
-      height: 45px;
-      line-height: 45px;
-    }
-    /* 録画中の点滅 */
-    .blink {
-      animation: blink-animation 3s infinite;
-    }
-    @keyframes blink-animation {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    fieldset,
-    :is(nav,.row):not(.wrap)>.max {
-      min-width: 0;
-    }
-    :is(nav,.row)>.chip {
-      max-width: 100%;
-      >span {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-    }
-    .wrap.tiny-space {
-      row-gap: 0;
-      .middle-align {
-        gap: .2rem;
-      }
-    }
-
-    .row:has(>article) {
-      align-items: stretch;
-    }
-    article.small-width {
-      inline-size: 15rem!important;
-      +button {
-        align-self: center;
-      }
-    }
-
-    /* EPG Grid styles */
-    #epg-grid {
-      display: flex;
-      min-width: 100%;
-      position: absolute;
-    }
-    .epg-time-col {
-      width: 2.5rem;
-      position: sticky;
-      left: 0;
-      z-index: 5;
-    }
-    .epg-service-col {
-      position: relative;
-      flex-grow: 1;
-    }
-    .epg-service-header {
-      height: 90px;
-      position: sticky;
-      top: 0;
-      z-index: 9;
-    }
-    .epg-time-col.epg-service-header {
-      line-height: 1.1;
-      margin-right: -2.5rem;
-      z-index: 10;
-    }
-    .epg-event {
-      width: 100%;
-      overflow: visible;
-      cursor: pointer;
-      height: calc( var(--h) * var(--min) * 1px);
-      & > div {
-        padding: 0 0.3rem;
-        height: 100%;
-        &.large-elevate {
-          height: auto;
-          min-height: 100%;
-          z-index: 8;
-        }
-      }
-    }
-    .epg-content {
-      position: sticky;
-      top: 90px;
-      align-items: start;
-      gap: .2rem;
-      overflow: hidden;
-      max-height: 100%;
-      user-select: none;
-    }
-    #epg-now-line {
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--error);
-      z-index: 7;
-      pointer-events: none;
-      &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: -4px;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-left: 8px solid var(--error);
-      }
-    }
-
-    /* 時間帯ごとの色相(Hue)と彩度(Chroma)の定義 */
-    .hour-4, .hour-5 { --h: 220; --c: 0.05; } /* 早朝: ブルー */
-    .hour-6, .hour-7 { --h: 170; --c: 0.05; } /* 朝: ティール */
-    .hour-8, .hour-9, .hour-10 { --h: 130; --c: 0.06; } /* 午前: グリーン */
-    .hour-11, .hour-12, .hour-13 { --h: 85; --c: 0.07; } /* 昼: イエロー/アンバー */
-    .hour-14, .hour-15, .hour-16 { --h: 40; --c: 0.07; } /* 午後: オレンジ */
-    .hour-17, .hour-18, .hour-19 { --h: 25; --c: 0.08; } /* 夕方: レッド */
-    .hour-20, .hour-21, .hour-22 { --h: 290; --c: 0.06; } /* 夜: パープル */
-    .hour-23, .hour-0, .hour-1, .hour-2, .hour-3 { --h: 260; --c: 0.06; } /* 深夜: インディゴ */
-
-    /* 時間軸のモード別スタイル定義 */
-    [class*="hour-"] {
-      /* デフォルト（ライトモード） */
-      --l-container: 92%;
-      --l-on-container: 20%;
-
-      background-color: oklch(var(--l-container) var(--c) var(--h)) !important;
-      color: oklch(var(--l-on-container) var(--c) var(--h)) !important;
-    }
-
-    /* ダークモード時の明度調整 */
-    :is(body.dark, :root.dark) [class*="hour-"] {
-      --l-container: 25%;
-      --l-on-container: 90%;
-    }
-
-  </style>
 </head>
 
-<body class="dark" x-data="edcbApp">
-  <nav class="surface-container left m l scroll" :class="{ 'max': sidebarActive }">
+<body class="dark" x-data="edcbApp" :class="{ isSmallScreen: isSmallScreen}">
+  <nav class="m l surface-container left scroll" :class="{ 'max': sidebarActive }">
     <header>
       <button class="extra circle transparent" @click="sidebarActive = !sidebarActive">
         <i x-text="sidebarActive ? 'menu_open' : 'menu'"></i>
@@ -394,7 +69,7 @@ ct:Append([=[
     </div>
   </template>
 
-  <nav class="bottom s scroll">
+  <nav class="s bottom scroll">
     <a data-ui="#drawer">
       <i>menu</i><span>メニュー</span>
     </a>
@@ -415,7 +90,7 @@ ct:Append([=[
       </span>
 
       <template x-if="page === '#epg'">
-        <div style="display: contents;">
+        <div class="contents">
           <button class="m l circle transparent" @click="scrollToNow()" title="現在時刻へ移動">
             <i>my_location</i>
           </button>
@@ -501,8 +176,8 @@ ct:Append([=[
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
-        <div class="grid" style="justify-items: center;">
-          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+        <div class="row around-align">
+          <div :class="isSmallScreen ? 'center-align' : 'row'">
             <i class="primary-text extra">event_available</i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">予約件数</div>
@@ -510,7 +185,7 @@ ct:Append([=[
             </h5>
           </div>
 
-          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+          <div :class="isSmallScreen ? 'center-align' : 'row'">
             <i class="extra" :class="dashboardData.isRecording ? 'error-text blink' : ''" x-text="dashboardData.isRecording ? 'fiber_manual_record' : dashboardData.isEpgCap ? 'sensors' : dashboardData.activeTuners ? 'fiber_manual_record' : 'bedtime'"></i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">チューナー</div>
@@ -518,7 +193,7 @@ ct:Append([=[
             </h5>
           </div>
 
-          <div class="s4 m4" :class="isSmallScreen ? 'center-align' : 'row'">
+          <div :class="isSmallScreen ? 'center-align' : 'row'">
             <i class="extra" :class="isOnline ? 'secondary-text' : 'error-text'">info</i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">システム</div>
@@ -538,7 +213,7 @@ ct:Append([=[
             <div class="tiny-text bold secondary-text" x-text="networkName"></div>
             <div class="row scroll">
               <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
-                <article class="small-width border ripple tiny-line small-text" style="overflow: hidden;"
+                <article class="small-width border ripple tiny-line small-text"
                       x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
                       @click="if (entry) openProgramDetail(entry.current)">
                   <div class="row">
@@ -650,12 +325,12 @@ ct:Append([=[
         <div class="epg-time-col">
           <div class="epg-service-header surface-container small-round border"></div> <!-- ヘッダー分 -->
           <template x-for="h in 24" :key="h">
-            <div class="center-align small-round border" :class="`hour-${ (new Date(epg.epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epg.epgStartTime).getHours() + h - 1 + 20) % 24 + 4)" style="height: calc(60 * var(--min) * 1px);"></div>
+            <div class="center-align small-round border" :class="`hour-${ (new Date(epg.epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epg.epgStartTime).getHours() + h - 1 + 20) % 24 + 4)"></div>
           </template>
         </div>
         <!-- 現在時刻の線 -->
         <template x-if="getNowLinePos() >= 0">
-          <div id="epg-now-line" :style="`top: ${getNowLinePos() + 90}px`" x-transition></div>
+          <div id="epg-now-line" :style="`--t: ${getNowLinePos()}px`" x-transition></div>
         </template>
 
         <!-- サービス列 -->
@@ -663,7 +338,7 @@ ct:Append([=[
           <template x-if="!service.subCh">
             <div class="epg-service-col small-width">
               <div class="epg-service-header secondary-container padding center-align small-round border">
-                <img :src="getLogoPath(service)" class="tiny" style="inline-size: auto;">
+                <img :src="getLogoPath(service)" class="tiny">
                 <div class="small-text" x-text="service.service_name"></div>
               </div>
               <!-- 番組配置エリア -->
@@ -704,19 +379,19 @@ ct:Append([=[
                           <div class="max">
                             <div x-html="convert.title(event.shortInfo?.event_name)"></div>
                             <div class="secondary-text small-text no-line" x-html="event.shortInfo?.text_char.replace(/\r?\n/g, '<br>')"></div>
-                            <nav class="vertical center-align tiny-space vertical-margin" x-show="!event.isGap && active === event.eid">
-                              <button class="responsive border secondary-border secondary-text horizontal-margin" @click="openProgramDetail(event)">
-                                <i>info</i>
+                            <nav class="vertical tiny-space vertical-margin" x-show="!event.isGap && active === event.eid">
+                              <button class="border secondary-border secondary-text" @click="openProgramDetail(event)">
+                                <i class="m l">info</i>
                                 <span>番組詳細</span>
                               </button>
-                              <button class="responsive border secondary-border secondary-text horizontal-margin"
+                              <button class="border secondary-border secondary-text"
                                       @click.stop="event.reserve ? toggleReserve(event.reserve) : addReserve(event)"
                                       x-show="event.startTimeInt + event.durationSecond * 1000 > now">
-                                <i>event_upcoming</i>
+                                <i class="m l">event_upcoming</i>
                                 <span x-text="!event.reserve ? '予約追加' : event.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
                               </button>
-                              <button class="responsive border secondary-border secondary-text horizontal-margin" @click.stop="openNewEntry(event)">
-                                <i>published_with_changes</i>
+                              <button class="border secondary-border secondary-text" @click.stop="openNewEntry(event)">
+                                <i class="m l">published_with_changes</i>
                                 <span>EPG予約</span>
                               </button>
                             </nav>
@@ -735,7 +410,7 @@ ct:Append([=[
 
     <template x-if="page === '#onair'">
       <div class="absolute" x-data="{ onairNetwork: 1 }">
-        <nav class="tabbed small top-margin" style="position: sticky;top:1rem;z-index:11;">
+        <nav class="tabbed small top-margin fixed">
           <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
             <a :class="onairNetwork === networkIndex ? 'active': ''" 
               x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))"
@@ -746,11 +421,11 @@ ct:Append([=[
         </nav>
 
         <section class="responsive">
-          <ul class="list medium-space vertical-margin">
+          <ul class="list medium-space bottom-margin">
             <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === onairNetwork)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
               <li class="ripple" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }" @click="if (entry) openProgramDetail(entry.current)">
-                <div class="max row no-margin no-wrap" style="max-width: 100%;">
-                  <div class="min flex center-align">
+                <div class="max row no-margin no-wrap">
+                  <div class="center-align">
                     <img class="round border tiny" :src="getLogoPath(s)">
                   </div>
                   <div class="max">
@@ -810,9 +485,9 @@ ct:Append([=[
 
         </div>
         <div class="max" :class="!d.recSetting?.recEnabled ? 'medium-opacity' : ''">
-          <div class="title bold large-text">
-            <img class="space right-margin tiny-margin" :src="getLogoPath(d)">
-            <span class="" x-html="convert.title(d.title)"></span>
+          <div class="title middle-align bold large-text">
+            <img class="space" :src="getLogoPath(d)">
+            <span x-html="convert.title(d.title)"></span>
           </div>
           <div class="row wrap tiny-space no-margin secondary-text no-line">
             <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
@@ -915,7 +590,7 @@ ct:Append([=[
                     <div class="row wrap tiny-space no-margin secondary-text no-line">
                       <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
                       <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
                       <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
                     </div>
                   </div>
@@ -935,7 +610,7 @@ ct:Append([=[
             <template x-for="d in displayList" :key="d.id">
               <li class="ripple" @click="openRecinfoDetail(d)">
                 <div class="row no-margin no-wrap">
-                  <div class="min flex center-align">
+                  <div class="center-align">
                     <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
                   </div>
                   <div class="max">
@@ -945,8 +620,8 @@ ct:Append([=[
                     </div>
                     <div class="row wrap tiny-space no-margin secondary-text no-line">
                       <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
-                      <span class="middle-align" style="max-width: 100%;"><i class="tiny">description</i><span x-text="d.comment"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
+                      <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
                       <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
                       <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
                     </div>
@@ -969,7 +644,7 @@ ct:Append([=[
   </main>
 
   <div class="overlay s" @click="sidePanel.close()"></div>
-  <dialog id="sidePanel" class="right no-padding" style="width:600px;max-width:min(90vw, 600px)" x-data="sidePanel">
+  <dialog id="sidePanel" class="right no-padding" x-data="sidePanel">
     <template id="serviceList-template">
 ]=]..GetServiceOption()..[=[
     </template>
@@ -987,7 +662,7 @@ ct:Append([=[
 
     <main class="responsive scroll" :class="{ 'no-padding': isSmallScreen }" x-init="$watch('detail', v => d = clone(v))">
       <template x-if="!isSmallScreen">
-        <nav class="tabbed small m l" style="position: sticky;top:0;z-index:11;">
+        <nav class="m l tabbed fixed small">
           <a data-ui="#info" x-show="isInfo || isRecinfo">
             <i>info</i>
             <span>番組詳細</span>
@@ -1025,12 +700,12 @@ ct:Append([=[
                 <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
               </div>
             </template>
-            <nav class="wrap no-margin" style="row-gap: 0rem;">
+            <nav class="wrap no-margin no-row-gap">
               <span class="chip primary">
                 <i>event</i>
                 <span x-text="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
               </span>
-              <span><img class="space right-margin tiny-margin" :src="getLogoPath(d)"><span x-text="d.stationName||getServiceName(d)"><span></span>
+              <span class="middle-align"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName||getServiceName(d)"><span></span>
             </nav>
             <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
             <hr class="medium">
@@ -1050,7 +725,7 @@ ct:Append([=[
                   </div>
                   <div class="row top-margin small-margin">
                     <i>description</i>
-                    <nav class="max wrap" style="gap: 0.5rem;">
+                    <nav class="max wrap small-gap">
                       <span class="chip">
                         <i>description</i>
                         <span x-text="d.comment"></span>
@@ -1069,7 +744,7 @@ ct:Append([=[
               </template>
               <div class="row top-margin small-margin">
                 <i>category</i>
-                <nav class="max wrap" style="gap: 0.5rem;">
+                <nav class="max wrap small-gap">
                   <template x-for="g in d.contentInfoList">
                     <span class="chip" :class="'cont-' + (getGenre(g).nibble1 + 1)">
                       <i>label</i>
@@ -1080,7 +755,7 @@ ct:Append([=[
               </div>
               <div class="row top-margin small-margin">
                 <i>videocam</i>
-                <nav class="max wrap" style="gap: 0.5rem;" x-data="{ v: {} }" x-effect="v = getComponent(d?.componentInfo)">
+                <nav class="max wrap small-gap" x-data="{ v: {} }" x-effect="v = getComponent(d?.componentInfo)">
                   <template x-if="v.quality">
                     <span class="chip">
                       <i>high_quality</i>
@@ -1115,9 +790,9 @@ ct:Append([=[
               </div>
               <div class="row top-margin small-margin">
                 <i>speaker</i>
-                <nav class="vertical max" style="gap: 0.5rem;">
+                <nav class="vertical max small-gap">
                   <template x-for="a in d.audioInfoList">
-                    <nav class="max wrap" style="gap: 0.25rem;" x-data="{ v: {} }" x-effect="v = getComponent(a)">
+                    <nav class="max wrap tiny-gap" x-data="{ v: {} }" x-effect="v = getComponent(a)">
                       <span class="chip">
                         <i>volume_up</i>
                         <span x-text="v.text"></span>
@@ -1138,7 +813,7 @@ ct:Append([=[
               </div>
               <div class="row top-margin small-margin">
                 <i>info</i>
-                <nav class="max wrap" style="gap: 0.5rem;">
+                <nav class="max wrap small-gap">
                   <template x-if="d.onid<0x7880 || 0x7FE8<d.onid">
                     <span class="chip">
                       <i>paid</i>
@@ -1358,12 +1033,12 @@ ct:Append([=[
                 <div class="row responsive">
                   <div class="max"></div>
                   <div class="field label border small" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
-                    <input type="number" name="chkDurationMin" x-model="s.chkDurationMin" style="width: 7rem;">
+                    <input type="number" name="chkDurationMin" x-model="s.chkDurationMin">
                     <label>最小（分）</label>
                   </div>
                   <span>〜</span>
                   <div class="field label border small" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
-                    <input type="number" name="chkDurationMax" x-model="s.chkDurationMax" style="width: 7rem;">
+                    <input type="number" name="chkDurationMax" x-model="s.chkDurationMax">
                     <label>最大（分）</label>
                   </div>
                 </div>
@@ -1389,7 +1064,7 @@ ct:Append([=[
                   <h6 class="large-text">確認対象期間</h6>
                   <div class="max"></div>
                   <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
-                    <input type="number" name="chkRecDay" x-model="s.chkRecDay" style="width: 5rem;">
+                    <input type="number" name="chkRecDay" x-model="s.chkRecDay">
                   </div>
                   日前まで
                 </div>
@@ -1403,7 +1078,7 @@ ct:Append([=[
                   <div class="row">
                     <div class="max"></div>
                     <div class="field border small">
-                      <input type="number" name="days" :value="s.days" style="width: 3rem;">
+                      <input type="number" name="days" :value="s.days">
                     </div>
                     日間
                   </div>
@@ -1419,7 +1094,7 @@ ct:Append([=[
         <template x-if="d.recSetting">
           <div class="grid no-margin" x-data="{ r: d.recSetting }" x-init="$watch('d', d => r = d.recSetting)">
             <template  x-if="isReserve">
-              <div style="display: contents;">
+              <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
@@ -1478,7 +1153,7 @@ ct:Append([=[
             </template>
 
             <template x-if="isAutoaddmanual">
-              <div style="display: contents;">
+              <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setmanuadd')..[=[">
                 <input type="hidden" :value="`SetManuAdd?id=${d.dataID}`" id="api_action">
                 <input type="hidden" name="addchg" value="1">
@@ -1601,7 +1276,7 @@ ct:Append([=[
                       <span class="tooltip"></span>
                     </div>
                     <button type="button" class="circle transparent" @click="r.priority = Math.min(5, (r.priority || 1) + 1)"><i>add</i></button>
-                    <h6 x-text="r.priority" style="min-width: 1.2em; text-align: center;"></h6>
+                    <h6 x-text="r.priority"></h6>
                   </nav>
                 </div>
               </fieldset>
@@ -1669,11 +1344,11 @@ ct:Append([=[
                 <div class="row small-margin" :class="!startMarginUseDef && 'disabled'">
                   <div class="max"></div>
                   <div class="field label border small">
-                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="startMarginUseDef" style="width: 7rem;">
+                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="startMarginUseDef">
                     <label>開始（秒前）</label>
                   </div>
                   <div class="field label border small">
-                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="startMarginUseDef" style="width: 7rem;">
+                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="startMarginUseDef">
                     <label>終了（秒後）</label>
                   </div>
                 </div>
@@ -1696,8 +1371,8 @@ ct:Append([=[
                     </label>
                   </nav>
                 </div>
-                <nav class="row wrap no-margin" style="row-gap: 0;" :class="(r.serviceMode % 2 === 0) && 'disabled'" x-data="{ def: ]=]..rsdef.serviceMode..[=[ }">
-                  <div class="max m l"></div>
+                <nav class="row wrap no-margin no-row-gap" :class="(r.serviceMode % 2 === 0) && 'disabled'" x-data="{ def: ]=]..rsdef.serviceMode..[=[ }">
+                  <div class="m l max"></div>
                   <label class="checkbox">
                     <input type="checkbox" name="serviceMode_1" :disabled="r.serviceMode % 2 === 0"
                            :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 16"
