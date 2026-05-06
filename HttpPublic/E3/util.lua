@@ -1,4 +1,4 @@
-ver='0.2.5'
+ver='0.3.0'
 
 --Windowsかどうか
 WIN32=not package.config:find('^/')
@@ -28,7 +28,7 @@ navList={
   {hash='#epg', icon='calendar_view_month', title='番組表', bottom=true},
   {hash='#epgweek', icon='view_week', title='週間', full='週間番組表'},
   {hash='#onair', icon='live_tv', title='放送中'},
-  {hash='#tvcast', icon='cast_connected', title='リモート', full='リモート視聴'},
+  {hash='#watch', icon='cast_connected', title='リモート', full='リモート視聴'},
   {hash='#reserve', icon='event_upcoming', title='予約一覧', bottom=true},
   {hash='#tunerreserve', icon='settings_input_component', title='ﾁｭｰﾅｰ別', full='チューナー別予約'},
   {hash='#autoaddepg', icon='published_with_changes', title='EPG予約'},
@@ -177,4 +177,57 @@ for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
     maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
     minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
   end
+end
+
+function GetPlayerOption(tslive)
+  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
+  local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
+  return (tslive and (autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '')
+    or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or '')
+      ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
+
+    ..(zip and '" data-absent-zip="'..zip or '')
+    ..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
+
+    ..((USE_LIVEJK or JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" data-comment-ctok="'..CsrfToken('comment')..'" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
+    ..'" ctok="'..CsrfToken('view')..'"'
+end
+
+function GetVideoOption()
+  local s=''
+  for i,v in ipairs(XCODE_OPTIONS) do
+    if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+      if v.tslive then
+        autoCinema=v.autoCinema
+        deinterlace=v.deinterlace
+      end
+      local id = 'q_'..mg.md5(v.name)
+      s=s..'<li :class="{ active: currentQuality === '..i..' }" @click=setQuality('..i..','..(v.tslive and 'true) x-show="window.isSecureContext && navigator.gpu"' or 'false)')..'>'..EdcbHtmlEscape(v.name)..'</li>\n'
+    end
+  end
+  return s
+end
+function GetVideoRate()
+  local has1=false
+  local s=''
+  for i,v in ipairs(XCODE_FAST_RATES) do
+    if not has1 and v==1 then
+      has1=true
+      i=0
+    end
+    s=s..'<li :class="{ active: playbackRate === '..v..' }"  @click="setPlaybackRate('..v..','..i..')">'..(v==1 and '標準' or v..(math.fmod(v,1)==0 and '.0' or ''))..'</li>\n'
+  end
+  return s
+end
+
+function GetJkList()
+  dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'jkconst.lua')
+  local jkList=GetChatStreamNameList()
+  local s=''
+  if jkList then
+    for i,v in ipairs(jkList) do
+      s=s..'<option value="'..v[1]..'">jk'..v[1]..' ('..EdcbHtmlEscape(v[2])..')\n'
+    end
+  end
+  return s
 end

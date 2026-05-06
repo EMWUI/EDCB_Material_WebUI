@@ -108,6 +108,10 @@ document.addEventListener('alpine:init', () => {
       oneseg: false,
       subGenre: false,
       genreMask: -1044262913,
+      jikkyo:{
+        opacity: 1,
+        height: 32,
+      }
     },
 
     // API名とデータキーを一元管理
@@ -115,7 +119,7 @@ document.addEventListener('alpine:init', () => {
       '#epg': { title: '番組表', itemKey: d => `${d.onid}-${d.tsid}-${d.sid}-${d.eid}` },
       '#epgweek': { title: '週間番組表' },
       '#onair': { title: '放送中' },
-      '#tvcast': {title: 'リモート視聴' },
+      '#watch': {title: 'リモート視聴' },
       '#reserve': { title: '予約一覧', api: 'EnumReserveInfo', sortKey: 'startTime', itemKey: d => d.eid !== 65535 ? `${d.onid}-${d.tsid}-${d.sid}-${d.eid}` : d.reserveID },
       '#tunerreserve': { title: 'チューナー別', api: 'EnumTunerReserveInfo', sortKey: 'startTime', itemKey: 'tunerID' },
       '#autoaddepg': { title: 'EPG自動予約', api: 'EnumAutoAdd', itemKey: 'dataID' },
@@ -154,6 +158,7 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.updateParams();
+      this.player.app = this;
       setInterval(() => {
         this.now = Date.now();
         // 放送中の番組が終了したかチェック
@@ -190,6 +195,7 @@ document.addEventListener('alpine:init', () => {
         this.loadAll();
       });
       window.addEventListener('resize', () => {
+        this.player.setbmlBrowserSize();
         this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
       });
 
@@ -474,6 +480,11 @@ document.addEventListener('alpine:init', () => {
 
     // ページ切り替え時に呼ばれる
     async loadAll() {
+      // 視聴ページ以外に移動した場合は再生を停止してインスタンスを破棄
+      if (this.player.ts && this.page !== '#watch') {
+        this.player.destroy();
+      }
+
       this.totalCount = null;
       document.querySelector('main').scrollTo(0,0);
       this.sidePanel.close();
@@ -532,6 +543,11 @@ document.addEventListener('alpine:init', () => {
       if (this.page === '#onair') {
         return;
       }
+      if (this.page === '#watch') {
+        if (this.params.id) this.player.loadLive(this.params.id);
+        return;
+      }
+
       this.updateDisplayList();
     },
 
@@ -1559,6 +1575,247 @@ document.addEventListener('alpine:init', () => {
       const action = document.getElementById('api_action')?.value || '';
       const url = `${this.ROOT}api/${action}`;
       this.apiFetch(url, new URLSearchParams({ del: 1 }));
+    },
+
+    player: {
+      get params() { return this.app.params },
+      get nowOnAir() { return this.app.dashboardData.nowOnAir },
+      get epg() { return this.nowOnAir[this.params?.id]?.current },
+      vid: null,
+      ts: null,
+      tslive: false,
+      live: true,
+      isPlaying: false,
+      currentTime: 0,
+      get duration() { return this.epg?.durationSecond || 0},
+      volume: 1,
+      isMuted: false,
+      isFullscreen: false,
+      playbackRate: 1,
+      currentQuality: 1,
+      cap: false,
+      datacast: false,
+      jikkyo: true,
+      track: 0,
+      nwtv: 0,
+      cinema: false,
+      isLoading: false, // バッファリング/読み込み中にtrueに設定
+      controlsVisible: true, // コントロールの表示状態
+      showSettingsMenu: false, // 設定ドロップダウンの状態
+      showSidePanel: false,
+      controlTimeout: null, // コントロール自動非表示用タイマー
+      isSeeking: false, // シーク中フラグ
+      sideTab: 'service-list',
+
+      // ビデオ要素と対話するためのメソッド
+      loadLive(id) {
+        if (!this.ts) return;
+        Alpine.raw(this.ts).reset();
+        Alpine.raw(this.ts).loadSource(`${ROOT}api/view?n=${this.nwtv}&id=${id}`);
+        this.isLoading = true;
+        this.live = true;
+      },
+      reset() {
+        Alpine.raw(this.ts).reset();
+        if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
+        if (this.app) this.app.updateParams();
+        this.isPlaying = false;
+        this.currentTime = 0;
+        this.isLoading = false;
+        this.isSeeking = false;
+      },
+      destroy() {
+        this.reset();
+        this.vid = null;
+        this.ts = null;
+      },
+      togglePlay() {
+        if (Alpine.raw(this.vid).paused) Alpine.raw(this.vid).play();
+        else Alpine.raw(this.vid).pause();
+      },
+      seek(value) {
+        Alpine.raw(this.ts).setSeek(value);
+      },
+      setVolume(value) {
+        this.volume = parseFloat(value);
+        this.isMuted = this.volume === 0;
+        Alpine.raw(this.vid).volume = this.volume;
+      },
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        Alpine.raw(this.vid).muted = this.isMuted;
+      },
+      toggleDatacast() {
+        this.datacast = !this.datacast;
+        Alpine.raw(this.ts).toggleDatacast(this.datacast);
+      },
+      toggleCap() {
+        this.cap = !this.cap;
+        this.cap ? Alpine.raw(this.ts).cap.show() : Alpine.raw(this.ts).cap.hide();
+      },
+      toggleJikkyo() {
+        this.jikkyo = Alpine.raw(this.ts).toggleJikkyo();
+      },
+      toggleFullscreen() {
+        const player = document.getElementById('player');
+        if (!document.fullscreenElement) {
+          player.requestFullscreen().catch(err => console.error(err));
+          screen.orientation.lock('landscape');
+          this.isFullscreen = true;
+        } else {
+          screen.orientation.unlock();
+          document.exitFullscreen();
+          this.isFullscreen = false;
+        }
+      },
+      setAudioTrack(track){
+        this.track = track;
+        Alpine.raw(this.ts).setAudioTrack(track);
+      },
+      get audioTrackLabels() {
+        const audioList = this.epg?.audioInfoList;
+        if (!audioList || audioList.length === 0) return ['主音声'];
+
+        // 多重音声（2つ以上の音声コンポーネントがある場合）
+        if (audioList.length >= 2) {
+          return [
+            audioList[0].text_char?.trim() || '主音声',
+            audioList[1].text_char?.trim() || '副音声'
+          ];
+        }
+
+        const info = audioList[0];
+        // デュアルモノ (component_type: 2) の判定
+        if (info.component_type === 2) {
+          // onair.jsを参考に、text_charが「日本語 英語」のように空白や改行で区切られている場合を考慮
+          const text = (info.text_char || '').trim().split(/[\s\n\r]+/);
+          return [
+            `[二] ${text[0] || '日本語'}`,
+            `[二] ${text[1] || '英語'}`
+          ];
+        }
+        return [info.text_char?.trim() || '主音声'];
+      },
+      setPlaybackRate(rate, i) {
+        this.playbackRate = rate;
+        Alpine.raw(this.ts).setFast(rate, i);
+      },
+      setQuality(quality, tslive) {
+        this.currentQuality = quality;
+        this.tslive = tslive;
+        Alpine.raw(this.ts).setOption(quality);
+      },
+      setNwtv(nwtv) {
+        this.nwtv = nwtv;
+      },
+      setDetelecine(){
+        this.cinema = !this.cinema;
+        Alpine.raw(this.ts).setDetelecine(this.cinema);
+      },
+      setbmlBrowserSize(){
+        if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
+        const width = this.$refs.player.clientWidth;
+        const height = this.$refs.player.clientHeight;
+        if (width * 9 < height * 16) bmlBrowserSetVisibleSize(width, Math.floor(width * 9 / 16));
+        else bmlBrowserSetVisibleSize(Math.floor(height * 16 / 9), height);
+      },
+
+      // 時間フォーマットユーティリティ
+      formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) return '00:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const parts = [m, s].map(v => v.toString().padStart(2, '0'));
+        if (h > 0) parts.unshift(h.toString().padStart(2, '0'));
+        return parts.join(':');
+      },
+
+      // コントロールの表示管理
+      showControls() {
+        this.controlsVisible = true;
+      },
+      hideControls() {
+        if (!this.showSettingsMenu) { // メニューが開いていない場合のみ非表示
+          this.controlsVisible = false;
+        }
+      },
+      resetControlTimeout() {
+        clearTimeout(this.controlTimeout);
+        this.showControls(); // 操作時にコントロールが確実に表示されるようにする
+        this.controlTimeout = setTimeout(() => {
+          this.hideControls();
+        }, 3000); // 3秒間操作がない場合に非表示
+      },
+
+      moveRemocon(isSmall) {
+        const content = this.$refs.remocon;
+        const target = isSmall ? this.$refs.remoteMobile : this.$refs.remoteDesktop;
+        if (content && target && content.parentElement !== target) {
+          target.appendChild(content);
+        }
+      },
+
+      remoconInit() {
+        this.$watch('isSmallScreen', value => this.moveRemocon(value));
+        this.$nextTick(() => {
+          const s = document.createElement('script');
+          s.src = 'js/web_bml_play_ts.js';
+          s.id = 'webBml';
+          this.$refs.remocon.appendChild(s);
+          this.moveRemocon(this.isSmallScreen);
+        });
+      },
+
+      // 初期化 (例: ビデオ要素へのイベントリスナーのアタッチ)
+      videoInit() {
+        this.$nextTick(() => {
+          const video = this.$refs.video;
+          video.volume = this.volume;
+          video.muted = this.isMuted;
+          video.addEventListener('play', () => this.isPlaying = true);
+          video.addEventListener('pause', () => this.isPlaying = false);
+          video.addEventListener('timeupdate', () => {
+            if (this.isSeeking) return;
+            if (this.live){
+              this.currentTime = this.app.getElapsedTime(this.epg);
+            }
+          });
+          video.addEventListener('volumechange', () => { this.volume = video.volume; this.isMuted = video.muted; });
+          video.addEventListener('waiting', () => this.isLoading = true);
+          video.addEventListener('playing', () => this.isLoading = false);
+          video.addEventListener('canplay', () => {
+            const promise = video.play();
+            //自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
+            if (promise !== undefined){
+              promise.catch(error => {
+                video.muted = true;
+                video.play();
+                document.addEventListener('click', () => {
+                  video.muted = false;
+                }, { once: true });
+              });
+            }
+          });
+          video.addEventListener('enabledDetelecine',  () => this.cinema = true);
+          video.addEventListener('disabledDetelecine', () => this.cinema = false);
+
+          const vid = this.tslive ? new TsLiveDatacast(video) : video;
+          const ts = this.tslive ? vid : new HlsDatacast(video);
+          if (ts.cap && !this.cap) ts.cap.hide();
+          ts.toggleJikkyo(this.jikkyo);
+          if (this.datacast) {
+            ts.datacast.enable();
+            this.setbmlBrowserSize();
+          }
+          this.vid = vid;
+          this.ts = ts;
+
+          if (this.params.id) this.loadLive(this.params.id);
+          
+          this.resetControlTimeout();
+        });
+      }
     },
   }));
 });

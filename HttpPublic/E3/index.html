@@ -15,6 +15,13 @@ ct:Append([=[
   <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.js"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
 
+  <link rel="stylesheet" href="css/ts-loader.css">
+  <script src="js/danmaku.js"></script>
+  <script src="js/hls.min.js"></script>
+  <script src="js/aribb24.js"></script>
+  <script src="js/ts-live.lua?t=.js"></script>
+  <script src="js/ts-loader.js"></script>
+
 ]=]..GetScript(minTime,maxTime)..[=[
   
   <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
@@ -457,7 +464,7 @@ ct:Append([=[
                       </div>
                     </template>
                   </div>
-                  <button class="circle front" @click.stop="openPage('#cast', { id: `${s.onid}-${s.tsid}-${s.sid}` })">
+                  <button class="circle front" @click.stop="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}` })">
                     <i>cast</i>
                   </button>
                 </div>
@@ -467,6 +474,326 @@ ct:Append([=[
         </section>
       </div>
     </template>
+
+    <template x-if="page === '#watch'" x-data="player">
+      <div class="absolute" style="height: 100%;">
+        <div :class="isSmallScreen ? 'vertical no-space' : 'row no-wrap'" style="height: 100%;">
+          <div id="player" x-ref="player"
+               @pointermove="showControls(); resetControlTimeout()"
+               @touchstart="showControls(); resetControlTimeout()"
+               @mouseleave="hideControls()">
+
+            <div class="remote-control-status-container contents">
+              <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
+              <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div>
+            </div>
+            <div class="data-broadcasting-browser-container">
+              <div class="data-broadcasting-browser-content"></div>
+            </div>
+            <div id="danmaku-container"></div>
+            <div id="player-UI" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
+              <div class="player-overlay-top row">
+                <h6 class="title max text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)"></h6>
+                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isSmallScreen && !isFullscreen" x-init="showSidePanel = !epg">
+                  <i x-text="showSidePanel ? 'view_sidebar' : 'side_navigation'">view_sidebar</i>
+                </button>
+              </div>
+
+              <div class="player-control-bar">
+
+                <div x-ref="remoteDesktop">
+                  <div x-show="datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isSmallScreen }"
+                        x-init="
+                          let s = document.createElement('script');
+                          s.src = 'js/web_bml_play_ts.js';
+                          s.id = 'webBml';
+                          $el.appendChild(s);">
+                    <nav class="vertical tiny-space" x-data="{ active: false }">
+                      <nav class="center-align">
+                        <button id="key21" class="blue10 circle"></button>
+                        <button id="key22" class="red10 circle"></button>
+                        <button id="key23" class="green10 circle"></button>
+                        <button id="key24" class="yellow10 circle"></button>
+                      </nav>
+                      <nav class="center-align tiny-space">
+                        <button id="key1" class="secondary circle"><i>north</i></button>
+                        <button id="key3" class="secondary circle"><i>west</i></button>
+                        <button id="key18" class="primary circle extra"><i class="fill">circle</i></button>
+                        <button id="key4" class="secondary circle"><i>east</i></button>
+                        <button id="key2" class="secondary circle"><i>south</i></button>
+                        <button id="key20" class="secondary circle"><i>d</i></button>
+                        <button id="key19" class="secondary circle"><i>subdirectory_arrow_left</i></button>
+                        <i class="toggleNum" @click="active = !active">123</i>
+                      </nav>
+                      <nav class="wrap center-align tiny-space" x-show="active">
+                        <nav class="center-align tiny-space">
+                          <button id="key6" class="secondary circle">1</button>
+                          <button id="key7" class="secondary circle">2</button>
+                          <button id="key8" class="secondary circle">3</button>
+                          <button id="key9" class="secondary circle">4</button>
+                          <button id="key10" class="secondary circle">5</button>
+                          <button id="key11" class="secondary circle">6</button>
+                        </nav>
+                        <nav class="center-align tiny-space">
+                          <button id="key12" class="secondary circle">7</button>
+                          <button id="key13" class="secondary circle">8</button>
+                          <button id="key14" class="secondary circle">9</button>
+                          <button id="key15" class="secondary circle">10</button>
+                          <button id="key16" class="secondary circle">11</button>
+                          <button id="key17" class="secondary circle">12</button>
+                          <button id="key5" class="secondary circle">0</button>
+                        </nav>
+                      </nav>
+                    </nav>
+                  </div>
+                </div>
+
+                <div class="field middle-align prefix suffix">
+                  <nav>
+                    <span class="tiny-text" x-text="formatTime(currentTime)"></span>
+                    <template x-if="live">
+                      <progress :max="duration" :value="currentTime" value="0"></progress>
+                    </template>
+                    <template x-if="!live">
+                      <div class="slider">
+                        <input type="range" min="0" :max="duration" :value="currentTime"
+                              @input="currentTime = $event.target.value; isSeeking = true"
+                              @change="seek($event.target.value); isSeeking = false">
+                        <span></span>
+                      </div>
+                    </template>
+                    <span class="tiny-text" x-text="formatTime(duration)"></span>
+                  </nav>
+                </div>
+
+                <nav class="no-margin no-space">
+                  <button class="circle transparent" @click="reset()">
+                    <i class="fill">stop</i>
+                  </button>
+                  <button class="circle transparent" @click="togglePlay()">
+                    <i class="fill" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
+                  </button>
+
+                  <div class="row no-wrap middle-align">
+                    <button class="circle transparent" @click="toggleMute()">
+                      <i class="fill" x-text="isMuted || volume === 0 ? 'volume_off' : (volume > 0.5 ? 'volume_up' : 'volume_down')"></i>
+                    </button>
+                    <div class="m l slider">
+                      <input type="range" min="0" max="1" step="0.01" :value="isMuted ? 0 : volume" @input="setVolume($event.target.value)">
+                      <span></span>
+                    </div>
+                  </div>
+
+                  <div class="max"></div>
+
+                  <button class="circle transparent" @click="toggleDatacast()">
+                    <i :class="{ fill: datacast }">settings_remote</i>
+                  </button>
+                  <button class="circle transparent" @click="toggleCap()">
+                    <i :class="{ fill: cap }">subtitles</i>
+                  </button>
+                  <button class="circle transparent" @click="toggleJikkyo()">
+                    <i :class="{ fill: jikkyo }">sms</i>
+                  </button>
+
+                  <div>
+                    <button class="circle transparent">
+                      <i>settings</i>
+                    </button>
+                    <menu class="top left no-wrap" :class="{ top: !isSmallScreen || isFullscreen }">
+                      <li>
+                        <i>settings_input_component</i>
+                        <span>nwtv</span>
+                        <menu class="left">
+                          <template x-for="i in [0, 1, 2, 3]" :key="i">
+                            <li :class="{ active: nwtv === i }" @click="setNwtv(i)" x-text="'nwtv' + i"></li>
+                          </template>
+                        </menu>
+                      </li>
+                      <li>
+                        <i>music_note</i>
+                        <span>音声</span>
+                        <menu class="top left">
+                          <template x-for="(label, i) in audioTrackLabels" :key="i">
+                            <li :class="{ active: track === i }" @click="setAudioTrack(i)" x-text="label"></li>
+                          </template>
+                        </menu>
+                      </li>
+                      <li>
+                        <i>high_quality</i>
+                        <span>画質</span>
+                        <menu class="top left">
+                          <li :class="{ active: cinema }" @click="setDetelecine()">逆テレシネ</li>
+                          <li><hr></li>
+                          ]=]..GetVideoOption()..[=[
+                        </menu>
+                      </li>
+                      <li>
+                        <i>speed</i>
+                        <span>速度</span>
+                        <menu class="top left">
+                          ]=]..GetVideoRate()..[=[
+                        </menu>
+                      </li>
+                    </menu>
+                  </div>
+
+                  <button class="circle transparent" @click="toggleFullscreen()">
+                    <i x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"></i>
+                  </button>
+                </nav>
+              </div>
+              
+            </div>
+            <div class="player-loading-indicator" x-show="isLoading">
+              <progress class="circle large"></progress>
+            </div>
+            <template x-if="!tslive">
+              <div class="arib-video-invisible-container contents">
+                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
+                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video" x-init="videoInit()"></video>
+                </div>
+              </div>
+            </template>
+            <template x-if="tslive">
+              <div class="arib-video-invisible-container contents">
+                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
+                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video" x-init="videoInit()"></canvas>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div id="sideTab" class="surface-container-high vertical" x-show="isSmallScreen || showSidePanel">
+            <div x-ref="remoteMobile"></div>
+            <div class="tabs min" :class="isSmallScreen ? 'bottom': 'top'">
+              <a :class="{ active: sideTab === 'info' }" @click="sideTab = 'info'"><i>info</i><span>詳細</span></a>
+              <a :class="{ active: sideTab === 'service-list' }" @click="sideTab = 'service-list'"><i>cell_tower</i><span>選局</span></a>
+              <a :class="{ active: sideTab === 'jikkyo-chats' }" @click="sideTab = 'jikkyo-chats'"><i>mic</i><span>実況</span></a>
+            </div>
+            <div class="page scroll" :class="{ active: sideTab === 'info' }">
+              <template x-if="epg">
+                <div class="padding">
+                  <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || '番組情報なし')"></h6>
+                  <div class="row no-margin vertical-margin">
+                    <span class="chip primary small" x-show="!epg.isDummy">
+                      <i>event</i>
+                      <span x-text="`${convert.date(epg.startTime, true, true)}～${convert.date(epg.startTimeInt + epg.durationSecond*1000, true)}`"></span>
+                    </span>
+                  </div>
+                  <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
+                </div>
+              </template>
+            </div>
+            <div class="page scroll" :class="{ active: sideTab === 'service-list' }" x-data="{ sideNetwork: 1 }">
+              <nav class="tabbed small scroll top-margin">
+                <template x-for="(networkName, networkIndex) in app.epg.networkNames" :key="networkName">
+                  <a :class="sideNetwork === networkIndex ? 'active': ''" 
+                    x-show="networkIndex > 0 && (app.epg.networkMask & (1 << networkIndex))"
+                    @click="sideNetwork = networkIndex">
+                    <span x-text="networkName"></span>
+                  </a>
+                </template>
+              </nav>
+              <template x-for="(networkName, networkIndex) in app.epg.networkNames" :key="networkName">
+                <div class="page no-padding" :class="{ active: sideNetwork === networkIndex }" x-show="networkIndex > 0 && (app.epg.networkMask & (1 << networkIndex))">
+                  <ul class="list small-space vertical-margin small-margin">
+                    <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+                      <li class="ripple" @click="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}`} );" :class="{ 'secondary-container': params.id === `${s.onid}-${s.tsid}-${s.sid}` }" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }">
+                        <div class="max row no-margin no-wrap">
+                          <div class="center-align">
+                            <img class="round border tiny" :src="getLogoPath(s)">
+                          </div>
+                          <div class="max">
+                            <div class="row no-margin no-wrap">
+                              <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
+                              <template x-if="entry">
+                                <div class="secondary-text small-text" x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                              </template>
+                            </div>
+                            <template x-if="entry">
+                              <div>
+                                <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                                <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
+                              </div>
+                            </template>
+                            <template x-if="!entry">
+                              <div class="middle-align center-align padding">
+                                <progress class="circle small"></progress>
+                              </div>
+                            </template>
+                          </div>
+                        </div>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </template>
+            </div>
+            <div class="page" :class="{ active: sideTab === 'jikkyo-chats' }">
+              <div id="jikkyo-comm" class="vertical padding jikkyo-comments">
+                <button id="jikkyo-setting" style="display:none;"><i>settings</i></button>
+                <div id="jikkyo-config">
+                  <nav class="group" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
+                    <template x-for="(v, i) in list">
+                      <button :class="{'left-round': i == 0, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" @click="jikkyoShift(i)"></button>
+                    </template>
+                  </nav>
+                  <div class="field suffix border">
+                    <select name="id">
+                      <option value="0" selected>jk? (初期値)
+                      ]=]..GetJkList()..[=[
+                    </select>
+                    <i>arrow_drop_down</i>
+                  </div>
+                  <div id="jikkyo-TM" x-show="!live">
+                    <nav class="no-space">
+                      <div class="max field prefix border small left-round">
+                        <i>today</i>
+                        <input name="tm" id="dateFormat" type="datetime-local">
+                      </div>
+                      <div class="field suffix border small">
+                        <select name="tmsec">
+                          <template x-for="i in 60" :key="i">
+                            <option :value="i-1" x-text="convert.zero(i-1) + 's'"></option>
+                          </template>
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <button class="right-round">変更</button>
+                    </nav>
+                  </div>
+                  <button id="kakolog" x-show="!live">ログ取得</button>
+                  <nav>
+                    <i>opacity</i>
+                    <div class="slider">
+                      <input type="range" min="0.1" max="1" step="0.1" x-model="set.jikkyo.opacity">
+                      <span></span>
+                    </div>
+                    <h6 x-text="set.jikkyo.opacity" style="min-width: 1.2em; text-align: center;"></h6>
+                  </nav>
+                  <nav>
+                    <i>zoom_in</i>
+                    <div class="slider">
+                      <input type="range" value="25" min="24" max="100" x-model="set.jikkyo.height">
+                      <span></span>
+                    </div>
+                    <h6 x-text="set.jikkyo.height" style="min-width: 1.2em; text-align: center;"></h6>
+                  </nav>
+                </div>
+                <div id="jikkyo-chats" class="scroll"></div>
+                <nav id="comment-control" class="no-space" style="display: none;">
+                  <div class="max field small border left-round">
+                    <input type="text" id="comm">
+                  </div>
+                  <button class="right-round" id="commSend"><i>send</i></button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <template id="reserveList-template">
       <div class="row no-margin no-wrap">
         <div x-data="{ startTime: new Date(d.startTime).getTime() }">
@@ -635,7 +962,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="['#epgweek', '#tvcast', '#library', '#search', '#setting'].includes(page)">
+    <template x-if="['#epgweek', '#library', '#search', '#setting'].includes(page)">
       <div class="flex center-align middle-align">
         <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
       </div>
