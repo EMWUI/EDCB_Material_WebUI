@@ -1682,7 +1682,7 @@ document.addEventListener('alpine:init', () => {
       },
       setAudioTrack(track){
         this.track = track;
-        Alpine.raw(this.ts).setAudioTrack(track);
+        Alpine.raw(this.ts).setAudioTrack(track, () => this.isLoading = true);
       },
       get audioTrackLabels() {
         const audioList = this.epg?.audioInfoList;
@@ -1710,19 +1710,19 @@ document.addEventListener('alpine:init', () => {
       },
       setPlaybackRate(rate, i) {
         this.playbackRate = rate;
-        Alpine.raw(this.ts).setFast(rate, i);
+        Alpine.raw(this.ts).setFast(rate, i, () => this.isLoading = true);
       },
       setQuality(quality, tslive) {
         this.currentQuality = quality;
         this.tslive = tslive;
-        Alpine.raw(this.ts).setOption(quality);
+        Alpine.raw(this.ts).setOption(quality, tslive, ()=>{}, () => this.isLoading = true);
       },
       setNwtv(nwtv) {
         this.nwtv = nwtv;
       },
       setDetelecine(){
         this.cinema = !this.cinema;
-        Alpine.raw(this.ts).setDetelecine(this.cinema);
+        Alpine.raw(this.ts).setDetelecine(this.cinema, () => this.isLoading = true);
       },
       setbmlBrowserSize(){
         if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
