@@ -60,6 +60,8 @@ document.addEventListener('alpine:init', () => {
     now: Date.now(),
     isOnline: false,
     isSmallScreen: false,
+    isPortrait: false,
+
     loading: false,
     rawData: [],
     displayList: [],
@@ -173,7 +175,17 @@ document.addEventListener('alpine:init', () => {
         }
         if (needSync) this.syncNowOnAir();
       }, 1000);
-      this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
+
+      const mqlSmall = window.matchMedia("(max-width: 600px)");
+      const mqlPortrait = window.matchMedia("(orientation: portrait)");
+      const updateMedia = () => {
+        this.isSmallScreen = mqlSmall.matches;
+        this.isPortrait = mqlPortrait.matches;
+      };
+      mqlSmall.addEventListener('change', updateMedia);
+      mqlPortrait.addEventListener('change', updateMedia);
+      updateMedia();
+
 
       const d = new Date(this.now);
       d.setMinutes(0, 0, 0);
@@ -196,7 +208,6 @@ document.addEventListener('alpine:init', () => {
       });
       window.addEventListener('resize', () => {
         this.player.setbmlBrowserSize();
-        this.isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
       });
 
       // 起動時にキャッシュから復元
@@ -1667,6 +1678,7 @@ document.addEventListener('alpine:init', () => {
           document.exitFullscreen();
           this.isFullscreen = false;
         }
+        this.moveRemocon(this.isPortrait);
       },
       setAudioTrack(track){
         this.track = track;
@@ -1748,22 +1760,22 @@ document.addEventListener('alpine:init', () => {
         }, 3000); // 3秒間操作がない場合に非表示
       },
 
-      moveRemocon(isSmall) {
+      moveRemocon(isPortrait) {
         const content = this.$refs.remocon;
-        const target = isSmall ? this.$refs.remoteMobile : this.$refs.remoteDesktop;
+        const target = isPortrait && !this.isFullscreen ? this.$refs.remoteMobile : this.$refs.remoteDesktop;
         if (content && target && content.parentElement !== target) {
           target.appendChild(content);
         }
       },
 
       remoconInit() {
-        this.$watch('isSmallScreen', value => this.moveRemocon(value));
+        this.$watch('isPortrait', value => this.moveRemocon(value));
         this.$nextTick(() => {
           const s = document.createElement('script');
           s.src = 'js/web_bml_play_ts.js';
           s.id = 'webBml';
           this.$refs.remocon.appendChild(s);
-          this.moveRemocon(this.isSmallScreen);
+          this.moveRemocon(this.isPortrait);
         });
       },
 

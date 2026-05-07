@@ -30,7 +30,7 @@ ct:Append([=[
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
-<body class="dark" x-data="edcbApp" :class="{ isSmallScreen: isSmallScreen}">
+<body class="dark" x-data="edcbApp" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
   <nav class="m l surface-container left scroll" :class="{ 'max': sidebarActive }">
     <header>
       <button class="extra circle transparent" @click="sidebarActive = !sidebarActive">
@@ -477,12 +477,11 @@ ct:Append([=[
 
     <template x-if="page === '#watch'" x-data="player">
       <div class="absolute" style="height: 100%;">
-        <div :class="isSmallScreen ? 'vertical no-space' : 'row no-wrap'" style="height: 100%;">
+        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'" style="height: 100%;">
           <div id="player" x-ref="player"
                @pointermove="showControls(); resetControlTimeout()"
                @touchstart="showControls(); resetControlTimeout()"
                @mouseleave="hideControls()">
-
             <div class="remote-control-status-container contents">
               <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
               <div class="remote-control-status remote-control-networking-status" style="display: none;">通信中...</div>
@@ -494,20 +493,14 @@ ct:Append([=[
             <div id="player-UI" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
               <div class="player-overlay-top row">
                 <h6 class="title max text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)"></h6>
-                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isSmallScreen && !isFullscreen" x-init="showSidePanel = !epg">
+                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg">
                   <i x-text="showSidePanel ? 'view_sidebar' : 'side_navigation'">view_sidebar</i>
                 </button>
               </div>
 
               <div class="player-control-bar">
-
                 <div x-ref="remoteDesktop">
-                  <div x-show="datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isSmallScreen }"
-                        x-init="
-                          let s = document.createElement('script');
-                          s.src = 'js/web_bml_play_ts.js';
-                          s.id = 'webBml';
-                          $el.appendChild(s);">
+                  <div x-show="datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
                     <nav class="vertical tiny-space" x-data="{ active: false }">
                       <nav class="center-align">
                         <button id="key21" class="blue10 circle"></button>
@@ -600,7 +593,7 @@ ct:Append([=[
                     <button class="circle transparent">
                       <i>settings</i>
                     </button>
-                    <menu class="top left no-wrap" :class="{ top: !isSmallScreen || isFullscreen }">
+                    <menu class="top left no-wrap" :class="{ top: !isPortrait || isFullscreen }">
                       <li>
                         <i>settings_input_component</i>
                         <span>nwtv</span>
@@ -663,9 +656,9 @@ ct:Append([=[
               </div>
             </template>
           </div>
-          <div id="sideTab" class="surface-container-high vertical" x-show="isSmallScreen || showSidePanel">
+          <div id="sideTab" class="surface-container-high vertical" x-show="isPortrait || showSidePanel">
             <div x-ref="remoteMobile"></div>
-            <div class="tabs min" :class="isSmallScreen ? 'bottom': 'top'">
+            <div class="tabs min" :class="isPortrait ? 'bottom': 'top'">
               <a :class="{ active: sideTab === 'info' }" @click="sideTab = 'info'"><i>info</i><span>詳細</span></a>
               <a :class="{ active: sideTab === 'service-list' }" @click="sideTab = 'service-list'"><i>cell_tower</i><span>選局</span></a>
               <a :class="{ active: sideTab === 'jikkyo-chats' }" @click="sideTab = 'jikkyo-chats'"><i>mic</i><span>実況</span></a>

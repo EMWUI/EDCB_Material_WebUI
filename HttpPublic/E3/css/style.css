@@ -260,7 +260,7 @@ article.small-width+button { align-self: center; }
   flex-shrink: 1;
   cursor: none;
 }
-.isSmallScreen #player {
+.isPortrait #player {
   height: auto;
   aspect-ratio: 16/9;
   flex-shrink: 0;
@@ -333,7 +333,7 @@ article.small-width+button { align-self: center; }
   height: 100%;
   flex-shrink: 0;
 }
-.isSmallScreen #sideTab {
+.isPortrait #sideTab {
   width: 100%;
   min-height: 0;
   flex-shrink: 1;
