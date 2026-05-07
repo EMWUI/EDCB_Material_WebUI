@@ -1,6 +1,14 @@
 dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
 mg.write("HTTP/1.1 200 OK\r\n")
 mg.write("Content-Type: text/event-stream\r\n")
+
+-- CORS対応: クライアントのオリジンを許可する
+local origin = mg.request_info.http_headers["Origin"]
+if origin then
+    mg.write("Access-Control-Allow-Origin: " .. origin .. "\r\n")
+    mg.write("Access-Control-Allow-Credentials: true\r\n")
+end
+
 mg.write("Cache-Control: no-cache\r\n")
 mg.write("Connection: keep-alive\r\n\r\n")
 

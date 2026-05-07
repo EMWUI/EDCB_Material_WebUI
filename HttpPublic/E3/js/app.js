@@ -55,6 +55,8 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('edcbApp', () => ({
     debug: true,
     ROOT: ROOT || '',
+    useDedicatedSsePort: false, // SSE専用ポートを使用するかどうか
+    ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
     params: {},
     now: Date.now(),
@@ -285,7 +287,14 @@ document.addEventListener('alpine:init', () => {
         this.eventSource.close();
       }
 
-      this.eventSource = new EventSource(`${this.ROOT}api/SSE`);
+      // 現在のROOTをベースにSSE接続URLを生成する
+      const sseUrl = new URL(`${this.ROOT}api/SSE`, window.location.href);
+      if (this.useDedicatedSsePort) {
+        const currentPort = parseInt(sseUrl.port || (sseUrl.protocol === 'https:' ? '443' : '80'));
+        sseUrl.port = (currentPort + this.ssePortOffset).toString();
+      }
+
+      this.eventSource = new EventSource(sseUrl.toString(), { withCredentials: true });
 
       this.eventSource.onopen = async () => {
         // this.snackbar.add({ text: 'onopen' });
