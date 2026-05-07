@@ -995,6 +995,41 @@ document.addEventListener('alpine:init', () => {
       lastLoadedReserve: 0,
       loadId: 0,
       lastLoadedKey: '',
+
+      active: null,
+      clickTimeout: null,
+      // クリックハンドラ
+      onEventClick(event) {
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = setTimeout(() => {
+            // Gap（番組の隙間）であるか、既にアクティブなら解除、そうでなければeidをセット
+            this.active = event.isGap || this.active === event.eid ? null : event.eid;
+        }, 200);
+      },
+      // ダブルクリックハンドラ
+      onEventDblClick(event) {
+        clearTimeout(this.clickTimeout);
+        if (!event.isGap) {
+            this.openProgramDetail(event);
+        }
+      },
+      // EPGイベントに適用するCSSクラスを判定する
+      getEventClass(event) {
+        const genreId = (event.contentInfoList && event.contentInfoList.length > 0) 
+            ? this.getGenre(event.contentInfoList[0]).nibble1 + 1 
+            : 16;
+        const genreClass = event.isGap ? 'cont-0' : 'cont-' + genreId;
+
+        return {
+            'reserve': !!event.reserve,
+            'disabled': event.reserve && !event.reserve.recSetting.recEnabled,
+            'partially': event.reserve?.overlapMode === 1,
+            'shortage': event.reserve?.overlapMode === 2,
+            'view': event.reserve?.recSetting.recMode === 5,
+            'large-elevate': !event.isGap && this.active === event.eid,
+            [genreClass]: true
+        };
+      },
     },
     getEpgKey(time) {
       const d = new Date(time);

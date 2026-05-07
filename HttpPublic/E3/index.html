@@ -324,15 +324,15 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="page === '#epg'">
-      <div id="epg-grid" x-data="{ active: null, clickTimeout: null }" :style="`--min: ${epg.epgMinHeight};`">
+    <template x-if="page === '#epg'" x-data="epg">
+      <div id="epg-grid" :style="`--min: ${epgMinHeight};`">
         <!-- 固定の角（日付） -->
         <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
         <!-- 時間軸 -->
         <div class="epg-time-col">
           <div class="epg-service-header surface-container small-round border"></div> <!-- ヘッダー分 -->
           <template x-for="h in 24" :key="h">
-            <div class="center-align small-round border" :class="`hour-${ (new Date(epg.epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epg.epgStartTime).getHours() + h - 1 + 20) % 24 + 4)"></div>
+            <div class="center-align small-round border" :class="`hour-${ (new Date(epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epgStartTime).getHours() + h - 1 + 20) % 24 + 4)"></div>
           </template>
         </div>
         <!-- 現在時刻の線 -->
@@ -341,10 +341,10 @@ ct:Append([=[
         </template>
 
         <!-- サービス列 -->
-        <template x-for="service in epg.servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
+        <template x-for="service in servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
           <template x-if="!service.subCh">
             <div class="epg-service-col small-width">
-              <div class="epg-service-header secondary-container padding center-align small-round border">
+              <div class="epg-service-header secondary-container vertical-padding center-align small-round border">
                 <img :src="getLogoPath(service)" class="tiny">
                 <div class="small-text" x-text="service.service_name"></div>
               </div>
@@ -352,33 +352,16 @@ ct:Append([=[
               <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = service.displayEvents);$watch('service.displayEvents', v => events = v)">
                 <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
                   <div class="epg-event" :style="`--h: ${event.minutes}`"
-                       @click="
-                         clearTimeout(clickTimeout);
-                         clickTimeout = setTimeout(() => { active = event.isGap || active === event.eid ? null : event.eid; }, 200);
-                       "
-                       @dblclick="
-                         clearTimeout(clickTimeout);
-                         if (!event.isGap) openProgramDetail(event);
-                       ">
-                    <div class="small-round border"
-                         :class="{
-                           'reserve': !!event.reserve,
-                           'disabled': event.reserve && !event.reserve.recSetting.recEnabled,
-                           'partially': event.reserve?.overlapMode === 1,
-                           'shortage': event.reserve?.overlapMode === 2,
-                           'view': event.reserve?.recSetting.recMode === 5,
-                           'large-elevate': !event.isGap && active === event.eid,
-                           [event.isGap ? 'cont-0' : (event.contentInfoList?.length > 0 ? 'cont-' + (getGenre(event.contentInfoList[0]).nibble1 + 1) : 'cont-16')]: true                         }">
+                       @click="onEventClick(event)"
+                       @dblclick="onEventDblClick(event)">
+                    <div class="small-round border" :class="getEventClass(event)">
                       <template x-if="!event.isGap">
                         <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">
                           <div>
                             <div x-text="convert.zero(new Date(event.startTimeInt).getUTCMinutes())"></div>
                             <div x-show="event.reserve">
                               <span class="mark"
-                                    :class="{
-                                      enabled : event.reserve?.recSetting.recEnabled,
-                                      disabled : !event.reserve?.recSetting.recEnabled,
-                                    }"
+                                    :class="event.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
                                     x-text="event.reserve?.recSetting.recEnabled ? '録' : '無'">
                               </span>
                             </div>
