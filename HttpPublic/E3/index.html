@@ -179,7 +179,7 @@ ct:Append([=[
     <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
   </header>
 
-  <main class="scroll no-padding">
+  <main class="scroll no-padding" x-ref="main">
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
@@ -325,7 +325,7 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#epg'" x-data="epg">
-      <div id="epg-grid" :style="`--min: ${epgMinHeight};`">
+      <div id="epg-grid" :style="`--min: ${epgMinHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
         <!-- 固定の角（日付） -->
         <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
         <!-- 時間軸 -->

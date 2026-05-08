@@ -506,7 +506,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       this.totalCount = null;
-      document.querySelector('main').scrollTo(0,0);
+      this.$refs.main.scrollTo(0,0);
       this.sidePanel.close();
 
       if (this.page === '#dashboard') {
@@ -1008,10 +1008,66 @@ document.addEventListener('alpine:init', () => {
       loadId: 0,
       lastLoadedKey: '',
 
+      isDragging: false,
+      hasMoved: false,
+      velocityX: 0,
+      velocityY: 0,
+      momentID: 0,
+      onPointerDown(e) {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        // 新しいドラッグが始まったら現在の慣性アニメーションを止める
+        if (this.momentID) {
+          cancelAnimationFrame(this.momentID);
+          this.momentID = 0;
+        }
+        this.isDragging = true;
+        this.hasMoved = false;
+        this.velocityX = 0;
+        this.velocityY = 0;
+      },
+      onPointerMove(e) {
+        if (!this.isDragging) return;
+        if (this.hasMoved || Math.abs(e.movementX) > 2 || Math.abs(e.movementY) > 2) {
+          if (!this.hasMoved) e.currentTarget.setPointerCapture(e.pointerId);
+          this.hasMoved = true;
+          document.body.style.cursor = 'grabbing';
+          this.$refs.main.scrollBy(-e.movementX, -e.movementY);
+          // 直近の移動量を速度として記録
+          this.velocityX = -e.movementX;
+          this.velocityY = -e.movementY;
+        }
+      },
+      onPointerUp(e) {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        document.body.style.cursor = null;
+        if (this.hasMoved) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+          // 慣性アニメーションの開始
+          const friction = 0.95; // 摩擦係数（1に近いほど止まりにくい）
+          const moment = () => {
+            if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) return;
+            this.$refs.main.scrollBy(this.velocityX, this.velocityY);
+            this.velocityX *= friction;
+            this.velocityY *= friction;
+            this.momentID = requestAnimationFrame(moment);
+          };
+          this.momentID = requestAnimationFrame(moment);
+        }
+      },
+      // ホイール操作時も慣性を止める
+      onWheel() {
+        if (this.momentID) {
+          cancelAnimationFrame(this.momentID);
+          this.momentID = 0;
+        }
+      },
+
       active: null,
       clickTimeout: null,
       // クリックハンドラ
       onEventClick(event) {
+        if (this.hasMoved) return;
         clearTimeout(this.clickTimeout);
         this.clickTimeout = setTimeout(() => {
             // Gap（番組の隙間）であるか、既にアクティブなら解除、そうでなければeidをセット
@@ -1020,6 +1076,7 @@ document.addEventListener('alpine:init', () => {
       },
       // ダブルクリックハンドラ
       onEventDblClick(event) {
+        if (this.hasMoved) return;
         clearTimeout(this.clickTimeout);
         if (!event.isGap) {
             this.openProgramDetail(event);
@@ -1100,7 +1157,7 @@ document.addEventListener('alpine:init', () => {
       // 代入後にプロキシ化された参照を取得する（比較用）
       const currentServices = this.epg.servicesToDisplay;
 
-      if (timeChanged || networkChanged) document.querySelector('main').scrollTo(0,0);
+      if (timeChanged || networkChanged) this.$refs.main.scrollTo(0,0);
 
       // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
       let index = 0;
@@ -1276,10 +1333,7 @@ document.addEventListener('alpine:init', () => {
         this.setDate(0);
       } else {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
-        const main = document.querySelector('main');
-        if (main) {
-          main.scrollTo({ top: pos - this.epg.epgMinHeight * 15, behavior: 'smooth' });
-        }
+        this.$refs.main.scrollTo({ top: pos - this.epg.epgMinHeight * 15, behavior: 'smooth' });
       }
     },
 
