@@ -228,7 +228,7 @@ ct:Append([=[
                     <div class="max secondary-text">
                       <div x-text="s.service_name"></div>
                       <template x-if="entry">
-                        <div x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                        <div x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
                       </template>
                     </div>
                   </div>
@@ -262,7 +262,7 @@ ct:Append([=[
                 <img class="round tiny border" :src="getLogoPath(d)">
                 <div class="max secondary-text">
                   <div x-text="d.stationName"></div>
-                  <div class="secondary-text" x-text="`${convert.date(d.startTime, true)}～${convert.date(new Date(d.startTime) + d.durationSecond*1000, true)}`"></div>
+                  <div class="secondary-text" x-html="`${convert.date(d.startTime, true)}～${convert.date(new Date(d.startTime) + d.durationSecond*1000, true)}`"></div>
                 </div>
               </div>
               <div class="title bold max" x-html="convert.title(d.title)"></div>
@@ -422,7 +422,7 @@ ct:Append([=[
                     <div class="row no-margin no-wrap">
                       <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
                       <template x-if="entry">
-                        <div class="secondary-text small-text" x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                        <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
                       </template>
                     </div>
                     <template x-if="entry">
@@ -653,7 +653,7 @@ ct:Append([=[
                   <div class="row no-margin vertical-margin">
                     <span class="chip primary small" x-show="!epg.isDummy">
                       <i>event</i>
-                      <span x-text="`${convert.date(epg.startTime, true, true)}～${convert.date(epg.startTimeInt + epg.durationSecond*1000, true)}`"></span>
+                      <span x-html="`${convert.date(epg.startTime, true, true)}～${convert.date(epg.startTimeInt + epg.durationSecond*1000, true)}`"></span>
                     </span>
                   </div>
                   <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
@@ -683,7 +683,7 @@ ct:Append([=[
                             <div class="row no-margin no-wrap">
                               <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
                               <template x-if="entry">
-                                <div class="secondary-text small-text" x-text="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                                <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
                               </template>
                             </div>
                             <template x-if="entry">
@@ -1006,7 +1006,7 @@ ct:Append([=[
             <nav class="wrap no-margin no-row-gap">
               <span class="chip primary">
                 <i>event</i>
-                <span x-text="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
+                <span x-html="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
               </span>
               <span class="middle-align"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName||getServiceName(d)"><span></span>
             </nav>
