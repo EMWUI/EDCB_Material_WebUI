@@ -564,7 +564,10 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.page === '#watch') {
-        if (this.params.id) this.player.loadLive(this.params.id);
+        if (this.player.ts) {
+          if (this.params.id) this.player.loadLive(this.params.id);
+          else if (this.params.recid) this.player.loadVideo(this.params);
+        }
         return;
       }
 
@@ -1635,7 +1638,7 @@ document.addEventListener('alpine:init', () => {
     player: {
       get params() { return this.app.params },
       get nowOnAir() { return this.app.dashboardData.nowOnAir },
-      get epg() { return this.nowOnAir[this.params?.id]?.current },
+      get epg() { return this.live ? this.nowOnAir[this.params?.id]?.current : this.app.allData.recinfo.get(Number(this.app.params.recid)) },
       vid: null,
       ts: null,
       tslive: false,
@@ -1665,10 +1668,21 @@ document.addEventListener('alpine:init', () => {
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
         if (!this.ts) return;
+        const video = this.app.$refs.video;
+        video.setAttribute('ctok', video.dataset.ctokView);
+        this.live = true;
         Alpine.raw(this.ts).reset();
         Alpine.raw(this.ts).loadSource(`${ROOT}api/view?n=${this.nwtv}&id=${id}`);
         this.isLoading = true;
-        this.live = true;
+      },
+      loadVideo(d) {
+        if (!this.ts) return;
+        const video = this.app.$refs.video;
+        video.setAttribute('ctok', video.dataset.ctokXcode);
+        this.live = false;
+        Alpine.raw(this.ts).reset();
+        Alpine.raw(this.ts).loadSource(`${ROOT}api/xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+        this.isLoading = true;
       },
       reset() {
         Alpine.raw(this.ts).reset();
@@ -1689,7 +1703,7 @@ document.addEventListener('alpine:init', () => {
         else Alpine.raw(this.vid).pause();
       },
       seek(value) {
-        Alpine.raw(this.ts).setSeek(value);
+        Alpine.raw(this.ts).setSeek(value, () => this.isLoading = true);
       },
       setVolume(value) {
         this.volume = parseFloat(value);
@@ -1827,6 +1841,9 @@ document.addEventListener('alpine:init', () => {
       videoInit() {
         this.$nextTick(() => {
           const video = this.$refs.video;
+          const vid = this.tslive ? new TsLiveDatacast(video) : video;
+          const ts = this.tslive ? vid : new HlsDatacast(video);
+
           video.volume = this.volume;
           video.muted = this.isMuted;
           video.addEventListener('play', () => this.isPlaying = true);
@@ -1835,6 +1852,8 @@ document.addEventListener('alpine:init', () => {
             if (this.isSeeking) return;
             if (this.live){
               this.currentTime = this.app.getElapsedTime(this.epg);
+            } else {
+              this.currentTime = ts.fixedCurrentTime || vid.currentTime;
             }
           });
           video.addEventListener('volumechange', () => { this.volume = video.volume; this.isMuted = video.muted; });
@@ -1856,8 +1875,8 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('enabledDetelecine',  () => this.cinema = true);
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
-          const vid = this.tslive ? new TsLiveDatacast(video) : video;
-          const ts = this.tslive ? vid : new HlsDatacast(video);
+          this.sideTab = this.live ? 'service-list' : 'info';
+          ts.setOption(this.currentQuality);
           if (ts.cap && !this.cap) ts.cap.hide();
           ts.toggleJikkyo(this.jikkyo);
           if (this.datacast) {
@@ -1868,6 +1887,7 @@ document.addEventListener('alpine:init', () => {
           this.ts = ts;
 
           if (this.params.id) this.loadLive(this.params.id);
+          else if (this.params.recid) this.loadVideo(this.params);
           
           this.resetControlTimeout();
         });

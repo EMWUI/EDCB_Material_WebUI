@@ -1,4 +1,4 @@
-ver='0.3.0'
+ver='0.3.6'
 
 --Windowsかどうか
 WIN32=not package.config:find('^/')
@@ -190,7 +190,7 @@ function GetPlayerOption(tslive)
     ..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
 
     ..((USE_LIVEJK or JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" data-comment-ctok="'..CsrfToken('comment')..'" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
-    ..'" ctok="'..CsrfToken('view')..'"'
+    ..'" data-ctok-view="'..CsrfToken('view')..'" data-ctok-xcode="'..CsrfToken('xcode')..'"'
 end
 
 function GetVideoOption()

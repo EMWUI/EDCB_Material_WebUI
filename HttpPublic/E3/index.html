@@ -649,11 +649,11 @@ ct:Append([=[
             <div class="page scroll" :class="{ active: sideTab === 'info' }">
               <template x-if="epg">
                 <div class="padding">
-                  <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || '番組情報なし')"></h6>
+                  <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || epg.title || '番組情報なし')"></h6>
                   <div class="row no-margin vertical-margin">
                     <span class="chip primary small" x-show="!epg.isDummy">
                       <i>event</i>
-                      <span x-html="`${convert.date(epg.startTime, true, true)}～${convert.date(epg.startTimeInt + epg.durationSecond*1000, true)}`"></span>
+                      <span x-html="`${convert.date(epg.startTime, true, true)}～${convert.date((epg.startTimeInt || new Date(epg.startTime).getTime()) + epg.durationSecond*1000, true)}`"></span>
                     </span>
                   </div>
                   <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
@@ -1860,6 +1860,7 @@ ct:Append([=[
     </template>
     <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo">
       <nav>
+        <button tyep="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo">再生</button>
         <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo"></button>
         <div class="max"></div>
         <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry">削除</button>

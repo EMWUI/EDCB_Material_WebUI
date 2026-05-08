@@ -35,7 +35,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#currentReader;
 	#wakeLock;
 	#ctrl;
-	#ctok;
+	get #ctok(){return this.#e.getAttribute('ctok')};
 	#params;
 	constructor(video){
 		super(video);
@@ -48,7 +48,6 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#params = new URLSearchParams();
 		this.#e = video || this;
 		this.#initCap();
-		this.#ctok = this.#e.getAttribute('ctok');
 		this.#muted = this.#e.hasAttribute('muted');
 		this.#detelecine = this.#e.hasAttribute('autoCinema') ? 2 : 0;
 		this.#deinterlace = this.#e.getAttribute('deinterlace');
@@ -379,7 +378,7 @@ class TsLive extends tsliveMixin(){
 const hlsMixin = (Base = class {}) => class extends Base{
 	#e;
 	#error;
-	#ctok;
+	get #ctok(){return this.#e.getAttribute('ctok')};
 	#hlsMp4Query;
 	#alwaysUseHls;
 	#params;
@@ -394,7 +393,6 @@ const hlsMixin = (Base = class {}) => class extends Base{
 			this.#e.fast = this.fast;
 		}
 		this.#initCap();
-		this.#ctok = this.#e.getAttribute('ctok');
 		this.#hlsMp4Query = this.#e.hasAttribute('hls4') ? `&hls4=${this.#e.getAttribute('hls4')}` : '';
 		this.#alwaysUseHls = this.#e.hasAttribute('alwaysUseHls');
 		this.#initHls();
