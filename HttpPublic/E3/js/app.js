@@ -249,13 +249,7 @@ document.addEventListener('alpine:init', () => {
         if ((this.epg.networkMask & 1) === 0) this.epg.networkMask |= 1;
         // キャッシュに他ネットワークの情報がない場合、データから再計算
         if (this.epg.networkMask === 1 && this.allData.epg.size > 0) {
-          this.allData.epg.forEach((_, serviceId) => {
-            const s = this.allData.service.get(serviceId);
-            if (s) {
-              const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
-              if (this.set.oneseg || ni !== 2) this.epg.networkMask |= (1 << ni);
-            }
-          });
+          this.updateNetworkMask();
         }
 
         this.syncNowOnAir();
@@ -395,18 +389,10 @@ document.addEventListener('alpine:init', () => {
 
         const grouped = new Map();
         const now = this.now;
-        let mask = 1; // 'すべて' (index 0) は常に有効
         (Array.isArray(list) ? list : []).forEach(v => {
           // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
           v.startTimeInt = new Date(v.startTime).getTime();
           const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
-          const s = this.allData.service.get(serviceId);
-          if (s) {
-            const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
-            if (this.set.oneseg || ni !== 2) {
-              mask |= (1 << ni);
-            }
-          }
           if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
         });
@@ -422,7 +408,7 @@ document.addEventListener('alpine:init', () => {
         this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
 
         this.lastUpdated.epg = Date.now();
-        this.epg.networkMask = mask;
+        this.updateNetworkMask();
         this.saveCache();
 
         // this.snackbar.add({ text: 'EPG updated' });
@@ -990,6 +976,17 @@ document.addEventListener('alpine:init', () => {
       if (onid === 7) return 7;
       if (onid === 10) return 8;
       return 9;
+    },
+    updateNetworkMask() {
+      let mask = 1;
+      this.allData.epg.forEach((_, serviceId) => {
+        const s = this.allData.service.get(serviceId);
+        if (s) {
+          const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
+          if (this.set.oneseg || ni !== 2) mask |= (1 << ni);
+        }
+      });
+      this.epg.networkMask = mask;
     },
     getDefSearchService(){
       return [...document.getElementById('serviceList-template').content.querySelectorAll('.def')].map(e => e.value);
