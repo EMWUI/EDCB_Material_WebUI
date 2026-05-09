@@ -112,7 +112,7 @@ ct:Append([=[
               </template>
             </menu>
           </div>
-          <nav class="m l no-margin tiny-space">
+          <nav class="m l no-margin no-space">
             <button class="circle transparent" @click="shiftDate(-1)" :disabled="!canShift(-1)">
               <i>chevron_backward</i>
             </button>
@@ -155,15 +155,20 @@ ct:Append([=[
         </button>
       </template>
 
-      <div>
-        <button class="circle transparent">
-          <i>more_vert</i>
+      <nav class="no-space">
+        <button class="circle transparent" data-ui="#setting">
+          <i>settings</i>
         </button>
-        <menu class="left no-wrap">
-          <li @click="refreshEpg()">EPGデータ更新</li>
-          <li @click="refreshStaticData()">基礎データ更新</li>
-        </menu>
-      </div>
+        <div>
+          <button class="circle transparent">
+            <i>more_vert</i>
+          </button>
+          <menu class="left no-wrap">
+            <li @click="refreshEpg()">EPGデータ更新</li>
+            <li @click="refreshStaticData()">基礎データ更新</li>
+          </menu>
+        </div>
+      </nav>
     </nav>
 
     <template x-if="page === '#tunerreserve'">
@@ -325,7 +330,7 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#epg'" x-data="epg">
-      <div id="epg-grid" :style="`--min: ${epgMinHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
+      <div id="epg-grid" :style="`--min: ${set.minHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
         <!-- 固定の角（日付） -->
         <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
         <!-- 時間軸 -->
@@ -483,7 +488,7 @@ ct:Append([=[
 
               <div class="player-control-bar">
                 <div x-ref="remoteDesktop">
-                  <div x-show="datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
+                  <div x-show="set.datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
                     <nav class="vertical tiny-space" x-data="{ active: false }">
                       <nav class="center-align">
                         <button id="key21" class="blue10 circle"></button>
@@ -552,10 +557,10 @@ ct:Append([=[
 
                   <div class="row no-wrap middle-align">
                     <button class="circle transparent" @click="toggleMute()">
-                      <i class="fill" x-text="isMuted || volume === 0 ? 'volume_off' : (volume > 0.5 ? 'volume_up' : 'volume_down')"></i>
+                      <i class="fill" x-text="set.isMuted || set.volume === 0 ? 'volume_off' : (set.volume > 0.5 ? 'volume_up' : 'volume_down')"></i>
                     </button>
-                    <div class="m l slider">
-                      <input type="range" min="0" max="1" step="0.01" :value="isMuted ? 0 : volume" @input="setVolume($event.target.value)">
+                    <div class="slider" :class="{ hidden: isMobile }">
+                      <input type="range" min="0" max="1" step="0.01" :value="set.isMuted ? 0 : set.volume" @input="setVolume($event.target.value)">
                       <span></span>
                     </div>
                   </div>
@@ -563,13 +568,13 @@ ct:Append([=[
                   <div class="max"></div>
 
                   <button class="circle transparent" @click="toggleDatacast()">
-                    <i :class="{ fill: datacast }">settings_remote</i>
+                    <i :class="{ fill: set.datacast }">settings_remote</i>
                   </button>
                   <button class="circle transparent" @click="toggleCap()">
-                    <i :class="{ fill: cap }">subtitles</i>
+                    <i :class="{ fill: set.cap }">subtitles</i>
                   </button>
                   <button class="circle transparent" @click="toggleJikkyo()">
-                    <i :class="{ fill: jikkyo }">sms</i>
+                    <i :class="{ fill: set.jikkyo }">sms</i>
                   </button>
 
                   <div>
@@ -577,15 +582,6 @@ ct:Append([=[
                       <i>settings</i>
                     </button>
                     <menu class="top left no-wrap" :class="{ top: !isPortrait || isFullscreen }">
-                      <li>
-                        <i>settings_input_component</i>
-                        <span>nwtv</span>
-                        <menu class="left">
-                          <template x-for="i in [0, 1, 2, 3]" :key="i">
-                            <li :class="{ active: nwtv === i }" @click="setNwtv(i)" x-text="'nwtv' + i"></li>
-                          </template>
-                        </menu>
-                      </li>
                       <li>
                         <i>music_note</i>
                         <span>音声</span>
@@ -739,22 +735,6 @@ ct:Append([=[
                     </nav>
                   </div>
                   <button id="kakolog" x-show="!live">ログ取得</button>
-                  <nav>
-                    <i>opacity</i>
-                    <div class="slider">
-                      <input type="range" min="0.1" max="1" step="0.1" x-model="set.jikkyo.opacity">
-                      <span></span>
-                    </div>
-                    <h6 x-text="set.jikkyo.opacity" style="min-width: 1.2em; text-align: center;"></h6>
-                  </nav>
-                  <nav>
-                    <i>zoom_in</i>
-                    <div class="slider">
-                      <input type="range" value="25" min="24" max="100" x-model="set.jikkyo.height">
-                      <span></span>
-                    </div>
-                    <h6 x-text="set.jikkyo.height" style="min-width: 1.2em; text-align: center;"></h6>
-                  </nav>
                 </div>
                 <div id="jikkyo-chats" class="scroll"></div>
                 <nav id="comment-control" class="no-space" style="display: none;">
@@ -960,6 +940,9 @@ ct:Append([=[
         <div class="max">
           <h6 x-text="title()"></h6>
         </div>
+        <button class="circle transparent" data-ui="#sidePanelSetting" x-show="detail.searchInfo || page === '#recinfo'">
+          <i>settings</i>
+        </button>
       </nav>
     </header>
 
@@ -1208,16 +1191,6 @@ ct:Append([=[
             <div class="s12">
             </div>
             <div class="s12">
-              <fieldset>
-                <legend>ジャンル表示絞り込み</legend>
-                <nav class="scroll">
-]=]..GetGenreChip()..[=[
-                </nav>
-                <label class="checkbox">
-                  <input type="checkbox" x-model="set.subGenre">
-                  <span>サブジャンル</span>
-                </label>
-              </fieldset>
               <div class="field label border" x-data="{ selectedValues: [] }"
                 x-init="
                   const init = () => selectedValues = (s.contentList||[]).map(i => i.content_nibble);
@@ -1863,7 +1836,7 @@ ct:Append([=[
         <button tyep="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo">再生</button>
         <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo"></button>
         <div class="max"></div>
-        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry">削除</button>
+        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isRecinfo || set.RecinfoDel">削除</button>
      </nav>
     </footer>
   </dialog>
@@ -1879,6 +1852,120 @@ ct:Append([=[
     <ul class="list">
 ]=]..link_drawer..[=[
     </ul>
+  </dialog>
+
+  <dialog id="setting">
+    <div class="field middle-align">
+      <nav>
+        <div class="max"><h6>ワンセグ</h6></div>
+        <label class="switch">
+          <input type="checkbox" x-model="set.oneseg">
+          <span></span>
+        </label>
+      </nav>
+    </div>
+    <hr class="medium">
+    <template x-if="page === '#epg'">
+      <div>
+        <div class="field middle-align" x-show="!isMobile">
+          <nav>
+            <div class="max"><h6>ホバーでポップアップ</h6></div>
+            <label class="switch">
+              <input type="checkbox" x-model="set.epg.hover">
+              <span></span>
+            </label>
+          </nav>
+        </div>
+        <fieldset class="padding">
+          <legend>1分の高さ</legend>
+          <div class="field middle-align suffix">
+            <nav>
+              <div class="slider">
+                <input type="range" min="1" max="10" step="0.1" x-model.number="set.epg.minHeight">
+                <span></span>
+              </div>
+              <h6 x-text="set.epg.minHeight" style="min-width: 2em; text-align: right;"></h6>
+            </nav>
+          </div>
+        </fieldset>
+      </div>
+    </template>
+
+    <template x-if="page === '#watch'" x-data="player.set">
+      <div>
+        <fieldset>
+          <legend>NetworkTVID</legend>
+          <nav class="group primary-container center-align">
+            <template x-for="i in [0, 1, 2, 3]" :key="i">
+              <button :class="{ 'left-round': i == 0, 'right-round': i == 3, active: nwtv === i }" @click="nwtv = i" x-text="'nwtv' + i"></li>
+            </template>
+          </nav>
+        </fieldset>
+
+        <fieldset>
+          <legend>実況</legend>
+          <nav>
+            <div class="max"><h6>常時読み込み</h6></div>
+            <label class="switch">
+              <input type="checkbox" x-model="jikkyoConfig.load" @change="Alpine.raw(player.ts).toggleJikkyo(jikkyo, jikkyoConfig.load)">
+              <span></span>
+            </label>
+          </nav>
+          <nav>
+            <i>opacity</i>
+            <div class="slider">
+              <input type="range" min="0.1" max="1" step="0.1" x-model.number="jikkyoConfig.opacity" @change="Alpine.raw(player.ts).jikkyo.danmaku.opacity(jikkyoConfig.opacity)">
+              <span></span>
+            </div>
+            <h6 x-text="jikkyoConfig.opacity"></h6>
+          </nav>
+          <nav>
+            <i>zoom_in</i>
+            <div class="slider">
+              <input type="range" value="25" min="24" max="100" x-model.number="jikkyoConfig.height" @change="Alpine.raw(player.ts).jikkyo.danmaku.options.height = jikkyoConfig.height">
+              <span></span>
+            </div>
+            <h6 x-text="jikkyoConfig.height"></h6>
+          </nav>
+        </fieldset>
+      </div>
+    </template>
+  </dialog>
+
+  <dialog id="sidePanelSetting">
+    <template x-if="detail.searchInfo">
+      <div>
+        <div class="field middle-align">
+          <nav>
+            <div class="max"><h6>サブジャンルを表示</h6></div>
+            <label class="switch">
+              <input type="checkbox" x-model="set.subGenre">
+              <span></span>
+            </label>
+          </nav>
+        </div>
+        <fieldset>
+          <legend>ジャンル表示絞り込み</legend>
+          <nav class="wrap">
+    ]=]..GetGenreChip()..[=[
+          </nav>
+        </fieldset>
+      </div>
+    </template>
+
+    <template x-if="page === '#recinfo'">
+      <div>
+        <div class="field middle-align">
+          <nav>
+            <div class="max"><h6>削除ボタンを表示</h6></div>
+            <label class="switch">
+              <input type="checkbox" x-model="set.RecinfoDel">
+              <span></span>
+            </label>
+          </nav>
+        </div>
+      </div>
+    </template>
   </dialog>
 
   <div id="snackbar" class="snackbar" :class="{ error: active?.error }" x-data="snackbar">

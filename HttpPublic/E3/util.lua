@@ -1,4 +1,4 @@
-ver='0.3.6'
+ver='0.3.13'
 
 --Windowsかどうか
 WIN32=not package.config:find('^/')
@@ -201,8 +201,7 @@ function GetVideoOption()
         autoCinema=v.autoCinema
         deinterlace=v.deinterlace
       end
-      local id = 'q_'..mg.md5(v.name)
-      s=s..'<li :class="{ active: currentQuality === '..i..' }" @click=setQuality('..i..','..(v.tslive and 'true) x-show="window.isSecureContext && navigator.gpu"' or 'false)')..'>'..EdcbHtmlEscape(v.name)..'</li>\n'
+      s=s..'<li :class="{ active: set.quality === '..i..' }" @click=setQuality('..i..','..(v.tslive and 'true) x-show="window.isSecureContext && navigator.gpu"' or 'false)')..'>'..EdcbHtmlEscape(v.name)..'</li>\n'
     end
   end
   return s

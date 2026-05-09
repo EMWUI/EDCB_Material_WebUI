@@ -12,6 +12,7 @@ main>.absolute{
   width: 100%;
 }
 
+.hidden { display: none; }
 .contents { display: contents; }
 .no-row-gap { row-gap: 0; }
 .tiny-gap { gap: .25rem }

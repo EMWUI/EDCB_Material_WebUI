@@ -54,6 +54,7 @@ document.addEventListener('alpine:init', () => {
   const  dayText = ['日','月','火','水','木','金','土'];
   Alpine.data('edcbApp', () => ({
     debug: true,
+    isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
     ROOT: ROOT || '',
     useDedicatedSsePort: false, // SSE専用ポートを使用するかどうか
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
@@ -110,15 +111,26 @@ document.addEventListener('alpine:init', () => {
 
     set: {
       oneseg: false,
-      subGenre: false,
+      subGenre: true,
       genreMask: -1044262913,
       epg: {
+        minHeight: 4,
         hover: false,
       },
-      jikkyo: {
-        opacity: 1,
-        height: 32,
-      }
+      player: {
+        volume: 1,
+        quality: 1,
+        isMuted: false,
+        nwtv: 0,
+        cap: false,
+        datacast: false,
+        jikkyo: false,
+        jikkyoConfig: {
+          load: false,
+          opacity: 1,
+          height: 32,
+        }
+      },
     },
 
     // API名とデータキーを一元管理
@@ -167,6 +179,7 @@ document.addEventListener('alpine:init', () => {
       this.updateParams();
       this.player.app = this;
       this.epg.set = this.set.epg;
+      this.player.set = this.set.player;
       setInterval(() => {
         this.now = Date.now();
         // 放送中の番組が終了したかチェック
@@ -192,6 +205,13 @@ document.addEventListener('alpine:init', () => {
       mqlPortrait.addEventListener('change', updateMedia);
       updateMedia();
 
+      this.$watch('set.oneseg', () => {
+        this.updateNetworkMask();
+        if (!this.set.oneseg && this.epg.activeNetwork === 2) this.setNetwork(0);
+        this.saveCache();
+        this.loadEpg();
+        this.syncNowOnAir();
+      });
 
       const d = new Date(this.now);
       d.setMinutes(0, 0, 0);
@@ -215,6 +235,23 @@ document.addEventListener('alpine:init', () => {
       window.addEventListener('resize', () => {
         this.player.setbmlBrowserSize();
       });
+
+      // 起動時に設定を復元
+      const savedSettings = localStorage.getItem('E3');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        const deepMerge = (target, source) => {
+          for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+              if (!target[key]) target[key] = {};
+              deepMerge(target[key], source[key]);
+            } else {
+              target[key] = source[key];
+            }
+          }
+        };
+        deepMerge(this.set, settings);
+      }
 
       // 起動時にキャッシュから復元
       const saved = localStorage.getItem('edcb_full_cache');
@@ -256,6 +293,11 @@ document.addEventListener('alpine:init', () => {
         this.syncDashboardData();
         this.updateStorage();
       }
+
+      // 設定の変更を監視して自動保存
+      this.$watch('set', () => {
+        //localStorage.setItem('E3', JSON.stringify(this.set));
+      }, { deep: true });
 
       // サービス一覧が空（初回またはクリア後）なら取得する
       if (this.allData.service.size === 0) {
@@ -993,7 +1035,6 @@ document.addEventListener('alpine:init', () => {
     },
 
     epg: {
-      epgMinHeight: 4,
       epgStartTime: 0,
       minTime: 0,
       maxTime: 0,
@@ -1137,6 +1178,7 @@ document.addEventListener('alpine:init', () => {
       if (this.epg.lastLoadedStart === gridStart &&
           this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
           this.epg.lastLoadedData === this.lastUpdated.epg &&
+          this.epg.lastLoadedMask === this.epg.networkMask &&
           this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
           this.epg.lastLoadedKey === slotKey &&
           this.epg.servicesToDisplay.length > 0) {
@@ -1144,17 +1186,19 @@ document.addEventListener('alpine:init', () => {
       }
       const timeChanged = this.epg.lastLoadedStart !== gridStart;
       const networkChanged = this.epg.lastLoadedNetwork !== this.epg.activeNetwork;
+      const maskChanged = this.epg.lastLoadedMask !== this.epg.networkMask;
 
       // 中断と新規 ID 発行
       const currentLoadId = ++this.epg.loadId;
       this.epg.lastLoadedStart = gridStart;
       this.epg.lastLoadedNetwork = this.epg.activeNetwork;
+      this.epg.lastLoadedMask = this.epg.networkMask;
       this.epg.lastLoadedData = this.lastUpdated.epg;
       this.epg.lastLoadedReserve = this.lastUpdated.reserve;
       this.epg.lastLoadedKey = slotKey;
 
       // 1. サービスリストの準備
-      if (networkChanged || this.epg.servicesToDisplay.length === 0) {
+      if (networkChanged || maskChanged || this.epg.servicesToDisplay.length === 0) {
         let services = this.serviceList;
         if (this.epg.activeNetwork > 0) {
           services = services.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === this.epg.activeNetwork);
@@ -1334,7 +1378,7 @@ document.addEventListener('alpine:init', () => {
       const start = this.epg.epgStartTime;
       const end = start + 24 * 3600 * 1000;
       if (this.now < start || this.now > end) return -1;
-      return Math.floor((this.now - start) / 60000) * this.epg.epgMinHeight;
+      return Math.floor((this.now - start) / 60000) * this.epg.set.minHeight;
     },
     // 現在時刻の位置までスクロールする
     scrollToNow() {
@@ -1344,7 +1388,7 @@ document.addEventListener('alpine:init', () => {
         this.setDate(0);
       } else {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
-        this.$refs.main.scrollTo({ top: pos - this.epg.epgMinHeight * 15, behavior: 'smooth' });
+        this.$refs.main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
       }
     },
 
@@ -1711,16 +1755,9 @@ document.addEventListener('alpine:init', () => {
       isPlaying: false,
       currentTime: 0,
       get duration() { return this.epg?.durationSecond || 0},
-      volume: 1,
-      isMuted: false,
       isFullscreen: false,
       playbackRate: 1,
-      currentQuality: 1,
-      cap: false,
-      datacast: false,
-      jikkyo: true,
       track: 0,
-      nwtv: 0,
       cinema: false,
       isLoading: false, // バッファリング/読み込み中にtrueに設定
       controlsVisible: true, // コントロールの表示状態
@@ -1737,7 +1774,7 @@ document.addEventListener('alpine:init', () => {
         video.setAttribute('ctok', video.dataset.ctokView);
         this.live = true;
         Alpine.raw(this.ts).reset();
-        Alpine.raw(this.ts).loadSource(`${ROOT}api/view?n=${this.nwtv}&id=${id}`);
+        Alpine.raw(this.ts).loadSource(`${ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
         this.isLoading = true;
       },
       loadVideo(d) {
@@ -1771,24 +1808,24 @@ document.addEventListener('alpine:init', () => {
         Alpine.raw(this.ts).setSeek(value, () => this.isLoading = true);
       },
       setVolume(value) {
-        this.volume = parseFloat(value);
-        this.isMuted = this.volume === 0;
-        Alpine.raw(this.vid).volume = this.volume;
+        this.set.volume = parseFloat(value);
+        this.set.isMuted = this.set.volume === 0;
+        Alpine.raw(this.vid).volume = this.set.volume;
       },
       toggleMute() {
-        this.isMuted = !this.isMuted;
-        Alpine.raw(this.vid).muted = this.isMuted;
+        this.set.isMuted = !this.set.isMuted;
+        Alpine.raw(this.vid).muted = this.set.isMuted;
       },
       toggleDatacast() {
-        this.datacast = !this.datacast;
-        Alpine.raw(this.ts).toggleDatacast(this.datacast);
+        this.set.datacast = !this.set.datacast;
+        Alpine.raw(this.ts).toggleDatacast(this.set.datacast);
       },
       toggleCap() {
-        this.cap = !this.cap;
-        this.cap ? Alpine.raw(this.ts).cap.show() : Alpine.raw(this.ts).cap.hide();
+        this.set.cap = !this.set.cap;
+        this.set.cap ? Alpine.raw(this.ts).cap.show() : Alpine.raw(this.ts).cap.hide();
       },
       toggleJikkyo() {
-        this.jikkyo = Alpine.raw(this.ts).toggleJikkyo();
+        this.set.jikkyo = Alpine.raw(this.ts).toggleJikkyo();
       },
       toggleFullscreen() {
         const player = document.getElementById('player');
@@ -1836,12 +1873,9 @@ document.addEventListener('alpine:init', () => {
         Alpine.raw(this.ts).setFast(rate, i, () => this.isLoading = true);
       },
       setQuality(quality, tslive) {
-        this.currentQuality = quality;
+        this.set.quality = quality;
         this.tslive = tslive;
         Alpine.raw(this.ts).setOption(quality, tslive, ()=>{}, () => this.isLoading = true);
-      },
-      setNwtv(nwtv) {
-        this.nwtv = nwtv;
       },
       setDetelecine(){
         this.cinema = !this.cinema;
@@ -1908,9 +1942,11 @@ document.addEventListener('alpine:init', () => {
           const video = this.$refs.video;
           const vid = this.tslive ? new TsLiveDatacast(video) : video;
           const ts = this.tslive ? vid : new HlsDatacast(video);
+          this.vid = vid;
+          this.ts = ts;
 
-          video.volume = this.volume;
-          video.muted = this.isMuted;
+          video.volume = this.set.volume;
+          video.muted = this.set.isMuted;
           video.addEventListener('play', () => this.isPlaying = true);
           video.addEventListener('pause', () => this.isPlaying = false);
           video.addEventListener('timeupdate', () => {
@@ -1921,7 +1957,7 @@ document.addEventListener('alpine:init', () => {
               this.currentTime = ts.fixedCurrentTime || vid.currentTime;
             }
           });
-          video.addEventListener('volumechange', () => { this.volume = video.volume; this.isMuted = video.muted; });
+          video.addEventListener('volumechange', () => { this.set.volume = video.volume; this.set.isMuted = video.muted; });
           video.addEventListener('waiting', () => this.isLoading = true);
           video.addEventListener('playing', () => this.isLoading = false);
           video.addEventListener('canplay', () => {
@@ -1941,15 +1977,17 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
           this.sideTab = this.live ? 'service-list' : 'info';
-          ts.setOption(this.currentQuality);
-          if (ts.cap && !this.cap) ts.cap.hide();
-          ts.toggleJikkyo(this.jikkyo);
-          if (this.datacast) {
-            ts.datacast.enable();
+          ts.setOption(this.set.quality);
+          if (ts.cap && !this.set.cap) ts.cap.hide();
+          ts.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
+          if (ts.jikkyo.danmaku) {
+            ts.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
+            ts.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
+          }
+          if (ts.datacast) {
+            ts.toggleDatacast(this.set.datacast);
             this.setbmlBrowserSize();
           }
-          this.vid = vid;
-          this.ts = ts;
 
           if (this.params.id) this.loadLive(this.params.id);
           else if (this.params.recid) this.loadVideo(this.params);
