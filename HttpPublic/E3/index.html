@@ -352,8 +352,8 @@ ct:Append([=[
               <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = service.displayEvents);$watch('service.displayEvents', v => events = v)">
                 <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
                   <div class="epg-event" :style="`--h: ${event.minutes}`"
-                       @click="onEventClick(event)"
-                       @dblclick="onEventDblClick(event)">
+                       @click="onEventClick(event)" @dblclick="onEventDblClick(event)"
+                       @pointerenter="onPointerEnter(event)" @pointerleave="onPointerLeave()">
                     <div class="small-round border" :class="getEventClass(event)">
                       <template x-if="!event.isGap">
                         <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">

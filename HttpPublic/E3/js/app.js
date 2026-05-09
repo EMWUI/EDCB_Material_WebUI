@@ -112,7 +112,10 @@ document.addEventListener('alpine:init', () => {
       oneseg: false,
       subGenre: false,
       genreMask: -1044262913,
-      jikkyo:{
+      epg: {
+        hover: false,
+      },
+      jikkyo: {
         opacity: 1,
         height: 32,
       }
@@ -163,6 +166,7 @@ document.addEventListener('alpine:init', () => {
     async init() {
       this.updateParams();
       this.player.app = this;
+      this.epg.set = this.set.epg;
       setInterval(() => {
         this.now = Date.now();
         // 放送中の番組が終了したかチェック
@@ -1064,6 +1068,16 @@ document.addEventListener('alpine:init', () => {
       },
 
       active: null,
+      onPointerEnter(event) {
+        if (this.set.hover && !event.isGap) {
+          this.active = event.eid;
+        }
+      },
+      onPointerLeave() {
+        if (this.set.hover) {
+          this.active = null;
+        }
+      },
       clickTimeout: null,
       // クリックハンドラ
       onEventClick(event) {
