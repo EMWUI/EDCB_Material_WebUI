@@ -31,10 +31,10 @@ ct:Append([=[
 </head>
 
 <body class="dark" x-data="edcbApp" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
-  <nav class="m l surface-container left scroll" :class="{ 'max': sidebarActive }">
+  <nav class="m l surface-container left scroll" :class="{ 'max': set.sidebar }">
     <header>
-      <button class="extra circle transparent" @click="sidebarActive = !sidebarActive">
-        <i x-text="sidebarActive ? 'menu_open' : 'menu'"></i>
+      <button class="extra circle transparent" @click="set.sidebar = !set.sidebar">
+        <i x-text="set.sidebar ? 'menu_open' : 'menu'"></i>
       </button>
     </header>
 ]=]..link..[=[

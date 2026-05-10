@@ -73,7 +73,6 @@ document.addEventListener('alpine:init', () => {
     cursor: 0,
     perPage: 50,
     activeTunerId: 1,
-    sidebarActive: false,
     dashboardData: {
       reserves: [], recs: [], nowOnAir: {},
       reservesCount: 0, 
@@ -110,6 +109,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     set: {
+      sidebar: false,
       oneseg: false,
       subGenre: true,
       genreMask: -1044262913,

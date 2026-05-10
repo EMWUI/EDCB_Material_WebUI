@@ -49,7 +49,7 @@ for i, v in ipairs(navList) do
   -- PC用サイドバー
   link=link..(v.space and '    <div class="max"></div>\n' or string.format([[
     <a href='%s' :class="page === '%s' ? 'active' : ''">
-      <i>%s</i><span x-show="!sidebarActive">%s</span><span x-show="sidebarActive">%s</span>
+      <i>%s</i><span x-show="!set.sidebar">%s</span><span x-show="set.sidebar">%s</span>
     </a>
 ]], v.hash, v.hash, v.icon, v.title, v.full or v.title))
 
@@ -78,7 +78,7 @@ function GetGenreChip()
     local nibble1=edcb.GetGenreName(i*256+255)
     if nibble1~='' then
       s=s..string.format([[
-                  <div class="chip" :class="(set.genreMask & (1 << %d)) ? 'primary' : ''" @click="set.genreMask ^= (1 << %d)">%s</div>
+                  <button class="chip" :class="(set.genreMask & (1 << %d)) ? 'active' : ''" @click="set.genreMask ^= (1 << %d)">%s</button>
 ]], _i-1, _i-1, nibble1)
     end
   end
