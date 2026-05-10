@@ -1164,7 +1164,7 @@ ct:Append([=[
                 <input type="text" name="note" x-model="s.note">
                 <label>メモ</label>
               </div>
-              <nav class="group center-align secondary-container top-margin small-margin">
+              <nav class="group center-align top-margin small-margin">
                 <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
                   <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
                   <i>regular_expression</i>
@@ -1195,8 +1195,7 @@ ct:Append([=[
                 x-init="
                   const init = () => selectedValues = (s.contentList||[]).map(i => i.content_nibble);
                   init();
-                  $watch('s', () => init());
-                ">
+                  $watch('s', () => init());">
                 <select name="contentList" multiple size="7" x-model="selectedValues" @change="s.contentList = selectedValues.map(e => ({ content_nibble: Number(e) }))">
 ]=]..GetGenreOption()..[=[
                 </select>
@@ -1214,8 +1213,7 @@ ct:Append([=[
                 x-init="
                   const init = () => selectedValues = s.serviceList ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`) : getDefSearchService();
                   $watch('s', () => init());
-                  $nextTick(() => init());
-                ">
+                  $nextTick(() => init());">
                 <select name="serviceList" multiple size="7" x-model="selectedValues"
                         @change="s.serviceList = selectedValues.map(e => {
                           const [onid, tsid, sid] = e.split('-').map(Number);
@@ -1231,44 +1229,46 @@ ct:Append([=[
               <fieldset>
                 <legend>時間絞り込み</legend>
                 <input type="hidden" name="dateList" :value="(s.dateList||[]).map(e => `${dayText[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${dayText[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`).join(',')">
-                <div x-text="(s.dateList||[]).map(e => `${dayText[e.startDayOfWeek]}-${e.startHour}:${e.startMin}-${dayText[e.endDayOfWeek]}-${e.endHour}:${e.endMin}`).join(',')"></div>
                 <div>
                   <ul class="list no-space border">
                     <template x-for="(e, i) in s.dateList" :key="i">
                       <li class="tiny-space scroll" x-data="{ start: `${convert.zero(e.startHour)}:${convert.zero(e.startMin)}`, end: `${convert.zero(e.endHour)}:${convert.zero(e.endMin)}`}">
-                        <div>
-                          <button class="chip round">
-                            <span x-text="dayText[e.startDayOfWeek]"></span>
-                            <i class="m l">arrow_drop_down</i>
-                          </button>
-                          <menu class="min">
-                              <template x-for="(v, i) in dayText">
-                                <li :value="i" x-text="v" :class="{ active: e.startDayOfWeek === i }" @click="e.startDayOfWeek = i"></li>
-                              </template>
-                          </menu>
-                        </div>
-                        <div>
-                          <div class="chip round" x-text="start"></div>
-                          <input type="time" x-model="start" @change="[e.startHour, e.startMin] = $event.target.value.split(':').map(Number)">
+                        <div class="row no-space">
+                          <div>
+                            <button class="chip left-round">
+                              <i class="m l">arrow_drop_down</i>
+                              <span x-text="dayText[e.startDayOfWeek]"></span>
+                            </button>
+                            <menu class="min">
+                                <template x-for="(v, i) in dayText">
+                                  <li :value="i" x-text="v" :class="{ active: e.startDayOfWeek === i }" @click="e.startDayOfWeek = i"></li>
+                                </template>
+                            </menu>
+                          </div>
+                          <div>
+                            <div class="chip right-round" x-text="start"></div>
+                            <input type="time" x-model="start" @change="[e.startHour, e.startMin] = $event.target.value.split(':').map(Number)">
+                          </div>
                         </div>
                         <div>～</div>
-                        <div>
-                          <button class="chip round">
-                            <span x-text="dayText[e.endDayOfWeek]"></span>
-                            <i class="m l">arrow_drop_down</i>
-                          </button>
-                          <menu class="min">
-                            <template x-for="(v, i) in dayText">
-                              <li :value="i" x-text="v" :class="{ active: e.endDayOfWeek === i }" @click="e.endDayOfWeek = i"></li>
-                            </template>
-                          </menu>
+                        <div class="row no-space no-margin">
+                          <div>
+                            <button class="chip left-round">
+                              <i class="m l">arrow_drop_down</i>
+                              <span x-text="dayText[e.endDayOfWeek]"></span>
+                            </button>
+                            <menu class="min">
+                              <template x-for="(v, i) in dayText">
+                                <li :value="i" x-text="v" :class="{ active: e.endDayOfWeek === i }" @click="e.endDayOfWeek = i"></li>
+                              </template>
+                            </menu>
+                          </div>
+                          <div>
+                            <button class="chip right-round" x-text="end"></button>
+                            <input type="time" x-model="end" @change="[e.endHour, e.endMin] = $event.target.value.split(':').map(Number)">
+                          </div>
                         </div>
-                        <div>
-                          <div class="chip round" x-text="end"></div>
-                          <input type="time" x-model="end" @change="[e.endHour, e.endMin] = $event.target.value.split(':').map(Number)">
-                        </div>
-                        <div class="max"></div>
-                        <button type="button" class="circle transparent small error" @click="s.dateList.splice(i, 1)">
+                        <button type="button" class="circle tertiary small" @click="s.dateList.splice(i, 1)">
                           <i>delete</i>
                         </button>
                       </li>
@@ -1277,8 +1277,7 @@ ct:Append([=[
                   <button class="responsive small top-margin small-margin"
                           @click="
                             s.dateList ??= [];
-                            s.dateList.push({ startDayOfWeek: 0, startHour: 0, startMin: 0, endDayOfWeek: 0, endHour: 23, endMin: 59 });
-                          ">
+                            s.dateList.push({ startDayOfWeek: 0, startHour: 0, startMin: 0, endDayOfWeek: 0, endHour: 23, endMin: 59 });">
                     <i>add</i>
                     <span>追加</span>
                   </button>
@@ -1932,7 +1931,7 @@ ct:Append([=[
     </template>
   </dialog>
 
-  <dialog id="sidePanelSetting">
+  <dialog id="sidePanelSetting" :class="{ bottom: isSmallScreen }">
     <template x-if="detail.searchInfo">
       <div>
         <div class="field middle-align">
@@ -1946,7 +1945,7 @@ ct:Append([=[
         </div>
         <fieldset>
           <legend>ジャンル表示絞り込み</legend>
-          <nav class="wrap">
+          <nav class="group wrap">
     ]=]..GetGenreChip()..[=[
           </nav>
         </fieldset>
