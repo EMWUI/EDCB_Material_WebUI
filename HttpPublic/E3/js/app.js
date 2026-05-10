@@ -1086,7 +1086,7 @@ document.addEventListener('alpine:init', () => {
         if (this.hasMoved) {
           e.currentTarget.releasePointerCapture(e.pointerId);
           // 慣性アニメーションの開始
-          const friction = 0.95; // 摩擦係数（1に近いほど止まりにくい）
+          const friction = 0.85; // 摩擦係数（1に近いほど止まりにくい）
           const moment = () => {
             if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) return;
             this.$refs.main.scrollBy(this.velocityX, this.velocityY);
