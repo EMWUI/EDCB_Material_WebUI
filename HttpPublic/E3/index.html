@@ -424,10 +424,10 @@ ct:Append([=[
                     <img class="round border tiny" :src="getLogoPath(s)">
                   </div>
                   <div class="max">
-                    <div class="row no-margin no-wrap">
-                      <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
+                    <div class="row no-margin no-wrap secondary-text small-text">
+                      <div class="max title bold" x-text="s.service_name"></div>
                       <template x-if="entry">
-                        <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                        <div x-html="`${convert.date(entry.current.startTimeInt, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
                       </template>
                     </div>
                     <template x-if="entry">
@@ -581,7 +581,7 @@ ct:Append([=[
                     <button class="circle transparent">
                       <i>settings</i>
                     </button>
-                    <menu class="top left no-wrap" :class="{ top: !isPortrait || isFullscreen }">
+                    <menu class="top left" :class="{ top: !isPortrait || isFullscreen }">
                       <li>
                         <i>music_note</i>
                         <span>音声</span>
@@ -751,8 +751,8 @@ ct:Append([=[
     </template>
 
     <template id="reserveList-template">
-      <div class="row no-margin no-wrap">
-        <div x-data="{ startTime: new Date(d.startTime).getTime() }">
+      <div class="max row no-margin no-wrap" x-data="{ startTime: new Date(d.startTime).getTime() }">
+        <div>
           <template x-if="startTime < now" >
             <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : startTime + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
           </template>
@@ -765,19 +765,21 @@ ct:Append([=[
               </span>
             </label>
           </template>
-
         </div>
         <div class="max" :class="!d.recSetting?.recEnabled ? 'medium-opacity' : ''">
+          <div class="row no-margin no-wrap secondary-text">
+            <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(startTime + d.durationSecond*1000, true)}`"></span>
+            <span x-text="d.stationName"></span>
+          </div>
           <div class="title middle-align bold large-text">
             <img class="space" :src="getLogoPath(d)">
             <span x-html="convert.title(d.title)"></span>
           </div>
           <div class="row wrap tiny-space no-margin secondary-text no-line">
-            <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
-            <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.stationName"></span></span>
             <span class="middle-align"><i class="tiny">star</i><span x-text="d.recSetting.priority"></span></span>
-            <span class="middle-align"><i class="tiny">storage</i><span x-text="d.size"></span></span>
             <template x-if="d.comment"><span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span></template>
+            <span class="max"></span>
+            <span class="middle-align"><i class="tiny">storage</i><span x-text="d.size"></span></span>
           </div>
         </div>
       </div>
@@ -862,18 +864,19 @@ ct:Append([=[
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.dataID">
               <li class="ripple" @click="openAutoaddDetail(d)">
-                <div class="row no-margin no-wrap"
-                  :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
+                <div class="row no-margin no-wrap" :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
                   <div>
-                    <i class="secondary-text" 
-                      x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
+                    <i class="secondary-text" x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
                   </div>
                   <div class="max">
-                    <div class="title bold large-text" x-html="d.title"></div>
+                    <div class="title bold large-text">
+                      <img class="space" :src="getLogoPath(d)">
+                      <span x-html="d.title"></span>
+                    </div>
                     <div class="row wrap tiny-space no-margin secondary-text no-line">
-                      <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
                       <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span>
+                      <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
+                      <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.stationName"></span></span>
                       <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
                     </div>
                   </div>
@@ -892,18 +895,20 @@ ct:Append([=[
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.id">
               <li class="ripple" @click="openRecinfoDetail(d)">
-                <div class="row no-margin no-wrap">
+                <div class="max row no-margin no-wrap">
                   <div class="center-align">
                     <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
                   </div>
                   <div class="max">
-                    <div class="title bold large-text" 
-                        :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''"
-                        x-html="convert.title(d.title)">
+                    <div class="row no-margin no-wrap secondary-text">
+                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
+                      <span x-text="d.serviceName"></span>
+                    </div>
+                    <div class="title middle-align bold large-text" :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''">
+                      <img class="space" :src="getLogoPath(d)">
+                      <span x-html="convert.title(d.title)"></span>
                     </div>
                     <div class="row wrap tiny-space no-margin secondary-text no-line">
-                      <span class="middle-align"><i class="tiny">event</i><span x-html="convert.date(d.startTime,true,true)"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><img class="space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span>
                       <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
                       <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
                       <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
