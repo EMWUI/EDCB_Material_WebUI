@@ -81,9 +81,6 @@ ct:Append([=[
       <i>menu</i><span>メニュー</span>
     </a>
 ]=]..link_bottom..[=[
-    <a @click="debug=!debug" :class="{ active: debug }">
-      <i>bug_report</i><span>確認</span>
-    </a>
   </nav>
 
   <header class="fixed top no-padding">
@@ -1859,6 +1856,18 @@ ct:Append([=[
   </dialog>
 
   <dialog id="setting">
+    <nav class="center-align large-space">
+      <span>
+        <button class="circle">
+          <i>palette</i>
+        </button>
+        <input type="color" @change="ui('theme', $event.target.value)">
+      </span>
+      <button class="circle border" @click="dark = ui('mode') === 'dark';ui('mode', dark ? 'light' : 'dark');mode = dark ? 'dark_mode' : 'light_mode'" x-data="{mode:'light_mode'}">
+        <i x-text="mode"></i>
+      </button>
+    </nav>
+    <hr class="medium">
     <div class="field middle-align">
       <nav>
         <div class="max"><h6>ワンセグ</h6></div>
@@ -1985,30 +1994,6 @@ ct:Append([=[
       <h6>マクロ一覧</h6>
     </header>
   </dialog>
-
-  <!--確認用-->
-  <div class="fixed middle right margin large-margin" x-show="debug">
-    <nav class="toolbar vertical">
-      <span>
-        <button class="circle">
-          <i>palette</i>
-        </button>
-        <input type="color" @change="ui('theme', $event.target.value)">
-      </span>
-      <a class="circle" @click="dark = ui('mode') === 'dark';ui('mode', dark ? 'light' : 'dark');mode = dark ? 'dark_mode' : 'light_mode'" x-data="{mode:'light_mode'}">
-        <i x-text="mode"></i>
-      </a>
-      <a :class="{active: dashboardData.isRecording}" @click="dashboardData.isRecording = !dashboardData.isRecording">
-        <i>fiber_manual_record</i>
-      </a>
-      <a :class="{active: !isOnline}" @click="isOnline = !isOnline">
-        <i>cloud_off</i>
-      </a>
-      <a :class="{active: loading}" @click="loading = !loading">
-        <i>refresh</i>
-      </a>
-    </nav>
-  </div>
 </body>
 </html>
 ]=])
