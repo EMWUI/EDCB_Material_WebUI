@@ -111,6 +111,7 @@ document.addEventListener('alpine:init', () => {
     set: {
       sidebar: false,
       oneseg: false,
+      subCh: false,
       subGenre: true,
       genreMask: -1044262913,
       epg: {
@@ -208,6 +209,12 @@ document.addEventListener('alpine:init', () => {
       this.$watch('set.oneseg', () => {
         this.updateNetworkMask();
         if (!this.set.oneseg && this.epg.activeNetwork === 2) this.setNetwork(0);
+        this.saveCache();
+        this.loadEpg();
+        this.syncNowOnAir();
+      });
+
+      this.$watch('set.subCh', () => {
         this.saveCache();
         this.loadEpg();
         this.syncNowOnAir();
@@ -961,7 +968,7 @@ document.addEventListener('alpine:init', () => {
 
       this.allData.epg.forEach((eventsMap, serviceId) => {
         const s = this.allData.service.get(serviceId);
-        if (!s || (!this.set.oneseg && s.partialReceptionFlag)) return;
+        if (!s || (!this.set.oneseg && s.partialReceptionFlag) || (!this.set.subCh && s.subCh)) return;
 
         const events = Array.from(eventsMap.values()).sort((a, b) => a.startTimeInt - b.startTimeInt);
         let current = null;
@@ -1006,7 +1013,9 @@ document.addEventListener('alpine:init', () => {
     },
     get serviceList() {
       const list = Array.from(this.allData.service.values());
-      return (this.set.oneseg ? list : list.filter(s => !s.partialReceptionFlag))
+      return list
+        .filter(s => this.set.oneseg || !s.partialReceptionFlag)
+        .filter(s => this.set.subCh || !s.subCh)
         .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
     },
     getNetworkIndex(onid, partial) {

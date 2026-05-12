@@ -221,7 +221,7 @@ ct:Append([=[
           <div class="vertical-margin" x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))">
             <div class="tiny-text bold secondary-text" x-text="networkName"></div>
             <div class="row scroll">
-              <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+              <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
                 <article class="small-width border ripple tiny-line small-text"
                       x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
                       @click="if (entry) openProgramDetail(entry.current)">
@@ -414,7 +414,7 @@ ct:Append([=[
 
         <section class="responsive">
           <ul class="list medium-space bottom-margin">
-            <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === onairNetwork)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+            <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === onairNetwork)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
               <li class="ripple" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }" @click="if (entry) openProgramDetail(entry.current)">
                 <div class="max row no-margin no-wrap">
                   <div class="center-align">
@@ -666,7 +666,7 @@ ct:Append([=[
               <template x-for="(networkName, networkIndex) in app.epg.networkNames" :key="networkName">
                 <div class="page no-padding" :class="{ active: sideNetwork === networkIndex }" x-show="networkIndex > 0 && (app.epg.networkMask & (1 << networkIndex))">
                   <ul class="list small-space vertical-margin small-margin">
-                    <template x-for="s in serviceList.filter(s => !s.subCh && getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+                    <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
                       <li class="ripple" @click="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}`} );" :class="{ 'secondary-container': params.id === `${s.onid}-${s.tsid}-${s.sid}` }" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }">
                         <div class="max row no-margin no-wrap">
                           <div class="center-align">
@@ -1870,7 +1870,16 @@ ct:Append([=[
     <hr class="medium">
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6>ワンセグ</h6></div>
+        <div class="max"><h6>サブチャンネルを表示</h6></div>
+        <label class="switch">
+          <input type="checkbox" x-model="set.subCh">
+          <span></span>
+        </label>
+      </nav>
+    </div>
+    <div class="field middle-align">
+      <nav>
+        <div class="max"><h6>ワンセグを表示</h6></div>
         <label class="switch">
           <input type="checkbox" x-model="set.oneseg">
           <span></span>
