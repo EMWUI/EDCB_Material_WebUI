@@ -423,8 +423,8 @@ document.addEventListener('alpine:init', () => {
     },
     async refreshEpg() {
       try {
-        // 現在時刻の6時間前から取得を開始
-        const d = new Date(this.now - 6 * 3600 * 1000);
+        // 現在時刻の2時間前から取得を開始
+        const d = new Date(this.now - 2 * 3600 * 1000);
         let hour = d.getHours();
         // 4時を日またぎの基準とするAPIの仕様（0-3時を前日の24-27時として扱う）に合わせる
         if (hour < 4) {
@@ -478,8 +478,7 @@ document.addEventListener('alpine:init', () => {
     async fetchEpgForRange(startTime) {
       this.loading = true;
       try {
-        // 指定時間の3時間前から取得を開始
-        const d = new Date(startTime - 3 * 3600 * 1000);
+        const d = new Date(startTime);
         let hour = d.getHours();
         // 4時を日またぎの基準とするAPIの仕様（0-3時を前日の24-27時として扱う）に合わせる
         if (hour < 4) {
@@ -488,7 +487,7 @@ document.addEventListener('alpine:init', () => {
         }
         const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
         // 27時間分を取得
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535&date=${dateStr}&hour=${hour}&interval=27`);
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535&date=${dateStr}&hour=${hour}&interval=24`);
         const list = await res.json();
         
         if (list.err) throw new Error(list.err);
