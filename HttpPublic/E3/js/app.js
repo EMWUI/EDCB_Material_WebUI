@@ -425,8 +425,14 @@ document.addEventListener('alpine:init', () => {
       try {
         // 現在時刻の6時間前から取得を開始
         const d = new Date(this.now - 6 * 3600 * 1000);
+        let hour = d.getHours();
+        // 4時を日またぎの基準とするAPIの仕様（0-3時を前日の24-27時として扱う）に合わせる
+        if (hour < 4) {
+          d.setDate(d.getDate() - 1);
+          hour += 24;
+        }
         const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-        const hour = d.getHours();
+
         const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=36`;
 
         // id65535-65535-65535でリクエストを1回だけ送り、全サービスの番組情報を取得する
@@ -570,12 +576,12 @@ document.addEventListener('alpine:init', () => {
         if (dateParam === undefined) {
           // 指定なし：現在の時間（1時間境界）
           d = new Date(this.now);
-          d.setMinutes(0, 0, 0);
+          d.setMinutes(0, 0, 0, 0);
         } else if (/^-?\d+$/.test(dateParam)) {
           // 相対指定（0:今日, 1:明日...）
           const offset = parseInt(dateParam);
           // 今日(0)かつhour指定なしなら現在時刻、それ以外なら04:00開始
-          if (offset === 0 && hourParam === null) {
+          if (offset === 0 && hourParam === undefined) {
             d = new Date(this.now);
             d.setMinutes(0, 0, 0, 0);
           } else {
