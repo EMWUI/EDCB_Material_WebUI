@@ -77,19 +77,64 @@ else
       a[#a+1]=v
     end
     if a and #a~=0 then
-      table.sort(a,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
-      --指定時刻跨ぎの番組を探す
-      if a[1].startTime and os.time(a[1].startTime)>os.time(range.startTime) and #id==1 then
-        range={startTime=os.date('!*t',TimeWithZone(range.startTime)-24*3600), durationSecond=24*3600}
-        b=edcb.EnumEventInfo(id,range)
-        for i,v in ipairs(edcb.EnumEventInfoArchive(id,range)) do
-          v.past=true
-          b[#b+1]=v
+      local function sortFunc(a, b)
+        local at = a.startTime and os.time(a.startTime) or 0
+        local bt = b.startTime and os.time(b.startTime) or 0
+        if at ~= bt then return at < bt end
+        return (a.sid or 0) < (b.sid or 0)
+      end
+      table.sort(a, sortFunc)
+
+      -- 指定時刻跨ぎの番組を各サービスについて探す
+      local range_t = os.time(range.startTime)
+      local first_a = {}
+      for i=1, #a do
+        local v = a[i]
+        local key = v.onid..'-'..v.tsid..'-'..v.sid
+        if v.startTime and not first_a[key] then
+          first_a[key] = os.time(v.startTime)
         end
-        table.sort(b,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
-        b=b[#b]
-        if b.startTime and b.durationSecond and os.time(b.startTime)+b.durationSecond==os.time(a[1].startTime) then
-          table.insert(a,1,b)
+      end
+
+      local id_prev = {}
+      for i=1, #id do
+        local v = id[i]
+        local key = v.onid..'-'..v.tsid..'-'..v.sid
+        if first_a[key] ~= range_t then
+          id_prev[#id_prev+1] = v
+        end
+      end
+
+      if #id_prev > 0 then
+        local prev_range = {startTime=os.date('!*t', TimeWithZone(range.startTime)-86400), durationSecond=86400}
+        local b = edcb.EnumEventInfo(id_prev, prev_range)
+        for _, v in ipairs(edcb.EnumEventInfoArchive(id_prev, prev_range)) do
+          v.past = true
+          b[#b+1] = v
+        end
+
+        local latest_b = {}
+        for i=1, #b do
+          local v = b[i]
+          local key = v.onid..'-'..v.tsid..'-'..v.sid
+          local t = v.startTime and os.time(v.startTime) or 0
+          if t < range_t and (not latest_b[key] or t > latest_b[key]._t) then
+            v._t = t
+            latest_b[key] = v
+          end
+        end
+
+        local added = false
+        for _, v in pairs(latest_b) do
+          -- range_tを跨いでいる（終了時間がrange_tより後）番組があれば追加
+          if v.durationSecond and v._t + v.durationSecond > range_t then
+            a[#a+1] = v
+            added = true
+          end
+          v._t = nil
+        end
+        if added then
+          table.sort(a, sortFunc)
         end
       end
     end
