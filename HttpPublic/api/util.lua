@@ -1375,8 +1375,8 @@ function GetVarTimeRange(qs)
   elseif mg.get_var(qs, 'date') then
     local BASE=4 --日の始まりの時刻
     local utc9Now=os.time()+9*3600
-    local interval=GetVarInt(qs,'interval',0,100) or 25
-    local date=GetVarDate(qs,'date') or (GetVarInt(qs,'date',-10000,1000)+math.floor((utc9Now-BASE*3600)/(24*3600)))*24*3600
+    local interval=GetVarInt(qs,'interval',0,200) or 25
+    local date=GetVarDate(qs,'date') or ((GetVarInt(qs,'date',-10000,1000) or 0)+math.floor((utc9Now-BASE*3600)/(24*3600)))*24*3600
     local hour=GetVarInt(qs,'hour',-1,27) or BASE  -- -1は現在時刻
     hour=hour<0 and math.floor((utc9Now%(24*3600))/3600) or hour<BASE and hour+24 or hour
     return {startTime=os.date('!*t',date+hour*3600),durationSecond=interval*3600}
