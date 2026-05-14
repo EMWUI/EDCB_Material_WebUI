@@ -119,7 +119,7 @@ ct:Append([=[
                   <i>today</i>
                   <span x-text="getEpgDateText()"></span>
                 </button>
-                <input type="date" @change="setDate($event.target.value)" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+                <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
               </div>
               <div>
                 <button class="right-round square border transparent">
@@ -141,12 +141,46 @@ ct:Append([=[
               <i>today</i>
               <span x-text="getEpgDateText()"></span>
             </button>
-            <input type="date" @change="setDate($event.target.value)" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+            <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
           </div>
         </div>
       </template>
 
-      <template x-if="page !== '#epg'">
+      <template x-if="page === '#epgweek'">
+        <div class="contents">
+          <div>
+            <button class="border transparent">
+              <i>cell_tower</i>
+              <span class="m l" x-text="allData.service.get(params.id)?.service_name || '局選択'"></span>
+              <i>arrow_drop_down</i>
+            </button>
+            <menu class="left no-wrap scroll" style="max-height: 70vh;">
+              <template x-for="s in serviceList" :key="getDataKey(s, 'service')">
+                <li :class="{ active: params.id === getDataKey(s, 'service') }"
+                    @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
+                    x-text="s.service_name"></li>
+              </template>
+            </menu>
+          </div>
+          <nav class="m l no-margin no-space">
+            <button class="circle transparent" @click="shiftDate(-7)" :disabled="!canShift(-7)">
+              <i>chevron_backward</i>
+            </button>
+            <div>
+              <button class="border transparent">
+                <i>today</i>
+                <span x-text="getEpgDateText()"></span>
+              </button>
+              <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+            </div>
+            <button class="circle transparent" @click="shiftDate(7)" :disabled="!canShift(7)">
+              <i>chevron_forward</i>
+            </button>
+          </nav>
+        </div>
+      </template>
+
+      <template x-if="!['#epg', '#epgweek'].includes(page)">
         <button class="circle transparent" @click="openNewEntry()">
           <i>add</i>
         </button>
@@ -181,7 +215,7 @@ ct:Append([=[
     <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
   </header>
 
-  <main class="scroll no-padding" x-ref="main">
+  <main class="scroll no-padding">
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
@@ -326,7 +360,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="page === '#epg'" x-data="epg">
+    <template x-if="page === '#epg' || page === '#epgweek'" x-data="epg">
       <div id="epg-grid" :style="`--min: ${set.minHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
         <!-- 固定の角（日付） -->
         <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
@@ -342,16 +376,73 @@ ct:Append([=[
           <div id="epg-now-line" :style="`--t: ${getNowLinePos()}px`" x-transition></div>
         </template>
 
-        <!-- サービス列 -->
-        <template x-for="service in servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
-          <template x-if="!service.subCh">
+        <template x-if="page === '#epg'">
+          <!-- サービス列 -->
+          <template x-for="service in servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
             <div class="epg-service-col small-width">
-              <div class="epg-service-header secondary-container vertical-padding center-align small-round border">
+              <div class="epg-service-header secondary-container vertical-padding center-align small-round border ripple"
+                   @click="openPage('#epgweek', { id: getDataKey(service, 'service') })">
                 <img :src="getLogoPath(service)" class="tiny">
                 <div class="small-text" x-text="service.service_name"></div>
               </div>
               <!-- 番組配置エリア -->
-              <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = service.displayEvents);$watch('service.displayEvents', v => events = v)">
+              <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = service.displayEvents); $watch('service.displayEvents', v => events = v)">
+                <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
+                  <div class="epg-event" :style="`--h: ${event.minutes}`"
+                      @click="onEventClick(event)" @dblclick="onEventDblClick(event)"
+                      @pointerenter="onPointerEnter(event)" @pointerleave="onPointerLeave()">
+                    <div class="small-round border" :class="getEventClass(event)">
+                      <template x-if="!event.isGap">
+                        <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">
+                          <div>
+                            <div x-text="convert.zero(new Date(event.startTimeInt).getUTCMinutes())"></div>
+                            <div x-show="event.reserve">
+                              <span class="mark"
+                                    :class="event.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
+                                    x-text="event.reserve?.recSetting.recEnabled ? '録' : '無'">
+                              </span>
+                            </div>
+                          </div>
+                          <div class="max">
+                            <div x-html="convert.title(event.shortInfo?.event_name)"></div>
+                            <div class="secondary-text small-text no-line" x-html="event.shortInfo?.text_char.replace(/\r?\n/g, '<br>')"></div>
+                            <nav class="vertical tiny-space vertical-margin" x-show="!event.isGap && active === event.eid">
+                              <button class="border secondary-border secondary-text" @click="openProgramDetail(event)">
+                                <i class="m l">info</i>
+                                <span>番組詳細</span>
+                              </button>
+                              <button class="border secondary-border secondary-text"
+                                      @click.stop="event.reserve ? toggleReserve(event.reserve) : addReserve(event)"
+                                      x-show="event.startTimeInt + event.durationSecond * 1000 > now">
+                                <i class="m l">event_upcoming</i>
+                                <span x-text="!event.reserve ? '予約追加' : event.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
+                              </button>
+                              <button class="border secondary-border secondary-text" @click.stop="openNewEntry(event)">
+                                <i class="m l">published_with_changes</i>
+                                <span>EPG予約</span>
+                              </button>
+                            </nav>
+                          </div>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </template>
+
+        <template x-if="page === '#epgweek'">
+          <!-- サービス列 -->
+          <template x-for="day in weeklyToDisplay" :key="day.date">
+            <div class="epg-service-col small-width">
+              <div class="epg-service-header secondary-container middle-align center-align small-round border ripple"
+                   @click="openPage('#epg', { date: new Date(day.date).toLocaleDateString('sv') })">
+                <h6 x-text="day.label"></h6>
+              </div>
+              <!-- 番組配置エリア -->
+              <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = day.displayEvents); $watch('day.displayEvents', v => events = v)">
                 <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
                   <div class="epg-event" :style="`--h: ${event.minutes}`"
                        @click="onEventClick(event)" @dblclick="onEventDblClick(event)"
@@ -920,7 +1011,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="['#epgweek', '#library', '#search', '#setting'].includes(page)">
+    <template x-if="['#library', '#search', '#setting'].includes(page)">
       <div class="flex center-align middle-align">
         <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
       </div>

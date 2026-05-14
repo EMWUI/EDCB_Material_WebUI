@@ -162,15 +162,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     // リロードなしでページとパラメータを切り替える
-    openPage(page, params = {}) {
+    openPage(page, params = {}, replace = false) {
       const url = new URL(window.location.href);
       url.hash = page;
       // パラメータをリセットして設定
       url.search = '';
       for (const [k, v] of Object.entries(params)) {
-        url.searchParams.set(k, v);
+        if (v !== undefined && v !== null) url.searchParams.set(k, v);
       }
-      history.pushState(null, '', url.toString());
+      if (replace) history.replaceState(null, '', url.toString());
+      else history.pushState(null, '', url.toString());
       this.page = page;
       this.updateParams();
       this.loadAll();
@@ -372,17 +373,21 @@ document.addEventListener('alpine:init', () => {
         const data = JSON.parse(e.data);
         
         // 通知が来たら pageMap に基づいて再取得
-        if (data.epg) await this.refreshEpg();
         if (data.reserve) {
           await Promise.all([
             this.refreshData('#reserve'),
             this.refreshData('#tunerreserve'),
           ]);
+          if (!data.epg) {
+            this.loadEpg();
+            this.loadWeeklyEpg();
+          }
         }
         if (data.recinfo) this.refreshData('#recinfo');
         if (data.auto_add) this.refreshData('#autoaddepg');
         if (data.manual_add) this.refreshData('#autoaddmanual');
         if (data.tuner) this.updateTunerStatus();
+        if (data.epg) await this.refreshEpg();
       };
     },
 
@@ -408,7 +413,6 @@ document.addEventListener('alpine:init', () => {
         map.clear();
         list.forEach(item => map.set(this.getDataKey(item, internalKey), item));
         this.lastUpdated[internalKey] = Date.now();
-        if (internalKey === 'reserve') this.loadEpg();
         this.totals[internalKey] = data.total ?? list.length;
 
         // ダッシュボードや表示リストへの反映
@@ -469,6 +473,7 @@ document.addEventListener('alpine:init', () => {
         // this.snackbar.add({ text: 'EPG updated' });
 
         this.loadEpg();
+        this.loadWeeklyEpg();
         this.syncNowOnAir();
       } catch (e) {
         console.error("Failed to refresh epg", e);
@@ -550,7 +555,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       this.totalCount = null;
-      this.$refs.main.scrollTo(0,0);
+      if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0,0);
       this.sidePanel.close();
 
       if (this.page === '#dashboard') {
@@ -602,6 +607,15 @@ document.addEventListener('alpine:init', () => {
         this.epg.epgStartTime = d.getTime();
 
         this.loadEpg();
+        return;
+      }
+      if (this.page === '#epgweek') {
+        if (!this.params.id) {
+          const first = this.serviceList[0];
+          if (first) this.openPage('#epgweek', { id: this.getDataKey(first, 'service') }, true);
+          return;
+        }
+        this.loadWeeklyEpg();
         return;
       }
       if (this.page === '#onair') {
@@ -1053,6 +1067,7 @@ document.addEventListener('alpine:init', () => {
       minTime: 0,
       maxTime: 0,
       servicesToDisplay: [],
+      weeklyToDisplay: [],
       activeNetwork: 1,
       networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
       networkMask: 1,
@@ -1063,6 +1078,13 @@ document.addEventListener('alpine:init', () => {
       lastLoadedReserve: 0,
       loadId: 0,
       lastLoadedKey: '',
+      weeklyCache: new Map(),
+      fetchingWeekly: null,
+      lastLoadedWeeklyService: '',
+      lastLoadedWeeklyStart: 0,
+      lastLoadedWeeklyData: 0,
+      lastLoadedWeeklyReserve: 0,
+      weeklyLoadId: 0,
 
       isDragging: false,
       hasMoved: false,
@@ -1087,7 +1109,7 @@ document.addEventListener('alpine:init', () => {
           if (!this.hasMoved) e.currentTarget.setPointerCapture(e.pointerId);
           this.hasMoved = true;
           document.body.style.cursor = 'grabbing';
-          this.$refs.main.scrollBy(-e.movementX, -e.movementY);
+          document.querySelector('main').scrollBy(-e.movementX, -e.movementY);
           // 直近の移動量を速度として記録
           this.velocityX = -e.movementX;
           this.velocityY = -e.movementY;
@@ -1103,7 +1125,7 @@ document.addEventListener('alpine:init', () => {
           const friction = 0.85; // 摩擦係数（1に近いほど止まりにくい）
           const moment = () => {
             if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) return;
-            this.$refs.main.scrollBy(this.velocityX, this.velocityY);
+            document.querySelector('main').scrollBy(this.velocityX, this.velocityY);
             this.velocityX *= friction;
             this.velocityY *= friction;
             this.momentID = requestAnimationFrame(moment);
@@ -1226,7 +1248,7 @@ document.addEventListener('alpine:init', () => {
       // 代入後にプロキシ化された参照を取得する（比較用）
       const currentServices = this.epg.servicesToDisplay;
 
-      if (timeChanged || networkChanged) this.$refs.main.scrollTo(0,0);
+      if (timeChanged || networkChanged) document.querySelector('main').scrollTo(0,0);
 
       // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
       let index = 0;
@@ -1283,6 +1305,163 @@ document.addEventListener('alpine:init', () => {
         if (index < currentServices.length) setTimeout(processNext, 0);
       };
       setTimeout(processNext, 0);
+    },
+    async loadWeeklyEpg() {
+      const serviceId = this.params.id;
+      if (!serviceId) return;
+      const service = this.allData.service.get(serviceId);
+      if (!service) return;
+
+      // 4時基準の開始時間を決定
+      let d = new Date(this.now);
+      let dateSpecified = false;
+      if (this.params.date) {
+        const parsed = new Date(this.params.date);
+        if (!isNaN(parsed.getTime())) {
+          d = parsed;
+          dateSpecified = true;
+        }
+      }
+      // 日付指定がない場合のみ、現在時刻が4時前なら前日扱いとする
+      if (!dateSpecified && d.getHours() < 4) d.setDate(d.getDate() - 1);
+      d.setHours(4, 0, 0, 0);
+
+      const startTime = d.getTime();
+      const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      const cacheKey = `${serviceId}-${dateStr}`;
+
+      // 同一キーの取得リクエストが進行中なら重複して走らせない
+      if (this.epg.fetchingWeekly === cacheKey) return;
+      this.epg.fetchingWeekly = cacheKey;
+
+      // 再描画が必要かチェック（サービス、開始時間、データ更新、予約更新のいずれも変化がなければスキップ）
+      if (this.epg.lastLoadedWeeklyService === serviceId &&
+          this.epg.lastLoadedWeeklyStart === startTime &&
+          this.epg.lastLoadedWeeklyData === this.lastUpdated.epg &&
+          this.epg.lastLoadedWeeklyReserve === this.lastUpdated.reserve &&
+          this.epg.weeklyToDisplay.length === 7) {
+        this.epg.fetchingWeekly = null;
+        return;
+      }
+
+      this.epg.epgStartTime = startTime;
+      const serviceChanged = this.epg.lastLoadedWeeklyService !== serviceId;
+      const timeChanged = this.epg.lastLoadedWeeklyStart !== startTime;
+
+      const currentWeeklyLoadId = ++this.epg.weeklyLoadId;
+      this.epg.lastLoadedWeeklyService = serviceId;
+      this.epg.lastLoadedWeeklyStart = startTime;
+      this.epg.lastLoadedWeeklyData = this.lastUpdated.epg;
+      this.epg.lastLoadedWeeklyReserve = this.lastUpdated.reserve;
+
+      // 先にガワだけ作る（リアクティブな反映のため）
+      if (this.epg.weeklyToDisplay.length !== 7 || serviceChanged || timeChanged) {
+        this.epg.weeklyToDisplay = Array.from({ length: 7 }, (_, i) => {
+          const dayStart = startTime + i * 24 * 3600 * 1000;
+          const dayDate = new Date(dayStart);
+          return {
+            ...service,
+            date: dayStart,
+            label: `${dayDate.getMonth() + 1}/${dayDate.getDate()}(${this.dayText[dayDate.getDay()]})`,
+            displayEvents: []
+          };
+        });
+        // 構造が変わった場合のみ、一旦処理を戻し、空のグリッドを表示させる
+        await new Promise(resolve => setTimeout(resolve, 0));
+        document.querySelector('main').scrollTo(0,0);
+      }
+
+
+      const processEvents = events => {
+        let index = 0;
+        const processNext = () => {
+          if (this.epg.weeklyLoadId !== currentWeeklyLoadId) return;
+
+          const dayStart = startTime + index * 24 * 3600 * 1000;
+          const dayEnd = dayStart + 24 * 3600 * 1000;
+          const displayEvents = [];
+          let lastPos = dayStart;
+
+          // その日の範囲に含まれる番組をフィルタリング
+          const dayEvents = events.filter(v => (v.startTimeInt + v.durationSecond * 1000) > dayStart && v.startTimeInt < dayEnd);
+
+          for (const v of dayEvents) {
+            const vStart = Math.max(v.startTimeInt, dayStart);
+            const vEnd = Math.min(v.startTimeInt + (v.durationSecond * 1000), dayEnd);
+
+            const startMin = Math.floor((vStart - dayStart) / 60000);
+            const endMin = Math.floor((vEnd - dayStart) / 60000);
+            const lastMin = Math.floor((lastPos - dayStart) / 60000);
+
+            if (startMin > lastMin) {
+              displayEvents.push({ isGap: true, minutes: startMin - lastMin });
+            }
+            const minutes = endMin - startMin;
+            if (minutes > 0) {
+              const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              displayEvents.push({ ...v, isGap: false, minutes, reserve });
+              lastPos = Math.max(lastPos, vEnd);
+            }
+          }
+
+          const finalMin = 1440;
+          const lastMin = Math.floor((lastPos - dayStart) / 60000);
+          if (finalMin > lastMin) {
+            displayEvents.push({ isGap: true, minutes: finalMin - lastMin });
+          }
+
+          // 変更がある場合のみ個別の番組リストを更新（リアクティブ連鎖の抑制）
+          const old = this.epg.weeklyToDisplay[index].displayEvents || [];
+          const isChanged = old.length !== displayEvents.length || 
+                            displayEvents.some((v, i) => v.eid !== old[i]?.eid || v.minutes !== old[i]?.minutes || 
+                            (v.reserve?.reserveID !== old[i]?.reserve?.reserveID) || 
+                            (v.reserve?.recSetting.recEnabled !== old[i]?.reserve?.recSetting.recEnabled) ||
+                            (v.reserve?.overlapMode !== old[i]?.reserve?.overlapMode));
+          
+          if (isChanged) {
+            this.epg.weeklyToDisplay[index].displayEvents = displayEvents;
+          }
+
+          index++;
+          if (index < 7) setTimeout(processNext, 0);
+        };
+
+        processNext();
+      };
+
+      // メモリキャッシュのチェック（EPGデータ自体の更新がなければ使い回す）
+      if (this.epg.weeklyCache.has(cacheKey)) {
+        processEvents(this.epg.weeklyCache.get(cacheKey));
+        this.epg.fetchingWeekly = null;
+        return;
+      }
+
+      this.loading = true;
+      try {
+        // 指定されたサービスの1週間分(168時間)を取得
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${serviceId}&date=${dateStr}&hour=4&interval=168`);
+        const list = await res.json();
+        this.loading = false;
+        
+        if (this.epg.weeklyLoadId !== currentWeeklyLoadId) {
+          this.epg.fetchingWeekly = null;
+          return;
+        }
+        if (list.err) throw new Error(list.err);
+
+        const events = (Array.isArray(list) ? list : []).map(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          return v;
+        });
+
+        this.epg.weeklyCache.set(cacheKey, events);
+        processEvents(events);
+      } catch (e) {
+        console.error("Failed to load weekly EPG", e);
+        this.loading = false;
+      } finally {
+        this.epg.fetchingWeekly = null;
+      }
     },
     // ネットワーク（タブ）を切り替え、履歴に追加する
     setNetwork(index) {
@@ -1394,7 +1573,7 @@ document.addEventListener('alpine:init', () => {
         this.setDate(0);
       } else {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
-        this.$refs.main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
+        document.querySelector('main').scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
       }
     },
 
