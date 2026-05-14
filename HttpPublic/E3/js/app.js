@@ -1235,43 +1235,40 @@ document.addEventListener('alpine:init', () => {
         // 別の loadEpg (フィルタ切り替え等) が開始されていたらこのループを中止
         if (this.epg.loadId !== currentLoadId) return;
 
-        const frameStart = performance.now();
+        const s = currentServices[index];
+        const serviceId = this.getDataKey(s, 'service');
+        const eventMap = dataMap ? dataMap.get(serviceId) : null;
+        const displayEvents = [];
+        let lastPos = gridStart;
 
-        while (index < currentServices.length) {
-          const s = currentServices[index];
-          const serviceId = this.getDataKey(s, 'service');
-          const eventMap = dataMap ? dataMap.get(serviceId) : null;
-          const displayEvents = [];
-          let lastPos = gridStart;
+        if (eventMap) {
+          for (const v of eventMap.values()) {
+            const start = v.startTimeInt;
+            const end = start + (v.durationSecond * 1000);
+            if (end <= gridStart || start >= gridEnd) continue;
 
-          if (eventMap) {
-            for (const v of eventMap.values()) {
-              const start = v.startTimeInt;
-              const end = start + (v.durationSecond * 1000);
-              if (end <= gridStart || start >= gridEnd) continue;
+            // サーバー側で時間順にソート済みのため、表示枠を超えたらこの局の計算は終了できる
+            if (start >= gridEnd) break;
+            if (end <= gridStart) continue;
 
-              // サーバー側で時間順にソート済みのため、表示枠を超えたらこの局の計算は終了できる
-              if (start >= gridEnd) break;
-              if (end <= gridStart) continue;
+            const vStart = Math.max(start, gridStart);
+            const vEnd = Math.min(end, gridEnd);
+            const startMin = Math.floor((vStart - gridStart) / 60000);
+            const endMin = Math.floor((vEnd - gridStart) / 60000);
+            const lastMin = Math.floor((lastPos - gridStart) / 60000);
 
-              const vStart = Math.max(start, gridStart);
-              const vEnd = Math.min(end, gridEnd);
-              const startMin = Math.floor((vStart - gridStart) / 60000);
-              const endMin = Math.floor((vEnd - gridStart) / 60000);
-              const lastMin = Math.floor((lastPos - gridStart) / 60000);
-
-              if (startMin < lastMin) continue;
-              if (startMin > lastMin) {
-                displayEvents.push({ isGap: true, minutes: startMin - lastMin });
-              }
-              const minutes = endMin - startMin;
-              if (minutes > 0) {
-                const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
-                displayEvents.push({ ...v, isGap: false, minutes, reserve });
-                lastPos = Math.max(lastPos, vEnd);
-              }
+            if (startMin < lastMin) continue;
+            if (startMin > lastMin) {
+              displayEvents.push({ isGap: true, minutes: startMin - lastMin });
+            }
+            const minutes = endMin - startMin;
+            if (minutes > 0) {
+              const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              displayEvents.push({ ...v, isGap: false, minutes, reserve });
+              lastPos = Math.max(lastPos, vEnd);
             }
           }
+        }
 
         const finalMin = Math.floor((gridEnd - gridStart) / 60000);
         const lastMin = Math.floor((lastPos - gridStart) / 60000);
@@ -1279,16 +1276,11 @@ document.addEventListener('alpine:init', () => {
           displayEvents.push({ isGap: true, minutes: finalMin - lastMin });
         }
 
-          // リアクティブに個別の番組リストを更新
-          currentServices[index].displayEvents = displayEvents;
-          index++;
+        // リアクティブに個別の番組リストを更新
+        currentServices[index].displayEvents = displayEvents;
 
-          // 予算を4msに短縮。残りの12ms程度をブラウザの描画（プログレスバー等）に明け渡す。
-          if (performance.now() - frameStart > 4) {
-            setTimeout(processNext, 0);
-            return;
-          }
-        }
+        index++;
+        if (index < currentServices.length) setTimeout(processNext, 0);
       };
       setTimeout(processNext, 0);
     },
