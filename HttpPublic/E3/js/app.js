@@ -60,6 +60,7 @@ document.addEventListener('alpine:init', () => {
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
     params: {},
+    search: {},
     now: Date.now(),
     isOnline: false,
     isSmallScreen: false,
@@ -89,12 +90,14 @@ document.addEventListener('alpine:init', () => {
       tunerreserve: new Map(),
       service: new Map(),
       recpreset: new Map(),
+      search: new Map(),
     },
     totals: {
       reserve: 0,
       recinfo: 0,
       autoaddepg: 0,
-      autoaddmanual: 0
+      autoaddmanual: 0,
+      search: 0,
     },
 
     lastUpdated: {
@@ -146,7 +149,7 @@ document.addEventListener('alpine:init', () => {
       '#autoaddmanual': { title: 'プログラム自動予約', api: 'EnumManuAdd', itemKey: 'dataID' },
       '#library': { title: 'ライブラリ' },
       '#recinfo': { title: '録画結果', api: 'EnumRecInfo', sortKey: 'startTime', reverse: true, count: 200, itemKey: 'id' },
-      '#search': { title: '検索' },
+      '#search': { title: '検索', api: 'SearchEvent', itemKey: d => `${d.onid}-${d.tsid}-${d.sid}-${d.eid}` },
       '#setting': { title: '設定' },
       '#dashboard': { title: 'ダッシュボード' },
       'service': { api: 'EnumService', itemKey: d => `${d.onid}-${d.tsid}-${d.sid}` },
@@ -627,6 +630,9 @@ document.addEventListener('alpine:init', () => {
         }
         return;
       }
+      if (this.page === '#search') {
+        this.openSearchDetail(this.search);
+      }
 
       this.updateDisplayList();
     },
@@ -811,8 +817,10 @@ document.addEventListener('alpine:init', () => {
       return JSON.parse(JSON.stringify(obj));
     },
     saveCache() {
-      const cache = { totals: this.totals, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, allData: {} };
+      const totalsForCache = { ...this.totals, search: 0 };
+      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, allData: {} };
       Object.entries(this.allData).forEach(([key, map]) => {
+        if (key === 'search') return; // 検索結果は永続キャッシュしない
         if (key === 'epg') {
           // serviceId毎のMapを配列に戻して保存
           cache.allData[key] = Array.from(map.values()).map(m => Array.from(m.values()));
@@ -1581,12 +1589,14 @@ document.addEventListener('alpine:init', () => {
       el: document.getElementById('sidePanel'),
       d: {},
       title() {
-        return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果'][this.mode] + (this.isInfo||this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
+        return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo||this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
       },
       get mode() {
         if (this.d.eid == 65535) return 1
-        else if (this.d.searchInfo) return 2
-        else if (this.d.dataID != null) return 3
+        else if (this.d.searchInfo) {
+          if (!this.d.recSetting) return 5
+          else return 2
+        } else if (this.d.dataID != null) return 3
         else if (this.d.recStatus) return 4
         else return 0
       },
@@ -1607,6 +1617,9 @@ document.addEventListener('alpine:init', () => {
       },
       get isRecinfo() {
         return this.mode == 4;
+      },
+      get isSearch() {
+        return this.mode == 5;
       },
       show() {
         this.el.querySelector('main').scrollTo(0, 0);
@@ -1686,7 +1699,74 @@ document.addEventListener('alpine:init', () => {
         }
       }
     },
+    openSearchDetail(d = this.search) {
+      this.sidePanel.d = { searchInfo: d };
+      ui("#searchInfo");
+      this.sidePanel.show();
+    },
 
+    isValidSearchRange(s) {
+      if (!s || !s.archive) return true;
+      if (!s.startDate || !s.startTime || !s.endDate || !s.endTime) return false;
+      const start = new Date(`${s.startDate}T${s.startTime}`).getTime();
+      const end = new Date(`${s.endDate}T${s.endTime}`).getTime();
+      return !isNaN(start) && !isNaN(end) && start < end;
+    },
+
+    async searchEvent() {
+      const s = this.sidePanel.d.searchInfo;
+      if (!this.isValidSearchRange(s)) {
+        const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
+        this.snackbar.add({ 
+          text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください', 
+          error: true 
+        });
+        return;
+      }
+
+      this.loading = true;
+      this.search = this.clone(this.sidePanel.d.searchInfo);
+      const container = document.getElementById('searchInfo');
+      const fd = new URLSearchParams();
+      
+      // 検索フォームから条件を収集
+      container.querySelectorAll('[name]').forEach(el => {
+        if (el.type === 'checkbox') {
+          if (el.checked) fd.append(el.name, '1');
+        } else if (el.tagName === 'SELECT' && el.multiple) {
+          Array.from(el.selectedOptions).forEach(opt => fd.append(el.name, opt.value));
+        } else {
+          fd.append(el.name, el.value);
+        }
+      });
+      
+      fd.set('ctok', document.getElementById('searchCtok')?.value || '');
+
+      try {
+        // 3. 検索結果ページへ遷移（URLを確定させる）
+        if (this.page !== '#search') {
+          this.openPage('#search', {}, true);
+        }
+
+        const res = await fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const list = await res.json();
+        
+        this.allData.search.clear();
+        (Array.isArray(list) ? list : []).forEach(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          this.allData.search.set(this.getDataKey(v, 'search'), v);
+        });
+
+        this.totals.search = this.allData.search.size;
+        this.updateDisplayList();
+        this.sidePanel.close();
+      } catch (e) {
+        console.error("Search failed", e);
+        this.snackbar.add({ text: '検索に失敗しました', error: true });
+      } finally {
+        this.loading = false;
+      }
+    },
     parseProgramInfo(e) {
       if (!e) return {};
       // 改行コードを統一

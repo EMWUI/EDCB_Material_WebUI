@@ -180,9 +180,15 @@ ct:Append([=[
         </div>
       </template>
 
-      <template x-if="!['#epg', '#epgweek'].includes(page)">
+      <template x-if="!['#epg', '#epgweek', '#search'].includes(page)">
         <button class="circle transparent" @click="openNewEntry()">
           <i>add</i>
+        </button>
+      </template>
+
+      <template x-if="['#search'].includes(page)">
+        <button class="circle transparent" @click="openSearchDetail()">
+          <i>search</i>
         </button>
       </template>
 
@@ -1011,7 +1017,36 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="['#library', '#search', '#setting'].includes(page)">
+    <template x-if="page === '#search'">
+      <div class="absolute">
+        <section class="responsive">
+          <ul class="list medium-space vertical-margin">
+            <template x-for="d in displayList" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
+              <li class="ripple" @click="openProgramDetail(d)">
+                <div class="max row no-margin no-wrap" x-data="{ startTime: new Date(d.startTime).getTime() }">
+                  <div class="center-align">
+                    <i class="primary-text">event</i>
+                  </div>
+                  <div class="max">
+                    <div class="row no-margin no-wrap secondary-text">
+                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(startTime + d.durationSecond*1000, true)}`"></span>
+                      <span x-html="getServiceName(d)"></span>
+                    </div>
+                    <div class="title middle-align bold large-text">
+                      <img class="space" :src="getLogoPath(d)">
+                      <span x-html="convert.title(d.shortInfo?.event_name)"></span>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            </template>
+            <div x-intersect="loadMore()"></div>
+          </ul>
+        </section>
+      </div>
+    </template>
+
+    <template x-if="['#library', '#setting'].includes(page)">
       <div class="flex center-align middle-align">
         <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
       </div>
@@ -1219,24 +1254,87 @@ ct:Append([=[
       <div id="searchInfo" class="page left padding">
         <template x-if="d.searchInfo">
           <div class="grid no-margin" x-data="{ s: d.searchInfo }" x-init="$watch('d', d => s = d.searchInfo)">
-            <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[">
-            <input type="hidden" :value="`SetAutoAdd?id=${d.dataID || 0}`" id="api_action">
-            <input type="hidden" name="addchg">
-            <div class="s12">
-              <div class="field middle-align">
-                <nav>
-                  <div class="max">
-                    <h6><label class="large-text" for="disableFlag">自動予約無効</label></h6>
+            <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
+            <template x-if="!d.recSetting">
+              <div class="contents">
+                <div class="s12">
+                  <div class="field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6><label class="large-text" for="archive">アーカイブ検索</label></h6>
+                      </div>
+                      <label class="switch icon">
+                        <input id="archive" type="checkbox" name="archive" x-model="s.archive">
+                        <span>
+                          <i>archive</i>
+                        </span>
+                      </label>
+                    </nav>
                   </div>
-                  <label class="switch icon">
-                    <input id="disableFlag" type="checkbox" name="disableFlag" x-model="s.disableFlag">
-                    <span>
-                      <i>block</i>
-                    </span>
-                  </label>
-                </nav>
+                </div>
+                <div class="s12">
+                  <fieldset class="padding">
+                    <legend>日時範囲</legend>
+                    <div class="grid no-margin">
+                      <div class="s6">
+                        <div class="field label prefix border small" :class="{ invalid: s.archive && !s.startDate }">
+                          <i>today</i>
+                          <input type="date" name="startDate" x-model="s.startDate" :required="s.archive">
+                          <label>開始日</label>
+                          <output class="invalid">開始日を入力してください</output>
+                        </div>
+                      </div>
+                      <div class="s6">
+                        <div class="field label prefix border small" :class="{ invalid: s.archive && !s.startTime }">
+                          <i>schedule</i>
+                          <input type="time" name="startTime" step="1" x-model="s.startTime" :required="s.archive">
+                          <label>開始時間</label> 
+                          <output class="invalid">開始時間を入力してください</output>
+                        </div>
+                      </div>
+                      <div class="s6">
+                        <div class="field label prefix border small" :class="{ invalid: s.archive && (!s.endDate || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
+                          <i>today</i>
+                          <input type="date" name="endDate" x-model="s.endDate" :required="s.archive">
+                          <label>終了日</label>
+                          <output class="invalid" x-text="!s.endDate ? '終了日を入力してください' : '開始日時より後の日時を指定してください'"></output>
+                        </div>
+                      </div>
+                      <div class="s6">
+                        <div class="field label prefix border small" :class="{ invalid: s.archive && (!s.endTime || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
+                          <i>schedule</i>
+                          <input type="time" name="endTime" step="1" x-model="s.endTime" :required="s.archive">
+                          <label>終了時間</label>
+                          <output class="invalid" x-text="!s.endTime ? '終了時間を入力してください' : '開始日時より後の日時を指定してください'"></output>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
               </div>
-            </div>
+            </template>
+            <template x-if="d.recSetting">
+              <div class="contents">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[">
+                <input type="hidden" :value="`SetAutoAdd?id=${d.dataID || 0}`" id="api_action">
+                <input type="hidden" name="addchg">
+                <div class="s12">
+                  <div class="field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6><label class="large-text" for="disableFlag">自動予約無効</label></h6>
+                      </div>
+                      <label class="switch icon">
+                        <input id="disableFlag" type="checkbox" name="disableFlag" x-model="s.disableFlag">
+                        <span>
+                          <i>block</i>
+                        </span>
+                      </label>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </template>
 
             <div class="s12">
               <div class="field label border">
@@ -1252,11 +1350,16 @@ ct:Append([=[
               </div>
             </div>
 
-            <div class="s12">
-              <div class="field label border">
-                <input type="text" name="note" x-model="s.note">
-                <label>メモ</label>
+            <template x-if="d.recSetting">
+              <div class="s12">
+                <div class="field label border">
+                  <input type="text" name="note" x-model="s.note">
+                  <label>メモ</label>
+                </div>
               </div>
+            </template>
+
+            <div class="s12">
               <nav class="group center-align top-margin small-margin">
                 <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
                   <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
@@ -1279,9 +1382,6 @@ ct:Append([=[
                   <span class="m l">大小文字区別</span>
                 </button>
               </nav>
-            </div>
-
-            <div class="s12">
             </div>
             <div class="s12">
               <div class="field label border" x-data="{ selectedValues: [] }"
@@ -1413,40 +1513,42 @@ ct:Append([=[
               </fieldset>
             </div>
 
-            <div class="s12">
-              <fieldset>
-                <legend>無効対象</legend>
-                <div>
-                  <label class="checkbox">
-                    <input type="checkbox" name="chkRecEnd" x-model="s.chkRecEnd">
-                    <span>同一番組名の録画結果があれば無効登録</span>
-                  </label>
-                </div>
-                <div>
-                  <label class="checkbox">
-                    <input type="checkbox" name="chkRecNoService" x-model="s.chkRecNoService">
-                    <span>全てのサービスで無効</span>
-                  </label>
-                </div>
-                <div class="row">
-                  <h6 class="large-text">確認対象期間</h6>
-                  <div class="max"></div>
-                  <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
-                    <input type="number" name="chkRecDay" x-model="s.chkRecDay">
+            <template x-if="d.recSetting">
+              <div class="s12">
+                <fieldset>
+                  <legend>無効対象</legend>
+                  <div>
+                    <label class="checkbox">
+                      <input type="checkbox" name="chkRecEnd" x-model="s.chkRecEnd">
+                      <span>同一番組名の録画結果があれば無効登録</span>
+                    </label>
                   </div>
-                  日前まで
-                </div>
-              </fieldset>
-            </div>
+                  <div>
+                    <label class="checkbox">
+                      <input type="checkbox" name="chkRecNoService" x-model="s.chkRecNoService">
+                      <span>全てのサービスで無効</span>
+                    </label>
+                  </div>
+                  <div class="row">
+                    <h6 class="large-text">確認対象期間</h6>
+                    <div class="max"></div>
+                    <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
+                      <input type="number" name="chkRecDay" x-model="s.chkRecDay">
+                    </div>
+                    日前まで
+                  </div>
+                </fieldset>
+              </div>
+            </template>
 
-            <template x-if="s.days">
+            <template x-if="!d.recSetting">
               <div class="s12">
                 <fieldset>
                   <legend>対象期間</legend>
                   <div class="row">
                     <div class="max"></div>
-                    <div class="field border small">
-                      <input type="number" name="days" :value="s.days">
+                    <div class="field border small" x-init="s.days ??= 0;">
+                      <input type="number" name="days" x-model="s.days">
                     </div>
                     日間
                   </div>
@@ -1923,10 +2025,11 @@ ct:Append([=[
         </a>
       </nav>
     </template>
-    <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo">
+    <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo || isSearch">
       <nav>
-        <button tyep="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo">再生</button>
-        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo"></button>
+        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo">再生</button>
+        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo&&!isSearch"></button>
+        <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo">検索</button>
         <div class="max"></div>
         <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isRecinfo || set.RecinfoDel">削除</button>
      </nav>
