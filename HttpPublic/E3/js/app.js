@@ -2007,6 +2007,11 @@ document.addEventListener('alpine:init', () => {
       const url = `${this.ROOT}api/${action}`;
       this.apiFetch(url, new URLSearchParams({ del: 1 }));
     },
+    chgRecFilePath(id, path) {
+      const fd = new URLSearchParams({ ren: path });
+      fd.append('ctok', this.sidePanel.el.querySelector('input[name="ctok"]')?.value || '');
+      this.apiFetch(`${ROOT}api/SetRecInfo?id=${id}`, fd);
+    },
 
     player: {
       get params() { return this.app.params },

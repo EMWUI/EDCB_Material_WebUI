@@ -222,6 +222,7 @@ ct:Append([=[
   </header>
 
   <main class="scroll no-padding">
+    <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
@@ -883,7 +884,6 @@ ct:Append([=[
       <div class="absolute">
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
-            <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
             <template x-for="d in displayList" :key="d.reserveID">
               <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
             </template>
@@ -897,7 +897,6 @@ ct:Append([=[
       <div class="absolute">
         <section class="responsive">
           <div>
-            <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
             <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
               <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }">
                 <template x-if="d">
@@ -1132,9 +1131,9 @@ ct:Append([=[
                     <i>movie</i>
                     <nav class="max no-space">
                       <div class="field small max">
-                        <input id="recFilePath" type="text" x-model="d.recFilePath">
+                        <input type="text" x-model="d.recFilePath">
                       </div>
-                      <button class="small right-round" @click="apiFetch(`${ROOT}api/SetRecInfo?id=${d.id}`, new URLSearchParams({ ren: document.getElementById('recFilePath').value}))"><i>edit</i></button>
+                      <button class="small right-round" @click="chgRecFilePath(d.id, d.recFilePath)"><i>edit</i></button>
                     </nav>
                   </div>
                   <div class="row top-margin small-margin">
