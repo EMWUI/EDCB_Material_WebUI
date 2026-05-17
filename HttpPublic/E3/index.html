@@ -678,7 +678,7 @@ ct:Append([=[
                     <i :class="{ fill: set.cap }">subtitles</i>
                   </button>
                   <button class="circle transparent" @click="toggleJikkyo()">
-                    <i :class="{ fill: set.jikkyo }">sms</i>
+                    <i :class="{ fill: set.jikkyo }">comment</i>
                   </button>
 
                   <div>
@@ -750,7 +750,7 @@ ct:Append([=[
               <template x-if="epg">
                 <div class="padding">
                   <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || epg.title || '番組情報なし')"></h6>
-                  <div class="row no-margin vertical-margin">
+                  <div class="row">
                     <span class="chip primary small" x-show="!epg.isDummy">
                       <i>event</i>
                       <span x-html="`${convert.date(epg.startTime, true, true)}～${convert.date((epg.startTimeInt || new Date(epg.startTime).getTime()) + epg.durationSecond*1000, true)}`"></span>
@@ -1109,7 +1109,7 @@ ct:Append([=[
           <div>
             <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
             <template x-if="isInfo">
-              <div>
+              <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID}`" id="api_action">
                 <input type="hidden" name="id" :value="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
@@ -1117,17 +1117,23 @@ ct:Append([=[
               </div>
             </template>
             <template x-if="isRecinfo">
-              <div>
+              <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setrecinfo')..[=[">
                 <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
               </div>
             </template>
-            <nav class="wrap no-margin no-row-gap">
-              <span class="chip primary">
-                <i>event</i>
-                <span x-html="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
-              </span>
-              <span class="middle-align"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName||getServiceName(d)"><span></span>
+            <nav class="row small-round">
+              <img class="border" :src="getLogoPath(d)">
+              <div class="max">
+                <span class="chip primary">
+                  <i>event</i>
+                  <span x-html="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
+                </span>
+                <span class="chip secondary">
+                  <i>cell_tower</i>
+                  <span x-text="d.stationName||getServiceName(d)"></span>
+                </span>
+              </div>
             </nav>
             <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
             <hr class="medium">
@@ -1148,15 +1154,15 @@ ct:Append([=[
                   <div class="row top-margin small-margin">
                     <i>description</i>
                     <nav class="max wrap small-gap">
-                      <span class="chip">
+                      <span class="chip fill">
                         <i>description</i>
                         <span x-text="d.comment"></span>
                       </span>
-                      <span class="chip">
+                      <span class="chip fill">
                         <i>water_drop</i>
                         <span x-text="d.drops"></span>
                       </span>
-                      <span class="chip">
+                      <span class="chip fill">
                         <i>encrypted</i>
                         <span x-text="d.scrambles"></span>
                       </span>
@@ -1179,31 +1185,31 @@ ct:Append([=[
                 <i>videocam</i>
                 <nav class="max wrap small-gap" x-data="{ v: {} }" x-effect="v = getComponent(d?.componentInfo)">
                   <template x-if="v.quality">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>high_quality</i>
                       <span x-text="v.quality"></span>
                     </span>
                   </template>
                   <template x-if="v.aspect">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>aspect_ratio</i>
                       <span x-text="v.aspect"></span>
                     </span>
                   </template>
                   <template x-if="v.pan">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>pan_tool</i>
                       <span>パンベクトルあり</span>
                     </span>
                   </template>
                   <template x-if="v.text_char">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>description</i>
                       <span x-text="v.text_char"></span>
                     </span>
                   </template>
                   <template x-if="!v.quality && v.text">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>videocam</i>
                       <span x-text="v.text"></span>
                     </span>
@@ -1215,17 +1221,17 @@ ct:Append([=[
                 <nav class="vertical max small-gap">
                   <template x-for="a in d.audioInfoList">
                     <nav class="max wrap tiny-gap" x-data="{ v: {} }" x-effect="v = getComponent(a)">
-                      <span class="chip">
+                      <span class="chip fill">
                         <i>volume_up</i>
                         <span x-text="v.text"></span>
                       </span>
                       <template x-if="v.text_char">
-                        <span class="chip">
+                        <span class="chip fill">
                           <i>description</i>
                           <span x-text="v.text_char"></span>
                         </span>
                       </template>
-                      <span class="chip">
+                      <span class="chip fill">
                         <i>graphic_eq</i>
                         <span x-text="a.sampling_rate_txt || `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[a.sampling_rate]}kHz`"></span>
                       </span>
@@ -1237,17 +1243,17 @@ ct:Append([=[
                 <i>info</i>
                 <nav class="max wrap small-gap">
                   <template x-if="d.onid<0x7880 || 0x7FE8<d.onid">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>paid</i>
                       <span x-text="d.freeCAFlag ? '有料放送' : '無料放送'"></span>
                     </span>
                   </template>
-                  <span class="chip">
+                  <span class="chip fill">
                     <i>key</i>
                     <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
                   </span>
                   <template x-for="rel in d.eventRelayInfo?.eventDataList">
-                    <span class="chip">
+                    <span class="chip fill">
                       <i>switch_access_2</i>
                       <span x-text="`${rel.onid}-${rel.tsid}-${rel.sid}-${rel.eid}`"></span>
                     </span>
@@ -1284,36 +1290,40 @@ ct:Append([=[
                   <fieldset class="padding">
                     <legend>日時範囲</legend>
                     <div class="grid no-margin">
-                      <div class="s6">
-                        <div class="field label prefix border small" :class="{ invalid: s.archive && !s.startDate }">
-                          <i>today</i>
-                          <input type="date" name="startDate" x-model="s.startDate" :required="s.archive">
-                          <label>開始日</label>
-                          <output class="invalid">開始日を入力してください</output>
+                      <div class="s12 grid no-margin no-space">
+                        <div class="s7 m6">
+                          <div class="field label prefix border small left-round" :class="{ invalid: s.archive && !s.startDate }">
+                            <i>today</i>
+                            <input type="date" name="startDate" x-model="s.startDate" :required="s.archive">
+                            <label>開始日</label>
+                            <output class="invalid">開始日を入力してください</output>
+                          </div>
+                        </div>
+                        <div class="s5 m6">
+                          <div class="field label prefix border small right-round" :class="{ invalid: s.archive && !s.startTime }">
+                            <i>schedule</i>
+                            <input type="time" name="startTime" step="1" x-model="s.startTime" :required="s.archive">
+                            <label>開始時間</label> 
+                            <output class="invalid">開始時間を入力してください</output>
+                          </div>
                         </div>
                       </div>
-                      <div class="s6">
-                        <div class="field label prefix border small" :class="{ invalid: s.archive && !s.startTime }">
-                          <i>schedule</i>
-                          <input type="time" name="startTime" step="1" x-model="s.startTime" :required="s.archive">
-                          <label>開始時間</label> 
-                          <output class="invalid">開始時間を入力してください</output>
+                      <div class="s12 grid no-margin no-space">
+                        <div class="s7 m6">
+                          <div class="field label prefix border small left-round" :class="{ invalid: s.archive && (!s.endDate || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
+                            <i>today</i>
+                            <input type="date" name="endDate" x-model="s.endDate" :required="s.archive">
+                            <label>終了日</label>
+                            <output class="invalid" x-text="!s.endDate ? '終了日を入力してください' : '開始日時より後の日時を指定してください'"></output>
+                          </div>
                         </div>
-                      </div>
-                      <div class="s6">
-                        <div class="field label prefix border small" :class="{ invalid: s.archive && (!s.endDate || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
-                          <i>today</i>
-                          <input type="date" name="endDate" x-model="s.endDate" :required="s.archive">
-                          <label>終了日</label>
-                          <output class="invalid" x-text="!s.endDate ? '終了日を入力してください' : '開始日時より後の日時を指定してください'"></output>
-                        </div>
-                      </div>
-                      <div class="s6">
-                        <div class="field label prefix border small" :class="{ invalid: s.archive && (!s.endTime || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
-                          <i>schedule</i>
-                          <input type="time" name="endTime" step="1" x-model="s.endTime" :required="s.archive">
-                          <label>終了時間</label>
-                          <output class="invalid" x-text="!s.endTime ? '終了時間を入力してください' : '開始日時より後の日時を指定してください'"></output>
+                        <div class="s5 m6">
+                          <div class="field label prefix border small right-round" :class="{ invalid: s.archive && (!s.endTime || (s.startDate && s.startTime && s.endDate && s.endTime && !isValidSearchRange(s))) }">
+                            <i>schedule</i>
+                            <input type="time" name="endTime" step="1" x-model="s.endTime" :required="s.archive">
+                            <label>終了時間</label>
+                            <output class="invalid" x-text="!s.endTime ? '終了時間を入力してください' : '開始日時より後の日時を指定してください'"></output>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1345,52 +1355,60 @@ ct:Append([=[
             </template>
 
             <div class="s12">
-              <div class="field label border">
-                <input type="text" name="andKey" x-model="s.andKey">
-                <label>検索キーワード</label>
-              </div>
-            </div>
+              <fieldset>
+                <legend>キーワード</legend>
+                <div class="grid">
+                  <div class="s12">
+                    <div class="field label border">
+                      <input type="text" name="andKey" x-model="s.andKey">
+                      <label>検索キーワード</label>
+                    </div>
+                  </div>
 
-            <div class="s12">
-              <div class="field label border">
-                <input type="text" name="notKey" x-model="s.notKey">
-                <label>NOTキーワード</label>
-              </div>
-            </div>
+                  <div class="s12">
+                    <div class="field label border">
+                      <input type="text" name="notKey" x-model="s.notKey">
+                      <label>NOTキーワード</label>
+                    </div>
+                  </div>
 
-            <template x-if="d.recSetting">
-              <div class="s12">
-                <div class="field label border">
-                  <input type="text" name="note" x-model="s.note">
-                  <label>メモ</label>
+                  <template x-if="d.recSetting">
+                    <div class="s12">
+                      <div class="field label border">
+                        <input type="text" name="note" x-model="s.note">
+                        <label>メモ</label>
+                      </div>
+                    </div>
+                  </template>
                 </div>
-              </div>
-            </template>
 
-            <div class="s12">
-              <nav class="group center-align top-margin small-margin">
-                <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
-                  <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
-                  <i>regular_expression</i>
-                  <span class="m l">正規表現</span>
-                </button>
-                <button class="small no-round" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
-                  <input type="checkbox" name="aimaiFlag" x-model="s.aimaiFlag">
-                  <i>search_check</i>
-                  <span class="m l">あいまい</span>
-                </button>
-                <button class="small no-round" :class="{ active: s.titleOnlyFlag }" @click="s.titleOnlyFlag = !s.titleOnlyFlag">
-                  <input type="checkbox" name="titleOnlyFlag" x-model="s.titleOnlyFlag">
-                  <i>find_in_page</i>
-                  <span class="m l">番組名のみ</span>
-                </button>
-                <button class="small right-round" :class="{ active: s.caseFlag }" @click="s.caseFlag = !s.caseFlag">
-                  <input type="checkbox" name="caseFlag" x-model="s.caseFlag">
-                  <i>match_case</i>
-                  <span class="m l">大小文字区別</span>
-                </button>
-              </nav>
+                <div class="s12">
+                  <nav class="group center-align top-margin small-margin">
+                    <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
+                      <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
+                      <i>regular_expression</i>
+                      <span class="m l">正規表現</span>
+                    </button>
+                    <button class="small no-round" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
+                      <input type="checkbox" name="aimaiFlag" x-model="s.aimaiFlag">
+                      <i>search_check</i>
+                      <span class="m l">あいまい</span>
+                    </button>
+                    <button class="small no-round" :class="{ active: s.titleOnlyFlag }" @click="s.titleOnlyFlag = !s.titleOnlyFlag">
+                      <input type="checkbox" name="titleOnlyFlag" x-model="s.titleOnlyFlag">
+                      <i>find_in_page</i>
+                      <span class="m l">番組名のみ</span>
+                    </button>
+                    <button class="small right-round" :class="{ active: s.caseFlag }" @click="s.caseFlag = !s.caseFlag">
+                      <input type="checkbox" name="caseFlag" x-model="s.caseFlag">
+                      <i>match_case</i>
+                      <span class="m l">大小文字区別</span>
+                    </button>
+                  </nav>
+                </div>
+              </fieldset>
             </div>
+
             <div class="s12">
               <div class="field label border" x-data="{ selectedValues: [] }"
                 x-init="
