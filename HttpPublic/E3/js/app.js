@@ -569,6 +569,7 @@ document.addEventListener('alpine:init', () => {
         // タブ選択の同期
         const tab = parseInt(this.params.tab);
         if (!isNaN(tab)) this.epg.activeNetwork = tab;
+        else this.epg.activeNetwork = 1;
 
         // 放送日付の基準（4時を境界とする）
         let base = new Date(this.now);

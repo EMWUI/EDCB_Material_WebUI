@@ -12,6 +12,18 @@ main>.absolute{
   width: 100%;
 }
 
+menu>li:nth-last-child(1 of li) { --_child: 1 }
+menu>li:nth-last-child(2 of li) { --_child: 2 }
+menu>li:nth-last-child(3 of li) { --_child: 3 }
+menu>li:nth-last-child(4 of li) { --_child: 4 }
+menu>li:nth-last-child(5 of li) { --_child: 5 }
+menu>li:nth-last-child(6 of li) { --_child: 6 }
+menu>li:nth-last-child(7 of li) { --_child: 7 }
+menu>li:nth-last-child(8 of li) { --_child: 8 }
+menu>li:nth-last-child(9 of li) { --_child: 9 }
+menu>li:nth-last-child(10 of li) { --_child: 10 }
+menu>li:nth-last-child(11 of li) { --_child: 11 }
+
 .hidden { display: none; }
 .contents { display: contents; }
 .no-row-gap { row-gap: 0; }
@@ -34,6 +46,7 @@ select[multiple] {
   overflow-y: auto;
   padding-block-start: 7px !important;
   cursor: default;
+  option { padding: 0.1rem 0; }
   option:checked {
     background-color: var(--secondary-container);
     color: var(--on-primary-container);

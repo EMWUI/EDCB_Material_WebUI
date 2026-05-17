@@ -103,7 +103,7 @@ ct:Append([=[
               <span x-text="epg.networkNames[epg.activeNetwork]"></span>
               <i>arrow_drop_down</i>
             </button>
-            <menu class="left no-wrap">
+            <menu class="left">
               <template x-for="(v, i) in epg.networkNames" :key="v">
                 <li :class="{ active: epg.activeNetwork === i }" @click="setNetwork(i)" x-show="epg.networkMask & (1 << i)" x-text="v"></li>
               </template>
@@ -154,11 +154,20 @@ ct:Append([=[
               <span class="m l" x-text="allData.service.get(params.id)?.service_name || '局選択'"></span>
               <i>arrow_drop_down</i>
             </button>
-            <menu class="left no-wrap scroll" style="max-height: 70vh;">
-              <template x-for="s in serviceList" :key="getDataKey(s, 'service')">
-                <li :class="{ active: params.id === getDataKey(s, 'service') }"
-                    @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
-                    x-text="s.service_name"></li>
+            <menu>
+              <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
+                <template x-if="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))">
+                  <li x-show="serviceList.some(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)">
+                    <span x-text="networkName"></span>
+                    <menu class="left">
+                      <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="getDataKey(s, 'service')">
+                        <li :class="{ active: params.id === getDataKey(s, 'service') }"
+                            @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
+                            x-text="s.service_name">
+                      </template>
+                    </menu>
+                  </li>
+                </template>
               </template>
             </menu>
           </div>
