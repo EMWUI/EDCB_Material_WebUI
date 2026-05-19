@@ -193,6 +193,7 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.updateParams();
+      this.sidePanel.app = this;
       this.player.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
@@ -1609,7 +1610,105 @@ document.addEventListener('alpine:init', () => {
     sidePanel: {
       el: document.getElementById('sidePanel'),
       d: {},
+      r: {},
+      s: {},
       rsdef: config.rsdef,
+      selectedGenres: [],
+      selectedServices: [],
+      init() {
+        // 親の detail 変更を監視して r と s を同期する
+        this.$watch('detail', v => {
+          this.d = this.app.clone(v);
+          this.r = this.d.recSetting || {};
+          this.s = this.d.searchInfo || {};
+        });
+      },
+      initSelectedGenres(s) {
+        this.selectedGenres = s?.contentList
+            ? s.contentList.map(i => i.content_nibble) : [];
+      },
+      initSelectedServices(s) {
+        this.selectedServices = s?.serviceList
+            ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`) 
+            : this.app.getDefSearchService();
+      },
+      updateContentList() {
+          this.s.contentList = this.selectedGenres.map(e => ({ content_nibble: Number(e) }));
+      },
+      // 選択されたキー配列を searchInfo.serviceList に反映する
+      updateServiceList() {
+          this.s.serviceList = this.selectedServices.map(e => {
+              const [onid, tsid, sid] = e.split('-').map(Number);
+              return { onid, tsid, sid };
+          });
+      },
+      applyPreset(presetId) {
+        if (!this.r) return;
+        const id = parseInt(presetId);
+        if (id === 65535) {
+          this.r = Object.assign(this.r, this.app.clone(this.detail.recSetting));
+        } else {
+          const preset = this.allData.recpreset.get(id);
+          if (preset) {
+            this.r = Object.assign(this.r, this.app.clone(preset.recSetting));
+          }
+        }
+      },
+      isServiceModeDef() {
+        return this.r ? (this.r.serviceMode % 2) === 0 : true;
+      },
+      toggleServiceModeDef(checked) {
+        if (!this.r) return;
+        if (checked) {
+          this.r.serviceMode &= ~1;
+        } else {
+          // 個別設定に切り替える際、現在の「見かけ上の状態（既定値）」をコピーする
+          const sub = this.isServiceModeBitSet(16);
+          const data = this.isServiceModeBitSet(32);
+          
+          // LSBを1（個別設定）にしつつ、直前のビット状態を維持
+          let newMode = 1;
+          if (sub) newMode |= 16;
+          if (data) newMode |= 32;
+          this.r.serviceMode = newMode;
+        }
+      },
+      isServiceModeBitSet(bit) {
+        if (!this.r) return false;
+        // デフォルト使用中ならシステム既定値を参照、そうでなければ設定値を参照
+        const mode = this.isServiceModeDef() ? this.rsdef.serviceMode : this.r.serviceMode;
+        return !!(mode & bit);
+      },
+      toggleServiceModeBit(bit, checked) {
+        if (checked) {
+          this.r.serviceMode |= bit;
+        } else {
+          this.r.serviceMode &= ~bit;
+        }
+      },
+      addRecFolder(partial) {
+        if (!this.r) return;
+        const list = partial ? this.r.partialRecFolder : this.r.recFolderList;
+        const defaultFolder = this.allData.recpreset.get(0).recSetting.recFolderList[0];
+        list.push({ ...defaultFolder });
+      },
+      removeRecFolder(index, partial) {
+        if (!this.r) return;
+        const list = partial ? this.r.partialRecFolder : this.r.recFolderList;
+        list.splice(index, 1);
+      },
+      toggleMarginDef(checked) {
+        if (!this.r) return;
+        if (checked) {
+          this.r.startMargin = null;
+          this.r.endMargin = null;
+        } else {
+          // 個別設定に切り替える際、システム既定値を現在の値としてコピーする
+          this.r.startMargin = this.rsdef.startMargin;
+          this.r.endMargin = this.rsdef.endMargin;
+        }
+      },
+
       title() {
         return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo||this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
       },

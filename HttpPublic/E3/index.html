@@ -1255,7 +1255,7 @@ ct:Append([=[
 
       <div id="searchInfo" class="page left padding">
         <template x-if="d.searchInfo">
-          <div class="grid no-margin" x-data="{ s: d.searchInfo }" x-init="$watch('d', d => s = d.searchInfo)">
+          <div class="grid no-margin">
             <template x-if="!d.recSetting">
               <div class="contents">
                 <div class="s12">
@@ -1396,13 +1396,9 @@ ct:Append([=[
               </fieldset>
             </div>
 
-            <div class="s12">
-              <div class="field label border" x-data="{ selectedValues: [] }"
-                x-init="
-                  const init = () => selectedValues = (s.contentList||[]).map(i => i.content_nibble);
-                  init();
-                  $watch('s', () => init());">
-                <select name="contentList" multiple size="7" x-model="selectedValues" @change="s.contentList = selectedValues.map(e => ({ content_nibble: Number(e) }))">
+            <div class="s12" x-init="$watch('s', s => initSelectedGenres(s))">
+              <div class="field label border">
+                <select name="contentList" multiple size="7" x-model="selectedGenres" @change="updateContentList()">
 ]=]..GetGenreOption()..[=[
                 </select>
                 <label>ジャンル</label>
@@ -1413,18 +1409,10 @@ ct:Append([=[
               </label>
             </div>
 
-            <div class="s12">
-              <div class="field label border"
-                x-data="{ selectedValues: [] }"
-                x-init="
-                  const init = () => selectedValues = s.serviceList ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`) : getDefSearchService();
-                  $watch('s', () => init());
-                  $nextTick(() => init());">
-                <select name="serviceList" multiple size="7" x-model="selectedValues"
-                        @change="s.serviceList = selectedValues.map(e => {
-                          const [onid, tsid, sid] = e.split('-').map(Number);
-                          return { onid: onid, tsid: tsid, sid: sid };
-                        })"
+            <div class="s12" x-init="$watch('s', s => initSelectedServices(s)); $nextTick(() => initSelectedServices(s))">
+              <div class="field label border">
+                <select name="serviceList" multiple size="7" x-model="selectedServices"
+                        @change="updateServiceList()"
                         x-html="$refs.serviceList.innerHTML">
                 </select>
                 <label>サービス</label>
@@ -1575,7 +1563,7 @@ ct:Append([=[
 
       <div id="recSetting" class="page right padding">
         <template x-if="d.recSetting">
-          <div class="grid no-margin" x-data="{ r: d.recSetting }" x-init="$watch('d', d => r = d.recSetting)">
+          <div class="grid no-margin">
             <template  x-if="isReserve">
               <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
@@ -1698,17 +1686,7 @@ ct:Append([=[
 
             <div class="s12">
               <div class="field label border">
-                <select @change="
-                          const presetId = parseInt($event.target.value);
-                          if (presetId === 65535) {
-                            r = clone(detail.recSetting);
-                          } else {
-                            const preset = allData.recpreset.get(presetId);
-                            if (preset) {
-                              r = clone(preset.recSetting);
-                            }
-                          }
-                        ">
+                <select @change="applyPreset($event.target.value)">
                   <template x-for="d in Array.from(allData.recpreset.values())" :key="d.id">
                     <option :value="d.id" x-text="d.name" :selected="!(d.reserveID || d.dataID) && d.id === 0"></option>
                   </template>
@@ -1794,23 +1772,7 @@ ct:Append([=[
             </div>
 
             <div class="s12">
-              <fieldset class="padding"
-                x-data="{
-                  startMarginUseDef: r.startMargin == null, 
-                }"
-                x-init="
-                  let lastProcessed = null;
-                  const init = v => {
-                    const raw = Alpine.raw(v);
-                    if (raw === lastProcessed) return;
-                    lastProcessed = raw;
-                    startMarginUseDef = v.startMargin == null;
-                    v.startMargin ??= rsdef.startMargin;
-                    v.endMargin ??= rsdef.endMargin;
-                  };
-                  init(r);
-                  $watch('r', v => init(v));
-                ">
+              <fieldset class="padding">
                 <legend>録画マージン</legend>
                 <div class="field middle-align">
                   <nav>
@@ -1818,19 +1780,19 @@ ct:Append([=[
                       <h6><label class="large-text" for="useDefMarginFlag">デフォルト設定で使用</label></h6>
                     </div>
                     <label class="switch">
-                      <input id="useDefMarginFlag" type="checkbox" name="useDefMarginFlag" x-model="startMarginUseDef">
+                      <input id="useDefMarginFlag" type="checkbox" name="useDefMarginFlag" :checked="r.startMargin == null" @change="toggleMarginDef($event.target.checked)">
                       <span></span>
                     </label>
                   </nav>
                 </div>
-                <div class="row small-margin" :class="!startMarginUseDef && 'disabled'">
+                <div class="row small-margin" :class="r.startMargin == null && 'disabled'">
                   <div class="max"></div>
                   <div class="field label border small">
-                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="startMarginUseDef">
+                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="r.startMargin == null">
                     <label>開始（秒前）</label>
                   </div>
                   <div class="field label border small">
-                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="startMarginUseDef">
+                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="r.startMargin == null">
                     <label>終了（秒後）</label>
                   </div>
                 </div>
@@ -1847,24 +1809,24 @@ ct:Append([=[
                     </div>
                     <label class="switch">
                       <input id="serviceMode" type="checkbox" name="serviceMode" 
-                        :checked="r.serviceMode % 2 === 0"
-                        @change="r.serviceMode = $event.target.checked ? (r.serviceMode & ~1) : (r.serviceMode | 1)">
+                        :checked="isServiceModeDef()"
+                        @change="toggleServiceModeDef($event.target.checked)">
                       <span></span>
                     </label>
                   </nav>
                 </div>
-                <nav class="row wrap no-margin no-row-gap" :class="(r.serviceMode % 2 === 0) && 'disabled'">
+                <nav class="row wrap no-margin no-row-gap" :class="isServiceModeDef() && 'disabled'">
                   <div class="m l max"></div>
                   <label class="checkbox">
-                    <input type="checkbox" name="serviceMode_1" :disabled="r.serviceMode % 2 === 0"
-                           :checked="(r.serviceMode % 2 === 0 ? rsdef.serviceMode : r.serviceMode) & 16"
-                           @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 16) : (r.serviceMode & ~16)">
+                    <input type="checkbox" :disabled="isServiceModeDef()"
+                           :checked="isServiceModeBitSet(16)"
+                           @change="toggleServiceModeBit(16, $event.target.checked)">
                     <span>字幕を含める</span>
                   </label>
                   <label class="checkbox">
-                    <input type="checkbox" name="serviceMode_2" :disabled="r.serviceMode % 2 === 0"
-                           :checked="(r.serviceMode % 2 === 0 ? rsdef.serviceMode : r.serviceMode) & 32"
-                           @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 32) : (r.serviceMode & ~32)">
+                    <input type="checkbox" :disabled="isServiceModeDef()"
+                           :checked="isServiceModeBitSet(32)"
+                           @change="toggleServiceModeBit(32, $event.target.checked)">
                     <span>データカルーセルを含める</span>
                   </label>
                 </nav>
@@ -1879,7 +1841,7 @@ ct:Append([=[
                     <input type="text" :name="`${partial ? 'partial' : ''}recFolder`" x-model="v.recFolder">
                     <label>フォルダ</label>
                   </div>
-                  <button class="circle left-round bottom-round small" @click="(partial ? r.partialRecFolder : r.recFolderList).splice(i, 1)">
+                  <button class="circle left-round bottom-round small" @click="removeRecFolder(i, partial)">
                     <i>delete</i>
                   </button>
                 </nav>
@@ -1913,7 +1875,7 @@ ct:Append([=[
                 <div x-html="$refs.recFolder.innerHTML"></div>
               </template>
               <button class="responsive secondary small top-margin small-margin"
-                      @click="r.recFolderList.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                      @click="addRecFolder(false)">
                 <i>add</i>
                 <span>追加</span>
               </button>
@@ -1935,7 +1897,7 @@ ct:Append([=[
                   <div x-html="$refs.recFolder.innerHTML"></div>
                 </template>
                 <button class="responsive secondary small top-margin small-margin"
-                        @click="r.partialRecFolder.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
+                        @click="addRecFolder(true)">
                   <i>add</i>
                   <span>追加</span>
                 </button>
