@@ -179,6 +179,17 @@ document.addEventListener('alpine:init', () => {
       this.updateParams();
       this.loadAll();
     },
+    google(d) {
+      window.open(`https://www.google.co.jp/search?q=${encodeURIComponent(this.convert.sanitizeTitle(d.shortInfo?.event_name))}`, '_blank', 'noreferrer');
+    },
+    calendar(d, details, authuser, src) {
+      window.open(`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
+        }&location=${encodeURIComponent(this.convert.ZtoH(this.getServiceName(d)))
+        }&dates=${this.convert.date(event.starttime, 'ISO')}/${this.convert.date(event.endtime, 'ISO')
+        }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
+        }&authuser=${authuser
+        }&src=${src}`, '_blank', 'noreferrer')
+    },
 
     async init() {
       this.updateParams();
@@ -632,7 +643,10 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.page === '#search') {
-        this.openSearchDetail(this.search);
+        if (this.params.andKey) {
+          this.sidePanel.d = { searchInfo: { andKey: this.params.andKey } };
+          this.searchEvent(this.params.andKey);
+        } else this.openSearchDetail(this.search);
       }
 
       this.updateDisplayList();
@@ -955,6 +969,9 @@ document.addEventListener('alpine:init', () => {
       },
       title(a) {
         return !a ? '' : `${a.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
+      },
+      sanitizeTitle(a) {
+        return a.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, '')
       },
       zero(t, n = 2) {
         return t.toString().padStart(n, '0');
@@ -1714,7 +1731,7 @@ document.addEventListener('alpine:init', () => {
       return !isNaN(start) && !isNaN(end) && start < end;
     },
 
-    async searchEvent() {
+    async searchEvent(andKey) {
       const s = this.sidePanel.d.searchInfo;
       if (!this.isValidSearchRange(s)) {
         const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
@@ -1730,16 +1747,21 @@ document.addEventListener('alpine:init', () => {
       const container = document.getElementById('searchInfo');
       const fd = new URLSearchParams();
       
-      // 検索フォームから条件を収集
-      container.querySelectorAll('[name]').forEach(el => {
-        if (el.type === 'checkbox') {
-          if (el.checked) fd.append(el.name, '1');
-        } else if (el.tagName === 'SELECT' && el.multiple) {
-          Array.from(el.selectedOptions).forEach(opt => fd.append(el.name, opt.value));
-        } else {
-          fd.append(el.name, el.value);
-        }
-      });
+      if (andKey){
+        fd.append('andKey', andKey);
+        (this.getDefSearchService()).forEach(v => fd.append('serviceList', v));
+      } else {
+        // 検索フォームから条件を収集
+        container.querySelectorAll('[name]').forEach(el => {
+          if (el.type === 'checkbox') {
+            if (el.checked) fd.append(el.name, '1');
+          } else if (el.tagName === 'SELECT' && el.multiple) {
+            Array.from(el.selectedOptions).forEach(opt => fd.append(el.name, opt.value));
+          } else {
+            fd.append(el.name, el.value);
+          }
+        });
+      }
       
       fd.set('ctok', document.getElementById('searchCtok')?.value || '');
 

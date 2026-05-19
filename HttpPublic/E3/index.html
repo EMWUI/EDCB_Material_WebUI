@@ -232,6 +232,7 @@ ct:Append([=[
 
   <main class="scroll no-padding">
     <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+    <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
     <template x-if="page === '#dashboard'">
       <div class="padding">
        
@@ -376,6 +377,23 @@ ct:Append([=[
       </div>
     </template>
 
+    <template x-ref="tools">
+      <nav class="group connected">
+        <button class="transparent circle small" :disabled="d.startTimeInt < now" x-show="'false && Notification' in window && Notification.permission == 'granted'">
+          <i>notifications</i>
+        </button>
+        <button class="transparent circle small" @click="openPage('#search', { andKey: convert.sanitizeTitle(d.shortInfo?.event_name) })">
+          <i>search</i>
+        </button>
+        <button class="transparent circle small" @click="google(d)">
+          <i>g_mobiledata_badge</i>
+        </button>
+        <button class="transparent circle small" @click="calendar(d, ']=]..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)..'\', '..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..', \''..edcb.GetPrivateProfile('CALENDAR','src','',INI)..[=[')">
+          <i>event</i>
+        </button>
+      </nav>
+    </template>
+
     <template x-if="page === '#epg' || page === '#epgweek'" x-data="epg">
       <div id="epg-grid" :style="`--min: ${set.minHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
         <!-- 固定の角（日付） -->
@@ -392,6 +410,53 @@ ct:Append([=[
           <div id="epg-now-line" :style="`--t: ${getNowLinePos()}px`" x-transition></div>
         </template>
 
+        <template x-ref="epgEvent">
+          <div class="epg-event" :style="`--h: ${d.minutes}`"
+              @click="onEventClick(d)" @dblclick="onEventDblClick(d)"
+              @pointerenter="onPointerEnter(d)" @pointerleave="onPointerLeave()">
+            <div class="small-round border" :class="getEventClass(d)">
+              <template x-if="!d.isGap">
+                <div class="epg-content row tiny-line no-margin" x-show="!d.isGap">
+                  <div>
+                    <div x-text="convert.zero(new Date(d.startTimeInt).getUTCMinutes())"></div>
+                    <div x-show="d.reserve">
+                      <span class="mark"
+                            :class="d.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
+                            x-text="d.reserve?.recSetting.recEnabled ? '録' : '無'">
+                      </span>
+                    </div>
+                  </div>
+                  <div class="max">
+                    <div x-html="convert.title(d.shortInfo?.event_name)"></div>
+                    <div class="secondary-text small-text no-line" x-html="d.shortInfo?.text_char.replace(/\r?\n/g, '<br>')"></div>
+                    <template x-if="!d.isGap && active === d.eid">
+                      <div class="contents">
+                        <div x-html="$refs.tools.innerHTML"></div>
+                        <nav class="vertical tiny-space vertical-margin">
+                          <button class="border secondary-border secondary-text" @click="openProgramDetail(d)">
+                            <i class="m l">info</i>
+                            <span>番組詳細</span>
+                          </button>
+                          <button class="border secondary-border secondary-text"
+                                  @click.stop="d.reserve ? toggleReserve(d.reserve) : addReserve(d)"
+                                  x-show="d.startTimeInt + d.durationSecond * 1000 > now">
+                            <i class="m l">event_upcoming</i>
+                            <span x-text="!d.reserve ? '予約追加' : d.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
+                          </button>
+                          <button class="border secondary-border secondary-text" @click.stop="openNewEntry(d)">
+                            <i class="m l">published_with_changes</i>
+                            <span>EPG予約</span>
+                          </button>
+                        </nav>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
         <template x-if="page === '#epg'">
           <!-- サービス列 -->
           <template x-for="service in servicesToDisplay" :key="`${service.onid}-${service.tsid}-${service.sid}`">
@@ -403,46 +468,8 @@ ct:Append([=[
               </div>
               <!-- 番組配置エリア -->
               <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = service.displayEvents); $watch('service.displayEvents', v => events = v)">
-                <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
-                  <div class="epg-event" :style="`--h: ${event.minutes}`"
-                      @click="onEventClick(event)" @dblclick="onEventDblClick(event)"
-                      @pointerenter="onPointerEnter(event)" @pointerleave="onPointerLeave()">
-                    <div class="small-round border" :class="getEventClass(event)">
-                      <template x-if="!event.isGap">
-                        <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">
-                          <div>
-                            <div x-text="convert.zero(new Date(event.startTimeInt).getUTCMinutes())"></div>
-                            <div x-show="event.reserve">
-                              <span class="mark"
-                                    :class="event.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
-                                    x-text="event.reserve?.recSetting.recEnabled ? '録' : '無'">
-                              </span>
-                            </div>
-                          </div>
-                          <div class="max">
-                            <div x-html="convert.title(event.shortInfo?.event_name)"></div>
-                            <div class="secondary-text small-text no-line" x-html="event.shortInfo?.text_char.replace(/\r?\n/g, '<br>')"></div>
-                            <nav class="vertical tiny-space vertical-margin" x-show="!event.isGap && active === event.eid">
-                              <button class="border secondary-border secondary-text" @click="openProgramDetail(event)">
-                                <i class="m l">info</i>
-                                <span>番組詳細</span>
-                              </button>
-                              <button class="border secondary-border secondary-text"
-                                      @click.stop="event.reserve ? toggleReserve(event.reserve) : addReserve(event)"
-                                      x-show="event.startTimeInt + event.durationSecond * 1000 > now">
-                                <i class="m l">event_upcoming</i>
-                                <span x-text="!event.reserve ? '予約追加' : event.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
-                              </button>
-                              <button class="border secondary-border secondary-text" @click.stop="openNewEntry(event)">
-                                <i class="m l">published_with_changes</i>
-                                <span>EPG予約</span>
-                              </button>
-                            </nav>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
+                <template x-for="(d, idx) in events" :key="d.isGap ? 'gap-'+idx : d.eid">
+                  <div x-html="$refs.epgEvent.innerHTML"></div>
                 </template>
               </div>
             </div>
@@ -459,46 +486,8 @@ ct:Append([=[
               </div>
               <!-- 番組配置エリア -->
               <div class="relative" x-data="{ events: [] }" x-init="$nextTick(() => events = day.displayEvents); $watch('day.displayEvents', v => events = v)">
-                <template x-for="(event, idx) in events" :key="event.isGap ? 'gap-'+idx : event.eid">
-                  <div class="epg-event" :style="`--h: ${event.minutes}`"
-                       @click="onEventClick(event)" @dblclick="onEventDblClick(event)"
-                       @pointerenter="onPointerEnter(event)" @pointerleave="onPointerLeave()">
-                    <div class="small-round border" :class="getEventClass(event)">
-                      <template x-if="!event.isGap">
-                        <div class="epg-content row tiny-line no-margin" x-show="!event.isGap">
-                          <div>
-                            <div x-text="convert.zero(new Date(event.startTimeInt).getUTCMinutes())"></div>
-                            <div x-show="event.reserve">
-                              <span class="mark"
-                                    :class="event.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
-                                    x-text="event.reserve?.recSetting.recEnabled ? '録' : '無'">
-                              </span>
-                            </div>
-                          </div>
-                          <div class="max">
-                            <div x-html="convert.title(event.shortInfo?.event_name)"></div>
-                            <div class="secondary-text small-text no-line" x-html="event.shortInfo?.text_char.replace(/\r?\n/g, '<br>')"></div>
-                            <nav class="vertical tiny-space vertical-margin" x-show="!event.isGap && active === event.eid">
-                              <button class="border secondary-border secondary-text" @click="openProgramDetail(event)">
-                                <i class="m l">info</i>
-                                <span>番組詳細</span>
-                              </button>
-                              <button class="border secondary-border secondary-text"
-                                      @click.stop="event.reserve ? toggleReserve(event.reserve) : addReserve(event)"
-                                      x-show="event.startTimeInt + event.durationSecond * 1000 > now">
-                                <i class="m l">event_upcoming</i>
-                                <span x-text="!event.reserve ? '予約追加' : event.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
-                              </button>
-                              <button class="border secondary-border secondary-text" @click.stop="openNewEntry(event)">
-                                <i class="m l">published_with_changes</i>
-                                <span>EPG予約</span>
-                              </button>
-                            </nav>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
+                <template x-for="(d, idx) in events" :key="d.isGap ? 'gap-'+idx : d.eid">
+                  <div x-html="$refs.epgEvent.innerHTML"></div>
                 </template>
               </div>
             </div>
@@ -854,7 +843,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template id="reserveList-template">
+    <template id="reserveList-template" x-ref="reserveList">
       <div class="max row no-margin no-wrap" x-data="{ startTime: new Date(d.startTime).getTime() }">
         <div>
           <template x-if="startTime < now" >
@@ -894,7 +883,7 @@ ct:Append([=[
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.reserveID">
-              <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+              <li class="ripple" x-html="$refs.reserveList.innerHTML" @click="openProgramDetail(d)"></li>
             </template>
             <div x-intersect="loadMore()"></div>
           </ul>
@@ -911,7 +900,7 @@ ct:Append([=[
                 <template x-if="d">
                   <ul class="list medium-space vertical-margin">
                     <template x-for="d in d.displayList" :key="d.reserveID">
-                      <li class="ripple" x-html="document.getElementById('reserveList-template').innerHTML" @click="openProgramDetail(d)"></li>
+                      <li class="ripple" x-html="$refs.reserveList.innerHTML" @click="openProgramDetail(d)"></li>
                     </template>
                     <div x-intersect="loadMoreTuner(tuner.tunerID)"></div>
                   </ul>
@@ -1064,7 +1053,7 @@ ct:Append([=[
 
   <div class="overlay s" @click="sidePanel.close()"></div>
   <dialog id="sidePanel" class="right no-padding" x-data="sidePanel">
-    <template id="serviceList-template">
+    <template id="serviceList-template" x-ref="serviceList">
 ]=]..GetServiceOption()..[=[
     </template>
 
@@ -1135,6 +1124,7 @@ ct:Append([=[
                 </span>
               </div>
             </nav>
+            <div x-html="$refs.tools.innerHTML"></div>
             <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
             <hr class="medium">
             <p class="secondary-text" x-html="convert.text(d.extInfo?.text_char)"></p>
@@ -1268,7 +1258,6 @@ ct:Append([=[
       <div id="searchInfo" class="page left padding">
         <template x-if="d.searchInfo">
           <div class="grid no-margin" x-data="{ s: d.searchInfo }" x-init="$watch('d', d => s = d.searchInfo)">
-            <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
             <template x-if="!d.recSetting">
               <div class="contents">
                 <div class="s12">
@@ -1438,7 +1427,7 @@ ct:Append([=[
                           const [onid, tsid, sid] = e.split('-').map(Number);
                           return { onid: onid, tsid: tsid, sid: sid };
                         })"
-                        x-html="document.getElementById('serviceList-template').innerHTML">
+                        x-html="$refs.serviceList.innerHTML">
                 </select>
                 <label>サービス</label>
               </div>
@@ -1611,7 +1600,7 @@ ct:Append([=[
                         $nextTick(() => init());
                       "
                       @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
-                      x-html="document.getElementById('serviceList-template').innerHTML">
+                      x-html="$refs.serviceList.innerHTML">
                     </select>
                     <label>サービス</label>
                     <i>arrow_drop_down</i>
@@ -1699,7 +1688,7 @@ ct:Append([=[
                               $nextTick(() => init());
                             "
                             @change="[d.onid, d.tsid, d.sid] = $event.target.value.split('-').map(Number)"
-                      x-html="document.getElementById('serviceList-template').innerHTML">
+                      x-html="$refs.serviceList.innerHTML">
                     </select>
                     <label>サービス</label>
                     <i>arrow_drop_down</i>
@@ -1885,7 +1874,7 @@ ct:Append([=[
               </fieldset>
             </div>
 
-            <template id="recFolder-template">
+            <template x-ref="recFolder">
               <fieldset>
                 <legend>ファイル出力</legend>
                 <nav>
@@ -1924,7 +1913,7 @@ ct:Append([=[
 
             <div class="s12">
               <template x-for="(v, i) in r.recFolderList" :key="i" x-data="{ partial: false }">
-                <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
+                <div x-html="$refs.recFolder.innerHTML"></div>
               </template>
               <button class="responsive secondary small top-margin small-margin"
                       @click="r.recFolderList.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
@@ -1946,7 +1935,7 @@ ct:Append([=[
                   </label>
                 </nav>
                 <template x-for="(v, i) in r.partialRecFolder" :key="i" x-data="{ partial: true }">
-                  <div x-html="document.getElementById('recFolder-template').innerHTML"></div>
+                  <div x-html="$refs.recFolder.innerHTML"></div>
                 </template>
                 <button class="responsive secondary small top-margin small-margin"
                         @click="r.partialRecFolder.push({...allData.recpreset.get(0).recSetting.recFolderList[0]});">
