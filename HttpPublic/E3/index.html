@@ -1401,7 +1401,7 @@ ct:Append([=[
                 <select name="contentList" multiple size="7" x-model="selectedGenres" @change="updateContentList()">
 ]=]..GetGenreOption()..[=[
                 </select>
-                <label>ジャンル</label>
+                <label x-text="isSearch ? '対象ジャンル' : 'ジャンル絞り込み'"></label>
               </div>
               <label class="checkbox">
                 <input type="checkbox" name="notContetFlag" x-model="s.notContetFlag">
@@ -1415,8 +1415,21 @@ ct:Append([=[
                         @change="updateServiceList()"
                         x-html="$refs.serviceList.innerHTML">
                 </select>
-                <label>サービス</label>
+                <label x-text="isSearch ? '対象サービス' : 'サービス絞り込み'"></label>
               </div>
+              <nav class="scroll">
+                <button class="s chip" @click="selectedServices = []; updateServiceList()">
+                  <i>clear_all</i>
+                  <span>クリア</span>
+                </button>
+                <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
+                  <button class="chip" x-show="serviceList.some(s => getNetworkIndex(s.onid, s.partialReceptionFlag, true) === networkIndex)"
+                    @click="addNetworkServices(networkIndex)">
+                    <i>add</i>
+                    <span x-text="networkName"></span>
+                  </button>
+                </template>
+              </nav>
             </div>
 
             <div class="s12">
@@ -1526,7 +1539,7 @@ ct:Append([=[
                   </div>
                   <div>
                     <label class="checkbox">
-                      <input type="checkbox" name="chkRecNoService" x-model="s.chkRecNoService">
+                      <input type="checkbox" name="chkRecNoService" x-model="s.chkRecNoService" :disabled="!s.chkRecEnd">
                       <span>全てのサービスで無効</span>
                     </label>
                   </div>
@@ -1534,7 +1547,7 @@ ct:Append([=[
                     <h6 class="large-text">確認対象期間</h6>
                     <div class="max"></div>
                     <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
-                      <input type="number" name="chkRecDay" x-model="s.chkRecDay">
+                      <input type="number" name="chkRecDay" x-model="s.chkRecDay" :disabled="!s.chkRecEnd">
                     </div>
                     日前まで
                   </div>

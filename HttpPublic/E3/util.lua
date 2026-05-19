@@ -124,8 +124,8 @@ function GetServiceOption()
   local s=''
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
     s=s..string.format([[
-      <option value="%d-%d-%d"%s>(%s)%s
-]],v.onid, v.tsid, v.sid, (v.searchFlag and ' class="def"' or ''), NetworkType()[NetworkIndex(v.onid, v.partialFlag, true)], v.serviceName)
+      <option value="%d-%d-%d"%s x-show="%s || set.oneseg">(%s)%s
+]],v.onid, v.tsid, v.sid, (v.searchFlag and ' class="def"' or ''), not v.partialFlag, NetworkType()[NetworkIndex(v.onid, v.partialFlag, true)], v.serviceName)
   end
   return s
 end

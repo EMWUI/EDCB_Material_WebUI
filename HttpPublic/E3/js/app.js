@@ -1066,11 +1066,11 @@ document.addEventListener('alpine:init', () => {
         .filter(s => this.set.subCh || !s.subCh)
         .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
     },
-    getNetworkIndex(onid, partial) {
+    getNetworkIndex(onid, partial, divCS) {
       if (0x7880 <= onid && onid <= 0x7FE8) return partial ? 2 : 1;
       if (onid === 4) return 3;
       if (onid === 11) return 4;
-      if (!this.divCS && (onid === 6 || onid === 7)) return 5;
+      if (!divCS && (onid === 6 || onid === 7)) return 5;
       if (onid === 6) return 6;
       if (onid === 7) return 7;
       if (onid === 10) return 8;
@@ -1641,6 +1641,21 @@ document.addEventListener('alpine:init', () => {
               const [onid, tsid, sid] = e.split('-').map(Number);
               return { onid, tsid, sid };
           });
+      },
+      // 指定されたネットワークに属する全サービスを選択に追加する
+      addNetworkServices(networkIndex) {
+          // 該当ネットワークの全サービスを取得
+          const servicesInNetwork = Array.from(this.allData.service.values())
+              .filter(sv => this.app.getNetworkIndex(sv.onid, sv.partialReceptionFlag, true) === networkIndex);
+
+          // それらのデータキーを取得
+          const keys = servicesInNetwork.map(sv => this.app.getDataKey(sv, 'service'));
+          
+          // 現在の選択にマージ（Setを使用して重複を排除）
+          this.selectedServices = [...new Set([...this.selectedServices, ...keys])];
+          
+          // searchInfo 側に反映
+          this.updateServiceList();
       },
       applyPreset(presetId) {
         if (!this.r) return;
