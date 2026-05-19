@@ -1903,7 +1903,7 @@ function GetFilePath(query)
     else
       local faddr=mg.get_var(query,'fname')
       if faddr then
-        fpath=DocumentToNativePath(faddr)
+        fpath=not faddr:find('^/') and DocumentToNativePath(faddr) or nil
         if not fpath then
           -- ディレクトリ区切りを一旦'/'に統一する
           faddr=faddr:gsub('['..DIR_SEPS..']+','/')
