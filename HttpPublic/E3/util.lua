@@ -11,16 +11,29 @@ DIR_SEP=WIN32 and '\\' or '/'
 
 dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
-rsdef=(edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting
+function GetAppConfig()
+  local minTime, maxTime = nil, nil
+  for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
+    local mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
+    if mmt then
+      maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
+      minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
+    end
+    mmt=edcb.GetEventMinMaxTimeArchive and edcb.GetEventMinMaxTimeArchive(v.onid, v.tsid, v.sid)
+    if mmt then
+      maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
+      minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
+    end
+  end
 
-function GetScript(minTime,maxTime)
-  return [=[
-  <script>
-    const ROOT = ']=]..PathToRoot()..[=[';
-    const EPG_MIN_TIME = ]=]..(minTime * 1000)..[=[;
-    const EPG_MAX_TIME = ]=]..(maxTime * 1000)..[=[;
-  </script>
-]=]
+  local rsdef=((edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting or {})
+  return '{root: \''..PathToRoot()
+    ..'\', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
+    ..' rsdef: {'
+    ..' serviceMode: '..(rsdef.serviceMode or 0)
+    ..', startMargin: '..(rsdef.startMargin or 0)
+    ..', endMargin: '..(rsdef.endMargin or 0)
+    ..' },}'
 end
 
 -- ナビゲーション項目の定義
@@ -161,22 +174,6 @@ function GetbatFileTagList()
 ]], v)
   end
   return s..'                </datalist>\n'
-end
-
-minTime=nil
-maxTime=nil
-for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
-  local mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
-  if mmt then
-    maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
-    minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
-    minTime_=math.min(minTime_ or maxTime,TimeWithZone(mmt.minTime))
-  end
-  mmt=edcb.GetEventMinMaxTimeArchive and edcb.GetEventMinMaxTimeArchive(v.onid, v.tsid, v.sid)
-  if mmt then
-    maxTime=math.max(maxTime or 0,TimeWithZone(mmt.maxTime))
-    minTime=math.min(minTime or maxTime,TimeWithZone(mmt.minTime))
-  end
 end
 
 function GetPlayerOption(tslive)

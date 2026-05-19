@@ -21,8 +21,6 @@ ct:Append([=[
   <script src="js/aribb24.js"></script>
   <script src="js/ts-live.lua?t=.js"></script>
   <script src="js/ts-loader.js"></script>
-
-]=]..GetScript(minTime,maxTime)..[=[
   
   <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
   <script src="js/app.js?ver=]=]..ver..[=[" defer></script>
@@ -30,7 +28,7 @@ ct:Append([=[
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
-<body class="dark" x-data="edcbApp" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
+<body class="dark" x-data="edcbApp(]=]..GetAppConfig()..[=[)" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
   <nav class="m l surface-container left scroll" :class="{ 'max': set.sidebar }">
     <header>
       <button class="extra circle transparent" @click="set.sidebar = !set.sidebar">
@@ -119,7 +117,7 @@ ct:Append([=[
                   <i>today</i>
                   <span x-text="getEpgDateText()"></span>
                 </button>
-                <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+                <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
               </div>
               <div>
                 <button class="right-round square border transparent">
@@ -141,7 +139,7 @@ ct:Append([=[
               <i>today</i>
               <span x-text="getEpgDateText()"></span>
             </button>
-            <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+            <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
           </div>
         </div>
       </template>
@@ -180,7 +178,7 @@ ct:Append([=[
                 <i>today</i>
                 <span x-text="getEpgDateText()"></span>
               </button>
-              <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" min="]=]..os.date('%Y-%m-%d', minTime)..'" max="'..os.date('%Y-%m-%d', maxTime)..[=[">
+              <input type="date" @change="setDate($event.target.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
             </div>
             <button class="circle transparent" @click="shiftDate(7)" :disabled="!canShift(7)">
               <i>chevron_forward</i>
@@ -1799,7 +1797,6 @@ ct:Append([=[
               <fieldset class="padding"
                 x-data="{
                   startMarginUseDef: r.startMargin == null, 
-                  def: { start: ]=]..(rsdef and rsdef.startMargin or 0)..[=[, end: ]=]..(rsdef and rsdef.endMargin or 0)..[=[ }
                 }"
                 x-init="
                   let lastProcessed = null;
@@ -1808,8 +1805,8 @@ ct:Append([=[
                     if (raw === lastProcessed) return;
                     lastProcessed = raw;
                     startMarginUseDef = v.startMargin == null;
-                    v.startMargin ??= def.start;
-                    v.endMargin ??= def.end;
+                    v.startMargin ??= rsdef.startMargin;
+                    v.endMargin ??= rsdef.endMargin;
                   };
                   init(r);
                   $watch('r', v => init(v));
@@ -1856,17 +1853,17 @@ ct:Append([=[
                     </label>
                   </nav>
                 </div>
-                <nav class="row wrap no-margin no-row-gap" :class="(r.serviceMode % 2 === 0) && 'disabled'" x-data="{ def: ]=]..rsdef.serviceMode..[=[ }">
+                <nav class="row wrap no-margin no-row-gap" :class="(r.serviceMode % 2 === 0) && 'disabled'">
                   <div class="m l max"></div>
                   <label class="checkbox">
                     <input type="checkbox" name="serviceMode_1" :disabled="r.serviceMode % 2 === 0"
-                           :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 16"
+                           :checked="(r.serviceMode % 2 === 0 ? rsdef.serviceMode : r.serviceMode) & 16"
                            @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 16) : (r.serviceMode & ~16)">
                     <span>字幕を含める</span>
                   </label>
                   <label class="checkbox">
                     <input type="checkbox" name="serviceMode_2" :disabled="r.serviceMode % 2 === 0"
-                           :checked="(r.serviceMode % 2 === 0 ? def : r.serviceMode) & 32"
+                           :checked="(r.serviceMode % 2 === 0 ? rsdef.serviceMode : r.serviceMode) & 32"
                            @change="r.serviceMode = $event.target.checked ? (r.serviceMode | 32) : (r.serviceMode & ~32)">
                     <span>データカルーセルを含める</span>
                   </label>

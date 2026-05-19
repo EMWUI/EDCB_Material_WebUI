@@ -52,10 +52,10 @@ document.addEventListener('alpine:init', () => {
   };
 
   const  dayText = ['日','月','火','水','木','金','土'];
-  Alpine.data('edcbApp', () => ({
+  Alpine.data('edcbApp', config => ({
     debug: true,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
-    ROOT: ROOT || '',
+    ROOT: config.root || '',
     useDedicatedSsePort: false, // SSE専用ポートを使用するかどうか
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
@@ -238,8 +238,11 @@ document.addEventListener('alpine:init', () => {
       d.setMinutes(0, 0, 0);
       this.epg.epgStartTime = d.getTime();
 
-      this.epg.minTime = EPG_MIN_TIME;
-      this.epg.maxTime = EPG_MAX_TIME;
+      this.epg.minTime = config.epgTimeRange.min * 1000;
+      this.epg.maxTime = config.epgTimeRange.max * 1000;
+
+      this.epg.minDate = new Date(this.epg.minTime).toLocaleDateString('sv');
+      this.epg.maxDate = new Date(this.epg.maxTime).toLocaleDateString('sv');
 
       window.addEventListener('hashchange', () => {
         // ページ移動時はクエリをリセット
@@ -1606,6 +1609,7 @@ document.addEventListener('alpine:init', () => {
     sidePanel: {
       el: document.getElementById('sidePanel'),
       d: {},
+      rsdef: config.rsdef,
       title() {
         return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo||this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
       },
