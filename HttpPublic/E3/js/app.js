@@ -65,6 +65,8 @@ document.addEventListener('alpine:init', () => {
     isOnline: false,
     isSmallScreen: false,
     isPortrait: false,
+    networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
+    networkMask: 1,
 
     loading: false,
     rawData: [],
@@ -1066,6 +1068,22 @@ document.addEventListener('alpine:init', () => {
         .filter(s => this.set.subCh || !s.subCh)
         .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
     },
+    // 現在の表示対象ネットワーク（「すべて」を含み、EPGデータが存在し、かつ設定で有効なもの）
+    get displayableNetworks() {
+      return this.networkNames
+        .map((name, index) => ({ name, index }))
+        .filter(n => (this.networkMask & (1 << n.index)) !== 0);
+    },
+    // displayableNetworks から「すべて」を除外したリスト（局選択メニュー等で使用）
+    get selectableNetworks() {
+      return this.displayableNetworks.filter(n => n.index > 0);
+    },
+    // 検索UI用でCSを細分化
+    get searchNetworks() {
+      return this.networkNames
+        .map((name, index) => ({ name, index }))
+        .filter(n => n.index > 0 && this.serviceList.some(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag, true) === n.index));
+    },
     getNetworkIndex(onid, partial, divCS) {
       if (0x7880 <= onid && onid <= 0x7FE8) return partial ? 2 : 1;
       if (onid === 4) return 3;
@@ -1082,10 +1100,10 @@ document.addEventListener('alpine:init', () => {
         const s = this.allData.service.get(serviceId);
         if (s) {
           const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
-          if (this.set.oneseg || ni !== 2) mask |= (1 << ni);
+          if (this.set.oneseg || ni !== 2) mask |= (1 << ni); // ワンセグ表示設定が有効な場合、またはワンセグでない場合
         }
       });
-      this.epg.networkMask = mask;
+      this.networkMask = mask;
     },
     getDefSearchService(){
       return [...document.getElementById('serviceList-template').content.querySelectorAll('.def')].map(e => e.value);
@@ -1098,8 +1116,6 @@ document.addEventListener('alpine:init', () => {
       servicesToDisplay: [],
       weeklyToDisplay: [],
       activeNetwork: 1,
-      networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
-      networkMask: 1,
       lastLoadedNetwork: -1,
       coreRange: { start: 0, end: 0 },
       extraData: new Map(), // 追加取得したデータの保管庫

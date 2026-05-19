@@ -49,8 +49,8 @@ ct:Append([=[
             <i>cell_tower</i>
           </button>
           <menu class="top left no-wrap">
-            <template x-for="(v, i) in epg.networkNames" :key="v">
-              <li :class="{ active: epg.activeNetwork === i }" @click="setNetwork(i)" x-show="epg.networkMask & (1 << i)" x-text="v"></li>
+            <template x-for="n in displayableNetworks" :key="n.index">
+              <li :class="{ active: epg.activeNetwork === n.index }" @click="setNetwork(n.index)" x-text="n.name"></li>
             </template>
           </menu>
         </div>
@@ -98,12 +98,12 @@ ct:Append([=[
           </button>
           <div>
             <button class="border transparent">
-              <span x-text="epg.networkNames[epg.activeNetwork]"></span>
+              <span x-text="networkNames[epg.activeNetwork]"></span>
               <i>arrow_drop_down</i>
             </button>
             <menu class="left">
-              <template x-for="(v, i) in epg.networkNames" :key="v">
-                <li :class="{ active: epg.activeNetwork === i }" @click="setNetwork(i)" x-show="epg.networkMask & (1 << i)" x-text="v"></li>
+              <template x-for="n in displayableNetworks" :key="n.index">
+                <li :class="{ active: epg.activeNetwork === n.index }" @click="setNetwork(n.index)" x-text="n.name"></li>
               </template>
             </menu>
           </div>
@@ -153,19 +153,17 @@ ct:Append([=[
               <i>arrow_drop_down</i>
             </button>
             <menu>
-              <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
-                <template x-if="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))">
-                  <li x-show="serviceList.some(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)">
-                    <span x-text="networkName"></span>
-                    <menu class="left">
-                      <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="getDataKey(s, 'service')">
-                        <li :class="{ active: params.id === getDataKey(s, 'service') }"
-                            @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
-                            x-text="s.service_name">
-                      </template>
-                    </menu>
-                  </li>
-                </template>
+              <template x-for="n in selectableNetworks" :key="n.index">
+                <li>
+                  <span x-text="n.name"></span>
+                  <menu class="left">
+                    <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="getDataKey(s, 'service')">
+                      <li :class="{ active: params.id === getDataKey(s, 'service') }"
+                          @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
+                          x-text="s.service_name"></li>
+                    </template>
+                  </menu>
+                </li>
               </template>
             </menu>
           </div>
@@ -266,11 +264,11 @@ ct:Append([=[
           <span class="max">放送中の番組</span>
           <button class="transparent circle" @click="location.hash = '#epg'"><i>arrow_forward</i></button>
         </h6>
-        <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
-          <div class="vertical-margin" x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))">
-            <div class="tiny-text bold secondary-text" x-text="networkName"></div>
+        <template x-for="n in selectableNetworks" :key="n.index">
+          <div class="vertical-margin">
+            <div class="tiny-text bold secondary-text" x-text="n.name"></div>
             <div class="row scroll">
-              <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+              <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
                 <article class="small-width border ripple tiny-line small-text"
                       x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
                       @click="if (entry) openProgramDetail(entry.current)">
@@ -497,11 +495,9 @@ ct:Append([=[
     <template x-if="page === '#onair'">
       <div class="absolute" x-data="{ onairNetwork: 1 }">
         <nav class="tabbed small top-margin fixed">
-          <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
-            <a :class="onairNetwork === networkIndex ? 'active': ''" 
-              x-show="networkIndex > 0 && (epg.networkMask & (1 << networkIndex))"
-              @click="onairNetwork = networkIndex">
-              <span x-text="networkName"></span>
+          <template x-for="n in selectableNetworks" :key="n.index">
+            <a :class="onairNetwork === n.index ? 'active': ''" @click="onairNetwork = n.index">
+              <span x-text="n.name"></span>
             </a>
           </template>
         </nav>
@@ -749,18 +745,16 @@ ct:Append([=[
             </div>
             <div class="page scroll" :class="{ active: sideTab === 'service-list' }" x-data="{ sideNetwork: 1 }">
               <nav class="tabbed small scroll top-margin">
-                <template x-for="(networkName, networkIndex) in app.epg.networkNames" :key="networkName">
-                  <a :class="sideNetwork === networkIndex ? 'active': ''" 
-                    x-show="networkIndex > 0 && (app.epg.networkMask & (1 << networkIndex))"
-                    @click="sideNetwork = networkIndex">
-                    <span x-text="networkName"></span>
-                  </a>
+              <template x-for="n in selectableNetworks" :key="n.index">
+                <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
+                  <span x-text="n.name"></span>
+                </a>
                 </template>
               </nav>
-              <template x-for="(networkName, networkIndex) in app.epg.networkNames" :key="networkName">
-                <div class="page no-padding" :class="{ active: sideNetwork === networkIndex }" x-show="networkIndex > 0 && (app.epg.networkMask & (1 << networkIndex))">
+              <template x-for="n in selectableNetworks" :key="n.index">
+                <div class="page no-padding" :class="{ active: sideNetwork === n.index }" x-show="sideNetwork === n.index">
                   <ul class="list small-space vertical-margin small-margin">
-                    <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === networkIndex)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+                    <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
                       <li class="ripple" @click="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}`} );" :class="{ 'secondary-container': params.id === `${s.onid}-${s.tsid}-${s.sid}` }" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }">
                         <div class="max row no-margin no-wrap">
                           <div class="center-align">
@@ -1422,11 +1416,10 @@ ct:Append([=[
                   <i>clear_all</i>
                   <span>クリア</span>
                 </button>
-                <template x-for="(networkName, networkIndex) in epg.networkNames" :key="networkName">
-                  <button class="chip" x-show="serviceList.some(s => getNetworkIndex(s.onid, s.partialReceptionFlag, true) === networkIndex)"
-                    @click="addNetworkServices(networkIndex)">
+                <template x-for="n in searchNetworks" :key="n.index">
+                  <button class="chip" @click="addNetworkServices(n.index)">
                     <i>add</i>
-                    <span x-text="networkName"></span>
+                    <span x-text="n.name"></span>
                   </button>
                 </template>
               </nav>
