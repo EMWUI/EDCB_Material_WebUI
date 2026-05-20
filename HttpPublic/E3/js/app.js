@@ -2168,7 +2168,7 @@ document.addEventListener('alpine:init', () => {
     chgRecFilePath(id, path) {
       const fd = new URLSearchParams({ ren: path });
       fd.append('ctok', this.sidePanel.el.querySelector('input[name="ctok"]')?.value || '');
-      this.apiFetch(`${ROOT}api/SetRecInfo?id=${id}`, fd);
+      this.apiFetch(`${this.ROOT}api/SetRecInfo?id=${id}`, fd);
     },
 
     player: {
@@ -2201,7 +2201,7 @@ document.addEventListener('alpine:init', () => {
         video.setAttribute('ctok', video.dataset.ctokView);
         this.live = true;
         Alpine.raw(this.ts).reset();
-        Alpine.raw(this.ts).loadSource(`${ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
+        Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
         this.isLoading = true;
       },
       loadVideo(d) {
@@ -2210,7 +2210,7 @@ document.addEventListener('alpine:init', () => {
         video.setAttribute('ctok', video.dataset.ctokXcode);
         this.live = false;
         Alpine.raw(this.ts).reset();
-        Alpine.raw(this.ts).loadSource(`${ROOT}api/xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+        Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
         this.isLoading = true;
       },
       reset() {
