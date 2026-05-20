@@ -56,7 +56,7 @@ document.addEventListener('alpine:init', () => {
     debug: true,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
     ROOT: config.root || '',
-    useDedicatedSsePort: false, // SSE専用ポートを使用するかどうか
+    useDedicatedSsePort: config.useSsePort, // SSE専用ポートを使用するかどうか
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
     params: {},

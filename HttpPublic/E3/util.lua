@@ -26,9 +26,11 @@ function GetAppConfig()
     end
   end
 
+  local useSsePort=tonumber(edcb.GetPrivateProfile('E3','useSsePort',false,INI))~=0 and 'true' or 'false'
   local rsdef=((edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting or {})
   return '{root: \''..PathToRoot()
-    ..'\', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
+    ..'\', useSsePort: '..useSsePort
+    ..', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
     ..' rsdef: {'
     ..' serviceMode: '..(rsdef.serviceMode or 0)
     ..', startMargin: '..(rsdef.startMargin or 0)
