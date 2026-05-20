@@ -85,41 +85,6 @@ for i, v in ipairs(navList) do
 ]], v.hash, v.hash, v.hash, v.icon, v.full or v.title))
 end
 
-function GetGenreChip()
-  local s=''
-  for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
-    local nibble1=edcb.GetGenreName(i*256+255)
-    if nibble1~='' then
-      s=s..string.format([[
-                  <button class="chip" :class="(set.genreMask & (1 << %d)) ? 'active' : ''" @click="set.genreMask ^= (1 << %d)">%s</button>
-]], _i-1, _i-1, nibble1)
-    end
-  end
-  return s
-end
-
-function GetGenreOption()
-  local s=''
-  for _i,i in ipairs({0,1,2,3,4,5,6,7,8,9,10,11,12,13,0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,15,255}) do
-    local nibble1=edcb.GetGenreName(i*256+255)
-    if nibble1~='' then
-      s=s..string.format([[
-                  <option value="%d" x-show="set.genreMask & (1 << %d)">%s
-]], i*256+255, _i-1, nibble1)
-      for j=0,15 do
-        local nibble2=edcb.GetGenreName(i*256+j)
-        if nibble2~='' then
-          s=s..string.format([[
-                    <option value="%d" x-show="(set.subGenre && set.genreMask & (1 << %d))">　%s
-]], i*256+j, _i-1, nibble2)
-        end
-      end
-    end
-  end
-
-  return s
-end
-
 function GetServiceOption()
   local s=''
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
@@ -159,7 +124,7 @@ function GetBatFilePathOption()
     if not v.isdir and (v.name:find('%.[Bb][Aa][Tt]$') or v.name:find('%.[Pp][Ss]1$') or v.name:find('%.[Ll][Uu][Aa]$')) or v.name:find('%.[Ss][Hh]$') then
       local batPath=PathAppend(batDir,v.name)
       s=s..string.format([[
-                  <option value="%s">%s
+                    <option value="%s">%s
 ]], batPath, v.name)
     end
   end
@@ -170,10 +135,10 @@ function GetbatFileTagList()
   local s='<datalist id="batFileTagList">\n'
   for v in edcb.GetPrivateProfile('set','batFileTag','',INI):gmatch('[^,]+') do
     s=s..string.format([[
-                  <option value="%s">
+                    <option value="%s">
 ]], v)
   end
-  return s..'                </datalist>\n'
+  return s..'                  </datalist>\n'
 end
 
 function GetPlayerOption(tslive)

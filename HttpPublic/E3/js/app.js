@@ -66,6 +66,7 @@ document.addEventListener('alpine:init', () => {
     isSmallScreen: false,
     isPortrait: false,
     networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
+    genreList: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 15, 255],
     networkMask: 1,
 
     loading: false,

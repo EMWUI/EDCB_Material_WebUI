@@ -1390,10 +1390,18 @@ ct:Append([=[
               </fieldset>
             </div>
 
-            <div class="s12" x-init="$watch('s', s => initSelectedGenres(s))">
+            <div class="s12" x-init="$watch('s', s => initSelectedGenres(s)); $nextTick(() => initSelectedGenres(s))">
               <div class="field label border">
                 <select name="contentList" multiple size="7" x-model="selectedGenres" @change="updateContentList()">
-]=]..GetGenreOption()..[=[
+                  <template x-for="(i, idx) in genreList" :key="idx">
+                    <template x-if="getGenre({ content_nibble: (i << 8) | 0xFF }).name1">
+                      <template x-for="j in [255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]" :key="j">
+                        <template x-if="j === 255 || getGenre({ content_nibble: (i << 8) | j }).name2">
+                          <option :value="(i << 8) | j" x-show="(j === 255) ? (set.genreMask & (1 << idx)) : (set.subGenre && (set.genreMask & (1 << idx)))" x-text="(j === 255) ? getGenre({ content_nibble: (i << 8) | j }).name1 : '　' + getGenre({ content_nibble: (i << 8) | j }).name2"></option>
+                        </template>
+                      </template>
+                    </template>
+                  </template>
                 </select>
                 <label x-text="isSearch ? '対象ジャンル' : 'ジャンル絞り込み'"></label>
               </div>
@@ -2143,7 +2151,11 @@ ct:Append([=[
         <fieldset>
           <legend>ジャンル表示絞り込み</legend>
           <nav class="group wrap">
-    ]=]..GetGenreChip()..[=[
+            <template x-for="(i, idx) in genreList" :key="idx">
+              <template x-if="getGenre({ content_nibble: (i << 8) | 0xFF }).name1">
+                <button type="button" class="chip" :class="(set.genreMask & (1 << idx)) ? 'active' : ''" @click="set.genreMask ^= (1 << idx)" x-text="getGenre({ content_nibble: (i << 8) | 0xFF }).name1"></button>
+              </template>
+            </template>
           </nav>
         </fieldset>
       </div>
