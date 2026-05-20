@@ -11,9 +11,9 @@ ct:Append([=[
   <link rel="icon" href="./img/EpgTimer.ico">
   <link rel="apple-touch-icon" sizes="256x256" href="./img/apple-touch-icon.png">
   
-  <link href="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.css" rel="stylesheet" />
-  <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@4.0.19/dist/cdn/beer.min.js"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.4/dist/cdn/material-dynamic-colors.min.js"></script>
+  <link href="css/beer.min.css" rel="stylesheet" />
+  <script type="module" src="js/beer.min.js"></script>
+  <script type="module" src="js/material-dynamic-colors.min.js"></script>
 
   <link rel="stylesheet" href="css/ts-loader.css">
   <script src="js/danmaku.js"></script>
@@ -24,8 +24,8 @@ ct:Append([=[
   
   <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
   <script src="js/app.js?ver=]=]..ver..[=[" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@alpinejs/intersect@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="js/intersect.min.js" defer></script>
+  <script src="js/alpine.min.js" defer></script>
 </head>
 
 <body class="dark" x-data="edcbApp(]=]..GetAppConfig()..[=[)" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
@@ -744,47 +744,49 @@ ct:Append([=[
               </template>
             </div>
             <div class="page scroll" :class="{ active: sideTab === 'service-list' }" x-data="{ sideNetwork: 1 }">
-              <nav class="tabbed small scroll top-margin">
-              <template x-for="n in selectableNetworks" :key="n.index">
-                <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
-                  <span x-text="n.name"></span>
-                </a>
-                </template>
-              </nav>
-              <template x-for="n in selectableNetworks" :key="n.index">
-                <div class="page no-padding" :class="{ active: sideNetwork === n.index }" x-show="sideNetwork === n.index">
-                  <ul class="list small-space vertical-margin small-margin">
-                    <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
-                      <li class="ripple" @click="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}`} );" :class="{ 'secondary-container': params.id === `${s.onid}-${s.tsid}-${s.sid}` }" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }">
-                        <div class="max row no-margin no-wrap">
-                          <div class="center-align">
-                            <img class="round border tiny" :src="getLogoPath(s)">
-                          </div>
-                          <div class="max">
-                            <div class="row no-margin no-wrap">
-                              <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
+              <div>
+                <nav class="tabbed small scroll top-margin">
+                <template x-for="n in selectableNetworks" :key="n.index">
+                  <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
+                    <span x-text="n.name"></span>
+                  </a>
+                  </template>
+                </nav>
+                <template x-for="n in selectableNetworks" :key="n.index">
+                  <div class="page no-padding" :class="{ active: sideNetwork === n.index }" x-show="sideNetwork === n.index">
+                    <ul class="list small-space vertical-margin small-margin">
+                      <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
+                        <li class="ripple" @click="openPage('#watch', { id: `${s.onid}-${s.tsid}-${s.sid}`} );" :class="{ 'secondary-container': params.id === `${s.onid}-${s.tsid}-${s.sid}` }" x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }">
+                          <div class="max row no-margin no-wrap">
+                            <div class="center-align">
+                              <img class="round border tiny" :src="getLogoPath(s)">
+                            </div>
+                            <div class="max">
+                              <div class="row no-margin no-wrap">
+                                <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
+                                <template x-if="entry">
+                                  <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                                </template>
+                              </div>
                               <template x-if="entry">
-                                <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                                <div>
+                                  <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                                  <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
+                                </div>
+                              </template>
+                              <template x-if="!entry">
+                                <div class="middle-align center-align padding">
+                                  <progress class="circle small"></progress>
+                                </div>
                               </template>
                             </div>
-                            <template x-if="entry">
-                              <div>
-                                <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
-                                <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
-                              </div>
-                            </template>
-                            <template x-if="!entry">
-                              <div class="middle-align center-align padding">
-                                <progress class="circle small"></progress>
-                              </div>
-                            </template>
                           </div>
-                        </div>
-                      </li>
-                    </template>
-                  </ul>
-                </div>
-              </template>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                </template>
+              </div>
             </div>
             <div class="page" :class="{ active: sideTab === 'jikkyo-chats' }">
               <div id="jikkyo-comm" class="vertical padding jikkyo-comments">

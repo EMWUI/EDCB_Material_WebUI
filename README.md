@@ -16,9 +16,6 @@ Geminiにモダンにと一から作り直してもらいました。
 *   [Alpine.js](https://alpinejs.dev/) - 軽量でパワフルな JavaScript フレームワーク
 *   [Beer CSS](https://www.beercss.com/) - Material 3 に準拠した CSS フレームワーク
 
-> [!NOTE]
-> 現在のベーター版では CDN を使用していますが、正式リリース版でローカルに移行します。
-
 ## 注意事項
 
 *   SSEにより、CivetWebのスレッドを接続毎に1つ常時消費します。  
@@ -46,13 +43,23 @@ Geminiにモダンにと一から作り直してもらいました。
     - [x] 実況
 - [ ] 設定画面の拡充
 - [ ] PWA
-- [ ] ローカルアセットへの移行
+- [x] ローカルアセットへの移行
 
 ### 不具合、改善点
 
 - [ ] スタンバイ移行時のオフライン判定
 - [x] EPGデータのダイエット（現状36時間分で約4.5MBとぎりぎり → 約3.5MB）
 - [ ] データ放送読み込み時などで、ローディングなどが発生
+
+## ライセンス
+
+本プロジェクトでは以下のオープンソースライブラリを利用しています。
+
+*   [Alpine.js](https://github.com/alpinejs/alpine) - MIT License
+*   [Beer CSS](https://github.com/beercss/beercss) (including Material Symbols) - Apache License 2.0
+*   [material-dynamic-colors](https://github.com/targoninc/material-dynamic-colors) - Apache License 2.0
+*   [hls.js](https://github.com/video-dev/hls.js) - Apache License 2.0
+*   [aribb24.js](https://github.com/monyone/aribb24.js) - MIT License
 
 ## 支援
 
