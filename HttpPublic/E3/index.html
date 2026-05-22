@@ -567,8 +567,9 @@ ct:Append([=[
             <div id="danmaku-container"></div>
             <div id="player-UI" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
               <div class="player-overlay-top row">
-                <h6 class="title max text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)"></h6>
-                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg">
+                <h6 class="title text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)" x-show="isFullscreen"></h6>
+                <div class="max"></div>
+                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg && !params.h">
                   <i x-text="showSidePanel ? 'view_sidebar' : 'side_navigation'">view_sidebar</i>
                 </button>
               </div>
@@ -710,7 +711,9 @@ ct:Append([=[
             <template x-if="!tslive">
               <div class="arib-video-invisible-container contents">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video" x-init="videoInit()"></video>
+                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video" x-init="videoInit()">
+                    <track id="vid-meta" x-ref="meta" kind="metadata" type="text/vtt">
+                  </video>
                 </div>
               </div>
             </template>
@@ -727,6 +730,7 @@ ct:Append([=[
             <div class="tabs min" :class="isPortrait ? 'bottom': 'top'">
               <a :class="{ active: sideTab === 'info' }" @click="sideTab = 'info'"><i>info</i><span>詳細</span></a>
               <a :class="{ active: sideTab === 'service-list' }" @click="sideTab = 'service-list'"><i>cell_tower</i><span>選局</span></a>
+              <a :class="{ active: sideTab === 'library' }" @click="sideTab = 'library'"><i>video_library</i><span>ビデオ</span></a>
               <a :class="{ active: sideTab === 'jikkyo-chats' }" @click="sideTab = 'jikkyo-chats'"><i>mic</i><span>実況</span></a>
             </div>
             <div class="page scroll" :class="{ active: sideTab === 'info' }">
@@ -786,6 +790,27 @@ ct:Append([=[
                     </ul>
                   </div>
                 </template>
+              </div>
+            </div>
+            <div class="page scroll" :class="{ active: sideTab === 'library' }">
+              <div>
+                <ul class="list small-space vertical-margin small-margin">
+                  <template x-for="item in library.data.file" :key="item.name">
+                    <li class="ripple" @click="library.play(item)" :class="{ 'secondary-container': params.h === item.hash }">
+                      <div class="max row no-margin no-wrap">
+                        <template x-if="item.thumb">
+                          <img class="round border" :src="ROOT + 'video/thumbs/' + item.thumb + '.jpg'">
+                        </template>
+                        <template x-if="!item.thumb">
+                          <button class="square large border transparent"><i class="primary-text">movie</i></button>
+                        </template>
+                        <div class="max">
+                          <h6 class="small title" x-text="item.name"></h6>
+                        </div>
+                      </div>
+                    </li>
+                  </template>
+                </ul>
               </div>
             </div>
             <div class="page" :class="{ active: sideTab === 'jikkyo-chats' }">
@@ -974,6 +999,97 @@ ct:Append([=[
       </div>
     </template>
 
+    <template x-if="page === '#library'" x-data="library">
+      <div class="absolute contents">
+        <section class="responsive">
+          <nav class="padding scroll no-wrap">
+            <button class="chip transparent" @click="openPage('#library', { home: 1 })">
+              <i>home</i>
+              <span>ホーム</span>
+            </button>
+            <template x-if="data.iname">
+              <button class="chip transparent" @click="openPath(-1)">
+                <i>chevron_right</i>
+                <span x-text="data.iname"></span>
+              </button>
+            </template>
+            <template x-for="(p, i) in data.path" :key="p.hash">
+              <button class="chip transparent" @click="openPath(i)">
+                <i>chevron_right</i>
+                <span x-text="p.name"></span>
+              </button>
+            </template>
+            <template x-if="data.index">
+              <button class="chip transparent">
+                <i>chevron_right</i>
+                <span x-text="data.dirname"></span>
+              </button>
+            </template>
+          </nav>
+          <ul class="list medium-space">
+            <!-- フォルダ一覧 -->
+            <template x-for="item in data.dir" :key="item.name">
+              <li class="ripple" @click="openDir(item)">
+                <div class="max row no-margin no-wrap">
+                  <div class="center-align">
+                    <i class="primary-text">folder</i>
+                  </div>
+                  <div class="max">
+                    <div class="title bold large-text" x-text="item.name"></div>
+                  </div>
+                  <i>chevron_right</i>
+                </div>
+              </li>
+            </template>
+
+            <!-- ファイル一覧 -->
+            <template x-for="item in data.file" :key="item.name">
+              <li class="ripple" @click="play(item)">
+                <div class="max row no-margin no-wrap">
+                  <template x-if="item.thumb">
+                    <img class="round border" :src="ROOT + 'video/thumbs/' + item.thumb + '.jpg'">
+                  </template>
+                  <template x-if="!item.thumb">
+                    <button class="square large border transparent"><i class="primary-text">movie</i></button>
+                  </template>
+                  <div class="max">
+                    <h6 class="small" x-text="item.name"></h6>
+                    <div class="row wrap tiny-space no-margin secondary-text no-line">
+                      <span class="middle-align">
+                        <i class="tiny">storage</i>
+                        <span x-text="item.sizeText"></span>
+                      </span>
+                      <span class="middle-align">
+                        <i class="tiny">schedule</i>
+                        <span x-text="convert.dateTime(item.mtime)"></span>
+                      </span>
+                    </div>
+                  </div>
+                  <button class="circle transparent">
+                    <i>play_arrow</i>
+                  </button>
+                </div>
+              </li>
+            </template>
+          </ul>
+
+          <template x-if="!loading && data.err">
+            <div class="center-align padding">
+              <i class="extra error-text">report</i>
+              <p class="error-text" x-text="data.err"></p>
+            </div>
+          </template>
+
+          <template x-if="!loading && !data.err && !data.dir?.length && !data.file?.length && data.iname">
+            <div class="center-align padding">
+              <i class="extra secondary-text">folder_open</i>
+              <p class="secondary-text">このフォルダは空です</p>
+            </div>
+          </template>
+        </section>
+      </div>
+    </template>
+
     <template x-if="page === '#recinfo'">
       <div class="absolute">
         <section class="responsive">
@@ -1037,7 +1153,7 @@ ct:Append([=[
       </div>
     </template>
 
-    <template x-if="['#library', '#setting'].includes(page)">
+    <template x-if="['#setting'].includes(page)">
       <div class="flex center-align middle-align">
         <h5 class="secondary-text" x-text="pageMap[page] ? pageMap[page].title + ' は準備中です' : '404'"></h5>
       </div>

@@ -198,6 +198,7 @@ document.addEventListener('alpine:init', () => {
       this.updateParams();
       this.sidePanel.app = this;
       this.player.app = this;
+      this.library.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
       setInterval(() => {
@@ -645,8 +646,12 @@ document.addEventListener('alpine:init', () => {
       if (this.page === '#watch') {
         if (this.player.ts) {
           if (this.params.id) this.player.loadLive(this.params.id);
-          else if (this.params.recid) this.player.loadVideo(this.params);
+          else if (this.params.recid || this.params.rid || this.params.h) this.player.loadVideo(this.params);
         }
+        return;
+      }
+      if (this.page === '#library') {
+        this.library.load();
         return;
       }
       if (this.page === '#search') {
@@ -958,6 +963,11 @@ document.addEventListener('alpine:init', () => {
         if (show_sec == 'ISO') return `${t.getUTCFullYear()}${this.zero(t.getUTCMonth()+1)}${this.zero(t.getUTCDate())}T${this.zero(t.getUTCHours())}${this.zero(t.getUTCMinutes())}${this.zero(t.getUTCSeconds())}`;
         return `${show_ymd ? `${t.getUTCFullYear()}/${this.zero(t.getUTCMonth()+1)}/${this.zero(t.getUTCDate())}(${dayText[t.getUTCDay()]}) ` : ''
           }${this.zero(t.getUTCHours())}:${this.zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${this.zero(t.getUTCSeconds())}</small>` : ''}`;
+      },
+      dateTime(t) {
+        if (!t) return '未定';
+        const d = this.viewDate(t);
+        return `${d.getUTCFullYear()}/${this.zero(d.getUTCMonth()+1)}/${this.zero(d.getUTCDate())} ${this.zero(d.getUTCHours())}:${this.zero(d.getUTCMinutes())}:${this.zero(d.getUTCSeconds())}`;
       },
       time(t) {
         return `${this.zero(Math.floor(t / 3600))}:${this.zero(Math.floor((t / 60) % 60))}:${this.zero(Math.floor(t % 60))}`
@@ -2172,16 +2182,25 @@ document.addEventListener('alpine:init', () => {
     },
 
     player: {
+      videoInfo: null,
       get params() { return this.app.params },
       get nowOnAir() { return this.app.dashboardData.nowOnAir },
-      get epg() { return this.live ? this.nowOnAir[this.params?.id]?.current : this.app.allData.recinfo.get(Number(this.app.params.recid)) },
+      get epg() {
+        if (this.live) return this.nowOnAir[this.params?.id]?.current;
+        if (this.params.recid) return this.app.allData.recinfo.get(Number(this.params.recid));
+        if (this.videoInfo) {
+          const info = this.app.parseProgramInfo(this.videoInfo.programInfo);
+          return { ...info, title: this.videoInfo.name, durationSecond: this.videoInfo.meta?.duration || 0, isDummy: true };
+        }
+        return null;
+      },
       vid: null,
       ts: null,
       tslive: false,
       live: true,
       isPlaying: false,
       currentTime: 0,
-      get duration() { return this.epg?.durationSecond || 0},
+      get duration() { return this.epg?.meta?.duration || this.epg?.durationSecond || 0 },
       isFullscreen: false,
       playbackRate: 1,
       track: 0,
@@ -2204,19 +2223,65 @@ document.addEventListener('alpine:init', () => {
         Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
         this.isLoading = true;
       },
-      loadVideo(d) {
+      async loadVideo(d) {
         if (!this.ts) return;
+        this.live = false;
+        this.videoInfo = null;
+
+        let fname;
+        let canPlay;
+        if (d.h) {
+          this.app.loading = true;
+          try {
+            const p = new URLSearchParams();
+            p.set('json', '1');
+            p.set('h', d.h);
+            if (d.i) p.set('i', d.i);
+            if (d.d) p.set('d', d.d);
+            if (d.p) d.p.split(',').filter(v => v).forEach(v => p.append('p', v));
+            const res = await fetch(`${this.app.ROOT}api/Library?basic=0&${p.toString()}`);
+            this.videoInfo = await res.json();
+            fname = this.videoInfo.path;
+            canPlay = document.createElement('video').canPlayType(`video/${fname.match(/[^\.]*$/)}`).length > 0;
+          } catch (e) {
+            console.error(e);
+          } finally {
+            this.app.loading = false;
+          }
+        }
+
+        if (!fname && !d.recid && !d.rid) return;
+
         const video = this.app.$refs.video;
         video.setAttribute('ctok', video.dataset.ctokXcode);
-        this.live = false;
         Alpine.raw(this.ts).reset();
-        Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/xcode?${d.path ? `fname=${encodeURIComponent(d.path)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+        if (canPlay){
+          fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F','/')}`;
+          video.src = fname;
+          const meta = this.app.$refs.meta;
+          if (meta) {
+            // トラック要素を物理的に再作成して置換（ブラウザの読み込みバグを回避）
+            const newMeta = document.createElement('track');
+            newMeta.id = 'vid-meta';
+            newMeta.kind = 'metadata';
+            newMeta.src = `${fname.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`;
+            meta.parentNode.replaceChild(newMeta, meta);
+            this.app.$refs.meta = newMeta;
+            newMeta.track.mode = 'hidden';
+          }
+          Alpine.raw(this.ts).createCap(); // aribb24のイベントリスナーを再登録
+          Alpine.raw(this.ts).loadSubData();
+        } else {
+          Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+        }
         this.isLoading = true;
       },
       reset() {
         Alpine.raw(this.ts).reset();
         if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
         if (this.app) this.app.updateParams();
+        if (this.app.$refs.meta) this.app.$refs.meta.src = '';
+        this.videoInfo = null;
         this.isPlaying = false;
         this.currentTime = 0;
         this.isLoading = false;
@@ -2399,6 +2464,10 @@ document.addEventListener('alpine:init', () => {
                 }, { once: true });
               });
             }
+
+            if (!this.live && this.videoInfo && !this.videoInfo.meta){
+              this.videoInfo.meta = { duration: video.duration };
+            }
           });
           video.addEventListener('enabledDetelecine',  () => this.cinema = true);
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
@@ -2417,11 +2486,67 @@ document.addEventListener('alpine:init', () => {
           }
 
           if (this.params.id) this.loadLive(this.params.id);
-          else if (this.params.recid) this.loadVideo(this.params);
+          else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
           
           this.resetControlTimeout();
         });
       }
+    },
+
+    library: {
+      data: { dir: [], file: [], path: [] },
+      lastParams: { home: 1 },
+      async load() {
+        const p = this.app.params;
+
+        // パラメータが完全に空（サイドバー等からの遷移）なら、
+        // 記憶している直前の状態（初期値はhome:1）へリダイレクトして復元
+        if (!p.i && !p.d && !p.home) {
+          this.app.openPage('#library', this.lastParams, true);
+          return;
+        }
+
+        // すでに表示中のデータとパラメータが一致するなら再取得しない（ブラウザバック時など）
+        if (this.data.dirname && this.data.index == p.i && (this.data.dirhash || '') == (p.d || '') && (this.data.p_raw || '') == (p.p || '')) {
+          return;
+        }
+
+        this.app.loading = true;
+        try {
+          const p = new URLSearchParams();
+          p.set('json', '1');
+          if (this.app.params.i) p.set('i', this.app.params.i);
+          if (this.app.params.d) p.set('d', this.app.params.d);
+          if (this.app.params.p) {
+            this.app.params.p.split(',').filter(v => v).forEach(v => p.append('p', v));
+          }
+
+          const res = await fetch(`${this.app.ROOT}api/Library?${p.toString()}`);
+          this.data = await res.json();
+          this.data.path = this.data.path || [];
+          this.data.p_raw = p.p;
+          // 取得成功したら現在の状態を記憶（homeがあれば優先、なければi,d,p）
+          if (!this.data.err) this.lastParams = this.app.params.home ? { home: 1 } : { i: this.app.params.i, d: this.app.params.d, p: this.app.params.p };
+          if (this.data.err) this.app.snackbar.add({ text: this.data.err, error: true });
+        } catch (e) {
+          console.error(e);
+          this.data = { dir: [], file: [], path: [], err: '通信に失敗しました' };
+        } finally {
+          this.app.loading = false;
+        }
+      },
+      openDir(item) {
+        const p = (this.data.path || []).concat(this.data.dirhash ? [{hash: this.data.dirhash}] : []).map(x => x.hash).filter(v => v).join(',');
+        this.app.openPage('#library', { i: item.index || this.data.index, p, d: item.hash });
+      },
+      openPath(idx) {
+        const p = idx < 0 ? '' : (this.data.path || []).slice(0, idx).map(x => x.hash).join(',');
+        const d = idx < 0 ? undefined : this.data.path[idx].hash;
+        this.app.openPage('#library', { i: this.data.index, p, d });
+      },
+      play(file) {
+        this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
+      },
     },
   }));
 });
