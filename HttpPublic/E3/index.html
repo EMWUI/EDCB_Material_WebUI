@@ -198,6 +198,28 @@ ct:Append([=[
       </template>
 
       <nav class="no-space">
+        <div x-data="reminder" x-show="enabled">
+          <button class="circle transparent" :class="list.length > 0 ? 'primary-text' : ''">
+            <i x-text="list.length > 0 ? 'notifications_active' : 'notifications'"></i>
+            <span class="badge" x-text="list.length" x-show="list.length > 0"></span>
+          </button>
+          <menu class="left no-wrap">
+            <template x-for="item in list" :key="item.id">
+              <li>
+                <div class="max">
+                  <div x-html="convert.title(item.title)"></div>
+                  <label>
+                    <span x-text="item.stationName"></span>
+                    <span x-text="convert.dateTime(item.startTimeInt)"></span>
+                  </label>
+                </div>
+                <button class="circle transparent small" @click="remove(item.id)">
+                  <i>notifications_off</i>
+                </button>
+              </li>
+            </template>
+          </menu>
+        </div>
         <button class="circle transparent" data-ui="#setting">
           <i>settings</i>
         </button>
@@ -375,8 +397,12 @@ ct:Append([=[
 
     <template x-ref="tools">
       <nav class="group connected">
-        <button class="transparent circle small" :disabled="d.startTimeInt < now" x-show="'false && Notification' in window && Notification.permission == 'granted'">
-          <i>notifications</i>
+        <button class="transparent circle small" 
+                :class="{ 'primary-text': reminder.isSet(d) }"
+                :disabled="d.startTimeInt < now" 
+                @click="reminder.toggle(d)"
+                x-show="reminder.enabled">
+          <i x-text="reminder.isSet(d) ? 'notifications_active' : 'notifications'"></i>
         </button>
         <button class="transparent circle small" @click="openPage('#search', { andKey: convert.sanitizeTitle(d.shortInfo?.event_name) })">
           <i>search</i>

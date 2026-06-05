@@ -201,6 +201,7 @@ document.addEventListener('alpine:init', () => {
       this.library.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
+      this.reminder.app = this;
       setInterval(() => {
         this.now = Date.now();
         // 放送中の番組が終了したかチェック
@@ -2080,6 +2081,94 @@ document.addEventListener('alpine:init', () => {
       });
 
       return res;
+    },
+
+    reminder: {
+      enabled: 'Notification' in window && Notification.permission === 'granted',
+      list: [],
+      init() {
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().then(p => this.enabled = (p === 'granted'));
+        }
+
+        const saved = localStorage.getItem('E3_reminders');
+        if (saved) {
+          try {
+            this.list = JSON.parse(saved);
+          } catch (e) { this.list = []; }
+        }
+
+        // 他のタブでの変更（通知後のリスト更新など）を検知して同期する
+        window.addEventListener('storage', e => {
+          if (e.key === 'E3_reminders') {
+            try {
+              this.list = JSON.parse(e.newValue || '[]');
+            } catch (ex) { this.list = []; }
+          }
+        });
+        
+        setInterval(() => {
+          const now = Date.now();
+          let changed = false;
+          const nextList = [];
+
+          this.list.forEach(item => {
+            if (item.startTimeInt - 30000 <= now) {
+              // 通知タイミングに到達、または既に過ぎている場合
+              if (!item.notified && now < item.startTimeInt + 60000) {
+                this.notify(item);
+              }
+              // 通知した（あるいは通知ウィンドウを過ぎた）のでリストからは消去
+              changed = true;
+            } else {
+              // まだ開始前（30秒以上先）
+              nextList.push(item);
+            }
+          });
+
+          if (changed) {
+            this.list = nextList;
+            this.save();
+          }
+        }, 1000);
+      },
+      save() {
+        localStorage.setItem('E3_reminders', JSON.stringify(this.list));
+      },
+      async toggle(d) {
+        if (!this.enabled) return;
+        const id = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
+        const idx = this.list.findIndex(item => item.id === id);
+        if (idx > -1) {
+          this.list.splice(idx, 1);
+          this.app.snackbar.add({ text: 'リマインダーを解除しました' });
+        } else {
+          this.list.push({ id, title: d.shortInfo?.event_name || d.title, startTimeInt: d.startTimeInt, stationName: this.app.getServiceName(d), text: d.shortInfo?.text_char, notified: false });
+          this.app.snackbar.add({ text: 'リマインダーを追加しました' });
+        }
+        this.save();
+      },
+      isSet(d) { return this.list.some(item => item.id === `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`); },
+      remove(id) {
+        this.list = this.list.filter(item => item.id !== id);
+        this.save();
+        this.app.snackbar.add({ text: 'リマインダーを解除しました' });
+      },
+      notify(item) {
+        const n = new Notification(item.title, {
+          body: `${this.app.convert.date(item.startTimeInt)}～ ${item.stationName}\n${item.text}`,
+          tag: item.id,
+          icon: './img/apple-touch-icon.png'
+        });
+        n.onclick = () => {
+          window.focus();
+          this.app.getEpgById(item.id).then(epg => {
+            if (epg) this.app.openProgramDetail(epg);
+          });
+          n.close();
+        };
+        setTimeout(() => n.close(), 15*1000);
+      }
     },
 
     snackbar: {
