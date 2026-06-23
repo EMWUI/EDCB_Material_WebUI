@@ -2159,7 +2159,7 @@ ct:Append([=[
     </template>
     <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo || isSearch">
       <nav>
-        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo">再生</button>
+        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo && detail.meta">再生</button>
         <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo&&!isSearch"></button>
         <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo">検索</button>
         <div class="max"></div>

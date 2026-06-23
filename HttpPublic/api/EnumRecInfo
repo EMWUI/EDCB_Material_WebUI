@@ -16,6 +16,12 @@ end
 if json then
   if a then
     if id then
+      fpath=a[1].recFilePath
+      f=edcb.io.open(fpath, 'rb')
+      if f then
+        fsec=GetDurationSec(f)
+        a[1].meta={duration=fsec}
+      end
       ResponseJson(a[1])
     else
       ResponseJson(a,mg.request_info.query_string)
