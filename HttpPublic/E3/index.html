@@ -185,7 +185,7 @@ ct:Append([=[
         </div>
       </template>
 
-      <template x-if="!['#epg', '#epgweek', '#search'].includes(page)">
+      <template x-if="pageMap[page].entry">
         <button class="circle transparent" @click="openNewEntry()">
           <i>add</i>
         </button>
