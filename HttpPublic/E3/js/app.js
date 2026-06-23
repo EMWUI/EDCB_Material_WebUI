@@ -340,7 +340,6 @@ document.addEventListener('alpine:init', () => {
         if (document.visibilityState === 'visible') {
           // 戻ってきたときに接続状態を確認
           if (this.eventSource.readyState === EventSource.CLOSED || this.eventSource.readyState === EventSource.CONNECTING) {
-            // this.snackbar.add({ text: this.eventSource.readyState + ' visibilitychange'});
             this.isOnline = false;
           }
         }
@@ -388,7 +387,6 @@ document.addEventListener('alpine:init', () => {
         }
       }
       this.eventSource.onerror = () => {
-        // this.snackbar.add({ text: 'onerror' });
         this.isOnline = false;
       }
       this.eventSource.onmessage = async e => {
@@ -2214,8 +2212,8 @@ document.addEventListener('alpine:init', () => {
       }).catch(err => {
         console.error('通信失敗:', err);
         // ctokエラーを想定してリロード
-        const t = setTimeout(location.reload, 3000);
-        this.snackbar.add({ text: 'トークン切れ？リロードします', action: () => clearTimeout(t), time: 2500, error: true});
+        const t = setTimeout(() => location.reload(), 3000);
+        this.snackbar.add({ text: 'トークン切れと思われます。リロードします', action: () => clearTimeout(t), time: 2500, error: true});
       });
     },
     addReserve(e) {
