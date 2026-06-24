@@ -10,7 +10,7 @@ ct:Append([=[
   <title>E3</title>
   <link rel="icon" href="./img/EpgTimer.ico">
   <link rel="apple-touch-icon" sizes="256x256" href="./img/apple-touch-icon.png">
-  
+
   <link href="css/beer.min.css" rel="stylesheet" />
   <script type="module" src="js/beer.min.js"></script>
   <script type="module" src="js/material-dynamic-colors.min.js"></script>
@@ -21,7 +21,7 @@ ct:Append([=[
   <script src="js/aribb24.js"></script>
   <script src="js/ts-live.lua?t=.js"></script>
   <script src="js/ts-loader.js"></script>
-  
+
   <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
   <script src="js/app.js?ver=]=]..ver..[=[" defer></script>
   <script src="js/intersect.min.js" defer></script>
@@ -253,7 +253,7 @@ ct:Append([=[
     <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
     <template x-if="page === '#dashboard'">
       <div class="padding">
-       
+
         <div class="row around-align">
           <div :class="isSmallScreen ? 'center-align' : 'row'">
             <i class="primary-text extra">event_available</i>
@@ -281,7 +281,7 @@ ct:Append([=[
             </h5>
           </div>
         </div>
-        
+
         <h6 class="row padding">
           <span class="max">放送中の番組</span>
           <button class="transparent circle" @click="location.hash = '#epg'"><i>arrow_forward</i></button>
@@ -729,7 +729,7 @@ ct:Append([=[
                   </button>
                 </nav>
               </div>
-              
+
             </div>
             <div class="player-loading-indicator" x-show="isLoading">
               <progress class="circle large"></progress>
@@ -776,10 +776,10 @@ ct:Append([=[
             <div class="page scroll" :class="{ active: sideTab === 'service-list' }" x-data="{ sideNetwork: 1 }">
               <div>
                 <nav class="tabbed small scroll top-margin">
-                <template x-for="n in selectableNetworks" :key="n.index">
-                  <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
-                    <span x-text="n.name"></span>
-                  </a>
+                  <template x-for="n in selectableNetworks" :key="n.index">
+                    <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
+                      <span x-text="n.name"></span>
+                    </a>
                   </template>
                 </nav>
                 <template x-for="n in selectableNetworks" :key="n.index">
@@ -1428,7 +1428,7 @@ ct:Append([=[
                           <div class="field label prefix border small right-round" :class="{ invalid: s.archive && !s.startTime }">
                             <i>schedule</i>
                             <input type="time" name="startTime" step="1" x-model="s.startTime" :required="s.archive">
-                            <label>開始時間</label> 
+                            <label>開始時間</label>
                             <output class="invalid">開始時間を入力してください</output>
                           </div>
                         </div>
@@ -1722,7 +1722,7 @@ ct:Append([=[
       <div id="recSetting" class="page right padding">
         <template x-if="d.recSetting">
           <div class="grid no-margin">
-            <template  x-if="isReserve">
+            <template x-if="isReserve">
               <div class="contents">
                 <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
@@ -1763,7 +1763,7 @@ ct:Append([=[
                       <div class="field label prefix border small">
                         <i>schedule</i>
                         <input type="time" name="starttime" step="1" :value="date.toTimeString().slice(0, 8)">
-                        <label>開始時間</label> 
+                        <label>開始時間</label>
                       </div>
                       ～
                       <div class="row max">
@@ -1801,7 +1801,7 @@ ct:Append([=[
                       <div class="field label prefix border small">
                         <i>schedule</i>
                         <input type="time" name="startTime" step="1" :value="convert.time(d.startTime||0)">
-                        <label>開始時間</label> 
+                        <label>開始時間</label>
                       </div>
                       ～
                       <div class="row max">
@@ -1862,7 +1862,7 @@ ct:Append([=[
                     <h6><label class="large-text" for="recEnabled">録画有効</label></h6>
                   </div>
                   <label class="switch icon">
-                  <input id="recEnabled" type="checkbox" name="recEnabled" x-model="r.recEnabled">
+                    <input id="recEnabled" type="checkbox" name="recEnabled" x-model="r.recEnabled">
                     <span>
                       <i>mode_off_on</i>
                     </span>
@@ -2019,7 +2019,7 @@ ct:Append([=[
                   <i>arrow_drop_down</i>
                 </div>
                 <nav class="no-space">
-                  <div class="max field label border small">                  
+                  <div class="max field label border small">
                     <input type="text" :name="`${partial ? 'partial' : ''}recName`" x-model="v.recNameOp">
                     <label>オプション</label>
                   </div>
@@ -2086,7 +2086,7 @@ ct:Append([=[
                 <i>arrow_drop_down</i>
               </div>
             </div>
-            
+
             <div class="s12">
               <fieldset>
                 <legend>録画後動作</legend>

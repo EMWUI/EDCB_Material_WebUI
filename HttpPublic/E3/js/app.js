@@ -51,7 +51,7 @@ document.addEventListener('alpine:init', () => {
     0x0240:['', '視覚障害者用音声解説'], 0x0241:['', '聴覚障害者用音声']
   };
 
-  const  dayText = ['日','月','火','水','木','金','土'];
+  const dayText = ['日', '月', '火', '水', '木', '金', '土'];
   Alpine.data('edcbApp', config => ({
     debug: true,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
@@ -79,7 +79,7 @@ document.addEventListener('alpine:init', () => {
     activeTunerId: 1,
     dashboardData: {
       reserves: [], recs: [], nowOnAir: {},
-      reservesCount: 0, 
+      reservesCount: 0,
       activeTuners: 0, isRecording: false, isEpgCap: false,
       diskGB: 0, diskPercent: 0
     },
@@ -145,7 +145,7 @@ document.addEventListener('alpine:init', () => {
       '#epg': { title: '番組表', itemKey: d => `${d.onid}-${d.tsid}-${d.sid}-${d.eid}` },
       '#epgweek': { title: '週間番組表' },
       '#onair': { title: '放送中' },
-      '#watch': {title: 'リモート視聴' },
+      '#watch': { title: 'リモート視聴' },
       '#reserve': { title: '予約一覧', api: 'EnumReserveInfo', sortKey: 'startTime', itemKey: d => d.eid !== 65535 ? `${d.onid}-${d.tsid}-${d.sid}-${d.eid}` : d.reserveID, entry: true },
       '#tunerreserve': { title: 'チューナー別', api: 'EnumTunerReserveInfo', sortKey: 'startTime', itemKey: 'tunerID', entry: true },
       '#autoaddepg': { title: 'EPG自動予約', api: 'EnumAutoAdd', itemKey: 'dataID', entry: true },
@@ -391,7 +391,7 @@ document.addEventListener('alpine:init', () => {
       }
       this.eventSource.onmessage = async e => {
         const data = JSON.parse(e.data);
-        
+
         // 通知が来たら pageMap に基づいて再取得
         if (data.reserve) {
           await Promise.all([
@@ -419,14 +419,14 @@ document.addEventListener('alpine:init', () => {
       try {
         const res = await fetch(`${this.ROOT}api/${config.api}?json=1${config.count ? `&count=${config.count}` : ''}`);
         const data = await res.json();
-        
+
         // データキー（items等）の特定
         const key = config.key || 'items';
         const list = Array.isArray(data[key]) ? data[key] : (Array.isArray(data) ? data : Object.values(data));
 
         // ソート
         this.sortList(list, config);
-        
+
         // 対応する内部キーに保存
         const internalKey = pageHash.replace('#', '');
         const map = this.allData[internalKey];
@@ -438,7 +438,7 @@ document.addEventListener('alpine:init', () => {
         // ダッシュボードや表示リストへの反映
         this.syncDashboardData();
         if (this.page === pageHash) this.updateDisplayList();
-        
+
         // キャッシュ保存
         this.saveCache();
       } catch (e) {
@@ -514,7 +514,7 @@ document.addEventListener('alpine:init', () => {
         // 27時間分を取得
         const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535&date=${dateStr}&hour=${hour}&interval=24`);
         const list = await res.json();
-        
+
         if (list.err) throw new Error(list.err);
 
         const grouped = new Map();
@@ -575,7 +575,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       this.totalCount = null;
-      if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0,0);
+      if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0, 0);
       this.sidePanel.close();
 
       if (this.page === '#dashboard') {
@@ -670,14 +670,14 @@ document.addEventListener('alpine:init', () => {
       if (this.page === '#tunerreserve') {
         this.allData.tunerreserve.forEach(tuner => {
           const tid = tuner.tunerID;
-          
+
           // まだこのチューナーの表示用データがない場合のみ作成
           if (!this.tunerDisplayData[tid]) {
             const idSet = new Set(tuner.reserveList);
             // 並び順はマスター(allData.reserve)に従う
             const allReserves = Array.from(this.allData.reserve.values());
             const fullList = allReserves.filter(res => idSet.has(res.reserveID));
-            
+
             this.tunerDisplayData[tid] = {
               fullList: fullList,
               displayList: fullList.slice(0, this.perPage),
@@ -690,7 +690,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       const list = Array.from(this.allData[internalKey]?.values() || []);
-      
+
       if (list) {
         this.rawData = list;
         this.totalCount = this.totals[internalKey];
@@ -761,7 +761,7 @@ document.addEventListener('alpine:init', () => {
         try {
           const res = await fetch(`${this.ROOT}api/${config.api}?json=1&index=${this.rawData.length}&count=${config.count}`);
           const data = await res.json();
-          
+
           const key = config.key || 'items';
           const newList = Array.isArray(data[key]) ? data[key] : (Array.isArray(data) ? data : Object.values(data));
 
@@ -771,7 +771,7 @@ document.addEventListener('alpine:init', () => {
           // 【重要】allData(キャッシュ)自体を更新する
           // これにより、他のページから参照しているデータも拡張される
           newList.forEach(item => this.allData[internalKey].set(this.getDataKey(item, internalKey), item));
-          
+
           // rawData も最新のキャッシュを参照させる
           this.rawData = Array.from(this.allData[internalKey].values());
 
@@ -806,7 +806,7 @@ document.addEventListener('alpine:init', () => {
           const currentIndex = this.allData.reserve.length;
           const res = await fetch(`${this.ROOT}api/${reserveConfig.api}?json=1&index=${currentIndex}`);
           const data = await res.json();
-          
+
           let newList = data.items || [];
           if (newList.length > 0) {
             // 【重要】追加分も予約一覧と同じルールでソートする
@@ -815,7 +815,7 @@ document.addEventListener('alpine:init', () => {
             // マスターデータを更新
             newList.forEach(item => this.allData.reserve.set(this.getDataKey(item, 'reserve'), item));
             const fullReserves = Array.from(this.allData.reserve.values());
-            
+
             // 全チューナーの fullList を最新の allData.reserve から再抽出
             // これにより「時間順」などが全てのタブで維持される
             this.allData.tunerreserve.forEach(t => {
@@ -839,7 +839,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    clone(obj){
+    clone(obj) {
       return JSON.parse(JSON.stringify(obj));
     },
     saveCache() {
@@ -890,7 +890,7 @@ document.addEventListener('alpine:init', () => {
       let epg = serviceMap ? serviceMap.get(eid) : null;
 
       if (!epg && this.isOnline) {
-        try{
+        try {
           this.loading = true;
           epg = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
           // 単発取得時は既存の配列を汚さないよう個別に扱うか検討が必要ですが、
@@ -976,15 +976,15 @@ document.addEventListener('alpine:init', () => {
         const re = /https?:\/\/[\w?=&.\/-;#~%-]+(?![\w\s?&.\/;#~%"=-]*>)/g;
         let s = '';
         let i = 0;
-        for (let m; m = re.exec(a); i = re.lastIndex){
+        for (let m; m = re.exec(a); i = re.lastIndex) {
           s += `${a.substring(i, re.lastIndex - m[0].length)}`
           s += `<a class="link underline" href="${m[0]}" target="_blank" rel="noreferrer">${m[0]}</a>`;
         }
         s += `${a.substring(i)}`;
-        return s.replace(/\n/g,'<br>');
+        return s.replace(/\n/g, '<br>');
       },
       title(a) {
-        return !a ? '' : `${a.replace(/　/g,' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
+        return !a ? '' : `${a.replace(/　/g, ' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
       },
       sanitizeTitle(a) {
         return a.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, '')
@@ -996,8 +996,8 @@ document.addEventListener('alpine:init', () => {
         return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ')
       },
     },
-    getLogoPath(d){
-        return `${this.ROOT}api/logo?onid=${d.onid}&sid=${d.sid}`;
+    getLogoPath(d) {
+      return `${this.ROOT}api/logo?onid=${d.onid}&sid=${d.sid}`;
     },
     getPageTitle() {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
@@ -1115,7 +1115,7 @@ document.addEventListener('alpine:init', () => {
       });
       this.networkMask = mask;
     },
-    getDefSearchService(){
+    getDefSearchService() {
       return [...document.getElementById('serviceList-template').content.querySelectorAll('.def')].map(e => e.value);
     },
 
@@ -1213,8 +1213,8 @@ document.addEventListener('alpine:init', () => {
         if (this.hasMoved) return;
         clearTimeout(this.clickTimeout);
         this.clickTimeout = setTimeout(() => {
-            // Gap（番組の隙間）であるか、既にアクティブなら解除、そうでなければeidをセット
-            this.active = event.isGap || this.active === event.eid ? null : event.eid;
+          // Gap（番組の隙間）であるか、既にアクティブなら解除、そうでなければeidをセット
+          this.active = event.isGap || this.active === event.eid ? null : event.eid;
         }, 200);
       },
       // ダブルクリックハンドラ
@@ -1222,24 +1222,24 @@ document.addEventListener('alpine:init', () => {
         if (this.hasMoved) return;
         clearTimeout(this.clickTimeout);
         if (!event.isGap) {
-            this.openProgramDetail(event);
+          this.openProgramDetail(event);
         }
       },
       // EPGイベントに適用するCSSクラスを判定する
       getEventClass(event) {
-        const genreId = (event.contentInfoList && event.contentInfoList.length > 0) 
-            ? this.getGenre(event.contentInfoList[0]).nibble1 + 1 
-            : 16;
+        const genreId = (event.contentInfoList && event.contentInfoList.length > 0)
+          ? this.getGenre(event.contentInfoList[0]).nibble1 + 1
+          : 16;
         const genreClass = event.isGap ? 'cont-0' : 'cont-' + genreId;
 
         return {
-            'reserve': !!event.reserve,
-            'disabled': event.reserve && !event.reserve.recSetting.recEnabled,
-            'partially': event.reserve?.overlapMode === 1,
-            'shortage': event.reserve?.overlapMode === 2,
-            'view': event.reserve?.recSetting.recMode === 5,
-            'large-elevate': !event.isGap && this.active === event.eid,
-            [genreClass]: true
+          'reserve': !!event.reserve,
+          'disabled': event.reserve && !event.reserve.recSetting.recEnabled,
+          'partially': event.reserve?.overlapMode === 1,
+          'shortage': event.reserve?.overlapMode === 2,
+          'view': event.reserve?.recSetting.recMode === 5,
+          'large-elevate': !event.isGap && this.active === event.eid,
+          [genreClass]: true
         };
       },
     },
@@ -1247,7 +1247,7 @@ document.addEventListener('alpine:init', () => {
       const d = new Date(time);
       return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
     },
-    loadEpg(){
+    loadEpg() {
       const gridStart = this.epg.epgStartTime;
       const gridEnd = gridStart + 24 * 3600 * 1000;
       const slotKey = this.getEpgKey(gridStart);
@@ -1267,13 +1267,13 @@ document.addEventListener('alpine:init', () => {
 
       // 基準時間、ネットワークフィルタ、EPGデータ更新のいずれも変化がなければ処理をスキップ
       const isUnchanged = (
-          this.epg.lastLoadedStart === gridStart &&
-          this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
-          this.epg.lastLoadedData === this.lastUpdated.epg &&
-          this.epg.lastLoadedMask === this.epg.networkMask &&
-          this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
-          this.epg.lastLoadedKey === slotKey &&
-          this.epg.servicesToDisplay.length > 0
+        this.epg.lastLoadedStart === gridStart &&
+        this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
+        this.epg.lastLoadedData === this.lastUpdated.epg &&
+        this.epg.lastLoadedMask === this.epg.networkMask &&
+        this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
+        this.epg.lastLoadedKey === slotKey &&
+        this.epg.servicesToDisplay.length > 0
       );
 
       const timeChanged = this.epg.lastLoadedStart !== gridStart;
@@ -1304,7 +1304,7 @@ document.addEventListener('alpine:init', () => {
       // 代入後にプロキシ化された参照を取得する（比較用）
       const currentServices = this.epg.servicesToDisplay;
 
-      if (timeChanged || networkChanged || isUnchanged) document.querySelector('main').scrollTo(0,0);
+      if (timeChanged || networkChanged || isUnchanged) document.querySelector('main').scrollTo(0, 0);
 
       // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
       let index = 0;
@@ -1392,11 +1392,11 @@ document.addEventListener('alpine:init', () => {
 
       // 再描画が必要かチェック（サービス、開始時間、データ更新、予約更新のいずれも変化がなければスキップ）
       const isUnchanged = (
-          this.epg.lastLoadedWeeklyService === serviceId &&
-          this.epg.lastLoadedWeeklyStart === startTime &&
-          this.epg.lastLoadedWeeklyData === this.lastUpdated.epg &&
-          this.epg.lastLoadedWeeklyReserve === this.lastUpdated.reserve &&
-          this.epg.weeklyToDisplay.length === 7
+        this.epg.lastLoadedWeeklyService === serviceId &&
+        this.epg.lastLoadedWeeklyStart === startTime &&
+        this.epg.lastLoadedWeeklyData === this.lastUpdated.epg &&
+        this.epg.lastLoadedWeeklyReserve === this.lastUpdated.reserve &&
+        this.epg.weeklyToDisplay.length === 7
       );
 
       this.epg.epgStartTime = startTime;
@@ -1421,11 +1421,11 @@ document.addEventListener('alpine:init', () => {
             displayEvents: []
           };
         });
-      } else if (isUnchanged){
+      } else if (isUnchanged) {
         this.epg.weeklyToDisplay.forEach(s => s.displayEvents = []);
       }
 
-      if (serviceChanged || timeChanged || isUnchanged) document.querySelector('main').scrollTo(0,0);
+      if (serviceChanged || timeChanged || isUnchanged) document.querySelector('main').scrollTo(0, 0);
 
       const processEvents = events => {
         let index = 0;
@@ -1467,12 +1467,12 @@ document.addEventListener('alpine:init', () => {
 
           // 変更がある場合のみ個別の番組リストを更新（リアクティブ連鎖の抑制）
           const old = this.epg.weeklyToDisplay[index].displayEvents || [];
-          const isChanged = old.length !== displayEvents.length || 
-                            displayEvents.some((v, i) => v.eid !== old[i]?.eid || v.minutes !== old[i]?.minutes || 
-                            (v.reserve?.reserveID !== old[i]?.reserve?.reserveID) || 
-                            (v.reserve?.recSetting.recEnabled !== old[i]?.reserve?.recSetting.recEnabled) ||
-                            (v.reserve?.overlapMode !== old[i]?.reserve?.overlapMode));
-          
+          const isChanged = old.length !== displayEvents.length ||
+            displayEvents.some((v, i) => v.eid !== old[i]?.eid || v.minutes !== old[i]?.minutes ||
+              (v.reserve?.reserveID !== old[i]?.reserve?.reserveID) ||
+              (v.reserve?.recSetting.recEnabled !== old[i]?.reserve?.recSetting.recEnabled) ||
+              (v.reserve?.overlapMode !== old[i]?.reserve?.overlapMode));
+
           if (isChanged) {
             this.epg.weeklyToDisplay[index].displayEvents = displayEvents;
           }
@@ -1497,7 +1497,7 @@ document.addEventListener('alpine:init', () => {
         const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${serviceId}&date=${dateStr}&hour=4&interval=168`);
         const list = await res.json();
         this.loading = false;
-        
+
         if (this.epg.weeklyLoadId !== currentWeeklyLoadId) {
           this.epg.fetchingWeekly = null;
           return;
@@ -1532,7 +1532,7 @@ document.addEventListener('alpine:init', () => {
     shiftDate(days) {
       const target = this.epg.epgStartTime + days * 24 * 3600 * 1000;
       if (target < this.epg.minTime || target > this.epg.maxTime) return;
-      
+
       const d = new Date(target);
       this.setDate(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`, d.getHours());
     },
@@ -1651,37 +1651,37 @@ document.addEventListener('alpine:init', () => {
       },
       initSelectedGenres(s) {
         this.selectedGenres = s?.contentList
-            ? s.contentList.map(i => i.content_nibble) : [];
+          ? s.contentList.map(i => i.content_nibble) : [];
       },
       initSelectedServices(s) {
         this.selectedServices = s?.serviceList
-            ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`) 
-            : this.app.getDefSearchService();
+          ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`)
+          : this.app.getDefSearchService();
       },
       updateContentList() {
-          this.s.contentList = this.selectedGenres.map(e => ({ content_nibble: Number(e) }));
+        this.s.contentList = this.selectedGenres.map(e => ({ content_nibble: Number(e) }));
       },
       // 選択されたキー配列を searchInfo.serviceList に反映する
       updateServiceList() {
-          this.s.serviceList = this.selectedServices.map(e => {
-              const [onid, tsid, sid] = e.split('-').map(Number);
-              return { onid, tsid, sid };
-          });
+        this.s.serviceList = this.selectedServices.map(e => {
+          const [onid, tsid, sid] = e.split('-').map(Number);
+          return { onid, tsid, sid };
+        });
       },
       // 指定されたネットワークに属する全サービスを選択に追加する
       addNetworkServices(networkIndex) {
-          // 該当ネットワークの全サービスを取得
-          const servicesInNetwork = Array.from(this.allData.service.values())
-              .filter(sv => this.app.getNetworkIndex(sv.onid, sv.partialReceptionFlag, true) === networkIndex);
+        // 該当ネットワークの全サービスを取得
+        const servicesInNetwork = Array.from(this.allData.service.values())
+          .filter(sv => this.app.getNetworkIndex(sv.onid, sv.partialReceptionFlag, true) === networkIndex);
 
-          // それらのデータキーを取得
-          const keys = servicesInNetwork.map(sv => this.app.getDataKey(sv, 'service'));
-          
-          // 現在の選択にマージ（Setを使用して重複を排除）
-          this.selectedServices = [...new Set([...this.selectedServices, ...keys])];
-          
-          // searchInfo 側に反映
-          this.updateServiceList();
+        // それらのデータキーを取得
+        const keys = servicesInNetwork.map(sv => this.app.getDataKey(sv, 'service'));
+
+        // 現在の選択にマージ（Setを使用して重複を排除）
+        this.selectedServices = [...new Set([...this.selectedServices, ...keys])];
+
+        // searchInfo 側に反映
+        this.updateServiceList();
       },
       applyPreset(presetId) {
         if (!this.r) return;
@@ -1706,7 +1706,7 @@ document.addEventListener('alpine:init', () => {
           // 個別設定に切り替える際、現在の「見かけ上の状態（既定値）」をコピーする
           const sub = this.isServiceModeBitSet(16);
           const data = this.isServiceModeBitSet(32);
-          
+
           // LSBを1（個別設定）にしつつ、直前のビット状態を維持
           let newMode = 1;
           if (sub) newMode |= 16;
@@ -1751,7 +1751,7 @@ document.addEventListener('alpine:init', () => {
       },
 
       title() {
-        return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo||this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
+        return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo || this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
       },
       get mode() {
         if (this.d.eid == 65535) return 1
@@ -1762,7 +1762,7 @@ document.addEventListener('alpine:init', () => {
         else if (this.d.recStatus) return 4
         else return 0
       },
-      get isNewEntry(){
+      get isNewEntry() {
         return !this.d.reserveID && !this.d.dataID && !this.d.id;
       },
       get isInfo() {
@@ -1795,9 +1795,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     // 番組詳細を開くメイン関数
-    openNewEntry(e){
+    openNewEntry(e) {
       this.detail = { recSetting: this.allData.recpreset.get(0).recSetting };
-      if (e)  this.detail.searchInfo = { andKey: e.shortInfo.event_name, serviceList: [{onid: e.onid, tsid: e.tsid, sid: e.sid }] };
+      if (e) this.detail.searchInfo = { andKey: e.shortInfo.event_name, serviceList: [{ onid: e.onid, tsid: e.tsid, sid: e.sid }] };
       else if (this.page == '#autoaddepg') this.detail.searchInfo = {};
       else if (this.page == '#autoaddmanual') this.detail.dataID = 0;
       else this.detail.eid = 65535;
@@ -1813,10 +1813,10 @@ document.addEventListener('alpine:init', () => {
       else ui("#info");
       this.sidePanel.show();
 
-      if (d.past ||  d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
+      if (d.past || d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
 
-      if (d.reserveID){
-        this.detail = { ...d, ...await this.getEpgById(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`)||{} };
+      if (d.reserveID) {
+        this.detail = { ...d, ...await this.getEpgById(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`) || {} };
       } else {
         const r = this.allData.reserve.get(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`);
         if (r) {
@@ -1844,10 +1844,10 @@ document.addEventListener('alpine:init', () => {
         if (json) {
           const parsed = this.parseProgramInfo(json.programInfo);
           Object.assign(parsed, json);
-          
+
           // 2. allData.recinfo の中から同じIDのものを探す
           const existing = this.allData.recinfo.get(d.id);
-          
+
           if (existing) {
             // 3. 詳細データをマージ（上書き）
             // これにより allData 自体が更新され、リアクティブに画面が変わる
@@ -1879,9 +1879,9 @@ document.addEventListener('alpine:init', () => {
       const s = this.sidePanel.d.searchInfo;
       if (!this.isValidSearchRange(s)) {
         const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
-        this.snackbar.add({ 
-          text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください', 
-          error: true 
+        this.snackbar.add({
+          text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください',
+          error: true
         });
         return;
       }
@@ -1890,8 +1890,8 @@ document.addEventListener('alpine:init', () => {
       this.search = this.clone(this.sidePanel.d.searchInfo);
       const container = document.getElementById('searchInfo');
       const fd = new URLSearchParams();
-      
-      if (andKey){
+
+      if (andKey) {
         fd.append('andKey', andKey);
         (this.getDefSearchService()).forEach(v => fd.append('serviceList', v));
       } else {
@@ -1906,7 +1906,7 @@ document.addEventListener('alpine:init', () => {
           }
         });
       }
-      
+
       fd.set('ctok', document.getElementById('searchCtok')?.value || '');
 
       try {
@@ -1917,7 +1917,7 @@ document.addEventListener('alpine:init', () => {
 
         const res = await fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
         const list = await res.json();
-        
+
         this.allData.search.clear();
         (Array.isArray(list) ? list : []).forEach(v => {
           v.startTimeInt = new Date(v.startTime).getTime();
@@ -1945,7 +1945,7 @@ document.addEventListener('alpine:init', () => {
       // --- 冒頭セクションの解析 ---
       const head = sections[0] || '';
       const headLines = head.split('\n');
-      
+
       // 1. 日時とdurationの算出
       // 生データ例: "2026/04/11(土) 00:12～00:52"
       const dateMatch = (headLines[0] || '').match(/(\d+)\/(\d+)\/(\d+)\D+([\d:]+)\s*～\s*(未定|[\d:]+)/);
@@ -1956,14 +1956,14 @@ document.addEventListener('alpine:init', () => {
         const pad = (n) => n.padStart(2, '0');
         const y = dateMatch[1], m = pad(dateMatch[2]), d = pad(dateMatch[3]);
         const startStr = `${y}-${m}-${d}T${dateMatch[4]}:00+09:00`;
-        
+
         // starttime を ISO 8601 形式に上書き
         starttime = startStr;
 
         if (dateMatch[5] !== '未定') {
           const sTime = new Date(startStr).getTime();
           let eTime = new Date(`${y}-${m}-${d}T${dateMatch[5]}:00+09:00`).getTime();
-          
+
           // 日またぎ補正
           if (eTime < sTime) eTime += 86400000;
           durationSecond = (eTime - sTime) / 1000;
@@ -1981,7 +1981,7 @@ document.addEventListener('alpine:init', () => {
       const getSection = (key) => {
         const s = sections.find(sec => sec.startsWith(key));
         if (!s) return '';
-        
+
         // キーワード（例：「音声 : 」）を取り除く
         let content = s.replace(key, '').trim();
 
@@ -2011,7 +2011,7 @@ document.addEventListener('alpine:init', () => {
           text_char: text_ext
         },
         freeCAFlag: false,
-        
+
         /*/ 生データを保持しつつパース
         genre_raw: getSection('ジャンル :'),
         video_raw: getSection('映像 :'),
@@ -2042,16 +2042,16 @@ document.addEventListener('alpine:init', () => {
           } : { component_type_name: text, text: text, toString() { return this.text; } };
         })(),
         audioInfoList: [],
-        
+
         // ID類 (other_rawから抽出)
         onid: 0, tsid: 0, sid: 0, eid: 0
       };
       const relay = getSection('イベントリレーあり : ');
       if (relay) {
         res.eventRelayInfo = {
-          eventDataList : relay.split('\n').filter(v => v).map(e => {
+          eventDataList: relay.split('\n').filter(v => v).map(e => {
             e = e.match(/(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)-(\d+)\(0x[0-9A-F]+\)(?:\s(.+))?/);
-            return {onid: Number(e[1]), tsid: Number(e[2]), sid: Number(e[3]), eid: Number(e[4])}
+            return { onid: Number(e[1]), tsid: Number(e[2]), sid: Number(e[3]), eid: Number(e[4]) }
           })
         }
       }
@@ -2104,7 +2104,7 @@ document.addEventListener('alpine:init', () => {
             } catch (ex) { this.list = []; }
           }
         });
-        
+
         setInterval(() => {
           const now = Date.now();
           let changed = false;
@@ -2165,7 +2165,7 @@ document.addEventListener('alpine:init', () => {
           });
           n.close();
         };
-        setTimeout(() => n.close(), 15*1000);
+        setTimeout(() => n.close(), 15 * 1000);
       }
     },
 
@@ -2213,7 +2213,7 @@ document.addEventListener('alpine:init', () => {
         console.error('通信失敗:', err);
         // ctokエラーを想定してリロード
         const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン切れと思われます。リロードします', action: () => clearTimeout(t), time: 2500, error: true});
+        this.snackbar.add({ text: 'トークン切れと思われます。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
       });
     },
     addReserve(e) {
@@ -2240,7 +2240,7 @@ document.addEventListener('alpine:init', () => {
         if (el.type === 'checkbox') {
           if (el.checked) fd.append(name, '1');
         }
-        
+
         // 2. 複数選択セレクトボックス
         else if (el.tagName === 'SELECT' && el.multiple) {
           // 選択されているすべての option を個別に append する
@@ -2342,7 +2342,7 @@ document.addEventListener('alpine:init', () => {
         const video = this.app.$refs.video;
         video.setAttribute('ctok', video.dataset.ctokXcode);
         Alpine.raw(this.ts).reset();
-        if (canPlay){
+        if (canPlay) {
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F','/')}`;
           video.src = fname;
           const meta = this.app.$refs.meta;
@@ -2351,7 +2351,7 @@ document.addEventListener('alpine:init', () => {
             const newMeta = document.createElement('track');
             newMeta.id = 'vid-meta';
             newMeta.kind = 'metadata';
-            newMeta.src = `${fname.replace(/\.[0-9A-Za-z]+$/,'')}.vtt`;
+            newMeta.src = `${fname.replace(/\.[0-9A-Za-z]+$/, '')}.vtt`;
             meta.parentNode.replaceChild(newMeta, meta);
             this.app.$refs.meta = newMeta;
             newMeta.track.mode = 'hidden';
@@ -2419,7 +2419,7 @@ document.addEventListener('alpine:init', () => {
         }
         this.moveRemocon(this.isPortrait);
       },
-      setAudioTrack(track){
+      setAudioTrack(track) {
         this.track = track;
         Alpine.raw(this.ts).setAudioTrack(track, () => this.isLoading = true);
       },
@@ -2454,13 +2454,13 @@ document.addEventListener('alpine:init', () => {
       setQuality(quality, tslive) {
         this.set.quality = quality;
         this.tslive = tslive;
-        Alpine.raw(this.ts).setOption(quality, tslive, ()=>{}, () => this.isLoading = true);
+        Alpine.raw(this.ts).setOption(quality, tslive, () => { }, () => this.isLoading = true);
       },
-      setDetelecine(){
+      setDetelecine() {
         this.cinema = !this.cinema;
         Alpine.raw(this.ts).setDetelecine(this.cinema, () => this.isLoading = true);
       },
-      setbmlBrowserSize(){
+      setbmlBrowserSize() {
         if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
         const width = this.$refs.player.clientWidth;
         const height = this.$refs.player.clientHeight;
@@ -2530,7 +2530,7 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('pause', () => this.isPlaying = false);
           video.addEventListener('timeupdate', () => {
             if (this.isSeeking) return;
-            if (this.live){
+            if (this.live) {
               this.currentTime = this.app.getElapsedTime(this.epg);
             } else {
               this.currentTime = ts.fixedCurrentTime || vid.currentTime;
@@ -2542,7 +2542,7 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('canplay', () => {
             const promise = video.play();
             //自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
-            if (promise !== undefined){
+            if (promise !== undefined) {
               promise.catch(error => {
                 video.muted = true;
                 video.play();
@@ -2552,11 +2552,11 @@ document.addEventListener('alpine:init', () => {
               });
             }
 
-            if (!this.live && this.videoInfo && !this.videoInfo.meta){
+            if (!this.live && this.videoInfo && !this.videoInfo.meta) {
               this.videoInfo.meta = { duration: video.duration };
             }
           });
-          video.addEventListener('enabledDetelecine',  () => this.cinema = true);
+          video.addEventListener('enabledDetelecine', () => this.cinema = true);
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
           this.sideTab = this.live ? 'service-list' : 'info';
@@ -2574,7 +2574,7 @@ document.addEventListener('alpine:init', () => {
 
           if (this.params.id) this.loadLive(this.params.id);
           else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
-          
+
           this.resetControlTimeout();
         });
       }
@@ -2623,7 +2623,7 @@ document.addEventListener('alpine:init', () => {
         }
       },
       openDir(item) {
-        const p = (this.data.path || []).concat(this.data.dirhash ? [{hash: this.data.dirhash}] : []).map(x => x.hash).filter(v => v).join(',');
+        const p = (this.data.path || []).concat(this.data.dirhash ? [{ hash: this.data.dirhash }] : []).map(x => x.hash).filter(v => v).join(',');
         this.app.openPage('#library', { i: item.index || this.data.index, p, d: item.hash });
       },
       openPath(idx) {
