@@ -223,15 +223,6 @@ ct:Append([=[
         <button class="circle transparent" data-ui="#setting">
           <i>settings</i>
         </button>
-        <div>
-          <button class="circle transparent">
-            <i>more_vert</i>
-          </button>
-          <menu class="left no-wrap">
-            <li @click="refreshEpg()">EPGデータ更新</li>
-            <li @click="refreshStaticData()">基礎データ更新</li>
-          </menu>
-        </div>
       </nav>
     </nav>
 
@@ -251,6 +242,7 @@ ct:Append([=[
   <main class="scroll no-padding">
     <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
     <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
+    <input id="commonCtok" type="hidden" value="]=]..CsrfToken('common')..[=[">
     <template x-if="page === '#dashboard'">
       <div class="padding">
 
@@ -2194,6 +2186,52 @@ ct:Append([=[
       </button>
     </nav>
     <hr class="medium">
+    <div class="grid">
+      <div class="s6 l3">
+        <template x-if="enableSuspend">
+          <button class="responsive vertical small" @click="suspendSystem()">
+            <i class="responsive">bedtime</i>
+            <span x-text="suspendMode === 'hibernate' ? '休止' : 'スタンバイ'">スタンバイ</span>
+          </button>
+        </template>
+      </div>
+      <div class="s6 l3">
+      <template x-if="hasNosuspend">
+        <button class="responsive vertical small" @click="toggleNosuspend()" :class="{ 'fill': !nosuspendActive }">
+          <i class="responsive">bedtime_off</i>
+          <span>録画後動作</span>
+        </button>
+      </template>
+      </div>
+      <div class="s6 l3">
+      <button class="responsive vertical small" @click="epgCap()">
+        <i class="responsive">download</i>
+        <span>EPG取得</span>
+      </button>
+      </div>
+      <div class="s6 l3">
+      <button class="responsive vertical small" @click="epgReload()">
+        <i class="responsive">cached</i>
+        <span>EPG再読み込み</span>
+      </button>
+      </div>
+    </div>
+    <hr class="medium">
+    <div class="grid">
+      <div class="s6">
+        <button class="responsive vertical small" @click="refreshEpg()">
+          <i class="responsive">download</i>
+          <span>EPGデータ</span>
+        </button>
+      </div>
+      <div class="s6">
+        <button class="responsive vertical small" @click="refreshStaticData()">
+          <i class="responsive">download</i>
+          <span>基礎データ</span>
+        </button>
+      </div>
+    </div>
+    <hr class="medium">
     <div class="field middle-align">
       <nav>
         <div class="max"><h6>サブチャンネルを表示</h6></div>
@@ -2320,7 +2358,7 @@ ct:Append([=[
     </template>
   </dialog>
 
-  <div id="snackbar" class="snackbar" :class="{ error: active?.error }" x-data="snackbar">
+  <div id="snackbar" class="snackbar" :class="{ error: active?.error, top: active?.top }" x-data="snackbar">
     <div class="max" x-text="active?.text"></div>
     <template x-if="active?.action != null">
       <a class="inverse-primary-text"

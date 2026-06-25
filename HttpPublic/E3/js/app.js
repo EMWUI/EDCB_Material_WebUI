@@ -56,6 +56,10 @@ document.addEventListener('alpine:init', () => {
     debug: true,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
     ROOT: config.root || '',
+    hasNosuspend: config.hasNosuspend || false,
+    nosuspendActive: config.nosuspendActive || false,
+    enableSuspend: config.enableSuspend || false,
+    suspendMode: config.suspendMode || 'suspend',
     useDedicatedSsePort: config.useSsePort, // SSE専用ポートを使用するかどうか
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
@@ -565,6 +569,115 @@ document.addEventListener('alpine:init', () => {
       } finally {
         this.loading = false;
       }
+    },
+    toggleNosuspend() {
+      const targetState = this.nosuspendActive ? 'n' : 'y';
+      const fd = new URLSearchParams({
+        nosuspend: targetState,
+        ctok: document.getElementById('commonCtok')?.value || ''
+      });
+      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
+        .then(r => {
+          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+          return r.json();
+        })
+        .then(d => {
+          if (d.err) {
+            this.snackbar.add({ text: d.err, error: true });
+          } else {
+            this.snackbar.add({ text: d.info || '操作を完了しました' });
+            if (d.info && d.info.includes('起動')) {
+              this.nosuspendActive = true;
+            } else if (d.info && d.info.includes('停止')) {
+              this.nosuspendActive = false;
+            } else {
+              this.nosuspendActive = (targetState === 'y');
+            }
+          }
+        })
+        .catch(err => {
+          console.error('通信失敗:', err);
+          this.snackbar.add({ text: '通信に失敗しました', error: true });
+        });
+    },
+    suspendSystem() {
+      ui('#setting');
+      const modeText = this.suspendMode === 'hibernate' ? '休止' : 'スタンバイ';
+
+      this.snackbar.add({
+        top: true,
+        text: `${modeText}に移行しますか？`,
+        action_text: '実行',
+        action: () => {
+          const fd = new URLSearchParams({
+            ctok: document.getElementById('commonCtok')?.value || ''
+          });
+          fd.append(this.suspendMode, 'y');
+          fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
+            .then(r => {
+              if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+              return r.json();
+            })
+            .then(d => {
+              if (d.err) {
+                this.snackbar.add({ text: d.err, error: true });
+              } else {
+                this.snackbar.add({ text: d.info || `${modeText}移行要求を送信しました` });
+              }
+            })
+            .catch(err => {
+              console.error('通信失敗:', err);
+              this.snackbar.add({ text: '通信に失敗しました', error: true });
+            });
+        },
+        time: 6000,
+      });
+    },
+    epgCap() {
+      const fd = new URLSearchParams({
+        epgcap: 'y',
+        ctok: document.getElementById('commonCtok')?.value || ''
+      });
+
+      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
+        .then(r => {
+          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+          return r.json();
+        })
+        .then(d => {
+          if (d.err) {
+            this.snackbar.add({ text: d.err, error: true });
+          } else {
+            this.snackbar.add({ text: d.info || 'EPG取得を開始しました' });
+          }
+        })
+        .catch(err => {
+          console.error('通信失敗:', err);
+          this.snackbar.add({ text: '通信に失敗しました', error: true });
+        });
+    },
+    epgReload() {
+      const fd = new URLSearchParams({
+        epgreload: 'y',
+        ctok: document.getElementById('commonCtok')?.value || ''
+      });
+
+      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
+        .then(r => {
+          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+          return r.json();
+        })
+        .then(d => {
+          if (d.err) {
+            this.snackbar.add({ text: d.err, error: true });
+          } else {
+            this.snackbar.add({ text: d.info || 'EPG再読み込みを開始しました' });
+          }
+        })
+        .catch(err => {
+          console.error('通信失敗:', err);
+          this.snackbar.add({ text: '通信に失敗しました', error: true });
+        });
     },
 
     // ページ切り替え時に呼ばれる

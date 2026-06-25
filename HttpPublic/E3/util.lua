@@ -28,6 +28,19 @@ function GetAppConfig()
 
   local useSsePort=tonumber(edcb.GetPrivateProfile('E3','useSsePort',false,INI))~=0 and 'true' or 'false'
   local rsdef=((edcb.GetReserveData(0x7FFFFFFF) or {}).recSetting or {})
+
+  local function EdcbFindFilePlain(path)
+    return edcb.FindFile and edcb.FindFile(path, 1) or edcb.FindFilePlain and edcb.FindFilePlain(path)
+  end
+
+  local edcbnosuspend=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')..'\\Tools\\edcbnosuspend.exe'
+  local hasNosuspend=WIN32 and EdcbFindFilePlain(edcbnosuspend)
+  local nosuspendActive=false
+  if hasNosuspend then
+    local onstat, stat, code=edcb.os.execute('tasklist /fi "imagename eq edcbnosuspend.exe" /fo csv /nh | find /i "edcbnosuspend.exe"')
+    nosuspendActive=(onstat and stat=='exit' and code==0)
+  end
+
   return '{root: \''..PathToRoot()
     ..'\', useSsePort: '..useSsePort
     ..', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
@@ -35,7 +48,12 @@ function GetAppConfig()
     ..' serviceMode: '..(rsdef.serviceMode or 0)
     ..', startMargin: '..(rsdef.startMargin or 0)
     ..', endMargin: '..(rsdef.endMargin or 0)
-    ..' },}'
+    ..' },'
+    ..' hasNosuspend: '..(hasNosuspend and 'true' or 'false')..','
+    ..' nosuspendActive: '..(nosuspendActive and 'true' or 'false')..','
+    ..' enableSuspend: '..(INDEX_ENABLE_SUSPEND and 'true' or 'false')..','
+    ..' suspendMode: \''..(INDEX_SUSPEND_USE_HIBERNATE and 'hibernate' or 'suspend')..'\','
+    ..'}'
 end
 
 -- ナビゲーション項目の定義
