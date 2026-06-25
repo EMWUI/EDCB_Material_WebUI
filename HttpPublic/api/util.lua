@@ -407,9 +407,9 @@ function SortServiceListInplace(r)
   end
   table.sort(r,function(a,b) return
     ('%04X%04X%04X%04X'):format((NetworkType(a.onid)~='地デジ' and 65535 or a.remote_control_key_id or a.remoconID or 0),
-                                a.onid,(NetworkType(a.onid)=='BS' and bsmin[a.tsid] or a.tsid),a.sid)<
+                                a.onid,(NetworkType(a.onid)=='BS' and bsmin[a.tsid] or NetworkType(a.onid)=='CS' and a.sid or a.tsid),a.sid)<
     ('%04X%04X%04X%04X'):format((NetworkType(b.onid)~='地デジ' and 65535 or b.remote_control_key_id or b.remoconID or 0),
-                                b.onid,(NetworkType(b.onid)=='BS' and bsmin[b.tsid] or b.tsid),b.sid) end)
+                                b.onid,(NetworkType(b.onid)=='BS' and bsmin[b.tsid] or NetworkType(b.onid)=='CS' and b.sid or b.tsid),b.sid) end)
   return r
 end
 
