@@ -1097,7 +1097,7 @@ document.addEventListener('alpine:init', () => {
         return s.replace(/\n/g, '<br>');
       },
       title(a) {
-        return !a ? '' : `${a.replace(/　/g, ' ').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
+        return !a ? '' : `${a.replace(/　/g, ' ').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
       },
       sanitizeTitle(a) {
         return a.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, '')
