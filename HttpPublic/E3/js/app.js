@@ -1642,6 +1642,11 @@ document.addEventListener('alpine:init', () => {
       history.pushState(null, '', url.toString());
       this.epg.activeNetwork = index;
       this.updateParams();
+      if (this.params.date === undefined) {
+        const d = new Date(Date.now());
+        d.setMinutes(0, 0, 0, 0);
+        this.epg.epgStartTime = d.getTime();
+      }
       this.loadEpg();
     },
     // 日付を前後にずらす (24時間単位)
