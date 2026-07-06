@@ -1122,6 +1122,9 @@ document.addEventListener('alpine:init', () => {
       if (!p || !p.durationSecond) return 0;
       return (this.now - p.startTimeInt) / 1000;
     },
+    getSamplingRate(r) {
+      return `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[r]}kHz`
+    },
     get nowOnAirList() {
       // サービス一覧の並び順に従って、放送中・次の番組ペアの配列を返す
       return this.serviceList.map(s => this.dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`]).filter(v => v);

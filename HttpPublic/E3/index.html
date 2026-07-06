@@ -1351,7 +1351,7 @@ ct:Append([=[
                       </template>
                       <span class="chip fill">
                         <i>graphic_eq</i>
-                        <span x-text="a.sampling_rate_txt || `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[a.sampling_rate]}kHz`"></span>
+                        <span x-text="a.sampling_rate_txt || getSamplingRate(a.sampling_rate)"></span>
                       </span>
                     </nav>
                   </template>
