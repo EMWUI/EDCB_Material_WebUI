@@ -1366,16 +1366,16 @@ ct:Append([=[
                       <span x-text="d.freeCAFlag ? '有料放送' : '無料放送'"></span>
                     </span>
                   </template>
+                  <template x-for="rel in d.eventRelayInfo?.eventDataList">
+                    <span class="chip fill" @click="openProgramDetailById(`${rel.onid}-${rel.tsid}-${rel.sid}-${rel.eid}`)">
+                      <i>switch_access_2</i>
+                      <span x-text="getServiceName(rel, true)"></span>
+                    </span>
+                  </template>
                   <span class="chip fill">
                     <i>key</i>
                     <span x-text="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`"></span>
                   </span>
-                  <template x-for="rel in d.eventRelayInfo?.eventDataList">
-                    <span class="chip fill">
-                      <i>switch_access_2</i>
-                      <span x-text="`${rel.onid}-${rel.tsid}-${rel.sid}-${rel.eid}`"></span>
-                    </span>
-                  </template>
                 </nav>
               </div>
             </div>

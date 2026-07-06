@@ -1115,8 +1115,8 @@ document.addEventListener('alpine:init', () => {
     getPageTitle() {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
     },
-    getServiceName(d) {
-      return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || '不明';
+    getServiceName(d, id) {
+      return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || (id ? `${d.onid}-${d.tsid}-${d.sid}` : '不明');
     },
     getElapsedTime(p) {
       if (!p || !p.durationSecond) return 0;
@@ -1922,6 +1922,9 @@ document.addEventListener('alpine:init', () => {
       else ui("#recSetting");
 
       this.sidePanel.show();
+    },
+    async openProgramDetailById(id) {
+      this.openProgramDetail(await this.getEpgById(id));
     },
     async openProgramDetail(d) {
       this.detail = d;
