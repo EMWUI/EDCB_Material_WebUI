@@ -124,6 +124,8 @@ document.addEventListener('alpine:init', () => {
       subCh: false,
       subGenre: true,
       genreMask: -1044262913,
+      mode: 'auto',
+      theme: '#6750A4',
       epg: {
         minHeight: 4,
         hover: false,
@@ -287,6 +289,20 @@ document.addEventListener('alpine:init', () => {
         deepMerge(this.set, settings);
       }
 
+      // テーマとライトダークモードの初期適用
+      if (typeof ui !== 'undefined') {
+        ui('theme', this.set.theme);
+        ui('mode', this.set.mode);
+      }
+
+      // prefers-color-schemeの変更監視
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', () => {
+        if (this.set.mode === 'auto' && typeof ui !== 'undefined') {
+          ui('mode', 'auto');
+        }
+      });
+
       // 起動時にキャッシュから復元
       const saved = localStorage.getItem('edcb_full_cache');
       if (saved) {
@@ -332,6 +348,11 @@ document.addEventListener('alpine:init', () => {
       this.$watch('set', () => {
         //localStorage.setItem('E3', JSON.stringify(this.set));
       }, { deep: true });
+
+      if (typeof ui !== 'undefined') {
+        this.$watch('set.theme', v => ui('theme', v));
+        this.$watch('set.mode', v => ui('mode', v));
+      }
 
       // サービス一覧が空（初回またはクリア後）なら取得する
       if (this.allData.service.size === 0) {
@@ -2758,6 +2779,34 @@ document.addEventListener('alpine:init', () => {
       play(file) {
         this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
       },
+    },
+    setThemeColor(color) {
+      this.set.theme = color;
+    },
+    themeTimer: null,
+    isThemeLongPress: false,
+    startThemeResetTimer() {
+      this.isThemeLongPress = false;
+      this.themeTimer = setTimeout(() => {
+        this.setThemeColor('#6750A4');
+        this.isThemeLongPress = true;
+        this.themeTimer = null;
+      }, 600);
+    },
+    clearThemeResetTimer() {
+      if (this.themeTimer) {
+        clearTimeout(this.themeTimer);
+        this.themeTimer = null;
+      }
+    },
+    handleThemeClick(e) {
+      if (this.isThemeLongPress) {
+        e.preventDefault();
+        this.isThemeLongPress = false;
+      }
+    },
+    toggleDarkMode() {
+      this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
     },
   }));
 });

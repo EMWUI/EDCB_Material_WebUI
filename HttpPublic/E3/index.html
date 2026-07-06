@@ -2179,10 +2179,13 @@ ct:Append([=[
         <button class="circle">
           <i>palette</i>
         </button>
-        <input type="color" @change="ui('theme', $event.target.value)">
+        <input type="color" :value="set.theme"
+               @change="setThemeColor($event.target.value)" @click="handleThemeClick($event)"
+               @pointerdown="startThemeResetTimer()" @pointerup="clearThemeResetTimer()"
+               @pointerleave="clearThemeResetTimer()" @pointercancel="clearThemeResetTimer()">
       </span>
-      <button class="circle border" @click="dark = ui('mode') === 'dark';ui('mode', dark ? 'light' : 'dark');mode = dark ? 'dark_mode' : 'light_mode'" x-data="{mode:'light_mode'}">
-        <i x-text="mode"></i>
+      <button class="circle border" @click="toggleDarkMode()">
+        <i x-text="set.mode === 'auto' ? 'brightness_auto' : (set.mode === 'light' ? 'light_mode' : 'dark_mode')"></i>
       </button>
     </nav>
     <hr class="medium">
