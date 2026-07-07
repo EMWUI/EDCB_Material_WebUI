@@ -35,7 +35,8 @@ ct:Append([=[
         <i x-text="set.sidebar ? 'menu_open' : 'menu'"></i>
       </button>
     </header>
-]=]..link..[=[
+]=]..link
+..GetCredit(true)..[=[
   </nav>
 
   <template x-if="page === '#epg'">
@@ -2171,6 +2172,7 @@ ct:Append([=[
     <ul class="list">
 ]=]..link_drawer..[=[
     </ul>
+]=]..GetCredit()..[=[
   </dialog>
 
   <dialog id="setting">

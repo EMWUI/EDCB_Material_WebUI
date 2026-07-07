@@ -105,6 +105,18 @@ for i, v in ipairs(navList) do
 ]], v.hash, v.hash, v.hash, v.icon, v.full or v.title))
 end
 
+function GetCredit(sidebar)
+  return [=[    <hr class="medium"]=]..(sidebar and ' x-show="set.sidebar"' or '') .. [=[>
+    <div class="horizontal-padding"]=]..(sidebar and ' x-show="set.sidebar"' or '') .. [=[>
+      <nav class="no-space">
+        <span class="right-margin small-margin"><i class="small right-margin tiny-margin">copyright</i><span>EMWUI</span></span>
+        <a class="button transparent circle tiny" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank" rel="noreferrer"><i class="link tiny">feedback</i></a>
+        <a class="button transparent circle tiny" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank" rel="noreferrer"><i class="link tiny">featured_seasonal_and_gifts</i></a>
+      </nav>
+    </div>
+]=]
+end
+
 function GetServiceOption()
   local s=''
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
