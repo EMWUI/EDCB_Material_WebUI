@@ -347,7 +347,7 @@ document.addEventListener('alpine:init', () => {
 
       // 設定の変更を監視して自動保存
       this.$watch('set', () => {
-        //localStorage.setItem('E3', JSON.stringify(this.set));
+        localStorage.setItem('E3', JSON.stringify(this.set));
       }, { deep: true });
 
       if (typeof ui !== 'undefined') {
