@@ -205,6 +205,7 @@ document.addEventListener('alpine:init', () => {
       this.sidePanel.app = this;
       this.player.app = this;
       this.library.app = this;
+      this.log.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
       this.reminder.app = this;
@@ -2779,6 +2780,66 @@ document.addEventListener('alpine:init', () => {
       play(file) {
         this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
       },
+    },
+    log: {
+      data: [],
+      debug: false,
+      show(debug = false) {
+        this.debug = debug;
+        this.load();
+        ui('#log');
+      },
+      close() {
+        ui('#log');
+        this.data = [];
+        this.page = 0;
+      },
+      async load(page = 0) {
+        try {
+          this.page = page;
+          const res = await fetch(`${this.app.ROOT}api/showlog?c=10000&page=${page}${this.debug ? '&t=d' : ''}`);
+          const text = await res.text();
+          const list = [];
+          for (const line of text.split(/\r?\n/)) {
+            if (!line.trim()) continue;
+            // 2026/07/03 23:29:52.040 [録画開始] ...
+            const m1 = line.match(/^(\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?)\s+(.*)$/);
+            if (m1) {
+              list.push({
+                time: m1[1],
+                text: m1[2]
+              });
+              continue;
+            }
+            // [260707192710.578] ...
+            const m2 = line.match(/^\[(\d{12}(?:\.\d{3})?)\]\s+(.*)$/);
+            if (m2) {
+              const rawTime = m2[1];
+              const msg = m2[2];
+              const tm = rawTime.match(/^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.(\d{3}))?$/);
+              let formattedTime = rawTime;
+              if (tm) {
+                const [_, yy, mm, dd, hh, min, ss, ms] = tm;
+                formattedTime = `20${yy}/${mm}/${dd} ${hh}:${min}:${ss}` + (ms ? `.${ms}` : '');
+              }
+              list.push({
+                time: formattedTime,
+                text: msg
+              });
+              continue;
+            }
+            list.push({
+              time: '',
+              text: line
+            });
+          }
+          this.data = list;
+          document.querySelector('#log').scrollTop = 0;
+        } catch (e) {
+          console.error(e);
+          this.data = [];
+        }
+      }
     },
     setThemeColor(color) {
       this.set.theme = color;

@@ -2363,6 +2363,41 @@ ct:Append([=[
     </template>
   </dialog>
 
+  <dialog id="log" class="max" x-data="log">
+    <header class="fixed top no-padding">
+      <nav>
+        <button class="circle transparent" @click="close()">
+          <i>arrow_back</i>
+        </button>
+        <h6 x-text="debug ? 'デバッグ出力' : '情報通知ログ'"></h6>
+        <div class="max"></div>
+        <span class="chip outline small no-mouse">
+          <i>description</i>
+          <span x-text="page"></span>
+        </span>
+        <nav class="no-space">
+          <button class="circle transparent" @click="load(page + 1)">
+            <i>arrow_upward</i>
+          </button>
+          <button class="circle transparent" @click="load(page - 1)" :disabled="page == 0">
+            <i>arrow_downward</i>
+          </button>
+        </nav>
+      </nav>
+    </header>
+    <main class="scroll">
+      <table class="border">
+        <tbody>
+          <template x-for="line in data">
+            <tr>
+              <td :class="{ min : !isSmallScreen }" x-text="line.time"></td>
+              <td x-text="line.text"></td>
+            </tr>
+        </template>
+      </table>
+    </main>
+  </dialog>
+
   <div id="snackbar" class="snackbar" :class="{ error: active?.error, top: active?.top }" x-data="snackbar">
     <div class="max" x-text="active?.text"></div>
     <template x-if="active?.action != null">

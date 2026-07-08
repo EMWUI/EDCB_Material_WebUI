@@ -20,28 +20,54 @@ if not f then
 else
   ct=CreateContentBuilder(GZIP_THRESHOLD_BYTE)
   c=GetVarInt(mg.request_info.query_string,'c',0,1e7) or 1e7
+  page=GetVarInt(mg.request_info.query_string,'page',0) or 0
   fsize=f:seek('end')
+  edcb.htmlEscape=15
+  s=''
   if not WIN32 then
     --UTF-8
-    ofs=math.max(fsize-c,0)
+    ofs=math.max(fsize-c*(page+1),0)
     f:seek('set',ofs)
     if ofs~=0 then
       repeat
+        c=c-1
         buf=f:read(1)
       until not buf or #buf<1 or buf=='\n'
     end
-    ct:Append(f:read('*a') or '')
+    s=c>0 and f:read(page>0 and c or '*a') or ''
+    if page>0 then
+      --次の改行まで読む
+      x=''
+      repeat
+        buf=f:read(1) or ''
+        x=x..buf
+      until #buf<1 or buf=='\n' or #x>10000
+      s=s..x
+    end
+    s=EdcbHtmlEscape(s)
   elseif fsize>=2 then
     --UTF-16
-    ofs=math.floor(math.max(fsize/2-1-c,0))
+    ofs=math.floor(math.max(fsize/2-1-c*(page+1),0))
     f:seek('set',2+ofs*2)
     if ofs~=0 then
       repeat
+        c=c-1
         buf=f:read(2)
       until not buf or #buf<2 or buf=='\n\0'
     end
-    ct:Append(edcb.Convert('utf-8','utf-16le',f:read('*a') or '') or '')
+    s=c>0 and f:read(page>0 and c*2 or '*a') or ''
+    if page>0 then
+      --次の改行まで読む
+      x=''
+      repeat
+        buf=f:read(2) or ''
+        x=x..buf
+      until #buf<2 or buf=='\n\0' or #x>10000
+      s=s..x
+    end
+    s=edcb.Convert('utf-8','utf-16le',s) or ''
   end
+  ct:Append(s)
   f:close()
   ct:Finish()
   mg.write(ct:Pop(Response(200,'text/plain','utf-8',ct.len,ct.gzip)..'\r\n'))

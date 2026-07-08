@@ -113,6 +113,10 @@ function GetCredit(sidebar)
         <a class="button transparent circle tiny" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank" rel="noreferrer"><i class="link tiny">feedback</i></a>
         <a class="button transparent circle tiny" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank" rel="noreferrer"><i class="link tiny">featured_seasonal_and_gifts</i></a>
       </nav>
+]=]..((SHOW_DEBUG_LOG or SHOW_NOTIFY_LOG) and '      <nav class="no-margin">\n'
+  ..(SHOW_NOTIFY_LOG and '        <a class="link small-text" @click="log.show()">情報通知ログ</a>\n' or '')
+  ..(SHOW_DEBUG_LOG and '        <a class="link small-text" @click="log.show(true)">デバッグ出力</a>\n' or '')
+  ..'      </nav>\n' or '')..[=[
     </div>
 ]=]
 end
