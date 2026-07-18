@@ -28,6 +28,11 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .small-gap { gap: .5rem }
 .around-align { justify-content: space-around; }
 
+:is(button, .button).tiny {
+  --_size: 1.5rem;
+  --_padding: .5rem;
+}
+
 nav.tabbed.fixed {
   position: sticky;
   top: 0;

@@ -2359,7 +2359,7 @@ document.addEventListener('alpine:init', () => {
         console.error('通信失敗:', err);
         // ctokエラーを想定してリロード
         const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン切れと思われます。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
       });
     },
     addReserve(e) {
@@ -2834,7 +2834,7 @@ document.addEventListener('alpine:init', () => {
             });
           }
           this.data = list;
-          document.querySelector('#log').scrollTop = 0;
+          document.querySelector('#log main').scrollTop = 0;
         } catch (e) {
           console.error(e);
           this.data = [];
