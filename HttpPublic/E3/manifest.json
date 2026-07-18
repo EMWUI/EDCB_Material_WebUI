@@ -1,0 +1,25 @@
+{
+  "name": "EMWUI 3",
+  "short_name": "E3",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#141316",
+  "theme_color": "#141316",
+  "icons": [
+    {
+      "src": "img/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "img/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "img/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

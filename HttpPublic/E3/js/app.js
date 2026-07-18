@@ -1,3 +1,11 @@
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then((reg) => console.log('Service Worker registered successfully with scope: ', reg.scope))
+      .catch((err) => console.error('Service Worker registration failed: ', err));
+  });
+}
+
 document.addEventListener('alpine:init', () => {
   // ARIB ジャンル・コンポーネント定義データ EpgTimerUtil.cppより
   const ARIB_GENRE = {
@@ -290,17 +298,34 @@ document.addEventListener('alpine:init', () => {
         deepMerge(this.set, settings);
       }
 
+      const updateThemeColor = (mode) => {
+        let isDark = false;
+        if (mode === 'auto') {
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        } else {
+          isDark = mode === 'dark';
+        }
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', isDark ? '#141316' : '#fdf8fd');
+        }
+      };
+
       // テーマとライトダークモードの初期適用
       if (typeof ui !== 'undefined') {
         ui('theme', this.set.theme);
         ui('mode', this.set.mode);
       }
+      updateThemeColor(this.set.mode);
 
       // prefers-color-schemeの変更監視
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       mediaQuery.addEventListener('change', () => {
-        if (this.set.mode === 'auto' && typeof ui !== 'undefined') {
-          ui('mode', 'auto');
+        if (this.set.mode === 'auto') {
+          if (typeof ui !== 'undefined') {
+            ui('mode', 'auto');
+          }
+          updateThemeColor('auto');
         }
       });
 
@@ -352,7 +377,10 @@ document.addEventListener('alpine:init', () => {
 
       if (typeof ui !== 'undefined') {
         this.$watch('set.theme', v => ui('theme', v));
-        this.$watch('set.mode', v => ui('mode', v));
+        this.$watch('set.mode', v => {
+          ui('mode', v);
+          updateThemeColor(v);
+        });
       }
 
       // サービス一覧が空（初回またはクリア後）なら取得する
