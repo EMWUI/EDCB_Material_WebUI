@@ -43,6 +43,7 @@ nav.tabbed.fixed.top-margin { top: var(--_margin); }
 li>.max, .row.wrap>.middle-align { max-width: 100%; }
 
 input[type=number] { inline-size: 7rem; }
+input[type=color] { cursor: pointer; }
 
 select[multiple] {
   overflow-y: auto;

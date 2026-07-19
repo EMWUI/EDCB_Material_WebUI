@@ -202,7 +202,7 @@ ct:Append([=[
 
       <nav class="no-space">
         <div x-data="reminder" x-show="enabled">
-          <button class="circle transparent" :class="list.length > 0 ? 'primary-text' : ''">
+          <button class="circle transparent" :class="list.length > 0 ? 'primary-text' : ''" :disabled="list.length === 0">
             <i x-text="list.length > 0 ? 'notifications_active' : 'notifications'"></i>
             <span class="badge" x-text="list.length" x-show="list.length > 0"></span>
           </button>
@@ -1507,22 +1507,22 @@ ct:Append([=[
                     <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
                       <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
                       <i>regular_expression</i>
-                      <span class="m l">正規表現</span>
+                      <span :class="{ tooltip: isSmallScreen }">正規表現</span>
                     </button>
                     <button class="small no-round" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
                       <input type="checkbox" name="aimaiFlag" x-model="s.aimaiFlag">
                       <i>search_check</i>
-                      <span class="m l">あいまい</span>
+                      <span :class="{ tooltip: isSmallScreen }">あいまい</span>
                     </button>
                     <button class="small no-round" :class="{ active: s.titleOnlyFlag }" @click="s.titleOnlyFlag = !s.titleOnlyFlag">
                       <input type="checkbox" name="titleOnlyFlag" x-model="s.titleOnlyFlag">
                       <i>find_in_page</i>
-                      <span class="m l">番組名のみ</span>
+                      <span :class="{ tooltip: isSmallScreen }">番組名のみ</span>
                     </button>
                     <button class="small right-round" :class="{ active: s.caseFlag }" @click="s.caseFlag = !s.caseFlag">
                       <input type="checkbox" name="caseFlag" x-model="s.caseFlag">
                       <i>match_case</i>
-                      <span class="m l">大小文字区別</span>
+                      <span :class="{ tooltip: isSmallScreen }">大小文字区別</span>
                     </button>
                   </nav>
                 </div>
@@ -2187,6 +2187,7 @@ ct:Append([=[
                @change="setThemeColor($event.target.value)" @click="handleThemeClick($event)"
                @pointerdown="startThemeResetTimer()" @pointerup="clearThemeResetTimer()"
                @pointerleave="clearThemeResetTimer()" @pointercancel="clearThemeResetTimer()">
+        <span class="tooltip bottom">長押しで初期化</span>
       </span>
       <button class="circle border" @click="toggleDarkMode()">
         <i x-text="set.mode === 'auto' ? 'brightness_auto' : (set.mode === 'light' ? 'light_mode' : 'dark_mode')"></i>
@@ -2207,6 +2208,7 @@ ct:Append([=[
         <button class="responsive vertical small" @click="toggleNosuspend()" :class="{ 'fill': !nosuspendActive }">
           <i class="responsive">bedtime_off</i>
           <span>録画後動作</span>
+          <span class="tooltip" x-show="nosuspendActive">抑制中</span>
         </button>
       </template>
       </div>
@@ -2229,12 +2231,14 @@ ct:Append([=[
         <button class="responsive vertical small" @click="refreshEpg()">
           <i class="responsive">download</i>
           <span>EPGデータ</span>
+          <span class="tooltip bottom">キャッシュを更新</span>
         </button>
       </div>
       <div class="s6">
         <button class="responsive vertical small" @click="refreshStaticData()">
           <i class="responsive">download</i>
           <span>基礎データ</span>
+          <span class="tooltip bottom">サービス一覧や録画プリセットの更新</span>
         </button>
       </div>
     </div>
