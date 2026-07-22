@@ -835,47 +835,55 @@ ct:Append([=[
               </div>
             </div>
             <div class="page" :class="{ active: sideTab === 'jikkyo-chats' }">
-              <div id="jikkyo-comm" class="vertical padding jikkyo-comments">
-                <button id="jikkyo-setting" style="display:none;"><i>settings</i></button>
-                <div id="jikkyo-config">
-                  <nav class="group" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
+              <div id="jikkyo-comm" class="vertical jikkyo-comments">
+                <div id="jikkyo-config" class="padding" :class="{ show: showJikkyoSet }">
+                  <nav class="group primary-container middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
                     <template x-for="(v, i) in list">
-                      <button :class="{'left-round': i == 0, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" @click="jikkyoShift(i)"></button>
+                      <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'no-round' : i > 0 && i < list.length - 1, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
                     </template>
                   </nav>
-                  <div class="field suffix border">
-                    <select name="id">
-                      <option value="0" selected>jk? (初期値)
-                      ]=]..GetJkList()..[=[
-                    </select>
-                    <i>arrow_drop_down</i>
-                  </div>
-                  <div id="jikkyo-TM" x-show="!live">
-                    <nav class="no-space">
-                      <div class="max field prefix border small left-round">
-                        <i>today</i>
-                        <input name="tm" id="dateFormat" type="datetime-local">
-                      </div>
-                      <div class="field suffix border small">
-                        <select name="tmsec">
-                          <template x-for="i in 60" :key="i">
-                            <option :value="i-1" x-text="convert.zero(i-1) + 's'"></option>
-                          </template>
+                  <div class="grid">
+                    <div class="s12">
+                      <div class="field suffix border">
+                        <select name="id">
+                          <option value="0" selected>jk? (初期値)
+                          ]=]..GetJkList()..[=[
                         </select>
                         <i>arrow_drop_down</i>
                       </div>
-                      <button class="right-round">変更</button>
-                    </nav>
+                    </div>
+                    <div class="s12" x-show="!live">
+                      <div id="jikkyo-TM">
+                        <nav class="group split">
+                          <div class="max field prefix border small left-round">
+                            <i>today</i>
+                            <input name="tm" id="dateFormat" type="datetime-local">
+                          </div>
+                          <div class="field suffix border small">
+                            <select name="tmsec">
+                              <template x-for="i in 60" :key="i">
+                                <option :value="i-1" x-text="convert.zero(i-1) + 's'"></option>
+                              </template>
+                            </select>
+                            <i>arrow_drop_down</i>
+                          </div>
+                          <button class="right-round border fill">変更</button>
+                        </nav>
+                      </div>
+                    </div>
+                    <div class="s12" x-show="!live">
+                      <button id="kakolog" class="responsive border fill">ログ取得</button>
+                    </div>
                   </div>
-                  <button id="kakolog" x-show="!live">ログ取得</button>
                 </div>
-                <div id="jikkyo-chats" class="scroll"></div>
-                <nav id="comment-control" class="no-space" style="display: none;">
+                <div id="jikkyo-chats" class="scroll padding"></div>
+                <nav id="comment-control" class="no-space margin" style="display: none;">
                   <div class="max field small border left-round">
                     <input type="text" id="comm">
                   </div>
                   <button class="right-round" id="commSend"><i>send</i></button>
                 </nav>
+                <button id="jikkyo-setting" class="circle transparent absolute right top margin small-margin" @click="showJikkyoSet = !showJikkyoSet"><i>settings</i></button>
               </div>
             </div>
           </div>

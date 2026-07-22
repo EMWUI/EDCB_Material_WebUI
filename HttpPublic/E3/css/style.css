@@ -22,6 +22,7 @@ menu>li:nth-last-child(10 of li) { --_child: 10 }
 menu>li:nth-last-child(11 of li) { --_child: 11 }
 
 .hidden { display: none; }
+.show { display: block !important; }
 .contents { display: contents; }
 .no-row-gap { row-gap: 0; }
 .tiny-gap { gap: .25rem }

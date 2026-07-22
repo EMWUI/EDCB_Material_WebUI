@@ -66,6 +66,8 @@
   height: 1.5em;
   vertical-align: top;
   width: 100%;
+  position: absolute;
+  bottom: 0;
 }
 
 #jikkyo-config > input {

@@ -2470,6 +2470,7 @@ document.addEventListener('alpine:init', () => {
       controlsVisible: true, // コントロールの表示状態
       showSettingsMenu: false, // 設定ドロップダウンの状態
       showSidePanel: false,
+      showJikkyoSet: false,
       controlTimeout: null, // コントロール自動非表示用タイマー
       isSeeking: false, // シーク中フラグ
       sideTab: 'service-list',
@@ -2736,8 +2737,8 @@ document.addEventListener('alpine:init', () => {
           this.sideTab = this.live ? 'service-list' : 'info';
           ts.setOption(this.set.quality);
           if (ts.cap && !this.set.cap) ts.cap.hide();
-          ts.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
-          if (ts.jikkyo.danmaku) {
+          if (ts.jikkyo) {
+            ts.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
             ts.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
             ts.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
           }
