@@ -1179,7 +1179,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 						}
 					}
 					if(this.#mHeader[2]){
-						const tm=this.#mHeader[2]-Math.floor(this.#e.fixedCurrentTime||this.#e.currentTime);
+						const tm=this.#mHeader[2]-Math.floor(this.fixedCurrentTime||this.#e.currentTime);
 						if(this.#elems.inputTM)this.#elems.inputTM.value==new Date(1000*tm+32400000).toISOString().substring(0,16);
 						if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[tm%60].selected=true;
 					}
@@ -1698,11 +1698,11 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		offsetSec: 0,
 		startRead: () => {
 			clearTimeout(this.#jklog.readTimer);
-			const startSec=(this.#e.fixedCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
+			const startSec=(this.fixedCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
 			this.#jklog.videoLastSec=startSec;
 			const ctx={};
 			const read=()=>{
-				const videoSec=(this.#e.fixedCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
+				const videoSec=(this.fixedCurrentTime||this.#e.currentTime)+this.#jklog.offsetSec;
 				if(videoSec<this.#jklog.videoLastSec||this.#jklog.videoLastSec+10<videoSec){
 					this.#jklog.startRead();
 					return;
@@ -1846,7 +1846,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		const ctx={};
 		this.#mHeader=null;
 		this.#xhr=new XMLHttpRequest();
-		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${Math.floor(this.#e.fixedCurrentTime||this.#e.currentTime)}`);
+		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${Math.floor(this.fixedCurrentTime||this.#e.currentTime)}`);
 		this.#xhr.onloadend=()=>{
 			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
 				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
@@ -1932,6 +1932,7 @@ TvtPlayのチャプターによるループやスキップ機能
 */
 class chapterTvt{
 	#vid;
+	#ts;
 	#disabled = false;
 	#repeat = true;
 	#skip = true;
@@ -1939,9 +1940,10 @@ class chapterTvt{
 	#hasSeeked;
 	#lastTime = 0;
 	#container = document.getElementById('chapMaker-container');
-	#currentTime(){return this.#vid.fixedCurrentTime || this.#vid.currentTime}
-	constructor(video){
+	#currentTime(){return this.#ts.fixedCurrentTime || this.#vid.currentTime}
+	constructor(video, ts){
 		this.#vid = video;
+		this.#ts = ts;
 		document.getElementById('nextChap').addEventListener('click', () => this.#navigate());
 		document.getElementById('prevChap').addEventListener('click', () => this.#navigate(false));
 		video.addEventListener('timeupdate', () => {
@@ -2028,7 +2030,7 @@ class chapterTvt{
 	#parseTvt(chap, dur){
 		if (!chap.startsWith('c-')) return;
 		// 前後の 'c' を除去して '-' で各セグメントに分割
-		const segments = chap.replace(/^c|c$/g, '').split('-').filter(s => s.length > 0);
+		const segments = chap.replace(/^c|c\r?\n?$/g, '').split('-').filter(s => s.length > 0);
 
 		return segments.map(segment => {
 			const match = segment.match(/^(\d+)([cd])/);

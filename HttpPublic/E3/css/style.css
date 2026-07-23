@@ -338,6 +338,10 @@ article.small-width+button { align-self: center; }
 .remote-control .toggleNum { align-self: end; cursor: pointer; }
 #key20 i { font-style: italic; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-weight: bold; }
 
+
+#chapMaker-container { transform: translate(0, -40px); }
+.chapMaker > div { background: var(--tertiary); }
+
 #jikkyo-comm { flex-grow: 1; min-height: 0; border-color: transparent; }
 #jikkyo-chats { flex-grow: 1; flex-shrink: 1; min-height: 0; }
 #jikkyo-chats > div > .nico { color: var(--primary); }

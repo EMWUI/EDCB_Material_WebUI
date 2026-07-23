@@ -2448,6 +2448,7 @@ document.addEventListener('alpine:init', () => {
       },
       vid: null,
       ts: null,
+      chap: null,
       tslive: false,
       live: true,
       isPlaying: false,
@@ -2493,9 +2494,12 @@ document.addEventListener('alpine:init', () => {
             if (d.d) p.set('d', d.d);
             if (d.p) d.p.split(',').filter(v => v).forEach(v => p.append('p', v));
             const res = await fetch(`${this.app.ROOT}api/Library?basic=0&${p.toString()}`);
-            this.videoInfo = await res.json();
-            fname = this.videoInfo.path;
+            const info = await res.json()
+            this.videoInfo = info;
+            fname = info.path;
             canPlay = document.createElement('video').canPlayType(`video/${fname.match(/[^\.]*$/)}`).length > 0;
+            Alpine.raw(this.chap).reset();
+            Alpine.raw(this.chap).setChapters(info.chapters, info.meta?.duration);
           } catch (e) {
             console.error(e);
           } finally {
@@ -2532,6 +2536,7 @@ document.addEventListener('alpine:init', () => {
       },
       reset() {
         Alpine.raw(this.ts).reset();
+        if (this.chap) Alpine.raw(this.chap).reset();
         if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
         if (this.app) this.app.updateParams();
         if (this.app.$refs.meta) this.app.$refs.meta.src = '';
@@ -2545,6 +2550,7 @@ document.addEventListener('alpine:init', () => {
         this.reset();
         this.vid = null;
         this.ts = null;
+        this.chap = null;
       },
       togglePlay() {
         if (Alpine.raw(this.vid).paused) Alpine.raw(this.vid).play();
@@ -2741,6 +2747,15 @@ document.addEventListener('alpine:init', () => {
 
           this.resetControlTimeout();
         });
+      },
+      chapterInit() {
+        if (!this.$refs.video || !this.ts) {
+          setTimeout(() => this.chapterInit(), 100);
+          return;
+        }
+        const chap = new chapterTvt(this.$refs.video, Alpine.raw(this.ts));
+        this.chap = chap;
+        chap.setSeek = val => this.seek(val);
       }
     },
 

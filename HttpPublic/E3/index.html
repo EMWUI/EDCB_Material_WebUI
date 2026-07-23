@@ -650,6 +650,7 @@ ct:Append([=[
                               @input="currentTime = $event.target.value; isSeeking = true"
                               @change="seek($event.target.value); isSeeking = false">
                         <span></span>
+                        <div id="chapMaker-container" x-init="chapterInit()"></div>
                       </div>
                     </template>
                     <span class="tiny-text" x-text="formatTime(duration)"></span>
@@ -660,8 +661,14 @@ ct:Append([=[
                   <button class="circle transparent" @click="reset()">
                     <i class="fill extra">stop</i>
                   </button>
+                  <button id="prevChap" class="circle transparent tiny" x-show="!live">
+                    <i class="fill">arrow_left</i>
+                  </button>
                   <button class="circle transparent" @click="togglePlay()">
                     <i class="fill extra" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
+                  </button>
+                  <button id="nextChap" class="circle transparent tiny" x-show="!live">
+                    <i class="fill">arrow_right</i>
                   </button>
 
                   <div class="row no-wrap middle-align">
