@@ -1,7 +1,6 @@
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then((reg) => console.log('Service Worker registered successfully with scope: ', reg.scope))
       .catch((err) => console.error('Service Worker registration failed: ', err));
   });
 }
@@ -298,33 +297,30 @@ document.addEventListener('alpine:init', () => {
         deepMerge(this.set, settings);
       }
 
-      const updateThemeColor = (mode) => {
-        let isDark = false;
-        if (mode === 'auto') {
-          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        } else {
-          isDark = mode === 'dark';
-        }
+      let colors;
+      const updateColor = async () => {
+        colors = await materialDynamicColors(this.set.theme);
+        const style = document.createElement('style');
+        style.textContent = `:root, body.light, .light {--primary: ${colors.light.primary};--on-primary: ${colors.light.onPrimary};--primary-container: ${colors.light.primaryContainer};--on-primary-container: ${colors.light.onPrimaryContainer};--secondary: ${colors.light.secondary};--on-secondary: ${colors.light.onSecondary};--secondary-container: ${colors.light.secondaryContainer};--on-secondary-container: ${colors.light.onSecondaryContainer};--tertiary: ${colors.light.tertiary};--on-tertiary: ${colors.light.onTertiary};--tertiary-container: ${colors.light.tertiaryContainer};--on-tertiary-container: ${colors.light.onTertiaryContainer};--error: ${colors.light.error};--on-error: ${colors.light.onError};--error-container: ${colors.light.errorContainer};--on-error-container: ${colors.light.onErrorContainer};--background: ${colors.light.background};--on-background: ${colors.light.onBackground};--surface: ${colors.light.surface};--on-surface: ${colors.light.onSurface};--surface-variant: ${colors.light.surfaceVariant};--on-surface-variant: ${colors.light.onSurfaceVariant};--outline: ${colors.light.outline};--outline-variant: ${colors.light.outlineVariant};--shadow: ${colors.light.shadow};--scrim: ${colors.light.scrim};--inverse-surface: ${colors.light.inverseSurface};--inverse-on-surface: ${colors.light.inverseOnSurface};--inverse-primary: ${colors.light.inversePrimary};--surface-dim: ${colors.light.surfaceDim};--surface-bright: ${colors.light.surfaceBright};--surface-container-lowest: ${colors.light.surfaceContainerLowest};--surface-container-low: ${colors.light.surfaceContainerLow};--surface-container: ${colors.light.surfaceContainer};--surface-container-high: ${colors.light.surfaceContainerHigh};--surface-container-highest: ${colors.light.surfaceContainerHighest};}`
+                          + `body.dark, .dark {--primary: ${colors.dark.primary};--on-primary: ${colors.dark.onPrimary};--primary-container: ${colors.dark.primaryContainer};--on-primary-container: ${colors.dark.onPrimaryContainer};--secondary: ${colors.dark.secondary};--on-secondary: ${colors.dark.onSecondary};--secondary-container: ${colors.dark.secondaryContainer};--on-secondary-container: ${colors.dark.onSecondaryContainer};--tertiary: ${colors.dark.tertiary};--on-tertiary: ${colors.dark.onTertiary};--tertiary-container: ${colors.dark.tertiaryContainer};--on-tertiary-container: ${colors.dark.onTertiaryContainer};--error: ${colors.dark.error};--on-error: ${colors.dark.onError};--error-container: ${colors.dark.errorContainer};--on-error-container: ${colors.dark.onErrorContainer};--background: ${colors.dark.background};--on-background: ${colors.dark.onBackground};--surface: ${colors.dark.surface};--on-surface: ${colors.dark.onSurface};--surface-variant: ${colors.dark.surfaceVariant};--on-surface-variant: ${colors.dark.onSurfaceVariant};--outline: ${colors.dark.outline};--outline-variant: ${colors.dark.outlineVariant};--shadow: ${colors.dark.shadow};--scrim: ${colors.dark.scrim};--inverse-surface: ${colors.dark.inverseSurface};--inverse-on-surface: ${colors.dark.inverseOnSurface};--inverse-primary: ${colors.dark.inversePrimary};--surface-dim: ${colors.dark.surfaceDim};--surface-bright: ${colors.dark.surfaceBright};--surface-container-lowest: ${colors.dark.surfaceContainerLowest};--surface-container-low: ${colors.dark.surfaceContainerLow};--surface-container: ${colors.dark.surfaceContainer};--surface-container-high: ${colors.dark.surfaceContainerHigh};--surface-container-highest: ${colors.dark.surfaceContainerHighest};}`
+        document.head.appendChild(style);
+      };
+      const updateThemeColor = v => {
+        const isDark = ui('mode', v) === 'dark';
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta) {
-          themeColorMeta.setAttribute('content', isDark ? '#141316' : '#fdf8fd');
+          themeColorMeta.setAttribute('content', isDark ? colors.dark.surface : colors.light.surface);
         }
       };
 
       // テーマとライトダークモードの初期適用
-      if (typeof ui !== 'undefined') {
-        ui('theme', this.set.theme);
-        ui('mode', this.set.mode);
-      }
+      await updateColor();
       updateThemeColor(this.set.mode);
 
       // prefers-color-schemeの変更監視
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       mediaQuery.addEventListener('change', () => {
         if (this.set.mode === 'auto') {
-          if (typeof ui !== 'undefined') {
-            ui('mode', 'auto');
-          }
           updateThemeColor('auto');
         }
       });
@@ -375,13 +371,8 @@ document.addEventListener('alpine:init', () => {
         localStorage.setItem('E3', JSON.stringify(this.set));
       }, { deep: true });
 
-      if (typeof ui !== 'undefined') {
-        this.$watch('set.theme', v => ui('theme', v));
-        this.$watch('set.mode', v => {
-          ui('mode', v);
-          updateThemeColor(v);
-        });
-      }
+      this.$watch('set.theme', v => updateColor(v));
+      this.$watch('set.mode', v => updateThemeColor(v));
 
       // サービス一覧が空（初回またはクリア後）なら取得する
       if (this.allData.service.size === 0) {
@@ -2516,9 +2507,10 @@ document.addEventListener('alpine:init', () => {
 
         const video = this.app.$refs.video;
         video.setAttribute('ctok', video.dataset.ctokXcode);
-        Alpine.raw(this.ts).reset();
+        const ts = Alpine.raw(this.ts);
+        ts.reset();
         if (canPlay) {
-          fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F','/')}`;
+          fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
           video.src = fname;
           const meta = this.app.$refs.meta;
           if (meta) {
@@ -2531,10 +2523,10 @@ document.addEventListener('alpine:init', () => {
             this.app.$refs.meta = newMeta;
             newMeta.track.mode = 'hidden';
           }
-          Alpine.raw(this.ts).createCap(); // aribb24のイベントリスナーを再登録
-          Alpine.raw(this.ts).loadSubData();
+          ts.createCap(); // aribb24のイベントリスナーを再登録
+          ts.loadSubData();
         } else {
-          Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+          ts.loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
         }
         this.isLoading = true;
       },
@@ -2562,17 +2554,14 @@ document.addEventListener('alpine:init', () => {
         Alpine.raw(this.ts).setSeek(value, () => this.isLoading = true);
       },
       setVolume(value) {
-        this.set.volume = parseFloat(value);
-        this.set.isMuted = this.set.volume === 0;
-        Alpine.raw(this.vid).volume = this.set.volume;
+        Alpine.raw(this.vid).volume = parseFloat(value);
+        Alpine.raw(this.vid).muted = this.set.volume === 0;
       },
       toggleMute() {
-        this.set.isMuted = !this.set.isMuted;
-        Alpine.raw(this.vid).muted = this.set.isMuted;
+        Alpine.raw(this.vid).muted = !this.set.isMuted;
       },
       toggleDatacast() {
-        this.set.datacast = !this.set.datacast;
-        Alpine.raw(this.ts).toggleDatacast(this.set.datacast);
+        this.set.datacast = Alpine.raw(this.ts).toggleDatacast();
       },
       toggleCap() {
         this.set.cap = !this.set.cap;
@@ -2810,6 +2799,7 @@ document.addEventListener('alpine:init', () => {
         this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
       },
     },
+
     log: {
       data: [],
       debug: false,

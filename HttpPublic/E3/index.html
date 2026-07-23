@@ -574,7 +574,7 @@ ct:Append([=[
     <template x-if="page === '#watch'" x-data="player">
       <div class="absolute" style="height: 100%;">
         <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'" style="height: 100%;">
-          <div id="player" x-ref="player"
+          <div id="player" class="dark" x-ref="player"
                @pointermove="showControls(); resetControlTimeout()"
                @touchstart="showControls(); resetControlTimeout()"
                @mouseleave="hideControls()">
@@ -658,15 +658,15 @@ ct:Append([=[
 
                 <nav class="no-margin no-space">
                   <button class="circle transparent" @click="reset()">
-                    <i class="fill">stop</i>
+                    <i class="fill extra">stop</i>
                   </button>
                   <button class="circle transparent" @click="togglePlay()">
-                    <i class="fill" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
+                    <i class="fill extra" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
                   </button>
 
                   <div class="row no-wrap middle-align">
                     <button class="circle transparent" @click="toggleMute()">
-                      <i class="fill" x-text="set.isMuted || set.volume === 0 ? 'volume_off' : (set.volume > 0.5 ? 'volume_up' : 'volume_down')"></i>
+                      <i class="fill extra" x-text="set.isMuted || set.volume === 0 ? 'volume_off' : (set.volume > 0.5 ? 'volume_up' : 'volume_down')"></i>
                     </button>
                     <div class="slider" :class="{ hidden: isMobile }">
                       <input type="range" min="0" max="1" step="0.01" :value="set.isMuted ? 0 : set.volume" @input="setVolume($event.target.value)">
@@ -677,18 +677,18 @@ ct:Append([=[
                   <div class="max"></div>
 
                   <button class="circle transparent" @click="toggleDatacast()">
-                    <i :class="{ fill: set.datacast }">settings_remote</i>
+                    <i class="large" :class="{ fill: set.datacast }">settings_remote</i>
                   </button>
                   <button class="circle transparent" @click="toggleCap()">
-                    <i :class="{ fill: set.cap }">subtitles</i>
+                    <i class="large" :class="{ fill: set.cap }">subtitles</i>
                   </button>
                   <button class="circle transparent" @click="toggleJikkyo()">
-                    <i :class="{ fill: set.jikkyo }">comment</i>
+                    <i class="large" :class="{ fill: set.jikkyo }">comment</i>
                   </button>
 
                   <div>
                     <button class="circle transparent">
-                      <i>settings</i>
+                      <i class="large">settings</i>
                     </button>
                     <menu class="top left" :class="{ top: !isPortrait || isFullscreen }">
                       <li>
@@ -720,7 +720,7 @@ ct:Append([=[
                   </div>
 
                   <button class="circle transparent" @click="toggleFullscreen()">
-                    <i x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"></i>
+                    <i class="large" x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"></i>
                   </button>
                 </nav>
               </div>
@@ -751,7 +751,7 @@ ct:Append([=[
             <div class="tabs min" :class="isPortrait ? 'bottom': 'top'">
               <a :class="{ active: sideTab === 'info' }" @click="sideTab = 'info'"><i>info</i><span>詳細</span></a>
               <a :class="{ active: sideTab === 'service-list' }" @click="sideTab = 'service-list'"><i>cell_tower</i><span>選局</span></a>
-              <a :class="{ active: sideTab === 'library' }" @click="sideTab = 'library'"><i>video_library</i><span>ビデオ</span></a>
+              <a :class="{ active: sideTab === 'library' }" @click="sideTab = 'library'" x-show="library.data.file.length > 0"><i>video_library</i><span>ビデオ</span></a>
               <a :class="{ active: sideTab === 'jikkyo-chats' }" @click="sideTab = 'jikkyo-chats'"><i>mic</i><span>実況</span></a>
             </div>
             <div class="page scroll" :class="{ active: sideTab === 'info' }">
@@ -837,13 +837,13 @@ ct:Append([=[
             <div class="page" :class="{ active: sideTab === 'jikkyo-chats' }">
               <div id="jikkyo-comm" class="vertical jikkyo-comments">
                 <div id="jikkyo-config" class="padding" :class="{ show: showJikkyoSet }">
-                  <nav class="group primary-container middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
-                    <template x-for="(v, i) in list">
-                      <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'no-round' : i > 0 && i < list.length - 1, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
-                    </template>
-                  </nav>
                   <div class="grid">
-                    <div class="s12">
+                    <nav class="s11 group primary-container middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
+                      <template x-for="(v, i) in list">
+                        <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'no-round' : i > 0 && i < list.length - 1, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
+                      </template>
+                    </nav>
+                    <div :class="{ 's11': live, 's12': !live }">
                       <div class="field suffix border">
                         <select name="id">
                           <option value="0" selected>jk? (初期値)
@@ -852,24 +852,22 @@ ct:Append([=[
                         <i>arrow_drop_down</i>
                       </div>
                     </div>
-                    <div class="s12" x-show="!live">
-                      <div id="jikkyo-TM">
-                        <nav class="group split">
-                          <div class="max field prefix border small left-round">
-                            <i>today</i>
-                            <input name="tm" id="dateFormat" type="datetime-local">
-                          </div>
-                          <div class="field suffix border small">
-                            <select name="tmsec">
-                              <template x-for="i in 60" :key="i">
-                                <option :value="i-1" x-text="convert.zero(i-1) + 's'"></option>
-                              </template>
-                            </select>
-                            <i>arrow_drop_down</i>
-                          </div>
-                          <button class="right-round border fill">変更</button>
-                        </nav>
-                      </div>
+                    <div class="s12" id="jikkyo-TM" x-show="!live">
+                      <nav class="group split">
+                        <div class="max field prefix border small left-round">
+                          <i>today</i>
+                          <input name="tm" id="dateFormat" type="datetime-local">
+                        </div>
+                        <div class="field suffix border small">
+                          <select name="tmsec">
+                            <template x-for="i in 60" :key="i">
+                              <option :value="i-1" x-text="convert.zero(i-1) + 's'"></option>
+                            </template>
+                          </select>
+                          <i>arrow_drop_down</i>
+                        </div>
+                        <button class="right-round border fill">変更</button>
+                      </nav>
                     </div>
                     <div class="s12" x-show="!live">
                       <button id="kakolog" class="responsive border fill">ログ取得</button>

@@ -907,7 +907,6 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			script.src = this.#webBmlSrc;
 			script.onload = () => {
 				this.#loaded = null;
-				this.#noWebBml = typeof bmlBrowserSetVisibleSize === 'undefined';
 				if (!this.#noWebBml) bmlBrowserSetVisibleSize(this.#elems.vcont.clientWidth,this.#elems.vcont.clientHeight);
 				return resolve();
 			}
@@ -933,7 +932,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		LOG: 3,
 	}
 	get #datacast(){
-		return {
+		return this.#noWebBml ? null : {
 			enabled: this.#datacastState ? true : false,
 			enable: () => this.#enableDatacast(),
 			disable: () => this.#disableDatacast(),
@@ -960,7 +959,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		return this.#datacastState ? true : false;
 	}
 	get #jikkyo(){
-		return {
+		return this.#noDanmaku ? null : {
 			danmaku: this.#danmaku,
 			enabled: this.#jikkyoState ? true : false,
 			showing: this.#jikkyoState && this.#jkStream.showing ? true : false,
