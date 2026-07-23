@@ -730,18 +730,18 @@ ct:Append([=[
               <progress class="circle large"></progress>
             </div>
             <template x-if="!tslive">
-              <div class="arib-video-invisible-container contents">
+              <div class="arib-video-invisible-container contents" x-init="videoInit()">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video" x-init="videoInit()">
+                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video">
                     <track id="vid-meta" x-ref="meta" kind="metadata" type="text/vtt">
                   </video>
                 </div>
               </div>
             </template>
             <template x-if="tslive">
-              <div class="arib-video-invisible-container contents">
+              <div class="arib-video-invisible-container contents" x-init="videoInit()">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video" x-init="videoInit()"></canvas>
+                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video"></canvas>
                 </div>
               </div>
             </template>

@@ -2625,6 +2625,7 @@ document.addEventListener('alpine:init', () => {
         Alpine.raw(this.ts).setDetelecine(this.cinema, () => this.isLoading = true);
       },
       setbmlBrowserSize() {
+        if (!this.$refs.player) return;
         if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
         const width = this.$refs.player.clientWidth;
         const height = this.$refs.player.clientHeight;
@@ -2704,6 +2705,7 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('waiting', () => this.isLoading = true);
           video.addEventListener('playing', () => this.isLoading = false);
           video.addEventListener('canplay', () => {
+            this.setbmlBrowserSize();
             const promise = video.play();
             //自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
             if (promise !== undefined) {
@@ -2731,10 +2733,8 @@ document.addEventListener('alpine:init', () => {
             ts.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
             ts.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
           }
-          if (ts.datacast) {
-            ts.toggleDatacast(this.set.datacast);
-            this.setbmlBrowserSize();
-          }
+
+          ts.toggleDatacast(this.set.datacast);
 
           if (this.params.id) this.loadLive(this.params.id);
           else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
