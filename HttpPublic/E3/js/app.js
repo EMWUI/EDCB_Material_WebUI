@@ -2434,6 +2434,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     player: {
+      video: null,
       videoInfo: null,
       get params() { return this.app.params },
       get nowOnAir() { return this.app.dashboardData.nowOnAir },
@@ -2470,8 +2471,7 @@ document.addEventListener('alpine:init', () => {
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
         if (!this.ts) return;
-        const video = this.app.$refs.video;
-        video.setAttribute('ctok', video.dataset.ctokView);
+        this.video.setAttribute('ctok', this.video.dataset.ctokView);
         this.live = true;
         Alpine.raw(this.ts).reset();
         Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
@@ -2509,13 +2509,12 @@ document.addEventListener('alpine:init', () => {
 
         if (!fname && !d.recid && !d.rid) return;
 
-        const video = this.app.$refs.video;
-        video.setAttribute('ctok', video.dataset.ctokXcode);
+        this.video.setAttribute('ctok', this.video.dataset.ctokXcode);
         const ts = Alpine.raw(this.ts);
         ts.reset();
         if (canPlay) {
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
-          video.src = fname;
+          this.video.src = fname;
           const meta = this.app.$refs.meta;
           if (meta) {
             // トラック要素を物理的に再作成して置換（ブラウザの読み込みバグを回避）
@@ -2689,7 +2688,7 @@ document.addEventListener('alpine:init', () => {
       // 初期化 (例: ビデオ要素へのイベントリスナーのアタッチ)
       videoInit() {
         this.$nextTick(() => {
-          const video = this.$refs.video;
+          const video = this.video = this.$refs.video;
           const vid = this.tslive ? new TsLiveDatacast(video) : video;
           const ts = this.tslive ? vid : new HlsDatacast(video);
           this.vid = vid;
