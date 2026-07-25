@@ -377,3 +377,5 @@ article.small-width+button { align-self: center; }
   min-height: 0;
 }
 #sideTab .page > div { width: 100%; }
+
+#macro { max-height: 80vh; }

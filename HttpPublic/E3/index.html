@@ -2026,12 +2026,12 @@ ct:Append([=[
                   <label>ファイル名PlugIn</label>
                   <i>arrow_drop_down</i>
                 </div>
-                <nav class="no-space">
+                <nav class="no-space" x-data="{ input: null }">
                   <div class="max field label border small">
-                    <input type="text" :name="`${partial ? 'partial' : ''}recName`" x-model="v.recNameOp">
+                    <input type="text" :name="`${partial ? 'partial' : ''}recName`" x-model="v.recNameOp" x-init="input = $el">
                     <label>オプション</label>
                   </div>
-                  <button class="tertiary right-round" @click="ui('#macro')"><i>add</i></button>
+                  <button class="tertiary right-round" @click="recname.open(input)"><i>add</i></button>
                 </nav>
               </fieldset>
             </template>
@@ -2417,6 +2417,74 @@ ct:Append([=[
     </main>
   </dialog>
 
+  <dialog id="macro" class="bottom" x-data="recname">
+    <header class="fixed top">
+      <nav>
+        <h6 class="max">マクロ一覧</h6>
+        <button class="circle transparent" @click="ui('#macro')"><i>close</i></button>
+      </nav>
+    </header>
+    <template x-for="d in macro">
+      <div>
+        <template x-if="!Array.isArray(d)">
+          <details>
+            <summary>
+              <nav class="padding">
+                <h6 class="max" x-text="d.title"></h6>
+                <i>expand_more</i>
+              </nav>
+            </summary>
+            <template x-for="v in d.items">
+              <div>
+                <template x-if="Array.isArray(v)">
+                  <div class="grid">
+                    <template x-for="w in v">
+                      <button class="chip s6 m4 l2 primary-container" @click="insert(w[1])">
+                        <span x-text="w[0]"></span>
+                        <span x-text="w[1]"></span>
+                      </button>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!Array.isArray(v) && typeof v === 'object' && v !== null">
+                  <details class="margin">
+                    <summary>
+                      <nav class="padding">
+                        <h6 class="max large-text" x-text="v.title"></h6>
+                        <i>expand_more</i>
+                      </nav>
+                    </summary>
+                    <div class="grid">
+                      <template x-for="w in v.items">
+                        <button class="chip s6 m4 l2 primary-container" @click="insert(w[1])">
+                          <span x-text="w[0]"></span>
+                          <span x-text="w[1]"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </details>
+                </template>
+              </div>
+            </template>
+          </details>
+        </template>
+        <template x-if="Array.isArray(d)">
+          <div>
+            <hr class="large">
+            <div class="grid">
+              <template x-for="v in d">
+                <button class="chip s12 m6 l3 primary-container" @click="insert(v[1])">
+                  <span x-text="v[0]"></span>
+                  <span x-text="v[2] || v[1]"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </dialog>
+
   <div id="snackbar" class="snackbar" :class="{ error: active?.error, top: active?.top }" x-data="snackbar">
     <div class="max" x-text="active?.text"></div>
     <template x-if="active?.action != null">
@@ -2425,11 +2493,6 @@ ct:Append([=[
          @click="active.action()"></a>
     </template>
   </div>
-  <dialog id="macro" class="bottom">
-    <header>
-      <h6>マクロ一覧</h6>
-    </header>
-  </dialog>
 </body>
 </html>
 ]=])

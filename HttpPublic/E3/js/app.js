@@ -58,6 +58,120 @@ document.addEventListener('alpine:init', () => {
     0x0240:['', '視覚障害者用音声解説'], 0x0241:['', '聴覚障害者用音声']
   };
 
+  const RECNAME_MACRO = [
+    { title: '開始時間',
+      items: [
+        [
+          ['年 4桁','$SDYYYY28$'],
+          ['年 2桁','$SDYY28$'],
+          ['月','$SDM28$'],
+          ['月 2桁','$SDMM28$'],
+          ['日','$SDD28$'],
+          ['日 2桁','$SDDD28$'],
+          ['曜日','$SDW28$'],
+          ['時','$STH28$'],
+          ['時 2桁','$STHH28$']
+        ], {
+          title: '28時間表記',
+          items: [
+            ['年 4桁','$SDYYYY$'],
+            ['年 2桁','$SDYY$'],
+            ['月','$SDM$'],
+            ['月 2桁','$SDMM$'],
+            ['日','$SDD$'],
+            ['日 2桁','$SDDD$'],
+            ['曜日','$SDW$'],
+            ['時','$STH$'],
+            ['時 2桁','$STHH$'],
+            ['分','$STM$'],
+            ['分 2桁','$STMM$'],
+            ['秒','$STS$'],
+            ['秒 2桁','$STSS$']
+          ]
+        }
+      ] 
+    }, {
+      title: '終了時間',
+      items: [
+        [
+          ['年 4桁','$EDYYYY28$'],
+          ['年 2桁','$EDYY28$'],
+          ['月','$EDM28$'],
+          ['月 2桁','$EDMM28$'],
+          ['日','$EDD28$'],
+          ['日 2桁','$EDDD28$'],
+          ['曜日','$EDW28$'],
+          ['時','$ETH28$'],
+          ['時 2桁','$ETHH28$'],
+        ], {
+          title: '28時間表記',
+          items: [
+            ['年 4桁','$EDYYYY$'],
+            ['年 2桁','$EDYY$'],
+            ['月','$EDM$'],
+            ['月 2桁','$EDMM$'],
+            ['日','$EDD$'],
+            ['日 2桁','$EDDD$'],
+            ['曜日','$EDW$'],
+            ['時','$ETH$'],
+            ['時 2桁','$ETHH$'],
+            ['分','$ETM$'],
+            ['分 2桁','$ETMM$'],
+            ['秒','$ETS$'],
+            ['秒 2桁','$ETSS$']
+          ]
+        }
+      ]
+    }, { 
+      title: '番組総時間',
+      items: [
+        [
+          ['時','$DUH$'],
+          ['時 2桁','$DUHH$'],
+          ['分','$DUM$'],
+          ['分 2桁','$DUMM$'],
+          ['秒','$DUS$'],
+          ['秒 2桁','$DUSS$']
+        ]
+      ]
+    }, [
+      ['番組名','$Title$'],
+      ['番組名（[]削除）','$Title2$'],
+      ['サブタイトル（番組内容）','$SubTitle$'],
+      ['話数が含まれるサブタイトル','$SubTitle2$'],
+      ['番組のジャンル','$Genre$'],
+      ['番組の詳細ジャンル','$Genre2$'],
+      ['サービス名','$ServiceName$'],
+      ['サービスID','$SID10$'],
+      ['ネットワークID','$ONID10$'],
+      ['ストリームID','$TSID10$'],
+      ['イベントID','$EID10$'],
+      ['サービスID 16進数','$SID16$'],
+      ['ネットワークID 16進数','$ONID16$'],
+      ['ストリームID 16進数','$TSID16$'],
+      ['イベントID 16進数','$EID16$'],
+      ['BonDriverの名前','$BonDriverName$'],
+      ['BonDriverのID(優先度)','$BonDriverID$'],
+      ['BonDriverごとのチューナID','$TunerID$'],
+      ['予約ID','$ReserveID$'],
+      ['ノンスクランブルフラグ','$FreeCAFlag$'],
+      ['詳細情報(200文字程度で足切りすべき)','$ExtEventInfo$'],
+    ], [
+      ['半角⇒全角','HtoZ()'],
+      ['全角⇒半角','ZtoH()'],
+      ['英数半角⇒全角','HtoZ<alnum>()'],
+      ['英数全角⇒半角','ZtoH<alnum>()'],
+      ['Shift_JISにない文字を?に置換','ToSJIS()'],
+      ['文字置換','Tr///','Tr/置換文字リスト/置換後/()'],
+      ['文字列置換','S///()','S/置換文字列/置換後/()'],
+      ['文字削除','Rm//()','Rm/削除文字リスト/()'],
+      ['頭切り','Tail()','Tail文字数[省略記号]()'],
+      ['足切り','Head()','Head文字数[省略記号]()'],
+      ['頭切り(UTF-8換算)','TailC()','TailC文字数[省略記号]()'],
+      ['足切り(UTF-8換算)','HeadC()','HeadC文字数[省略記号]()']
+    ]
+  ]
+
   const dayText = ['日', '月', '火', '水', '木', '金', '土'];
   Alpine.data('edcbApp', config => ({
     debug: true,
@@ -2905,6 +3019,28 @@ document.addEventListener('alpine:init', () => {
     },
     toggleDarkMode() {
       this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
+    },
+
+    recname: {
+      macro: RECNAME_MACRO,
+      activeInput: null,
+      open(input) {
+        this.activeInput = input;
+        ui('#macro');
+      },
+      insert(macroValue) {
+        if (this.activeInput) {
+          const input = this.activeInput;
+          const start = input.selectionStart || 0;
+          const end = input.selectionEnd || 0;
+          const text = input.value;
+          input.value = text.substring(0, start) + macroValue + text.substring(end);
+          input.selectionStart = input.selectionEnd = start + macroValue.length;
+          input.focus();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        ui('#macro');
+      },
     },
   }));
 });
