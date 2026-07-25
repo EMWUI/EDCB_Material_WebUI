@@ -572,8 +572,8 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#watch'" x-data="player">
-      <div class="absolute" style="height: 100%;">
-        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'" style="height: 100%;">
+      <div id="player-wrapper" class="absolute">
+        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'">
           <div id="player" class="dark" x-ref="player"
                @pointermove="showControls(); resetControlTimeout()"
                @touchstart="showControls(); resetControlTimeout()"
@@ -590,7 +590,7 @@ ct:Append([=[
               <div class="player-overlay-top row">
                 <h6 class="title text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)" x-show="isFullscreen"></h6>
                 <div class="max"></div>
-                <button class="circle transparent" @click="showSidePanel = !showSidePanel" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg && !params.h">
+                <button class="circle transparent" @click="toggleSidePanel()" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg && !params.h">
                   <i x-text="showSidePanel ? 'view_sidebar' : 'side_navigation'">view_sidebar</i>
                 </button>
               </div>
@@ -776,7 +776,7 @@ ct:Append([=[
               </template>
             </div>
             <div class="page scroll" :class="{ active: sideTab === 'service-list' }" x-data="{ sideNetwork: 1 }">
-              <div>
+              <div class="scroll">
                 <nav class="tabbed small scroll top-margin">
                   <template x-for="n in selectableNetworks" :key="n.index">
                     <a :class="sideNetwork === n.index ? 'active': ''" @click="sideNetwork = n.index">
@@ -2167,7 +2167,7 @@ ct:Append([=[
     </template>
     <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo || isSearch">
       <nav>
-        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo && detail.meta">再生</button>
+        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo" :disabled="!detail.meta">再生</button>
         <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo&&!isSearch"></button>
         <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo">検索</button>
         <div class="max"></div>

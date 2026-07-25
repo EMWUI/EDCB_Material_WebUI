@@ -266,7 +266,8 @@ article.small-width+button { align-self: center; }
   --l-on-container: 90%;
 }
 
-
+#player-wrapper,
+#player-wrapper > div { height: 100%; }
 #player {
   position: relative;
   width: 100%;
@@ -375,3 +376,4 @@ article.small-width+button { align-self: center; }
   flex-direction: column;
   min-height: 0;
 }
+#sideTab .page > div { width: 100%; }

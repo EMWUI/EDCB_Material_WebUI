@@ -2629,6 +2629,10 @@ document.addEventListener('alpine:init', () => {
         this.cinema = !this.cinema;
         Alpine.raw(this.ts).setDetelecine(this.cinema, () => this.isLoading = true);
       },
+      toggleSidePanel() {
+        this.showSidePanel = !this.showSidePanel;
+        this.setbmlBrowserSize();
+      },
       setbmlBrowserSize() {
         if (!this.$refs.player) return;
         if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
