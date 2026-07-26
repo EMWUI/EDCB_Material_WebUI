@@ -22,6 +22,7 @@ ct:Append([=[
   <script src="js/hls.min.js"></script>
   <script src="js/aribb24.js"></script>
   <script src="js/ts-live.lua?t=.js"></script>
+  <script src="js/ts-live.lua?t=-misc.js" defer></script>
   <script src="js/ts-loader.js"></script>
 
   <link rel="stylesheet" href="css/style.css?ver=]=]..ver..[=[">
@@ -645,8 +646,12 @@ ct:Append([=[
                       <progress :max="duration" :value="currentTime" value="0"></progress>
                     </template>
                     <template x-if="!live">
-                      <div class="slider">
-                        <input type="range" min="0" :max="duration" :value="currentTime"
+                      <div class="slider" @pointerleave="onSeekLeave()" @pointermove="onSeekHover($event)">
+                        <span id="seek-thumb" class="hidden" x-ref="thumbWrapper">
+                          <canvas style="display: none;" x-init="thumbInit()" x-ref="thumb"></canvas>
+                          <span class="time" x-ref="thumbTime"></span>
+                        </span>
+                        <input type="range" min="0" :max="duration" :value="currentTime" x-ref="seekbar"
                               @input="currentTime = $event.target.value; isSeeking = true"
                               @change="seek($event.target.value); isSeeking = false">
                         <span></span>

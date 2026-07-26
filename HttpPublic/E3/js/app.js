@@ -2563,6 +2563,7 @@ document.addEventListener('alpine:init', () => {
       },
       vid: null,
       ts: null,
+      thumb: null,
       chap: null,
       tslive: false,
       live: true,
@@ -2650,6 +2651,7 @@ document.addEventListener('alpine:init', () => {
       reset() {
         Alpine.raw(this.ts).reset();
         if (this.chap) Alpine.raw(this.chap).reset();
+        if (this.thumb) Alpine.raw(this.thumb).reset();
         if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
         if (this.app) this.app.updateParams();
         if (this.app.$refs.meta) this.app.$refs.meta.src = '';
@@ -2664,6 +2666,7 @@ document.addEventListener('alpine:init', () => {
         this.vid = null;
         this.ts = null;
         this.chap = null;
+        this.thumb = null;
       },
       togglePlay() {
         if (Alpine.raw(this.vid).paused) Alpine.raw(this.vid).play();
@@ -2671,6 +2674,26 @@ document.addEventListener('alpine:init', () => {
       },
       seek(value) {
         Alpine.raw(this.ts).setSeek(value, () => this.isLoading = true);
+      },
+      onSeekHover(e) {
+        if (!this.thumb || this.live || Object.keys(this.params).length === 0) return;
+        const input = e.currentTarget;
+        const max = parseFloat(this.$refs.seekbar.getAttribute('max') || 0);
+        const offsetX = e.offsetX;
+        const clientWidth = input.clientWidth;
+
+        const thumb = this.$refs.thumbWrapper;
+        thumb.classList.remove('hidden');
+        thumb.style.setProperty('--width', clientWidth + 'px');
+        thumb.style.setProperty('--offset', (offsetX / clientWidth) * 100);
+
+        const seekTime = Math.min(Math.max(0, max * offsetX / clientWidth), max);
+        this.$refs.thumbTime.textContent = this.formatTime(seekTime);
+        Alpine.raw(this.thumb).seek(seekTime);
+      },
+      onSeekLeave() {
+        if (this.thumb) Alpine.raw(this.thumb).hide();
+        this.$refs.thumbWrapper.classList.add('hidden');
       },
       setVolume(value) {
         Alpine.raw(this.vid).volume = parseFloat(value);
@@ -2864,6 +2887,13 @@ document.addEventListener('alpine:init', () => {
 
           this.resetControlTimeout();
         });
+      },
+      thumbInit() {
+        if (!this.$refs.video) {
+          setTimeout(() => this.thumbInit(), 100);
+          return;
+        }
+        this.thumb = new TsThumb(`${this.app.ROOT}api/grabber`, this.$refs.thumb, video);
       },
       chapterInit() {
         if (!this.$refs.video || !this.ts) {
