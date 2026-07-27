@@ -1,6 +1,12 @@
 EDCB Material WebUI
 ===================
 
+> [!WARNING]
+> 開発終了しました  
+> 今後は[EMWUI 3](https://github.com/EMWUI/EDCB_Material_WebUI/tree/E3)をよろしくお願いします
+
+---
+
 **EDCBのWebUIを、Material Design Liteを使いマテリアルデザインに沿うように表示できます**  
 
 予約の追加確認、番組表の表示などの基本的な機能の他、リモート視聴・ファイル再生、PWAなどに対応しています  
