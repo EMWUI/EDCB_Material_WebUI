@@ -391,6 +391,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		if (video){
 			this.#e.params = this.params;
 			this.#e.fast = this.fast;
+			this.#e.fixedCurrentTime = this.fixedCurrentTime
 		}
 		this.#initCap();
 		this.#hlsMp4Query = this.#e.hasAttribute('hls4') ? `&hls4=${this.#e.getAttribute('hls4')}` : '';
@@ -1932,7 +1933,6 @@ TvtPlayのチャプターによるループやスキップ機能
 */
 class chapterTvt{
 	#vid;
-	#ts;
 	#disabled = false;
 	#repeat = true;
 	#skip = true;
@@ -1940,10 +1940,9 @@ class chapterTvt{
 	#hasSeeked;
 	#lastTime = 0;
 	#container = document.getElementById('chapMaker-container');
-	#currentTime(){return this.#ts.fixedCurrentTime || this.#vid.currentTime}
-	constructor(video, ts){
+	#currentTime(){return this.#vid.fixedCurrentTime || this.#vid.currentTime}
+	constructor(video){
 		this.#vid = video;
-		this.#ts = ts;
 		document.getElementById('nextChap').addEventListener('click', () => this.#navigate());
 		document.getElementById('prevChap').addEventListener('click', () => this.#navigate(false));
 		video.addEventListener('timeupdate', () => {
@@ -1980,7 +1979,6 @@ class chapterTvt{
 				}
 			}
 		});
-		//公開フォルダ内はここで直接取得すべきだが。。。
 	}
 
 	get reset(){return this.#reset}

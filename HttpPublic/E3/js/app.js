@@ -2896,11 +2896,11 @@ document.addEventListener('alpine:init', () => {
         this.thumb = new TsThumb(`${this.app.ROOT}api/grabber`, this.$refs.thumb, video);
       },
       chapterInit() {
-        if (!this.$refs.video || !this.ts) {
+        if (!this.$refs.video) {
           setTimeout(() => this.chapterInit(), 100);
           return;
         }
-        const chap = new chapterTvt(this.$refs.video, Alpine.raw(this.ts));
+        const chap = new chapterTvt(this.$refs.video);
         this.chap = chap;
         chap.setSeek = val => this.seek(val);
       }
