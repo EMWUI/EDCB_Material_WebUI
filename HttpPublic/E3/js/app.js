@@ -2627,6 +2627,7 @@ document.addEventListener('alpine:init', () => {
         this.video.setAttribute('ctok', this.video.dataset.ctokXcode);
         const ts = Alpine.raw(this.ts);
         ts.reset();
+        if (this.thumb) Alpine.raw(this.thumb).reset();
         if (canPlay) {
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
           this.video.src = fname;
