@@ -403,12 +403,12 @@ ct:Append([=[
         <button class="transparent circle small" @click="openPage('#search', { andKey: convert.sanitizeTitle(d.shortInfo?.event_name) })">
           <i>search</i>
         </button>
-        <button class="transparent circle small" @click="google(d)">
+        <a class="button transparent circle small" target="_blank" rel="noreferrer" :href="google(d)">
           <i>g_mobiledata_badge</i>
-        </button>
-        <button class="transparent circle small" @click="calendar(d, ']=]..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)..'\', '..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..', \''..edcb.GetPrivateProfile('CALENDAR','src','',INI)..[=[')">
+        </a>
+        <a class="button transparent circle small" target="_blank" rel="noreferrer" :href="calendar(d, ']=]..edcb.GetPrivateProfile('CALENDAR','details','%text_char%',INI)..'\', '..edcb.GetPrivateProfile('CALENDAR','authuser','0',INI)..', \''..edcb.GetPrivateProfile('CALENDAR','src','',INI)..[=[')">
           <i>event</i>
-        </button>
+        </a>
       </nav>
     </template>
 
@@ -1243,7 +1243,7 @@ ct:Append([=[
       </template>
 
       <div id="info" class="page left padding">
-        <template x-if="isInfo || isRecinfo">
+        <template x-if="d.onid && (isInfo || isRecinfo)">
           <div>
             <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
             <template x-if="isInfo">

@@ -310,15 +310,15 @@ document.addEventListener('alpine:init', () => {
       this.loadAll();
     },
     google(d) {
-      window.open(`https://www.google.co.jp/search?q=${encodeURIComponent(this.convert.sanitizeTitle(d.shortInfo?.event_name))}`, '_blank', 'noreferrer');
+      return `https://www.google.co.jp/search?q=${encodeURIComponent(this.convert.sanitizeTitle(d.shortInfo?.event_name))}`
     },
     calendar(d, details, authuser, src) {
-      window.open(`https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
-        }&location=${encodeURIComponent(this.convert.ZtoH(this.getServiceName(d)))
-        }&dates=${this.convert.date(event.starttime, 'ISO')}/${this.convert.date(event.endtime, 'ISO')
+      return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
+        }&location=${encodeURIComponent(this.convert.ZtoH(this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.ts_name||this.getServiceName(d)))
+        }&dates=${this.convert.date(d.startTime, 'ISO')}/${this.convert.date(new Date(d.startTime).getTime() + d.durationSecond * 1000, 'ISO')
         }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
         }&authuser=${authuser
-        }&src=${src}`, '_blank', 'noreferrer')
+        }&src=${src}`
     },
 
     async init() {
@@ -1255,13 +1255,13 @@ document.addEventListener('alpine:init', () => {
         return !a ? '' : `${a.replace(/　/g, ' ').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\[(新|終|再|交|映|手|声|多|字|二|Ｓ|Ｂ|SS|無|Ｃ|S1|S2|S3|MV|双|デ|Ｄ|Ｎ|Ｗ|Ｐ|HV|SD|天|解|料|前|後|初|生|販|吹|PPV|演|移|他|収)\]/g, '<span class="mark">$1</span>')}`
       },
       sanitizeTitle(a) {
-        return a.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, '')
+        return !a ? '' : a.replace(/(?!^【.*?】$)[＜【\[].*?[＞】\]]|（.*?版）/g, '')
       },
       zero(t, n = 2) {
         return t.toString().padStart(n, '0');
       },
       ZtoH(s) {
-        return s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ')
+        return !s ? '' : s.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ')
       },
     },
     getLogoPath(d) {
