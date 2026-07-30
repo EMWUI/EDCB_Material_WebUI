@@ -236,3 +236,18 @@ function GetJkList()
   end
   return s
 end
+
+function GetBonList()
+  local bonList={}
+  for i,v in ipairs(edcb.GetTunerReserveAll()) do
+    if #bonList==0 or bonList[#bonList]~=v.tunerName then
+      bonList[#bonList+1]=v.tunerName
+    end
+  end
+  table.remove(bonList)
+  local s=''
+  for i,v in ipairs(bonList) do
+    s=s..string.format([[    <option>%s</option>]], v)
+  end
+  return s
+end

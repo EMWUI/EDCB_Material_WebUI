@@ -1,0 +1,957 @@
+-- vim:set ft=lua:
+dofile(mg.script_name:gsub('[^\\/]*$','')..'util.lua')
+
+post=AssertPost()
+
+commonIni='Common.ini'
+viewAppIni='ViewApp.ini'
+srvIni='EpgTimerSrv.ini'
+appIni='EpgDataCap_Bon.ini'
+
+defaultRecExePath=WIN32 and PathAppend(EdcbModulePath(),'EpgDataCap_Bon.exe') or ''
+
+function GetViewAppCmdOpt()
+  return {
+    bon=edcb.GetPrivateProfile('APP_CMD_OPT','Bon','-d',viewAppIni),
+    min=edcb.GetPrivateProfile('APP_CMD_OPT','Min','-min',viewAppIni),
+    viewOff=edcb.GetPrivateProfile('APP_CMD_OPT','ViewOff','-noview',viewAppIni),
+    onid=edcb.GetPrivateProfile('APP_CMD_OPT','ONID','-nid',viewAppIni),
+    tsid=edcb.GetPrivateProfile('APP_CMD_OPT','TSID','-tsid',viewAppIni),
+    sid=edcb.GetPrivateProfile('APP_CMD_OPT','SID','-sid',viewAppIni),
+  }
+end
+
+function GetBasic()
+  return {
+    dataSavePath=EdcbSettingPath(),
+    recExePath=edcb.GetPrivateProfile('SET','RecExePath',defaultRecExePath,commonIni),
+    recInfoFolder=edcb.GetPrivateProfile('SET','RecInfoFolder','',commonIni),
+    cmdOpt=GetViewAppCmdOpt(),
+  }
+end
+
+function SaveBasic()
+  local item=mg.get_var(post,'dataSavePath') or ''
+  if IsEqualPath(item,PathAppend(EdcbModulePath(),'Setting')) then
+    --既定値なので記録しない
+    edcb.WritePrivateProfile('SET','DataSavePath',nil,commonIni)
+  elseif item:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+    ff=EdcbFindFilePlain(item)
+    if ff and ff.isdir then
+      edcb.WritePrivateProfile('SET','DataSavePath',item,commonIni)
+    end
+  end
+  item=mg.get_var(post,'recExePath') or ''
+  if IsEqualPath(item,defaultRecExePath) then
+    --既定値なので記録しない
+    edcb.WritePrivateProfile('SET','RecExePath',nil,commonIni)
+  elseif item:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+    ff=EdcbFindFilePlain(item)
+    if ff and not ff.isdir then
+      edcb.WritePrivateProfile('SET','RecExePath',item,commonIni)
+    end
+  end
+  item=mg.get_var(post,'recInfoFolder') or ''
+  if item=='' then
+    --既定値なので記録しない
+    edcb.WritePrivateProfile('SET','RecInfoFolder',nil,commonIni)
+  elseif item:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+    ff=EdcbFindFilePlain(item)
+    if ff and ff.isdir then
+      edcb.WritePrivateProfile('SET','RecInfoFolder',item,commonIni)
+    end
+  end
+  if WIN32 then
+    local cmdOpt=GetViewAppCmdOpt()
+    item=mg.get_var(post,'cmdOptBon') or ''
+    if item~=cmdOpt.bon and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','Bon',item,viewAppIni)
+    end
+    item=mg.get_var(post,'cmdOptMin') or ''
+    if item~=cmdOpt.min and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','Min',item,viewAppIni)
+    end
+    item=mg.get_var(post,'cmdOptViewOff') or ''
+    if item~=cmdOpt.viewOff and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','ViewOff',item,viewAppIni)
+    end
+    item=mg.get_var(post,'cmdOptONID') or ''
+    if item~=cmdOpt.onid and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','ONID',item,viewAppIni)
+    end
+    item=mg.get_var(post,'cmdOptTSID') or ''
+    if item~=cmdOpt.tsid and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','TSID',item,viewAppIni)
+    end
+    item=mg.get_var(post,'cmdOptSID') or ''
+    if item~=cmdOpt.sid and not item:find('%c') then
+      edcb.WritePrivateProfile('APP_CMD_OPT','SID',item,viewAppIni)
+    end
+  end
+end
+
+function GetBon()
+  local esc=edcb.htmlEscape
+  edcb.htmlEscape=0
+  local pattern=PathAppend(EdcbSettingPath(),'*.ChSet4.txt')
+  edcb.htmlEscape=esc
+  local ret={}
+  for i,v in ipairs(edcb.FindFile(pattern,0) or {}) do
+    if not v.isdir then
+      local bon=v.name
+      local depth=0
+      while bon~='' do
+        if bon:find('%)$') then
+          depth=depth+1
+        elseif bon:find('%($') and depth>0 then
+          depth=depth-1
+          if depth==0 then
+            bon=bon:sub(0,#bon-1)
+            break
+          end
+        end
+        bon=bon:sub(0,#bon-1)
+      end
+      if bon~='' then
+        bon=bon..(WIN32 and '.dll' or '.so')
+        for j,w in ipairs(ret) do
+          if w.bon:upper()==bon:upper() then
+            bon=nil
+            break
+          end
+        end
+        if bon then
+          local epgCount=0
+          if edcb.GetPrivateProfile(bon,'GetEpg',1,srvIni)~='0' then
+            epgCount=tonumber(edcb.GetPrivateProfile(bon,'EPGCount',0,srvIni)) or 0
+            if epgCount==0 then epgCount=100 end
+          end
+          ret[#ret+1]={
+            bon=bon,
+            count=tonumber(edcb.GetPrivateProfile(bon,'Count',0,srvIni)) or 0,
+            epgCount=epgCount
+          }
+        end
+      end
+    end
+  end
+  local priority={}
+  for i,v in ipairs(ret) do
+    priority[i]=tonumber(edcb.GetPrivateProfile(v.bon,'Priority',0xFFFF,srvIni)) or 0xFFFF
+  end
+  for i=2,#priority do
+    for j=2,#priority do
+      if priority[j]<priority[j-1] then
+        table.insert(priority,j-1,table.remove(priority,j))
+        table.insert(ret,j-1,table.remove(ret,j))
+      end
+    end
+  end
+  return ret
+end
+
+function SaveBon()
+  local itemList=GetBon()
+  local item=mg.get_var(post,'item') or ''
+  for i,v in ipairs(itemList) do
+    if v.bon==item then
+      if mg.get_var(post,'count') then
+        v.count=GetVarInt(post,'count',0,99) or 0
+        v.epgCount=GetVarInt(post,'epgCount',0,100) or 0
+        ct:Append('<div id="result">変更しました</div>\n')
+      elseif mg.get_var(post,'up') and i>1 then
+        table.remove(itemList,i)
+        table.insert(itemList,i-1,v)
+        ct:Append('<div id="result">移動しました</div>\n')
+      elseif mg.get_var(post,'down') and i<#itemList then
+        table.remove(itemList,i)
+        table.insert(itemList,i+1,v)
+        ct:Append('<div id="result">移動しました</div>\n')
+      end
+      break
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile(v.bon,'Count',v.count,srvIni)
+    edcb.WritePrivateProfile(v.bon,'GetEpg',v.epgCount~=0,srvIni)
+    edcb.WritePrivateProfile(v.bon,'EPGCount',v.epgCount%100,srvIni)
+    edcb.WritePrivateProfile(v.bon,'Priority',i-1,srvIni)
+  end
+end
+
+function GetEpg()
+  return {
+    basicOnlyBS=edcb.GetPrivateProfile('SET','BSBasicOnly',1,commonIni)~='0',
+    basicOnlyCS1=edcb.GetPrivateProfile('SET','CS1BasicOnly',1,commonIni)~='0',
+    basicOnlyCS2=edcb.GetPrivateProfile('SET','CS2BasicOnly',1,commonIni)~='0',
+    basicOnlyCS3=edcb.GetPrivateProfile('SET','CS3BasicOnly',0,commonIni)~='0',
+    ngEpgCapTime=tonumber(edcb.GetPrivateProfile('SET','NGEpgCapTime',20,srvIni)),
+    ngEpgCapTunerTime=tonumber(edcb.GetPrivateProfile('SET','NGEpgCapTunerTime',20,srvIni)),
+  }
+end
+
+function SaveEpg()
+  edcb.WritePrivateProfile('SET','BSBasicOnly',GetVarInt(post,'basicOnlyBS')==1,commonIni)
+  edcb.WritePrivateProfile('SET','CS1BasicOnly',GetVarInt(post,'basicOnlyCS1')==1,commonIni)
+  edcb.WritePrivateProfile('SET','CS2BasicOnly',GetVarInt(post,'basicOnlyCS2')==1,commonIni)
+  edcb.WritePrivateProfile('SET','CS3BasicOnly',GetVarInt(post,'basicOnlyCS3')==1,commonIni)
+  edcb.WritePrivateProfile('SET','NGEpgCapTime',GetVarInt(post,'ngEpgCapTime',0) or 20,srvIni)
+  edcb.WritePrivateProfile('SET','NGEpgCapTunerTime',GetVarInt(post,'ngEpgCapTunerTime',0) or 20,srvIni)
+end
+
+function GetEpgTime()
+  local count=tonumber(edcb.GetPrivateProfile('EPG_CAP','Count',-1,srvIni)) or -1
+  if count<0 then
+    --未設定。毎日23:00に取得
+    return {{enabled=true,weekMin=23*60,flags=-1}}
+  end
+  local ret={}
+  for i=1,count do
+    local hour,minute,wday=edcb.GetPrivateProfile('EPG_CAP',i-1,'',srvIni):match('^([0-2][0-9]):([0-5][0-9])(w?[1-7]?)$')
+    if hour then
+      --曜日指定接尾辞(w1=Mon,...,w7=Sun)
+      wday=#wday==2 and wday:sub(2) or 0
+      ret[#ret+1]={
+        enabled=edcb.GetPrivateProfile('EPG_CAP',(i-1)..'Select',0,srvIni)~='0',
+        weekMin=(wday*24+hour%24)*60+minute,
+        --取得種別(bit0(LSB)=BS,bit1=CS1,bit2=CS2,bit3=CS3)。負値のときは共通設定に従う
+        flags=tonumber(edcb.GetPrivateProfile('EPG_CAP',(i-1)..'BasicOnlyFlags',-1,srvIni))
+      }
+    end
+  end
+  return ret
+end
+
+function SaveEpgTime()
+  local itemList=GetEpgTime()
+  if mg.get_var(post,'add') then
+    local wday=GetVarInt(post,'wday',0,7) or 0
+    local hour=GetVarInt(post,'hour',0,23) or 0
+    local minute=GetVarInt(post,'minute',0,59) or 0
+    local weekMin=(wday*24+hour%24)*60+minute
+    for i,v in ipairs(itemList) do
+      if v.weekMin==weekMin then
+        --既にある
+        weekMin=nil
+        break
+      end
+    end
+    if weekMin then
+      itemList[#itemList+1]={
+        enabled=true,
+        weekMin=weekMin,
+        flags=(GetVarInt(post,'basicOnlyBS',1,1) or 0)+
+              (GetVarInt(post,'basicOnlyCS1',1,1) or 0)*2+
+              (GetVarInt(post,'basicOnlyCS2',1,1) or 0)*4+
+              (GetVarInt(post,'basicOnlyCS3',1,1) or 0)*8
+      }
+    end
+  else
+    local newItemList={}
+    for i,v in ipairs(itemList) do
+      if GetVarInt(post,'del-'..v.weekMin)~=1 then
+        v.enabled=GetVarInt(post,'enabled-'..v.weekMin)==1
+        newItemList[#newItemList+1]=v
+      end
+    end
+    itemList=newItemList
+    ct:Append('<div id="result">変更しました</div>\n')
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('EPG_CAP',i-1,
+      ('%02d:%02d'):format(math.floor(v.weekMin/60)%24,v.weekMin%60)
+        ..(math.floor(v.weekMin/24/60)==0 and '' or 'w'..math.floor(v.weekMin/24/60)),srvIni)
+    edcb.WritePrivateProfile('EPG_CAP',(i-1)..'Select',v.enabled,srvIni)
+    edcb.WritePrivateProfile('EPG_CAP',(i-1)..'BasicOnlyFlags',v.flags,srvIni)
+  end
+  edcb.WritePrivateProfile('EPG_CAP','Count',#itemList,srvIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('EPG_CAP',i-1,'',srvIni)=='' then break end
+    edcb.WritePrivateProfile('EPG_CAP',i-1,nil,srvIni)
+    edcb.WritePrivateProfile('EPG_CAP',(i-1)..'Select',nil,srvIni)
+    edcb.WritePrivateProfile('EPG_CAP',(i-1)..'BasicOnlyFlags',nil,srvIni)
+  end
+end
+
+function GetRec()
+  return {
+    wakeTime=tonumber(edcb.GetPrivateProfile('SET','WakeTime',5,srvIni)),
+    recEndMode=tonumber(edcb.GetPrivateProfile('SET','RecEndMode',2,srvIni)) or 2,
+    reboot=edcb.GetPrivateProfile('SET','Reboot',0,srvIni)~='0',
+    noUsePC=edcb.GetPrivateProfile('NO_SUSPEND','NoUsePC',0,srvIni)~='0',
+    noUsePCTime=tonumber(edcb.GetPrivateProfile('NO_SUSPEND','NoUsePCTime',3,srvIni)),
+    noFileStreaming=edcb.GetPrivateProfile('NO_SUSPEND','NoFileStreaming',0,srvIni)~='0',
+    noShareFile=edcb.GetPrivateProfile('NO_SUSPEND','NoShareFile',0,srvIni)~='0',
+    noStandbyTime=tonumber(edcb.GetPrivateProfile('NO_SUSPEND','NoStandbyTime',10,srvIni)),
+    startMargin=tonumber(edcb.GetPrivateProfile('SET','StartMargin',5,srvIni)),
+    endMargin=tonumber(edcb.GetPrivateProfile('SET','EndMargin',2,srvIni)),
+    recAppWakeTime=tonumber(edcb.GetPrivateProfile('SET','RecAppWakeTime',2,srvIni)),
+    recMinWake=edcb.GetPrivateProfile('SET','RecMinWake',1,srvIni)~='0',
+    recView=tonumber(edcb.GetPrivateProfile('SET','RecView',1,srvIni)) or 1     ,
+    recNW=edcb.GetPrivateProfile('SET','RecNW',0,srvIni)~='0',
+    pgInfoLog=edcb.GetPrivateProfile('SET','PgInfoLog',1,srvIni)~='0',  
+    pgInfoLogAsUtf8=not WIN32 or edcb.GetPrivateProfile('SET','PgInfoLogAsUtf8',0,srvIni)~='0',
+    dropLog=edcb.GetPrivateProfile('SET','DropLog',1,srvIni)~='0',
+    recOverWrite=edcb.GetPrivateProfile('SET','RecOverWrite',0,srvIni)~='0',
+    processPriority=tonumber(edcb.GetPrivateProfile('SET','ProcessPriority',3,srvIni)) or 3,
+    keepDisk=edcb.GetPrivateProfile('SET','KeepDisk',1,srvIni)~='0',
+    enableCaption=edcb.GetPrivateProfile('SET','Caption',1,srvIni)~='0',
+    enableData=edcb.GetPrivateProfile('SET','Data',0,srvIni)~='0'
+  }
+end
+
+function SaveRec()
+  edcb.WritePrivateProfile('SET','WakeTime',GetVarInt(post,'wakeTime',0) or 5,srvIni)
+  edcb.WritePrivateProfile('SET','RecEndMode',GetVarInt(post,'recEndMode',0,3) or 2,srvIni)
+  edcb.WritePrivateProfile('SET','Reboot',GetVarInt(post,'reboot')==1,srvIni)
+  edcb.WritePrivateProfile('NO_SUSPEND','NoFileStreaming',GetVarInt(post,'noFileStreaming')==1,srvIni)
+  edcb.WritePrivateProfile('NO_SUSPEND','NoStandbyTime',GetVarInt(post,'noStandbyTime',0) or 10,srvIni)
+  if WIN32 then
+    edcb.WritePrivateProfile('NO_SUSPEND','NoUsePC',GetVarInt(post,'noUsePC')==1,srvIni)
+    edcb.WritePrivateProfile('NO_SUSPEND','NoUsePCTime',GetVarInt(post,'noUsePCTime',0) or 3,srvIni)
+    edcb.WritePrivateProfile('NO_SUSPEND','NoShareFile',GetVarInt(post,'noShareFile')==1,srvIni)
+  end
+  edcb.WritePrivateProfile('SET','StartMargin',GetVarInt(post,'startMargin') or 5,srvIni)
+  edcb.WritePrivateProfile('SET','EndMargin',GetVarInt(post,'endMargin') or 2,srvIni)
+  edcb.WritePrivateProfile('SET','RecAppWakeTime',GetVarInt(post,'recAppWakeTime',0) or 2,srvIni)
+  edcb.WritePrivateProfile('SET','RecMinWake',GetVarInt(post,'recMinWake')==1,srvIni)
+  edcb.WritePrivateProfile('SET','RecView',(GetVarInt(post,'openViewForViewing',1,1) or 0)+
+                                           (GetVarInt(post,'openViewForRec',1,1) or 0)*2+
+                                           (GetVarInt(post,'openViewAlways',1,1) or 0)*4,srvIni)
+  edcb.WritePrivateProfile('SET','RecNW',GetVarInt(post,'recNW')==1,srvIni)
+  edcb.WritePrivateProfile('SET','PgInfoLog',GetVarInt(post,'pgInfoLog')==1,srvIni)
+  if WIN32 then
+    edcb.WritePrivateProfile('SET','PgInfoLogAsUtf8',GetVarInt(post,'pgInfoLogAsUtf8')==1,srvIni)
+  end
+  edcb.WritePrivateProfile('SET','DropLog',GetVarInt(post,'dropLog')==1,srvIni)
+  edcb.WritePrivateProfile('SET','RecOverWrite',GetVarInt(post,'recOverWrite')==1,srvIni)
+  if WIN32 then
+    edcb.WritePrivateProfile('SET','ProcessPriority',GetVarInt(post,'processPriority',0,5) or 3,srvIni)
+  end
+  edcb.WritePrivateProfile('SET','KeepDisk',GetVarInt(post,'keepDisk')==1,srvIni)
+  edcb.WritePrivateProfile('SET','Caption',GetVarInt(post,'enableCaption')==1,srvIni)
+  edcb.WritePrivateProfile('SET','Data',GetVarInt(post,'enableData')==1,srvIni)
+end
+
+function GetDelChk()
+  local ret={}
+  for i=1,tonumber(edcb.GetPrivateProfile('DEL_CHK','Count',0,srvIni)) or 0 do
+    ret[i]=edcb.GetPrivateProfile('DEL_CHK',i-1,'',srvIni)
+  end
+  return ret
+end
+
+function SaveDelChk()
+  local itemList=GetDelChk()
+  local item=mg.get_var(post,'dir') or ''
+  if mg.get_var(post,'add') then
+    for i,v in ipairs(itemList) do
+      if IsEqualPath(v,item) then
+        --既にある
+        item=nil
+        break
+      end
+    end
+    if item and item:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+      ff=EdcbFindFilePlain(item)
+      if (ff and ff.isdir) or (WIN32 and item:find('^[A-Za-z]:\\$')) then
+        itemList[#itemList+1]=item
+        ct:Append('<div id="result">追加しました</div>\n')
+      end
+    end
+  elseif mg.get_var(post,'del') then
+    for i,v in ipairs(itemList) do
+      if v==item then
+        table.remove(itemList,i)
+        ct:Append('<div id="result">削除しました</div>\n')
+        break
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('DEL_CHK',i-1,v,srvIni)
+  end
+  edcb.WritePrivateProfile('DEL_CHK','Count',#itemList,srvIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('DEL_CHK',i-1,'',srvIni)=='' then break end
+    edcb.WritePrivateProfile('DEL_CHK',i-1,nil,srvIni)
+  end
+end
+
+function GetDelExt()
+  local count=tonumber(edcb.GetPrivateProfile('DEL_EXT','Count',-1,srvIni)) or -1
+  if count<0 then
+    --未設定
+    return {'.ts.err','.ts.program.txt'}
+  end
+  local ret={}
+  for i=1,count do
+    ret[i]=edcb.GetPrivateProfile('DEL_EXT',i-1,'',srvIni)
+  end
+  return ret
+end
+
+function SaveDelExt()
+  local itemList=GetDelExt()
+  local item=mg.get_var(post,'ext') or ''
+  if mg.get_var(post,'add') then
+    for i,v in ipairs(itemList) do
+      if IsEqualPath(v,item) then
+        --既にある
+        item=nil
+        break
+      end
+    end
+    if item and item:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
+      itemList[#itemList+1]=item
+      ct:Append('<div id="result">追加しました</div>\n')
+    end
+  elseif mg.get_var(post,'del') then
+    for i,v in ipairs(itemList) do
+      if v==item then
+        table.remove(itemList,i)
+        ct:Append('<div id="result">削除しました</div>\n')
+        break
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('DEL_EXT',i-1,v,srvIni)
+  end
+  edcb.WritePrivateProfile('DEL_EXT','Count',#itemList,srvIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('DEL_EXT',i-1,'',srvIni)=='' then break end
+    edcb.WritePrivateProfile('DEL_EXT',i-1,nil,srvIni)
+  end
+end
+
+function GetNoSuspend()
+  local count=tonumber(edcb.GetPrivateProfile('NO_SUSPEND','Count',-1,srvIni)) or -1
+  if count<0 then
+    --未設定
+    return {'EpgDataCap_Bon'}
+  end
+  local ret={}
+  for i=1,count do
+    local item=edcb.GetPrivateProfile('NO_SUSPEND',i-1,'',srvIni)
+    if item~='' then
+      ret[#ret+1]=item
+    end
+  end
+  return ret
+end
+
+function SaveNoSuspend()
+  local itemList=GetNoSuspend()
+  local item=mg.get_var(post,'noSuspend') or ''
+  if mg.get_var(post,'add') then
+    for i,v in ipairs(itemList) do
+      if IsEqualPath(v,item) then
+        --既にある
+        item=nil
+        break
+      end
+    end
+    if item and item:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
+      itemList[#itemList+1]=item
+      ct:Append('<div id="result">追加しました</div>\n')
+    end
+  elseif mg.get_var(post,'del') then
+    for i,v in ipairs(itemList) do
+      if v==item then
+        table.remove(itemList,i)
+        ct:Append('<div id="result">削除しました</div>\n')
+        break
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('NO_SUSPEND',i-1,v,srvIni)
+  end
+  edcb.WritePrivateProfile('NO_SUSPEND','Count',#itemList,srvIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('NO_SUSPEND',i-1,'',srvIni)=='' then break end
+    edcb.WritePrivateProfile('NO_SUSPEND',i-1,nil,srvIni)
+  end
+end
+
+function GetReserve()
+  return {
+    recInfoFolderOnly=edcb.GetPrivateProfile('SET','RecInfoFolderOnly',1,srvIni)~='0',
+    applyExtToRecInfoDel=edcb.GetPrivateProfile('SET','ApplyExtToRecInfoDel',0,srvIni)~='0',
+    autoDel=edcb.GetPrivateProfile('SET','AutoDel',0,srvIni)~='0',
+    backPriority=edcb.GetPrivateProfile('SET','BackPriority',1,srvIni)~='0',
+    fixedTunerPriority=edcb.GetPrivateProfile('SET','FixedTunerPriority',1,srvIni)~='0',
+    retryOtherTuners=edcb.GetPrivateProfile('SET','RetryOtherTuners',0,srvIni)~='0',
+    separateFixedTuners=edcb.GetPrivateProfile('SET','SeparateFixedTuners',0,srvIni)~='0',
+    commentAutoAdd=edcb.GetPrivateProfile('SET','CommentAutoAdd',0,srvIni)~='0',
+    fixNoRecToServiceOnly=edcb.GetPrivateProfile('SET','FixNoRecToServiceOnly',0,srvIni)~='0',
+    useRecNamePlugIn=edcb.GetPrivateProfile('SET','RecNamePlugIn',0,srvIni)~='0',
+    recNamePlugInFile=edcb.GetPrivateProfile('SET','RecNamePlugInFile','',srvIni),
+    noChkYen=edcb.GetPrivateProfile('SET','NoChkYen',0,srvIni)~='0',
+    delReserveMode=tonumber(edcb.GetPrivateProfile('SET','DelReserveMode',2,srvIni)) or 2,
+    recInfoDelFile=edcb.GetPrivateProfile('SET','RecInfoDelFile',0,commonIni)~='0'
+  }
+end
+
+function SaveReserve()
+  edcb.WritePrivateProfile('SET','RecInfoFolderOnly',GetVarInt(post,'recInfoFolderOnly')==1,srvIni)
+  edcb.WritePrivateProfile('SET','ApplyExtToRecInfoDel',GetVarInt(post,'applyExtToRecInfoDel')==1,srvIni)
+  edcb.WritePrivateProfile('SET','AutoDel',GetVarInt(post,'autoDel')==1,srvIni)
+  edcb.WritePrivateProfile('SET','BackPriority',GetVarInt(post,'backPriority')==1,srvIni)
+  edcb.WritePrivateProfile('SET','FixedTunerPriority',GetVarInt(post,'fixedTunerPriority')==1,srvIni)
+  edcb.WritePrivateProfile('SET','RetryOtherTuners',GetVarInt(post,'retryOtherTuners')==1,srvIni)
+  edcb.WritePrivateProfile('SET','SeparateFixedTuners',GetVarInt(post,'separateFixedTuners')==1,srvIni)
+  edcb.WritePrivateProfile('SET','CommentAutoAdd',GetVarInt(post,'commentAutoAdd')==1,srvIni)
+  edcb.WritePrivateProfile('SET','FixNoRecToServiceOnly',GetVarInt(post,'fixNoRecToServiceOnly')==1,srvIni)
+  edcb.WritePrivateProfile('SET','RecNamePlugIn',GetVarInt(post,'recNamePlugIn')==1,srvIni)
+  local recNamePlugInFile=mg.get_var(post,'recNamePlugInFile') or ''
+  local recNameList=EnumPlugInFileName('RecName')
+  for i,v in ipairs(recNameList) do
+    if IsEqualPath(v,recNamePlugInFile) then
+      recNameList=nil
+      break
+    end
+  end
+  --未選択のときは先頭の候補にする
+  edcb.WritePrivateProfile('SET','RecNamePlugInFile',recNameList and (#recNameList>0 and recNameList[1] or '') or recNamePlugInFile,srvIni)
+  edcb.WritePrivateProfile('SET','NoChkYen',GetVarInt(post,'noChkYen')==1,srvIni)
+  edcb.WritePrivateProfile('SET','DelReserveMode',GetVarInt(post,'delReserveMode',0,2) or 2,srvIni)
+  edcb.WritePrivateProfile('SET','RecInfoDelFile',GetVarInt(post,'recInfoDelFile')==1,commonIni)
+end
+
+function GetOther()
+  return {
+    enableTCPSrv=edcb.GetPrivateProfile('SET','EnableTCPSrv',0,srvIni)~='0',
+    tcpIPv6=edcb.GetPrivateProfile('SET','TCPIPv6',0,srvIni)~='0',
+    tcpPort=tonumber(edcb.GetPrivateProfile('SET','TCPPort',4510,srvIni)),
+    tcpAccessControlList=edcb.GetPrivateProfile('SET','TCPAccessControlList','+127.0.0.1,+192.168.0.0/16',srvIni),
+    tcpResponseTimeoutSec=tonumber(edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni)),
+    epgArchivePeriodHour=tonumber(edcb.GetPrivateProfile('SET','EpgArchivePeriodHour',0,srvIni)) or 0,
+    residentMode=tonumber(edcb.GetPrivateProfile('SET','ResidentMode',2,srvIni)),
+    notifyTipStyle=edcb.GetPrivateProfile('SET','NotifyTipStyle',0,srvIni)~='0',
+    blinkPreRec=edcb.GetPrivateProfile('SET','BlinkPreRec',0,srvIni)~='0',
+    noBalloonTip=tonumber(edcb.GetPrivateProfile('SET','NoBalloonTip',0,srvIni)),
+    saveNotifyLog=edcb.GetPrivateProfile('SET','SaveNotifyLog',0,srvIni)~='0',
+    saveDebugLog=edcb.GetPrivateProfile('SET','SaveDebugLog',0,srvIni)~='0',
+    timeSync=edcb.GetPrivateProfile('SET','TimeSync',0,srvIni)~='0',
+    autoDelRecInfo=edcb.GetPrivateProfile('SET','AutoDelRecInfo',0,srvIni)~='0',
+    autoDelRecInfoNum=tonumber(edcb.GetPrivateProfile('SET','AutoDelRecInfoNum',100,srvIni)),
+    recInfo2Max=tonumber(edcb.GetPrivateProfile('SET','RecInfo2Max',1000,srvIni)),
+    recInfo2DropChk=tonumber(edcb.GetPrivateProfile('SET','RecInfo2DropChk',2,srvIni)),
+    tsExt=edcb.GetPrivateProfile('SET','TSExt','.ts',srvIni),
+    compatFlags=tonumber(edcb.GetPrivateProfile('SET','CompatFlags',0,srvIni)) or 0
+  }
+end
+
+function SaveOther()
+  edcb.htmlEscape=15
+  local lastEnableTCPSrv=edcb.GetPrivateProfile('SET','EnableTCPSrv',0,srvIni)~='0'
+  local lastTcpIPv6=edcb.GetPrivateProfile('SET','TCPIPv6',0,srvIni)~='0'
+  local lastTcpPort=edcb.GetPrivateProfile('SET','TCPPort',4510,srvIni)
+  local lastTcpAccessControlList=edcb.GetPrivateProfile('SET','TCPAccessControlList','+127.0.0.1,+192.168.0.0/16',srvIni)
+  local lastTcpResponseTimeoutSec=edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni)
+  edcb.htmlEscape=0
+  edcb.WritePrivateProfile('SET','EnableTCPSrv',GetVarInt(post,'enableTCPSrv')==1,srvIni)
+  edcb.WritePrivateProfile('SET','TCPIPv6',GetVarInt(post,'tcpIPv6')==1,srvIni)
+  edcb.WritePrivateProfile('SET','TCPPort',GetVarInt(post,'tcpPort',0,65535) or 4510,srvIni)
+  edcb.WritePrivateProfile('SET','TCPAccessControlList',(mg.get_var(post,'tcpAccessControlList') or ''):gsub('%c',''),srvIni)
+  edcb.WritePrivateProfile('SET','TCPResponseTimeoutSec',GetVarInt(post,'tcpResponseTimeoutSec',0) or 120,srvIni)
+  edcb.WritePrivateProfile('SET','EpgArchivePeriodHour',(GetVarInt(post,'epgArchivePeriod',0,20000) or 0)*24,srvIni)
+  if WIN32 then
+    edcb.WritePrivateProfile('SET','ResidentMode',GetVarInt(post,'residentMode')~=1 and 0 or GetVarInt(post,'showTray')~=1 and 1 or 2,srvIni)
+    edcb.WritePrivateProfile('SET','NotifyTipStyle',GetVarInt(post,'notifyTipStyle')==1,srvIni)
+    edcb.WritePrivateProfile('SET','BlinkPreRec',GetVarInt(post,'blinkPreRec')==1,srvIni)
+    edcb.WritePrivateProfile('SET','NoBalloonTip',GetVarInt(post,'noBalloonTip')==1 and 1 or GetVarInt(post,'noBalloonTipRealtime')==1 and 2 or 0,srvIni)
+  end
+  edcb.WritePrivateProfile('SET','SaveNotifyLog',GetVarInt(post,'saveNotifyLog')==1,srvIni)
+  edcb.WritePrivateProfile('SET','SaveDebugLog',GetVarInt(post,'saveDebugLog')==1,srvIni)
+  edcb.WritePrivateProfile('SET','TimeSync',GetVarInt(post,'timeSync')==1,srvIni)
+  edcb.WritePrivateProfile('SET','AutoDelRecInfo',GetVarInt(post,'autoDelRecInfo')==1,srvIni)
+  edcb.WritePrivateProfile('SET','AutoDelRecInfoNum',GetVarInt(post,'autoDelRecInfoNum',0) or 100,srvIni)
+  edcb.WritePrivateProfile('SET','RecInfo2Max',GetVarInt(post,'recInfo2Max',0) or 1000,srvIni)
+  edcb.WritePrivateProfile('SET','RecInfo2DropChk',GetVarInt(post,'recInfo2DropChk',0) or 2,srvIni)
+  edcb.WritePrivateProfile('SET','TSExt',(mg.get_var(post,'tsExt') or ''):match('^%.[0-9A-Za-z][0-9A-Za-z]?[0-9A-Za-z]?[0-9A-Za-z]?[0-9A-Za-z]?$') or '.ts',srvIni)
+  local v=GetOther()
+  return v.enableTCPSrv~=lastEnableTCPSrv or
+    v.tcpIPv6~=lastTcpIPv6 or
+    v.tcpPort~=lastTcpPort or
+    v.tcpAccessControlList~=lastTcpAccessControlList or
+    v.tcpResponseTimeoutSec~=lastTcpResponseTimeoutSec
+end
+
+function GetViewBon()
+  local ret={}
+  for i=1,tonumber(edcb.GetPrivateProfile('TVTEST','Num',0,srvIni)) or 0 do
+    local item=edcb.GetPrivateProfile('TVTEST',i-1,'',srvIni)
+    if item~='' then
+      ret[#ret+1]=item
+    end
+  end
+  return ret
+end
+
+function SaveViewBon()
+  local itemList=GetViewBon()
+  local item=mg.get_var(post,'item') or ''
+  if mg.get_var(post,'add') then
+    for i,v in ipairs(itemList) do
+      if v:upper()==item:upper() then
+        --既にある
+        item=nil
+        break
+      end
+    end
+    if item then
+      for i,v in ipairs(edcb.GetTunerReserveAll()) do
+        if item==v.tunerName then
+          itemList[#itemList+1]=item
+          ct:Append('<div id="result">追加しました</div>\n')
+          break
+        end
+      end
+    end
+  elseif mg.get_var(post,'del') then
+    for i,v in ipairs(itemList) do
+      if v==item then
+        table.remove(itemList,i)
+        ct:Append('<div id="result">削除しました</div>\n')
+        break
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('TVTEST',i-1,v,srvIni)
+  end
+  edcb.WritePrivateProfile('TVTEST','Num',#itemList,srvIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('TVTEST',i-1,'',srvIni)=='' then break end
+    edcb.WritePrivateProfile('TVTEST',i-1,nil,srvIni)
+  end
+end
+
+function ParseSettingArrays(s)
+  local i,r=1,{}
+  while s:find('^%[',i) do
+    i=i+1
+    local a={}
+    while true do
+      local v=nil
+      if s:find('^false',i) then
+        v=false
+        i=i+5
+      elseif s:find('^true',i) then
+        v=true
+        i=i+4
+      elseif s:find('^"',i) then
+        --文字列
+        i=i+1
+        local t=''
+        while i<=#s do
+          if s:find('^"',i) then
+            v=t
+            i=i+1
+            break
+          elseif s:find('^\\.',i) then
+            i=i+1
+          end
+          t=t..s:sub(i,i)
+          i=i+1
+        end
+      else
+        local n=s:match('^%-?[0-9]+',i)
+        if n then
+          --数値
+          i=i+#n
+          n=tonumber(n)
+          if n and n==math.floor(n) and n>=-2147483648 and n<=2147483647 then
+            v=n
+          end
+        end
+      end
+      if v==nil then return nil end
+      a[#a+1]=v
+      if s:find('^%],',i) then
+        i=i+2
+        break
+      end
+      if not s:find('^,',i) then return nil end
+      i=i+1
+    end
+    if r.body then
+      if type(a[1])~='number' then return nil end
+      if a[1]%8==0 then
+        --設定項目
+        if #a<5 or type(a[2])~='string' or type(a[3])~='string' or type(a[4])~='string' then return nil end
+        r.body[#r.body+1]={sub=math.floor(a[1]/8)%4,section=a[2],key=a[3],desc=a[4],def=a[5]}
+        if type(a[5])=='number' then
+          --数値の設定項目
+          if type(a[6])~='number' or type(a[7])~='number' then return nil end
+          r.body[#r.body].min=a[6]
+          r.body[#r.body].max=a[7]
+        end
+      elseif a[1]%8==1 then
+        --ラベル項目
+        if type(a[2])~='string' then return nil end
+        r.body[#r.body+1]={sub=math.floor(a[1]/8)%4,label=a[2]}
+      end
+    else
+      if type(a[2])~='string' or type(a[3])~='number' then return nil end
+      r.head={desc=a[2],utf=a[3]%2==1}
+      r.body={}
+    end
+  end
+  return r.body and r or nil
+end
+
+function GetPlugin()
+  mode=GetVarInt(mg.request_info.query_string,'mode',1,2) or 1
+  item=mg.get_var(mg.request_info.query_string,'item') or ''
+  itemList=EnumPlugInFileName(mode==1 and 'RecName' or 'Write')
+  setting=nil
+  for i,v in ipairs(itemList) do
+    if v==item then
+      f=edcb.io.open(PathAppend(EdcbLibPath() or PathAppend(EdcbModulePath(),mode==1 and 'RecName' or 'Write'),v),'rb')
+      if f then
+        --埋め込まれた設定ファイルについてのメタ情報を取り出す
+        buf=(' '):rep(65536)
+        while #buf==65536 do
+          buf=buf..(f:read(65536) or '')
+          setting=buf:match('%[(%["setting%-59c4d329%-ba81%-4054%-9f4d%-d1900653338a",.-)%[""%]%]')
+          if setting then
+            setting=ParseSettingArrays(setting:gsub('%c',''))
+            break
+          end
+          buf=buf:sub(65537)
+        end
+        f:close()
+      end
+      break
+    end
+  end
+  for i,v in ipairs(setting.body) do
+    if v.section then
+      v.val=edcb.GetPrivateProfile(v.section,v.key,v.def,(mode==1 and 'RecName\\' or 'Write\\')..item..'.ini')
+    end
+  end
+  return setting
+end
+
+function SavePlugin()
+  local setting=GetPlugin()
+  if setting then
+    if WIN32 and setting.head.utf then
+      --設定ファイルがまだないか空のときバイト順マークを書き込む
+      f=edcb.io.open(EdcbModulePath()..(mode==1 and '\\RecName\\' or '\\Write\\')..item..'.ini','ab')
+      if f then
+        if f:seek('end')==0 then
+          f:write('\xff\xfe')
+        end
+        f:close()
+      end
+    end
+    for i,v in ipairs(setting.body) do
+      if v.section and mg.get_var(post,'k-'..i)=='['..v.section..']'..v.key then
+        val=GetVarInt(post,'c-'..i)==1
+        if type(v.def)=='number' then
+          val=math.min(math.max(val and GetVarInt(post,'v-'..i) or 0,v.min),v.max)
+        elseif type(v.def)=='string' then
+          val=(val and mg.get_var(post,'v-'..i) or ''):gsub('%c','')
+        end
+        edcb.WritePrivateProfile(v.section,v.key,val,(mode==1 and 'RecName\\' or 'Write\\')..item..'.ini')
+      end
+    end
+  end
+end
+
+function GetApp()
+  return {
+    allService=edcb.GetPrivateProfile('SET','AllService',0,appIni)~='0',
+    scramble=edcb.GetPrivateProfile('SET','Scramble',1,appIni)~='0',
+    emm=edcb.GetPrivateProfile('SET','EMM',0,appIni)~='0',
+    enableCaption=edcb.GetPrivateProfile('SET','Caption',1,appIni)~='0',
+    enableData=edcb.GetPrivateProfile('SET','Data',0,appIni)~='0',
+    overWrite=edcb.GetPrivateProfile('SET','OverWrite',0,appIni)~='0',
+    dropSaveThresh=tonumber(edcb.GetPrivateProfile('SET','DropSaveThresh',0,appIni)) or 0,
+    scrambleSaveThresh=tonumber(edcb.GetPrivateProfile('SET','ScrambleSaveThresh',-1,appIni)) or -1,
+    noLogScramble=edcb.GetPrivateProfile('SET','NoLogScramble',0,appIni)~='0',
+    recFileName=edcb.GetPrivateProfile('SET','RecFileName','$DYYYY$$DMM$$DDD$-$THH$$TMM$$TSS$-$ServiceName$.ts',appIni),
+    openLast=WIN32 and edcb.GetPrivateProfile('SET','OpenLast',1,appIni)~='0',
+    dropLogAsUtf8=not WIN32 or edcb.GetPrivateProfile('SET','DropLogAsUtf8',0,appIni)~='0',
+    saveDebugLog=edcb.GetPrivateProfile('SET','SaveDebugLog',0,appIni)~='0',
+    traceBonDriverLevel=edcb.GetPrivateProfile('SET','TraceBonDriverLevel',0,appIni)~='0',
+    tsBuffMaxCount=tonumber(edcb.GetPrivateProfile('SET','TsBuffMaxCount',5000,appIni)) or 5000,
+    --設定上の無制限は-1だがUIでは0を無制限とみなす
+    writeBuffMaxCount=math.max(tonumber(edcb.GetPrivateProfile('SET','WriteBuffMaxCount',0,appIni)) or 0,0),
+    epgCapBackBSBasic=edcb.GetPrivateProfile('SET','EpgCapBackBSBasicOnly',1,appIni)~='0',
+    epgCapBackCS1Basic=edcb.GetPrivateProfile('SET','EpgCapBackCS1BasicOnly',1,appIni)~='0' ,
+    epgCapBackCS2Basic=edcb.GetPrivateProfile('SET','EpgCapBackCS2BasicOnly',1,appIni)~='0',
+    epgCapBackCS3Basic=edcb.GetPrivateProfile('SET','EpgCapBackCS3BasicOnly',0,appIni)~='0',
+    epgCapLive=edcb.GetPrivateProfile('SET','EpgCapLive',1,appIni)~='0',
+    epgCapRec=edcb.GetPrivateProfile('SET','EpgCapRec',1,appIni)~='0',
+    parseEpgPostProcess=edcb.GetPrivateProfile('SET','ParseEpgPostProcess',0,appIni)~='0',
+    epgCapBackStartWaitSec=tonumber(edcb.GetPrivateProfile('SET','EpgCapBackStartWaitSec',30,appIni)) or 30,
+    saveLogo=edcb.GetPrivateProfile('SET','SaveLogo',0,appIni)~='0',
+    saveLogoTypeFlags=tonumber(edcb.GetPrivateProfile('SET','SaveLogoTypeFlags',32,appIni)) or 32
+  }
+end
+
+function SaveApp()
+  edcb.WritePrivateProfile('SET','AllService',GetVarInt(post,'allService')==1,appIni)
+  edcb.WritePrivateProfile('SET','Scramble',GetVarInt(post,'scramble')==1,appIni)
+  edcb.WritePrivateProfile('SET','EMM',GetVarInt(post,'emm')==1,appIni)
+  edcb.WritePrivateProfile('SET','Caption',GetVarInt(post,'enableCaption')==1,appIni)
+  edcb.WritePrivateProfile('SET','Data',GetVarInt(post,'enableData')==1,appIni)
+  edcb.WritePrivateProfile('SET','OverWrite',GetVarInt(post,'overWrite')==1,appIni)
+  edcb.WritePrivateProfile('SET','DropSaveThresh',GetVarInt(post,'dropSaveThresh',-1) or 0,appIni)
+  edcb.WritePrivateProfile('SET','ScrambleSaveThresh',GetVarInt(post,'scrambleSaveThresh',-1) or -1,appIni)
+  edcb.WritePrivateProfile('SET','NoLogScramble',GetVarInt(post,'noLogScramble')==1,appIni)
+  edcb.WritePrivateProfile('SET','RecFileName',(mg.get_var(post,'recFileName') or ''):gsub('%c',''),appIni)
+  if WIN32 then
+    edcb.WritePrivateProfile('SET','OpenLast',GetVarInt(post,'openLast')==1,appIni)
+    edcb.WritePrivateProfile('SET','DropLogAsUtf8',GetVarInt(post,'dropLogAsUtf8')==1,appIni)
+  end
+  edcb.WritePrivateProfile('SET','SaveDebugLog',GetVarInt(post,'saveDebugLog')==1,appIni)
+  --設定的には多値なので、すでに有効な場合は値を維持する
+  traceLevel=GetVarInt(post,'traceBonDriverLevel')==1 and 2 or 0
+  if traceLevel==0 or edcb.GetPrivateProfile('SET','TraceBonDriverLevel',0,appIni)=='0' then
+    edcb.WritePrivateProfile('SET','TraceBonDriverLevel',traceLevel,appIni)
+  end
+  edcb.WritePrivateProfile('SET','TsBuffMaxCount',GetVarInt(post,'tsBuffMaxCount',0) or 5000,appIni)
+  edcb.WritePrivateProfile('SET','WriteBuffMaxCount',GetVarInt(post,'writeBuffMaxCount',1) or -1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapBackBSBasicOnly',GetVarInt(post,'epgCapBackBSBasic')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapBackCS1BasicOnly',GetVarInt(post,'epgCapBackCS1Basic')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapBackCS2BasicOnly',GetVarInt(post,'epgCapBackCS2Basic')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapBackCS3BasicOnly',GetVarInt(post,'epgCapBackCS3Basic')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapLive',GetVarInt(post,'epgCapLive')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapRec',GetVarInt(post,'epgCapRec')==1,appIni)
+  edcb.WritePrivateProfile('SET','ParseEpgPostProcess',GetVarInt(post,'parseEpgPostProcess')==1,appIni)
+  edcb.WritePrivateProfile('SET','EpgCapBackStartWaitSec',GetVarInt(post,'epgCapBackStartWaitSec',0) or 30,appIni)
+  edcb.WritePrivateProfile('SET','SaveLogo',GetVarInt(post,'saveLogo')==1,appIni)
+  edcb.WritePrivateProfile('SET','SaveLogoTypeFlags',GetVarInt(post,'saveLogoTypeFlags',0) or 32,appIni)
+end
+
+function GetAppNetwork(tcp)
+  local count=tonumber(edcb.GetPrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','Count',0,appIni)) or 0
+  local ret={}
+  for i=1,count do
+    local ip=edcb.GetPrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','IP'..(i-1),2130706433,appIni)
+    if ip:find('^%[.') then
+      ip=ip:match('^%[(.*).$')
+    else
+      --IPv4
+      ip=tonumber(ip) or 0
+      ip=(ip<0 and 0x100000000 or 0)+ip
+      ip=(math.floor(ip/256/256/256)%256)..'.'..(math.floor(ip/256/256)%256)..'.'..(math.floor(ip/256)%256)..'.'..(ip%256)
+    end
+    ret[i]={
+      ip=ip,
+      port=tonumber(edcb.GetPrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','Port'..(i-1),not tcp and 1234 or ip~='0.0.0.1' and 2230 or 0,appIni)) or 0,
+      broadcast=not tcp and edcb.GetPrivateProfile('SET_UDP','BroadCast'..(i-1),0,appIni)~='0'
+    }
+  end
+  return ret
+end
+
+function SaveAppNetwork()
+  local tcp=not not mg.get_var(post,'tcp')
+  local itemList=GetAppNetwork(tcp)
+  local ip
+  if mg.get_var(post,'add') then
+    ip=(mg.get_var(post,'specip') or ''):match('^.+$') or mg.get_var(post,'ip')
+    local port=GetVarInt(post,'port',0)
+    --IPアドレスっぽくないものを弾く
+    if ip and port and ip:find('^[0-9A-Za-z%%.:]+$') and ip:find('[^%%.:]') and ip:find('[.:]') then
+      if ip=='0.0.0.1' then
+        --SrvPipeのPortは常に0
+        port=0
+      elseif ip=='0.0.0.2' and port>=100 then
+        --PipeのPortは基本的に0
+        port=0
+      end
+      local broadcast=not tcp and GetVarInt(post,'broadcast')==1
+      for i,v in ipairs(itemList) do
+        if v.ip==ip and v.port%65536==port%65536 and v.broadcast==broadcast then
+          --既にある
+          ip=nil
+          break
+        end
+      end
+      if ip then
+        itemList[#itemList+1]={ip=ip,port=port,broadcast=broadcast}
+        ct:Append('<div id="result">追加しました</div>\n')
+      end
+    end
+  elseif mg.get_var(post,'del') then
+    local index=GetVarInt(post,'index',1)
+    if index and index<=#itemList then
+      table.remove(itemList,index)
+      ct:Append('<div id="result">削除しました</div>\n')
+    end
+  end
+  for i,v in ipairs(itemList) do
+    local ipA,ipB,ipC,ipD=v.ip:match('^([0-2]?[0-9]?[0-9])%.([0-2]?[0-9]?[0-9])%.([0-2]?[0-9]?[0-9])%.([0-2]?[0-9]?[0-9])$')
+    if ipA then
+      --IPv4。非負の整数に変換
+      ip=(tonumber(ipA) or 0)*256*256*256+(tonumber(ipB) or 0)*256*256+(tonumber(ipC) or 0)*256+(tonumber(ipD) or 0)
+      ip=math.floor(ip<0x100000000 and (ip>=0x80000000 and ip-0x100000000 or ip>0 and ip) or 0)
+    else
+      ip='['..v.ip..']'
+    end
+    edcb.WritePrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','IP'..(i-1),ip,appIni)
+    edcb.WritePrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','Port'..(i-1),v.port,appIni)
+    if not tcp then
+      edcb.WritePrivateProfile('SET_UDP','BroadCast'..(i-1),v.broadcast,appIni)
+    end
+  end
+  edcb.WritePrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','Count',#itemList,appIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','IP'..(i-1),'',appIni)=='' then break end
+    edcb.WritePrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','IP'..(i-1),nil,appIni)
+    edcb.WritePrivateProfile(tcp and 'SET_TCP' or 'SET_UDP','Port'..(i-1),nil,appIni)
+    if not tcp then
+      edcb.WritePrivateProfile('SET_UDP','BroadCast'..(i-1),nil,appIni)
+    end
+  end
+end
+
+if post then
+  --local network=SaveOther()
+  --edcb.ReloadSetting(network)
+end
+
+plugin=mg.get_var(mg.request_info.query_string,'plugin')=='1'
+if plugin then
+  a=GetPlugin()
+else
+  a={
+    basic=GetBasic(),
+    recFolder=EdcbRecFolderPathList(),
+    bon=GetBon(),
+    epg=GetEpg(),
+    epgService=edcb.GetChDataList(),
+    epgTime=GetEpgTime(),
+    rec=GetRec(),
+    noSuspend=GetNoSuspend(),
+    reserve=GetReserve(),
+    delChk=GetDelChk(),
+    delExt=GetDelExt(),
+    other=GetOther(),
+    viewBon=GetViewBon(),
+    recNamePlugInList=EnumPlugInFileName('RecName'),
+    writePlugInList=EnumPlugInFileName('Write'),
+    app=GetApp(),
+    appNetwork={
+      udp=GetAppNetwork(false),
+      tcp=GetAppNetwork(true)
+    }
+  }
+end
+
+ResponseJson(a)

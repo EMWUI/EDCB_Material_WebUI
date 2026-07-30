@@ -326,6 +326,7 @@ document.addEventListener('alpine:init', () => {
       this.sidePanel.app = this;
       this.player.app = this;
       this.library.app = this;
+      this.settings.app = this;
       this.log.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
@@ -926,6 +927,9 @@ document.addEventListener('alpine:init', () => {
           this.sidePanel.d = { searchInfo: { andKey: this.params.andKey } };
           this.searchEvent(this.params.andKey);
         } else this.openSearchDetail(this.search);
+      }
+      if (this.page === '#setting') {
+        this.settings.load();
       }
 
       this.updateDisplayList();
@@ -3050,6 +3054,14 @@ document.addEventListener('alpine:init', () => {
     },
     toggleDarkMode() {
       this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
+    },
+
+    settings: {
+      data: {},
+      async load() {
+        const res = await fetch(`${this.app.ROOT}api/Settings`);
+        this.data = await res.json();
+      }
     },
 
     recname: {
