@@ -326,7 +326,6 @@ document.addEventListener('alpine:init', () => {
       this.sidePanel.app = this;
       this.player.app = this;
       this.library.app = this;
-      this.settings.app = this;
       this.log.app = this;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
@@ -929,7 +928,7 @@ document.addEventListener('alpine:init', () => {
         } else this.openSearchDetail(this.search);
       }
       if (this.page === '#setting') {
-        this.settings.load();
+        this.loadSetting();
       }
 
       this.updateDisplayList();
@@ -3056,12 +3055,145 @@ document.addEventListener('alpine:init', () => {
       this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
     },
 
+    async loadSetting() {
+      try {
+        this.loading = true;
+        const res = await fetch(`${this.ROOT}api/Settings`);
+        this.settings.data = await res.json();
+      } catch (e) {
+        console.error(e);
+        this.snackbar.add({ text: '設定の取得に失敗しました', error: true });
+      } finally {
+        this.loading = false;
+      }
+    },
+    async loadPlugIn(mode, name) {
+      try {
+        this.loading = true;
+        const res = await fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
+        const data = await res.json();
+
+        const parsedItems = [];
+        let currentParent = null;
+
+        data.body.forEach((v, i) => {
+          // 型やチェックボックス条件の事前判定
+          const item = {
+            ...v,
+            index: i, // name属性（k-i, c-i, v-i）で使う元のインデックスを保持
+            defType: typeof v.def,
+            // 次の項目が sub===3 になるかどうかの判定 (Lua: sub<2 and next.sub==3)
+            check: v.sub < 2 && data.body[i + 1] && data.body[i + 1].sub === 3,
+            checked: v.val !== '0' && v.val !== '',
+            children: [] // 子要素を格納する配列を用意
+          };
+          item.checkbox = v.defType === 'boolean' || item.check;
+
+          if (v.sub < 2) {
+            // 通常の親アイテム
+            currentParent = item;
+            parsedItems.push(item);
+          } else {
+            // サブアイテム (sub >= 2) の場合、直近の親アイテムのsubに追加
+            if (currentParent) {
+              currentParent.children.push(item);
+            } else {
+              // 万が一、最初にsub>=2が来た場合のセーフティ
+              parsedItems.push(item);
+            }
+          }
+        });
+        data.body = parsedItems;
+
+        if (mode == 1) this.settings.recNamePlugin = data;
+        else if (mode == 2) this.settings.writePlugin = data;
+      } catch (e) {
+        console.error(e);
+        this.snackbar.add({ text: '設定の取得に失敗しました', error: true });
+      } finally {
+        this.loading = false;
+      }
+    },
     settings: {
       data: {},
-      async load() {
-        const res = await fetch(`${this.app.ROOT}api/Settings`);
-        this.data = await res.json();
-      }
+      recNamePlugin: null,
+      writePlugin: null,
+      moveList(list, index, offset) {
+        const newIndex = index + offset;
+        if (newIndex < 0 || newIndex >= this.data[list].length) {
+          return;
+        }
+        const item = this.data[list][index];
+        this.data[list].splice(index,1);
+        this.data[list].splice(newIndex,0,item);
+      },
+      removeList(list, index) {
+        this.data[list].splice(index,1);
+      },
+      addList(list) {
+        const value = this.$refs[list].value.trim();
+        if (!value) {
+          return;
+        }
+        this.data[list].push(value);
+        this.$refs[list].value = '';
+      },
+      addEpgTime(bs, cs1, cs2, cs3) {
+        const weekMin = (this.$refs.addWday.value || 0) * 24 * 60;
+        const [h, m] = this.$refs.addTime.value.split(':');
+        const minute = Number(h || 0) * 60 + Number(m || 0);
+        const flags = (bs ? 1 : 0) + (cs1 ? 2 : 0) + (cs2 ? 4 : 0) + (cs3 ? 8 : 0);
+        this.data.epgTime.push({
+          weekMin: weekMin + minute,
+          enabled: true,
+          flags: flags,
+        });
+        this.$refs.addWday.value = '';
+        this.$refs.addTime.value = '00:00';
+      },
+      addViewBon() {
+        const value = this.$refs.viewBon.value;
+        if (!value || this.data.viewBon.includes(value)) {
+          return;
+        }
+        this.data.viewBon.push(value);
+      },
+      textUDP(v) {
+        return `${v.ip} : ${v.port}-${v.port+29}${v.broadcast ? ' (Broadcast)' : ''}`
+      },
+      addUDP(ip, port, broadcast) {
+        if(!ip || !port){
+          return;
+        }
+        this.data.appNetwork.udp.push({
+          ip: ip,
+          port: port,
+          broadcast: broadcast,
+        });
+      },
+      removeUDP(index) {
+        this.data.appNetwork.udp.splice(index,1);
+      },
+      textTCP(v) {
+        return `${v.ip} : ${v.port}-${v.port+29}${v.ip=='0.0.0.1' ? ' (SrvPipe)' : v.ip=='0.0.0.2' ? ' (Pipe)' : '' }`
+      },
+      addTCP(ip, port, specip) {
+        if (specip) {
+          if (specip === "1") ip = '0.0.0.1';
+          else if (specip === "2") ip = '0.0.0.2';
+        }
+        if (!ip || !port) {
+          return;
+        }
+        this.data.appNetwork.tcp.push({
+          ip: ip,
+          port: port,
+          broadcast: false,
+        });
+      },
+      removeTCP(index) {
+        this.data.appNetwork.tcp.splice(index,1);
+      },
     },
 
     recname: {

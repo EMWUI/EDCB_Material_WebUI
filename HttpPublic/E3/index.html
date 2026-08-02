@@ -1194,14 +1194,15 @@ ct:Append([=[
 
     <template x-if="page === '#setting'" x-data="settings">
       <div class="absolute">
-        <section class="responsive horizontal-padding">
+        <section class="responsive padding">
           <h6 class="error center-align padding">
             <div><i>warning</i>作成中につき表示のみ。</div>
             <div>正しく読み込まれてるか確認をお願いします。</div>
           </h6>
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>settings</i>
                 <h6 class="max">基本設定</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
@@ -1218,27 +1219,27 @@ ct:Append([=[
               <legend>コマンドライン引数</legend>
               <div class="grid">
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptBon" x-model="data.basic?.cmdOpt.bon">
+                  <input type="text" name="cmdOptBon" x-model="data.basic?.cmdOpt.bon"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>{BonDriver}</label>
                 </div>
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptMin" x-model="data.basic?.cmdOpt.min">
+                  <input type="text" name="cmdOptMin" x-model="data.basic?.cmdOpt.min"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>最小化</label>
                 </div>
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptViewOff" x-model="data.basic?.cmdOpt.viewOff">
+                  <input type="text" name="cmdOptViewOff" x-model="data.basic?.cmdOpt.viewOff"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>非視聴時</label>
                 </div>
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptONID" x-model="data.basic?.cmdOpt.onid">
+                  <input type="text" name="cmdOptONID" x-model="data.basic?.cmdOpt.onid"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>{ONID}</label>
                 </div>
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptTSID" x-model="data.basic?.cmdOpt.tsid">
+                  <input type="text" name="cmdOptTSID" x-model="data.basic?.cmdOpt.tsid"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>{TSID}</label>
                 </div>
                 <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptSID" x-model="data.basic?.cmdOpt.sid">
+                  <input type="text" name="cmdOptSID" x-model="data.basic?.cmdOpt.sid"]=]..(WIN32 and '' or ' disabled')..[=[>
                   <label>{SID}</label>
                 </div>
               </div>
@@ -1246,47 +1247,66 @@ ct:Append([=[
             <div class="field label border">
               <input type="text" name="recInfoFolder" x-model="data.basic?.recInfoFolder">
               <label>録画情報保存フォルダ</label>
-              <output>※未指定時は録画ファイルと同じ場所に保存します。</output>
+              ]=]..(WIN32 and '' or '<output>※未指定時は録画ファイルと同じ場所に保存します。</output>')..[=[
             </div>
             <fieldset>
               <legend>録画保存フォルダ</legend>
               <ul class="list border">
-                <template x-for="(v,i) in data.recFolder" :key="i">
+                <template x-for="(v,i) in data.recFolder" :key="v">
                   <li>
                     <h6 class="max" x-text="v"></h6>
-                    <button class="secondary small"><i>arrow_upward</i></button>
-                    <button class="secondary small"><i>arrow_downward</i></button>
-                    <button class="tertiary small"><i>delete</i></button>
+                    <nav class="group connected no-margin">
+                      <button class="secondary small left-round" @click="moveList('recFolder',i,-1)"><i>arrow_upward</i></button>
+                      <button class="secondary small right-round" @click="moveList('recFolder',i,1)"><i>arrow_downward</i></button>
+                    </nav>
+                    <button class="tertiary small" @click="removeList('recFolder',i)"><i>delete</i></button>
                   </li>
                 </template>
               </ul>
+              <nav class="no-space">
+                <div class="max"></div>
+                <div class="field small">
+                  <input type="text" x-ref="recFolder">
+                </div>
+                <button class="secondary right-round" @click="addList('recFolder')"><i>add</i><span>追加</span></button>
+              </nav>
             </fieldset>
             <fieldset>
               <legend>BonDriver</legend>
-              <table>
-                <thead>
-                  <tr>
-                    <th>BonDriver</th>
-                    <th>チューナー数</th>
-                    <th>EPG取得に使用する数</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="(v,i) in data.bon" :key="i">
+              <div class="scroll">
+                <table>
+                  <thead>
                     <tr>
-                      <td x-text="v.bon"></td>
-                      <td><div class="field small"><input type="number" x-model="v.count"></div></td>
-                      <td><div class="field small"><input type="number" x-model="v.epgCount"></div></td>
+                      <th></th>
+                      <th>BonDriver</th>
+                      <th>チューナー数</th>
+                      <th>EPG取得に使用する数</th>
                     </tr>
-                  </template>
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    <template x-for="(v,i) in data.bon" :key="v.bon">
+                      <tr>
+                        <td class="min">
+                          <nav class="group connected">
+                            <button class="secondary small left-round" @click="moveList('bon',i,-1)"><i>arrow_upward</i></button>
+                            <button class="secondary small right-round" @click="moveList('bon',i,1)"><i>arrow_downward</i></button>
+                          </nav>
+                        </td>
+                        <td x-text="v.bon"></td>
+                        <td><div class="field small"><input type="number" x-model="v.count"></div></td>
+                        <td><div class="field small"><input type="number" x-model="v.epgCount"></div></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
             </fieldset>
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>event_list</i>
                 <h6 class="max">EPG取得</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
@@ -1314,11 +1334,14 @@ ct:Append([=[
             </fieldset>
             <fieldset>
               <legend>実行抑制条件</legend>
-              <div class="row">
-                <div class="field border small">
-                  <input type="number" name="ngEpgCapTime" :value="data.epg.ngEpgCapTime">
+              <div class="field">
+                <div class="row">
+                  <div class="field border small">
+                    <input type="number" name="ngEpgCapTime" :value="data.epg.ngEpgCapTime">
+                  </div>
+                  <div class="max">分以内に予約がある場合、実行しない</div>
                 </div>
-                <div class="max">分以内に予約がある場合、実行しない (0で録画時も実行)</div>
+                <output><span class="bold">0</span>で録画時も実行</output>
               </div>
             </fieldset>
             <fieldset>
@@ -1332,107 +1355,97 @@ ct:Append([=[
             </fieldset>
             <fieldset>
               <legend>EPG取得開始時間</legend>
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                    <th>開始時間
-                    <th>種別(BS,CS1,CS2,CS3)
-                    <th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="v in data.epgTime">
+              <div class="scroll">
+                <table>
+                  <thead>
                     <tr>
-                      <td class="min"><label class="switch"><input type="checkbox" :name="'enabled-'+v.weekMin" :checked="v.enabled"><span></span></label></td>
-                      <td x-text="['','月','火','水','木','金','土','日'][Math.floor(v.weekMin/24/60)] + String(Math.floor(v.weekMin/60)%24).padStart(2,'0') + ':' + String(v.weekMin%60).padStart(2,'0')"></td>
-                      <td x-text="v.flags >= 0 ? [(v.flags&1?'基本':'拡張'), (v.flags&2?'基本':'拡張'), (v.flags&4?'基本':'拡張'), (v.flags&8?'基本':'拡張')].join(',') : '(共通設定に従う)'"></td>
-                      <td class="min"><button class="tertiary small"><i>delete</i></button></td>
+                      <th>
+                      <th>開始時間
+                      <th>種別(BS,CS1,CS2,CS3)
+                      <th>
                     </tr>
-                  </template>
-                </tbody>
-              </table>
-              <div class="row padding">
+                  </thead>
+                  <tbody>
+                    <template x-for="(v,i) in data.epgTime" :key="i">
+                      <tr>
+                        <td class="min"><label class="switch"><input type="checkbox" :name="'enabled-'+v.weekMin" :checked="v.enabled"><span></span></label></td>
+                        <td class="no-wrap" x-text="['','月','火','水','木','金','土','日'][Math.floor(v.weekMin/24/60)] + String(Math.floor(v.weekMin/60)%24).padStart(2,'0') + ':' + String(v.weekMin%60).padStart(2,'0')"></td>
+                        <td x-text="v.flags >= 0 ? [(v.flags&1?'基本':'拡張'), (v.flags&2?'基本':'拡張'), (v.flags&4?'基本':'拡張'), (v.flags&8?'基本':'拡張')].join(',') : '(共通設定に従う)'"></td>
+                        <td class="min"><button class="tertiary small" @click="removeList('epgTime',i)"><i>delete</i></button></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+              <div class="row padding wrap" x-data="{ bs: false, cs1: false, cs2: false, cs3: false }">
+                <div class="max"></div>
                 <div class="field border small">
-                  <select name="addWday">
+                  <select name="addWday" x-ref="addWday">
                     <template x-for="(d,i) in ['','月','火','水','木','金','土','日']" :key="i">
                       <option :value="i" x-text="d"></option>
                     </template>
                   </select>
                 </div>
-                <div class="field border small">
-                  <select name="addHour">
-                    <template x-for="h in 24" :key="h">
-                      <option x-text="String(h-1).padStart(2,'0')"></option>
-                    </template>
-                  </select>
+                <div class="field prefix border small">
+                  <i>schedule</i>
+                  <input type="time" value="00:00" x-ref="addTime">
                 </div>
-                <span>:</span>
-                <div class="field border small">
-                  <select name="addMinute">
-                    <template x-for="m in 60" :key="m">
-                      <option x-text="String(m-1).padStart(2,'0')"></option>
-                    </template>
-                  </select>
-                </div>
-                <nav class="group" x-data="{bs: false, cs1: false, cs2: false, cs3: false}" x-init="bs=data.epg.basicOnlyBS;cs1=data.epg.basicOnlyCS1;cs2=data.epg.basicOnlyCS2;cs3=data.epg.basicOnlyCS3;">
-                  <button class="left-round" :class="{active: bs}" @click="bs = !bs">BS</button>
-                  <button class="no-round" :class="{active: cs1}" @click="cs1 = !cs1">CS1</button>
-                  <button class="no-round" :class="{active: cs2}" @click="cs2 = !cs2">CS2</button>
-                  <button class="right-round" :class="{active: cs3}" @click="cs3 = !cs3">CS3</button>
+                基本情報のみ取得
+                <nav class="group" x-init="bs=data.epg.basicOnlyBS;cs1=data.epg.basicOnlyCS1;cs2=data.epg.basicOnlyCS2;cs3=data.epg.basicOnlyCS3;">
+                  <button class="left-round" :class="{ active: bs }" @click="bs = !bs">BS</button>
+                  <button :class="{ active: cs1 }" @click="cs1 = !cs1">CS1</button>
+                  <button :class="{ active: cs2 }" @click="cs2 = !cs2">CS2</button>
+                  <button class="right-round" :class="{ active: cs3 }" @click="cs3 = !cs3">CS3</button>
                 </nav>
-                <div class="max"></div>
-                <button class="tertiary small"><i>add</i><span>追加</span></button>
+                <button class="tertiary small" @click="addEpgTime(bs,cs1,cs2,cs3)"><i>add</i><span>追加</span></button>
               </div>
             </fieldset>
-            <details class="margin" x-data="{ open: $el.open }" @toggle="open = $el.open">
-              <summary>
-                <nav class="padding">
-                  <h6 class="max large-text">EPG取得対象サービス</h6>
-                  <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-                </nav>
-              </summary>
-              <table>
-                <thead>
-                  <tr>
-                    <th class="min">有効
-                    <th>サービス名
-                    <th>Network
-                    <th>ServiceID
-                    <th>Type
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="sv in data.epgService" :key="`${sv.onid}-${sv.tsid}-${sv.sid}`">
+            <fieldset>
+              <legend>EPG取得対象サービス</legend>
+              <div class="large-height scroll">
+                <table>
+                  <thead class="fixed front surface-variant">
                     <tr>
-                      <td class="min">
-                        <label class="switch">
-                          <input type="checkbox" :name="`${sv.onid}-${sv.tsid}-${sv.sid}`" :checked="sv.epgCapFlag">
-                          <span></span>
-                        </label>
-                      </td>
-                      <td x-text="sv.serviceName">
-                      <td x-text="networkNames[getNetworkIndex(sv.onid)]">
-                      <td x-text="sv.sid">
-                      <td x-text="sv.serviceType">
+                      <th class="min">有効
+                      <th>サービス名
+                      <th>Network
+                      <th>ServiceID
+                      <th>Type
+                      <th></th>
                     </tr>
-                  </template>
-                </tbody>
-              </table>
-            </details>
+                  </thead>
+                  <tbody>
+                    <template x-for="sv in data.epgService" :key="`${sv.onid}-${sv.tsid}-${sv.sid}`">
+                      <tr>
+                        <td class="min">
+                          <label class="switch">
+                            <input type="checkbox" :name="`${sv.onid}-${sv.tsid}-${sv.sid}`" :checked="sv.epgCapFlag">
+                            <span></span>
+                          </label>
+                        </td>
+                        <td x-text="sv.serviceName" style="white-space: nowrap">
+                        <td x-text="networkNames[getNetworkIndex(sv.onid)]">
+                        <td x-text="sv.sid">
+                        <td x-text="sv.serviceType">
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </fieldset>
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>settings_applications</i>
                 <h6 class="max">録画動作</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
             </summary>
             <fieldset>
               <legend>録画、EPG取得終了後のデフォルト動作</legend>
-              <div class="field border small">
+              <div class="field border">
                 <select name="recEndMode" x-model.number="data.rec.recEndMode">
                   <option value="0">何もしない
                   <option value="1">スタンバイ
@@ -1441,30 +1454,42 @@ ct:Append([=[
                 </select>
                 <i>arrow_drop_down</i>
               </div>
-              <label class="checkbox">
-                <input type="checkbox" name="reboot" x-model="data.rec.reboot">
-                <span>復帰後再起動する</span>
-              </label>
+              <div class="field">
+                <label class="checkbox">
+                  <input type="checkbox" name="reboot" x-model="data.rec.reboot">
+                  <span>復帰後再起動する</span>
+                </label>
+              </div>
             </fieldset>
             <fieldset>
               <legend>復帰処理開始時間</legend>
-              <div class="row tiny-space">
-                録画開始
-                <div class="field small">
-                  <input type="number" name="wakeTime" x-model="data.rec.wakeTime">
+              <div class="field">
+                <div class="row tiny-space wrap">
+                  <span>録画開始</span>
+                  <div class="field small">
+                    <input type="number" name="wakeTime" x-model="data.rec.wakeTime">
+                  </div>
+                  <span>分前</span>
                 </div>
-                分前 (再起動ありの場合は+5分)
+                <output>再起動ありの場合は+5分</output>
               </div>
             </fieldset>
             <fieldset>
               <legend>録画後動作の抑制条件</legend>
               <fieldset]=]..(WIN32 and '' or ' disabled')..[=[>
                 <legend>指定プロセスが起動している場合 (前方一致)</legend>
-                <ul class="list border no-space">
-                  <template x-for="v in data.noSuspend">
-                    <li><span class="max" x-text="v"></span><button class="tertiary small"><i>delete</i></button></li>
+                <nav class="scroll">
+                  <template x-for="(v,i) in data.noSuspend">
+                    <button class="chip fill round large" @click="removeList('noSuspend', i)"><i>delete</i><span x-text="v"></span></button>
                   </template>
-                </ul>
+                </nav>
+                <nav class="no-space">
+                  <div class="max"></div>
+                  <div class="field small">
+                    <input type="text" x-ref="noSuspend">
+                  </div>
+                  <button class="secondary right-round" @click="addList('noSuspend')"><i>add</i><span>追加</span></button>
+                </nav>
               </fieldset>
               <div class="row">
                 <div class="field small">
@@ -1475,7 +1500,7 @@ ct:Append([=[
               <div class="field">
                 <label class="checkbox">
                   <input type="checkbox" name="noUsePC" x-model="data.rec.noUsePC"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <span>ユーザー操作が<span class="field small"><input type="number" name="noUsePCTime" x-model.number="data.rec.noUsePCTime"></span>分以内にあった場合</span>
+                  <span>ユーザー操作が<span class="field small"><input type="number" name="noUsePCTime" x-model.number="data.rec.noUsePCTime" :disabled="!data.rec.noUsePC"></span>分以内にあった場合</span>
                 </label>
               </div>
               <div class="field">
@@ -1496,14 +1521,14 @@ ct:Append([=[
               <legend>録画マージンのデフォルト</legend>
               <div class="row">
                 <div class="row tiny-space">
-                  <div class="field label border small">
+                  <div class="field label border">
                     <input type="number" name="startMargin" x-model="data.rec.startMargin">
                     <label>開始</label>
                   </div>
                   <div>秒前</div>
                 </div>
                 <div class="row tiny-space">
-                  <div class="field label border small">
+                  <div class="field label border">
                     <input type="number" name="endMargin" x-model="data.rec.endMargin">
                     <label>終了</label>
                   </div>
@@ -1532,7 +1557,7 @@ ct:Append([=[
                 </div>
                 分前に起動する
               </div>
-              <div class="field label suffix border small">
+              <div class="field label suffix border">
                 <select name="processPriority" name="processPriority" x-model="data.rec.processPriority">
                   <option value="0">リアルタイム
                   <option value="1">高
@@ -1580,7 +1605,7 @@ ct:Append([=[
                   <span>番組情報を出力する</span>
                 </label>
                 <label class="checkbox">
-                  <input type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8"]=]..(WIN32 and '' or ' disabled')..[=[>
+                  <input type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8" ]=]..(WIN32 and ':disabled="!data.rec.pgInfoLog"' or 'disabled')..[=[>
                   <span>UTF-8で出力する</span>
                 </label>
               </div>
@@ -1605,151 +1630,151 @@ ct:Append([=[
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>event_upcoming</i>
                 <h6 class="max">予約情報管理</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
             </summary>
-            <ul class="list">
-              <li>
+            <div class="horizontal-margin">
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="backPriority" x-model="data.reserve.backPriority">
                   <span>優先度が同じで時間が重なった場合、後の予約を優先する</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="fixedTunerPriority" x-model="data.reserve.fixedTunerPriority">
                   <span>優先度が同じ場合、チューナー強制指定された予約を先にチューナー割り当てする</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="retryOtherTuners" x-model="data.reserve.retryOtherTuners">
                   <span>チューナーの起動に失敗したとき、ほかのチューナーで再試行する</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="separateFixedTuners" x-model="data.reserve.separateFixedTuners">
                   <span>チューナー強制指定の値が異なるものを重複予約できるようにする</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="commentAutoAdd" x-model="data.reserve.commentAutoAdd">
                   <span>EPG自動予約をプログラム予約化したとき、予約が再び追加されないようにする</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="fixNoRecToServiceOnly" x-model="data.reserve.fixNoRecToServiceOnly">
                   <span>予約を無効にするとき、録画モードを「指定サービス」にする</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="recInfoFolderOnly" x-model="data.reserve.recInfoFolderOnly">
                   <span>録画情報保存フォルダ指定時は録画ファイルと同じ場所を参照しない</span>
                 </label>
-              </li>
-              <li>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="recInfoDelFile" x-model="data.reserve.recInfoDelFile">
                   <span>録画済み一覧から削除するときに録画ファイルも削除する</span>
                 </label>
-              </li>
-              <li>
-                <ul class="list">
-                  <li>
-                    <label class="checkbox">
-                      <input type="checkbox" name="applyExtToRecInfoDel" x-model="data.reserve.applyExtToRecInfoDel">
-                      <span>同時に削除するファイルの拡張子は削除設定に従う</span>
-                    </label>
-                  </li>
-                </ul>
-              </li>
-              <li>
+              </div>
+              <div class="field left-margin large-margin">
+                <label class="checkbox">
+                  <input type="checkbox" name="applyExtToRecInfoDel" x-model="data.reserve.applyExtToRecInfoDel" :disabled="!data.reserve.recInfoDelFile">
+                  <span>同時に削除するファイルの拡張子は削除設定に従う</span>
+                </label>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="autoDel" x-model="data.reserve.autoDel">
                   <span>HDDの空きが少ない場合、古いTSファイルを削除する</span>
                 </label>
-              </li>
-              <li>
-                <div class="left-margin">
-                  <fieldset class="left-margin">
-                    <legend>同時に削除するファイルの拡張子</legend>
-                    <ul class="list border no-space">
-                      <template x-for="v in data.delExt">
-                        <li><span class="max" x-text="v"></span><button class="tertiary small"><i>delete</i></button></li>
-                      </template>
-                    </ul>
-                  </fieldset>
-                  <fieldset class="left-margin">
-                    <legend>削除対象フォルダ</legend>
-                    <ul class="list border no-space">
-                      <template x-for="v in data.delChk">
-                        <li><span class="max" x-text="v"></span><button class="tertiary small"><i>delete</i></button></li>
-                      </template>
-                    </ul>
-                  </fieldset>
-                </div>
-              </li>
-              <li>
+              </div>
+              <div class="left-margin large-margin" :class="{ 'medium-opacity': !data.reserve.autoDel }">
+                <fieldset>
+                  <legend>同時に削除するファイルの拡張子</legend>
+                  <nav class="scroll">
+                    <template x-for="(v,i) in data.delExt">
+                      <button class="chip fill round large" @click="removeList('delExt', i)"><i>delete</i><span x-text="v"></span></button>
+                    </template>
+                  </nav>
+                  <nav class="no-space">
+                    <div class="max"></div>
+                    <div class="field small">
+                      <input type="text" x-ref="delExt">
+                    </div>
+                    <button class="secondary right-round" @click="addList('delExt')"><i>add</i><span>追加</span></button>
+                  </nav>
+                </fieldset>
+                <fieldset>
+                  <legend>削除対象フォルダ</legend>
+                  <nav class="scroll">
+                    <template x-for="(v,i) in data.delChk">
+                      <button class="chip fill round large" @click="removeList('delChk', i)"><span x-text="v"></span><i>delete</i></button>
+                    </template>
+                  </nav>
+                  <nav class="no-space">
+                    <div class="max"></div>
+                    <div class="field small">
+                      <input type="text" x-ref="delChk">
+                    </div>
+                    <button class="secondary right-round" @click="addList('delChk')"><i>add</i><span>追加</span></button>
+                  </nav>
+                </fieldset>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="recNamePlugIn" x-model="data.reserve.useRecNamePlugIn">
                   <span>録画時のファイル名にPlugInを使用する</span>
                 </label>
-              </li>
-              <li>
-                <ul class="list">
-                  <li>
-                    <div class="field suffix border">
-                      <select name="recNamePlugInFile">
-                        <template x-for="v in data.recNamePlugInList">
-                          <option x-text="v" :selected="v===data.reserve.recNamePlugInFile"></option>
-                        </template>
-                      </select>
-                      <i>arrow_drop_down</i>
-                    </div>
-                  </li>
-                </ul>
-              </li>
-              <li>
+              </div>
+              <div class="field suffix border left-margin large-margin">
+                <select name="recNamePlugInFile" :disabled="!data.reserve.useRecNamePlugIn">
+                  <template x-for="v in data.recNamePlugInList">
+                    <option x-text="v" :selected="v===data.reserve.recNamePlugInFile"></option>
+                  </template>
+                </select>
+                <i>arrow_drop_down</i>
+              </div>
+              <div class="field no-margin">
                 <label class="checkbox">
                   <input type="checkbox" name="noChkYen" x-model="data.reserve.noChkYen">
                   <span>ファイル名の禁則文字の変換対象から「]=]..DIR_SEP..[=[」を除外する</span>
                 </label>
-              </li>
-              <li>
-                <div class="row">
-                  録画中の予約削除を
-                  <div class="field suffix border">
-                    <select name="delReserveMode">
-                      <option value="0" :selected="data.reserve.delReserveMode==0">削除のみ
-                      <option value="1" :selected="data.reserve.delReserveMode==1">録画済みに追加
-                      <option value="2" :selected="data.reserve.delReserveMode==2">キャンセルとして録画済みに追加
-                    </select>
-                    <i>arrow_drop_down</i>
-                  </div>
-                </div>
-              </li>
-            </ul>
+              </div>
+              <div class="field label suffix border">
+                <select name="delReserveMode">
+                  <option value="0" :selected="data.reserve.delReserveMode==0">削除のみ
+                  <option value="1" :selected="data.reserve.delReserveMode==1">録画済みに追加
+                  <option value="2" :selected="data.reserve.delReserveMode==2">キャンセルとして録画済みに追加
+                </select>
+                <label>録画中の予約削除を</label>
+                <i>arrow_drop_down</i>
+              </div>
+            </div>
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>build</i>
                 <h6 class="max">その他</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
             </summary>
+            <div>※設定変更後にHTTPサーバーも再起動します。</div>
             <div class="field middle-align">
               <nav>
                 <div class="max">
-                  <h6 class="large-text">ネットワーク接続を許可する (EpgTimerNW用)</h6>
-                  <div>※設定変更後にHTTPサーバーも再起動します。</div>
+                  <h6 class="large-text">ネットワーク接続を許可する</h6>
                 </div>
                 <label class="switch">
                   <input type="checkbox" name="enableTCPSrv" x-model="data.other.enableTCPSrv">
@@ -1763,7 +1788,7 @@ ct:Append([=[
                   <h6 class="large-text">IPv6</h6>
                 </div>
                 <label class="switch">
-                  <input type="checkbox" name="tcpIPv6" x-model="data.other.tcpIPv6">
+                  <input type="checkbox" name="tcpIPv6" x-model="data.other.tcpIPv6" :disabled="!data.other.enableTCPSrv">
                   <span></span>
                 </label>
               </nav>
@@ -1772,18 +1797,18 @@ ct:Append([=[
             <div class="grid">
               <div class="s6 l3">
                 <div class="field label border">
-                  <input name="tcpPort" x-model="data.other.tcpPort">
+                  <input name="tcpPort" x-model="data.other.tcpPort" :disabled="!data.other.enableTCPSrv">
                   <label>ポート</label>
                 </div>
               </div>
               <div class="s6 l3">
                 <div class="field label border">
-                  <input name="tcpResponseTimeoutSec" x-model="data.other.tcpResponseTimeoutSec">
+                  <input name="tcpResponseTimeoutSec" x-model="data.other.tcpResponseTimeoutSec" :disabled="!data.other.enableTCPSrv">
                   <label>無通信タイムアウト(秒)</label>
                 </div>
               </div>
               <div class="s12 l6 field label border">
-                <input type="text" name="tcpAccessControlList" x-model="data.other.tcpAccessControlList">
+                <input type="text" name="tcpAccessControlList" x-model="data.other.tcpAccessControlList" :disabled="!data.other.enableTCPSrv">
                 <label>アクセス制御</label>
                 <output>※必ず信頼できるPCのみアクセスできるようにしてください。</output>
               </div>
@@ -1793,16 +1818,16 @@ ct:Append([=[
               <span>録画結果を自動的に削除する</span>
             </label>
             <div class="field label border">
-              <input type="text" name="autoDelRecInfoNum" x-model="data.other.autoDelRecInfoNum">
+              <input type="number" name="autoDelRecInfoNum" x-model.number="data.other.autoDelRecInfoNum" :disabled="!data.other.autoDelRecInfo">
               <label>保持件数</label>
             </div>
             <div class="field label border">
-              <input type="text" name="recInfo2Max" x-model="data.other.recInfo2Max">
+              <input type="number" name="recInfo2Max" x-model.number="data.other.recInfo2Max">
               <label>正常に録画した番組情報(RecInfo2)の蓄積数</label>
             </div>
             <div class="row tiny-space">
               <div class="field label border">
-                <input type="text" name="recInfo2DropChk" x-model="data.other.recInfo2DropChk">
+                <input type="number" name="recInfo2DropChk" x-model.number="data.other.recInfo2DropChk">
                 <label>ドロップ数しきい値</label>
               </div>
               未満
@@ -1829,40 +1854,40 @@ ct:Append([=[
             </div>
             <div class="field">
               <label class="checkbox">
-                <input type="checkbox" name="residentMode" x-model="data.other.residentMode!=0">
+                <input type="checkbox" name="residentMode" value="1" x-model="data.other.residentMode"]=]..(WIN32 and '' or ' disabled')..[=[>
                 <span>EpgTimerSrvを常駐させる</span>
               </label>
+            </div>
+            <div class="left-margin large-margin">
               <div class="field">
-                <div class="field">
-                  <label class="checkbox">
-                    <input type="checkbox" name="showTray" x-model="data.other.residentMode!=1">
-                    <span>タスクトレイアイコンを表示する</span>
-                  </label>
-                  <div class="field">
-                    <label class="checkbox">
-                      <input type="checkbox" name="notifyTipStyle" x-model="data.other.notifyTipStyle">
-                      <span>ツールチップに次の予約を表示する</span>
-                    </label>
-                  </div>
-                  <div class="field">
-                    <label class="checkbox">
-                      <input type="checkbox" name="blinkPreRec" x-model="data.other.blinkPreRec">
-                      <span>開始準備で点滅させる</span>
-                    </label>
-                  </div>
-                </div>
-                <div class="field">
-                  <label class="checkbox">
-                    <input type="checkbox" name="noBalloonTip" x-model="data.other.noBalloonTip==1">
-                      <span>バルーンチップ/トーストでの動作通知を抑制する</span>
-                  </label>
-                  <div class="field">
-                    <label class="checkbox">
-                      <input type="checkbox" name="noBalloonTipRealtime" x-model="data.other.noBalloonTip==2">
-                      <span>リアルタイムで表示できなかった通知を捨てる</span>
-                    </label>
-                  </div>
-                </div>
+                <label class="checkbox">
+                  <input type="checkbox" name="showTray" value="1" x-model="data.other.showTray" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                  <span>タスクトレイアイコンを表示する</span>
+                </label>
+              </div>
+              <div class="field left-margin large-margin">
+                <label class="checkbox">
+                  <input type="checkbox" name="notifyTipStyle" value="1" x-model="data.other.notifyTipStyle" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                  <span>ツールチップに次の予約を表示する</span>
+                </label>
+              </div>
+              <div class="field left-margin large-margin">
+                <label class="checkbox">
+                  <input type="checkbox" name="blinkPreRec" value="1" x-model="data.other.blinkPreRec" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                  <span>開始準備で点滅させる</span>
+                </label>
+              </div>
+              <div class="field">
+                <label class="checkbox">
+                  <input type="checkbox" name="noBalloonTip" value="1" x-model="data.other.noBalloonTip" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                    <span>バルーンチップ/トーストでの動作通知を抑制する</span>
+                </label>
+              </div>
+              <div class="field left-margin large-margin">
+                <label class="checkbox">
+                  <input type="checkbox" name="noBalloonTipRealtime" value="1" x-model="data.other.noBalloonTipRealtime" ]=]..(WIN32 and ':disabled="!data.other.residentMode || data.other.noBalloonTip"' or 'disabled')..[=[>
+                  <span>リアルタイムで表示できなかった通知を捨てる</span>
+                </label>
               </div>
             </div>
             <div class="field">
@@ -1886,51 +1911,161 @@ ct:Append([=[
             <fieldset>
               <legend>視聴に使用するBonDriver</legend>
               <ul class="list border no-space">
-                <template x-for="v in data.viewBon">
-                  <li><span class="max" x-text="v"></span><button class="tertiary small"><i>delete</i></button></li>
+                <template x-for="(v,i) in data.viewBon">
+                  <li><span class="max" x-text="v"></span><button class="tertiary small" @click="removeList('viewBon',i)"><i>delete</i></button></li>
                 </template>
               </ul>
               <div class="row">
-                <div class="field suffix border">
-                  <select>
-                    ]=]..GetBonList()..[=[
-                  </select>
-                  <i>arrow_drop_down</i>
-                </div>
-                <button class="tertiary small"><i>add</i><span>追加</span></button>
+                <div class="max"></div>
+                <nav class="no-space">
+                  <div class="field suffix small">
+                    <select x-ref="viewBon">
+                      ]=]..GetBonList()..[=[
+                    </select>
+                    <i>arrow_drop_down</i>
+                  </div>
+                  <button class="tertiary right-round" @click="addViewBon()"><i>add</i><span>追加</span></button>
+                </nav>
               </div>
             </fieldset>
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>rule</i>
                 <h6 class="max">プリセット</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
             </summary>
             <div class="center-align">準備中</div>
-            <details class="margin" x-data="{ open: $el.open }" @toggle="open = $el.open">
-              <summary>
-                <nav class="padding">
-                  <h6 class="max large-text">ファイル名PlugIn設定</h6>
-                  <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-                </nav>
-              </summary>
-            </details>
-            <details class="margin" x-data="{ open: $el.open }" @toggle="open = $el.open">
-              <summary>
-                <nav class="padding">
-                  <h6 class="max large-text">出力PlugIn設定</h6>
-                  <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-                </nav>
-              </summary>
-            </details>
+
+            <template x-ref="plugin">
+              <div>
+                <template x-if="v.section">
+                  <div>
+                    <input type="hidden" :name="'k-' + v.index" :value="'[' + v.section + ']' + v.key">
+                    <div :class="{ field: v.checkbox }">
+                      <label :class="{ checkbox : v.checkbox }">
+                        <input type="checkbox" 
+                              :name="'c-' + v.index" 
+                              x-model="v.checked"
+                              :checked="v.val !== '0' && v.val !== ''"
+                              :type="v.checkbox ? 'checkbox' : 'hidden'"
+                              :value="(v.defType !== 'boolean' && !v.check) ? '1' : null">
+                        <span x-text="v.desc" x-show="v.checkbox"></span>
+                      </label>
+                    </div>
+                    
+                    <template x-if="v.defType === 'number'">
+                      <div class="field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.checkbox }">
+                        <input type="number" :name="'v-' + v.index" x-model.number="v.val" :disabled="!v.checked">
+                        <label x-text="v.desc" x-show="!v.checkbox"></label>
+                      </div>
+                    </template>
+                    <template x-if="v.defType === 'string'">
+                      <div class="field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.checkbox }">
+                        <input type="text" :name="'v-' + v.index" x-model="v.val":disabled="!v.checked">
+                        <label x-text="v.desc" x-show="!v.checkbox"></label>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+                <template x-if="!v.section">
+                  <span x-text="v.label"></span>
+                </template>
+              </div>
+              <template x-if="v.children.length > 0">
+                <div class="left-margin large-margin">
+                  <template x-for="w in v.children" :key="w.index">
+                    <div>
+                      <template x-if="w.section">
+                        <div>
+                          <input type="hidden" :name="'k-' + w.index" :value="'[' + w.section + ']' + w.key">
+                          <label :class="{ checkbox : w.checkbox }">
+                            <input type="checkbox"
+                                  :name="'c-' + w.index" 
+                                  :checked="w.val !== '0' && w.val !== ''"
+                                  :type="w.checkbox ? 'checkbox' : 'hidden'"
+                                  :value="(w.defType !== 'boolean' && !w.check) ? '1' : null"
+                                  :disabled="!v.checked">
+                            <span x-text="w.desc" x-show="w.checkbox"></span>
+                          </label>
+                          
+                          <template x-if="w.defType === 'number'">
+                            <div class="field label">
+                              <input type="number" :name="'v-' + w.index" x-model.number="w.val" :disabled="!v.checked">
+                              <label x-text="w.desc"></label>
+                            </div>
+                          </template>
+                          <template x-if="w.defType === 'string'">
+                            <div class="field label">
+                              <input type="text" :name="'v-' + w.index" x-model="w.val" :disabled="!v.checked">
+                              <label x-text="w.desc"></label>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                      <template x-if="!w.section">
+                        <span x-text="w.label"></span>
+                      </template>
+                    </div>
+                  </template>
+
+                </div>
+              </template>
+            </template>
+
+            <fieldset x-init="recNamePlugin = null">
+              <legend>ファイル名PlugIn設定</legend>
+              <div class="field suffix border">
+                <select @change="loadPlugIn(1, $el.value)" x-ref="recNamePluginSelect">
+                  <option x-show="recNamePlugin === null">選択してください</option>
+                  <template x-for="v in data.recNamePlugInList">
+                    <option :value="v" x-text="v"></option>
+                  </template>
+                </select>
+                <i>arrow_drop_down</i>
+              </div>
+              <input type="hidden" name="mode" value="1">
+              <input type="hidden" name="item" :value="$refs.recNamePluginSelect.value">
+              <template x-if="recNamePlugin">
+                <div>
+                  <h6 x-text="recNamePlugin.head.desc"></h6>
+                  <template x-for="(v,i) in recNamePlugin.body">
+                    <div x-html="$refs.plugin.innerHTML"></div>
+                  </template>
+                </div>
+              </template>
+            </fieldset>
+            <fieldset x-init="writePlugin = null">
+              <legend>出力PlugIn設定</legend>
+              <div class="field suffix border">
+                <select @change="loadPlugIn(2, $el.value)" x-ref="writePluginSelect">
+                  <option x-show="writePlugin === null">選択してください</option>
+                  <template x-for="v in data.writePlugInList">
+                    <option :value="v" x-text="v"></option>
+                  </template>
+                </select>
+                <i>arrow_drop_down</i>
+              </div>
+              <input type="hidden" name="mode" value="2">
+              <input type="hidden" name="item" :value="$refs.writePluginSelect.value">
+              <template x-if="writePlugin">
+                <div>
+                  <h6 x-text="writePlugin.head.desc"></h6>
+                  <template x-for="(v, i) in writePlugin.body">
+                    <div x-html="$refs.plugin.innerHTML"></div>
+                  </template>
+                </div>
+              </template>
+            </fieldset>
           </details>
 
           <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary>
+            <summary class="fixed round" :class="{ 'primary-container' : open }">
               <nav class="padding">
+                <i>videocam</i>
                 <h6 class="max">録画アプリ(EpgDataCap_Bon)</h6>
                 <i x-text="open ? 'expand_less' : 'expand_more'"></i>
               </nav>
@@ -1961,22 +2096,28 @@ ct:Append([=[
               <input type="checkbox" name="openLast" x-model="data.app.openLast"]=]..(WIN32 and '' or ' disabled')..[=[>
               <span>次回起動時に終了前のサービスで起動する</span>
             </label>
-            <div class="row tiny-space">
-              <div class="row tiny-space">
-                ドロップ数が
-                <div class="field small">
-                  <input type="number" name="dropSaveThresh" x-model.number="data.app.dropSaveThresh">
+            <fieldset>
+              <legend>ドロップログを出力する</legend>
+              <div class="field">
+                <div class="row wrap tiny-space">
+                  <div class="row tiny-space">
+                    ドロップ数が
+                    <div class="field small">
+                      <input type="number" name="dropSaveThresh" x-model.number="data.app.dropSaveThresh">
+                    </div>
+                    以上または
+                  </div>
+                  <div class="row tiny-space">
+                    スクランブル数が
+                    <div class="field small">
+                      <input type="number" name="scrambleSaveThresh" x-model.number="data.app.scrambleSaveThresh">
+                    </div>
+                    以上で
+                  </div>
                 </div>
-                以上または
+                <output><span class="bold">-1</span>で常に出力しない</output>
               </div>
-              <div class="row tiny-space">
-                スクランブル数が
-                <div class="field small">
-                  <input type="number" name="scrambleSaveThresh" x-model.number="data.app.scrambleSaveThresh">
-                </div>
-                以上でドロップログを出力する(-1で常に出力しない)
-              </div>
-            </div>
+            </fieldset>
             <label class="checkbox">
               <input type="checkbox" name="noLogScramble" x-model="data.app.noLogScramble">
               <span>スクランブル値の変化をドロップログに記録しない</span>
@@ -1995,11 +2136,12 @@ ct:Append([=[
             </label>
             <div class="field label border">
               <input type="number" name="tsBuffMaxCount" x-model.number="data.app.tsBuffMaxCount">
-              <label>入力バッファ上限(47KiB単位) </label>
+              <label>入力バッファ上限(47KiB単位)</label>
             </div>
             <div class="field label border">
               <input type="number" name="writeBuffMaxCount" x-model.number="data.app.writeBuffMaxCount">
-              <label>ファイル出力バッファ上限(47KiB単位)(0で無制限)</label>
+              <label>ファイル出力バッファ上限(47KiB単位)</label>
+              <output>0で無制限</output>
             </div>
             <div class="field label border">
               <input type="text" name="recFileName" x-model="data.app.recFileName">
@@ -2052,7 +2194,7 @@ ct:Append([=[
               <span>ロゴデータを保存する</span>
             </label>
             <div class="field label border">
-              <input type="number" name="saveLogoTypeFlags"  x-model.number="data.app.saveLogoTypeFlags">
+              <input type="number" name="saveLogoTypeFlags" x-model.number="data.app.saveLogoTypeFlags" :disabled="!data.app.saveLogo">
               <label>取得するロゴタイプ</label>
             </div>
 
@@ -2063,17 +2205,50 @@ ct:Append([=[
                   <legend>UDP送信先</legend>
                   <ul class="list border">
                     <template x-for="(v,i) in data.appNetwork.udp" :key="i">
-                      <li><span x-text="v.ip"></span>:<span x-text="`${v.port}-${v.port+29}`"></span><div class="max"></div><button class="tertiary small"><i>delete</i></button></li>
+                      <li>
+                        <span class="max" x-text="textUDP(v)"></span>
+                        <button class="tertiary small" @click="removeUDP(i)"><i>delete</i></button>
+                      </li>
                     </template> 
                   </ul>
+                  <nav class="group wrap" x-data="{ ip: '127.0.0.1', port: 1234, broadcast: false }">
+                    <div class="field small">
+                      <input type="text" x-model="ip">
+                    </div>
+                    <div class="field small">
+                      <input type="number" x-model="port">
+                    </div>
+                    <button :class="{ active: broadcast }" @click="broadcast=!broadcast">ブロードキャスト</button>
+                    <button class="tertiary right-round" @click="addUDP(ip,port,broadcast)"><i>add</i><span>追加</span></button>
+                  </nav>
                 </fieldset>
                 <fieldset class="s12 l6">
                   <legend>TCP送信先</legend>
                   <ul class="list border">
                     <template x-for="(v,i) in data.appNetwork.tcp" :key="i">
-                      <li><span x-text="v.ip"></span>:<span x-text="`${v.port}-${v.port+29}`"></span><div class="max"></div><button class="tertiary small"><i>delete</i></button></li>
+                      <li>
+                        <span class="max" x-text="textTCP(v)"></span>
+                        <button class="tertiary small" @click="removeTCP(i)"><i>delete</i></button>
+                      </li>
                     </template> 
                   </ul>
+                  <nav class="wrap" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
+                    <div class="field small">
+                      <input type="text" x-model="ip">
+                    </div>
+                    <div class="field small">
+                      <input type="number" x-model="port">
+                    </div>
+                    <div class="field suffix small">
+                      <select name="specip" x-model="specip">
+                        <option value="0">TCP</option>
+                        <option value="1">SrvPipe</option>
+                        <option value="2">Pipe</option>
+                      </select>
+                      <i>arrow_drop_down</i>
+                    </div>
+                    <button class="tertiary right-round" @click="addTCP(ip,port,specip)"><i>add</i><span>追加</span></button>
+                  </nav>
                 </fieldset>
               </div>
             </fieldset>
@@ -2411,7 +2586,7 @@ ct:Append([=[
                       <i>regular_expression</i>
                       <span :class="{ tooltip: isSmallScreen }">正規表現</span>
                     </button>
-                    <button class="small no-round" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
+                    <button class="small" :class="{ active: s.aimaiFlag }" @click="s.aimaiFlag = !s.aimaiFlag">
                       <input type="checkbox" name="aimaiFlag" x-model="s.aimaiFlag">
                       <i>search_check</i>
                       <span :class="{ tooltip: isSmallScreen }">あいまい</span>
@@ -2556,14 +2731,20 @@ ct:Append([=[
                 <legend>番組長で絞り込み</legend>
                 <div class="row responsive">
                   <div class="max"></div>
-                  <div class="field label border small" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
-                    <input type="number" name="chkDurationMin" x-model="s.chkDurationMin">
-                    <label>最小（分）</label>
+                  <div class="row tiny-space">
+                    <div class="field label border small" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
+                      <input type="number" name="chkDurationMin" x-model="s.chkDurationMin">
+                      <label>最小</label>
+                    </div>
+                    <div>分</div>
                   </div>
                   <span>〜</span>
-                  <div class="field label border small" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
-                    <input type="number" name="chkDurationMax" x-model="s.chkDurationMax">
-                    <label>最大（分）</label>
+                  <div class="row tiny-space">
+                    <div class="field label border small" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
+                      <input type="number" name="chkDurationMax" x-model="s.chkDurationMax">
+                      <label>最大</label>
+                    </div>
+                    <div>分</div>
                   </div>
                 </div>
               </fieldset>
@@ -2842,13 +3023,19 @@ ct:Append([=[
                 </div>
                 <div class="row small-margin" :class="r.startMargin == null && 'disabled'">
                   <div class="max"></div>
-                  <div class="field label border small">
-                    <input type="number" name="startMargin" x-model="r.startMargin" :disabled="r.startMargin == null">
-                    <label>開始（秒前）</label>
+                  <div class="row tiny-space">
+                    <div class="field label border small">
+                      <input type="number" name="startMargin" x-model="r.startMargin" :disabled="r.startMargin == null">
+                      <label>開始</label>
+                    </div>
+                    <div>秒前</div>
                   </div>
-                  <div class="field label border small">
-                    <input type="number" name="endMargin" x-model="r.endMargin" :disabled="r.startMargin == null">
-                    <label>終了（秒後）</label>
+                  <div class="row tiny-space">
+                    <div class="field label border small">
+                      <input type="number" name="endMargin" x-model="r.endMargin" :disabled="r.startMargin == null">
+                      <label>終了</label>
+                    </div>
+                    <div>秒後</div>
                   </div>
                 </div>
               </fieldset>

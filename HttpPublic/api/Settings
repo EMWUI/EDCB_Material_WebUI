@@ -525,6 +525,8 @@ function SaveReserve()
 end
 
 function GetOther()
+  local residentMode=tonumber(edcb.GetPrivateProfile('SET','ResidentMode',2,srvIni))
+  local noBalloonTip=tonumber(edcb.GetPrivateProfile('SET','NoBalloonTip',0,srvIni))
   return {
     enableTCPSrv=edcb.GetPrivateProfile('SET','EnableTCPSrv',0,srvIni)~='0',
     tcpIPv6=edcb.GetPrivateProfile('SET','TCPIPv6',0,srvIni)~='0',
@@ -532,10 +534,12 @@ function GetOther()
     tcpAccessControlList=edcb.GetPrivateProfile('SET','TCPAccessControlList','+127.0.0.1,+192.168.0.0/16',srvIni),
     tcpResponseTimeoutSec=tonumber(edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni)),
     epgArchivePeriodHour=tonumber(edcb.GetPrivateProfile('SET','EpgArchivePeriodHour',0,srvIni)) or 0,
-    residentMode=tonumber(edcb.GetPrivateProfile('SET','ResidentMode',2,srvIni)),
+    residentMode=residentMode~=0,
+    showTray=residentMode~=1,
     notifyTipStyle=edcb.GetPrivateProfile('SET','NotifyTipStyle',0,srvIni)~='0',
     blinkPreRec=edcb.GetPrivateProfile('SET','BlinkPreRec',0,srvIni)~='0',
-    noBalloonTip=tonumber(edcb.GetPrivateProfile('SET','NoBalloonTip',0,srvIni)),
+    noBalloonTip=noBalloonTip==1,
+    noBalloonTipRealtime=noBalloonTip==2,
     saveNotifyLog=edcb.GetPrivateProfile('SET','SaveNotifyLog',0,srvIni)~='0',
     saveDebugLog=edcb.GetPrivateProfile('SET','SaveDebugLog',0,srvIni)~='0',
     timeSync=edcb.GetPrivateProfile('SET','TimeSync',0,srvIni)~='0',
