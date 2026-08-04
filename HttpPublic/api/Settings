@@ -90,6 +90,34 @@ function SaveBasic()
   end
 end
 
+function SaveRecFolder()
+  local itemList=EdcbRecFolderPathList()
+  if #itemList==1 and IsEqualPath(itemList[1],EdcbSettingPath()) then
+    --既定値なので記録しない
+    return
+  end
+  itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'recFolder', i)
+    if not v then break end
+    if v:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+      local ff=EdcbFindFilePlain(v)
+      if (ff and ff.isdir) or (WIN32 and v:find('^[A-Za-z]:\\$')) then
+        itemList[#itemList+1]=v
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('SET','RecFolderPath'..(i-1),v,commonIni)
+  end
+  edcb.WritePrivateProfile('SET','RecFolderNum',#itemList,commonIni)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('SET','RecFolderPath'..(i-1),'',commonIni)=='' then break end
+    edcb.WritePrivateProfile('SET','RecFolderPath'..(i-1),nil,commonIni)
+  end
+end
+
 function GetBon()
   local esc=edcb.htmlEscape
   edcb.htmlEscape=0
@@ -151,24 +179,17 @@ function GetBon()
 end
 
 function SaveBon()
-  local itemList=GetBon()
-  local item=mg.get_var(post,'item') or ''
-  for i,v in ipairs(itemList) do
-    if v.bon==item then
-      if mg.get_var(post,'count') then
-        v.count=GetVarInt(post,'count',0,99) or 0
-        v.epgCount=GetVarInt(post,'epgCount',0,100) or 0
-        ct:Append('<div id="result">変更しました</div>\n')
-      elseif mg.get_var(post,'up') and i>1 then
-        table.remove(itemList,i)
-        table.insert(itemList,i-1,v)
-        ct:Append('<div id="result">移動しました</div>\n')
-      elseif mg.get_var(post,'down') and i<#itemList then
-        table.remove(itemList,i)
-        table.insert(itemList,i+1,v)
-        ct:Append('<div id="result">移動しました</div>\n')
-      end
-      break
+  local itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'bon', i)
+    if not v then break end
+    local bon, count, epgCount = v:match('([^%-%s]+)%-(%d+)%-(%d+)')
+    if bon and count and epgCount then
+      itemList[#itemList+1]={
+        bon=bon,
+        count=tonumber(count) or 0,
+        epgCount=tonumber(epgCount) or 0
+      }
     end
   end
   for i,v in ipairs(itemList) do
@@ -199,6 +220,42 @@ function SaveEpg()
   edcb.WritePrivateProfile('SET','NGEpgCapTunerTime',GetVarInt(post,'ngEpgCapTunerTime',0) or 20,srvIni)
 end
 
+function SaveEpgService()
+  f=edcb.io.open(PathAppend(EdcbSettingPath(),'ChSet5.txt'),'r+b')
+  if f and not WIN32 and not edcb.io._flock_nb(f) then
+    --排他ロックできなかった
+    f:close()
+    f=nil
+  end
+  if f then
+    fsize=f:seek('end')
+    txt=nil
+    if fsize then
+      f:seek('set')
+      txt=f:read('*a')
+      if txt and #txt~=fsize then
+        txt=nil
+      end
+    end
+    if txt then
+      txt=txt:gsub('[^\n]*',function(s)
+        --8列目がEPG取得フラグ
+        local i,j,onid,tsid,sid=s:find('^[^\t]*\t[^\t]*\t([0-9]+)\t([0-9]+)\t([0-9]+)\t[0-9]+\t[0-9]+\t[01]\t')
+        return i and s:sub(1,j-2)..(GetVarInt(post,onid..'-'..tsid..'-'..sid,1,1) or 0)..s:sub(j)
+      end)
+      --サイズは変化しないのでそのまま上書き
+      f:seek('set')
+      f:write(txt)
+      f:flush()
+    end
+    if not WIN32 then
+      --ほっといても解除されるが一応
+      edcb.io._flock_nb(f,'u')
+    end
+    f:close()
+  end
+end
+
 function GetEpgTime()
   local count=tonumber(edcb.GetPrivateProfile('EPG_CAP','Count',-1,srvIni)) or -1
   if count<0 then
@@ -223,39 +280,17 @@ function GetEpgTime()
 end
 
 function SaveEpgTime()
-  local itemList=GetEpgTime()
-  if mg.get_var(post,'add') then
-    local wday=GetVarInt(post,'wday',0,7) or 0
-    local hour=GetVarInt(post,'hour',0,23) or 0
-    local minute=GetVarInt(post,'minute',0,59) or 0
-    local weekMin=(wday*24+hour%24)*60+minute
-    for i,v in ipairs(itemList) do
-      if v.weekMin==weekMin then
-        --既にある
-        weekMin=nil
-        break
-      end
-    end
-    if weekMin then
-      itemList[#itemList+1]={
-        enabled=true,
-        weekMin=weekMin,
-        flags=(GetVarInt(post,'basicOnlyBS',1,1) or 0)+
-              (GetVarInt(post,'basicOnlyCS1',1,1) or 0)*2+
-              (GetVarInt(post,'basicOnlyCS2',1,1) or 0)*4+
-              (GetVarInt(post,'basicOnlyCS3',1,1) or 0)*8
+  local itemList={}
+  local item=mg.get_var(post,'epgTime') or ''
+  for v in item:gmatch('[^,]+') do
+    local weekMin,flags,enabled=v:match('^([0-9]+)-([0-9]+)-([01])$')
+    if weekMin and flags and enabled then
+      itemList[#itemList+1] = {
+        weekMin=tonumber(weekMin) or 0,
+        flags=tonumber(flags) or 0,
+        enabled=tonumber(enabled)==1
       }
     end
-  else
-    local newItemList={}
-    for i,v in ipairs(itemList) do
-      if GetVarInt(post,'del-'..v.weekMin)~=1 then
-        v.enabled=GetVarInt(post,'enabled-'..v.weekMin)==1
-        newItemList[#newItemList+1]=v
-      end
-    end
-    itemList=newItemList
-    ct:Append('<div id="result">変更しました</div>\n')
   end
   for i,v in ipairs(itemList) do
     edcb.WritePrivateProfile('EPG_CAP',i-1,
@@ -343,29 +378,14 @@ function GetDelChk()
 end
 
 function SaveDelChk()
-  local itemList=GetDelChk()
-  local item=mg.get_var(post,'dir') or ''
-  if mg.get_var(post,'add') then
-    for i,v in ipairs(itemList) do
-      if IsEqualPath(v,item) then
-        --既にある
-        item=nil
-        break
-      end
-    end
-    if item and item:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
-      ff=EdcbFindFilePlain(item)
-      if (ff and ff.isdir) or (WIN32 and item:find('^[A-Za-z]:\\$')) then
-        itemList[#itemList+1]=item
-        ct:Append('<div id="result">追加しました</div>\n')
-      end
-    end
-  elseif mg.get_var(post,'del') then
-    for i,v in ipairs(itemList) do
-      if v==item then
-        table.remove(itemList,i)
-        ct:Append('<div id="result">削除しました</div>\n')
-        break
+  local itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'delChk', i)
+    if not v then break end
+    if v:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+      ff=EdcbFindFilePlain(v)
+      if (ff and ff.isdir) or (WIN32 and v:find('^[A-Za-z]:\\$')) then
+        itemList[#itemList+1]=v
       end
     end
   end
@@ -394,27 +414,12 @@ function GetDelExt()
 end
 
 function SaveDelExt()
-  local itemList=GetDelExt()
-  local item=mg.get_var(post,'ext') or ''
-  if mg.get_var(post,'add') then
-    for i,v in ipairs(itemList) do
-      if IsEqualPath(v,item) then
-        --既にある
-        item=nil
-        break
-      end
-    end
-    if item and item:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
-      itemList[#itemList+1]=item
-      ct:Append('<div id="result">追加しました</div>\n')
-    end
-  elseif mg.get_var(post,'del') then
-    for i,v in ipairs(itemList) do
-      if v==item then
-        table.remove(itemList,i)
-        ct:Append('<div id="result">削除しました</div>\n')
-        break
-      end
+  local itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'delExt', i)
+    if not v then break end
+    if v:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
+      itemList[#itemList+1]=v
     end
   end
   for i,v in ipairs(itemList) do
@@ -445,27 +450,12 @@ function GetNoSuspend()
 end
 
 function SaveNoSuspend()
-  local itemList=GetNoSuspend()
-  local item=mg.get_var(post,'noSuspend') or ''
-  if mg.get_var(post,'add') then
-    for i,v in ipairs(itemList) do
-      if IsEqualPath(v,item) then
-        --既にある
-        item=nil
-        break
-      end
-    end
-    if item and item:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
-      itemList[#itemList+1]=item
-      ct:Append('<div id="result">追加しました</div>\n')
-    end
-  elseif mg.get_var(post,'del') then
-    for i,v in ipairs(itemList) do
-      if v==item then
-        table.remove(itemList,i)
-        ct:Append('<div id="result">削除しました</div>\n')
-        break
-      end
+  local itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'noSuspend', i)
+    if not v then break end
+    if v:find('^[^%c/'..(WIN32 and '\\:*?"<>|' or '')..']+$') then
+      itemList[#itemList+1]=v
     end
   end
   for i,v in ipairs(itemList) do
@@ -553,13 +543,11 @@ function GetOther()
 end
 
 function SaveOther()
-  edcb.htmlEscape=15
   local lastEnableTCPSrv=edcb.GetPrivateProfile('SET','EnableTCPSrv',0,srvIni)~='0'
   local lastTcpIPv6=edcb.GetPrivateProfile('SET','TCPIPv6',0,srvIni)~='0'
-  local lastTcpPort=edcb.GetPrivateProfile('SET','TCPPort',4510,srvIni)
+  local lastTcpPort=tonumber(edcb.GetPrivateProfile('SET','TCPPort',4510,srvIni))
   local lastTcpAccessControlList=edcb.GetPrivateProfile('SET','TCPAccessControlList','+127.0.0.1,+192.168.0.0/16',srvIni)
-  local lastTcpResponseTimeoutSec=edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni)
-  edcb.htmlEscape=0
+  local lastTcpResponseTimeoutSec=tonumber(edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni))
   edcb.WritePrivateProfile('SET','EnableTCPSrv',GetVarInt(post,'enableTCPSrv')==1,srvIni)
   edcb.WritePrivateProfile('SET','TCPIPv6',GetVarInt(post,'tcpIPv6')==1,srvIni)
   edcb.WritePrivateProfile('SET','TCPPort',GetVarInt(post,'tcpPort',0,65535) or 4510,srvIni)
@@ -600,30 +588,13 @@ function GetViewBon()
 end
 
 function SaveViewBon()
-  local itemList=GetViewBon()
-  local item=mg.get_var(post,'item') or ''
-  if mg.get_var(post,'add') then
-    for i,v in ipairs(itemList) do
-      if v:upper()==item:upper() then
-        --既にある
-        item=nil
-        break
-      end
-    end
-    if item then
-      for i,v in ipairs(edcb.GetTunerReserveAll()) do
-        if item==v.tunerName then
-          itemList[#itemList+1]=item
-          ct:Append('<div id="result">追加しました</div>\n')
-          break
-        end
-      end
-    end
-  elseif mg.get_var(post,'del') then
-    for i,v in ipairs(itemList) do
-      if v==item then
-        table.remove(itemList,i)
-        ct:Append('<div id="result">削除しました</div>\n')
+  local itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'viewBon', i)
+    if not v then break end
+    for j,w in ipairs(edcb.GetTunerReserveAll()) do
+      if v==w.tunerName then
+        itemList[#itemList+1]=v
         break
       end
     end
@@ -636,6 +607,105 @@ function SaveViewBon()
     --掃除
     if edcb.GetPrivateProfile('TVTEST',i-1,'',srvIni)=='' then break end
     edcb.WritePrivateProfile('TVTEST',i-1,nil,srvIni)
+  end
+end
+
+function SavePreset()
+  local presetID=GetVarInt(post,'presetID') or 0
+  local preset=nil
+  local itemList=edcb.EnumRecPresetInfo()
+  local found=BinarySearch(itemList,{id=presetID},CompareFields('id'))
+  if found then
+      if mg.get_var(post,'del') then
+        --デフォルトは削除できない
+        if presetID~=0 then
+          presetID=nil
+          table.remove(itemList,i)
+        end
+      elseif mg.get_var(post,'addchg') then
+        if mg.get_var(post,'add') then
+          local presetName=mg.get_var(post,'presetName') or ''
+          if presetName:find('^%C+$') then
+            presetID=nil
+            preset={
+              name=presetName,
+              recSetting={
+                recFolderList=found.recSetting.recFolderList,
+                partialRecFolder=found.recSetting.partialRecFolder
+              }
+            }
+            itemList[#itemList+1]=preset
+          end
+        else
+          presetID=nil
+          preset=found
+        end
+      end
+  end
+  if not presetID then
+    --削除または追加または変更
+    if preset then
+      --追加または変更
+      rs=preset.recSetting
+      rs.noRecMode=GetVarInt(post,'recMode',0,4) or 1
+      rs.recMode=GetVarInt(post,'recEnabled')~=1 and 5 or rs.noRecMode
+      rs.tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1
+      rs.priority=GetVarInt(post,'priority',1,5) or 2
+      rs.pittariFlag=GetVarInt(post,'pittariFlag')==1
+      rs.suspendMode=GetVarInt(post,'suspendMode',0,4) or 0
+      rs.rebootFlag=GetVarInt(post,'rebootFlag')==1
+      rs.startMargin=GetVarInt(post,'useDefMarginFlag')~=1 and GetVarInt(post,'startMargin',-6*3600,6*3600)
+      rs.endMargin=GetVarInt(post,'useDefMarginFlag')~=1 and GetVarInt(post,'endMargin',-6*3600,6*3600)
+      rs.serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or
+        1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0)
+      rs.continueRecFlag=GetVarInt(post,'continueRecFlag')==1
+      rs.tunerID=GetVarInt(post,'tunerID') or 0
+      rs.partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
+      rs.batFilePath=(mg.get_var(post,'batFilePath') or ''):gsub('%c','')
+    end
+    local saveID=''
+    for i,v in ipairs(itemList) do
+      --IDを振りなおす
+      v.id=i-1
+      local defName='REC_DEF'
+      if v.id>0 then
+        defName=defName..v.id
+        saveID=saveID..v.id..','
+      end
+      edcb.WritePrivateProfile(defName,'SetName',v.id>0 and v.name or 'デフォルト',srvIni)
+      rs=v.recSetting
+      edcb.WritePrivateProfile(defName,'RecMode',rs.recMode,srvIni)
+      edcb.WritePrivateProfile(defName,'NoRecMode',rs.noRecMode,srvIni)
+      edcb.WritePrivateProfile(defName,'Priority',rs.priority,srvIni)
+      edcb.WritePrivateProfile(defName,'TuijyuuFlag',rs.tuijyuuFlag,srvIni)
+      edcb.WritePrivateProfile(defName,'ServiceMode',rs.serviceMode,srvIni)
+      edcb.WritePrivateProfile(defName,'PittariFlag',rs.pittariFlag,srvIni)
+      edcb.WritePrivateProfile(defName,'BatFilePath',rs.batFilePath,srvIni)
+      edcb.WritePrivateProfile(defName,'SuspendMode',rs.suspendMode,srvIni)
+      edcb.WritePrivateProfile(defName,'RebootFlag',rs.rebootFlag,srvIni)
+      edcb.WritePrivateProfile(defName,'UseMargineFlag',not not (rs.startMargin and rs.endMargin),srvIni)
+      edcb.WritePrivateProfile(defName,'StartMargine',rs.startMargin or 0,srvIni)
+      edcb.WritePrivateProfile(defName,'EndMargine',rs.endMargin or 0,srvIni)
+      edcb.WritePrivateProfile(defName,'ContinueRec',rs.continueRecFlag,srvIni)
+      edcb.WritePrivateProfile(defName,'PartialRec',rs.partialRecFlag,srvIni)
+      edcb.WritePrivateProfile(defName,'TunerID',rs.tunerID,srvIni)
+      defName=defName:gsub('EF','EF_FOLDER')
+      edcb.WritePrivateProfile(defName,'Count',#rs.recFolderList,srvIni)
+      for j,w in ipairs(rs.recFolderList) do
+        edcb.WritePrivateProfile(defName,j-1,w.recFolder,srvIni)
+        edcb.WritePrivateProfile(defName,'WritePlugIn'..(j-1),w.writePlugIn,srvIni)
+        edcb.WritePrivateProfile(defName,'RecNamePlugIn'..(j-1),w.recNamePlugIn,srvIni)
+      end
+      defName=defName:gsub('ER','ER_1SEG')
+      edcb.WritePrivateProfile(defName,'Count',#rs.partialRecFolder,srvIni)
+      for j,w in ipairs(rs.partialRecFolder) do
+        edcb.WritePrivateProfile(defName,j-1,w.recFolder,srvIni)
+        edcb.WritePrivateProfile(defName,'WritePlugIn'..(j-1),w.writePlugIn,srvIni)
+        edcb.WritePrivateProfile(defName,'RecNamePlugIn'..(j-1),w.recNamePlugIn,srvIni)
+      end
+    end
+    edcb.WritePrivateProfile('SET','PresetID',saveID,srvIni)
+    presetID=preset and preset.id or 0
   end
 end
 
@@ -714,16 +784,16 @@ function ParseSettingArrays(s)
 end
 
 function GetPlugin()
-  mode=GetVarInt(mg.request_info.query_string,'mode',1,2) or 1
-  item=mg.get_var(mg.request_info.query_string,'item') or ''
-  itemList=EnumPlugInFileName(mode==1 and 'RecName' or 'Write')
-  setting=nil
+  local mode=GetVarInt(mg.request_info.query_string,'mode',1,2) or 1
+  local item=mg.get_var(mg.request_info.query_string,'item') or ''
+  local itemList=EnumPlugInFileName(mode==1 and 'RecName' or 'Write')
+  local setting=nil
   for i,v in ipairs(itemList) do
     if v==item then
-      f=edcb.io.open(PathAppend(EdcbLibPath() or PathAppend(EdcbModulePath(),mode==1 and 'RecName' or 'Write'),v),'rb')
+      local f=edcb.io.open(PathAppend(EdcbLibPath() or PathAppend(EdcbModulePath(),mode==1 and 'RecName' or 'Write'),v),'rb')
       if f then
         --埋め込まれた設定ファイルについてのメタ情報を取り出す
-        buf=(' '):rep(65536)
+        local buf=(' '):rep(65536)
         while #buf==65536 do
           buf=buf..(f:read(65536) or '')
           setting=buf:match('%[(%["setting%-59c4d329%-ba81%-4054%-9f4d%-d1900653338a",.-)%[""%]%]')
@@ -738,9 +808,11 @@ function GetPlugin()
       break
     end
   end
-  for i,v in ipairs(setting.body) do
-    if v.section then
-      v.val=edcb.GetPrivateProfile(v.section,v.key,v.def,(mode==1 and 'RecName\\' or 'Write\\')..item..'.ini')
+  if setting then
+    for i,v in ipairs(setting.body) do
+      if v.section then
+        v.val=edcb.GetPrivateProfile(v.section,v.key,v.def,(mode==1 and 'RecName\\' or 'Write\\')..item..'.ini')
+      end
     end
   end
   return setting
@@ -749,9 +821,11 @@ end
 function SavePlugin()
   local setting=GetPlugin()
   if setting then
+    local mode=GetVarInt(mg.request_info.query_string,'mode',1,2) or 1
+    local item=mg.get_var(mg.request_info.query_string,'item') or ''
     if WIN32 and setting.head.utf then
       --設定ファイルがまだないか空のときバイト順マークを書き込む
-      f=edcb.io.open(EdcbModulePath()..(mode==1 and '\\RecName\\' or '\\Write\\')..item..'.ini','ab')
+      local f=edcb.io.open(EdcbModulePath()..(mode==1 and '\\RecName\\' or '\\Write\\')..item..'.ini','ab')
       if f then
         if f:seek('end')==0 then
           f:write('\xff\xfe')
@@ -761,7 +835,7 @@ function SavePlugin()
     end
     for i,v in ipairs(setting.body) do
       if v.section and mg.get_var(post,'k-'..i)=='['..v.section..']'..v.key then
-        val=GetVarInt(post,'c-'..i)==1
+        local val=GetVarInt(post,'c-'..i)==1
         if type(v.def)=='number' then
           val=math.min(math.max(val and GetVarInt(post,'v-'..i) or 0,v.min),v.max)
         elseif type(v.def)=='string' then
@@ -862,15 +936,14 @@ function GetAppNetwork(tcp)
   return ret
 end
 
-function SaveAppNetwork()
-  local tcp=not not mg.get_var(post,'tcp')
-  local itemList=GetAppNetwork(tcp)
-  local ip
-  if mg.get_var(post,'add') then
-    ip=(mg.get_var(post,'specip') or ''):match('^.+$') or mg.get_var(post,'ip')
-    local port=GetVarInt(post,'port',0)
+function SaveAppNetwork(tcp)
+  local itemList={}
+  local item=mg.get_var(post,tcp and 'tcp' or 'udp') or ''
+  for v in item:gmatch('[^,]+') do
+    local ip,port,broadcast=v:match('([^:]+):(%d+):(%d+)')
     --IPアドレスっぽくないものを弾く
     if ip and port and ip:find('^[0-9A-Za-z%%.:]+$') and ip:find('[^%%.:]') and ip:find('[.:]') then
+      port=tonumber(port)
       if ip=='0.0.0.1' then
         --SrvPipeのPortは常に0
         port=0
@@ -878,7 +951,7 @@ function SaveAppNetwork()
         --PipeのPortは基本的に0
         port=0
       end
-      local broadcast=not tcp and GetVarInt(post,'broadcast')==1
+      broadcast=not tcp and broadcast==1
       for i,v in ipairs(itemList) do
         if v.ip==ip and v.port%65536==port%65536 and v.broadcast==broadcast then
           --既にある
@@ -887,15 +960,12 @@ function SaveAppNetwork()
         end
       end
       if ip then
-        itemList[#itemList+1]={ip=ip,port=port,broadcast=broadcast}
-        ct:Append('<div id="result">追加しました</div>\n')
+        itemList[#itemList+1] = {
+          ip=ip,
+          port=tonumber(port) or 0,
+          broadcast=broadcast==1
+        }
       end
-    end
-  elseif mg.get_var(post,'del') then
-    local index=GetVarInt(post,'index',1)
-    if index and index<=#itemList then
-      table.remove(itemList,index)
-      ct:Append('<div id="result">削除しました</div>\n')
     end
   end
   for i,v in ipairs(itemList) do
@@ -926,13 +996,45 @@ function SaveAppNetwork()
 end
 
 if post then
-  --local network=SaveOther()
-  --edcb.ReloadSetting(network)
+  if GetVarInt(post,'srv')==1 then
+    network=nil
+    if GetVarInt(post,'saveBasic')==1 then
+      SaveBasic()
+      SaveRecFolder()
+      SaveBon()
+    end
+    if GetVarInt(post,'saveEpg')==1 then
+      SaveEpg()
+      SaveEpgService()
+      SaveEpgTime()
+    end
+    if GetVarInt(post,'saveRec')==1 then
+      SaveRec()
+      SaveNoSuspend()
+    end
+    if GetVarInt(post,'saveReserve')==1 then
+      SaveReserve()
+      SaveDelChk()
+      SaveDelExt()
+    end
+    if GetVarInt(post,'saveOther')==1 then
+      network=SaveOther()
+      SaveViewBon()
+    end
+    edcb.ReloadSetting(network)
+  end
+
+  if GetVarInt(post,'presetID') then SavePreset() end
+  if GetVarInt(post,'savePlugin')==1 then SavePlugin() end
+  if GetVarInt(post,'saveApp')==1 then
+    SaveApp()
+    SaveAppNetwork(false)
+    SaveAppNetwork(true)
+  end
 end
 
-plugin=mg.get_var(mg.request_info.query_string,'plugin')=='1'
-if plugin then
-  a=GetPlugin()
+if mg.get_var(mg.request_info.query_string,'plugin')=='1' then
+  a=GetPlugin(mg.request_info.query_string)
 else
   a={
     basic=GetBasic(),
