@@ -2506,11 +2506,7 @@ document.addEventListener('alpine:init', () => {
       const fd = new URLSearchParams({ id: d.reserveID, toggle: Number(!d.recSetting.recEnabled) });
       this.apiFetch(`${this.ROOT}api/SetReserve`, fd, 'GET');
     },
-    saveEntry() {
-      const container = document.querySelector('#sidePanel');
-
-      const action = document.getElementById('api_action')?.value || '';
-      const url = `${this.ROOT}api/${action}`;
+    getFormData(container){
       const fd = new URLSearchParams();
 
       // name属性を持っている要素をすべて拾う
@@ -2536,6 +2532,13 @@ document.addEventListener('alpine:init', () => {
           fd.append(name, el.value);
         }
       });
+      return fd
+    },
+    saveEntry() {
+      const fd = this.getFormData(document.querySelector('#sidePanel'));
+
+      const action = document.getElementById('api_action')?.value || '';
+      const url = `${this.ROOT}api/${action}`;
 
       this.apiFetch(url, fd);
     },
@@ -3055,6 +3058,23 @@ document.addEventListener('alpine:init', () => {
       this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
     },
 
+    saveSetting(container) {
+      const fd = this.getFormData(this.$refs[container]);
+      fd.append('ctok', document.getElementById('settingsCtok').value);
+
+      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+        return r.json();
+      }).then(d => {
+        this.settings.data = d;
+        this.snackbar.add({ text: '保存しました' });
+      }).catch(err => {
+        console.error('通信失敗:', err);
+        // ctokエラーを想定してリロード
+        const t = setTimeout(() => location.reload(), 3000);
+        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+      });
+    },
     async loadSetting() {
       try {
         this.loading = true;
@@ -3067,12 +3087,10 @@ document.addEventListener('alpine:init', () => {
         this.loading = false;
       }
     },
-    async loadPlugIn(mode, name) {
-      try {
-        this.loading = true;
-        const res = await fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
-        const data = await res.json();
+    parsePlugin(data, mode, name) {
+      data.name = name;
 
+      if (data.body) {
         const parsedItems = [];
         let currentParent = null;
 
@@ -3080,14 +3098,13 @@ document.addEventListener('alpine:init', () => {
           // 型やチェックボックス条件の事前判定
           const item = {
             ...v,
-            index: i, // name属性（k-i, c-i, v-i）で使う元のインデックスを保持
+            index: i+1, // name属性（k-i, c-i, v-i）で使う元のインデックスを保持
             defType: typeof v.def,
             // 次の項目が sub===3 になるかどうかの判定 (Lua: sub<2 and next.sub==3)
-            check: v.sub < 2 && data.body[i + 1] && data.body[i + 1].sub === 3,
+            check: typeof v.def === 'boolean' || v.sub < 2 && data.body[i + 1] && data.body[i + 1].sub === 3,
             checked: v.val !== '0' && v.val !== '',
             children: [] // 子要素を格納する配列を用意
           };
-          item.checkbox = v.defType === 'boolean' || item.check;
 
           if (v.sub < 2) {
             // 通常の親アイテム
@@ -3104,9 +3121,36 @@ document.addEventListener('alpine:init', () => {
           }
         });
         data.body = parsedItems;
+      }
 
-        if (mode == 1) this.settings.recNamePlugin = data;
-        else if (mode == 2) this.settings.writePlugin = data;
+      if (mode == 1) this.settings.recNamePlugin = data;
+      else if (mode == 2) this.settings.writePlugin = data;
+    },
+    savePlugIn(mode) {
+      const container = mode == 1 ? 'recNamePlugin' : 'writePlugin';
+      const name = this.settings[container].name;
+      const fd = this.getFormData(this.$refs[container]);
+      fd.append('ctok', document.getElementById('settingsCtok').value);
+
+      fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd }).then(r => {
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+        return r.json();
+      }).then(d => {
+        this.parsePlugin(d, mode, name);
+        this.snackbar.add({ text: '保存しました' });
+      }).catch(err => {
+        console.error('通信失敗:', err);
+        // ctokエラーを想定してリロード
+        const t = setTimeout(() => location.reload(), 3000);
+        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+      });
+    },
+    async loadPlugIn(mode, name) {
+      try {
+        this.loading = true;
+        const res = await fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
+        const data = await res.json() || {};
+        this.parsePlugin(data, mode, name);
       } catch (e) {
         console.error(e);
         this.snackbar.add({ text: '設定の取得に失敗しました', error: true });
@@ -3115,7 +3159,10 @@ document.addEventListener('alpine:init', () => {
       }
     },
     settings: {
-      data: {},
+      data: null,
+      tab: 'srv',
+      presetTab: 0,
+      recpreset: null,
       recNamePlugin: null,
       writePlugin: null,
       moveList(list, index, offset) {

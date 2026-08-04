@@ -1194,779 +1194,1021 @@ ct:Append([=[
 
     <template x-if="page === '#setting'" x-data="settings">
       <div class="absolute">
-        <section class="responsive padding">
-          <h6 class="error center-align padding">
-            <div><i>warning</i>作成中につき表示のみ。</div>
-            <div>正しく読み込まれてるか確認をお願いします。</div>
-          </h6>
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>settings</i>
-                <h6 class="max">基本設定</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <div class="field label border">
-              <input type="text" name="dataSavePath" x-model="data.basic?.dataSavePath">
-              <label>設定関係保存フォルダ</label>
-            </div>
-            <div class="field label border">
-              <input type="text" name="recExePath" x-model="data.basic?.recExePath">
-              <label>録画用アプリのパス</label>
-            </div>
-            <fieldset>
-              <legend>コマンドライン引数</legend>
-              <div class="grid">
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptBon" x-model="data.basic?.cmdOpt.bon"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>{BonDriver}</label>
-                </div>
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptMin" x-model="data.basic?.cmdOpt.min"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>最小化</label>
-                </div>
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptViewOff" x-model="data.basic?.cmdOpt.viewOff"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>非視聴時</label>
-                </div>
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptONID" x-model="data.basic?.cmdOpt.onid"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>{ONID}</label>
-                </div>
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptTSID" x-model="data.basic?.cmdOpt.tsid"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>{TSID}</label>
-                </div>
-                <div class="s6 m4 field label border">
-                  <input type="text" name="cmdOptSID" x-model="data.basic?.cmdOpt.sid"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <label>{SID}</label>
-                </div>
-              </div>
-            </fieldset>            
-            <div class="field label border">
-              <input type="text" name="recInfoFolder" x-model="data.basic?.recInfoFolder">
-              <label>録画情報保存フォルダ</label>
-              ]=]..(WIN32 and '' or '<output>※未指定時は録画ファイルと同じ場所に保存します。</output>')..[=[
-            </div>
-            <fieldset>
-              <legend>録画保存フォルダ</legend>
-              <ul class="list border">
-                <template x-for="(v,i) in data.recFolder" :key="v">
-                  <li>
-                    <h6 class="max" x-text="v"></h6>
-                    <nav class="group connected no-margin">
-                      <button class="secondary small left-round" @click="moveList('recFolder',i,-1)"><i>arrow_upward</i></button>
-                      <button class="secondary small right-round" @click="moveList('recFolder',i,1)"><i>arrow_downward</i></button>
-                    </nav>
-                    <button class="tertiary small" @click="removeList('recFolder',i)"><i>delete</i></button>
-                  </li>
-                </template>
-              </ul>
-              <nav class="no-space">
-                <div class="max"></div>
-                <div class="field small">
-                  <input type="text" x-ref="recFolder">
-                </div>
-                <button class="secondary right-round" @click="addList('recFolder')"><i>add</i><span>追加</span></button>
-              </nav>
-            </fieldset>
-            <fieldset>
-              <legend>BonDriver</legend>
-              <div class="scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>BonDriver</th>
-                      <th>チューナー数</th>
-                      <th>EPG取得に使用する数</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template x-for="(v,i) in data.bon" :key="v.bon">
-                      <tr>
-                        <td class="min">
-                          <nav class="group connected">
-                            <button class="secondary small left-round" @click="moveList('bon',i,-1)"><i>arrow_upward</i></button>
-                            <button class="secondary small right-round" @click="moveList('bon',i,1)"><i>arrow_downward</i></button>
-                          </nav>
-                        </td>
-                        <td x-text="v.bon"></td>
-                        <td><div class="field small"><input type="number" x-model="v.count"></div></td>
-                        <td><div class="field small"><input type="number" x-model="v.epgCount"></div></td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </fieldset>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>event_list</i>
-                <h6 class="max">EPG取得</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <fieldset>
-              <legend>基本情報のみ取得するネットワーク</legend>
-              <nav>
-                <label class="checkbox">
-                  <input type="checkbox" name="basicOnlyBS" x-model="data.epg.basicOnlyBS">
-                  <span>BS</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="basicOnlyCS1" x-model="data.epg.basicOnlyCS1">
-                  <span>CS1</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="basicOnlyCS2" x-model="data.epg.basicOnlyCS2">
-                  <span>CS2</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="basicOnlyCS3" x-model="data.epg.basicOnlyCS3">
-                  <span>CS3</span>
-                </label>
-              </nav>
-            </fieldset>
-            <fieldset>
-              <legend>実行抑制条件</legend>
-              <div class="field">
-                <div class="row">
-                  <div class="field border small">
-                    <input type="number" name="ngEpgCapTime" :value="data.epg.ngEpgCapTime">
+        <nav class="tabbed scroll top-margin fixed">
+          <a :class="{ active: tab === 'srv'}" @click="tab='srv'"><i>settings</i>Srv設定</a>
+          <a :class="{ active: tab === 'preset'}" @click="tab='preset'"><i>rule</i><span>プリセット</span></a>
+          <a :class="{ active: tab === 'epgdatacap'}" @click="tab='epgdatacap'"><i>videocam</i><span>EpgDataCap_Bon</span></a>
+        </nav>
+        <template x-if="data">
+          <section class="responsive padding">
+            <h6 class="error center-align padding">
+              <div><i>warning</i>作成中につき表示のみ。</div>
+              <div>正しく読み込まれてるか確認をお願いします。</div>
+            </h6>
+            <input type="hidden" value="]=]..CsrfToken('settings')..[=[" id="settingsCtok">
+            <div class="page" :class="{ active: tab === 'srv'}" x-ref="srv">
+              <input type="hidden" name="srv" value="1">
+              <details x-data="{ open: $el.open }" @toggle="open = $el.open">
+                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                  <nav class="padding">
+                    <i>settings</i>
+                    <h6 class="max">基本設定</h6>
+                    <i x-text="open ? 'expand_less' : 'expand_more'"></i>
+                  </nav>
+                </summary>
+                <div class="grid vertical-margin">
+                  <input type="hidden" name="saveBasic" value="1">
+                  <div class="s12 field label border">
+                    <input type="text" name="dataSavePath" x-model="data.basic.dataSavePath">
+                    <label>設定関係保存フォルダ</label>
                   </div>
-                  <div class="max">分以内に予約がある場合、実行しない</div>
+                  <div class="s12 field label border">
+                    <input type="text" name="recExePath" x-model="data.basic.recExePath">
+                    <label>録画用アプリのパス</label>
+                  </div>
+                  <fieldset class="s12">
+                    <legend>コマンドライン引数</legend>
+                    <div class="grid">
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptBon" x-model="data.basic.cmdOpt.bon"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>{BonDriver}</label>
+                      </div>
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptMin" x-model="data.basic.cmdOpt.min"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>最小化</label>
+                      </div>
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptViewOff" x-model="data.basic.cmdOpt.viewOff"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>非視聴時</label>
+                      </div>
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptONID" x-model="data.basic.cmdOpt.onid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>{ONID}</label>
+                      </div>
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptTSID" x-model="data.basic.cmdOpt.tsid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>{TSID}</label>
+                      </div>
+                      <div class="s6 m4 field label border">
+                        <input type="text" name="cmdOptSID" x-model="data.basic.cmdOpt.sid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <label>{SID}</label>
+                      </div>
+                    </div>
+                  </fieldset>            
+                  <div class="s12 field label border">
+                    <input type="text" name="recInfoFolder" x-model="data.basic.recInfoFolder">
+                    <label>録画情報保存フォルダ</label>
+                    ]=]..(WIN32 and '' or '<output>※未指定時は録画ファイルと同じ場所に保存します。</output>')..[=[
+                  </div>
+                  <fieldset class="s12 l6">
+                    <legend>録画保存フォルダ</legend>
+                    <ul class="list border">
+                      <template x-for="(v,i) in data.recFolder" :key="v">
+                        <li>
+                          <h6 class="large-text max" x-text="v"></h6>
+                          <nav class="group connected no-margin">
+                            <button class="secondary small left-round" @click="moveList('recFolder',i,-1)"><i>arrow_upward</i></button>
+                            <button class="secondary small right-round" @click="moveList('recFolder',i,1)"><i>arrow_downward</i></button>
+                          </nav>
+                          <button class="tertiary small" @click="removeList('recFolder',i)"><i>delete</i></button>
+                          <input type="hidden" name="recFolder" :value="v">
+                        </li>
+                      </template>
+                    </ul>
+                    <nav class="no-space">
+                      <div class="max"></div>
+                      <div class="field small">
+                        <input type="text" x-ref="recFolder">
+                      </div>
+                      <button class="secondary right-round" @click="addList('recFolder')"><i>add</i><span>追加</span></button>
+                    </nav>
+                  </fieldset>
+                  <fieldset class="s12 l6">
+                    <legend>BonDriver</legend>
+                    <div class="scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th></th>
+                            <th>BonDriver</th>
+                            <th>チューナー数</th>
+                            <th>EPG取得に使用する数</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template x-for="(v,i) in data.bon" :key="v.bon">
+                            <tr>
+                              <td class="min">
+                                <nav class="group connected">
+                                  <button class="secondary small left-round" @click="moveList('bon',i,-1)"><i>arrow_upward</i></button>
+                                  <button class="secondary small right-round" @click="moveList('bon',i,1)"><i>arrow_downward</i></button>
+                                </nav>
+                              </td>
+                              <td x-text="v.bon"></td>
+                              <td><div class="field small min"><input type="number" x-model="v.count"></div></td>
+                              <td><div class="field small min"><input type="number" x-model="v.epgCount"></div></td>
+                              <input type="hidden" name="bon" :value="`${v.bon}-${v.count}-${v.epgCount}`">
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                  </fieldset>
                 </div>
-                <output><span class="bold">0</span>で録画時も実行</output>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>使用チューナー条件</legend>
-              <div class="row">
-                <div class="field border small">
-                  <input type="number" name="ngEpgCapTunerTime" :value="data.epg.ngEpgCapTunerTime">
+              </details>
+
+              <details x-data="{ open: $el.open }" @toggle="open = $el.open">
+                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                  <nav class="padding">
+                    <i>event_list</i>
+                    <h6 class="max">EPG取得</h6>
+                    <i x-text="open ? 'expand_less' : 'expand_more'"></i>
+                  </nav>
+                </summary>
+                <div class="grid vertical-margin">
+                  <input type="hidden" name="saveEpg" value="1">
+                  <fieldset class="s12 l4">
+                    <legend>基本情報のみ取得するネットワーク</legend>
+                    <nav>
+                      <label class="checkbox">
+                        <input type="checkbox" name="basicOnlyBS" x-model="data.epg.basicOnlyBS">
+                        <span>BS</span>
+                      </label>
+                      <label class="checkbox">
+                        <input type="checkbox" name="basicOnlyCS1" x-model="data.epg.basicOnlyCS1">
+                        <span>CS1</span>
+                      </label>
+                      <label class="checkbox">
+                        <input type="checkbox" name="basicOnlyCS2" x-model="data.epg.basicOnlyCS2">
+                        <span>CS2</span>
+                      </label>
+                      <label class="checkbox">
+                        <input type="checkbox" name="basicOnlyCS3" x-model="data.epg.basicOnlyCS3">
+                        <span>CS3</span>
+                      </label>
+                    </nav>
+                  </fieldset>
+                  <fieldset class="s12 m6 l4">
+                    <legend>実行抑制条件</legend>
+                    <div class="field">
+                      <div class="row">
+                        <div class="field border small min">
+                          <input type="number" name="ngEpgCapTime" :value="data.epg.ngEpgCapTime">
+                        </div>
+                        <div class="max">分以内に予約がある場合、実行しない</div>
+                      </div>
+                      <output><span class="bold">0</span>で録画時も実行</output>
+                    </div>
+                  </fieldset>
+                  <fieldset class="s12 m6 l4">
+                    <legend>使用チューナー条件</legend>
+                    <div class="row">
+                      <div class="field border small min">
+                        <input type="number" name="ngEpgCapTunerTime" :value="data.epg.ngEpgCapTunerTime">
+                      </div>
+                      <div class="max">分以内に予約がある場合、使用しない</div>
+                    </div>
+                  </fieldset>
+                  <fieldset class="s12">
+                    <legend>EPG取得開始時間</legend>
+                    <div class="scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>
+                            <th>開始時間
+                            <th>種別(BS,CS1,CS2,CS3)
+                            <th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template x-for="(v,i) in data.epgTime" :key="i">
+                            <tr>
+                              <td class="min"><label class="switch"><input type="checkbox" :checked="v.enabled"><span></span></label></td>
+                              <td class="no-wrap" x-text="['','月','火','水','木','金','土','日'][Math.floor(v.weekMin/24/60)] + String(Math.floor(v.weekMin/60)%24).padStart(2,'0') + ':' + String(v.weekMin%60).padStart(2,'0')"></td>
+                              <td x-text="v.flags >= 0 ? [(v.flags&1?'基本':'拡張'), (v.flags&2?'基本':'拡張'), (v.flags&4?'基本':'拡張'), (v.flags&8?'基本':'拡張')].join(',') : '(共通設定に従う)'"></td>
+                              <td class="min"><button class="tertiary small" @click="removeList('epgTime',i)"><i>delete</i></button></td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="row padding wrap" x-data="{ bs: false, cs1: false, cs2: false, cs3: false }">
+                      <div class="max"></div>
+                      <div class="field suffix border small">
+                        <select name="addWday" x-ref="addWday">
+                          <template x-for="(d,i) in ['','月','火','水','木','金','土','日']" :key="i">
+                            <option :value="i" x-text="d"></option>
+                          </template>
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <div class="field prefix border small">
+                        <i>schedule</i>
+                        <input type="time" value="00:00" x-ref="addTime">
+                      </div>
+                      基本情報のみ取得
+                      <nav class="group" x-init="bs=data.epg.basicOnlyBS;cs1=data.epg.basicOnlyCS1;cs2=data.epg.basicOnlyCS2;cs3=data.epg.basicOnlyCS3;">
+                        <button class="left-round" :class="{ active: bs }" @click="bs = !bs">BS</button>
+                        <button :class="{ active: cs1 }" @click="cs1 = !cs1">CS1</button>
+                        <button :class="{ active: cs2 }" @click="cs2 = !cs2">CS2</button>
+                        <button class="right-round" :class="{ active: cs3 }" @click="cs3 = !cs3">CS3</button>
+                      </nav>
+                      <button class="tertiary small" @click="addEpgTime(bs,cs1,cs2,cs3)"><i>add</i><span>追加</span></button>
+                    </div>
+                    <input type="hidden" name="epgTime" :value="data.epgTime.map(v=>`${v.weekMin}-${v.flags}-${v.enabled ? 1 : 0}`).join(',')">
+                  </fieldset>
+                  <fieldset class="s12">
+                    <legend>EPG取得対象サービス</legend>
+                    <div class="medium-height scroll">
+                      <table>
+                        <thead class="fixed front surface-variant">
+                          <tr>
+                            <th class="min">有効
+                            <th>サービス名
+                            <th>Network
+                            <th>ServiceID
+                            <th>Type
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template x-for="sv in data.epgService" :key="`${sv.onid}-${sv.tsid}-${sv.sid}`">
+                            <tr>
+                              <td class="min">
+                                <label class="switch">
+                                  <input type="checkbox" :name="`${sv.onid}-${sv.tsid}-${sv.sid}`" :checked="sv.epgCapFlag">
+                                  <span></span>
+                                </label>
+                              </td>
+                              <td x-text="sv.serviceName" style="white-space: nowrap">
+                              <td x-text="networkNames[getNetworkIndex(sv.onid)]">
+                              <td x-text="sv.sid">
+                              <td x-text="sv.serviceType">
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+                    </div>
+                  </fieldset>
                 </div>
-                <div class="max">分以内に予約がある場合、使用しない</div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>EPG取得開始時間</legend>
-              <div class="scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                      <th>開始時間
-                      <th>種別(BS,CS1,CS2,CS3)
-                      <th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template x-for="(v,i) in data.epgTime" :key="i">
-                      <tr>
-                        <td class="min"><label class="switch"><input type="checkbox" :name="'enabled-'+v.weekMin" :checked="v.enabled"><span></span></label></td>
-                        <td class="no-wrap" x-text="['','月','火','水','木','金','土','日'][Math.floor(v.weekMin/24/60)] + String(Math.floor(v.weekMin/60)%24).padStart(2,'0') + ':' + String(v.weekMin%60).padStart(2,'0')"></td>
-                        <td x-text="v.flags >= 0 ? [(v.flags&1?'基本':'拡張'), (v.flags&2?'基本':'拡張'), (v.flags&4?'基本':'拡張'), (v.flags&8?'基本':'拡張')].join(',') : '(共通設定に従う)'"></td>
-                        <td class="min"><button class="tertiary small" @click="removeList('epgTime',i)"><i>delete</i></button></td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-              <div class="row padding wrap" x-data="{ bs: false, cs1: false, cs2: false, cs3: false }">
-                <div class="max"></div>
-                <div class="field border small">
-                  <select name="addWday" x-ref="addWday">
-                    <template x-for="(d,i) in ['','月','火','水','木','金','土','日']" :key="i">
-                      <option :value="i" x-text="d"></option>
-                    </template>
-                  </select>
-                </div>
-                <div class="field prefix border small">
-                  <i>schedule</i>
-                  <input type="time" value="00:00" x-ref="addTime">
-                </div>
-                基本情報のみ取得
-                <nav class="group" x-init="bs=data.epg.basicOnlyBS;cs1=data.epg.basicOnlyCS1;cs2=data.epg.basicOnlyCS2;cs3=data.epg.basicOnlyCS3;">
-                  <button class="left-round" :class="{ active: bs }" @click="bs = !bs">BS</button>
-                  <button :class="{ active: cs1 }" @click="cs1 = !cs1">CS1</button>
-                  <button :class="{ active: cs2 }" @click="cs2 = !cs2">CS2</button>
-                  <button class="right-round" :class="{ active: cs3 }" @click="cs3 = !cs3">CS3</button>
-                </nav>
-                <button class="tertiary small" @click="addEpgTime(bs,cs1,cs2,cs3)"><i>add</i><span>追加</span></button>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>EPG取得対象サービス</legend>
-              <div class="large-height scroll">
-                <table>
-                  <thead class="fixed front surface-variant">
-                    <tr>
-                      <th class="min">有効
-                      <th>サービス名
-                      <th>Network
-                      <th>ServiceID
-                      <th>Type
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <template x-for="sv in data.epgService" :key="`${sv.onid}-${sv.tsid}-${sv.sid}`">
-                      <tr>
-                        <td class="min">
+              </details>
+
+              <details x-data="{ open: $el.open }" @toggle="open = $el.open">
+                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                  <nav class="padding">
+                    <i>settings_applications</i>
+                    <h6 class="max">録画動作</h6>
+                    <i x-text="open ? 'expand_less' : 'expand_more'"></i>
+                  </nav>
+                </summary>
+                <div class="grid vertical-margin">
+                  <input type="hidden" name="saveRec" value="1">
+                  <fieldset class="s12 m6">
+                    <legend>録画、EPG取得終了後のデフォルト動作</legend>
+                    <div class="grid">
+                      <div class="s12 field suffix border">
+                        <select name="recEndMode" x-model.number="data.rec.recEndMode">
+                          <option value="0">何もしない
+                          <option value="1">スタンバイ
+                          <option value="2">休止
+                          <option value="3">シャットダウン
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <div class="s12 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">復帰後再起動する</h6>
+                          </div>
                           <label class="switch">
-                            <input type="checkbox" :name="`${sv.onid}-${sv.tsid}-${sv.sid}`" :checked="sv.epgCapFlag">
+                            <input type="checkbox" name="reboot" x-model="data.rec.reboot">
                             <span></span>
                           </label>
-                        </td>
-                        <td x-text="sv.serviceName" style="white-space: nowrap">
-                        <td x-text="networkNames[getNetworkIndex(sv.onid)]">
-                        <td x-text="sv.sid">
-                        <td x-text="sv.serviceType">
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </fieldset>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>settings_applications</i>
-                <h6 class="max">録画動作</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <fieldset>
-              <legend>録画、EPG取得終了後のデフォルト動作</legend>
-              <div class="field border">
-                <select name="recEndMode" x-model.number="data.rec.recEndMode">
-                  <option value="0">何もしない
-                  <option value="1">スタンバイ
-                  <option value="2">休止
-                  <option value="3">シャットダウン
-                </select>
-                <i>arrow_drop_down</i>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="reboot" x-model="data.rec.reboot">
-                  <span>復帰後再起動する</span>
-                </label>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>復帰処理開始時間</legend>
-              <div class="field">
-                <div class="row tiny-space wrap">
-                  <span>録画開始</span>
-                  <div class="field small">
-                    <input type="number" name="wakeTime" x-model="data.rec.wakeTime">
-                  </div>
-                  <span>分前</span>
-                </div>
-                <output>再起動ありの場合は+5分</output>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>録画後動作の抑制条件</legend>
-              <fieldset]=]..(WIN32 and '' or ' disabled')..[=[>
-                <legend>指定プロセスが起動している場合 (前方一致)</legend>
-                <nav class="scroll">
-                  <template x-for="(v,i) in data.noSuspend">
-                    <button class="chip fill round large" @click="removeList('noSuspend', i)"><i>delete</i><span x-text="v"></span></button>
-                  </template>
-                </nav>
-                <nav class="no-space">
-                  <div class="max"></div>
-                  <div class="field small">
-                    <input type="text" x-ref="noSuspend">
-                  </div>
-                  <button class="secondary right-round" @click="addList('noSuspend')"><i>add</i><span>追加</span></button>
-                </nav>
-              </fieldset>
-              <div class="row">
-                <div class="field small">
-                  <input type="number" x-model.number="data.rec.noStandbyTime">
-                </div>
-                分以内に予約がある場合
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="noUsePC" x-model="data.rec.noUsePC"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <span>ユーザー操作が<span class="field small"><input type="number" name="noUsePCTime" x-model.number="data.rec.noUsePCTime" :disabled="!data.rec.noUsePC"></span>分以内にあった場合</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="noFileStreaming" x-model="data.rec.noFileStreaming"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <span>NetworkTVモードで追っかけ再生、ストリーミング再生を行っている場合</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="noShareFile" x-model="data.rec.noShareFile"]=]..(WIN32 and '' or ' disabled')..[=[>
-                  <span>共有フォルダのTSファイルにアクセスがある場合</span>
-                </label>
-                <output>※管理者権限が必要です</output>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>録画マージンのデフォルト</legend>
-              <div class="row">
-                <div class="row tiny-space">
-                  <div class="field label border">
-                    <input type="number" name="startMargin" x-model="data.rec.startMargin">
-                    <label>開始</label>
-                  </div>
-                  <div>秒前</div>
-                </div>
-                <div class="row tiny-space">
-                  <div class="field label border">
-                    <input type="number" name="endMargin" x-model="data.rec.endMargin">
-                    <label>終了</label>
-                  </div>
-                  <div>秒後</div>
-                </div>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>対象データのデフォルト</legend>
-              <div class="row">
-                <label class="checkbox">
-                  <input type="checkbox" name="enableCaption" x-model="data.rec.enableCaption">
-                  <span>字幕を含める</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="enableData" x-model="data.rec.enableData">
-                  <span>データカルーセルを含める</span>
-                </label>
-              </div>
-            </fieldset>
-            <fieldset>
-              <legend>録画用アプリ</legend>
-              <div class="row">
-                <div class="field small">
-                  <input type="number" name="recAppWakeTime" x-model.number="data.rec.recAppWakeTime">
-                </div>
-                分前に起動する
-              </div>
-              <div class="field label suffix border">
-                <select name="processPriority" name="processPriority" x-model="data.rec.processPriority">
-                  <option value="0">リアルタイム
-                  <option value="1">高
-                  <option value="2">通常以上
-                  <option value="3">通常
-                  <option value="4">通常以下
-                  <option value="5">低
-                </select>
-                <label>プロセス優先度</label>
-                <i>arrow_drop_down</i>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="recMinWake" x-model="data.rec.recMinWake">
-                  <span>最小化で起動する</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="recOverWrite" x-model="data.rec.recOverWrite">
-                  <span>同一ファイル名が存在した場合に上書きする</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="recNW" x-model="data.rec.recNW">
-                  <span>UDP、TCP送信を行う</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="keepDisk" x-model="data.rec.keepDisk">
-                  <span>録画ファイルの容量確保を行う</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="dropLog" x-model="data.rec.dropLog">
-                  <span>ドロップログを出力する</span>
-                </label>
-              </div>
-              <div class="row">
-                <label class="checkbox">
-                  <input type="checkbox" name="pgInfoLog" x-model="data.rec.pgInfoLog">
-                  <span>番組情報を出力する</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8" ]=]..(WIN32 and ':disabled="!data.rec.pgInfoLog"' or 'disabled')..[=[>
-                  <span>UTF-8で出力する</span>
-                </label>
-              </div>
-              <fieldset>
-                <legend>Viewを起動する</legend>
-                <nav class="wrap">
-                  <label class="checkbox">
-                    <input type="checkbox" name="openViewAlways" x-model="((data.rec.recView >> 2) & 1) === 1">
-                    <span>EPG取得を除く起動時</span>
-                  </label>
-                  <label class="checkbox">
-                    <input type="checkbox" name="openViewForViewing" x-model="(data.rec.recView & 1) === 1">
-                    <span>視聴時</span>
-                  </label>
-                  <label class="checkbox">
-                    <input type="checkbox" name="openViewForRec" x-model="((data.rec.recView >> 1) & 1) === 1">
-                    <span>録画時</span>
-                  </label>
-                </nav>
-              </fieldset>
-            </fieldset>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>event_upcoming</i>
-                <h6 class="max">予約情報管理</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <div class="horizontal-margin">
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="backPriority" x-model="data.reserve.backPriority">
-                  <span>優先度が同じで時間が重なった場合、後の予約を優先する</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="fixedTunerPriority" x-model="data.reserve.fixedTunerPriority">
-                  <span>優先度が同じ場合、チューナー強制指定された予約を先にチューナー割り当てする</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="retryOtherTuners" x-model="data.reserve.retryOtherTuners">
-                  <span>チューナーの起動に失敗したとき、ほかのチューナーで再試行する</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="separateFixedTuners" x-model="data.reserve.separateFixedTuners">
-                  <span>チューナー強制指定の値が異なるものを重複予約できるようにする</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="commentAutoAdd" x-model="data.reserve.commentAutoAdd">
-                  <span>EPG自動予約をプログラム予約化したとき、予約が再び追加されないようにする</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="fixNoRecToServiceOnly" x-model="data.reserve.fixNoRecToServiceOnly">
-                  <span>予約を無効にするとき、録画モードを「指定サービス」にする</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="recInfoFolderOnly" x-model="data.reserve.recInfoFolderOnly">
-                  <span>録画情報保存フォルダ指定時は録画ファイルと同じ場所を参照しない</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="recInfoDelFile" x-model="data.reserve.recInfoDelFile">
-                  <span>録画済み一覧から削除するときに録画ファイルも削除する</span>
-                </label>
-              </div>
-              <div class="field left-margin large-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="applyExtToRecInfoDel" x-model="data.reserve.applyExtToRecInfoDel" :disabled="!data.reserve.recInfoDelFile">
-                  <span>同時に削除するファイルの拡張子は削除設定に従う</span>
-                </label>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="autoDel" x-model="data.reserve.autoDel">
-                  <span>HDDの空きが少ない場合、古いTSファイルを削除する</span>
-                </label>
-              </div>
-              <div class="left-margin large-margin" :class="{ 'medium-opacity': !data.reserve.autoDel }">
-                <fieldset>
-                  <legend>同時に削除するファイルの拡張子</legend>
-                  <nav class="scroll">
-                    <template x-for="(v,i) in data.delExt">
-                      <button class="chip fill round large" @click="removeList('delExt', i)"><i>delete</i><span x-text="v"></span></button>
-                    </template>
-                  </nav>
-                  <nav class="no-space">
-                    <div class="max"></div>
-                    <div class="field small">
-                      <input type="text" x-ref="delExt">
+                        </nav>
+                      </div>
                     </div>
-                    <button class="secondary right-round" @click="addList('delExt')"><i>add</i><span>追加</span></button>
-                  </nav>
-                </fieldset>
-                <fieldset>
-                  <legend>削除対象フォルダ</legend>
-                  <nav class="scroll">
-                    <template x-for="(v,i) in data.delChk">
-                      <button class="chip fill round large" @click="removeList('delChk', i)"><span x-text="v"></span><i>delete</i></button>
-                    </template>
-                  </nav>
-                  <nav class="no-space">
-                    <div class="max"></div>
-                    <div class="field small">
-                      <input type="text" x-ref="delChk">
+                  </fieldset>
+                  <fieldset class="s12 m6">
+                    <legend>復帰処理開始時間</legend>
+                    <div class="field">
+                      <div class="row tiny-space wrap">
+                        <span>録画開始</span>
+                        <div class="field small min">
+                          <input type="number" name="wakeTime" x-model="data.rec.wakeTime">
+                        </div>
+                        <span>分前</span>
+                      </div>
+                      <output>再起動ありの場合は+5分</output>
                     </div>
-                    <button class="secondary right-round" @click="addList('delChk')"><i>add</i><span>追加</span></button>
-                  </nav>
-                </fieldset>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="recNamePlugIn" x-model="data.reserve.useRecNamePlugIn">
-                  <span>録画時のファイル名にPlugInを使用する</span>
-                </label>
-              </div>
-              <div class="field suffix border left-margin large-margin">
-                <select name="recNamePlugInFile" :disabled="!data.reserve.useRecNamePlugIn">
-                  <template x-for="v in data.recNamePlugInList">
-                    <option x-text="v" :selected="v===data.reserve.recNamePlugInFile"></option>
-                  </template>
-                </select>
-                <i>arrow_drop_down</i>
-              </div>
-              <div class="field no-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="noChkYen" x-model="data.reserve.noChkYen">
-                  <span>ファイル名の禁則文字の変換対象から「]=]..DIR_SEP..[=[」を除外する</span>
-                </label>
-              </div>
-              <div class="field label suffix border">
-                <select name="delReserveMode">
-                  <option value="0" :selected="data.reserve.delReserveMode==0">削除のみ
-                  <option value="1" :selected="data.reserve.delReserveMode==1">録画済みに追加
-                  <option value="2" :selected="data.reserve.delReserveMode==2">キャンセルとして録画済みに追加
-                </select>
-                <label>録画中の予約削除を</label>
-                <i>arrow_drop_down</i>
-              </div>
-            </div>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>build</i>
-                <h6 class="max">その他</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <div>※設定変更後にHTTPサーバーも再起動します。</div>
-            <div class="field middle-align">
-              <nav>
-                <div class="max">
-                  <h6 class="large-text">ネットワーク接続を許可する</h6>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" name="enableTCPSrv" x-model="data.other.enableTCPSrv">
-                  <span></span>
-                </label>
-              </nav>
-            </div>
-            <div class="field middle-align">
-              <nav>
-                <div class="max">
-                  <h6 class="large-text">IPv6</h6>
-                </div>
-                <label class="switch">
-                  <input type="checkbox" name="tcpIPv6" x-model="data.other.tcpIPv6" :disabled="!data.other.enableTCPSrv">
-                  <span></span>
-                </label>
-              </nav>
-            </div>
-            
-            <div class="grid">
-              <div class="s6 l3">
-                <div class="field label border">
-                  <input name="tcpPort" x-model="data.other.tcpPort" :disabled="!data.other.enableTCPSrv">
-                  <label>ポート</label>
-                </div>
-              </div>
-              <div class="s6 l3">
-                <div class="field label border">
-                  <input name="tcpResponseTimeoutSec" x-model="data.other.tcpResponseTimeoutSec" :disabled="!data.other.enableTCPSrv">
-                  <label>無通信タイムアウト(秒)</label>
-                </div>
-              </div>
-              <div class="s12 l6 field label border">
-                <input type="text" name="tcpAccessControlList" x-model="data.other.tcpAccessControlList" :disabled="!data.other.enableTCPSrv">
-                <label>アクセス制御</label>
-                <output>※必ず信頼できるPCのみアクセスできるようにしてください。</output>
-              </div>
-            </div>
-            <label class="checkbox">
-              <input type="checkbox" name="autoDelRecInfo" x-model="data.other.autoDelRecInfo">
-              <span>録画結果を自動的に削除する</span>
-            </label>
-            <div class="field label border">
-              <input type="number" name="autoDelRecInfoNum" x-model.number="data.other.autoDelRecInfoNum" :disabled="!data.other.autoDelRecInfo">
-              <label>保持件数</label>
-            </div>
-            <div class="field label border">
-              <input type="number" name="recInfo2Max" x-model.number="data.other.recInfo2Max">
-              <label>正常に録画した番組情報(RecInfo2)の蓄積数</label>
-            </div>
-            <div class="row tiny-space">
-              <div class="field label border">
-                <input type="number" name="recInfo2DropChk" x-model.number="data.other.recInfo2DropChk">
-                <label>ドロップ数しきい値</label>
-              </div>
-              未満
-            </div>
-            <div class="row tiny-space">
-              EPG取得後も番組情報を
-              <div class="field suffix">
-                <select name="epgArchivePeriod">
-                  <template x-for="v in 15">
-                    <option x-text="v-1">
-                  </template>
-                  <option value="20000">∞
-                </select>
-                <i>arrow_drop_down</i>
-              </div>
-              日前まで保存する
-            </div>
-            <div class="field">
-              <label class="checkbox">
-                <input type="checkbox" name="timeSync" x-model="data.other.timeSync">
-                <span>EPG取得時に放送波時間でPC時計を同期する</span>
-              </label>
-              <output>※]=]..(WIN32 and 'システム時刻の変更特権が必要です' or '`/bin/date -s 20[0-9][0-9]-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z`をsudoで実行します')..[=[</output>
-            </div>
-            <div class="field">
-              <label class="checkbox">
-                <input type="checkbox" name="residentMode" value="1" x-model="data.other.residentMode"]=]..(WIN32 and '' or ' disabled')..[=[>
-                <span>EpgTimerSrvを常駐させる</span>
-              </label>
-            </div>
-            <div class="left-margin large-margin">
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="showTray" value="1" x-model="data.other.showTray" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
-                  <span>タスクトレイアイコンを表示する</span>
-                </label>
-              </div>
-              <div class="field left-margin large-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="notifyTipStyle" value="1" x-model="data.other.notifyTipStyle" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
-                  <span>ツールチップに次の予約を表示する</span>
-                </label>
-              </div>
-              <div class="field left-margin large-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="blinkPreRec" value="1" x-model="data.other.blinkPreRec" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
-                  <span>開始準備で点滅させる</span>
-                </label>
-              </div>
-              <div class="field">
-                <label class="checkbox">
-                  <input type="checkbox" name="noBalloonTip" value="1" x-model="data.other.noBalloonTip" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
-                    <span>バルーンチップ/トーストでの動作通知を抑制する</span>
-                </label>
-              </div>
-              <div class="field left-margin large-margin">
-                <label class="checkbox">
-                  <input type="checkbox" name="noBalloonTipRealtime" value="1" x-model="data.other.noBalloonTipRealtime" ]=]..(WIN32 and ':disabled="!data.other.residentMode || data.other.noBalloonTip"' or 'disabled')..[=[>
-                  <span>リアルタイムで表示できなかった通知を捨てる</span>
-                </label>
-              </div>
-            </div>
-            <div class="field">
-              <label class="checkbox">
-                <input type="checkbox" name="saveNotifyLog" x-model="data.other.saveNotifyLog">
-                <span>情報通知ログをファイルに保存する</span>
-              </label>
-            </div>
-            <div class="field">
-              <label class="checkbox">
-                <input type="checkbox" name="saveDebugLog" x-model="data.other.saveDebugLog">
-                <span>デバッグ出力をファイルに保存する</span>
-              </label>
-            </div>
-            <div class="field label border">
-              <input type="text" name="tsExt" x-model="data.other.tsExt">
-              <label>TSファイルの拡張子</label>
-            </div>
-            <div x-show="data.other.compatFlags%4096==4095">現在のEpgTimerSrvの応答はtkntrec版互換です。</div>
-            
-            <fieldset>
-              <legend>視聴に使用するBonDriver</legend>
-              <ul class="list border no-space">
-                <template x-for="(v,i) in data.viewBon">
-                  <li><span class="max" x-text="v"></span><button class="tertiary small" @click="removeList('viewBon',i)"><i>delete</i></button></li>
-                </template>
-              </ul>
-              <div class="row">
-                <div class="max"></div>
-                <nav class="no-space">
-                  <div class="field suffix small">
-                    <select x-ref="viewBon">
-                      ]=]..GetBonList()..[=[
-                    </select>
-                    <i>arrow_drop_down</i>
-                  </div>
-                  <button class="tertiary right-round" @click="addViewBon()"><i>add</i><span>追加</span></button>
-                </nav>
-              </div>
-            </fieldset>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>rule</i>
-                <h6 class="max">プリセット</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <div class="center-align">準備中</div>
-
-            <template x-ref="plugin">
-              <div>
-                <template x-if="v.section">
-                  <div>
-                    <input type="hidden" :name="'k-' + v.index" :value="'[' + v.section + ']' + v.key">
-                    <div :class="{ field: v.checkbox }">
-                      <label :class="{ checkbox : v.checkbox }">
-                        <input type="checkbox" 
-                              :name="'c-' + v.index" 
-                              x-model="v.checked"
-                              :checked="v.val !== '0' && v.val !== ''"
-                              :type="v.checkbox ? 'checkbox' : 'hidden'"
-                              :value="(v.defType !== 'boolean' && !v.check) ? '1' : null">
-                        <span x-text="v.desc" x-show="v.checkbox"></span>
+                  </fieldset>
+                  <fieldset class="s12">
+                    <legend>録画後動作の抑制条件</legend>
+                    <fieldset>
+                      <legend>指定プロセスが起動している場合 (前方一致)</legend>
+                      <nav class="scroll">
+                        <template x-for="(v,i) in data.noSuspend">
+                          <button class="chip fill round large" @click="removeList('noSuspend', i)">
+                            <i>delete</i>
+                            <span x-text="v"></span>
+                            <input type="hidden" name="noSuspend" :value="v">
+                          </button>
+                        </template>
+                      </nav>
+                      <nav class="no-space">
+                        <div class="max"></div>
+                        <div class="field small">
+                          <input type="text" x-ref="noSuspend">
+                        </div>
+                        <button class="secondary right-round" @click="addList('noSuspend')"><i>add</i><span>追加</span></button>
+                      </nav>
+                    </fieldset>
+                    <div class="grid">
+                      <div class="s12 l6 row">
+                        <div class="field small min">
+                          <input type="number" x-model.number="data.rec.noStandbyTime">
+                        </div>
+                        分以内に予約がある場合
+                      </div>
+                      <div class="s12 l6">
+                        <label class="checkbox">
+                          <input type="checkbox" name="noUsePC" x-model="data.rec.noUsePC"]=]..(WIN32 and '' or ' disabled')..[=[>
+                          <span>ユーザー操作が<span class="field small min"><input type="number" name="noUsePCTime" x-model.number="data.rec.noUsePCTime" :disabled="!data.rec.noUsePC"></span>分以内にあった場合</span>
+                        </label>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">NetworkTVモードで追っかけ再生、ストリーミング再生を行っている場合</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="noFileStreaming" x-model="data.rec.noFileStreaming"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">共有フォルダのTSファイルにアクセスがある場合</h6>
+                            <div>※管理者権限が必要です</div>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="noShareFile" x-model="data.rec.noShareFile"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <fieldset class="s12 l6">
+                    <legend>録画マージンのデフォルト</legend>
+                    <div class="row">
+                      <div class="row tiny-space">
+                        <div class="field label border min">
+                          <input type="number" name="startMargin" x-model="data.rec.startMargin">
+                          <label>開始</label>
+                        </div>
+                        <div>秒前</div>
+                      </div>
+                      <div class="row tiny-space">
+                        <div class="field label border min">
+                          <input type="number" name="endMargin" x-model="data.rec.endMargin">
+                          <label>終了</label>
+                        </div>
+                        <div>秒後</div>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <fieldset class="s12 l6">
+                    <legend>対象データのデフォルト</legend>
+                    <div class="row">
+                      <label class="checkbox">
+                        <input type="checkbox" name="enableCaption" x-model="data.rec.enableCaption">
+                        <span>字幕を含める</span>
+                      </label>
+                      <label class="checkbox">
+                        <input type="checkbox" name="enableData" x-model="data.rec.enableData">
+                        <span>データカルーセルを含める</span>
                       </label>
                     </div>
+                  </fieldset>
+                  <fieldset class="s12">
+                    <legend>録画用アプリ</legend>
+                    <div class="grid">
+                      <div class="s12 l6 row">
+                        <div class="field small min">
+                          <input type="number" name="recAppWakeTime" x-model.number="data.rec.recAppWakeTime">
+                        </div>
+                        分前に起動する
+                      </div>
+                      <div class="s12 l6 field label suffix border">
+                        <select name="processPriority" name="processPriority" x-model="data.rec.processPriority">
+                          <option value="0">リアルタイム
+                          <option value="1">高
+                          <option value="2">通常以上
+                          <option value="3">通常
+                          <option value="4">通常以下
+                          <option value="5">低
+                        </select>
+                        <label>プロセス優先度</label>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">最小化で起動する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="recMinWake" x-model="data.rec.recMinWake">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">同一ファイル名が存在した場合に上書きする</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="recOverWrite" x-model="data.rec.recOverWrite">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">UDP、TCP送信を行う</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="recNW" x-model="data.rec.recNW">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">録画ファイルの容量確保を行う</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="keepDisk" x-model="data.rec.keepDisk">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">ドロップログを出力する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="dropLog" x-model="data.rec.dropLog">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12">
+                        <div class="grid">
+                          <div class="s12 l6 field middle-align">
+                            <nav>
+                              <div class="max">
+                                <h6 class="large-text">番組情報を出力する</h6>
+                              </div>
+                              <label class="switch">
+                                <input type="checkbox" name="pgInfoLog" x-model="data.rec.pgInfoLog">
+                                <span></span>
+                              </label>
+                            </nav>
+                          </div>
+                          <div class="s12 l6 middle-align">
+                            <label class="checkbox">
+                              <input type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8" ]=]..(WIN32 and ':disabled="!data.rec.pgInfoLog"' or 'disabled')..[=[>
+                              <span>UTF-8で出力する</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <fieldset>
+                      <legend>Viewを起動する</legend>
+                      <nav class="wrap">
+                        <label class="checkbox">
+                          <input type="checkbox" name="openViewAlways" x-model="((data.rec.recView >> 2) & 1) === 1">
+                          <span>EPG取得を除く起動時</span>
+                        </label>
+                        <label class="checkbox">
+                          <input type="checkbox" name="openViewForViewing" x-model="(data.rec.recView & 1) === 1">
+                          <span>視聴時</span>
+                        </label>
+                        <label class="checkbox">
+                          <input type="checkbox" name="openViewForRec" x-model="((data.rec.recView >> 1) & 1) === 1">
+                          <span>録画時</span>
+                        </label>
+                      </nav>
+                    </fieldset>
+                  </fieldset>
+                </div>
+              </details>
+
+              <details x-data="{ open: $el.open }" @toggle="open = $el.open">
+                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                  <nav class="padding">
+                    <i>event_upcoming</i>
+                    <h6 class="max">予約情報管理</h6>
+                    <i x-text="open ? 'expand_less' : 'expand_more'"></i>
+                  </nav>
+                </summary>
+                <div class="grid vertical-margin">
+                  <input type="hidden" name="saveReserve" value="1">
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">優先度が同じで時間が重なった場合、後の予約を優先する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="backPriority" x-model="data.reserve.backPriority">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">優先度が同じ場合、チューナー強制指定された予約を先にチューナー割り当てする</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="fixedTunerPriority" x-model="data.reserve.fixedTunerPriority">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">チューナーの起動に失敗したとき、ほかのチューナーで再試行する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="retryOtherTuners" x-model="data.reserve.retryOtherTuners">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">チューナー強制指定の値が異なるものを重複予約できるようにする</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="separateFixedTuners" x-model="data.reserve.separateFixedTuners">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">EPG自動予約をプログラム予約化したとき、予約が再び追加されないようにする</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="commentAutoAdd" x-model="data.reserve.commentAutoAdd">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">予約を無効にするとき、録画モードを「指定サービス」にする</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="fixNoRecToServiceOnly" x-model="data.reserve.fixNoRecToServiceOnly">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">録画情報保存フォルダ指定時は録画ファイルと同じ場所を参照しない</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="recInfoFolderOnly" x-model="data.reserve.recInfoFolderOnly">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12">
+                    <div class="grid">
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">録画済み一覧から削除するときに録画ファイルも削除する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="recInfoDelFile" x-model="data.reserve.recInfoDelFile">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 middle-align">
+                        <label class="checkbox">
+                          <input type="checkbox" name="applyExtToRecInfoDel" x-model="data.reserve.applyExtToRecInfoDel" :disabled="!data.reserve.recInfoDelFile">
+                          <span>同時に削除するファイルの拡張子は削除設定に従う</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <fieldset class="s12">
+                    <legend>HDDの空きが少ない場合</legend>
+                    <div class="grid">
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">古いTSファイルを削除する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="autoDel" x-model="data.reserve.autoDel">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="l6 l"></div>
+                      <fieldset class="s12 l6" :class="{ 'medium-opacity': !data.reserve.autoDel }">
+                        <legend>同時に削除するファイルの拡張子</legend>
+                        <nav class="scroll">
+                          <template x-for="(v,i) in data.delExt">
+                            <button class="chip fill round large" @click="removeList('delExt', i)">
+                              <i>delete</i>
+                              <span x-text="v"></span>
+                              <input type="hidden" name="delExt" :value="v">
+                            </button>
+                          </template>
+                        </nav>
+                        <nav class="no-space">
+                          <div class="max"></div>
+                          <div class="field small">
+                            <input type="text" x-ref="delExt">
+                          </div>
+                          <button class="secondary right-round" @click="addList('delExt')"><i>add</i><span>追加</span></button>
+                        </nav>
+                      </fieldset>
+                      <fieldset class="s12 l6" :class="{ 'medium-opacity': !data.reserve.autoDel }">
+                        <legend>削除対象フォルダ</legend>
+                        <nav class="scroll">
+                          <template x-for="(v,i) in data.delChk">
+                            <button class="chip fill round large" @click="removeList('delChk', i)"><span x-text="v"></span><i>delete</i></button>
+                            <input type="hidden" name="delChk" :value="v">
+                          </template>
+                        </nav>
+                        <nav class="no-space">
+                          <div class="max"></div>
+                          <div class="field small">
+                            <input type="text" x-ref="delChk">
+                          </div>
+                          <button class="secondary right-round" @click="addList('delChk')"><i>add</i><span>追加</span></button>
+                        </nav>
+                      </fieldset>
+                    </div>
+                  </fieldset>
+                  <fieldset class="s12">
+                    <legend>録画時のファイル名PlugIn</legend>
+                    <div class="grid">
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">使用する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="recNamePlugIn" x-model="data.reserve.useRecNamePlugIn">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6 field suffix border">
+                        <select name="recNamePlugInFile" :disabled="!data.reserve.useRecNamePlugIn">
+                          <template x-for="v in data.recNamePlugInList">
+                            <option x-text="v" :selected="v===data.reserve.recNamePlugInFile"></option>
+                          </template>
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">ファイル名の禁則文字の変換対象から「]=]..DIR_SEP..[=[」を除外する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="noChkYen" x-model="data.reserve.noChkYen">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field label suffix border">
+                    <select name="delReserveMode">
+                      <option value="0" :selected="data.reserve.delReserveMode==0">削除のみ
+                      <option value="1" :selected="data.reserve.delReserveMode==1">録画済みに追加
+                      <option value="2" :selected="data.reserve.delReserveMode==2">キャンセルとして録画済みに追加
+                    </select>
+                    <label>録画中の予約削除を</label>
+                    <i>arrow_drop_down</i>
+                  </div>
+                </div>
+              </details>
+
+              <details x-data="{ open: $el.open }" @toggle="open = $el.open">
+                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                  <nav class="padding">
+                    <i>build</i>
+                    <h6 class="max">その他</h6>
+                    <i x-text="open ? 'expand_less' : 'expand_more'"></i>
+                  </nav>
+                </summary>
+                <div class="grid">
+                  <input type="hidden" name="saveOther" value="1">
+                  <div class="s12">※設定変更後にHTTPサーバーも再起動します。</div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">ネットワーク接続を許可する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="enableTCPSrv" x-model="data.other.enableTCPSrv">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">IPv6</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="tcpIPv6" x-model="data.other.tcpIPv6" :disabled="!data.other.enableTCPSrv">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                
+                  <div class="s6 l3">
+                    <div class="field label border">
+                      <input type="number" name="tcpPort" x-model="data.other.tcpPort" :disabled="!data.other.enableTCPSrv">
+                      <label>ポート</label>
+                    </div>
+                  </div>
+                  <div class="s6 l3">
+                    <div class="field label border">
+                      <input type="number" name="tcpResponseTimeoutSec" x-model="data.other.tcpResponseTimeoutSec" :disabled="!data.other.enableTCPSrv">
+                      <label>無通信タイムアウト(秒)</label>
+                    </div>
+                  </div>
+                  <div class="s12 l6 field label border">
+                    <input type="text" name="tcpAccessControlList" x-model="data.other.tcpAccessControlList" :disabled="!data.other.enableTCPSrv">
+                    <label>アクセス制御</label>
+                    <output>※必ず信頼できるPCのみアクセスできるようにしてください。</output>
+                  </div>
+                  <fieldset class="s12 m6">
+                    <legend>録画結果</legend>
+                    <div class="grid">
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">自動的に削除する</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="autoDelRecInfo" x-model="data.other.autoDelRecInfo">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 l6">
+                        <div class="field label border">
+                          <input type="number" name="autoDelRecInfoNum" x-model.number="data.other.autoDelRecInfoNum" :disabled="!data.other.autoDelRecInfo">
+                          <label>保持件数</label>
+                        </div>
+                      </div>                  
+                    </div>
+                  </fieldset>                
+                  <fieldset class="s12 m6">
+                    <legend>正常に録画した番組情報</legend>
+                    <nav>
+                      <div class="field label border max">
+                        <input type="number" name="recInfo2Max" x-model.number="data.other.recInfo2Max">
+                        <label>(RecInfo2)の蓄積数</label>
+                      </div>
+                      <div class="row tiny-space max">
+                        <div class="field label border min">
+                          <input type="number" name="recInfo2DropChk" x-model.number="data.other.recInfo2DropChk">
+                          <label>ドロップ数しきい値</label>
+                        </div>
+                        未満
+                      </div>
+                    </nav>
+                  </fieldset>
+                  <fieldset class="s12 l6">
+                    <legend>EPG取得後も番組情報を</legend>
+                    <div class="row wrap tiny-space">
+                      <div class="field suffix">
+                        <select name="epgArchivePeriod">
+                          <template x-for="v in 15">
+                            <option x-text="v-1">
+                          </template>
+                          <option value="20000">∞
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      日前まで保存する
+                    </div>
+                  </fieldset>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">EPG取得時に放送波時間でPC時計を同期する</h6>
+                        <output>※]=]..(WIN32 and 'システム時刻の変更特権が必要です' or '`/bin/date -s 20[0-9][0-9]-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z`をsudoで実行します')..[=[</output>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="timeSync" x-model="data.other.timeSync">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <fieldset class="s12">
+                    <legend>EpgTimerSrvを</legend>
+                    <div class="grid">
+                      <div class="s12 l6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6 class="large-text">常駐させる</h6>
+                          </div>
+                          <label class="switch">
+                            <input type="checkbox" name="residentMode" value="1" x-model="data.other.residentMode"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="l6 l"></div>
+                      <div class="s12 l6 grid">
+                        <div class="s12 field middle-align">
+                          <nav>
+                            <div class="max">
+                              <h6 class="large-text">タスクトレイアイコンを表示する</h6>
+                            </div>
+                            <label class="switch">
+                              <input type="checkbox" name="showTray" value="1" x-model="data.other.showTray" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                              <span></span>
+                            </label>
+                          </nav>
+                        </div>
+                        <div class="s12 left-margin large-margin">
+                          <label class="checkbox">
+                            <input type="checkbox" name="notifyTipStyle" value="1" x-model="data.other.notifyTipStyle" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                            <span>ツールチップに次の予約を表示する</span>
+                          </label>
+                        </div>
+                        <div class="s12 left-margin large-margin">
+                          <label class="checkbox">
+                            <input type="checkbox" name="blinkPreRec" value="1" x-model="data.other.blinkPreRec" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                            <span>開始準備で点滅させる</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="s12 l6 grid">
+                        <div class="s12 field middle-align">
+                          <nav>
+                            <div class="max">
+                              <h6 class="large-text">バルーンチップ/トーストでの動作通知を抑制する</h6>
+                            </div>
+                            <label class="switch">
+                              <input type="checkbox" name="noBalloonTip" value="1" x-model="data.other.noBalloonTip" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                              <span></span>
+                            </label>
+                          </nav>
+                        </div>
+                        <div class="s12 left-margin large-margin">
+                          <label class="checkbox">
+                            <input type="checkbox" name="noBalloonTipRealtime" value="1" x-model="data.other.noBalloonTipRealtime" ]=]..(WIN32 and ':disabled="!data.other.residentMode || data.other.noBalloonTip"' or 'disabled')..[=[>
+                            <span>リアルタイムで表示できなかった通知を捨てる</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">情報通知ログをファイルに保存する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="saveNotifyLog" x-model="data.other.saveNotifyLog">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6 class="large-text">デバッグ出力をファイルに保存する</h6>
+                      </div>
+                      <label class="switch">
+                        <input type="checkbox" name="saveDebugLog" x-model="data.other.saveDebugLog">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+                  <div class="s12 field label border">
+                    <input type="text" name="tsExt" x-model="data.other.tsExt">
+                    <label>TSファイルの拡張子</label>
+                  </div>
+                  <div class="s12" x-show="data.other.compatFlags%4096==4095">現在のEpgTimerSrvの応答はtkntrec版互換です。</div>
+                  
+                  <fieldset class="s12">
+                    <legend>視聴に使用するBonDriver</legend>
+                    <ul class="list border no-space">
+                      <template x-for="(v,i) in data.viewBon">
+                        <li>
+                          <span class="max" x-text="v"></span><button class="tertiary small" @click="removeList('viewBon',i)"><i>delete</i></button>
+                          <input type="hidden" name="viewBon" :value="v">
+                        </li>
+                      </template>
+                    </ul>
+                    <div class="row">
+                      <div class="max"></div>
+                      <nav class="no-space">
+                        <div class="field suffix small">
+                          <select x-ref="viewBon">
+                            ]=]..GetBonList()..[=[
+                          </select>
+                          <i>arrow_drop_down</i>
+                        </div>
+                        <button class="tertiary right-round" @click="addViewBon()"><i>add</i><span>追加</span></button>
+                      </nav>
+                    </div>
+                  </fieldset>
+                </div>
+              </details>
+              <footer>
+                <nav>
+                  <div class="max"></div>
+                  <button class="extra" @click="saveSetting('srv')"><i>save</i><span>保存</span></button>
+                </nav>
+              </footer>
+            </div>
+
+            <div class="page" :class="{ active: tab === 'preset'}">
+              <nav class="tabbed small">
+                <a :class="{ active: presetTab === 0 }" @click="presetTab=0">録画設定</a>
+                <a :class="{ active: presetTab === 1 }" @click="presetTab=1">ファイル名PlugIn設定</a>
+                <a :class="{ active: presetTab === 2 }" @click="presetTab=2">出力PlugIn設定</a>
+              </nav>
+
+              <div class="page padding" :class="{ active: presetTab === 0 }" x-init="recpreset = null" x-ref="recPreset">
+                <div class="field suffix border bottom-margin large-margin">
+                  <select>
+                    <option x-show="recpreset === null">選択してください</option>
+                    <template x-for="v in Array.from(allData.recpreset.values())">
+                      <option x-text="v.name"></option>
+                    </template>
+                  </select>
+                  <i>arrow_drop_down</i>
+                </div>
+                <div class="center-align">準備中</div>
+                <footer>
+                  <nav>
+                    <div class="max"></div>
+                    <button><i>save</i><span>保存</span></button>
+                  </nav>
+                </footer>
+              </div>
+
+              <template x-ref="plugin">
+                <template x-if="v.section">
+                  <div class="grid">
+                    <input type="hidden" :name="'k-' + v.index" :value="'[' + v.section + ']' + v.key">
+                    <template x-if="v.check">
+                      <div class="s12 middle-align">
+                        <label class="checkbox">
+                          <input type="checkbox" :name="'c-' + v.index" x-model="v.checked">
+                          <span x-text="v.desc"></span>
+                        </label>
+                      </div>
+                    </template>
+                    <template x-if="!v.check">
+                      <input type="hidden" :name="'c-' + v.index" value="1">
+                    </template>
                     
                     <template x-if="v.defType === 'number'">
-                      <div class="field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.checkbox }">
+                      <div class="s12 field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.check }">
                         <input type="number" :name="'v-' + v.index" x-model.number="v.val" :disabled="!v.checked">
-                        <label x-text="v.desc" x-show="!v.checkbox"></label>
+                        <label x-text="v.desc" x-show="!v.check"></label>
                       </div>
                     </template>
                     <template x-if="v.defType === 'string'">
-                      <div class="field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.checkbox }">
-                        <input type="text" :name="'v-' + v.index" x-model="v.val":disabled="!v.checked">
-                        <label x-text="v.desc" x-show="!v.checkbox"></label>
+                      <div class="s12 field" :class="{ small: v.check, 'left-margin': v.check, 'large-margin': v.check, label: !v.check }">
+                        <input type="text" :name="'v-' + v.index" x-model="v.val" :disabled="!v.checked">
+                        <label x-text="v.desc" x-show="!v.check"></label>
                       </div>
                     </template>
                   </div>
@@ -1974,286 +2216,410 @@ ct:Append([=[
                 <template x-if="!v.section">
                   <span x-text="v.label"></span>
                 </template>
-              </div>
-              <template x-if="v.children.length > 0">
-                <div class="left-margin large-margin">
-                  <template x-for="w in v.children" :key="w.index">
-                    <div>
-                      <template x-if="w.section">
-                        <div>
-                          <input type="hidden" :name="'k-' + w.index" :value="'[' + w.section + ']' + w.key">
-                          <label :class="{ checkbox : w.checkbox }">
-                            <input type="checkbox"
-                                  :name="'c-' + w.index" 
-                                  :checked="w.val !== '0' && w.val !== ''"
-                                  :type="w.checkbox ? 'checkbox' : 'hidden'"
-                                  :value="(w.defType !== 'boolean' && !w.check) ? '1' : null"
-                                  :disabled="!v.checked">
-                            <span x-text="w.desc" x-show="w.checkbox"></span>
-                          </label>
-                          
-                          <template x-if="w.defType === 'number'">
-                            <div class="field label">
-                              <input type="number" :name="'v-' + w.index" x-model.number="w.val" :disabled="!v.checked">
-                              <label x-text="w.desc"></label>
-                            </div>
-                          </template>
-                          <template x-if="w.defType === 'string'">
-                            <div class="field label">
-                              <input type="text" :name="'v-' + w.index" x-model="w.val" :disabled="!v.checked">
-                              <label x-text="w.desc"></label>
-                            </div>
-                          </template>
-                        </div>
-                      </template>
-                      <template x-if="!w.section">
-                        <span x-text="w.label"></span>
-                      </template>
-                    </div>
-                  </template>
-
-                </div>
-              </template>
-            </template>
-
-            <fieldset x-init="recNamePlugin = null">
-              <legend>ファイル名PlugIn設定</legend>
-              <div class="field suffix border">
-                <select @change="loadPlugIn(1, $el.value)" x-ref="recNamePluginSelect">
-                  <option x-show="recNamePlugin === null">選択してください</option>
-                  <template x-for="v in data.recNamePlugInList">
-                    <option :value="v" x-text="v"></option>
-                  </template>
-                </select>
-                <i>arrow_drop_down</i>
-              </div>
-              <input type="hidden" name="mode" value="1">
-              <input type="hidden" name="item" :value="$refs.recNamePluginSelect.value">
-              <template x-if="recNamePlugin">
-                <div>
-                  <h6 x-text="recNamePlugin.head.desc"></h6>
-                  <template x-for="(v,i) in recNamePlugin.body">
-                    <div x-html="$refs.plugin.innerHTML"></div>
-                  </template>
-                </div>
-              </template>
-            </fieldset>
-            <fieldset x-init="writePlugin = null">
-              <legend>出力PlugIn設定</legend>
-              <div class="field suffix border">
-                <select @change="loadPlugIn(2, $el.value)" x-ref="writePluginSelect">
-                  <option x-show="writePlugin === null">選択してください</option>
-                  <template x-for="v in data.writePlugInList">
-                    <option :value="v" x-text="v"></option>
-                  </template>
-                </select>
-                <i>arrow_drop_down</i>
-              </div>
-              <input type="hidden" name="mode" value="2">
-              <input type="hidden" name="item" :value="$refs.writePluginSelect.value">
-              <template x-if="writePlugin">
-                <div>
-                  <h6 x-text="writePlugin.head.desc"></h6>
-                  <template x-for="(v, i) in writePlugin.body">
-                    <div x-html="$refs.plugin.innerHTML"></div>
-                  </template>
-                </div>
-              </template>
-            </fieldset>
-          </details>
-
-          <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-            <summary class="fixed round" :class="{ 'primary-container' : open }">
-              <nav class="padding">
-                <i>videocam</i>
-                <h6 class="max">録画アプリ(EpgDataCap_Bon)</h6>
-                <i x-text="open ? 'expand_less' : 'expand_more'"></i>
-              </nav>
-            </summary>
-            <label class="checkbox"><input type="checkbox" name="allService" x-model="data.app.allService">
-              <span>全サービスを処理対象とする*</span>
-            </label>
-            <label class="checkbox"><input type="checkbox" name="scramble" x-model="data.app.scramble">
-              <span>スクランブル解除処理を行う*</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="emm" x-model="data.app.emm">
-              <span>EMM処理を行う</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="enableCaption" x-model="data.app.enableCaption">
-              <span>字幕を含める*</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="enableData" x-model="data.app.enableData">
-              <span>データカルーセルを含める*</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="overWrite" x-model="data.app.overWrite">
-              <span>録画ファイル名が同一の場合に上書きをする*</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="openLast" x-model="data.app.openLast"]=]..(WIN32 and '' or ' disabled')..[=[>
-              <span>次回起動時に終了前のサービスで起動する</span>
-            </label>
-            <fieldset>
-              <legend>ドロップログを出力する</legend>
-              <div class="field">
-                <div class="row wrap tiny-space">
-                  <div class="row tiny-space">
-                    ドロップ数が
-                    <div class="field small">
-                      <input type="number" name="dropSaveThresh" x-model.number="data.app.dropSaveThresh">
-                    </div>
-                    以上または
+                <template x-if="v.children.length > 0">
+                  <div class="s12 grid left-margin large-margin">
+                    <template x-for="w in v.children" :key="w.index">
+                      <div class="contents">
+                        <template x-if="w.section">
+                          <div class="contents">
+                            <input type="hidden" :name="'k-' + w.index" :value="'[' + w.section + ']' + w.key">
+                            <template x-if="w.check">
+                              <div class="s12 middle-align">
+                                <label class="checkbox">
+                                  <input type="checkbox" :name="'c-' + w.index" x-model="w.checked">
+                                  <span x-text="w.desc"></span>
+                                </label>
+                              </div>
+                            </template>
+                            <template x-if="!w.check">  
+                              <input type="hidden" :name="'c-' + w.index" value="1">
+                            </template>
+                            
+                            <template x-if="w.defType === 'number'">
+                              <div class="s12 m6 field label">
+                                <input type="number" :name="'v-' + w.index" x-model.number="w.val" :disabled="!v.checked">
+                                <label x-text="w.desc"></label>
+                              </div>
+                            </template>
+                            <template x-if="w.defType === 'string'">
+                              <div class="s12 m6 field label">
+                                <input type="text" :name="'v-' + w.index" x-model="w.val" :disabled="!v.checked">
+                                <label x-text="w.desc"></label>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                        <template x-if="!w.section">
+                          <span x-text="w.label"></span>
+                        </template>
+                      </div>
+                    </template>
                   </div>
-                  <div class="row tiny-space">
-                    スクランブル数が
-                    <div class="field small">
-                      <input type="number" name="scrambleSaveThresh" x-model.number="data.app.scrambleSaveThresh">
-                    </div>
-                    以上で
+                </template>
+              </template>
+
+              <div class="page padding" :class="{ active: presetTab === 1 }" x-init="recNamePlugin = null" x-ref="recNamePlugin">
+                <div class="field suffix border bottom-margin large-margin">
+                  <select @change="loadPlugIn(1, $el.value)" x-ref="recNamePluginSelect">
+                    <option x-show="recNamePlugin === null">選択してください</option>
+                    <template x-for="v in data.recNamePlugInList">
+                      <option :value="v" x-text="v"></option>
+                    </template>
+                  </select>
+                  <i>arrow_drop_down</i>
+                </div>
+                <input type="hidden" name="savePlugin" value="1">
+                <template x-if="recNamePlugin">
+                  <div>
+                    <h6 x-text="recNamePlugin.head.desc"></h6>
+                    <template x-for="(v,i) in recNamePlugin.body">
+                      <div x-html="$refs.plugin.innerHTML"></div>
+                    </template>
+                    <template x-if="!recNamePlugin.body"><h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6></template>
+                    <footer>
+                      <nav>
+                        <div class="max"></div>
+                        <button @click="savePlugIn(1)"><i>save</i><span>保存</span></button>
+                      </nav>
+                    </footer>
                   </div>
-                </div>
-                <output><span class="bold">-1</span>で常に出力しない</output>
+                </template>
               </div>
-            </fieldset>
-            <label class="checkbox">
-              <input type="checkbox" name="noLogScramble" x-model="data.app.noLogScramble">
-              <span>スクランブル値の変化をドロップログに記録しない</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="dropLogAsUtf8" x-model="data.app.dropLogAsUtf8"]=]..(WIN32 and '' or ' disabled')..[=[>
-              <span>ドロップログをUTF-8で出力する</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="saveDebugLog" x-model="data.app.saveDebugLog">
-              <span>デバッグ出力をファイルに保存する</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="traceBonDriverLevel" x-model="data.app.traceBonDriverLevel">
-              <span>BonDriverについてのデバッグ出力を増やす</span>
-            </label>
-            <div class="field label border">
-              <input type="number" name="tsBuffMaxCount" x-model.number="data.app.tsBuffMaxCount">
-              <label>入力バッファ上限(47KiB単位)</label>
-            </div>
-            <div class="field label border">
-              <input type="number" name="writeBuffMaxCount" x-model.number="data.app.writeBuffMaxCount">
-              <label>ファイル出力バッファ上限(47KiB単位)</label>
-              <output>0で無制限</output>
-            </div>
-            <div class="field label border">
-              <input type="text" name="recFileName" x-model="data.app.recFileName">
-              <label>録画ファイル名*</label>
-            </div>
-            <label class="checkbox">
-              <input type="checkbox" name="epgCapLive" x-model="data.app.epgCapLive">
-              <span>視聴中にEPGデータの取得を行う</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="epgCapRec" x-model="data.app.epgCapRec">
-              <span>録画中にEPGデータの取得を行う</span>
-            </label>
-            <fieldset>
-              <legend>基本情報のみ取得するネットワーク（視聴・録画中）</legend>
-              <nav>
-                <label class="checkbox">
-                  <input type="checkbox" name="epgCapBackBSBasic" x-model="data.app.epgCapBackBSBasic">
-                  <span>BS</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="epgCapBackCS1Basic" x-model="data.app.epgCapBackCS1Basic">
-                  <span>CS</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="epgCapBackCS2Basic" x-model="data.app.epgCapBackCS2Basic">
-                  <span>CS2</span>
-                </label>
-                <label class="checkbox">
-                  <input type="checkbox" name="epgCapBackCS3Basic" x-model="data.app.epgCapBackCS3Basic">
-                  <span>CS3</span>
-                </label>
-              </nav>
-            </fieldset>
-            <fieldset>
-              <legend>Ch切換、録画開始</legend>
-              <div class="row">
-                <div class="field small">
-                  <input type="number" name="epgCapBackStartWaitSec" x-model.number="data.app.epgCapBackStartWaitSec">
+
+              <div class="page padding" :class="{ active: presetTab === 2 }" x-init="writePlugin = null" x-ref="writePlugin">
+                <div class="field suffix border bottom-margin large-margin">
+                  <select @change="loadPlugIn(2, $el.value)" x-ref="writePluginSelect">
+                    <option x-show="writePlugin === null">選択してください</option>
+                    <template x-for="v in data.writePlugInList">
+                      <option :value="v" x-text="v"></option>
+                    </template>
+                  </select>
+                  <i>arrow_drop_down</i>
                 </div>
-                秒後からEPG取得する
+                <input type="hidden" name="savePlugin" value="1">
+                <template x-if="writePlugin">
+                  <div>
+                    <h6 x-text="writePlugin.head.desc"></h6>
+                    <template x-for="(v, i) in writePlugin.body">
+                      <div x-html="$refs.plugin.innerHTML"></div>
+                    </template>
+                    <template x-if="!writePlugin.body"><h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6></template>
+                    <footer>
+                      <nav>
+                        <div class="max"></div>
+                        <button @click="savePlugIn(2)"><i>save</i><span>保存</span></button>
+                      </nav>
+                    </footer>
+                  </div>
+                </template>
               </div>
-            </fieldset>
-            <label class="checkbox">
-              <input type="checkbox" name="parseEpgPostProcess" x-model="data.app.parseEpgPostProcess">
-              <span>TS解析後にEPG取得する</span>
-            </label>
-            <label class="checkbox">
-              <input type="checkbox" name="saveLogo" x-model="data.app.saveLogo">
-              <span>ロゴデータを保存する</span>
-            </label>
-            <div class="field label border">
-              <input type="number" name="saveLogoTypeFlags" x-model.number="data.app.saveLogoTypeFlags" :disabled="!data.app.saveLogo">
-              <label>取得するロゴタイプ</label>
             </div>
 
-            <fieldset>
-              <legend>ネットワーク設定</legend>
+            <div class="page" :class="{ active: tab === 'epgdatacap'}" x-ref="epgdatacap">
               <div class="grid">
+                <input type="hidden" name="saveApp" value="1">
+                <div class="s12">*の項目はEpgTimerSrvの予約以外で起動したとき用</div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">全サービスを処理対象とする*</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="allService" x-model="data.app.allService">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">スクランブル解除処理を行う*</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="scramble" x-model="data.app.scramble">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">EMM処理を行う</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="emm" x-model="data.app.emm">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">字幕を含める*</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="enableCaption" x-model="data.app.enableCaption">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">データカルーセルを含める*</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="enableData" x-model="data.app.enableData">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">録画ファイル名が同一の場合に上書きをする*</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="overWrite" x-model="data.app.overWrite">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">次回起動時に終了前のサービスで起動する</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="openLast" x-model="data.app.openLast"]=]..(WIN32 and '' or ' disabled')..[=[>
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <fieldset class="s12">
+                  <legend>ドロップログを出力する</legend>
+                  <div class="field">
+                    <div class="row wrap tiny-space">
+                      <div class="row tiny-space">
+                        ドロップ数が
+                        <div class="field small min">
+                          <input type="number" name="dropSaveThresh" x-model.number="data.app.dropSaveThresh">
+                        </div>
+                        以上または
+                      </div>
+                      <div class="row tiny-space">
+                        スクランブル数が
+                        <div class="field small min">
+                          <input type="number" name="scrambleSaveThresh" x-model.number="data.app.scrambleSaveThresh">
+                        </div>
+                        以上で
+                      </div>
+                    </div>
+                    <output><span class="bold">-1</span>で常に出力しない</output>
+                  </div>
+                </fieldset>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">スクランブル値の変化をドロップログに記録しない</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="noLogScramble" x-model="data.app.noLogScramble">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">ドロップログをUTF-8で出力する</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="dropLogAsUtf8" x-model="data.app.dropLogAsUtf8"]=]..(WIN32 and '' or ' disabled')..[=[>
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">デバッグ出力をファイルに保存する</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="saveDebugLog" x-model="data.app.saveDebugLog">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">BonDriverについてのデバッグ出力を増やす</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="traceBonDriverLevel" x-model="data.app.traceBonDriverLevel">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s6 field label border">
+                  <input type="number" name="tsBuffMaxCount" x-model.number="data.app.tsBuffMaxCount">
+                  <label>入力バッファ上限(47KiB単位)</label>
+                </div>
+                <div class="s6 field label border">
+                  <input type="number" name="writeBuffMaxCount" x-model.number="data.app.writeBuffMaxCount">
+                  <label>ファイル出力バッファ上限(47KiB単位)</label>
+                  <output>0で無制限</output>
+                </div>
+                <div class="s12 field label border">
+                  <input type="text" name="recFileName" x-model="data.app.recFileName">
+                  <label>録画ファイル名*</label>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">視聴中にEPGデータの取得を行う</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="epgCapLive" x-model="data.app.epgCapLive">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">録画中にEPGデータの取得を行う</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="epgCapRec" x-model="data.app.epgCapRec">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
                 <fieldset class="s12 l6">
-                  <legend>UDP送信先</legend>
-                  <ul class="list border">
-                    <template x-for="(v,i) in data.appNetwork.udp" :key="i">
-                      <li>
-                        <span class="max" x-text="textUDP(v)"></span>
-                        <button class="tertiary small" @click="removeUDP(i)"><i>delete</i></button>
-                      </li>
-                    </template> 
-                  </ul>
-                  <nav class="group wrap" x-data="{ ip: '127.0.0.1', port: 1234, broadcast: false }">
-                    <div class="field small">
-                      <input type="text" x-model="ip">
-                    </div>
-                    <div class="field small">
-                      <input type="number" x-model="port">
-                    </div>
-                    <button :class="{ active: broadcast }" @click="broadcast=!broadcast">ブロードキャスト</button>
-                    <button class="tertiary right-round" @click="addUDP(ip,port,broadcast)"><i>add</i><span>追加</span></button>
+                  <legend>基本情報のみ取得するネットワーク（視聴・録画中）</legend>
+                  <nav>
+                    <label class="checkbox">
+                      <input type="checkbox" name="epgCapBackBSBasic" x-model="data.app.epgCapBackBSBasic">
+                      <span>BS</span>
+                    </label>
+                    <label class="checkbox">
+                      <input type="checkbox" name="epgCapBackCS1Basic" x-model="data.app.epgCapBackCS1Basic">
+                      <span>CS</span>
+                    </label>
+                    <label class="checkbox">
+                      <input type="checkbox" name="epgCapBackCS2Basic" x-model="data.app.epgCapBackCS2Basic">
+                      <span>CS2</span>
+                    </label>
+                    <label class="checkbox">
+                      <input type="checkbox" name="epgCapBackCS3Basic" x-model="data.app.epgCapBackCS3Basic">
+                      <span>CS3</span>
+                    </label>
                   </nav>
                 </fieldset>
                 <fieldset class="s12 l6">
-                  <legend>TCP送信先</legend>
-                  <ul class="list border">
-                    <template x-for="(v,i) in data.appNetwork.tcp" :key="i">
-                      <li>
-                        <span class="max" x-text="textTCP(v)"></span>
-                        <button class="tertiary small" @click="removeTCP(i)"><i>delete</i></button>
-                      </li>
-                    </template> 
-                  </ul>
-                  <nav class="wrap" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
-                    <div class="field small">
-                      <input type="text" x-model="ip">
+                  <legend>Ch切換、録画開始</legend>
+                  <div class="row">
+                    <div class="field small min">
+                      <input type="number" name="epgCapBackStartWaitSec" x-model.number="data.app.epgCapBackStartWaitSec">
                     </div>
-                    <div class="field small">
-                      <input type="number" x-model="port">
+                    秒後からEPG取得する
+                  </div>
+                </fieldset>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">TS解析後にEPG取得する</h6>
                     </div>
-                    <div class="field suffix small">
-                      <select name="specip" x-model="specip">
-                        <option value="0">TCP</option>
-                        <option value="1">SrvPipe</option>
-                        <option value="2">Pipe</option>
-                      </select>
-                      <i>arrow_drop_down</i>
-                    </div>
-                    <button class="tertiary right-round" @click="addTCP(ip,port,specip)"><i>add</i><span>追加</span></button>
+                    <label class="switch">
+                      <input type="checkbox" name="parseEpgPostProcess" x-model="data.app.parseEpgPostProcess">
+                      <span></span>
+                    </label>
                   </nav>
+                </div>
+                <div class="l6 l"></div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 class="large-text">ロゴデータを保存する</h6>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" name="saveLogo" x-model="data.app.saveLogo">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field label border">
+                  <input type="number" name="saveLogoTypeFlags" x-model.number="data.app.saveLogoTypeFlags" :disabled="!data.app.saveLogo">
+                  <label>取得するロゴタイプ</label>
+                </div>
+                <fieldset class="s12">
+                  <legend>ネットワーク設定</legend>
+                  <div class="grid">
+                    <fieldset class="s12 l6">
+                      <legend>UDP送信先</legend>
+                      <ul class="list border">
+                        <template x-for="(v,i) in data.appNetwork.udp" :key="i">
+                          <li>
+                            <span class="max" x-text="textUDP(v)"></span>
+                            <button class="tertiary small" @click="removeUDP(i)"><i>delete</i></button>
+                          </li>
+                        </template> 
+                      </ul>
+                      <nav class="group wrap" x-data="{ ip: '127.0.0.1', port: 1234, broadcast: false }">
+                        <div class="field small">
+                          <input type="text" x-model="ip">
+                        </div>
+                        <div class="field small">
+                          <input type="number" x-model="port">
+                        </div>
+                        <button :class="{ active: broadcast }" @click="broadcast=!broadcast">ブロードキャスト</button>
+                        <button class="tertiary right-round" @click="addUDP(ip,port,broadcast)"><i>add</i><span>追加</span></button>
+                      </nav>
+                      <input type="hidden" name="udp" :value="data.appNetwork.udp.map(v=>`${v.ip}:${v.port}:${v.broadcast?1:0}`).join(',')">
+                    </fieldset>
+                    <fieldset class="s12 l6">
+                      <legend>TCP送信先</legend>
+                      <ul class="list border">
+                        <template x-for="(v,i) in data.appNetwork.tcp" :key="i">
+                          <li>
+                            <span class="max" x-text="textTCP(v)"></span>
+                            <button class="tertiary small" @click="removeTCP(i)"><i>delete</i></button>
+                          </li>
+                        </template> 
+                      </ul>
+                      <nav class="wrap" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
+                        <div class="field small">
+                          <input type="text" x-model="ip">
+                        </div>
+                        <div class="field small">
+                          <input type="number" x-model="port">
+                        </div>
+                        <div class="field suffix small">
+                          <select name="specip" x-model="specip">
+                            <option value="0">TCP</option>
+                            <option value="1">SrvPipe</option>
+                            <option value="2">Pipe</option>
+                          </select>
+                          <i>arrow_drop_down</i>
+                        </div>
+                        <button class="tertiary right-round" @click="addTCP(ip,port,specip)"><i>add</i><span>追加</span></button>
+                      </nav>
+                      <input type="hidden" name="tcp" :value="data.appNetwork.tcp.map(v=>`${v.ip}:${v.port}:0`).join(',')">
+                    </fieldset>
+                  </div>
                 </fieldset>
               </div>
-            </fieldset>
-          </details>
-        </section>
+              <footer>
+                <nav>
+                  <div class="max"></div>
+                  <button class="extra" @click="saveSetting('epgdatacap')"><i>save</i><span>保存</span></button>
+                </nav>
+              </footer>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
