@@ -29,6 +29,10 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .small-gap { gap: .5rem }
 .around-align { justify-content: space-around; }
 
+:is(.checkbox,.radio,.switch)>span {
+  word-break: auto-phrase;
+  white-space: normal;
+}
 :is(button, .button).tiny {
   --_size: 1.5rem;
   --_padding: .5rem;
@@ -37,13 +41,25 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 nav.tabbed.fixed {
   position: sticky;
   top: 0;
+  z-index:20;
+}
+summary.fixed {
+  position: sticky;
+  top: 96px;
   z-index:11;
 }
 nav.tabbed.fixed.top-margin { top: var(--_margin); }
+nav.tabbed.scroll a {
+  flex: none;
+  flex-grow: 1;
+}
 
 li>.max, .row.wrap>.middle-align { max-width: 100%; }
 
-input[type=number] { inline-size: 7rem; }
+.min>input[type=number] { 
+  inline-size: 5.5rem;
+  text-align: end;
+}
 input[type=color] { cursor: pointer; }
 
 select[multiple] {

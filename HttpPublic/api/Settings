@@ -629,10 +629,7 @@ function SavePreset()
             presetID=nil
             preset={
               name=presetName,
-              recSetting={
-                recFolderList=found.recSetting.recFolderList,
-                partialRecFolder=found.recSetting.partialRecFolder
-              }
+              recSetting={}
             }
             itemList[#itemList+1]=preset
           end
@@ -646,22 +643,7 @@ function SavePreset()
     --削除または追加または変更
     if preset then
       --追加または変更
-      rs=preset.recSetting
-      rs.noRecMode=GetVarInt(post,'recMode',0,4) or 1
-      rs.recMode=GetVarInt(post,'recEnabled')~=1 and 5 or rs.noRecMode
-      rs.tuijyuuFlag=GetVarInt(post,'tuijyuuFlag')==1
-      rs.priority=GetVarInt(post,'priority',1,5) or 2
-      rs.pittariFlag=GetVarInt(post,'pittariFlag')==1
-      rs.suspendMode=GetVarInt(post,'suspendMode',0,4) or 0
-      rs.rebootFlag=GetVarInt(post,'rebootFlag')==1
-      rs.startMargin=GetVarInt(post,'useDefMarginFlag')~=1 and GetVarInt(post,'startMargin',-6*3600,6*3600)
-      rs.endMargin=GetVarInt(post,'useDefMarginFlag')~=1 and GetVarInt(post,'endMargin',-6*3600,6*3600)
-      rs.serviceMode=GetVarInt(post,'serviceMode')==1 and 0 or
-        1+16*(GetVarInt(post,'serviceMode_1',0,1) or 0)+32*(GetVarInt(post,'serviceMode_2',0,1) or 0)
-      rs.continueRecFlag=GetVarInt(post,'continueRecFlag')==1
-      rs.tunerID=GetVarInt(post,'tunerID') or 0
-      rs.partialRecFlag=GetVarInt(post,'partialRecFlag',0,1) or 0
-      rs.batFilePath=(mg.get_var(post,'batFilePath') or ''):gsub('%c','')
+      preset.recSetting=GetRecSetting(post)
     end
     local saveID=''
     for i,v in ipairs(itemList) do
@@ -705,7 +687,7 @@ function SavePreset()
       end
     end
     edcb.WritePrivateProfile('SET','PresetID',saveID,srvIni)
-    presetID=preset and preset.id or 0
+    return preset and preset.id or 0
   end
 end
 
@@ -1035,6 +1017,8 @@ end
 
 if mg.get_var(mg.request_info.query_string,'plugin')=='1' then
   a=GetPlugin(mg.request_info.query_string)
+elseif GetVarInt(post,'presetID') then 
+  a=edcb.EnumRecPresetInfo()
 else
   a={
     basic=GetBasic(),

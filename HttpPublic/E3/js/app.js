@@ -1974,60 +1974,6 @@ document.addEventListener('alpine:init', () => {
           }
         }
       },
-      isServiceModeDef() {
-        return this.r ? (this.r.serviceMode % 2) === 0 : true;
-      },
-      toggleServiceModeDef(checked) {
-        if (!this.r) return;
-        if (checked) {
-          this.r.serviceMode &= ~1;
-        } else {
-          // 個別設定に切り替える際、現在の「見かけ上の状態（既定値）」をコピーする
-          const sub = this.isServiceModeBitSet(16);
-          const data = this.isServiceModeBitSet(32);
-
-          // LSBを1（個別設定）にしつつ、直前のビット状態を維持
-          let newMode = 1;
-          if (sub) newMode |= 16;
-          if (data) newMode |= 32;
-          this.r.serviceMode = newMode;
-        }
-      },
-      isServiceModeBitSet(bit) {
-        if (!this.r) return false;
-        // デフォルト使用中ならシステム既定値を参照、そうでなければ設定値を参照
-        const mode = this.isServiceModeDef() ? this.rsdef.serviceMode : this.r.serviceMode;
-        return !!(mode & bit);
-      },
-      toggleServiceModeBit(bit, checked) {
-        if (checked) {
-          this.r.serviceMode |= bit;
-        } else {
-          this.r.serviceMode &= ~bit;
-        }
-      },
-      addRecFolder(partial) {
-        if (!this.r) return;
-        const list = partial ? this.r.partialRecFolder : this.r.recFolderList;
-        const defaultFolder = this.allData.recpreset.get(0).recSetting.recFolderList[0];
-        list.push({ ...defaultFolder });
-      },
-      removeRecFolder(index, partial) {
-        if (!this.r) return;
-        const list = partial ? this.r.partialRecFolder : this.r.recFolderList;
-        list.splice(index, 1);
-      },
-      toggleMarginDef(checked) {
-        if (!this.r) return;
-        if (checked) {
-          this.r.startMargin = null;
-          this.r.endMargin = null;
-        } else {
-          // 個別設定に切り替える際、システム既定値を現在の値としてコピーする
-          this.r.startMargin = this.rsdef.startMargin;
-          this.r.endMargin = this.rsdef.endMargin;
-        }
-      },
 
       title() {
         return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo || this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
@@ -2070,6 +2016,60 @@ document.addEventListener('alpine:init', () => {
       close() {
         this.el.close();
         this.el.previousElementSibling.classList.remove('active');
+      }
+    },
+    isServiceModeDef(r = this.sidePanel.r) {
+      return r ? (r.serviceMode % 2) === 0 : true;
+    },
+    toggleServiceModeDef(checked, r = this.sidePanel.r) {
+      if (!r) return;
+      if (checked) {
+        r.serviceMode &= ~1;
+      } else {
+        // 個別設定に切り替える際、現在の「見かけ上の状態（既定値）」をコピーする
+        const sub = this.isServiceModeBitSet(16);
+        const data = this.isServiceModeBitSet(32);
+
+        // LSBを1（個別設定）にしつつ、直前のビット状態を維持
+        let newMode = 1;
+        if (sub) newMode |= 16;
+        if (data) newMode |= 32;
+        r.serviceMode = newMode;
+      }
+    },
+    isServiceModeBitSet(bit, r = this.sidePanel.r) {
+      if (!r) return false;
+      // デフォルト使用中ならシステム既定値を参照、そうでなければ設定値を参照
+      const mode = this.isServiceModeDef(r) ? config.rsdef.serviceMode : r.serviceMode;
+      return !!(mode & bit);
+    },
+    toggleServiceModeBit(bit, checked, r = this.sidePanel.r) {
+      if (checked) {
+        r.serviceMode |= bit;
+      } else {
+        r.serviceMode &= ~bit;
+      }
+    },
+    addRecFolder(partial, r = this.sidePanel.r) {
+      if (!r) return;
+      const list = partial ? r.partialRecFolder : r.recFolderList;
+      const defaultFolder = this.allData.recpreset.get(0).recSetting.recFolderList[0];
+      list.push({ ...defaultFolder });
+    },
+    removeRecFolder(index, partial, r = this.sidePanel.r) {
+      if (!r) return;
+      const list = partial ? r.partialRecFolder : r.recFolderList;
+      list.splice(index, 1);
+    },
+    toggleMarginDef(checked, r = this.sidePanel.r) {
+      if (!r) return;
+      if (checked) {
+        r.startMargin = null;
+        r.endMargin = null;
+      } else {
+        // 個別設定に切り替える際、システム既定値を現在の値としてコピーする
+        r.startMargin = config.rsdef.startMargin;
+        r.endMargin = config.rsdef.endMargin;
       }
     },
 
@@ -3086,6 +3086,57 @@ document.addEventListener('alpine:init', () => {
       } finally {
         this.loading = false;
       }
+    },
+    loadPreset(id) {
+      const preset = this.allData.recpreset.get(parseInt(id));
+      this.r = this.clone(preset.recSetting);
+      this.settings.presetID = id;
+    },
+    removePreset() {
+      if (this.settings.presetID == 0) return;
+      const fd = new URLSearchParams();
+      fd.append('ctok', document.getElementById('settingsCtok').value);
+      fd.append('presetID', this.settings.presetID);
+      fd.append('del', 1);
+
+      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+        return r.json();
+      }).then(d => {
+        this.allData.recpreset.clear();
+        d.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
+        this.lastUpdated.recpreset = Date.now();
+        this.saveCache();
+
+        this.snackbar.add({ text: '削除しました' });
+      }).catch(err => {
+        console.error('通信失敗:', err);
+        // ctokエラーを想定してリロード
+        //const t = setTimeout(() => location.reload(), 3000);
+        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+      });
+    },
+    savePreset(add) {
+      const fd = this.getFormData(this.$refs.recPreset);
+      fd.append('ctok', document.getElementById('settingsCtok').value);
+      if (add) fd.append('add', 1);
+
+      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
+        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
+        return r.json();
+      }).then(d => {
+        this.allData.recpreset.clear();
+        d.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
+        this.lastUpdated.recpreset = Date.now();
+        this.saveCache();
+
+        this.snackbar.add({ text: '保存しました' });
+      }).catch(err => {
+        console.error('通信失敗:', err);
+        // ctokエラーを想定してリロード
+        //const t = setTimeout(() => location.reload(), 3000);
+        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+      });
     },
     parsePlugin(data, mode, name) {
       data.name = name;

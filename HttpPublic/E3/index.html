@@ -1201,10 +1201,6 @@ ct:Append([=[
         </nav>
         <template x-if="data">
           <section class="responsive padding">
-            <h6 class="error center-align padding">
-              <div><i>warning</i>作成中につき表示のみ。</div>
-              <div>正しく読み込まれてるか確認をお願いします。</div>
-            </h6>
             <input type="hidden" value="]=]..CsrfToken('settings')..[=[" id="settingsCtok">
             <div class="page" :class="{ active: tab === 'srv'}" x-ref="srv">
               <input type="hidden" name="srv" value="1">
@@ -1265,18 +1261,17 @@ ct:Append([=[
                     <ul class="list border">
                       <template x-for="(v,i) in data.recFolder" :key="v">
                         <li>
-                          <h6 class="large-text max" x-text="v"></h6>
                           <nav class="group connected no-margin">
                             <button class="secondary small left-round" @click="moveList('recFolder',i,-1)"><i>arrow_upward</i></button>
                             <button class="secondary small right-round" @click="moveList('recFolder',i,1)"><i>arrow_downward</i></button>
                           </nav>
+                          <span class="large-text max" x-text="v"></span>
                           <button class="tertiary small" @click="removeList('recFolder',i)"><i>delete</i></button>
                           <input type="hidden" name="recFolder" :value="v">
                         </li>
                       </template>
                     </ul>
-                    <nav class="no-space">
-                      <div class="max"></div>
+                    <nav class="no-space right-align">
                       <div class="field small">
                         <input type="text" x-ref="recFolder">
                       </div>
@@ -1393,8 +1388,7 @@ ct:Append([=[
                         </tbody>
                       </table>
                     </div>
-                    <div class="row padding wrap" x-data="{ bs: false, cs1: false, cs2: false, cs3: false }">
-                      <div class="max"></div>
+                    <div class="row padding right-align wrap" x-data="{ bs: false, cs1: false, cs2: false, cs3: false }">
                       <div class="field suffix border small">
                         <select name="addWday" x-ref="addWday">
                           <template x-for="(d,i) in ['','月','火','水','木','金','土','日']" :key="i">
@@ -1515,8 +1509,7 @@ ct:Append([=[
                           </button>
                         </template>
                       </nav>
-                      <nav class="no-space">
-                        <div class="max"></div>
+                      <nav class="no-space right-align">
                         <div class="field small">
                           <input type="text" x-ref="noSuspend">
                         </div>
@@ -1563,7 +1556,7 @@ ct:Append([=[
                   </fieldset>
                   <fieldset class="s12 l6">
                     <legend>録画マージンのデフォルト</legend>
-                    <div class="row">
+                    <div class="row right-align">
                       <div class="row tiny-space">
                         <div class="field label border min">
                           <input type="number" name="startMargin" x-model="data.rec.startMargin">
@@ -1835,40 +1828,40 @@ ct:Append([=[
                         </nav>
                       </div>
                       <div class="l6 l"></div>
-                      <fieldset class="s12 l6" :class="{ 'medium-opacity': !data.reserve.autoDel }">
+                      <fieldset class="s12 l6 grid" :class="{ 'medium-opacity': !data.reserve.autoDel }">
                         <legend>同時に削除するファイルの拡張子</legend>
-                        <nav class="scroll">
-                          <template x-for="(v,i) in data.delExt">
-                            <button class="chip fill round large" @click="removeList('delExt', i)">
-                              <i>delete</i>
-                              <span x-text="v"></span>
-                              <input type="hidden" name="delExt" :value="v">
-                            </button>
-                          </template>
-                        </nav>
-                        <nav class="no-space">
-                          <div class="max"></div>
-                          <div class="field small">
-                            <input type="text" x-ref="delExt">
-                          </div>
-                          <button class="secondary right-round" @click="addList('delExt')"><i>add</i><span>追加</span></button>
-                        </nav>
+                          <nav class="s12 scroll">
+                            <template x-for="(v,i) in data.delExt">
+                              <button class="chip fill round large" @click="removeList('delExt', i)">
+                                <i>delete</i>
+                                <span x-text="v"></span>
+                                <input type="hidden" name="delExt" :value="v">
+                              </button>
+                            </template>
+                          </nav>
+                          <nav class="s12 no-space bottom-align">
+                            <div class="max"></div>
+                            <div class="field small">
+                              <input type="text" x-ref="delExt">
+                            </div>
+                            <button class="secondary right-round" @click="addList('delExt')"><i>add</i><span>追加</span></button>
+                          </nav>
                       </fieldset>
-                      <fieldset class="s12 l6" :class="{ 'medium-opacity': !data.reserve.autoDel }">
+                      <fieldset class="s12 l6 grid" :class="{ 'medium-opacity': !data.reserve.autoDel }">
                         <legend>削除対象フォルダ</legend>
-                        <nav class="scroll">
-                          <template x-for="(v,i) in data.delChk">
-                            <button class="chip fill round large" @click="removeList('delChk', i)"><span x-text="v"></span><i>delete</i></button>
-                            <input type="hidden" name="delChk" :value="v">
-                          </template>
-                        </nav>
-                        <nav class="no-space">
-                          <div class="max"></div>
-                          <div class="field small">
-                            <input type="text" x-ref="delChk">
-                          </div>
-                          <button class="secondary right-round" @click="addList('delChk')"><i>add</i><span>追加</span></button>
-                        </nav>
+                          <nav class="s12 scroll">
+                            <template x-for="(v,i) in data.delChk">
+                              <button class="chip fill round large" @click="removeList('delChk', i)"><span x-text="v"></span><i>delete</i></button>
+                              <input type="hidden" name="delChk" :value="v">
+                            </template>
+                          </nav>
+                          <nav class="s12 no-space bottom-align">
+                            <div class="max"></div>
+                            <div class="field small">
+                              <input type="text" x-ref="delChk">
+                            </div>
+                            <button class="secondary right-round" @click="addList('delChk')"><i>add</i><span>追加</span></button>
+                          </nav>
                       </fieldset>
                     </div>
                   </fieldset>
@@ -2010,7 +2003,7 @@ ct:Append([=[
                   </fieldset>
                   <fieldset class="s12 l6">
                     <legend>EPG取得後も番組情報を</legend>
-                    <div class="row wrap tiny-space">
+                    <div class="row wrap tiny-space right-align">
                       <div class="field suffix">
                         <select name="epgArchivePeriod">
                           <template x-for="v in 15">
@@ -2134,7 +2127,7 @@ ct:Append([=[
                         </li>
                       </template>
                     </ul>
-                    <div class="row">
+                    <div class="row right-align">
                       <div class="max"></div>
                       <nav class="no-space">
                         <div class="field suffix small">
@@ -2158,27 +2151,320 @@ ct:Append([=[
             </div>
 
             <div class="page" :class="{ active: tab === 'preset'}">
-              <nav class="tabbed small">
+              <nav class="tabbed small bottom-margin">
                 <a :class="{ active: presetTab === 0 }" @click="presetTab=0">録画設定</a>
                 <a :class="{ active: presetTab === 1 }" @click="presetTab=1">ファイル名PlugIn設定</a>
                 <a :class="{ active: presetTab === 2 }" @click="presetTab=2">出力PlugIn設定</a>
               </nav>
 
-              <div class="page padding" :class="{ active: presetTab === 0 }" x-init="recpreset = null" x-ref="recPreset">
-                <div class="field suffix border bottom-margin large-margin">
-                  <select>
-                    <option x-show="recpreset === null">選択してください</option>
-                    <template x-for="v in Array.from(allData.recpreset.values())">
-                      <option x-text="v.name"></option>
+              <div class="page" :class="{ active: presetTab === 0 }" x-init="loadPreset(0)" x-ref="recPreset">
+                <nav>
+                  <div class="field suffix border max">
+                    <select @change="loadPreset($el.value)">
+                      <template x-for="v in Array.from(allData.recpreset.values())">
+                        <option :value="v.id" x-text="v.name"></option>
+                      </template>
+                    </select>
+                    <i>arrow_drop_down</i>
+                  </div>
+                  <button class="right-round large" @click="removePreset()" :disabled="presetID==0"><i>delete</i><span>削除</span></button>
+                </nav>
+                <hr class="large">
+                <div class="grid">
+                  <input type="hidden" name="presetID" :value="presetID">
+                  <input type="hidden" name="addchg" value="1">
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6><label class="large-text" for="p-recEnabled">録画有効</label></h6>
+                      </div>
+                      <label class="switch icon">
+                        <input id="p-recEnabled" type="checkbox" name="recEnabled" x-model="r.recEnabled">
+                        <span>
+                          <i>mode_off_on</i>
+                        </span>
+                      </label>
+                    </nav>
+                  </div>
+
+                  <div class="l6 l"></div>
+
+                  <div class="s12 l6 grid middle-align">
+                    <div class="s12 field label border">
+                      <select name="recMode" x-model.number="r.recMode">
+                        <template x-for="(name, i) in recModeText">
+                          <option :value="i" x-text="name" :selected="r.recMode === i"></option>
+                        </template>
+                      </select>
+                      <label>録画モード</label>
+                      <i>arrow_drop_down</i>
+                    </div>
+                  </div>
+
+                  <fieldset class="s12 l6">
+                    <legend>優先度</legend>
+                    <div class="field middle-align prefix suffix">
+                      <nav>
+                        <button type="button" class="circle transparent" @click="r.priority = Math.max(1, (r.priority || 1) - 1)"><i>remove</i></button>
+                        <div class="slider" x-intersect="ui($el)" x-effect="r.priority; $nextTick(() => ui($el))">
+                          <input type="range" name="priority" min="1" max="5" x-model.number="r.priority" x-init="r.priority ??= 1">
+                          <span><i>star</i></span>
+                          <span class="tooltip"></span>
+                        </div>
+                        <button type="button" class="circle transparent" @click="r.priority = Math.min(5, (r.priority || 1) + 1)"><i>add</i></button>
+                        <h6 x-text="r.priority"></h6>
+                      </nav>
+                    </div>
+                  </fieldset>
+
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6><label class="large-text" for="p-tuijyuuFlag">イベントリレー追従</label></h6>
+                      </div>
+                      <label class="switch">
+                        <input id="p-tuijyuuFlag" type="checkbox" name="tuijyuuFlag" x-model="r.tuijyuuFlag">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+
+                  <div class="s12 l6 field middle-align">
+                    <nav>
+                      <div class="max">
+                        <h6><label class="large-text" for="p-pittariFlag">ぴったり（？）録画</label></h6>
+                      </div>
+                      <label class="switch">
+                        <input id="p-pittariFlag" type="checkbox" name="pittariFlag" x-model="r.pittariFlag">
+                        <span></span>
+                      </label>
+                    </nav>
+                  </div>
+
+                  <fieldset class="s12 l6">
+                    <legend>録画マージン</legend>
+                    <div class="grid">
+                      <div class="s12 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6><label class="large-text" for="p-useDefMarginFlag">デフォルト設定で使用</label></h6>
+                          </div>
+                          <label class="switch">
+                            <input id="p-useDefMarginFlag" type="checkbox" name="useDefMarginFlag" :checked="r.startMargin == null" @change="toggleMarginDef($event.target.checked, r)">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <div class="s12 row" :class="r.startMargin == null && 'disabled'">
+                        <div class="max"></div>
+                        <div class="row tiny-space">
+                          <div class="field label border small min">
+                            <input type="number" name="startMargin" x-model="r.startMargin" :disabled="r.startMargin == null">
+                            <label>開始</label>
+                          </div>
+                          <div>秒前</div>
+                        </div>
+                        <div class="row tiny-space">
+                          <div class="field label border small min">
+                            <input type="number" name="endMargin" x-model="r.endMargin" :disabled="r.startMargin == null">
+                            <label>終了</label>
+                          </div>
+                          <div>秒後</div>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="s12 l6">
+                    <legend>指定サービス対象データ</legend>
+                    <div class="grid">
+                      <div class="s12 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6><label class="large-text" for="p-serviceMode">デフォルト設定で使用</label></h6>
+                          </div>
+                          <label class="switch">
+                            <input id="p-serviceMode" type="checkbox" name="serviceMode" 
+                              :checked="isServiceModeDef(r)"
+                              @change="toggleServiceModeDef($event.target.checked, r)">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <nav class="s12" :class="isServiceModeDef(r) && 'disabled'">
+                        <div class="m l max"></div>
+                        <label class="checkbox">
+                          <input type="checkbox" :disabled="isServiceModeDef(r)"
+                                :checked="isServiceModeBitSet(16, r)"
+                                @change="toggleServiceModeBit(16, $event.target.checked, r)">
+                          <span>字幕を含める</span>
+                        </label>
+                        <label class="checkbox">
+                          <input type="checkbox" :disabled="isServiceModeDef(r)"
+                                :checked="isServiceModeBitSet(32, r)"
+                                @change="toggleServiceModeBit(32, $event.target.checked, r)">
+                          <span>データカルーセルを含める</span>
+                        </label>
+                      </nav>
+                    </div>
+                  </fieldset>
+
+                  <template x-ref="s_recFolder">
+                    <fieldset>
+                      <legend>ファイル出力</legend>
+                      <nav>
+                        <div class="max field label border small">
+                          <input type="text" :name="`${partial ? 'partial' : ''}recFolder`" x-model="v.recFolder">
+                          <label>フォルダ</label>
+                        </div>
+                        <button class="circle left-round bottom-round small" @click="removeRecFolder(i, partial, r)">
+                          <i>delete</i>
+                        </button>
+                      </nav>
+                      <div class="field label border small">
+                        <select :name="`${partial ? 'partial' : ''}writePlugIn`" x-model="v.writePlugIn">
+                          <template x-for="w in data.writePlugInList">
+                            <option :value="w" x-text="w" :selected="v.writePlugIn === w"></option>
+                          </template>
+                        </select>
+                        <label>出力PlugIn</label>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <div class="field label border small">
+                        <select :name="`${partial ? 'partial' : ''}recNamePlugIn`" x-model="v.recNamePlugIn">
+                          <option value="">なし</option>
+                          <template x-for="w in data.recNamePlugInList">
+                            <option :value="w" x-text="w" :selected="v.recNamePlugIn === w"></option>
+                          </template>
+                        </select>
+                        <label>ファイル名PlugIn</label>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <nav class="no-space" x-data="{ input: null }">
+                        <div class="max field label border small">
+                          <input type="text" :name="`${partial ? 'partial' : ''}recName`" x-model="v.recNameOp" x-init="input = $el">
+                          <label>オプション</label>
+                        </div>
+                        <button class="tertiary right-round" @click="recname.open(input)"><i>add</i></button>
+                      </nav>
+                    </fieldset>
+                  </template>
+
+                  <div class="s12">
+                    <template x-for="(v, i) in r.recFolderList" :key="i" x-data="{ partial: false }">
+                      <div x-html="$refs.s_recFolder.innerHTML"></div>
                     </template>
-                  </select>
-                  <i>arrow_drop_down</i>
+                    <button class="responsive secondary small top-margin small-margin"
+                            @click="addRecFolder(false, r)">
+                      <i>add</i>
+                      <span>追加</span>
+                    </button>
+                  </div>
+
+                  <fieldset class="s12">
+                    <legend>部分受信サービス</legend>
+                    <div class="grid">
+                      <div class="s12 field middle-align">
+                        <nav class="s12">
+                          <div class="max">
+                            <label for="p-partialRecFlag"><h6 class="large-text">別ファイルに同時出力する</h6></label>
+                          </div>
+                          <label class="switch">
+                            <input id="p-partialRecFlag" type="checkbox" name="partialRecFlag" x-model="r.partialRecFlag">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                      <template x-for="(v, i) in r.partialRecFolder" :key="i" x-data="{ partial: true }">
+                        <div class="s12" x-html="$refs.s_recFolder.innerHTML"></div>
+                      </template>
+                      <button class="s12 responsive secondary small top-margin small-margin"
+                              @click="addRecFolder(true, r)">
+                        <i>add</i>
+                        <span>追加</span>
+                      </button>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="s12 l6">
+                    <legend>連続録画動作</legend>
+                    <div class="field middle-align">
+                      <nav>
+                        <div class="max">
+                          <h6><label class="large-text" for="p-continueRecFlag">後ろの予約を同一ファイルで出力する</label></h6>
+                        </div>
+                        <label class="switch">
+                          <input id="p-continueRecFlag" type="checkbox" name="continueRecFlag" x-model="r.continueRecFlag" value="1">
+                          <span></span>
+                        </label>
+                      </nav>
+                    </div>
+                  </fieldset>
+
+                  <div class="s12 l6 grid middle-align">
+                    <div class="s12 field label border">
+                      <select name="tunerID" x-model.number="r.tunerID">
+                        ]=]..GetTunerIDOption()..[=[
+                      </select>
+                      <label>使用チューナー強制指定</label>
+                      <i>arrow_drop_down</i>
+                    </div>
+                  </div>
+
+                  <fieldset class="s12">
+                    <legend>録画後動作</legend>
+                    <div class="grid">
+                      <div class="s12 m6 field border">
+                        <select name="suspendMode" x-model.number="r.suspendMode">
+                          <option value="0">デフォルト</option>
+                          <option value="1">スタンバイ</option>
+                          <option value="2">休止</option>
+                          <option value="3">シャットダウン</option>
+                          <option value="4">何もしない</option>
+                        </select>
+                        <i>arrow_drop_down</i>
+                      </div>
+                      <div class="s12 m6 field middle-align">
+                        <nav>
+                          <div class="max">
+                            <h6><label class="large-text" for="p-rebootFlag">復帰後再起動する</label></h6>
+                          </div>
+                          <label class="switch">
+                            <input id="p-rebootFlag" type="checkbox" name="rebootFlag" x-model="r.rebootFlag">
+                            <span></span>
+                          </label>
+                        </nav>
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="s12">
+                    <legend>録画後実行bat</legend>
+                    <div class="field label border">
+                      <select type="text" name="batFilePath" x-model="r.batFilePath">
+                        <option value="">なし
+]=]..GetBatFilePathOption('RecName')..[=[
+                      </select>
+                      <label>ファイルパス</label>
+                      <i>arrow_drop_down</i>
+                    </div>
+                    <div class="field label border">
+                      <input name="batFileTag" list="batFileTagList" x-model="r.batFileTag">
+                      <label>録画タグ</label>
+                      ]=]..GetbatFileTagList()..[=[
+                    </div>
+                  </fieldset>
                 </div>
-                <div class="center-align">準備中</div>
                 <footer>
                   <nav>
                     <div class="max"></div>
-                    <button><i>save</i><span>保存</span></button>
+                    <nav class="no-space">
+                      <div class="field border left-round small">
+                        <input type="text" name="presetName">
+                      </div>
+                      <button class="right-round" @click="savePreset(true)"><i>add</i><span>追加</span></button>
+                    </nav>
+                    <button @click="savePreset()"><i>save</i><span>保存</span></button>
                   </nav>
                 </footer>
               </div>
@@ -2258,8 +2544,8 @@ ct:Append([=[
                 </template>
               </template>
 
-              <div class="page padding" :class="{ active: presetTab === 1 }" x-init="recNamePlugin = null" x-ref="recNamePlugin">
-                <div class="field suffix border bottom-margin large-margin">
+              <div class="page" :class="{ active: presetTab === 1 }" x-init="recNamePlugin = null" x-ref="recNamePlugin">
+                <div class="field suffix border">
                   <select @change="loadPlugIn(1, $el.value)" x-ref="recNamePluginSelect">
                     <option x-show="recNamePlugin === null">選択してください</option>
                     <template x-for="v in data.recNamePlugInList">
@@ -2271,11 +2557,14 @@ ct:Append([=[
                 <input type="hidden" name="savePlugin" value="1">
                 <template x-if="recNamePlugin">
                   <div>
+                    <hr class="large">
                     <h6 x-text="recNamePlugin.head.desc"></h6>
                     <template x-for="(v,i) in recNamePlugin.body">
                       <div x-html="$refs.plugin.innerHTML"></div>
                     </template>
-                    <template x-if="!recNamePlugin.body"><h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6></template>
+                    <template x-if="!recNamePlugin.body">
+                      <h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6>
+                    </template>
                     <footer>
                       <nav>
                         <div class="max"></div>
@@ -2286,8 +2575,8 @@ ct:Append([=[
                 </template>
               </div>
 
-              <div class="page padding" :class="{ active: presetTab === 2 }" x-init="writePlugin = null" x-ref="writePlugin">
-                <div class="field suffix border bottom-margin large-margin">
+              <div class="page" :class="{ active: presetTab === 2 }" x-init="writePlugin = null" x-ref="writePlugin">
+                <div class="field suffix border">
                   <select @change="loadPlugIn(2, $el.value)" x-ref="writePluginSelect">
                     <option x-show="writePlugin === null">選択してください</option>
                     <template x-for="v in data.writePlugInList">
@@ -2299,11 +2588,14 @@ ct:Append([=[
                 <input type="hidden" name="savePlugin" value="1">
                 <template x-if="writePlugin">
                   <div>
+                    <hr class="large">
                     <h6 x-text="writePlugin.head.desc"></h6>
                     <template x-for="(v, i) in writePlugin.body">
                       <div x-html="$refs.plugin.innerHTML"></div>
                     </template>
-                    <template x-if="!writePlugin.body"><h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6></template>
+                    <template x-if="!writePlugin.body">
+                      <h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6>
+                    </template>
                     <footer>
                       <nav>
                         <div class="max"></div>
@@ -2567,16 +2859,16 @@ ct:Append([=[
                           </li>
                         </template> 
                       </ul>
-                      <nav class="group wrap" x-data="{ ip: '127.0.0.1', port: 1234, broadcast: false }">
+                      <nav class="wrap right-align tiny-space" x-data="{ ip: '127.0.0.1', port: 1234, broadcast: false }">
                         <div class="field small">
                           <input type="text" x-model="ip">
                         </div>
-                        <div class="field small">
+                        <div class="field small min">
                           <input type="number" x-model="port">
                         </div>
                         <button :class="{ active: broadcast }" @click="broadcast=!broadcast">ブロードキャスト</button>
-                        <button class="tertiary right-round" @click="addUDP(ip,port,broadcast)"><i>add</i><span>追加</span></button>
                       </nav>
+                      <button class="tertiary" @click="addUDP(ip,port,broadcast)"><i>add</i><span>追加</span></button>
                       <input type="hidden" name="udp" :value="data.appNetwork.udp.map(v=>`${v.ip}:${v.port}:${v.broadcast?1:0}`).join(',')">
                     </fieldset>
                     <fieldset class="s12 l6">
@@ -2589,11 +2881,11 @@ ct:Append([=[
                           </li>
                         </template> 
                       </ul>
-                      <nav class="wrap" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
+                      <nav class="wrap right-align tiny-space" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
                         <div class="field small">
                           <input type="text" x-model="ip">
                         </div>
-                        <div class="field small">
+                        <div class="field small min">
                           <input type="number" x-model="port">
                         </div>
                         <div class="field suffix small">
@@ -2604,8 +2896,8 @@ ct:Append([=[
                           </select>
                           <i>arrow_drop_down</i>
                         </div>
-                        <button class="tertiary right-round" @click="addTCP(ip,port,specip)"><i>add</i><span>追加</span></button>
                       </nav>
+                      <button class="tertiary" @click="addTCP(ip,port,specip)"><i>add</i><span>追加</span></button>
                       <input type="hidden" name="tcp" :value="data.appNetwork.tcp.map(v=>`${v.ip}:${v.port}:0`).join(',')">
                     </fieldset>
                   </div>
@@ -3098,7 +3390,7 @@ ct:Append([=[
                 <div class="row responsive">
                   <div class="max"></div>
                   <div class="row tiny-space">
-                    <div class="field label border small" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
+                    <div class="field label border small min" x-init="s.chkDurationMin ??= 0;$watch('s', s => s.chkDurationMin ??= 0)">
                       <input type="number" name="chkDurationMin" x-model="s.chkDurationMin">
                       <label>最小</label>
                     </div>
@@ -3106,7 +3398,7 @@ ct:Append([=[
                   </div>
                   <span>〜</span>
                   <div class="row tiny-space">
-                    <div class="field label border small" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
+                    <div class="field label border small min" x-init="s.chkDurationMax ??= 0;$watch('s', s => s.chkDurationMax ??= 0)">
                       <input type="number" name="chkDurationMax" x-model="s.chkDurationMax">
                       <label>最大</label>
                     </div>
@@ -3135,7 +3427,7 @@ ct:Append([=[
                   <div class="row">
                     <h6 class="large-text">確認対象期間</h6>
                     <div class="max"></div>
-                    <div class="field border small" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
+                    <div class="field border small min" x-init="s.chkRecDay ??= 6;$watch('s', s => s.chkRecDay ??= 6)">
                       <input type="number" name="chkRecDay" x-model="s.chkRecDay" :disabled="!s.chkRecEnd">
                     </div>
                     日前まで
@@ -3390,14 +3682,14 @@ ct:Append([=[
                 <div class="row small-margin" :class="r.startMargin == null && 'disabled'">
                   <div class="max"></div>
                   <div class="row tiny-space">
-                    <div class="field label border small">
+                    <div class="field label border small min">
                       <input type="number" name="startMargin" x-model="r.startMargin" :disabled="r.startMargin == null">
                       <label>開始</label>
                     </div>
                     <div>秒前</div>
                   </div>
                   <div class="row tiny-space">
-                    <div class="field label border small">
+                    <div class="field label border small min">
                       <input type="number" name="endMargin" x-model="r.endMargin" :disabled="r.startMargin == null">
                       <label>終了</label>
                     </div>
