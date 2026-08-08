@@ -1917,7 +1917,6 @@ document.addEventListener('alpine:init', () => {
       d: {},
       r: {},
       s: {},
-      rsdef: config.rsdef,
       selectedGenres: [],
       selectedServices: [],
       init() {
@@ -3213,7 +3212,7 @@ document.addEventListener('alpine:init', () => {
       data: null,
       tab: 'srv',
       presetTab: 0,
-      recpreset: null,
+      r: null,
       recNamePlugin: null,
       writePlugin: null,
       moveList(list, index, offset) {
@@ -3236,6 +3235,21 @@ document.addEventListener('alpine:init', () => {
         this.data[list].push(value);
         this.$refs[list].value = '';
       },
+      addViewBon() {
+        const value = this.$refs.viewBon.value;
+        if (!value || this.data.viewBon.includes(value)) {
+          return;
+        }
+        this.data.viewBon.push(value);
+      },
+      wdays: ['','月','火','水','木','金','土','日'],
+      epgTimeText(v) {
+        return this.wdays[Math.floor(v.weekMin/24/60)] + String(Math.floor(v.weekMin/60)%24).padStart(2,'0') + ':' + String(v.weekMin%60).padStart(2,'0')
+      },
+      epgTimeFlags(v) {
+        if (v.flags < 0) return '(共通設定に従う)';
+        return [(v.flags&1?'基本':'拡張'), (v.flags&2?'基本':'拡張'), (v.flags&4?'基本':'拡張'), (v.flags&8?'基本':'拡張')].join(',')
+      },
       addEpgTime(bs, cs1, cs2, cs3) {
         const weekMin = (this.$refs.addWday.value || 0) * 24 * 60;
         const [h, m] = this.$refs.addTime.value.split(':');
@@ -3249,12 +3263,11 @@ document.addEventListener('alpine:init', () => {
         this.$refs.addWday.value = '';
         this.$refs.addTime.value = '00:00';
       },
-      addViewBon() {
-        const value = this.$refs.viewBon.value;
-        if (!value || this.data.viewBon.includes(value)) {
-          return;
-        }
-        this.data.viewBon.push(value);
+      epgTimeValue(){
+        return this.data.epgTime.map(v=>`${v.weekMin}-${v.flags}-${v.enabled ? 1 : 0}`).join(',');
+      },
+      openView(bit, r = this.data.rec.recView) {
+        return r && ((r >> bit) & 1) === 1
       },
       textUDP(v) {
         return `${v.ip} : ${v.port}-${v.port+29}${v.broadcast ? ' (Broadcast)' : ''}`
@@ -3277,10 +3290,15 @@ document.addEventListener('alpine:init', () => {
       },
       addTCP(ip, port, specip) {
         if (specip) {
-          if (specip === "1") ip = '0.0.0.1';
-          else if (specip === "2") ip = '0.0.0.2';
+          if (specip === "1") {
+            ip = '0.0.0.1';
+            port = 0 ;
+          } else if (specip === "2") {
+            ip = '0.0.0.2';
+            if (port >= 100) port = 0;
+          }
         }
-        if (!ip || !port) {
+        if (!ip || isNaN(port)) {
           return;
         }
         this.data.appNetwork.tcp.push({

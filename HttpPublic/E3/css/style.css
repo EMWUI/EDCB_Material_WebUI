@@ -29,10 +29,6 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .small-gap { gap: .5rem }
 .around-align { justify-content: space-around; }
 
-:is(.checkbox,.radio,.switch)>span {
-  word-break: auto-phrase;
-  white-space: normal;
-}
 :is(button, .button).tiny {
   --_size: 1.5rem;
   --_padding: .5rem;
@@ -64,7 +60,6 @@ input[type=color] { cursor: pointer; }
 
 select[multiple] {
   overflow-y: auto;
-  padding-block-start: 7px !important;
   cursor: default;
   option { padding: 0.1rem 0; }
   option:checked {
@@ -72,7 +67,9 @@ select[multiple] {
     color: var(--on-primary-container);
   }
 }
+.label>select[multiple] { padding-block-start: 7px !important; }
 button>input { display: none; }
+label[for] { cursor: pointer; }
 
 .chip+menu>li {
   padding: 0;
@@ -114,7 +111,7 @@ button>input { display: none; }
 fieldset, :is(nav,.row):not(.wrap)>.max { min-width: 0; }
 :is(nav,.row)>.chip { max-width: 100%; }
 :is(nav,.row)>.chip>span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.wrap.tiny-space { row-gap: 0; }
+.no-row-space { row-gap: 0!important; }
 .wrap.tiny-space .middle-align { gap: .2rem; }
 .row:has(>article) { align-items: stretch; }
 article.small-width { inline-size: 15rem!important; overflow: hidden; }
