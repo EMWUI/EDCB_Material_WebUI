@@ -1,6 +1,6 @@
-app='0627026'
-tsloader='0627026'
-beer='4.0.21'
+app='260808'
+tsloader='260726'
+beer='5.0.3'
 mdc='1.1.4'
 alpine='3.15.12'
 hls='v1.5.20'
@@ -122,8 +122,8 @@ function GetCredit(sidebar)
         <a class="button transparent circle tiny" href="https://www.amazon.jp/hz/wishlist/ls/1FFBR5ZLZK8EY" target="_blank" rel="noreferrer"><i class="link tiny">featured_seasonal_and_gifts</i></a>
       </nav>
 ]=]..((SHOW_DEBUG_LOG or SHOW_NOTIFY_LOG) and '      <nav class="no-margin">\n'
-  ..(SHOW_NOTIFY_LOG and '        <a class="link small-text" @click="log.show()">情報通知ログ</a>\n' or '')
-  ..(SHOW_DEBUG_LOG and '        <a class="link small-text" @click="log.show(true)">デバッグ出力</a>\n' or '')
+  ..(SHOW_NOTIFY_LOG and '        <span class="link small-text" @click="log.show()">情報通知ログ</span>\n' or '')
+  ..(SHOW_DEBUG_LOG and '        <span class="link small-text" @click="log.show(true)">デバッグ出力</span>\n' or '')
   ..'      </nav>\n' or '')..[=[
     </div>
 ]=]

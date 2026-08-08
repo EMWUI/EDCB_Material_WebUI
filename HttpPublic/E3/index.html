@@ -852,7 +852,7 @@ ct:Append([=[
                   <div class="grid">
                     <nav class="s11 group primary-container middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
                       <template x-for="(v, i) in list">
-                        <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'no-round' : i > 0 && i < list.length - 1, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
+                        <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
                       </template>
                     </nav>
                     <div :class="{ 's11': live, 's12': !live }">
