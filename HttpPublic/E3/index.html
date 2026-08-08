@@ -2965,7 +2965,7 @@ ct:Append([=[
             <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
             <template x-if="isInfo">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[" id="ctok">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID}`" id="api_action">
                 <input type="hidden" name="id" :value="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
@@ -2973,7 +2973,7 @@ ct:Append([=[
             </template>
             <template x-if="isRecinfo">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setrecinfo')..[=[">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setrecinfo')..[=[" id="ctok">
                 <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
               </div>
             </template>
@@ -3188,7 +3188,7 @@ ct:Append([=[
             </template>
             <template x-if="d.recSetting">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[" id="ctok">
                 <input type="hidden" :value="`SetAutoAdd?id=${d.dataID || 0}`" id="api_action">
                 <input type="hidden" name="addchg">
                 <div class="s12">
@@ -3460,7 +3460,7 @@ ct:Append([=[
           <div class="grid no-margin">
             <template x-if="isReserve">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[" id="ctok">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
 
@@ -3519,7 +3519,7 @@ ct:Append([=[
 
             <template x-if="isAutoaddmanual">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setmanuadd')..[=[">
+                <input type="hidden" name="ctok" value="]=]..CsrfToken('setmanuadd')..[=[" id="ctok">
                 <input type="hidden" :value="`SetManuAdd?id=${d.dataID}`" id="api_action">
                 <input type="hidden" name="addchg" value="1">
                 <div class="s12">

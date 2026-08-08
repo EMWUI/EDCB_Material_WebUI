@@ -2545,7 +2545,7 @@ document.addEventListener('alpine:init', () => {
     delEntry() {
       const action = document.getElementById('api_action')?.value || '';
       const url = `${this.ROOT}api/${action}`;
-      this.apiFetch(url, new URLSearchParams({ del: 1 }));
+      this.apiFetch(url, new URLSearchParams({ del: 1, ctok: document.getElementById('ctok').value }));
     },
     chgRecFilePath(id, path) {
       const fd = new URLSearchParams({ ren: path });
