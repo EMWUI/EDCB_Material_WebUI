@@ -2260,6 +2260,7 @@ ct:Append([=[
                   </div>
                   <button class="right-round large" @click="removePreset()" :disabled="presetID==0"><i>delete</i><span>削除</span></button>
                 </nav>
+                <div><span>取得:</span><span x-text="convert.date(lastUpdated.recpreset,false,true)"></span></div>
                 <hr class="large">
                 <div class="grid">
                   <input type="hidden" name="presetID" :value="presetID">
@@ -3059,6 +3060,11 @@ ct:Append([=[
             </div>
           </section>
         </template>
+        <template x-if="!data">
+          <div class="margin middle-align center-align">
+            <div class="shape loading-indicator small-width small-height rotate"></div>
+          </div>
+        </template>
       </div>
     </template>
 
@@ -3138,7 +3144,7 @@ ct:Append([=[
               </div>
             </nav>
             <div x-html="$refs.tools.innerHTML"></div>
-            <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
+            <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)||'未取得'"></p>
             <hr class="medium">
             <p class="secondary-text" x-html="convert.text(d.extInfo?.text_char)"></p>
             <div class="space small-space"></div>
