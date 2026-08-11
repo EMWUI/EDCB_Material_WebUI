@@ -965,7 +965,7 @@ ct:Append([=[
                 </template>
 
                 <template x-if="tuner.reserveList.length === 0">
-                  <div class="center-align padding mt-8">
+                  <div class="center-align padding">
                     <i class="extra secondary-text">event_busy</i>
                     <p class="secondary-text">割り当てられた予約はありません</p>
                   </div>
@@ -2497,7 +2497,10 @@ ct:Append([=[
                   <div class="s12 l6 grid middle-align">
                     <div class="s12 field label border">
                       <select name="tunerID" x-model.number="r.tunerID">
-                        ]=]..GetTunerIDOption()..[=[
+                        <option value="0">自動</option>
+                        <template x-for="v in getTunerList()">
+                          <option :value="v.tunerID" x-text="getTunerID(v)"></option>
+                        </template>
                       </select>
                       <label>使用チューナー強制指定</label>
                       <i>arrow_drop_down</i>
@@ -3917,7 +3920,10 @@ ct:Append([=[
 
             <div class="s12 field label border">
               <select name="tunerID" x-model.number="r.tunerID">
-                ]=]..GetTunerIDOption()..[=[
+                <option value="0">自動</option>
+                <template x-for="v in getTunerList()">
+                  <option :value="v.tunerID" x-text="getTunerID(v)"></option>
+                </template>
               </select>
               <label>使用チューナー強制指定</label>
               <i>arrow_drop_down</i>
@@ -4089,18 +4095,18 @@ ct:Append([=[
     <hr class="medium">
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6>サブチャンネルを表示</h6></div>
+        <div class="max"><h6><label class="large-text" for="set-subCh">サブチャンネルを表示</label></h6></div>
         <label class="switch">
-          <input type="checkbox" x-model="set.subCh">
+          <input type="checkbox" id="set-subCh" x-model="set.subCh">
           <span></span>
         </label>
       </nav>
     </div>
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6>ワンセグを表示</h6></div>
+        <div class="max"><h6><label class="large-text" for="set-oneseg">ワンセグを表示</label></h6></div>
         <label class="switch">
-          <input type="checkbox" x-model="set.oneseg">
+          <input type="checkbox" id="set-oneseg" x-model="set.oneseg">
           <span></span>
         </label>
       </nav>
@@ -4110,9 +4116,9 @@ ct:Append([=[
       <div>
         <div class="field middle-align" x-show="!isMobile">
           <nav>
-            <div class="max"><h6>ホバーでポップアップ</h6></div>
+            <div class="max"><h6><label class="large-text" for="set-epg-hover">ホバーでポップアップ</label></h6></div>
             <label class="switch">
-              <input type="checkbox" x-model="set.epg.hover">
+              <input type="checkbox" id="set-epg-hover" x-model="set.epg.hover">
               <span></span>
             </label>
           </nav>
@@ -4136,9 +4142,9 @@ ct:Append([=[
       <div>
         <fieldset>
           <legend>NetworkTVID</legend>
-          <nav class="group primary-container center-align">
+          <nav class="group primary center-align">
             <template x-for="i in [0, 1, 2, 3]" :key="i">
-              <button :class="{ 'left-round': i == 0, 'right-round': i == 3, active: nwtv === i }" @click="nwtv = i" x-text="'nwtv' + i"></li>
+              <button :class="{ 'left-round': i == 0, 'right-round': i == 3, fill: nwtv !== i }" @click="nwtv = i" x-text="'nwtv' + i"></li>
             </template>
           </nav>
         </fieldset>
@@ -4146,9 +4152,9 @@ ct:Append([=[
         <fieldset>
           <legend>実況</legend>
           <nav>
-            <div class="max"><h6>常時読み込み</h6></div>
+            <div class="max"><h6><label class="large-text" for="set-jikkyoLoad">常時読み込み</label></h6></div>
             <label class="switch">
-              <input type="checkbox" x-model="jikkyoConfig.load" @change="Alpine.raw(player.ts).toggleJikkyo(jikkyo, jikkyoConfig.load)">
+              <input type="checkbox" id="set-jikkyoLoad" x-model="jikkyoConfig.load" @change="Alpine.raw(player.ts).toggleJikkyo(jikkyo, jikkyoConfig.load)">
               <span></span>
             </label>
           </nav>
@@ -4178,9 +4184,9 @@ ct:Append([=[
       <div>
         <div class="field middle-align">
           <nav>
-            <div class="max"><h6>サブジャンルを表示</h6></div>
+            <div class="max"><h6><label class="large-text" for="set-subGenre">サブジャンルを表示</label></h6></div>
             <label class="switch">
-              <input type="checkbox" x-model="set.subGenre">
+              <input type="checkbox" id="set-subGenre" x-model="set.subGenre">
               <span></span>
             </label>
           </nav>
@@ -4202,9 +4208,9 @@ ct:Append([=[
       <div>
         <div class="field middle-align">
           <nav>
-            <div class="max"><h6>削除ボタンを表示</h6></div>
+            <div class="max"><h6><label class="large-text" for="set-recinfoDel">削除ボタンを表示</label></h6></div>
             <label class="switch">
-              <input type="checkbox" x-model="set.RecinfoDel">
+              <input type="checkbox" id="set-recinfoDel" x-model="set.RecinfoDel">
               <span></span>
             </label>
           </nav>

@@ -149,17 +149,6 @@ function GetPlugInFileNameOption(a)
   return s
 end
 
-function GetTunerIDOption()
-  local a=edcb.GetTunerReserveAll()
-  local s='<option value="0">自動</option>\n'
-  for i=1,#a-1 do
-    s=s..string.format([[
-                <option value="%d">ID:%08X(%s)
-]], a[i].tunerID, a[i].tunerID, a[i].tunerName)
-  end
-  return s
-end
-
 function GetBatFilePathOption()
   local CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
   local batDir=edcb.GetPrivateProfile('SET','batPath',PathAppend(CurrentDir,'bat'),INI)
