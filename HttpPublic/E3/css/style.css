@@ -25,8 +25,8 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .show { display: block !important; }
 .contents { display: contents; }
 .no-row-gap { row-gap: 0; }
-.tiny-gap { gap: .25rem }
-.small-gap { gap: .5rem }
+.tiny-gap { gap: .25rem; }
+.small-gap { gap: .5rem; }
 .around-align { justify-content: space-around; }
 
 :is(button, .button).tiny {
@@ -34,6 +34,7 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
   --_padding: .5rem;
 }
 
+nav.group>:is(.button,button) { white-space: nowrap; }
 nav.tabbed.fixed {
   position: sticky;
   top: 0;
@@ -163,16 +164,9 @@ article.small-width+button { align-self: center; }
   color: var(--m3-on-container) !important;
 }
 
-[class*="cont-"]:not(.chip) {
-  /* 左端のアクセントだけ */
-  /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important;  */
-
-  /* 左端から右へ消え込むグラデーション */
-  background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%) !important;
-
-  /* 塗りつぶし */
-  /* background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; */
-}
+[class*="cont-"]:not(.chip) { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%); } /* 左端から右へ消え込むグラデーション */
+.bar [class*="cont-"] { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; } /* 左端のアクセントだけ */
+.paint [class*="cont-"] { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px) !important; } /* 塗りつぶし */
 
 [class*="cont-"].reserve {
   position: relative;

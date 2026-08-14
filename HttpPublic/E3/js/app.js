@@ -250,6 +250,7 @@ document.addEventListener('alpine:init', () => {
       epg: {
         minHeight: 4,
         hover: false,
+        bg: '',
       },
       player: {
         volume: 1,

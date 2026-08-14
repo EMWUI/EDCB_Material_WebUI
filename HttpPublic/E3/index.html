@@ -413,7 +413,7 @@ ct:Append([=[
     </template>
 
     <template x-if="page === '#epg' || page === '#epgweek'" x-data="epg">
-      <div id="epg-grid" :style="`--min: ${set.minHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
+      <div id="epg-grid" :class="set.bg" :style="`--min: ${set.minHeight};`" @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @wheel.passive="onWheel">
         <!-- 固定の角（日付） -->
         <div class="epg-time-col epg-service-header surface-container center-align middle-align small-round border" x-html="getEpgDateText().replace('(', '<br>(')"></div>
         <!-- 時間軸 -->
@@ -4117,9 +4117,9 @@ ct:Append([=[
         </label>
       </nav>
     </div>
-    <hr class="medium">
     <template x-if="page === '#epg'">
       <div>
+        <hr class="medium">
         <div class="field middle-align" x-show="!isMobile">
           <nav>
             <div class="max"><h6><label class="large-text" for="set-epg-hover">ホバーでポップアップ</label></h6></div>
@@ -4129,6 +4129,16 @@ ct:Append([=[
             </label>
           </nav>
         </div>
+        <fieldset>
+          <legend>背景</legend>
+          <div class="field">
+            <nav class="group primary scroll">
+              <button class="left-round" :class="{ fill: set.epg.bg!=='bar' }" @click="set.epg.bg='bar'">シンプル</button>
+              <button :class="{ fill: set.epg.bg!=='' }" @click="set.epg.bg=''">モダン</button>
+              <button class="right-round" :class="{ fill: set.epg.bg!=='paint' }" @click="set.epg.bg='paint'">クラシック</button>
+            </nav>
+          </div>
+        </fieldset>
         <fieldset class="padding">
           <legend>1分の高さ</legend>
           <div class="field middle-align suffix">
@@ -4188,6 +4198,7 @@ ct:Append([=[
   <dialog id="sidePanelSetting" :class="{ bottom: isSmallScreen }">
     <template x-if="detail.searchInfo">
       <div>
+        <hr class="medium">
         <div class="field middle-align">
           <nav>
             <div class="max"><h6><label class="large-text" for="set-subGenre">サブジャンルを表示</label></h6></div>
