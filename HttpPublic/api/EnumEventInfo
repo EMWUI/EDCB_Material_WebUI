@@ -65,6 +65,7 @@ elseif startTime>0 then
   --過去番組
   et=edcb.EnumEventInfoArchive(id,{startTime=os.date('!*t',startTime), durationSecond=1})
   if et and #et~=0 then
+    et[1].past=true
     a={et[1]}
   end
 else

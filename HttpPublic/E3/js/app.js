@@ -310,6 +310,108 @@ document.addEventListener('alpine:init', () => {
       this.updateParams();
       this.loadAll();
     },
+    // クエリパラメータを更新して履歴を操作する
+    updateQueryParam(params, push = false) {
+      const url = new URL(window.location.href);
+      let changed = false;
+      for (const [k, v] of Object.entries(params)) {
+        const oldVal = url.searchParams.get(k);
+        if (v === null || v === undefined) {
+          if (url.searchParams.has(k)) {
+            url.searchParams.delete(k);
+            changed = true;
+          }
+        } else {
+          if (oldVal !== String(v)) {
+            url.searchParams.set(k, v);
+            changed = true;
+          }
+        }
+      }
+      if (changed) {
+        if (push) {
+          history.pushState(null, '', url.toString());
+        } else {
+          history.replaceState(null, '', url.toString());
+        }
+        this.updateParams();
+      }
+    },
+
+    // URLクエリパラメータからサイドパネルの状態を復元する
+    async restoreSidePanel() {
+      const id = this.params.id;
+      if (!id) {
+        // id パラメータが無ければサイドパネルを閉じる
+        if (this.sidePanel.el && this.sidePanel.el.open) {
+          this.sidePanel.preventHistoryBack = true;
+          this.sidePanel.el.close();
+          this.sidePanel.el.previousElementSibling.classList.remove('active');
+        }
+        return;
+      }
+
+      // すでに開いているIDと同じなら何もしない
+      if (this.sidePanel.el && this.sidePanel.el.open) {
+        let currentId = '';
+        if (this.page === '#recinfo') {
+          currentId = String(this.detail.id);
+        } else if (this.page === '#autoaddepg' || this.page === '#autoaddmanual') {
+          currentId = String(this.detail.id || this.detail.dataID);
+        } else if (this.page === '#reserve' || this.page === '#tunerreserve') {
+          currentId = String(this.detail.reserveID || `${this.detail.onid}-${this.detail.tsid}-${this.detail.sid}-${this.detail.eid}`);
+        } else {
+          currentId = `${this.detail.onid}-${this.detail.tsid}-${this.detail.sid}-${this.detail.eid}`;
+        }
+        if (currentId === String(id)) return;
+      }
+
+      if (id.includes('-')) {
+        // 番組ID形式
+        const epgData = await this.getEpgById(id);
+        if (epgData) this.openProgramDetail(epgData);
+      } else {
+        // 数値ID形式
+        const numId = parseInt(id);
+        if (isNaN(numId)) return;
+
+        if (this.page === '#recinfo') {
+          const r = this.allData.recinfo.get(numId);
+          if (r) {
+            this.openRecinfoDetail(r);
+          } else {
+            this.openRecinfoDetail({ id: numId });
+          }
+        } else if (this.page === '#autoaddepg') {
+          const d = this.allData.autoaddepg.get(numId);
+          if (d) this.openAutoaddDetail(d);
+        } else if (this.page === '#autoaddmanual') {
+          const d = this.allData.autoaddmanual.get(numId);
+          if (d) this.openAutoaddDetail(d);
+        } else {
+          // 予約IDとして復元を試みる (Mapのvaluesを走査して一致するreserveIDを探す)
+          const getReserveAndOpen = () => {
+            const reserves = Array.from(this.allData.reserve.values());
+            const r = reserves.find(item => item.reserveID === numId);
+            if (r) {
+              this.openProgramDetail(r);
+              return true;
+            }
+            return false;
+          };
+
+          if (!getReserveAndOpen()) {
+            let attempts = 0;
+            const timer = setInterval(() => {
+              attempts++;
+              if (getReserveAndOpen() || attempts >= 15) {
+                clearInterval(timer);
+              }
+            }, 100);
+          }
+        }
+      }
+    },
     google(d) {
       return `https://www.google.co.jp/search?q=${encodeURIComponent(this.convert.sanitizeTitle(d.shortInfo?.event_name))}`
     },
@@ -387,9 +489,14 @@ document.addEventListener('alpine:init', () => {
         this.loadAll();
       });
       window.addEventListener('popstate', () => {
+        const oldPage = this.page;
         this.page = window.location.hash || '#dashboard';
         this.updateParams();
-        this.loadAll();
+        if (this.page !== oldPage) {
+          this.loadAll();
+        } else {
+          this.restoreSidePanel();
+        }
       });
       window.addEventListener('resize', () => {
         this.player.setbmlBrowserSize();
@@ -507,6 +614,7 @@ document.addEventListener('alpine:init', () => {
 
       // 初回表示の反映
       await this.loadAll();
+      await this.restoreSidePanel();
     },
 
     // SSEの開始とメッセージ処理
@@ -540,6 +648,7 @@ document.addEventListener('alpine:init', () => {
             this.updateTunerStatus(),
             this.refreshEpg()
           ]);
+          this.restoreSidePanel();
         } catch (e) {
           console.error("Reconnection sync failed", e);
         } finally {
@@ -845,6 +954,7 @@ document.addEventListener('alpine:init', () => {
 
       this.totalCount = null;
       if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0, 0);
+      this.sidePanel.preventHistoryBack = true;
       this.sidePanel.close();
 
       if (this.page === '#dashboard') {
@@ -1150,23 +1260,31 @@ document.addEventListener('alpine:init', () => {
       return d.id || d.reserveID || d.dataID;
     },
     async getEpgById(id) {
-      // id: "onid-tsid-sid-eid"
+      // id: "onid-tsid-sid-eid" または "onid-tsid-sid-startTime(秒)" (過去番組)
       const parts = id.split('-');
       if (parts.length < 4) return null;
 
       const serviceId = parts.slice(0, 3).join('-');
-      const eid = parseInt(parts[3]);
+      const fourth = parseInt(parts[3]);
 
-      // ネストした Map から取得
-      const serviceMap = this.allData.epg.get(serviceId);
-      let epg = serviceMap ? serviceMap.get(eid) : null;
+      // eidが65535を超える場合はstartTime（秒タイムスタンプ）として過去番組指定
+      const isPastId = fourth > 65535;
 
-      if (!epg && this.isOnline) {
+      let epg = null;
+      if (!isPastId) {
+        // 通常番組のみキャッシュから検索（過去番組はキャッシュ対象外）
+        const serviceMap = this.allData.epg.get(serviceId);
+        epg = serviceMap ? serviceMap.get(fourth) || null : null;
+      }
+
+      if (!epg) {
         try {
           this.loading = true;
-          epg = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
-          // 単発取得時は既存の配列を汚さないよう個別に扱うか検討が必要ですが、
-          // 基本的に refreshEpg で一括取得されている前提とします
+          const fetched = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
+          if (!fetched.err) {
+            if (fetched.startTime) fetched.startTimeInt = new Date(fetched.startTime).getTime();
+            epg = fetched;
+          }
         } catch (e) {
           console.error(e);
         } finally {
@@ -1926,9 +2044,21 @@ document.addEventListener('alpine:init', () => {
       d: {},
       r: {},
       s: {},
+      preventHistoryBack: false,
       selectedGenres: [],
       selectedServices: [],
       init() {
+        // 閉じられたときにURLパラメータをクリア
+        this.el.addEventListener('close', () => {
+          if (this.preventHistoryBack) {
+            this.preventHistoryBack = false;
+            return;
+          }
+          if (this.app.params.id) {
+            history.back();
+          }
+        });
+
         // 親の detail 変更を監視して r と s を同期する
         this.$watch('detail', v => {
           this.d = this.app.clone(v);
@@ -2103,6 +2233,20 @@ document.addEventListener('alpine:init', () => {
       else ui("#info");
       this.sidePanel.show();
 
+      // クエリパラメータを更新
+      let idVal;
+      if (d.past && d.startTimeInt) {
+        // 過去番組はeidが変化している可能性があるため開始時間（秒）を使う
+        // EDCBはJST時刻をそのまま秒換算した値で管理するため、UTC ms/1000 に +9h(32400) を加算する
+        idVal = `${d.onid}-${d.tsid}-${d.sid}-${Math.floor(d.startTimeInt / 1000) + 9 * 3600}`;
+      } else if (d.reserveID && (this.page === '#reserve' || this.page === '#tunerreserve' || !d.eid || d.eid === 65535)) {
+        idVal = d.reserveID;
+      } else {
+        idVal = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
+      }
+      const push = !this.params.id;
+      this.updateQueryParam({ id: idVal }, push);
+
       if (d.past || d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
 
       if (d.reserveID) {
@@ -2122,11 +2266,21 @@ document.addEventListener('alpine:init', () => {
       if (d.searchInfo) ui("#searchInfo");
       else ui("#recSetting");
       this.sidePanel.show();
+
+      // クエリパラメータを更新
+      const idVal = d.id || d.dataID;
+      const push = !this.params.id;
+      this.updateQueryParam({ id: idVal }, push);
     },
     async openRecinfoDetail(d) {
       this.detail = d;
       ui("#info")
       this.sidePanel.show();
+
+      // クエリパラメータを更新
+      const idVal = d.id;
+      const push = !this.params.id;
+      this.updateQueryParam({ id: idVal }, push);
       if (!d.programInfo) {
         // 1. 詳細情報を取得
         const json = await fetch(`${this.ROOT}api/${this.pageMap['#recinfo'].api}?json=1&id=${d.id}`).then(r => r.json()).catch(() => null);
