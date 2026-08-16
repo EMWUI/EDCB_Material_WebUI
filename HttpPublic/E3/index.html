@@ -1169,13 +1169,24 @@ ct:Append([=[
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
               <li class="ripple" @click="openProgramDetail(d)">
-                <div class="max row no-margin no-wrap" x-data="{ startTime: new Date(d.startTime).getTime() }">
+                <div class="max row no-margin no-wrap">
                   <div class="center-align">
-                    <i class="primary-text">event</i>
+                    <template x-if="!d.reserveID">
+                      <i class="primary-text">event</i>
+                    </template>
+                    <template x-if="d.reserveID">
+                      <label class="checkbox icon" @click.stop>
+                        <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
+                        <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
+                          <i>block</i>
+                          <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
+                        </span>
+                      </label>
+                    </template>
                   </div>
                   <div class="max">
                     <div class="row no-margin no-wrap secondary-text">
-                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(startTime + d.durationSecond*1000, true)}`"></span>
+                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(d.startTimeInt + d.durationSecond*1000, true)}`"></span>
                       <span x-html="getServiceName(d)"></span>
                     </div>
                     <div class="title middle-align bold large-text">

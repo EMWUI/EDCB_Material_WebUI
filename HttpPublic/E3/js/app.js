@@ -185,7 +185,7 @@ document.addEventListener('alpine:init', () => {
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
     params: {},
-    search: {},
+    search: { searchInfo: {} },
     now: Date.now(),
     isOnline: false,
     isSmallScreen: false,
@@ -667,6 +667,14 @@ document.addEventListener('alpine:init', () => {
             this.refreshData('#reserve'),
             this.refreshData('#tunerreserve'),
           ]);
+          this.allData.search.forEach((v, k) => {
+            if (!v.past) {
+              const r = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              if (!r && v.reserveID) v.reserveID = null;
+              if (r) this.allData.search.set(k, { ...v, ...r })
+            };
+          });
+          if (this.page === '#search') this.updateDisplayList();
           if (!data.epg) {
             if (this.page === '#epg') this.loadEpg();
             if (this.page === '#epgweek') this.loadWeeklyEpg();
@@ -1033,10 +1041,8 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.page === '#search') {
-        if (this.params.andKey) {
-          this.sidePanel.d = { searchInfo: { andKey: this.params.andKey } };
-          this.searchEvent(this.params.andKey);
-        } else this.openSearchDetail(this.search);
+        if (this.params.andKey) this.searchEvent(this.params.andKey);
+        else this.openSearchDetail();
       }
       if (this.page === '#setting') {
         this.loadSetting();
@@ -2042,8 +2048,8 @@ document.addEventListener('alpine:init', () => {
     sidePanel: {
       el: document.getElementById('sidePanel'),
       d: {},
-      r: {},
-      s: {},
+      get r() { return this.d?.recSetting ?? {} },
+      get s() { return this.d?.searchInfo ?? {} },
       preventHistoryBack: false,
       selectedGenres: [],
       selectedServices: [],
@@ -2060,11 +2066,7 @@ document.addEventListener('alpine:init', () => {
         });
 
         // 親の detail 変更を監視して r と s を同期する
-        this.$watch('detail', v => {
-          this.d = this.app.clone(v);
-          this.r = this.d.recSetting || {};
-          this.s = this.d.searchInfo || {};
-        });
+        this.$watch('detail', v => { this.d = this.app.clone(v); });
       },
       initSelectedGenres(s) {
         this.selectedGenres = s?.contentList
@@ -2305,8 +2307,8 @@ document.addEventListener('alpine:init', () => {
         }
       }
     },
-    openSearchDetail(d = this.search) {
-      this.sidePanel.d = { searchInfo: d };
+    openSearchDetail() {
+      this.detail = this.search;
       ui("#searchInfo");
       this.sidePanel.show();
     },
@@ -2320,35 +2322,25 @@ document.addEventListener('alpine:init', () => {
     },
 
     async searchEvent(andKey) {
-      const s = this.sidePanel.d.searchInfo;
-      if (!this.isValidSearchRange(s)) {
-        const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
-        this.snackbar.add({
-          text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください',
-          error: true
-        });
-        return;
-      }
-
-      this.loading = true;
-      this.search = this.clone(this.sidePanel.d.searchInfo);
-      const container = document.getElementById('searchInfo');
       const fd = new URLSearchParams();
 
       if (andKey) {
+        this.search = { searchInfo: { andKey: andKey } };
         fd.append('andKey', andKey);
         (this.getDefSearchService()).forEach(v => fd.append('serviceList', v));
       } else {
+        const s = this.sidePanel.s;
+        if (!this.isValidSearchRange(s)) {
+          const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
+          this.snackbar.add({
+            text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください',
+            error: true
+          });
+          return;
+        }
+        this.search = this.clone(this.sidePanel.d);
         // 検索フォームから条件を収集
-        container.querySelectorAll('[name]').forEach(el => {
-          if (el.type === 'checkbox') {
-            if (el.checked) fd.append(el.name, '1');
-          } else if (el.tagName === 'SELECT' && el.multiple) {
-            Array.from(el.selectedOptions).forEach(opt => fd.append(el.name, opt.value));
-          } else {
-            fd.append(el.name, el.value);
-          }
-        });
+        this.getFormData(document.getElementById('searchInfo'), fd);
       }
 
       fd.set('ctok', document.getElementById('searchCtok')?.value || '');
@@ -2358,6 +2350,7 @@ document.addEventListener('alpine:init', () => {
         if (this.page !== '#search') {
           this.openPage('#search', {}, true);
         }
+        this.loading = true;
 
         const res = await fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
         const list = await res.json();
@@ -2365,6 +2358,7 @@ document.addEventListener('alpine:init', () => {
         this.allData.search.clear();
         (Array.isArray(list) ? list : []).forEach(v => {
           v.startTimeInt = new Date(v.startTime).getTime();
+          if (!v.past) v = { ...v, ...this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`) || {} };
           this.allData.search.set(this.getDataKey(v, 'search'), v);
         });
 
@@ -2668,13 +2662,10 @@ document.addEventListener('alpine:init', () => {
       const fd = new URLSearchParams({ id: d.reserveID, toggle: Number(!d.recSetting.recEnabled) });
       this.apiFetch(`${this.ROOT}api/SetReserve`, fd, 'GET');
     },
-    getFormData(container){
-      const fd = new URLSearchParams();
-
+    getFormData(container, fd = new URLSearchParams()){
       // name属性を持っている要素をすべて拾う
       container.querySelectorAll('[name]').forEach(el => {
         const name = el.name;
-        let value;
 
         // 1. チェックボックス (0 or 1 変換)
         if (el.type === 'checkbox') {
@@ -3251,7 +3242,7 @@ document.addEventListener('alpine:init', () => {
     },
     loadPreset(id) {
       const preset = this.allData.recpreset.get(parseInt(id));
-      this.r = this.clone(preset.recSetting);
+      this.settings.r = this.clone(preset.recSetting);
       this.settings.presetID = id;
     },
     removePreset() {
