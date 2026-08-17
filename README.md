@@ -20,80 +20,81 @@ EDCBの基本的な操作に加え、リモート視聴などの機能を提供�
 > [!NOTE]  
 > PWAやTS-Live!にSSL/TLSによる通信が必須なため、HTTPSでの運用を前提として記述しています。  
 
+### 1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)をよく読む
+### 2. HTTPSに必要な自己署名証明書を作成、インストール
+### 3. `HttpPublic`と`Setting`のフォルダをEDCBフォルダに入れる  
+
+> [!TIP]
+> 配置例 (E3、legacyは任意にリネーム等可)
+>
+>      EDCB/
+>        ├─ HttpPublic/
+>        │   ├─ api/
+>        │   ├─ E3/
+>        │   ├─ legacy/
+>        │   ├─ video/
+>        │   ├─ index.html
+>        │   :
+>        │
+>        ├─ Tools/
+>        │   ├─ ffmpeg/
+>        │   │   ├─ ffmpeg.exe
+>        │   │   ├─ ffprobe.exe
+>        │   │   :
+>        │   ├─ NVEncC/
+>        │   │   :
+>        │   ├─ QSVEncC/
+>        │   │   :
+>        │   ├─ asyncbuf.exe
+>        │   ├─ edcbnosuspend.exe
+>        │   ├─ psisiarc.exe
+>        │   ├─ psisimux.exe
+>        │   ├─ tsmemseg.exe
+>        │   ├─ tsreadex.exe
+>        │   ├─ tspgtxt.exe
+>        │   :
+>        │
+>        ├─ Setting/
+>        │   ├─ XCODE_OPTIONS.lua
+>        │   ├─ HttpPublic.ini
+>        │   :
+>        │
+>        ├─ EpgDataCap_Bon.exe
+>        ├─ EpgTimerSrv.exe
+>        ├─ EpgTimer.exe
+>        ├─ lua52.dll
+>        ├─ SendTSTCP.dll
+>        ├─ libssl-3(-x64).dll
+>        ├─ libcrypto-3(-x64).dll
+>        ├─ ssl_cert.pem
+>        ├─ ssl_peer.pem
+>        :
+
 > [!NOTE]  
-> 最低限の動作に必要なファイルは、EDCBの[releases](https://github.com/xtne6f/EDCB/releases)の`EDCB-work-plus-s-bin.zip`で入手可能です。
+> 最低限の動作に必要なファイルは、EDCBの[releases](https://github.com/xtne6f/EDCB/releases)の`EDCB-work-plus-s-bin.zip`で入手可能です。  
 > リモート視聴を行う場合は、別途使用するトランスコーダが必要です。  
 
-1. EDCBのReadme_Mod.txtの[*Civetwebの組み込みについて*](https://github.com/xtne6f/EDCB/blob/work-plus-s/Document/Readme_Mod.txt#civetweb%E3%81%AE%E7%B5%84%E3%81%BF%E8%BE%BC%E3%81%BF%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6)をよく読む
-1. HTTPSに必要な自己署名証明書を作成、インストール
-1. `HttpPublic`と`Setting`のフォルダをEDCBフォルダに入れる  
-   >[!TIP]
-   > 配置例 (E3、legacyは任意にリネーム等可)
-
-       EDCB/
-        ├─ HttpPublic/
-        │   ├─ api/
-        │   ├─ E3/
-        │   ├─ legacy/
-        │   ├─ video/
-        │   ├─ index.html
-        │   :
-        │
-        ├─ Tools/
-        │   ├─ ffmpeg/
-        │   │   ├─ ffmpeg.exe
-        │   │   ├─ ffprobe.exe
-        │   │   :
-        │   ├─ NVEncC/
-        │   │   :
-        │   ├─ QSVEncC/
-        │   │   :
-        │   ├─ asyncbuf.exe
-        │   ├─ edcbnosuspend.exe
-        │   ├─ psisiarc.exe
-        │   ├─ psisimux.exe
-        │   ├─ tsmemseg.exe
-        │   ├─ tsreadex.exe
-        │   ├─ tspgtxt.exe
-        │   :
-        │
-        ├─ Setting/
-        │   ├─ XCODE_OPTIONS.lua
-        │   ├─ HttpPublic.ini
-        │   :
-        │
-        ├─ EpgDataCap_Bon.exe
-        ├─ EpgTimerSrv.exe
-        ├─ EpgTimer.exe
-        ├─ lua52.dll
-        ├─ SendTSTCP.dll
-        ├─ libssl-3(-x64).dll
-        ├─ libcrypto-3(-x64).dll
-        ├─ ssl_cert.pem
-        ├─ ssl_peer.pem
-        :
-
-1. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
+### 4. EDCBのHTTPサーバ機能を有効化、アクセス制御を設定
    * `EnableHttpSrv=1`
    * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
    * `HttpPort=5510,5520,5511s,5521s`
    * `HttpNumThreads=50`
-   > [!TIP]
-   > SSEの仕様により、表示ごとにCivetWebのスレッドを1つ常に消費します。  
-   > `HttpNumThreads`がデフォルトの`5`の場合、複数のタブで開いた場合などで応答なしとなる事があります。  
-   > デバイスの性能や同時アクセス数に合わせて`HttpNumThreads`を適切な値に調整してください。  
-1. http://localhost:5510/ や https://localhost:5511/ にアクセスし、サーバー機能とHTTPSが有効か確認  
-   > [!TIP]
-   > うまく行かない場合はEDCBの設定を見直してください
-1. `HttpPublic.ini`での設定
+> [!TIP]
+> SSEの仕様により、表示ごとにCivetWebのスレッドを1つ常に消費します。  
+> `HttpNumThreads`がデフォルトの`5`の場合、複数のタブで開いた場合などで応答なしとなる事があります。  
+> デバイスの性能や同時アクセス数に合わせて`HttpNumThreads`を適切な値に調整してください。  
+### 5. http://localhost:5510/ や https://localhost:5511/ にアクセスし、サーバー機能とHTTPSが有効か確認  
+> [!TIP]
+> うまく行かない場合はEDCBの設定を見直してください
+### 6. `HttpPublic.ini`での設定
    * `useSsePort=1`に変更しSSE専用ポートの使用を有効にし、 https://localhost:5521/ でのアクセスが可能か確認
    * その他必要に応じて設定
-   > [!TIP]
-   > SSEの仕様により、ブラウザの同一オリジンに対する同時接続数制限(通常6～8接続)の1つを消費します。  
-   > レスポンスに影響が出る場合があるため、回避策としてSSE接続を専用ポートで実施します。     
-   > 設定が有効の場合、SSE接続はメインのポートに設定されたポート番号に`+10`したポート番号で確立されます。  
-   > 例: メインポートが`5510`の場合、SSEは`5520`で接続を試みます  
-1. リモート視聴する場合
+> [!TIP]
+> SSEの仕様により、ブラウザの同一オリジンに対する同時接続数制限(通常6～8接続)の1つを消費します。  
+> レスポンスに影響が出る場合があるため、回避策としてSSE接続を専用ポートで実施します。     
+> 設定が有効の場合、SSE接続はメインのポートに設定されたポート番号に`+10`したポート番号で確立されます。  
+> 例: メインポートが`5510`の場合、SSEは`5520`で接続を試みます  
+### 7. リモート視聴する場合
    * EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
    * `XCODE_OPTIONS.lua`でトランスコード用プリセットを設定
 
@@ -102,12 +103,14 @@ EDCBの基本的な操作に加え、リモート視聴などの機能を提供�
 
 ## 注意事項
 
-* オフライン機能のために各データをキャッシュし、LocalStorageに保存します。  
-  > [!NOTE]
-  > チャンネルスキャンした場合と録画プリセットを変更（設定ページでの変更を除く）した場合は、右上設定アイコンから基礎データから再取得してください。
+> [!NOTE]
+> オフライン機能のために各データをキャッシュし、LocalStorageに保存します。  
 
-  > [!TIP]
-  > 録画結果は日々増え、膨大になるため200件に制御してますが、予約情報は全件キャッシュしていますので全録環境の方は注意してください。  
+> [!NOTE]
+> チャンネルスキャンした場合と録画プリセットを変更（設定ページでの変更を除く）した場合は、右上設定アイコンから基礎データから再取得してください。
+
+> [!TIP]
+> 録画結果は日々増え、膨大になるため200件に制御してますが、予約情報は全件キャッシュしていますので全録環境の方は注意してください。  
 
 
 ### 不具合、改善点
