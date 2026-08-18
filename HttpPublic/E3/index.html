@@ -43,36 +43,40 @@ ct:Append([=[
   </nav>
 
   <template x-if="page === '#epg'">
-    <div class="s fixed center bottom" style="margin-bottom: 100px;z-index: 5;">
-      <nav class="toolbar large-elevate">
-        <button class="circle transparent" @click="scrollToNow()" title="現在時刻へ移動">
+    <div id="epg-toolbar" class="s fixed center bottom" :class="{ active: epg.toolbarActive }">
+      <nav class="center-align tiny-space">
+        <nav class="toolbar large-elevate">
+          <div>
+            <button class="circle transparent">
+              <i>cell_tower</i>
+            </button>
+            <menu class="top no-wrap">
+              <template x-for="n in displayableNetworks" :key="n.index">
+                <li :class="{ active: epg.activeNetwork === n.index }" @click="setNetwork(n.index)" x-text="n.name"></li>
+              </template>
+            </menu>
+          </div>
+          <nav class="no-margin no-space">
+            <button class="circle transparent" @click="shiftDate(-1)" :disabled="!canShift(-1)">
+              <i>chevron_backward</i>
+            </button>
+            <div>
+              <button class="circle transparent">
+                <i>today</i>
+              </button>
+              <menu class="top no-wrap">
+                <template x-for="dateObj in getEpgDateList()" :key="dateObj.getTime()">
+                  <li :class="{ active: isDateActive(dateObj) }" @click="setDate(dateObj)" x-text="getDateLabel(dateObj)"></li>
+                </template>
+              </menu>
+            </div>
+            <button class="circle transparent" @click="shiftDate(1)" :disabled="!canShift(1)">
+              <i>chevron_forward</i>
+            </button>
+          </nav>
+        </nav>
+        <button class="extra round circle error" @click="scrollToNow()" title="現在時刻へ移動">
           <i>my_location</i>
-        </button>
-        <div>
-          <button class="circle border transparent">
-            <i>cell_tower</i>
-          </button>
-          <menu class="top left no-wrap">
-            <template x-for="n in displayableNetworks" :key="n.index">
-              <li :class="{ active: epg.activeNetwork === n.index }" @click="setNetwork(n.index)" x-text="n.name"></li>
-            </template>
-          </menu>
-        </div>
-        <button class="circle transparent" @click="shiftDate(-1)" :disabled="!canShift(-1)">
-          <i>chevron_backward</i>
-        </button>
-        <div>
-          <button class="circle border transparent">
-            <i>today</i>
-          </button>
-          <menu class="top no-wrap">
-            <template x-for="dateObj in getEpgDateList()" :key="dateObj.getTime()">
-              <li :class="{ active: isDateActive(dateObj) }" @click="setDate(dateObj)" x-text="getDateLabel(dateObj)"></li>
-            </template>
-          </menu>
-        </div>
-        <button class="circle transparent" @click="shiftDate(1)" :disabled="!canShift(1)">
-          <i>chevron_forward</i>
         </button>
       </nav>
     </div>
@@ -243,7 +247,7 @@ ct:Append([=[
     <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
   </header>
 
-  <main class="scroll no-padding">
+  <main class="scroll no-padding" x-ref="main">
     <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
     <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
     <input id="commonCtok" type="hidden" value="]=]..CsrfToken('common')..[=[">

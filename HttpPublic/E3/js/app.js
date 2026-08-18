@@ -429,6 +429,7 @@ document.addEventListener('alpine:init', () => {
       this.player.app = this;
       this.library.app = this;
       this.log.app = this;
+      this.epg.$refs = this.$refs;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
       this.reminder.app = this;
@@ -521,6 +522,21 @@ document.addEventListener('alpine:init', () => {
       window.addEventListener('resize', () => {
         this.player.setbmlBrowserSize();
       });
+
+      let lastScrollTop = 0;
+      this.$refs.main.addEventListener('scroll', () => {
+        if (this.page !== '#epg') return;
+        const scrollTop = this.$refs.main.scrollTop;
+        if (scrollTop <= 10) {
+          this.epg.toolbarActive = true;
+        } else if (scrollTop > lastScrollTop + 5) {
+          this.epg.toolbarActive = false;
+        } else if (scrollTop < lastScrollTop - 5) {
+          this.epg.toolbarActive = true;
+        }
+        lastScrollTop = scrollTop;
+      }, { passive: true });
+
 
       // 起動時に設定を復元
       const savedSettings = localStorage.getItem('E3');
@@ -975,13 +991,14 @@ document.addEventListener('alpine:init', () => {
 
     // ページ切り替え時に呼ばれる
     async loadAll() {
+      this.epg.toolbarActive = true;
       // 視聴ページ以外に移動した場合は再生を停止してインスタンスを破棄
       if (this.player.ts && this.page !== '#watch') {
         this.player.destroy();
       }
 
       this.totalCount = null;
-      if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0, 0);
+      if (!['#epg', '#epgweek'].includes(this.page)) this.$refs.main.scrollTo(0, 0);
       this.sidePanel.close(false);
 
       if (this.page === '#dashboard') {
@@ -1566,6 +1583,7 @@ document.addEventListener('alpine:init', () => {
       lastLoadedWeeklyData: 0,
       lastLoadedWeeklyReserve: 0,
       weeklyLoadId: 0,
+      toolbarActive: true,
 
       isDragging: false,
       hasMoved: false,
@@ -1590,7 +1608,7 @@ document.addEventListener('alpine:init', () => {
           if (!this.hasMoved) e.currentTarget.setPointerCapture(e.pointerId);
           this.hasMoved = true;
           document.body.style.cursor = 'grabbing';
-          document.querySelector('main').scrollBy(-e.movementX, -e.movementY);
+          this.$refs.main.scrollBy(-e.movementX, -e.movementY);
           // 直近の移動量を速度として記録
           this.velocityX = -e.movementX;
           this.velocityY = -e.movementY;
@@ -1606,7 +1624,7 @@ document.addEventListener('alpine:init', () => {
           const friction = 0.85; // 摩擦係数（1に近いほど止まりにくい）
           const moment = () => {
             if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) return;
-            document.querySelector('main').scrollBy(this.velocityX, this.velocityY);
+            this.$refs.main.scrollBy(this.velocityX, this.velocityY);
             this.velocityX *= friction;
             this.velocityY *= friction;
             this.momentID = requestAnimationFrame(moment);
@@ -1730,7 +1748,7 @@ document.addEventListener('alpine:init', () => {
       // 代入後にプロキシ化された参照を取得する（比較用）
       const currentServices = this.epg.servicesToDisplay;
 
-      if (timeChanged || networkChanged || isUnchanged) document.querySelector('main').scrollTo(0, 0);
+      if (timeChanged || networkChanged || isUnchanged) this.$refs.main.scrollTo(0, 0);
 
       // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
       let index = 0;
@@ -1855,7 +1873,7 @@ document.addEventListener('alpine:init', () => {
         this.epg.weeklyToDisplay.forEach(s => s.displayEvents = []);
       }
 
-      if (serviceChanged || timeChanged || isUnchanged) document.querySelector('main').scrollTo(0, 0);
+      if (serviceChanged || timeChanged || isUnchanged) this.$refs.main.scrollTo(0, 0);
 
       const processEvents = events => {
         let index = 0;
@@ -2063,7 +2081,7 @@ document.addEventListener('alpine:init', () => {
         this.setDate(0);
       } else {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
-        document.querySelector('main').scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
+        this.$refs.main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
       }
     },
 
