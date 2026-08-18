@@ -344,7 +344,6 @@ document.addEventListener('alpine:init', () => {
       if (!id) {
         // id パラメータが無ければサイドパネルを閉じる
         if (this.sidePanel.el && this.sidePanel.el.open) {
-          this.sidePanel.preventHistoryBack = true;
           this.sidePanel.el.close();
           this.sidePanel.el.previousElementSibling.classList.remove('active');
         }
@@ -491,8 +490,29 @@ document.addEventListener('alpine:init', () => {
       window.addEventListener('popstate', () => {
         const oldPage = this.page;
         this.page = window.location.hash || '#dashboard';
+        const newParams = Object.fromEntries(new URLSearchParams(window.location.search));
+        let paramsChanged = false;
+
+        // id以外のすべてのパラメータの変化を自動チェック
+        const allKeys = new Set([...Object.keys(this.params), ...Object.keys(newParams)]);
+        allKeys.delete('id');
+        for (const k of allKeys) {
+          if (this.params[k] !== newParams[k]) {
+            paramsChanged = true;
+            break;
+          }
+        }
+
+        // idパラメータは #epgweek と #watch の場合のみ、サービスID部分（最初の3ブロック）の変化を監視
+        if (!paramsChanged && ['#epgweek', '#watch'].includes(this.page)) {
+          const getServiceId = id => id ? id.split('-').slice(0, 3).join('-') : '';
+          if (getServiceId(this.params.id) !== getServiceId(newParams.id)) {
+            paramsChanged = true;
+          }
+        }
+
         this.updateParams();
-        if (this.page !== oldPage) {
+        if (this.page !== oldPage || paramsChanged) {
           this.loadAll();
         } else {
           this.restoreSidePanel();
@@ -962,8 +982,7 @@ document.addEventListener('alpine:init', () => {
 
       this.totalCount = null;
       if (!['#epg', '#epgweek'].includes(this.page)) document.querySelector('main').scrollTo(0, 0);
-      this.sidePanel.preventHistoryBack = true;
-      this.sidePanel.close();
+      this.sidePanel.close(false);
 
       if (this.page === '#dashboard') {
         this.syncDashboardData();
@@ -1770,8 +1789,12 @@ document.addEventListener('alpine:init', () => {
       setTimeout(processNext, 0);
     },
     async loadWeeklyEpg() {
-      const serviceId = this.params.id;
+      let serviceId = this.params.id;
       if (!serviceId) return;
+      const parts = serviceId.split('-');
+      if (parts.length > 3) {
+        serviceId = parts.slice(0, 3).join('-');
+      }
       const service = this.allData.service.get(serviceId);
       if (!service) return;
 
@@ -2050,18 +2073,21 @@ document.addEventListener('alpine:init', () => {
       d: {},
       get r() { return this.d?.recSetting ?? {} },
       get s() { return this.d?.searchInfo ?? {} },
-      preventHistoryBack: false,
+      shouldGoBack: false,
       selectedGenres: [],
       selectedServices: [],
       init() {
-        // 閉じられたときにURLパラメータをクリア
         this.el.addEventListener('close', () => {
-          if (this.preventHistoryBack) {
-            this.preventHistoryBack = false;
-            return;
-          }
-          if (this.app.params.id) {
+          if (!this.app.params.id) return;
+          if (this.shouldGoBack) {
+            this.shouldGoBack = false;
             history.back();
+          } else {
+            let targetId = null;
+            if (this.app.page === '#epgweek' && this.app.params.id) {
+              targetId = this.app.params.id.split('-').slice(0, 3).join('-');
+            }
+            this.app.updateQueryParam({ id: targetId }, false);
           }
         });
 
@@ -2153,7 +2179,20 @@ document.addEventListener('alpine:init', () => {
         this.el.show();
         this.el.previousElementSibling.classList.add('active');
       },
-      close() {
+      close(clearParam = true) {
+        if (clearParam && this.app.params.id) {
+          if (this.shouldGoBack) {
+            this.shouldGoBack = false;
+            history.back();
+            return;
+          } else {
+            let targetId = null;
+            if (this.app.page === '#epgweek' && this.app.params.id) {
+              targetId = this.app.params.id.split('-').slice(0, 3).join('-');
+            }
+            this.app.updateQueryParam({ id: targetId }, false);
+          }
+        }
         this.el.close();
         this.el.previousElementSibling.classList.remove('active');
       }
@@ -2247,6 +2286,7 @@ document.addEventListener('alpine:init', () => {
         idVal = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
       }
       const push = !this.params.id;
+      this.sidePanel.shouldGoBack = push;
       this.updateQueryParam({ id: idVal }, push);
 
       if (d.past || d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
@@ -2272,6 +2312,7 @@ document.addEventListener('alpine:init', () => {
       // クエリパラメータを更新
       const idVal = d.id || d.dataID;
       const push = !this.params.id;
+      this.sidePanel.shouldGoBack = push;
       this.updateQueryParam({ id: idVal }, push);
     },
     async openRecinfoDetail(d) {
@@ -2282,6 +2323,7 @@ document.addEventListener('alpine:init', () => {
       // クエリパラメータを更新
       const idVal = d.id;
       const push = !this.params.id;
+      this.sidePanel.shouldGoBack = push;
       this.updateQueryParam({ id: idVal }, push);
       if (!d.programInfo) {
         // 1. 詳細情報を取得
