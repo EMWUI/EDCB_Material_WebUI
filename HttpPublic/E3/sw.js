@@ -1,4 +1,4 @@
-const CACHE_NAME = 'e3-pwa-cache-v2';
+const CACHE_NAME = 'e3-pwa-cache-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   './css/style.css',
   './css/ts-loader.css',
   './css/beer.min.css',
+  './css/loading-indicator.svg',
   './js/beer.min.js',
   './js/material-dynamic-colors.min.js',
   './js/danmaku.js',
@@ -60,7 +61,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
+          if (key.startsWith('e3-pwa-cache-') && key !== CACHE_NAME) {
             return caches.delete(key);
           }
         })
@@ -74,7 +75,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   // 動的APIやluaスクリプト、GET以外のリクエストはキャッシュ処理から除外する
   if (
+    !url.protocol.startsWith('http') ||
     url.pathname.includes('/api/') ||
+    url.pathname.includes('/video/') ||
     url.pathname.endsWith('.lua') ||
     event.request.method !== 'GET'
   ) {
@@ -85,6 +88,7 @@ self.addEventListener('fetch', (event) => {
   const isCacheFirstAsset =
     url.pathname.endsWith('.woff2') ||
     url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.svg') ||
     url.pathname.endsWith('.ico') ||
     url.pathname.includes('.min.');
 
