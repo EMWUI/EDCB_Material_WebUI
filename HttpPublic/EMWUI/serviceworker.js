@@ -1,5 +1,5 @@
 // キャッシュ名とキャッシュファイルの指定
-var CACHE_NAME = 'v2';
+var CACHE_NAME = 'EMWUI';
 var cacheList = [
 	'./css/material.min.css',
 	'./js/hammer.min.js',
@@ -41,7 +41,7 @@ self.addEventListener('activate', function(event) {
 		caches.keys().then(function(cacheNames) {
 			return Promise.all(
 				cacheNames.filter(function(cacheName) {
-					return cacheName !== CACHE_NAME;
+					return cacheName.startsWith('EMWUI') && cacheName !== CACHE_NAME;
 				}).map(function(cacheName) {
 					return caches.delete(cacheName);
 				})
