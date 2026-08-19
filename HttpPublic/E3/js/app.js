@@ -670,7 +670,6 @@ document.addEventListener('alpine:init', () => {
       this.eventSource = new EventSource(sseUrl.toString(), { withCredentials: true });
 
       this.eventSource.onopen = async () => {
-        // this.snackbar.add({ text: 'onopen' });
         this.isOnline = true;
 
         this.loading = true;
@@ -806,8 +805,6 @@ document.addEventListener('alpine:init', () => {
         this.updateNetworkMask();
         this.saveCache();
 
-        // this.snackbar.add({ text: 'EPG updated' });
-
         if (this.page === '#epg') this.loadEpg();
         if (this.page === '#epgweek') this.loadWeeklyEpg();
         this.syncNowOnAir();
@@ -895,9 +892,9 @@ document.addEventListener('alpine:init', () => {
         })
         .then(d => {
           if (d.err) {
-            this.snackbar.add({ text: d.err, error: true });
+            this.snackbar.error(d.err);
           } else {
-            this.snackbar.add({ text: d.info || '操作を完了しました' });
+            this.snackbar.add(d.info);
             if (d.info && d.info.includes('起動')) {
               this.nosuspendActive = true;
             } else if (d.info && d.info.includes('停止')) {
@@ -909,7 +906,11 @@ document.addEventListener('alpine:init', () => {
         })
         .catch(err => {
           console.error('通信失敗:', err);
-          this.snackbar.add({ text: '通信に失敗しました', error: true });
+          if (this.isOnline) {
+            this.snackbar.tokenError();
+          } else {
+            this.snackbar.error('通信に失敗しました');
+          }
         });
     },
     suspendSystem() {
@@ -919,10 +920,10 @@ document.addEventListener('alpine:init', () => {
       this.snackbar.add({
         top: true,
         text: `${modeText}に移行しますか？`,
-        action_text: '実行',
-        action: () => {
+        btn: '実行',
+        btnFn: () => {
           const fd = new URLSearchParams({
-            ctok: document.getElementById('commonCtok')?.value || ''
+            ctok: document.getElementById('commonCtok')?.value || '',
           });
           fd.append(this.suspendMode, 'y');
           fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
@@ -932,14 +933,18 @@ document.addEventListener('alpine:init', () => {
             })
             .then(d => {
               if (d.err) {
-                this.snackbar.add({ text: d.err, error: true });
+                this.snackbar.error(d.err);
               } else {
-                this.snackbar.add({ text: d.info || `${modeText}移行要求を送信しました` });
+                this.snackbar.add(d.info);
               }
             })
             .catch(err => {
               console.error('通信失敗:', err);
-              this.snackbar.add({ text: '通信に失敗しました', error: true });
+              if (this.isOnline) {
+                this.snackbar.tokenError();
+              } else {
+                this.snackbar.error('通信に失敗しました');
+              }
             });
         },
         time: 6000,
@@ -958,14 +963,18 @@ document.addEventListener('alpine:init', () => {
         })
         .then(d => {
           if (d.err) {
-            this.snackbar.add({ text: d.err, error: true });
+            this.snackbar.error(d.err);
           } else {
-            this.snackbar.add({ text: d.info || 'EPG取得を開始しました' });
+            this.snackbar.add(d.info);
           }
         })
         .catch(err => {
           console.error('通信失敗:', err);
-          this.snackbar.add({ text: '通信に失敗しました', error: true });
+          if (this.isOnline) {
+            this.snackbar.tokenError();
+          } else {
+            this.snackbar.error('通信に失敗しました');
+          }
         });
     },
     epgReload() {
@@ -981,14 +990,18 @@ document.addEventListener('alpine:init', () => {
         })
         .then(d => {
           if (d.err) {
-            this.snackbar.add({ text: d.err, error: true });
+            this.snackbar.error(d.err);
           } else {
-            this.snackbar.add({ text: d.info || 'EPG再読み込みを開始しました' });
+            this.snackbar.add(d.info);
           }
         })
         .catch(err => {
           console.error('通信失敗:', err);
-          this.snackbar.add({ text: '通信に失敗しました', error: true });
+          if (this.isOnline) {
+            this.snackbar.tokenError();
+          } else {
+            this.snackbar.error('通信に失敗しました');
+          }
         });
     },
 
@@ -2298,7 +2311,7 @@ document.addEventListener('alpine:init', () => {
     },
     async openProgramDetail(d) {
       if (d.isDummy) {
-        this.snackbar.add({ text: 'この時間帯の番組情報がありません。', error: true })
+        this.snackbar.error('この時間帯の番組情報がありません。')
         return
       }
       this.detail = d;
@@ -2406,10 +2419,7 @@ document.addEventListener('alpine:init', () => {
         const s = this.sidePanel.s;
         if (!this.isValidSearchRange(s)) {
           const isMissing = s.archive && (!s.startDate || !s.startTime || !s.endDate || !s.endTime);
-          this.snackbar.add({
-            text: isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください',
-            error: true
-          });
+          this.snackbar.error(isMissing ? 'アーカイブ検索の日時をすべて入力してください' : '開始日時は終了日時より前に設定してください');
           return;
         }
         this.search = this.clone(this.sidePanel.d);
@@ -2441,7 +2451,11 @@ document.addEventListener('alpine:init', () => {
         this.sidePanel.close();
       } catch (e) {
         console.error("Search failed", e);
-        this.snackbar.add({ text: '検索に失敗しました', error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('検索に失敗しました');
+        }
       } finally {
         this.loading = false;
       }
@@ -2651,10 +2665,10 @@ document.addEventListener('alpine:init', () => {
         const idx = this.list.findIndex(item => item.id === id);
         if (idx > -1) {
           this.list.splice(idx, 1);
-          this.app.snackbar.add({ text: 'リマインダーを解除しました' });
+          this.app.snackbar.add('リマインダーを解除しました');
         } else {
           this.list.push({ id, title: d.shortInfo?.event_name || d.title, startTimeInt: d.startTimeInt, stationName: this.app.getServiceName(d), text: d.shortInfo?.text_char, notified: false });
-          this.app.snackbar.add({ text: 'リマインダーを追加しました' });
+          this.app.snackbar.add('リマインダーを追加しました');
         }
         this.save();
       },
@@ -2662,7 +2676,7 @@ document.addEventListener('alpine:init', () => {
       remove(id) {
         this.list = this.list.filter(item => item.id !== id);
         this.save();
-        this.app.snackbar.add({ text: 'リマインダーを解除しました' });
+        this.app.snackbar.add('リマインダーを解除しました');
       },
       notify(item) {
         const n = new Notification(item.title, {
@@ -2684,7 +2698,9 @@ document.addEventListener('alpine:init', () => {
     snackbar: {
       list: [],
       active: null,
+      el: document.getElementById('snackbar'),
       add(d) {
+        if (typeof d === 'string') d = { text: d };
         this.list.push(d);
         if (!this.active) this.show();
       },
@@ -2692,10 +2708,23 @@ document.addEventListener('alpine:init', () => {
         this.active = this.list.shift();
         if (!this.active) return;
 
+        this.el.showPopover();
         const time = this.active.time || 2500;
-        ui('#snackbar', time);
+        setTimeout(() => this.el.hidePopover(), time);
+        if (this.active.fn) this.active.fn();
         // 表示時間 + アニメーション用のバッファ（500ms）を待ってから次を表示
         setTimeout(() => this.show(), time + 500);
+      },
+      error(text) {
+        this.add({ text, class: 'error' });
+      },
+      tokenError() {
+        this.add({
+          text: 'トークン認証に失敗。リロードします',
+          class: 'error',
+          fn() { this.t = setTimeout(() => location.reload(), 3000) },
+          btnFn() { clearTimeout(this.t) },
+        });
       },
     },
 
@@ -2719,13 +2748,18 @@ document.addEventListener('alpine:init', () => {
         if (!r.ok) throw new Error(`Server Error: ${r.status}`);
         return r.json();
       }).then(d => {
-        if (d.err) this.snackbar.add({ text: d.err, error: true });
-        else this.snackbar.add({ text: d.success });
+        if (d.err) {
+          this.snackbar.error(d.err);
+        } else {
+          this.snackbar.add(d.success);
+        }
       }).catch(err => {
         console.error('通信失敗:', err);
-        // ctokエラーを想定してリロード
-        const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('保存に失敗しました');
+        }
       });
     },
     addReserve(e) {
@@ -3174,7 +3208,7 @@ document.addEventListener('alpine:init', () => {
           this.data.p_raw = p.p;
           // 取得成功したら現在の状態を記憶（homeがあれば優先、なければi,d,p）
           if (!this.data.err) this.lastParams = this.app.params.home ? { home: 1 } : { i: this.app.params.i, d: this.app.params.d, p: this.app.params.p };
-          if (this.data.err) this.app.snackbar.add({ text: this.data.err, error: true });
+          if (this.data.err) this.app.snackbar.error(this.data.err);
         } catch (e) {
           console.error(e);
           this.data = { dir: [], file: [], path: [], err: '通信に失敗しました' };
@@ -3294,12 +3328,14 @@ document.addEventListener('alpine:init', () => {
         return r.json();
       }).then(d => {
         this.settings.data = d;
-        this.snackbar.add({ text: '保存しました' });
+        this.snackbar.add('保存しました');
       }).catch(err => {
         console.error('通信失敗:', err);
-        // ctokエラーを想定してリロード
-        const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('設定の保存に失敗しました');
+        }
       });
     },
     async loadSetting() {
@@ -3309,7 +3345,7 @@ document.addEventListener('alpine:init', () => {
         this.settings.data = await res.json();
       } catch (e) {
         console.error(e);
-        this.snackbar.add({ text: '設定の取得に失敗しました', error: true });
+        this.snackbar.error('設定の取得に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -3335,12 +3371,14 @@ document.addEventListener('alpine:init', () => {
         this.lastUpdated.recpreset = Date.now();
         this.saveCache();
 
-        this.snackbar.add({ text: '削除しました' });
+        this.snackbar.add('削除しました');
       }).catch(err => {
         console.error('通信失敗:', err);
-        // ctokエラーを想定してリロード
-        //const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('プリセットの削除に失敗しました');
+        }
       });
     },
     savePreset(add) {
@@ -3357,12 +3395,14 @@ document.addEventListener('alpine:init', () => {
         this.lastUpdated.recpreset = Date.now();
         this.saveCache();
 
-        this.snackbar.add({ text: '保存しました' });
+        this.snackbar.add('保存しました');
       }).catch(err => {
         console.error('通信失敗:', err);
-        // ctokエラーを想定してリロード
-        //const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('プリセットの保存に失敗しました');
+        }
       });
     },
     parsePlugin(data, mode, name) {
@@ -3415,12 +3455,14 @@ document.addEventListener('alpine:init', () => {
         return r.json();
       }).then(d => {
         this.parsePlugin(d, mode, name);
-        this.snackbar.add({ text: '保存しました' });
+        this.snackbar.add('保存しました');
       }).catch(err => {
         console.error('通信失敗:', err);
-        // ctokエラーを想定してリロード
-        const t = setTimeout(() => location.reload(), 3000);
-        this.snackbar.add({ text: 'トークン認証に失敗。リロードします', action: () => clearTimeout(t), time: 2500, error: true });
+        if (this.isOnline) {
+          this.snackbar.tokenError();
+        } else {
+          this.snackbar.error('設定の保存に失敗しました');
+        }
       });
     },
     async loadPlugIn(mode, name) {
@@ -3431,7 +3473,7 @@ document.addEventListener('alpine:init', () => {
         this.parsePlugin(data, mode, name);
       } catch (e) {
         console.error(e);
-        this.snackbar.add({ text: '設定の取得に失敗しました', error: true });
+        this.snackbar.error('設定の取得に失敗しました');
       } finally {
         this.loading = false;
       }

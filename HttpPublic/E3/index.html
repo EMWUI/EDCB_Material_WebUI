@@ -4354,12 +4354,12 @@ ct:Append([=[
     </template>
   </dialog>
 
-  <div id="snackbar" class="snackbar" :class="{ error: active?.error, top: active?.top }" x-data="snackbar">
+  <div id="snackbar" class="snackbar" :class="active?.class" x-data="snackbar" popover>
     <div class="max" x-text="active?.text"></div>
-    <template x-if="active?.action != null">
+    <template x-if="active?.btnFn != null">
       <a class="inverse-primary-text"
-         x-text="active?.action_text || 'キャンセル'" 
-         @click="active.action()"></a>
+         x-text="active?.btn || 'キャンセル'" 
+         @click="active.btnFn()"></a>
     </template>
   </div>
 </body>
