@@ -417,7 +417,7 @@ document.addEventListener('alpine:init', () => {
     calendar(d, details, authuser, src) {
       return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
         }&location=${encodeURIComponent(this.convert.ZtoH(this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.ts_name||this.getServiceName(d)))
-        }&dates=${this.convert.date(d.startTime, 'ISO')}/${this.convert.date(new Date(d.startTime).getTime() + d.durationSecond * 1000, 'ISO')
+        }&dates=${this.convert.ISO(d.startTime)}/${this.convert.ISO(d.startTimeInt + d.durationSecond * 1000)
         }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
         }&authuser=${authuser
         }&src=${src}`
@@ -744,7 +744,10 @@ document.addEventListener('alpine:init', () => {
         const internalKey = pageHash.replace('#', '');
         const map = this.allData[internalKey];
         map.clear();
-        list.forEach(item => map.set(this.getDataKey(item, internalKey), item));
+        list.forEach(v => {
+          if (v.startTime) v.startTimeInt = new Date(v.startTime).getTime();
+          map.set(this.getDataKey(v, internalKey), v);
+        });
         this.lastUpdated[internalKey] = Date.now();
         this.totals[internalKey] = data.total ?? list.length;
 
@@ -1391,17 +1394,18 @@ document.addEventListener('alpine:init', () => {
       date(t, show_sec, show_ymd) {
         if (!t) return '未定';
         t = this.viewDate(t);
-        if (show_sec == 'ISO') return `${t.getUTCFullYear()}${this.zero(t.getUTCMonth()+1)}${this.zero(t.getUTCDate())}T${this.zero(t.getUTCHours())}${this.zero(t.getUTCMinutes())}${this.zero(t.getUTCSeconds())}`;
-        return `${show_ymd ? `${t.getUTCFullYear()}/${this.zero(t.getUTCMonth()+1)}/${this.zero(t.getUTCDate())}(${dayText[t.getUTCDay()]}) ` : ''
-          }${this.zero(t.getUTCHours())}:${this.zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${this.zero(t.getUTCSeconds())}</small>` : ''}`;
+        return `${show_ymd ? `${this.ymd(t)} ` : ''}${this.time(t, show_sec)}`;
       },
-      dateTime(t) {
-        if (!t) return '未定';
-        const d = this.viewDate(t);
-        return `${d.getUTCFullYear()}/${this.zero(d.getUTCMonth()+1)}/${this.zero(d.getUTCDate())} ${this.zero(d.getUTCHours())}:${this.zero(d.getUTCMinutes())}:${this.zero(d.getUTCSeconds())}`;
+      ymd(t, show_day) {
+        return `${t.getUTCFullYear()}/${this.zero(t.getUTCMonth()+1)}/${this.zero(t.getUTCDate())}${show_day ? `(${dayText[t.getUTCDay()]})` : ''}`
       },
-      time(t) {
-        return `${this.zero(Math.floor(t / 3600))}:${this.zero(Math.floor((t / 60) % 60))}:${this.zero(Math.floor(t % 60))}`
+      time(t, show_sec = true) {
+        if (typeof t === 'object') return `${this.zero(t.getUTCHours())}:${this.zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${this.zero(t.getUTCSeconds())}</small>` : ''}`
+        return `${this.zero(Math.floor(t / 3600))}:${this.zero(Math.floor((t / 60) % 60))}${show_sec ? `:${this.zero(Math.floor(t % 60))}` : ''}`
+      },
+      ISO(t) {
+        t = this.viewDate(t);
+        return `${t.getUTCFullYear()}${this.zero(t.getUTCMonth()+1)}${this.zero(t.getUTCDate())}T${this.zero(t.getUTCHours())}${this.zero(t.getUTCMinutes())}${this.zero(t.getUTCSeconds())}`;
       },
       text(a) {
         if (!a) return '';
@@ -1433,6 +1437,12 @@ document.addEventListener('alpine:init', () => {
     },
     getPageTitle() {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
+    },
+    getDateHtml(v, show_ymd) {
+      if (!v.startTimeInt) return '未定';
+      const start = this.convert.viewDate(v.startTimeInt);
+      const end = !v.durationSecond ? '未定' : this.convert.time(new Date(start.getTime() + v.durationSecond*1000));
+      return `<span class="row wrap" style="gap: 0 0.3rem;">${show_ymd ? `<span>${this.convert.ymd(start, true)}</span>` : ''}<span>${this.convert.time(start)}～${end}</span></span>`
     },
     getServiceName(d, id) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || (id ? `${d.onid}-${d.tsid}-${d.sid}` : '不明');
@@ -2287,6 +2297,10 @@ document.addEventListener('alpine:init', () => {
       this.openProgramDetail(await this.getEpgById(id));
     },
     async openProgramDetail(d) {
+      if (d.isDummy) {
+        this.snackbar.add({ text: 'この時間帯の番組情報がありません。', error: true })
+        return
+      }
       this.detail = d;
       if (d.eid === 65535) ui("#recSetting");
       else ui("#info");

@@ -218,7 +218,7 @@ ct:Append([=[
                   <div x-html="convert.title(item.title)"></div>
                   <label>
                     <span x-text="item.stationName"></span>
-                    <span x-text="convert.dateTime(item.startTimeInt)"></span>
+                    <span x-html="convert.date(item.startTimeInt, true, true)"></span>
                   </label>
                 </div>
                 <button class="circle transparent small" @click="remove(item.id)">
@@ -299,7 +299,7 @@ ct:Append([=[
                     <div class="max secondary-text">
                       <div x-text="s.service_name"></div>
                       <template x-if="entry">
-                        <div x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                        <div x-html="getDateHtml(entry.current)"></div>
                       </template>
                     </div>
                   </div>
@@ -333,7 +333,7 @@ ct:Append([=[
                 <img class="round tiny border" :src="getLogoPath(d)">
                 <div class="max secondary-text">
                   <div x-text="d.stationName"></div>
-                  <div class="secondary-text" x-html="`${convert.date(d.startTime, true)}～${convert.date(new Date(d.startTime) + d.durationSecond*1000, true)}`"></div>
+                  <div class="secondary-text" x-html="getDateHtml(d)"></div>
                 </div>
               </div>
               <div class="title bold max" x-html="convert.title(d.title)"></div>
@@ -538,10 +538,10 @@ ct:Append([=[
                   </div>
                   <div class="max">
                     <div class="row no-margin no-wrap secondary-text small-text">
-                      <div class="max title bold" x-text="s.service_name"></div>
                       <template x-if="entry">
-                        <div x-html="`${convert.date(entry.current.startTimeInt, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                        <div class="max" x-html="getDateHtml(entry.current)"></div>
                       </template>
+                      <div class="title bold" x-text="s.service_name"></div>
                     </div>
                     <template x-if="entry">
                       <div>
@@ -777,7 +777,7 @@ ct:Append([=[
                   <div class="row">
                     <span class="chip primary small" x-show="!epg.isDummy">
                       <i>event</i>
-                      <span x-html="`${convert.date(epg.startTime, true, true)}～${convert.date((epg.startTimeInt || new Date(epg.startTime).getTime()) + epg.durationSecond*1000, true)}`"></span>
+                      <span x-html="getDateHtml(epg, true)"></span>
                     </span>
                   </div>
                   <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
@@ -804,10 +804,10 @@ ct:Append([=[
                             </div>
                             <div class="max">
                               <div class="row no-margin no-wrap">
-                                <div class="max title bold secondary-text small-text" x-text="s.service_name"></div>
                                 <template x-if="entry">
-                                  <div class="secondary-text small-text" x-html="`${convert.date(entry.current.startTime, true)}～${convert.date(entry.current.startTimeInt + entry.current.durationSecond*1000, true)}`"></div>
+                                  <div class="max secondary-text small-text" x-html="getDateHtml(entry.current)"></div>
                                 </template>
+                                <div class="title bold secondary-text small-text" x-text="s.service_name"></div>
                               </div>
                               <template x-if="entry">
                                 <div>
@@ -906,12 +906,12 @@ ct:Append([=[
     </template>
 
     <template id="reserveList-template" x-ref="reserveList">
-      <div class="max row no-margin no-wrap" x-data="{ startTime: new Date(d.startTime).getTime() }">
+      <div class="max row no-margin no-wrap">
         <div>
-          <template x-if="startTime < now" >
-            <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : startTime + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
+          <template x-if="d.startTimeInt < now" >
+            <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTimeInt + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
           </template>
-          <template x-if="startTime > now">
+          <template x-if="d.startTimeInt > now">
             <label class="checkbox icon" @click.stop>
               <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
               <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
@@ -923,7 +923,7 @@ ct:Append([=[
         </div>
         <div class="max" :class="!d.recSetting?.recEnabled ? 'medium-opacity' : ''">
           <div class="row no-margin no-wrap secondary-text">
-            <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(startTime + d.durationSecond*1000, true)}`"></span>
+            <span class="max" x-html="getDateHtml(d, true)"></span>
             <span x-text="d.stationName"></span>
           </div>
           <div class="title middle-align bold large-text">
@@ -1104,7 +1104,7 @@ ct:Append([=[
                       </span>
                       <span class="middle-align">
                         <i class="tiny">schedule</i>
-                        <span x-text="convert.dateTime(item.mtime)"></span>
+                        <span x-html="convert.date(item.mtime, true, true)"></span>
                       </span>
                     </div>
                   </div>
@@ -3150,7 +3150,7 @@ ct:Append([=[
               <div class="max">
                 <span class="chip primary">
                   <i>event</i>
-                  <span x-html="`${convert.date(d.startTime, true, true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
+                  <span x-html="getDateHtml(d, true)"></span>
                 </span>
                 <span class="chip secondary">
                   <i>cell_tower</i>
