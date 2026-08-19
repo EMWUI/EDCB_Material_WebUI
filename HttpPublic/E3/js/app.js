@@ -1722,6 +1722,7 @@ document.addEventListener('alpine:init', () => {
       // データソースの決定
       let dataMap = null;
       if (gridStart >= this.epg.coreRange.start && gridEnd <= this.epg.coreRange.end) {
+        // 非表示部分が出てくるのはCSの長時間番組でコア範囲が予定外の広さになるので
         dataMap = this.allData.epg;
       } else {
         dataMap = this.epg.extraData.get(slotKey);
@@ -2090,15 +2091,15 @@ document.addEventListener('alpine:init', () => {
       return target.getTime() === currentShowDay.getTime();
     },
     // 現在時刻の線の位置（px）を取得。範囲外なら -1
-    getNowLinePos() {
+    getNowLinePos(hours = 24) {
       const start = this.epg.epgStartTime;
-      const end = start + 24 * 3600 * 1000;
+      const end = start + hours * 3600 * 1000;
       if (this.now < start || this.now > end) return -1;
       return Math.floor((this.now - start) / 60000) * this.epg.set.minHeight;
     },
     // 現在時刻の位置までスクロールする
     scrollToNow() {
-      const pos = this.getNowLinePos();
+      const pos = this.getNowLinePos(3);
       if (pos < 0) {
         // 表示範囲外なら「今日」へ移動（loadAllが走り、現在時刻開始のグリッドになる）
         this.setDate(0);
