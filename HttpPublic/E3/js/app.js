@@ -774,8 +774,8 @@ document.addEventListener('alpine:init', () => {
 
         const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=36`;
 
-        // id65535-65535-65535でリクエストを1回だけ送り、全サービスの番組情報を取得する
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535${rangeQuery}`);
+        // tab=0でリクエストを1回だけ送り、全サービスの番組情報を取得する
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=0${rangeQuery}`);
 
         const list = await res.json();
 
@@ -824,8 +824,7 @@ document.addEventListener('alpine:init', () => {
           hour += 24;
         }
         const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-        // 27時間分を取得
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=65535-65535-65535&date=${dateStr}&hour=${hour}&interval=24`);
+        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=${this.params.tab}&date=${dateStr}&hour=${hour}&interval=24`);
         const list = await res.json();
 
         if (list.err) throw new Error(list.err);
@@ -1712,7 +1711,7 @@ document.addEventListener('alpine:init', () => {
     },
     getEpgKey(time) {
       const d = new Date(time);
-      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
+      return `${this.params.tab}-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
     },
     loadEpg() {
       const gridStart = this.epg.epgStartTime;

@@ -6,13 +6,24 @@ json=GetVarInt(mg.request_info.query_string,'json',0,1)==1
 
 onid,tsid,sid,eid=GetVarEventID(mg.request_info.query_string,'id')
 if eid==0 then
-  onid,tsid,sid,startTime=GetVarPastEventID(mg.request_info.query_string,'id')
-  if startTime==0 then
-    onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
-  end
-  if onid==65535 and tsid==65535 and sid==65535 then
-    id=SelectChDataList(edcb.GetChDataList())
+  tab=GetVarInt(mg.request_info.query_string,'tab',0,#NetworkType()) or -1
+  if tab>=0 then
+    startTime=0
+    if tab==0 then
+      id=SelectChDataList(edcb.GetChDataList())
+    else
+      id={}
+      for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
+        if tab==NetworkIndex(v.onid, v.partialFlag) then
+          table.insert(id, v)
+        end
+      end
+    end
   else
+    onid,tsid,sid,startTime=GetVarPastEventID(mg.request_info.query_string,'id')
+    if startTime==0 then
+      onid,tsid,sid=GetVarServiceID(mg.request_info.query_string,'id')
+    end
     id={{onid=onid, tsid=tsid, sid=sid}}
   end
 end
