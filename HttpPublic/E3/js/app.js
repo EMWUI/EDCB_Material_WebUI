@@ -425,11 +425,11 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.updateParams();
+      this.$main = this.epg.$main = this.$refs.main;
       this.sidePanel.app = this;
       this.player.app = this;
       this.library.app = this;
       this.log.app = this;
-      this.epg.$refs = this.$refs;
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
       this.reminder.app = this;
@@ -524,9 +524,9 @@ document.addEventListener('alpine:init', () => {
       });
 
       let lastScrollTop = 0;
-      this.$refs.main.addEventListener('scroll', () => {
+      this.$main.addEventListener('scroll', () => {
         if (this.page !== '#epg') return;
-        const scrollTop = this.$refs.main.scrollTop;
+        const scrollTop = this.$main.scrollTop;
         if (scrollTop <= 10) {
           this.epg.toolbarActive = true;
         } else if (scrollTop > lastScrollTop + 5) {
@@ -605,12 +605,16 @@ document.addEventListener('alpine:init', () => {
             }
           });
           // キャッシュから復元したデータの時間範囲を特定（コア範囲）
-          let min = Infinity, max = 0;
-          this.allData.epg.forEach(m => m.forEach(v => {
-            min = Math.min(min, v.startTimeInt);
-            max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
-          }));
-          this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
+          if (cache.coreRange) {
+            this.epg.coreRange = cache.coreRange;
+          } else {
+            let min = Infinity, max = 0;
+            this.allData.epg.forEach(m => m.forEach(v => {
+              min = Math.min(min, v.startTimeInt);
+              max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
+            }));
+            this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
+          }
         }
         // 「すべて」(bit 0)を保証
         if ((this.epg.networkMask & 1) === 0) this.epg.networkMask |= 1;
@@ -793,13 +797,10 @@ document.addEventListener('alpine:init', () => {
 
         this.allData.epg = grouped;
 
-        // コアキャッシュの範囲を更新
-        let min = Infinity, max = 0;
-        grouped.forEach(m => m.forEach(v => {
-          min = Math.min(min, v.startTimeInt);
-          max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
-        }));
-        this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
+        // リクエストした範囲をコアキャッシュの範囲に設定
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, 0, 0, 0).getTime();
+        const end = start + 36 * 3600 * 1000;
+        this.epg.coreRange = { start, end };
 
         this.lastUpdated.epg = Date.now();
         this.updateNetworkMask();
@@ -1013,7 +1014,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       this.totalCount = null;
-      if (!['#epg', '#epgweek'].includes(this.page)) this.$refs.main.scrollTo(0, 0);
+      if (!['#epg', '#epgweek'].includes(this.page)) this.$main.scrollTo(0, 0);
       this.sidePanel.close(false);
 
       if (this.page === '#dashboard') {
@@ -1283,7 +1284,7 @@ document.addEventListener('alpine:init', () => {
     },
     saveCache() {
       const totalsForCache = { ...this.totals, search: 0 };
-      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, allData: {} };
+      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, coreRange: this.epg.coreRange, allData: {} };
       Object.entries(this.allData).forEach(([key, map]) => {
         if (key === 'search') return; // 検索結果は永続キャッシュしない
         if (key === 'epg') {
@@ -1630,7 +1631,7 @@ document.addEventListener('alpine:init', () => {
           if (!this.hasMoved) e.currentTarget.setPointerCapture(e.pointerId);
           this.hasMoved = true;
           document.body.style.cursor = 'grabbing';
-          this.$refs.main.scrollBy(-e.movementX, -e.movementY);
+          this.$main.scrollBy(-e.movementX, -e.movementY);
           // 直近の移動量を速度として記録
           this.velocityX = -e.movementX;
           this.velocityY = -e.movementY;
@@ -1646,7 +1647,7 @@ document.addEventListener('alpine:init', () => {
           const friction = 0.85; // 摩擦係数（1に近いほど止まりにくい）
           const moment = () => {
             if (Math.abs(this.velocityX) < 0.1 && Math.abs(this.velocityY) < 0.1) return;
-            this.$refs.main.scrollBy(this.velocityX, this.velocityY);
+            this.$main.scrollBy(this.velocityX, this.velocityY);
             this.velocityX *= friction;
             this.velocityY *= friction;
             this.momentID = requestAnimationFrame(moment);
@@ -1721,7 +1722,6 @@ document.addEventListener('alpine:init', () => {
       // データソースの決定
       let dataMap = null;
       if (gridStart >= this.epg.coreRange.start && gridEnd <= this.epg.coreRange.end) {
-        // 非表示部分が出てくるのはCSの長時間番組でコア範囲が予定外の広さになるので
         dataMap = this.allData.epg;
       } else {
         dataMap = this.epg.extraData.get(slotKey);
@@ -1771,7 +1771,7 @@ document.addEventListener('alpine:init', () => {
       // 代入後にプロキシ化された参照を取得する（比較用）
       const currentServices = this.epg.servicesToDisplay;
 
-      if (timeChanged || networkChanged || isUnchanged) this.$refs.main.scrollTo(0, 0);
+      if (timeChanged || networkChanged || isUnchanged) this.$main.scrollTo(0, 0);
 
       // 2. 各局の番組計算を非同期（逐次）で行い、メインスレッドのブロックを防ぐ
       let index = 0;
@@ -1896,7 +1896,7 @@ document.addEventListener('alpine:init', () => {
         this.epg.weeklyToDisplay.forEach(s => s.displayEvents = []);
       }
 
-      if (serviceChanged || timeChanged || isUnchanged) this.$refs.main.scrollTo(0, 0);
+      if (serviceChanged || timeChanged || isUnchanged) this.$main.scrollTo(0, 0);
 
       const processEvents = events => {
         let index = 0;
@@ -2104,7 +2104,7 @@ document.addEventListener('alpine:init', () => {
         this.setDate(0);
       } else {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
-        this.$refs.main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
+        this.$main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
       }
     },
 
