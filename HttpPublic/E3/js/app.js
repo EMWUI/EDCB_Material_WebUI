@@ -549,52 +549,6 @@ document.addEventListener('alpine:init', () => {
         lastScrollTop = scrollTop;
       }, { passive: true });
 
-
-      // 起動時に設定を復元
-      const savedSettings = localStorage.getItem('E3');
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        const deepMerge = (target, source) => {
-          for (const key in source) {
-            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-              if (!target[key]) target[key] = {};
-              deepMerge(target[key], source[key]);
-            } else {
-              target[key] = source[key];
-            }
-          }
-        };
-        deepMerge(this.set, settings);
-      }
-
-      let colors;
-      const updateColor = async () => {
-        colors = await materialDynamicColors(this.set.theme);
-        const style = document.createElement('style');
-        style.textContent = `:root, body.light, .light {--primary: ${colors.light.primary};--on-primary: ${colors.light.onPrimary};--primary-container: ${colors.light.primaryContainer};--on-primary-container: ${colors.light.onPrimaryContainer};--secondary: ${colors.light.secondary};--on-secondary: ${colors.light.onSecondary};--secondary-container: ${colors.light.secondaryContainer};--on-secondary-container: ${colors.light.onSecondaryContainer};--tertiary: ${colors.light.tertiary};--on-tertiary: ${colors.light.onTertiary};--tertiary-container: ${colors.light.tertiaryContainer};--on-tertiary-container: ${colors.light.onTertiaryContainer};--error: ${colors.light.error};--on-error: ${colors.light.onError};--error-container: ${colors.light.errorContainer};--on-error-container: ${colors.light.onErrorContainer};--background: ${colors.light.background};--on-background: ${colors.light.onBackground};--surface: ${colors.light.surface};--on-surface: ${colors.light.onSurface};--surface-variant: ${colors.light.surfaceVariant};--on-surface-variant: ${colors.light.onSurfaceVariant};--outline: ${colors.light.outline};--outline-variant: ${colors.light.outlineVariant};--shadow: ${colors.light.shadow};--scrim: ${colors.light.scrim};--inverse-surface: ${colors.light.inverseSurface};--inverse-on-surface: ${colors.light.inverseOnSurface};--inverse-primary: ${colors.light.inversePrimary};--surface-dim: ${colors.light.surfaceDim};--surface-bright: ${colors.light.surfaceBright};--surface-container-lowest: ${colors.light.surfaceContainerLowest};--surface-container-low: ${colors.light.surfaceContainerLow};--surface-container: ${colors.light.surfaceContainer};--surface-container-high: ${colors.light.surfaceContainerHigh};--surface-container-highest: ${colors.light.surfaceContainerHighest};}`
-                          + `body.dark, .dark {--primary: ${colors.dark.primary};--on-primary: ${colors.dark.onPrimary};--primary-container: ${colors.dark.primaryContainer};--on-primary-container: ${colors.dark.onPrimaryContainer};--secondary: ${colors.dark.secondary};--on-secondary: ${colors.dark.onSecondary};--secondary-container: ${colors.dark.secondaryContainer};--on-secondary-container: ${colors.dark.onSecondaryContainer};--tertiary: ${colors.dark.tertiary};--on-tertiary: ${colors.dark.onTertiary};--tertiary-container: ${colors.dark.tertiaryContainer};--on-tertiary-container: ${colors.dark.onTertiaryContainer};--error: ${colors.dark.error};--on-error: ${colors.dark.onError};--error-container: ${colors.dark.errorContainer};--on-error-container: ${colors.dark.onErrorContainer};--background: ${colors.dark.background};--on-background: ${colors.dark.onBackground};--surface: ${colors.dark.surface};--on-surface: ${colors.dark.onSurface};--surface-variant: ${colors.dark.surfaceVariant};--on-surface-variant: ${colors.dark.onSurfaceVariant};--outline: ${colors.dark.outline};--outline-variant: ${colors.dark.outlineVariant};--shadow: ${colors.dark.shadow};--scrim: ${colors.dark.scrim};--inverse-surface: ${colors.dark.inverseSurface};--inverse-on-surface: ${colors.dark.inverseOnSurface};--inverse-primary: ${colors.dark.inversePrimary};--surface-dim: ${colors.dark.surfaceDim};--surface-bright: ${colors.dark.surfaceBright};--surface-container-lowest: ${colors.dark.surfaceContainerLowest};--surface-container-low: ${colors.dark.surfaceContainerLow};--surface-container: ${colors.dark.surfaceContainer};--surface-container-high: ${colors.dark.surfaceContainerHigh};--surface-container-highest: ${colors.dark.surfaceContainerHighest};}`
-        document.head.appendChild(style);
-      };
-      const updateThemeColor = v => {
-        const isDark = ui('mode', v) === 'dark';
-        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-        if (themeColorMeta) {
-          themeColorMeta.setAttribute('content', isDark ? colors.dark.surface : colors.light.surface);
-        }
-      };
-
-      // テーマとライトダークモードの初期適用
-      await updateColor();
-      updateThemeColor(this.set.mode);
-
-      // prefers-color-schemeの変更監視
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', () => {
-        if (this.set.mode === 'auto') {
-          updateThemeColor('auto');
-        }
-      });
-
       // 起動時にキャッシュから復元
       const saved = localStorage.getItem('edcb_full_cache');
       if (saved) {
@@ -640,19 +594,61 @@ document.addEventListener('alpine:init', () => {
         this.updateStorage();
       }
 
-      // 設定の変更を監視して自動保存
-      this.$watch('set', () => {
-        localStorage.setItem('E3', JSON.stringify(this.set));
-      }, { deep: true });
-
-      this.$watch('set.theme', v => updateColor(v));
-      this.$watch('set.mode', v => updateThemeColor(v));
-
       // サービス一覧が空（初回またはクリア後）なら取得する
       if (this.allData.service.size === 0) {
         console.log("First run or no cache: fetching static data...");
         await this.refreshStaticData();
       }
+
+      // 起動時に設定を復元
+      const savedSettings = localStorage.getItem('E3');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        const deepMerge = (target, source) => {
+          for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+              if (!target[key]) target[key] = {};
+              deepMerge(target[key], source[key]);
+            } else {
+              target[key] = source[key];
+            }
+          }
+        };
+        deepMerge(this.set, settings);
+      }
+
+      // 設定の変更を監視して自動保存
+      this.$watch('set', () => {
+        localStorage.setItem('E3', JSON.stringify(this.set));
+      }, { deep: true });
+
+      // テーマとライトダークモード
+      let colors;
+      const updateThemeColor = v => {
+        const isDark = ui('mode', v) === 'dark';
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', isDark ? colors.dark.surface : colors.light.surface);
+        }
+      };
+      const updateColor = async () => {
+        colors = await materialDynamicColors(this.set.theme);
+        const style = document.createElement('style');
+        style.textContent = `:root, body.light, .light {--primary: ${colors.light.primary};--on-primary: ${colors.light.onPrimary};--primary-container: ${colors.light.primaryContainer};--on-primary-container: ${colors.light.onPrimaryContainer};--secondary: ${colors.light.secondary};--on-secondary: ${colors.light.onSecondary};--secondary-container: ${colors.light.secondaryContainer};--on-secondary-container: ${colors.light.onSecondaryContainer};--tertiary: ${colors.light.tertiary};--on-tertiary: ${colors.light.onTertiary};--tertiary-container: ${colors.light.tertiaryContainer};--on-tertiary-container: ${colors.light.onTertiaryContainer};--error: ${colors.light.error};--on-error: ${colors.light.onError};--error-container: ${colors.light.errorContainer};--on-error-container: ${colors.light.onErrorContainer};--background: ${colors.light.background};--on-background: ${colors.light.onBackground};--surface: ${colors.light.surface};--on-surface: ${colors.light.onSurface};--surface-variant: ${colors.light.surfaceVariant};--on-surface-variant: ${colors.light.onSurfaceVariant};--outline: ${colors.light.outline};--outline-variant: ${colors.light.outlineVariant};--shadow: ${colors.light.shadow};--scrim: ${colors.light.scrim};--inverse-surface: ${colors.light.inverseSurface};--inverse-on-surface: ${colors.light.inverseOnSurface};--inverse-primary: ${colors.light.inversePrimary};--surface-dim: ${colors.light.surfaceDim};--surface-bright: ${colors.light.surfaceBright};--surface-container-lowest: ${colors.light.surfaceContainerLowest};--surface-container-low: ${colors.light.surfaceContainerLow};--surface-container: ${colors.light.surfaceContainer};--surface-container-high: ${colors.light.surfaceContainerHigh};--surface-container-highest: ${colors.light.surfaceContainerHighest};}`
+                          + `body.dark, .dark {--primary: ${colors.dark.primary};--on-primary: ${colors.dark.onPrimary};--primary-container: ${colors.dark.primaryContainer};--on-primary-container: ${colors.dark.onPrimaryContainer};--secondary: ${colors.dark.secondary};--on-secondary: ${colors.dark.onSecondary};--secondary-container: ${colors.dark.secondaryContainer};--on-secondary-container: ${colors.dark.onSecondaryContainer};--tertiary: ${colors.dark.tertiary};--on-tertiary: ${colors.dark.onTertiary};--tertiary-container: ${colors.dark.tertiaryContainer};--on-tertiary-container: ${colors.dark.onTertiaryContainer};--error: ${colors.dark.error};--on-error: ${colors.dark.onError};--error-container: ${colors.dark.errorContainer};--on-error-container: ${colors.dark.onErrorContainer};--background: ${colors.dark.background};--on-background: ${colors.dark.onBackground};--surface: ${colors.dark.surface};--on-surface: ${colors.dark.onSurface};--surface-variant: ${colors.dark.surfaceVariant};--on-surface-variant: ${colors.dark.onSurfaceVariant};--outline: ${colors.dark.outline};--outline-variant: ${colors.dark.outlineVariant};--shadow: ${colors.dark.shadow};--scrim: ${colors.dark.scrim};--inverse-surface: ${colors.dark.inverseSurface};--inverse-on-surface: ${colors.dark.inverseOnSurface};--inverse-primary: ${colors.dark.inversePrimary};--surface-dim: ${colors.dark.surfaceDim};--surface-bright: ${colors.dark.surfaceBright};--surface-container-lowest: ${colors.dark.surfaceContainerLowest};--surface-container-low: ${colors.dark.surfaceContainerLow};--surface-container: ${colors.dark.surfaceContainer};--surface-container-high: ${colors.dark.surfaceContainerHigh};--surface-container-highest: ${colors.dark.surfaceContainerHighest};}`
+        document.head.appendChild(style);
+        updateThemeColor(this.set.mode);
+      };
+      // prefers-color-schemeの変更監視
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      mediaQuery.addEventListener('change', () => {
+        if (this.set.mode === 'auto') {
+          updateThemeColor('auto');
+        }
+      });
+      await updateColor();
+      this.$watch('set.theme', v => updateColor(v));
+      this.$watch('set.mode', v => updateThemeColor(v));
 
       this.startSSE();
       document.addEventListener("visibilitychange", () => {
