@@ -62,12 +62,17 @@ input[type=color] { cursor: pointer; }
 select[multiple] {
   overflow-y: auto;
   cursor: default;
-  option { padding: 0.1rem 0; }
+  option { 
+    padding: .1rem .9375rem;
+    background-color: inherit;
+  }
   option:checked {
     background-color: var(--secondary-container);
     color: var(--on-primary-container);
   }
 }
+.field:not(.label)>select[multiple] { padding: 0; }
+.field:not(.label)>select[multiple]:focus { padding-inline: 0; }
 .label>select[multiple] { padding-block-start: 7px !important; }
 button>input { display: none; }
 label[for] { cursor: pointer; }

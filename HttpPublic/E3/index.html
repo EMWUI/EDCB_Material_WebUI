@@ -94,10 +94,12 @@ ct:Append([=[
       <div class="max">
         <h5 :class="{ small: isSmallScreen }" x-text="getPageTitle()"></h5>
       </div>
-      
-      <span class="chip outline small no-mouse" x-show="totalCount != null" x-transition>
-        <span x-text="totalCount != null ? totalCount + ' 件' : ''"></span>
-      </span>
+
+      <template x-if="totalCount != null">
+        <span class="chip outline small no-mouse" x-transition>
+          <span x-text="totalCount != null ? totalCount + ' 件' : ''"></span>
+        </span>
+      </template>
 
       <template x-if="page === '#epg'">
         <div class="contents">
@@ -206,28 +208,30 @@ ct:Append([=[
       </template>
 
       <nav class="no-space">
-        <div x-data="reminder" x-show="enabled">
-          <button class="circle transparent" :class="list.length > 0 ? 'primary-text' : ''" :disabled="list.length === 0">
-            <i x-text="list.length > 0 ? 'notifications_active' : 'notifications'"></i>
-            <span class="badge" x-text="list.length" x-show="list.length > 0"></span>
-          </button>
-          <menu class="left no-wrap">
-            <template x-for="item in list" :key="item.id">
-              <li>
-                <div class="max">
-                  <div x-html="convert.title(item.title)"></div>
-                  <label>
-                    <span x-text="item.stationName"></span>
-                    <span x-html="convert.date(item.startTimeInt, true, true)"></span>
-                  </label>
-                </div>
-                <button class="circle transparent small" @click="remove(item.id)">
-                  <i>notifications_off</i>
-                </button>
-              </li>
-            </template>
-          </menu>
-        </div>
+        <template x-if="enabled" x-data="reminder">
+          <div>
+            <button class="circle transparent" :class="list.length > 0 ? 'primary-text' : ''" :disabled="list.length === 0">
+              <i x-text="list.length > 0 ? 'notifications_active' : 'notifications'"></i>
+              <span class="badge" x-text="list.length" x-show="list.length > 0"></span>
+            </button>
+            <menu class="left no-wrap">
+              <template x-for="item in list" :key="item.id">
+                <li>
+                  <div class="max">
+                    <div x-html="convert.title(item.title)"></div>
+                    <label>
+                      <span x-text="item.stationName"></span>
+                      <span x-html="convert.date(item.startTimeInt, true, true)"></span>
+                    </label>
+                  </div>
+                  <button class="circle transparent small" @click="remove(item.id)">
+                    <i>notifications_off</i>
+                  </button>
+                </li>
+              </template>
+            </menu>
+          </div>
+        </template>
         <button class="circle transparent" data-ui="#setting">
           <i>settings</i>
         </button>
@@ -247,7 +251,7 @@ ct:Append([=[
     <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
   </header>
 
-  <main class="scroll no-padding" x-ref="main">
+  <main class="background scroll no-padding" x-ref="main">
     <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
     <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
     <input id="commonCtok" type="hidden" value="]=]..CsrfToken('common')..[=[">
@@ -396,7 +400,7 @@ ct:Append([=[
     </template>
 
     <template x-ref="tools">
-      <nav class="group connected">
+      <nav class="no-space">
         <button class="transparent circle small" 
                 :class="{ 'primary-text': reminder.isSet(d) }"
                 :disabled="d.startTimeInt < now" 
@@ -882,7 +886,7 @@ ct:Append([=[
                           </select>
                           <i>arrow_drop_down</i>
                         </div>
-                        <button class="right-round border fill">変更</button>
+                        <button class="right-round border fill"><i>save</i><span>変更</span></button>
                       </nav>
                     </div>
                     <div class="s12" x-show="!live">
@@ -3111,7 +3115,7 @@ ct:Append([=[
       </nav>
     </header>
 
-    <main class="responsive scroll" :class="{ 'no-padding': isSmallScreen }" x-init="$watch('detail', v => d = clone(v))">
+    <main class="background responsive scroll" :class="{ 'no-padding': isSmallScreen }" x-init="$watch('detail', v => d = clone(v))">
       <template x-if="!isSmallScreen">
         <nav class="m l tabbed fixed small">
           <a data-ui="#info" x-show="isInfo || isRecinfo">
@@ -3165,7 +3169,7 @@ ct:Append([=[
               </div>
             </nav>
             <div x-html="$refs.tools.innerHTML"></div>
-            <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)||'未取得'"></p>
+            <p class="bold tiny-line" x-html="convert.text(d.shortInfo?.text_char)"></p>
             <hr class="medium">
             <p class="secondary-text" x-html="convert.text(d.extInfo?.text_char)"></p>
             <div class="space small-space"></div>
@@ -4032,10 +4036,10 @@ ct:Append([=[
     <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo || isSearch">
       <nav>
         <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo" :disabled="!detail.meta">再生</button>
-        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-text="isNewEntry ? '追加' : '変更'" x-show="!isRecinfo&&!isSearch"></button>
-        <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo">検索</button>
+        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-show="!isRecinfo&&!isSearch"><i x-text="isNewEntry ? 'add' : 'save'">save</i><span x-text="isNewEntry ? '追加' : '変更'">変更</span></button>
+        <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo"><i>search</i><span>検索</span></button>
         <div class="max"></div>
-        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isRecinfo || set.RecinfoDel">削除</button>
+        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isRecinfo || set.RecinfoDel"><i>delete</i><span>削除</span></button>
      </nav>
     </footer>
   </dialog>
@@ -4072,52 +4076,36 @@ ct:Append([=[
     </nav>
     <hr class="medium">
     <div class="grid">
-      <div class="s6 l3">
-        <template x-if="enableSuspend">
-          <button class="responsive vertical small" @click="suspendSystem()">
-            <i class="responsive">bedtime</i>
-            <span x-text="suspendMode === 'hibernate' ? '休止' : 'スタンバイ'">スタンバイ</span>
-          </button>
-        </template>
-      </div>
-      <div class="s6 l3">
-      <template x-if="hasNosuspend">
-        <button class="responsive vertical small" @click="toggleNosuspend()" :class="{ 'fill': !nosuspendActive }">
-          <i class="responsive">bedtime_off</i>
-          <span>録画後動作</span>
-          <span class="tooltip" x-show="nosuspendActive">抑制中</span>
-        </button>
-      </template>
-      </div>
-      <div class="s6 l3">
-      <button class="responsive vertical small" @click="epgCap()">
-        <i class="responsive">download</i>
+      <button class="s6 l3 vertical small" @click="suspendSystem()">
+        <i class="responsive">bedtime</i>
+        <span x-text="suspendMode === 'hibernate' ? '休止' : 'スタンバイ'">スタンバイ</span>
+      </button>
+      <button class="s6 l3 vertical small" @click="toggleNosuspend()" :class="{ 'fill': !nosuspendActive }" :disabled="!hasNosuspend">
+        <i class="responsive">bedtime_off</i>
+        <span>録画後動作</span>
+        <span class="tooltip" x-show="nosuspendActive">抑制中</span>
+      </button>
+      <button class="s6 l3 vertical small" @click="epgCap()">
+        <i class="responsive">download_2</i>
         <span>EPG取得</span>
       </button>
-      </div>
-      <div class="s6 l3">
-      <button class="responsive vertical small" @click="epgReload()">
+      <button class="s6 l3 vertical small" @click="epgReload()">
         <i class="responsive">cached</i>
         <span>EPG再読み込み</span>
       </button>
-      </div>
     </div>
     <hr class="medium">
     <div class="grid">
-      <div class="s6">
-        <button class="responsive vertical small" @click="getEpg()">
-          <i class="responsive">download</i>
-          <span>EPGデータ</span>
-          <span class="tooltip bottom">キャッシュを更新</span>
-        </button>
-      </div>
-      <div class="s6">
-        <button class="responsive vertical small" @click="refreshStaticData(true)">
-          <i class="responsive">download</i>
-          <span>基礎データ</span>
-          <span class="tooltip bottom">サービス一覧や録画プリセットの更新</span>
-        </button>
-      </div>
+      <button class="s6 vertical small" @click="getEpg()">
+        <i class="responsive">download</i>
+        <span>EPGデータ</span>
+        <span class="tooltip bottom">キャッシュを更新</span>
+      </button>
+      <button class="s6 vertical small" @click="refreshStaticData(true)">
+        <i class="responsive">download</i>
+        <span>基礎データ</span>
+        <span class="tooltip bottom">サービス一覧や録画プリセットの更新</span>
+      </button>
     </div>
     <hr class="medium">
     <div class="field middle-align">
@@ -4204,7 +4192,7 @@ ct:Append([=[
             <h6 x-text="jikkyoConfig.opacity"></h6>
           </nav>
           <nav>
-            <i>zoom_in</i>
+            <i>format_size</i>
             <div class="slider">
               <input type="range" value="25" min="24" max="100" x-model.number="jikkyoConfig.height" @change="Alpine.raw(player.ts).jikkyo.danmaku.options.height = jikkyoConfig.height">
               <span></span>
@@ -4219,7 +4207,6 @@ ct:Append([=[
   <dialog id="sidePanelSetting" :class="{ bottom: isSmallScreen }">
     <template x-if="detail.searchInfo">
       <div>
-        <hr class="medium">
         <div class="field middle-align">
           <nav>
             <div class="max"><h6><label class="large-text" for="set-subGenre">サブジャンルを表示</label></h6></div>
