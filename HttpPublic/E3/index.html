@@ -248,7 +248,7 @@ ct:Append([=[
         </template>
       </div>
     </template>
-    <progress class="absolute bottom" :class="{ 'error': !isOnline }" x-show="loading || !isOnline"></progress>
+    <progress class="absolute bottom" :class="{ error: !dataSaver&&!isOnline }" x-show="loading || !isOnline" max="100" x-effect="dataSaver&&!loading ? $el.value = '100' : $el.removeAttribute('value')"></progress>
   </header>
 
   <main class="background scroll no-padding" x-ref="main">
@@ -276,12 +276,12 @@ ct:Append([=[
           </div>
 
           <div :class="isSmallScreen ? 'center-align' : 'row'">
-            <i class="extra" :class="isOnline ? 'secondary-text' : 'error-text'">info</i>
+            <i class="extra" :class="dataSaver || isOnline ? 'secondary-text' : 'error-text'" x-text="dataSaver ? 'data_saver_on' : 'info'">info</i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">システム</div>
               <div class="status bold"
-                  :class="isOnline ? '' : 'error-text'"
-                  x-text="isOnline ? 'Online' : 'Offline'">--</div>
+                  :class="dataSaver || isOnline ? '' : 'error-text'"
+                  x-text="dataSaver ? 'Save' : isOnline ? 'Online' : 'Offline'">--</div>
             </h5>
           </div>
         </div>
@@ -4096,12 +4096,20 @@ ct:Append([=[
     </div>
     <hr class="medium">
     <div class="grid">
-      <button class="s6 vertical small" @click="getEpg()">
+      <button class="s6 l3 vertical small" :class="{ 'fill': !set.dataSaver }" @click="set.dataSaver = !set.dataSaver">
+        <i class="responsive" x-text="set.dataSaver ? 'data_saver_on' : 'data_usage'">data_usage</i>
+        <span>データセーバー</span>
+      </button>
+      <button class="s6 l3 vertical small" @click="getData()">
+        <i class="responsive">download</i>
+        <span>データ更新</span>
+      </button>
+      <button class="s6 l3 vertical small" @click="getEpg()">
         <i class="responsive">download</i>
         <span>EPGデータ</span>
         <span class="tooltip bottom">キャッシュを更新</span>
       </button>
-      <button class="s6 vertical small" @click="refreshStaticData(true)">
+      <button class="s6 l3 vertical small" @click="refreshStaticData(true)">
         <i class="responsive">download</i>
         <span>基礎データ</span>
         <span class="tooltip bottom">サービス一覧や録画プリセットの更新</span>

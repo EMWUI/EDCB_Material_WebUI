@@ -188,6 +188,8 @@ document.addEventListener('alpine:init', () => {
     search: { searchInfo: {} },
     now: Date.now(),
     isOnline: false,
+    isCellular: false,
+    dataSaver: false,
     isSmallScreen: false,
     isPortrait: false,
     networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
@@ -241,6 +243,7 @@ document.addEventListener('alpine:init', () => {
 
     set: {
       sidebar: false,
+      dataSaver: true,
       oneseg: false,
       subCh: false,
       subGenre: true,
@@ -650,10 +653,38 @@ document.addEventListener('alpine:init', () => {
       this.$watch('set.theme', v => updateColor(v));
       this.$watch('set.mode', v => updateThemeColor(v));
 
-      this.startSSE();
+      const toggleSSE = () => {
+        if (this.dataSaver) {
+          if (this.eventSource) this.eventSource.close();
+        } else if (!this.eventSource || this.eventSource.readyState === EventSource.CLOSED) {
+          this.startSSE();
+        }
+      }
+      const connection = navigator.connection;
+      if (connection) {
+        const updateDataSaver = () => {
+          this.isCellular = connection.type === 'cellular';
+          this.dataSaver = this.set.dataSaver && this.isCellular;
+          toggleSSE();
+        }
+        updateDataSaver();
+        this.$watch('set.dataSaver', () => updateDataSaver());
+        connection.addEventListener('change', () => updateDataSaver());
+      } else {
+        // localStorage 未設定（初回・アップデート直後）の場合のみ false をデフォルトにする
+        const hasSavedDataSaver = savedSettings && JSON.parse(savedSettings)?.dataSaver !== undefined;
+        if (!hasSavedDataSaver) this.set.dataSaver = false;
+        this.dataSaver = this.set.dataSaver;
+        toggleSSE();
+        this.$watch('set.dataSaver', d => {
+          this.dataSaver = d;
+          toggleSSE();
+        });
+      }
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === 'visible') {
           // 戻ってきたときに接続状態を確認
+          if (!this.eventSource) return;
           if (this.eventSource.readyState === EventSource.CLOSED || this.eventSource.readyState === EventSource.CONNECTING) {
             this.isOnline = false;
           }
@@ -902,6 +933,20 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {
         console.error("Failed to refresh static data", e);
         this.snackbar.error('基礎データの取得ができませんでした');
+      } finally {
+        this.loading = false;
+      }
+    },
+    async getData() {
+      let pageHash = this.page;
+      if (!['#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual'].includes(pageHash)) pageHash = '#reserve';
+      const pageName = this.pageMap[pageHash].title;
+      this.loading = true;
+      try {
+        await this.refreshData(pageHash);
+        this.snackbar.add(`${pageName}を更新しました`);
+      } catch (e) {
+        this.snackbar.error(`${pageName}の更新ができませんでした`);
       } finally {
         this.loading = false;
       }
