@@ -676,6 +676,16 @@ document.addEventListener('alpine:init', () => {
         this.eventSource.close();
       }
 
+      const TIMEOUT_LIMIT = 15000;
+      let timeoutId = null;
+
+      const resetTimeout = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          this.isOnline = false;
+        }, TIMEOUT_LIMIT);
+      }
+
       // 現在のROOTをベースにSSE接続URLを生成する
       const sseUrl = new URL(`${this.ROOT}api/SSE`, window.location.href);
       if (this.useDedicatedSsePort) {
@@ -690,6 +700,7 @@ document.addEventListener('alpine:init', () => {
 
         this.loading = true;
         try {
+          resetTimeout();
           await Promise.all([
             this.refreshData('#reserve'),
             this.refreshData('#tunerreserve'),
@@ -710,7 +721,9 @@ document.addEventListener('alpine:init', () => {
         this.isOnline = false;
       }
       this.eventSource.onmessage = async e => {
+        resetTimeout();
         const data = JSON.parse(e.data);
+        if (data.ping) return;
 
         // 通知が来たら pageMap に基づいて再取得
         if (data.reserve) {

@@ -29,6 +29,7 @@ end
 local last_tuner_json = ConvertJson(edcb.GetTunerProcessStatusAll())
 
 -- メインループ
+local keepalive_count = 1
 while true do
   -- 2秒待機 (edcb.Sleepがtrueならサーバー終了)
   if edcb.Sleep(2000) then break end
@@ -59,9 +60,19 @@ while true do
     if not mg.write(json_payload) then
       break
     end
+    keepalive_count = 1
   else
-    -- 接続維持用のキープアライブ
-    if not mg.write(": keep-alive\n\n") then
+    local payload
+
+    if keepalive_count >= 5 then
+      -- 5回に1回（10秒ごと）はクライアント検知用の data: 形式
+      payload = "data: {\"ping\": true}\n\n"
+      keepalive_count = 1
+    else
+      payload = ": keep-alive\n\n"
+      keepalive_count = keepalive_count + 1
+    end
+    if not mg.write(payload) then
       break
     end
   end
