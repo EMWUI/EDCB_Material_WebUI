@@ -287,6 +287,18 @@ document.addEventListener('alpine:init', () => {
       'recpreset': { api: 'EnumRecPreset', itemKey: 'id' },
     },
 
+    // タイムアウト付きフェッチ
+    fetch(request, options = {}, timeoutMs = 5000) {
+      const timeoutSignal = AbortSignal.timeout(timeoutMs);
+
+      // 呼び出し側から別の signal が渡されている場合は結合する
+      const signal = options.signal
+        ? AbortSignal.any([options.signal, timeoutSignal])
+        : timeoutSignal;
+
+      return fetch(request, { ...options, signal });
+    },
+
     // クエリパラメータを解析して params オブジェクトを更新
     updateParams() {
       const newParams = Object.fromEntries(new URLSearchParams(window.location.search));
@@ -733,7 +745,7 @@ document.addEventListener('alpine:init', () => {
       if (!config || !config.api) return;
 
       try {
-        const res = await fetch(`${this.ROOT}api/${config.api}?json=1${config.count ? `&count=${config.count}` : ''}`);
+        const res = await this.fetch(`${this.ROOT}api/${config.api}?json=1${config.count ? `&count=${config.count}` : ''}`);
         const data = await res.json();
 
         // データキー（items等）の特定
@@ -762,6 +774,7 @@ document.addEventListener('alpine:init', () => {
         this.saveCache();
       } catch (e) {
         console.error(`Refresh failed for ${pageHash}`, e);
+        throw e;
       }
     },
     async refreshEpg() {
@@ -779,7 +792,7 @@ document.addEventListener('alpine:init', () => {
         const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=36`;
 
         // tab=0でリクエストを1回だけ送り、全サービスの番組情報を取得する
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=0${rangeQuery}`);
+        const res = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=0${rangeQuery}`);
 
         const list = await res.json();
 
@@ -811,6 +824,7 @@ document.addEventListener('alpine:init', () => {
         this.syncNowOnAir();
       } catch (e) {
         console.error("Failed to refresh epg", e);
+        throw e;
       }
     },
     // 指定範囲のEPGを単発取得し、再利用可能な形でメモリに保持する
@@ -825,7 +839,7 @@ document.addEventListener('alpine:init', () => {
           hour += 24;
         }
         const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=${this.params.tab}&date=${dateStr}&hour=${hour}&interval=24`);
+        const res = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=${this.params.tab??1}&date=${dateStr}&hour=${hour}&interval=24`);
         const list = await res.json();
 
         if (list.err) throw new Error(list.err);
@@ -844,17 +858,19 @@ document.addEventListener('alpine:init', () => {
         this.loadEpg();
       } catch (e) {
         console.error("Failed to fetch epg for range", e);
+        this.epg.servicesToDisplay.forEach(s => s.displayEvents = []);
+        this.snackbar.error('取得できませんでした');
       } finally {
         this.loading = false;
       }
     },
-    async refreshStaticData() {
+    async refreshStaticData(snackbar) {
       this.loading = true;
       try {
         // サービス一覧とプリセットを同時に取得
         const [serviceRes, presetRes] = await Promise.all([
-          fetch(`${this.ROOT}api/${this.pageMap['service'].api}?json=1`).then(r => r.json()),
-          fetch(`${this.ROOT}api/${this.pageMap['recpreset'].api}?json=1`).then(r => r.json())
+          this.fetch(`${this.ROOT}api/${this.pageMap['service'].api}?json=1`).then(r => r.json()),
+          this.fetch(`${this.ROOT}api/${this.pageMap['recpreset'].api}?json=1`).then(r => r.json())
         ]);
 
         this.allData.service.clear();
@@ -873,45 +889,59 @@ document.addEventListener('alpine:init', () => {
 
         // キャッシュを更新
         this.saveCache();
+        if (snackbar) this.snackbar.add('基礎データを更新しました');
       } catch (e) {
         console.error("Failed to refresh static data", e);
+        this.snackbar.error('基礎データの取得ができませんでした');
       } finally {
         this.loading = false;
       }
     },
-    toggleNosuspend() {
+    async getEpg() {
+      this.loading = true;
+      try {
+        await this.refreshEpg();
+        this.snackbar.add('EPGデータを更新しました');
+      } catch (e) {
+        this.snackbar.error('EPGデータの更新ができませんでした');
+      } finally {
+        this.loading = false;
+      }
+    },
+    async toggleNosuspend() {
       const targetState = this.nosuspendActive ? 'n' : 'y';
       const fd = new URLSearchParams({
         nosuspend: targetState,
         ctok: document.getElementById('commonCtok')?.value || ''
       });
-      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
-        .then(r => {
-          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-          return r.json();
-        })
-        .then(d => {
-          if (d.err) {
-            this.snackbar.error(d.err);
+
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
+        } else {
+          this.snackbar.add(data.info);
+          if (data.info && data.info.includes('起動')) {
+            this.nosuspendActive = true;
+          } else if (data.info && data.info.includes('停止')) {
+            this.nosuspendActive = false;
           } else {
-            this.snackbar.add(d.info);
-            if (d.info && d.info.includes('起動')) {
-              this.nosuspendActive = true;
-            } else if (d.info && d.info.includes('停止')) {
-              this.nosuspendActive = false;
-            } else {
-              this.nosuspendActive = (targetState === 'y');
-            }
+            this.nosuspendActive = (targetState === 'y');
           }
-        })
-        .catch(err => {
-          console.error('通信失敗:', err);
-          if (this.isOnline) {
-            this.snackbar.tokenError();
-          } else {
-            this.snackbar.error('通信に失敗しました');
-          }
-        });
+        }
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
+        } else {
+          this.snackbar.tokenError();
+        }
+      } finally {
+        this.loading = false;
+      }
     },
     suspendSystem() {
       ui('#setting');
@@ -921,88 +951,89 @@ document.addEventListener('alpine:init', () => {
         top: true,
         text: `${modeText}に移行しますか？`,
         btn: '実行',
-        btnFn: () => {
+        btnFn: async () => {
           const fd = new URLSearchParams({
             ctok: document.getElementById('commonCtok')?.value || '',
           });
           fd.append(this.suspendMode, 'y');
-          fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
-            .then(r => {
-              if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-              return r.json();
-            })
-            .then(d => {
-              if (d.err) {
-                this.snackbar.error(d.err);
-              } else {
-                this.snackbar.add(d.info);
-              }
-            })
-            .catch(err => {
-              console.error('通信失敗:', err);
-              if (this.isOnline) {
-                this.snackbar.tokenError();
-              } else {
-                this.snackbar.error('通信に失敗しました');
-              }
-            });
+
+          try {
+            this.loading = true;
+            const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (data.err) {
+              this.snackbar.error(data.err);
+            } else {
+              this.snackbar.add(data.info);
+            }
+          } catch (e) {
+            console.error('通信失敗:', e);
+            if (e.name === 'TimeoutError') {
+              this.snackbar.error('通信エラー');
+            } else {
+              this.snackbar.tokenError();
+            }
+          } finally {
+            this.loading = false;
+          }
         },
         time: 6000,
       });
     },
-    epgCap() {
+    async epgCap() {
       const fd = new URLSearchParams({
         epgcap: 'y',
         ctok: document.getElementById('commonCtok')?.value || ''
       });
 
-      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
-        .then(r => {
-          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-          return r.json();
-        })
-        .then(d => {
-          if (d.err) {
-            this.snackbar.error(d.err);
-          } else {
-            this.snackbar.add(d.info);
-          }
-        })
-        .catch(err => {
-          console.error('通信失敗:', err);
-          if (this.isOnline) {
-            this.snackbar.tokenError();
-          } else {
-            this.snackbar.error('通信に失敗しました');
-          }
-        });
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
+        } else {
+          this.snackbar.add(data.info);
+        }
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
+        } else {
+          this.snackbar.tokenError();
+        }
+      } finally {
+        this.loading = false;
+      }
     },
-    epgReload() {
+    async epgReload() {
       const fd = new URLSearchParams({
         epgreload: 'y',
         ctok: document.getElementById('commonCtok')?.value || ''
       });
 
-      fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd })
-        .then(r => {
-          if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-          return r.json();
-        })
-        .then(d => {
-          if (d.err) {
-            this.snackbar.error(d.err);
-          } else {
-            this.snackbar.add(d.info);
-          }
-        })
-        .catch(err => {
-          console.error('通信失敗:', err);
-          if (this.isOnline) {
-            this.snackbar.tokenError();
-          } else {
-            this.snackbar.error('通信に失敗しました');
-          }
-        });
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
+        } else {
+          this.snackbar.add(data.info);
+        }
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
+        } else {
+          this.snackbar.tokenError();
+        }
+      } finally {
+        this.loading = false;
+      }
     },
 
     // ページ切り替え時に呼ばれる
@@ -1155,7 +1186,7 @@ document.addEventListener('alpine:init', () => {
     async updateStorage() {
       try {
         this.loadingStorage = true;
-        const res = await fetch(`${this.ROOT}api/Common?json=1&storage=1`);
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1&storage=1`);
         const data = await res.json();
         this.dashboardData.storage = (Array.isArray(data) ? data : []).map(s => {
           const total = parseInt(s.total) || 0;
@@ -1175,7 +1206,7 @@ document.addEventListener('alpine:init', () => {
     },
     async updateTunerStatus() {
       try {
-        const res = await fetch(`${this.ROOT}api/Common?json=1&tuner=1`).then(r => r.json());
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1&tuner=1`).then(r => r.json());
         this.dashboardData.activeTuners = res.length;
         this.dashboardData.isRecording = res.some(t => t.recFlag === true);
         this.dashboardData.isEpgCap = res.some(t => t.epgCapFlag === true);
@@ -1199,7 +1230,7 @@ document.addEventListener('alpine:init', () => {
       if (this.totalCount > 0 && this.rawData.length < this.totalCount) {
         this.loading = true;
         try {
-          const res = await fetch(`${this.ROOT}api/${config.api}?json=1&index=${this.rawData.length}&count=${config.count}`);
+          const res = await this.fetch(`${this.ROOT}api/${config.api}?json=1&index=${this.rawData.length}&count=${config.count}`);
           const data = await res.json();
 
           const key = config.key || 'items';
@@ -1221,6 +1252,7 @@ document.addEventListener('alpine:init', () => {
           this.cursor += next.length;
         } catch (e) {
           console.error("Fetch more error:", e);
+          this.snackbar.error('取得できませんでした');
         } finally {
           this.loading = false;
         }
@@ -1244,7 +1276,7 @@ document.addEventListener('alpine:init', () => {
         this.loading = true;
         try {
           const currentIndex = this.allData.reserve.length;
-          const res = await fetch(`${this.ROOT}api/${reserveConfig.api}?json=1&index=${currentIndex}`);
+          const res = await this.fetch(`${this.ROOT}api/${reserveConfig.api}?json=1&index=${currentIndex}`);
           const data = await res.json();
 
           let newList = data.items || [];
@@ -1273,6 +1305,7 @@ document.addEventListener('alpine:init', () => {
           }
         } catch (e) {
           console.error("loadMoreTuner fetch error:", e);
+          this.snackbar.error('取得できませんでした');
         } finally {
           this.loading = false;
         }
@@ -1338,13 +1371,14 @@ document.addEventListener('alpine:init', () => {
       if (!epg) {
         try {
           this.loading = true;
-          const fetched = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
+          const fetched = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
           if (!fetched.err) {
             if (fetched.startTime) fetched.startTimeInt = new Date(fetched.startTime).getTime();
             epg = fetched;
           }
         } catch (e) {
           console.error(e);
+          this.snackbar.error('取得できませんでした');
         } finally {
           this.loading = false;
         }
@@ -1965,7 +1999,7 @@ document.addEventListener('alpine:init', () => {
       this.loading = true;
       try {
         // 指定されたサービスの1週間分(168時間)を取得
-        const res = await fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${serviceId}&date=${dateStr}&hour=4&interval=168`);
+        const res = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${serviceId}&date=${dateStr}&hour=4&interval=168`);
         const list = await res.json();
         this.loading = false;
 
@@ -1985,6 +2019,7 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {
         console.error("Failed to load weekly EPG", e);
         this.loading = false;
+        this.snackbar.error('取得できませんでした');
       } finally {
         this.epg.fetchingWeekly = null;
       }
@@ -2371,26 +2406,34 @@ document.addEventListener('alpine:init', () => {
       this.sidePanel.shouldGoBack = push;
       this.updateQueryParam({ id: idVal }, push);
       if (!d.programInfo) {
-        // 1. 詳細情報を取得
-        const json = await fetch(`${this.ROOT}api/${this.pageMap['#recinfo'].api}?json=1&id=${d.id}`).then(r => r.json()).catch(() => null);
+        try {
+          this.loading = true;
+          // 1. 詳細情報を取得
+          const json = await this.fetch(`${this.ROOT}api/${this.pageMap['#recinfo'].api}?json=1&id=${d.id}`).then(r => r.json());
 
-        if (json) {
-          const parsed = this.parseProgramInfo(json.programInfo);
-          Object.assign(parsed, json);
+          if (json) {
+            const parsed = this.parseProgramInfo(json.programInfo);
+            Object.assign(parsed, json);
 
-          // 2. allData.recinfo の中から同じIDのものを探す
-          const existing = this.allData.recinfo.get(d.id);
+            // 2. allData.recinfo の中から同じIDのものを探す
+            const existing = this.allData.recinfo.get(d.id);
 
-          if (existing) {
-            // 3. 詳細データをマージ（上書き）
-            // これにより allData 自体が更新され、リアクティブに画面が変わる
-            Object.assign(existing, parsed);
-            // 4. 表示用の detail には、その実体をセット
-            this.detail = existing;
-          } else {
-            // 万が一一覧にない場合は直接入れる
-            this.detail = parsed;
+            if (existing) {
+              // 3. 詳細データをマージ（上書き）
+              // これにより allData 自体が更新され、リアクティブに画面が変わる
+              Object.assign(existing, parsed);
+              // 4. 表示用の detail には、その実体をセット
+              this.detail = existing;
+            } else {
+              // 万が一一覧にない場合は直接入れる
+              this.detail = parsed;
+            }
           }
+        } catch(e) {
+          console.error(e);
+          this.snackbar.error('詳細の取得ができませんでした')
+        } finally {
+          this.loading = false;
         }
       }
     },
@@ -2436,7 +2479,7 @@ document.addEventListener('alpine:init', () => {
         }
         this.loading = true;
 
-        const res = await fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
         const list = await res.json();
 
         this.allData.search.clear();
@@ -2451,10 +2494,10 @@ document.addEventListener('alpine:init', () => {
         this.sidePanel.close();
       } catch (e) {
         console.error("Search failed", e);
-        if (this.isOnline) {
-          this.snackbar.tokenError();
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
         } else {
-          this.snackbar.error('検索に失敗しました');
+          this.snackbar.tokenError();
         }
       } finally {
         this.loading = false;
@@ -2729,7 +2772,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     // 通信用共通メソッド
-    apiFetch(url, params = new URLSearchParams(), method = 'POST') {
+    async apiFetch(url, params = new URLSearchParams(), method = 'POST') {
       url += (url.includes('?') ? '&' : '?') + 'json=1';
       // ctokをここで自動追加
       if (!params.has('ctok')) params.append('ctok', document.querySelector('input[name="ctok"]')?.value || '');
@@ -2744,23 +2787,26 @@ document.addEventListener('alpine:init', () => {
         options.body = params;
       }
 
-      fetch(url, options).then(r => {
-        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        return r.json();
-      }).then(d => {
-        if (d.err) {
-          this.snackbar.error(d.err);
+      try {
+        this.loading = true;
+        const res = await this.fetch(url, options);
+        const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
         } else {
-          this.snackbar.add(d.success);
+          this.snackbar.add(data.success);
         }
-      }).catch(err => {
-        console.error('通信失敗:', err);
-        if (this.isOnline) {
+      } catch(e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
+        } else {
           this.snackbar.tokenError();
-        } else {
-          this.snackbar.error('保存に失敗しました');
         }
-      });
+      } finally {
+        this.loading = false;
+      }
     },
     addReserve(e) {
       const fd = new URLSearchParams({ id: `${e.onid}-${e.tsid}-${e.sid}-${e.eid}`, oneClick: 1 });
@@ -2875,7 +2921,7 @@ document.addEventListener('alpine:init', () => {
             if (d.i) p.set('i', d.i);
             if (d.d) p.set('d', d.d);
             if (d.p) d.p.split(',').filter(v => v).forEach(v => p.append('p', v));
-            const res = await fetch(`${this.app.ROOT}api/Library?basic=0&${p.toString()}`);
+            const res = await this.app.fetch(`${this.app.ROOT}api/Library?basic=0&${p.toString()}`);
             const info = await res.json()
             this.videoInfo = info;
             fname = info.path;
@@ -3202,7 +3248,7 @@ document.addEventListener('alpine:init', () => {
             this.app.params.p.split(',').filter(v => v).forEach(v => p.append('p', v));
           }
 
-          const res = await fetch(`${this.app.ROOT}api/Library?${p.toString()}`);
+          const res = await this.app.fetch(`${this.app.ROOT}api/Library?${p.toString()}`);
           this.data = await res.json();
           this.data.path = this.data.path || [];
           this.data.p_raw = p.p;
@@ -3211,7 +3257,7 @@ document.addEventListener('alpine:init', () => {
           if (this.data.err) this.app.snackbar.error(this.data.err);
         } catch (e) {
           console.error(e);
-          this.data = { dir: [], file: [], path: [], err: '通信に失敗しました' };
+          this.data = { dir: [], file: [], path: [], err: '取得できませんでした' };
         } finally {
           this.app.loading = false;
         }
@@ -3246,7 +3292,7 @@ document.addEventListener('alpine:init', () => {
       async load(page = 0) {
         try {
           this.page = page;
-          const res = await fetch(`${this.app.ROOT}api/showlog?c=10000&page=${page}${this.debug ? '&t=d' : ''}`);
+          const res = await this.app.fetch(`${this.app.ROOT}api/showlog?c=10000&page=${page}${this.debug ? '&t=d' : ''}`);
           const text = await res.text();
           const list = [];
           for (const line of text.split(/\r?\n/)) {
@@ -3286,7 +3332,7 @@ document.addEventListener('alpine:init', () => {
           document.querySelector('#log main').scrollTop = 0;
         } catch (e) {
           console.error(e);
-          this.data = [];
+          this.data = [{ text: 'ログの取得ができませんでした' }];
         }
       }
     },
@@ -3319,33 +3365,35 @@ document.addEventListener('alpine:init', () => {
       this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
     },
 
-    saveSetting(container) {
+    async saveSetting(container) {
       const fd = this.getFormData(this.$refs[container]);
       fd.append('ctok', document.getElementById('settingsCtok').value);
 
-      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
-        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        return r.json();
-      }).then(d => {
-        this.settings.data = d;
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+
+        this.settings.data = res.jsion();
         this.snackbar.add('保存しました');
-      }).catch(err => {
-        console.error('通信失敗:', err);
-        if (this.isOnline) {
-          this.snackbar.tokenError();
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
         } else {
-          this.snackbar.error('設定の保存に失敗しました');
+          this.snackbar.tokenError();
         }
-      });
+      } finally {
+        this.loading = false;
+      }
     },
     async loadSetting() {
       try {
         this.loading = true;
-        const res = await fetch(`${this.ROOT}api/Settings`);
+        const res = await this.fetch(`${this.ROOT}api/Settings`);
         this.settings.data = await res.json();
       } catch (e) {
         console.error(e);
-        this.snackbar.error('設定の取得に失敗しました');
+        this.snackbar.error('設定の取得ができませんでした');
       } finally {
         this.loading = false;
       }
@@ -3355,55 +3403,61 @@ document.addEventListener('alpine:init', () => {
       this.settings.r = this.clone(preset.recSetting);
       this.settings.presetID = id;
     },
-    removePreset() {
+    async removePreset() {
       if (this.settings.presetID == 0) return;
       const fd = new URLSearchParams();
       fd.append('ctok', document.getElementById('settingsCtok').value);
       fd.append('presetID', this.settings.presetID);
       fd.append('del', 1);
 
-      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
-        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        return r.json();
-      }).then(d => {
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+        const data = await res.json();
+
         this.allData.recpreset.clear();
-        d.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
+        data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.recpreset = Date.now();
         this.saveCache();
 
         this.snackbar.add('削除しました');
-      }).catch(err => {
-        console.error('通信失敗:', err);
-        if (this.isOnline) {
-          this.snackbar.tokenError();
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
         } else {
-          this.snackbar.error('プリセットの削除に失敗しました');
+          this.snackbar.tokenError();
         }
-      });
+      } finally {
+        this.loading = false;
+      }
     },
-    savePreset(add) {
+    async savePreset(add) {
       const fd = this.getFormData(this.$refs.recPreset);
       fd.append('ctok', document.getElementById('settingsCtok').value);
       if (add) fd.append('add', 1);
 
-      fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd }).then(r => {
-        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        return r.json();
-      }).then(d => {
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+        const data = await res.json();
+
         this.allData.recpreset.clear();
-        d.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
+        data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.recpreset = Date.now();
         this.saveCache();
 
         this.snackbar.add('保存しました');
-      }).catch(err => {
-        console.error('通信失敗:', err);
-        if (this.isOnline) {
-          this.snackbar.tokenError();
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
         } else {
-          this.snackbar.error('プリセットの保存に失敗しました');
+          this.snackbar.tokenError();
         }
-      });
+      } finally {
+        this.loading = false;
+      }
     },
     parsePlugin(data, mode, name) {
       data.name = name;
@@ -3444,36 +3498,40 @@ document.addEventListener('alpine:init', () => {
       if (mode == 1) this.settings.recNamePlugin = data;
       else if (mode == 2) this.settings.writePlugin = data;
     },
-    savePlugIn(mode) {
+    async savePlugIn(mode) {
       const container = mode == 1 ? 'recNamePlugin' : 'writePlugin';
       const name = this.settings[container].name;
       const fd = this.getFormData(this.$refs[container]);
       fd.append('ctok', document.getElementById('settingsCtok').value);
 
-      fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd }).then(r => {
-        if (!r.ok) throw new Error(`Server Error: ${r.status}`);
-        return r.json();
-      }).then(d => {
-        this.parsePlugin(d, mode, name);
+      try {
+        this.loading = true;
+        const res = await this.fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd });
+        const data = await res.json();
+
+        this.parsePlugin(data, mode, name);
         this.snackbar.add('保存しました');
-      }).catch(err => {
-        console.error('通信失敗:', err);
-        if (this.isOnline) {
-          this.snackbar.tokenError();
+      } catch (e) {
+        console.error('通信失敗:', e);
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
         } else {
-          this.snackbar.error('設定の保存に失敗しました');
+          this.snackbar.tokenError();
         }
-      });
+      } finally {
+        this.loading = false;
+      }
     },
     async loadPlugIn(mode, name) {
       try {
         this.loading = true;
-        const res = await fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
-        const data = await res.json() || {};
+        const res = await this.fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
+        const data = await res.json();
+
         this.parsePlugin(data, mode, name);
       } catch (e) {
         console.error(e);
-        this.snackbar.error('設定の取得に失敗しました');
+        this.snackbar.error('設定の取得ができませんでした');
       } finally {
         this.loading = false;
       }

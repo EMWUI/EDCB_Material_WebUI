@@ -27,28 +27,6 @@ const ASSETS = [
   './img/EpgTimer.ico'
 ];
 
-// タイムアウト付きフェッチ (デフォルト 2000ms)
-function fetchWithTimeout(request, timeoutMs = 2000) {
-  return new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error('Fetch timeout'));
-    }, timeoutMs);
-
-    fetch(request, { signal })
-      .then((response) => {
-        clearTimeout(timeoutId);
-        resolve(response);
-      })
-      .catch((err) => {
-        clearTimeout(timeoutId);
-        reject(err);
-      });
-  });
-}
-
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -109,7 +87,7 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse; 
         }
 
-        const fetchPromise = fetchWithTimeout(event.request).then((response) => {
+        const fetchPromise = fetch(event.request, { signal: AbortSignal.timeout(2000) }).then((response) => {
           if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -128,7 +106,7 @@ self.addEventListener('fetch', (event) => {
   } else {
     // index.html, style.css, app.js などの独自ロジックはネットワーク優先(Network-First)
     event.respondWith(
-      fetchWithTimeout(event.request)
+      fetch(event.request, { signal: AbortSignal.timeout(2000) })
         .then((response) => {
           if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();

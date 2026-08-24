@@ -3075,9 +3075,15 @@ ct:Append([=[
             </div>
           </section>
         </template>
-        <template x-if="!data">
+        <template x-if="loading && !data">
           <div class="margin middle-align center-align">
             <div class="shape loading-indicator small-width small-height rotate"></div>
+          </div>
+        </template>
+        <template x-if="!loading && !data">
+          <div class="center-align padding">
+            <i class="extra error-text">report</i>
+            <p class="error-text">設定の取得ができませんでした</p>
           </div>
         </template>
       </div>
@@ -4099,14 +4105,14 @@ ct:Append([=[
     <hr class="medium">
     <div class="grid">
       <div class="s6">
-        <button class="responsive vertical small" @click="refreshEpg()">
+        <button class="responsive vertical small" @click="getEpg()">
           <i class="responsive">download</i>
           <span>EPGデータ</span>
           <span class="tooltip bottom">キャッシュを更新</span>
         </button>
       </div>
       <div class="s6">
-        <button class="responsive vertical small" @click="refreshStaticData()">
+        <button class="responsive vertical small" @click="refreshStaticData(true)">
           <i class="responsive">download</i>
           <span>基礎データ</span>
           <span class="tooltip bottom">サービス一覧や録画プリセットの更新</span>
