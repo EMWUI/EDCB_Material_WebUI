@@ -3508,9 +3508,9 @@ document.addEventListener('alpine:init', () => {
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
 
-        this.settings.data = res.jsion();
+        this.settings.data = await res.json();
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
@@ -3549,7 +3549,7 @@ document.addEventListener('alpine:init', () => {
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
         const data = await res.json();
 
         this.allData.recpreset.clear();
@@ -3576,7 +3576,7 @@ document.addEventListener('alpine:init', () => {
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/settings`, { method: 'POST', body: fd });
+        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
         const data = await res.json();
 
         this.allData.recpreset.clear();
