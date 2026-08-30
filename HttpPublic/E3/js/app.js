@@ -185,7 +185,7 @@ document.addEventListener('alpine:init', () => {
     ssePortOffset: 10, // SSE専用ポートを使用する場合のオフセット (デフォルトは+10)
     page: window.location.hash || '#dashboard',
     params: {},
-    search: { searchInfo: {} },
+    search: { isDummy: true, searchInfo: {} },
     now: Date.now(),
     isOnline: false,
     isCellular: false,
@@ -311,7 +311,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     // リロードなしでページとパラメータを切り替える
-    openPage(page, params = {}, replace = false) {
+    openPage(page, params = {}, replace = false, load = true) {
       const url = new URL(window.location.href);
       url.hash = page;
       // パラメータをリセットして設定
@@ -323,7 +323,7 @@ document.addEventListener('alpine:init', () => {
       else history.pushState(null, '', url.toString());
       this.page = page;
       this.updateParams();
-      this.loadAll();
+      if (load) this.loadAll();
     },
     // クエリパラメータを更新して履歴を操作する
     updateQueryParam(params, push = false) {
@@ -2529,11 +2529,11 @@ document.addEventListener('alpine:init', () => {
       try {
         // 3. 検索結果ページへ遷移（URLを確定させる）
         if (this.page !== '#search') {
-          this.openPage('#search', {}, true);
+          this.openPage('#search', {}, true, false);
         }
         this.loading = true;
 
-        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 20000);
         const list = await res.json();
 
         this.allData.search.clear();

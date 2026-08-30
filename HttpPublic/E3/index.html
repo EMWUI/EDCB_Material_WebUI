@@ -946,6 +946,14 @@ ct:Append([=[
 
     <template x-if="page === '#reserve'">
       <div class="absolute">
+        <template x-if="totals.reserve === 0">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">info</i>
+              <p class="secondary-text">予約はありません</p>
+            </div>
+          </div>
+        </template>
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.reserveID">
@@ -1017,6 +1025,14 @@ ct:Append([=[
 
     <template x-if="page === '#autoaddmanual'">
       <div class="absolute">
+        <template x-if="totals.autoaddmanual === 0">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">info</i>
+              <p class="secondary-text">プログラム自動予約はありません</p>
+            </div>
+          </div>
+        </template>
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.dataID">
@@ -1103,11 +1119,11 @@ ct:Append([=[
                     <h6 class="small" x-text="item.name"></h6>
                     <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
                       <span class="middle-align">
-                        <i class="tiny">storage</i>
+                        <i class="primary-text tiny">storage</i>
                         <span x-text="item.sizeText"></span>
                       </span>
                       <span class="middle-align">
-                        <i class="tiny">schedule</i>
+                        <i class="primary-text tiny">schedule</i>
                         <span x-html="convert.date(item.mtime, true, true)"></span>
                       </span>
                     </div>
@@ -1121,16 +1137,20 @@ ct:Append([=[
           </ul>
 
           <template x-if="!loading && data.err">
-            <div class="center-align padding">
-              <i class="extra error-text">report</i>
-              <p class="error-text" x-text="data.err"></p>
+            <div class="center-align middle-align small-height">
+              <div>
+                <i class="extra error-text">report</i>
+                <p class="error-text" x-text="data.err"></p>
+              </div>
             </div>
           </template>
 
           <template x-if="!loading && !data.err && !data.dir?.length && !data.file?.length && data.iname">
-            <div class="center-align padding">
-              <i class="extra secondary-text">folder_open</i>
-              <p class="secondary-text">このフォルダは空です</p>
+          <div class="center-align middle-align small-height">
+              <div>
+                <i class="extra secondary-text">folder_open</i>
+                <p class="secondary-text">このフォルダは空です</p>
+              </div>
             </div>
           </template>
         </section>
@@ -1139,6 +1159,14 @@ ct:Append([=[
 
     <template x-if="page === '#recinfo'">
       <div class="absolute">
+        <template x-if="totals.recinfo === 0">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">info</i>
+              <p class="secondary-text">録画結果はありません</p>
+            </div>
+          </div>
+        </template>
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="d.id">
@@ -1173,6 +1201,14 @@ ct:Append([=[
 
     <template x-if="page === '#search'">
       <div class="absolute">
+        <template x-if="!search.isDummy && !loading && totals.search === 0">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">info</i>
+              <p class="secondary-text">対象となる番組はありません</p>
+            </div>
+          </div>
+        </template>
         <section class="responsive">
           <ul class="list medium-space vertical-margin">
             <template x-for="d in displayList" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
@@ -3080,14 +3116,16 @@ ct:Append([=[
           </section>
         </template>
         <template x-if="loading && !data">
-          <div class="margin middle-align center-align">
-            <div class="shape loading-indicator small-width small-height rotate"></div>
+          <div class="center-align middle-align small-height">
+            <div class="shape loading-indicator extra rotate"></div>
           </div>
         </template>
         <template x-if="!loading && !data">
-          <div class="center-align padding">
-            <i class="extra error-text">report</i>
-            <p class="error-text">設定の取得ができませんでした</p>
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra error-text">report</i>
+              <p class="error-text">設定の取得ができませんでした</p>
+            </div>
           </div>
         </template>
       </div>

@@ -8,9 +8,15 @@ json=GetVarInt(mg.request_info.query_string,'json',0,1)==1
 
 edcb.htmlEscape=json and 0 or 15
 
-a=SearchEpg(key,GetVarTimeRange(post),GetVarInt(post, 'archive')==1)
+archive=GetVarInt(post, 'archive')==1
+a=SearchEpg(key,GetVarTimeRange(post),archive)
 
 if json then
+  if archive then
+    for i,v in ipairs(a) do
+      v.archive=true
+    end
+  end
   ResponseJson(a,mg.request_info.query_string)
 else
   ct=CreateContentBuilder()
