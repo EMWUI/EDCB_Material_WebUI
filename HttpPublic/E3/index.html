@@ -255,23 +255,23 @@ ct:Append([=[
     <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
     <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
     <input id="commonCtok" type="hidden" value="]=]..CsrfToken('common')..[=[">
-    <template x-if="page === '#dashboard'">
+    <template x-if="page === '#dashboard'" x-data="dashboardData">
       <div class="padding">
 
-        <div class="row around-align">
+        <section class="responsive row small-height around-align">
           <div :class="isSmallScreen ? 'center-align' : 'row'">
             <i class="primary-text extra">event_available</i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">予約件数</div>
-              <div class="status bold"><span x-text="dashboardData.reservesCount">--</span><span class="large-text left-margin small-margin">件</span></div>
+              <div class="status bold"><span x-text="reservesCount">--</span><span class="large-text left-margin small-margin">件</span></div>
             </h5>
           </div>
 
           <div :class="isSmallScreen ? 'center-align' : 'row'">
-            <i class="extra" :class="dashboardData.isRecording ? 'error-text blink' : ''" x-text="dashboardData.isRecording ? 'fiber_manual_record' : dashboardData.isEpgCap ? 'sensors' : dashboardData.activeTuners ? 'fiber_manual_record' : 'bedtime'"></i>
+            <i class="extra" :class="isRecording ? 'error-text blink' : ''" x-text="isRecording ? 'fiber_manual_record' : isEpgCap ? 'sensors' : activeTuners ? 'fiber_manual_record' : 'bedtime'"></i>
             <h5 class="max">
               <div class="medium-text no-margin secondary-text">チューナー</div>
-              <div class="status bold" x-text="dashboardData.isRecording ? '録画中' : dashboardData.isEpgCap ? '取得中' : dashboardData.activeTuners ? '待機中' : '停止中'">--</div>
+              <div class="status bold" x-text="isRecording ? '録画中' : isEpgCap ? '取得中' : activeTuners ? '待機中' : '停止中'">--</div>
             </h5>
           </div>
 
@@ -284,38 +284,133 @@ ct:Append([=[
                   x-text="dataSaver ? 'Save' : isOnline ? 'Online' : 'Offline'">--</div>
             </h5>
           </div>
-        </div>
+        </section>
 
+        <h6 class="row padding">ピックアップ</h6>
+        <template x-if="olympic.length > 0">
+          <div class="vertical-margin">
+            <h6 class="row">
+              <span class="max medium-text bold secondary-text">オリンピック・FIFAワールドカップ</span>
+              <button class="small transparent circle" @click="searchOlympic()" :disabled="loadingOlympic">
+                <i :class="{ rotate: loadingOlympic }">refresh</i>
+              </button>
+            </h6>
+            <div class="row scroll">
+              <template x-for="(d, i) in olympic" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
+                <article class="small-width border ripple tiny-line" @click="openProgramDetail(d)">
+                  <div class="vertical small-gap no-round">
+                    <div class="row">
+                      <img class="round tiny border" :src="getLogoPath(d)">
+                      <div class="max small-text secondary-text">
+                        <div x-text="d.service_name"></div>
+                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                      </div>
+                    </div>
+                    <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="anime.length > 0">
+          <div class="vertical-margin">
+            <h6 class="row">
+              <span class="max medium-text bold secondary-text">本日のアニメ</span>
+              <button class="small transparent circle" @click="searchAnime()" :disabled="loadingAnime">
+                <i :class="{ rotate: loadingAnime }">refresh</i>
+              </button>
+            </h6>
+            <div class="row scroll">
+              <template x-for="(d, i) in anime" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
+                <article class="small-width border ripple tiny-line" :class="getGenreClass(d)" @click="openProgramDetail(d)">
+                  <div class="vertical small-gap no-round">
+                    <div class="row">
+                      <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
+                      <div class="max small-text secondary-text">
+                        <div x-text="getServiceName(d)"></div>
+                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                      </div>
+                    </div>
+                    <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="newPrograms.length > 0">
+          <div class="vertical-margin">
+            <h6 class="row">
+              <span class="max medium-text bold secondary-text">新番組</span>
+              <button class="small transparent circle" @click="searchNew()" :disabled="loadingNew">
+                <i :class="{ rotate: loadingNew }">refresh</i>
+              </button>
+            </h6>
+            <div class="row scroll">
+              <template x-for="(d, i) in newPrograms" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
+                <article class="small-width border ripple tiny-line" :class="getGenreClass(d)" @click="openProgramDetail(d)">
+                  <div class="vertical small-gap no-round">
+                    <div class="row">
+                      <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
+                      <div class="max small-text secondary-text">
+                        <div x-text="getServiceName(d)"></div>
+                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                      </div>
+                    </div>
+                    <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
+                  </div>
+                </article>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="!loadingNew && olympic.length === 0 && anime.length === 0 && newPrograms.length === 0">
+          <article class="small-width border ripple tiny-line center-align">
+            <div class="padding">
+              <i class="extra secondary-text">globe_2_cancel</i>
+            </div>
+          </article>
+        </template>
+         
         <h6 class="row padding">
-          <span class="max">放送中の番組</span>
+          <span class="max">
+            <span>放送中の番組</span>
+            <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.epg,false,true)"></span></span>
+          </span>
           <button class="transparent circle" @click="location.hash = '#epg'"><i>arrow_forward</i></button>
         </h6>
         <template x-for="n in selectableNetworks" :key="n.index">
           <div class="vertical-margin">
-            <div class="tiny-text bold secondary-text" x-text="n.name"></div>
+            <div class="bold secondary-text" x-text="n.name"></div>
             <div class="row scroll">
               <template x-for="s in serviceList.filter(s => getNetworkIndex(s.onid, s.partialReceptionFlag) === n.index)" :key="`${s.onid}-${s.tsid}-${s.sid}`">
-                <article class="small-width border ripple tiny-line small-text"
-                      x-data="{ get entry() { return dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
+                <article class="small-width border ripple tiny-line"  :class="getGenreClass(entry.current)"
+                      x-data="{ get entry() { return nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`] } }"
                       @click="if (entry) openProgramDetail(entry.current)">
-                  <div class="row">
-                    <img class="round tiny border" :src="getLogoPath(s)">
-                    <div class="max secondary-text">
-                      <div x-text="s.service_name"></div>
+                  <div class="vertical small-gap no-round">
+                    <div class="row">
+                      <img class="round tiny border left-margin small-margin" :src="getLogoPath(s)">
+                      <div class="max small-text secondary-text">
+                        <div x-text="s.service_name"></div>
+                        <template x-if="entry">
+                          <div x-html="getDateHtml(entry.current)"></div>
+                        </template>
+                      </div>
+                    </div>
+                    <div>
                       <template x-if="entry">
-                        <div x-html="getDateHtml(entry.current)"></div>
+                        <div class="title large-text bold" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                      </template>
+                      <template x-if="!entry">
+                        <div class="middle-align center-align">
+                          <progress class="circle small"></progress>
+                        </div>
                       </template>
                     </div>
-                  </div>
-                  <div>
-                    <template x-if="entry">
-                      <div class="title bold" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
-                    </template>
-                    <template x-if="!entry">
-                      <div class="middle-align center-align">
-                        <progress class="circle small"></progress>
-                      </div>
-                    </template>
                   </div>
                   <template x-if="entry">
                     <progress class="absolute bottom left right" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
@@ -327,55 +422,71 @@ ct:Append([=[
         </template>
 
         <h6 class="row padding">
-          <span class="max">直近の予約</span>
+          <span class="max">
+            <span>直近の予約</span>
+            <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.reserve,false,true)"></span></span>
+          </span>
           <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
         </h6>
         <div class="row scroll">
-          <template x-for="(d, i) in dashboardData.reserves" :key="d.reserveID">
-            <article class="small-width border ripple tiny-line small-text" @click="openProgramDetail(d)">
-              <div class="row">
-                <img class="round tiny border" :src="getLogoPath(d)">
-                <div class="max secondary-text">
-                  <div x-text="d.stationName"></div>
-                  <div class="secondary-text" x-html="getDateHtml(d)"></div>
+          <template x-for="(d, i) in reserves" :key="d.reserveID">
+            <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTimeInt + d.durationSecond*1000 > now ? 'inverse-primary-border' : d.startTimeInt < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
+              <div class="vertical small-gap no-round">
+                <div class="row">
+                  <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
+                  <div class="max small-text secondary-text">
+                    <div x-text="d.stationName"></div>
+                    <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                  </div>
                 </div>
+                <div class="title large-text bold max" x-html="convert.title(d.title)"></div>
               </div>
-              <div class="title bold max" x-html="convert.title(d.title)"></div>
             </article>
           </template>
           <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
         </div>
 
         <h6 class="row padding">
-          <span class="max">最近の録画結果</span>
+          <span class="max">
+            <span>最近の録画結果</span>
+            <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.recinfo,false,true)"></span></span>
+          </span>
           <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
         </h6>
         <div class="row scroll">
-          <template x-for="(d, i) in dashboardData.recs" :key="d.id">
-            <article class="small-width border ripple tiny-line small-text" @click="openRecinfoDetail(d)">
-              <div class="row">
-                <img class="round tiny border" :src="getLogoPath(d)">
-                <div class="max secondary-text">
-                  <div x-text="d.serviceName"></div>
-                  <div class="secondary-text" x-text="d.comment"></div>
+          <template x-for="(d, i) in recs" :key="d.id">
+            <article class="small-width border ripple tiny-line" :class="{ 'error-border': d.recStatus > 1, 'error-container': d.recStatus % 10 !== 1 }" @click="openRecinfoDetail(d)">
+              <div class="vertical small-gap no-round">
+                <div class="row">
+                  <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
+                  <div class="max small-text secondary-text">
+                    <div x-text="d.serviceName"></div>
+                    <div class="ellipsis secondary-text" x-text="d.comment"></div>
+                  </div>
                 </div>
+                <div class="title large-text bold max" x-html="convert.title(d.title)"></div>
               </div>
-              <div class="title bold max" x-html="convert.title(d.title)"></div>
             </article>
           </template>
           <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
         </div>
 
         <section class="responsive">
-          <div class="row padding">
-            <h6 class="max no-margin">ストレージ</h6>
-            <button class="transparent circle" @click="updateStorage()" :disabled="!isOnline || loadingStorage">
-              <i :class="loading ? 'spin' : ''">refresh</i>
+          <h6 class="row padding">
+            <span class="max">
+              <span>ストレージ</span>
+              <span class="small-text middle-align" x-show="storageUpdated">
+                <i class="tiny">save</i>
+                <span x-text="convert.date(storageUpdated,false,true)"></span>
+              </span>
+            </span>
+            <button class="transparent circle" @click="updateStorage()" :disabled="loadingStorage">
+              <i :class="{ rotate: loadingStorage }">refresh</i>
             </button>
-          </div>
+          </h6>
 
           <div class="grid">
-            <template x-for="drive in dashboardData.storage" :key="drive.name">
+            <template x-for="drive in storage" :key="drive.name">
               <div class="s12 m6">
                 <div class="card round border padding no-shadow">
                   <div class="row no-wrap">
@@ -935,10 +1046,10 @@ ct:Append([=[
             <span x-html="convert.title(d.title)"></span>
           </div>
           <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
-            <span class="middle-align"><i class="tiny">star</i><span x-text="d.recSetting.priority"></span></span>
-            <template x-if="d.comment"><span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span></template>
+            <span class="middle-align"><i class="primary-text tiny">star</i><span x-text="d.recSetting.priority"></span></span>
+            <template x-if="d.comment"><span class="middle-align"><i class="primary-text tiny">description</i><span x-text="d.comment"></span></span></template>
             <span class="max"></span>
-            <span class="middle-align"><i class="tiny">storage</i><span x-text="d.size"></span></span>
+            <span class="middle-align"><i class="primary-text tiny">storage</i><span x-text="d.size"></span></span>
           </div>
         </div>
       </div>
@@ -2315,7 +2426,7 @@ ct:Append([=[
                   </div>
                   <button class="right-round large" @click="removePreset()" :disabled="presetID==0"><i>delete</i><span>削除</span></button>
                 </nav>
-                <div><span>取得:</span><span x-text="convert.date(lastUpdated.recpreset,false,true)"></span></div>
+                <div class="middle-align"><i class="small">save</i><span x-text="convert.date(lastUpdated.recpreset,false,true)"></span></div>
                 <hr class="large">
                 <div class="grid">
                   <input type="hidden" name="presetID" :value="presetID">
@@ -3246,7 +3357,7 @@ ct:Append([=[
                 <i>category</i>
                 <nav class="max wrap small-gap">
                   <template x-for="g in d.contentInfoList">
-                    <span class="chip" :class="'cont-' + (getGenre(g).nibble1 + 1)">
+                    <span class="chip" :class="getGenreClass(g)">
                       <i>label</i>
                       <span x-text="`${getGenre(g).name1} - ${getGenre(g).name2}`"></span>
                     </span>

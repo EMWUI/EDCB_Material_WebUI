@@ -205,10 +205,11 @@ document.addEventListener('alpine:init', () => {
     perPage: 50,
     activeTunerId: 1,
     dashboardData: {
-      reserves: [], recs: [], nowOnAir: {},
-      reservesCount: 0,
+      olympic: [], anime: [], newPrograms: [],
+      reserves: [], recs: [], storage: [], nowOnAir: {},
+      reservesCount: 0, storageUpdated: 0,
       activeTuners: 0, isRecording: false, isEpgCap: false,
-      diskGB: 0, diskPercent: 0
+      loadingAnime: false, loadingNew: false, loadingOlympic: false, loadingStorage: false,
     },
 
     allData: {
@@ -1104,7 +1105,18 @@ document.addEventListener('alpine:init', () => {
 
       if (this.page === '#dashboard') {
         this.syncDashboardData();
-        //if (this.isOnline) await this.updateStorage();
+        if (!this.dataSaver) {
+          try {
+            await Promise.all([
+              this.updateStorage(),
+              this.searchOlympic(),
+              this.searchNew(),
+              this.searchAnime(),
+            ]);
+          } catch (e) {
+            this.snackbar.error('更新できませんでした');
+          }
+        }
         return;
       }
       if (this.page === '#epg') {
@@ -1178,6 +1190,11 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.page === '#search') {
+        if (this.search.dataID) {
+          this.allData.search.clear();
+          this.totals.search = 0;
+          this.search = { isDummy: true, searchInfo: {} };
+        }
         if (this.params.andKey) this.searchEvent(this.params.andKey);
         else this.openSearchDetail();
       }
@@ -1239,9 +1256,10 @@ document.addEventListener('alpine:init', () => {
     },
     async updateStorage() {
       try {
-        this.loadingStorage = true;
+        this.dashboardData.loadingStorage = true;
         const res = await this.fetch(`${this.ROOT}api/Common?json=1&storage=1`);
         const data = await res.json();
+        this.dashboardData.storageUpdated = Date.now();
         this.dashboardData.storage = (Array.isArray(data) ? data : []).map(s => {
           const total = parseInt(s.total) || 0;
           const free = parseInt(s.free) || 0;
@@ -1255,7 +1273,7 @@ document.addEventListener('alpine:init', () => {
       } catch (e) {
         console.error(e);
       } finally {
-        this.loadingStorage = false;
+        this.dashboardData.loadingStorage = false;
       }
     },
     async updateTunerStatus() {
@@ -1289,6 +1307,7 @@ document.addEventListener('alpine:init', () => {
 
           const key = config.key || 'items';
           const newList = Array.isArray(data[key]) ? data[key] : (Array.isArray(data) ? data : Object.values(data));
+          newList.forEach(v => v.startTimeInt = new Date(v.startTime).getTime());
 
           // 追加分をソート
           this.sortList(newList, config);
@@ -1547,6 +1566,10 @@ document.addEventListener('alpine:init', () => {
     },
     getServiceName(d, id) {
       return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || (id ? `${d.onid}-${d.tsid}-${d.sid}` : '不明');
+    },
+    getGenreClass(g) {
+      if (g.contentInfoList) g = g.contentInfoList[0];
+      return `cont-${this.getGenre(g).nibble1 + 1}`;
     },
     getElapsedTime(p) {
       if (!p || !p.durationSecond) return 0;
@@ -2555,6 +2578,66 @@ document.addEventListener('alpine:init', () => {
         }
       } finally {
         this.loading = false;
+      }
+    },
+    async searchOlympic() {
+      try {
+        this.dashboardData.loadingOlympic = true;
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&Olympic=1`);
+        const list = await res.json();
+
+        this.dashboardData.olympic = (Array.isArray(list) ? list : []).map(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          return v;
+        });
+      } catch (e) {
+        console.error("Search failed", e);
+      } finally {
+        this.dashboardData.loadingOlympic = false;
+      }
+    },
+    async searchNew() {
+      try {
+        this.dashboardData.loadingNew = true;
+        const fd = new URLSearchParams();
+        fd.append('ctok', document.getElementById('searchCtok')?.value || '');
+        fd.append('andKey', `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`);
+        fd.append('regExpFlag', 1);
+        fd.append('titleOnlyFlag', 1);
+        //fd.append('contentList', 2047);
+        this.serviceList.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === 1).forEach(v => fd.append('serviceList', `${v.onid}-${v.tsid}-${v.sid}`));
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const list = await res.json();
+
+        this.dashboardData.newPrograms = (Array.isArray(list) ? list : []).map(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          return v;
+        });
+      } catch (e) {
+        console.error("Search failed", e);
+      } finally {
+        this.dashboardData.loadingNew = false;
+      }
+    },
+    async searchAnime() {
+      try {
+        this.dashboardData.loadingAnime = true;
+        const fd = new URLSearchParams();
+        fd.append('ctok', document.getElementById('searchCtok')?.value || '');
+        fd.append('contentList', 2047);
+        fd.append('days', 1);
+        this.serviceList.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === 1).forEach(v => fd.append('serviceList', `${v.onid}-${v.tsid}-${v.sid}`));
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const list = await res.json();
+
+        this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          return v;
+        });
+      } catch (e) {
+        console.error("Search failed", e);
+      } finally {
+        this.dashboardData.loadingAnime = false;
       }
     },
     parseProgramInfo(e) {
