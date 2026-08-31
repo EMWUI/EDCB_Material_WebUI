@@ -1849,6 +1849,7 @@ document.addEventListener('alpine:init', () => {
         this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
         this.epg.lastLoadedData === this.lastUpdated.epg &&
         this.epg.lastLoadedMask === this.epg.networkMask &&
+        this.epg.lastLoadedSubCh === this.set.subCh &&
         this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
         this.epg.lastLoadedKey === slotKey &&
         this.epg.servicesToDisplay.length > 0
@@ -1857,18 +1858,20 @@ document.addEventListener('alpine:init', () => {
       const timeChanged = this.epg.lastLoadedStart !== gridStart;
       const networkChanged = this.epg.lastLoadedNetwork !== this.epg.activeNetwork;
       const maskChanged = this.epg.lastLoadedMask !== this.epg.networkMask;
+      const subChChanged = this.epg.lastLoadedSubCh !== this.set.subCh;
 
       // 中断と新規 ID 発行
       const currentLoadId = ++this.epg.loadId;
       this.epg.lastLoadedStart = gridStart;
       this.epg.lastLoadedNetwork = this.epg.activeNetwork;
       this.epg.lastLoadedMask = this.epg.networkMask;
+      this.epg.lastLoadedSubCh = this.set.subCh;
       this.epg.lastLoadedData = this.lastUpdated.epg;
       this.epg.lastLoadedReserve = this.lastUpdated.reserve;
       this.epg.lastLoadedKey = slotKey;
 
       // 1. サービスリストの準備
-      if (networkChanged || maskChanged || this.epg.servicesToDisplay.length === 0) {
+      if (networkChanged || maskChanged || subChChanged || this.epg.servicesToDisplay.length === 0) {
         let services = this.serviceList;
         if (this.epg.activeNetwork > 0) {
           services = services.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === this.epg.activeNetwork);

@@ -430,7 +430,7 @@ ct:Append([=[
         </h6>
         <div class="row scroll">
           <template x-for="(d, i) in reserves" :key="d.reserveID">
-            <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTimeInt + d.durationSecond*1000 > now ? 'inverse-primary-border' : d.startTimeInt < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
+            <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTimeInt + d.durationSecond*1000 < now ? 'inverse-primary-border' : d.startTimeInt < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
               <div class="vertical small-gap no-round">
                 <div class="row">
                   <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
@@ -1081,7 +1081,7 @@ ct:Append([=[
         <section class="responsive">
           <div>
             <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
-              <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }">
+              <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }" x-init="$watch('tunerDisplayData',() => d = tunerDisplayData[tuner.tunerID])">
                 <template x-if="d">
                   <ul class="list medium-space vertical-margin">
                     <template x-for="d in d.displayList" :key="d.reserveID">
