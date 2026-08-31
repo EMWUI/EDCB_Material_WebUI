@@ -369,14 +369,14 @@ document.addEventListener('alpine:init', () => {
       // すでに開いているIDと同じなら何もしない
       if (this.sidePanel.el && this.sidePanel.el.open) {
         let currentId = '';
-        if (this.page === '#recinfo') {
+        if (this.isPage('#recinfo')) {
           currentId = String(this.detail.id);
-        } else if (this.page === '#autoaddepg' || this.page === '#autoaddmanual') {
+        } else if (this.isPage('#autoaddepg','#autoaddmanual')) {
           currentId = String(this.detail.id || this.detail.dataID);
-        } else if (this.page === '#reserve' || this.page === '#tunerreserve') {
-          currentId = String(this.detail.reserveID || `${this.detail.onid}-${this.detail.tsid}-${this.detail.sid}-${this.detail.eid}`);
+        } else if (this.isPage('#reserve','#tunerreserve')) {
+          currentId = String(this.detail.reserveID || this.getEventID(this.detail));
         } else {
-          currentId = `${this.detail.onid}-${this.detail.tsid}-${this.detail.sid}-${this.detail.eid}`;
+          currentId = this.getEventID(this.detail);
         }
         if (currentId === String(id)) return;
       }
@@ -390,17 +390,17 @@ document.addEventListener('alpine:init', () => {
         const numId = parseInt(id);
         if (isNaN(numId)) return;
 
-        if (this.page === '#recinfo') {
+        if (this.isPage('#recinfo')) {
           const r = this.allData.recinfo.get(numId);
           if (r) {
             this.openRecinfoDetail(r);
           } else {
             this.openRecinfoDetail({ id: numId });
           }
-        } else if (this.page === '#autoaddepg') {
+        } else if (this.isPage('#autoaddepg')) {
           const d = this.allData.autoaddepg.get(numId);
           if (d) this.openAutoaddDetail(d);
-        } else if (this.page === '#autoaddmanual') {
+        } else if (this.isPage('#autoaddmanual')) {
           const d = this.allData.autoaddmanual.get(numId);
           if (d) this.openAutoaddDetail(d);
         } else {
@@ -432,7 +432,7 @@ document.addEventListener('alpine:init', () => {
     },
     calendar(d, details, authuser, src) {
       return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
-        }&location=${encodeURIComponent(this.convert.ZtoH(this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.ts_name||this.getServiceName(d)))
+        }&location=${encodeURIComponent(this.convert.ZtoH(this.allData.service.get(this.getServiceID(d))?.ts_name||this.getServiceName(d)))
         }&dates=${this.convert.ISO(d.startTime)}/${this.convert.ISO(d.startTimeInt + d.durationSecond * 1000)
         }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
         }&authuser=${authuser
@@ -476,14 +476,14 @@ document.addEventListener('alpine:init', () => {
 
       this.$watch('set.oneseg', () => {
         this.updateNetworkMask();
-        if (!this.set.oneseg && this.epg.activeNetwork === 2) this.setNetwork(0);
+        if (!this.set.oneseg && this.isActiveNetwork(2)) this.setNetwork(0);
         this.saveCache();
         this.syncNowOnAir();
       });
 
       this.$watch('set.subCh', () => {
         this.saveCache();
-        if (this.page === '#epg') this.loadEpg();
+        if (this.isPage('#epg')) this.loadEpg();
         this.syncNowOnAir();
       });
 
@@ -541,7 +541,7 @@ document.addEventListener('alpine:init', () => {
 
       let lastScrollTop = 0;
       this.$main.addEventListener('scroll', () => {
-        if (this.page !== '#epg') return;
+        if (!this.isPage('#epg')) return;
         const scrollTop = this.$main.scrollTop;
         if (scrollTop <= 10) {
           this.epg.toolbarActive = true;
@@ -566,7 +566,7 @@ document.addEventListener('alpine:init', () => {
               list.forEach(val => {
                 if (key === 'epg' && Array.isArray(val) && val.length > 0) {
                   // 局ごとのMapとして復元
-                  const serviceId = `${val[0].onid}-${val[0].tsid}-${val[0].sid}`;
+                  const serviceId = this.getServiceID(val[0]);
                   this.allData.epg.set(serviceId, new Map(val.map(v => [v.eid, v])));
                 } else {
                   this.allData[key].set(this.getDataKey(val, key), val);
@@ -761,15 +761,15 @@ document.addEventListener('alpine:init', () => {
           ]);
           this.allData.search.forEach((v, k) => {
             if (!v.past) {
-              const r = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              const r = this.allData.reserve.get(this.getEventID(v));
               if (!r && v.reserveID) v.reserveID = null;
               if (r) this.allData.search.set(k, { ...v, ...r })
             };
           });
-          if (this.page === '#search') this.updateDisplayList();
+          if (this.isPage('#search')) this.updateDisplayList();
           if (!data.epg) {
-            if (this.page === '#epg') this.loadEpg();
-            if (this.page === '#epgweek') this.loadWeeklyEpg();
+            if (this.isPage('#epg')) this.loadEpg();
+            if (this.isPage('#epgweek')) this.loadWeeklyEpg();
           }
         }
         if (data.recinfo) this.refreshData('#recinfo');
@@ -809,7 +809,7 @@ document.addEventListener('alpine:init', () => {
 
         // ダッシュボードや表示リストへの反映
         this.syncDashboardData();
-        if (this.page === pageHash) this.updateDisplayList();
+        if (this.isPage(pageHash)) this.updateDisplayList();
 
         // キャッシュ保存
         this.saveCache();
@@ -844,7 +844,7 @@ document.addEventListener('alpine:init', () => {
         (Array.isArray(list) ? list : []).forEach(v => {
           // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
           v.startTimeInt = new Date(v.startTime).getTime();
-          const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
+          const serviceId = this.getServiceID(v);
           if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
         });
@@ -860,8 +860,8 @@ document.addEventListener('alpine:init', () => {
         this.updateNetworkMask();
         this.saveCache();
 
-        if (this.page === '#epg') this.loadEpg();
-        if (this.page === '#epgweek') this.loadWeeklyEpg();
+        if (this.isPage('#epg')) this.loadEpg();
+        if (this.isPage('#epgweek')) this.loadWeeklyEpg();
         this.syncNowOnAir();
       } catch (e) {
         console.error("Failed to refresh epg", e);
@@ -888,7 +888,7 @@ document.addEventListener('alpine:init', () => {
         const grouped = new Map();
         (Array.isArray(list) ? list : []).forEach(v => {
           v.startTimeInt = new Date(v.startTime).getTime();
-          const serviceId = `${v.onid}-${v.tsid}-${v.sid}`;
+          const serviceId = this.getServiceID(v);
           if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
         });
@@ -1091,11 +1091,14 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    isPage(...v) {
+      return v.includes(this.page);
+    },
     // ページ切り替え時に呼ばれる
     async loadAll() {
       this.epg.toolbarActive = true;
       // 視聴ページ以外に移動した場合は再生を停止してインスタンスを破棄
-      if (this.player.ts && this.page !== '#watch') {
+      if (this.player.ts && !this.isPage('#watch')) {
         this.player.destroy();
       }
 
@@ -1103,7 +1106,7 @@ document.addEventListener('alpine:init', () => {
       if (!['#epg', '#epgweek'].includes(this.page)) this.$main.scrollTo(0, 0);
       this.sidePanel.close(false);
 
-      if (this.page === '#dashboard') {
+      if (this.isPage('#dashboard')) {
         this.syncDashboardData();
         if (!this.dataSaver) {
           try {
@@ -1119,11 +1122,11 @@ document.addEventListener('alpine:init', () => {
         }
         return;
       }
-      if (this.page === '#epg') {
+      if (this.isPage('#epg')) {
         // タブ選択の同期
         const tab = parseInt(this.params.tab);
-        if (!isNaN(tab)) this.epg.activeNetwork = tab;
-        else this.epg.activeNetwork = 1;
+        if (!isNaN(tab)) this.isActiveNetwork(tab);
+        else this.isActiveNetwork(1);
 
         // 放送日付の基準（4時を境界とする）
         let base = new Date(this.now);
@@ -1166,7 +1169,7 @@ document.addEventListener('alpine:init', () => {
         this.loadEpg();
         return;
       }
-      if (this.page === '#epgweek') {
+      if (this.isPage('#epgweek')) {
         if (!this.params.id) {
           const first = this.serviceList[0];
           if (first) this.openPage('#epgweek', { id: this.getDataKey(first, 'service') }, true);
@@ -1175,21 +1178,21 @@ document.addEventListener('alpine:init', () => {
         this.loadWeeklyEpg();
         return;
       }
-      if (this.page === '#onair') {
+      if (this.isPage('#onair')) {
         return;
       }
-      if (this.page === '#watch') {
+      if (this.isPage('#watch')) {
         if (this.player.ts) {
           if (this.params.id) this.player.loadLive(this.params.id);
           else if (this.params.recid || this.params.rid || this.params.h) this.player.loadVideo(this.params);
         }
         return;
       }
-      if (this.page === '#library') {
+      if (this.isPage('#library')) {
         this.library.load();
         return;
       }
-      if (this.page === '#search') {
+      if (this.isPage('#search')) {
         if (this.search.dataID) {
           this.allData.search.clear();
           this.totals.search = 0;
@@ -1198,7 +1201,7 @@ document.addEventListener('alpine:init', () => {
         if (this.params.andKey) this.searchEvent(this.params.andKey);
         else this.openSearchDetail();
       }
-      if (this.page === '#setting') {
+      if (this.isPage('#setting')) {
         this.loadSetting();
       }
 
@@ -1209,7 +1212,7 @@ document.addEventListener('alpine:init', () => {
       const internalKey = this.page.replace('#', '');
 
       // チューナー別予約ページの場合
-      if (this.page === '#tunerreserve') {
+      if (this.isPage('#tunerreserve')) {
         this.allData.tunerreserve.forEach(tuner => {
           const tid = tuner.tunerID;
 
@@ -1565,7 +1568,7 @@ document.addEventListener('alpine:init', () => {
       return `<span class="row wrap" style="gap: 0 0.3rem;">${show_ymd ? `<span>${this.convert.ymd(start, true)}</span>` : ''}<span>${this.convert.time(start)}～${end}</span></span>`
     },
     getServiceName(d, id) {
-      return this.allData.service.get(`${d.onid}-${d.tsid}-${d.sid}`)?.service_name || (id ? `${d.onid}-${d.tsid}-${d.sid}` : '不明');
+      return this.allData.service.get(this.getServiceID(d))?.service_name || (id ? this.getServiceID(d) : '不明');
     },
     getGenreClass(g) {
       if (g.contentInfoList) g = g.contentInfoList[0];
@@ -1578,17 +1581,23 @@ document.addEventListener('alpine:init', () => {
     getSamplingRate(r) {
       return `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[r]}kHz`
     },
-    getTunerList(){
-      const l=Array.from(this.allData.tunerreserve.values());
+    getTunerList() {
+      const l = Array.from(this.allData.tunerreserve.values());
       l.pop();
       return l
     },
-    getTunerID(v){
+    getServiceID(v) {
+      return `${v.onid}-${v.tsid}-${v.sid}`
+    },
+    getEventID(v) {
+      return `${this.getServiceID(v)}-${v.eid}`
+    },
+    getTunerID(v) {
       return `ID:${this.convert.zero(v.tunerID.toString(16).toUpperCase(),8)} (${v.tunerName})`
     },
     get nowOnAirList() {
       // サービス一覧の並び順に従って、放送中・次の番組ペアの配列を返す
-      return this.serviceList.map(s => this.dashboardData.nowOnAir[`${s.onid}-${s.tsid}-${s.sid}`]).filter(v => v);
+      return this.serviceList.map(s => this.dashboardData.nowOnAir[this.getServiceID(s)]).filter(v => v);
     },
     syncNowOnAir() {
       const now = this.now;
@@ -1653,7 +1662,7 @@ document.addEventListener('alpine:init', () => {
       return list
         .filter(s => this.set.oneseg || !s.partialReceptionFlag)
         .filter(s => this.set.subCh || !s.subCh)
-        .filter(s => this.allData.epg.has(`${s.onid}-${s.tsid}-${s.sid}`));
+        .filter(s => this.allData.epg.has(this.getServiceID(s)));
     },
     // 現在の表示対象ネットワーク（「すべて」を含み、EPGデータが存在し、かつ設定で有効なもの）
     get displayableNetworks() {
@@ -1669,7 +1678,7 @@ document.addEventListener('alpine:init', () => {
     get searchNetworks() {
       return this.networkNames
         .map((name, index) => ({ name, index }))
-        .filter(n => n.index > 0 && this.serviceList.some(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag, true) === n.index));
+        .filter(n => n.index > 0 && this.serviceList.some(s => this.isNetwork(s, n.index, true)));
     },
     getNetworkIndex(onid, partial, divCS) {
       if (0x7880 <= onid && onid <= 0x7FE8) return partial ? 2 : 1;
@@ -1680,6 +1689,12 @@ document.addEventListener('alpine:init', () => {
       if (onid === 7) return 7;
       if (onid === 10) return 8;
       return 9;
+    },
+    isNetwork(s, i, divCS = false) {
+      return this.getNetworkIndex(s.onid, s.partialReceptionFlag, divCS) === i;
+    },
+    getNetworkServices(i, divCS = false) {
+      return this.serviceList.filter(s => this.isNetwork(s, i, divCS));
     },
     updateNetworkMask() {
       let mask = 1;
@@ -1826,16 +1841,17 @@ document.addEventListener('alpine:init', () => {
       return `${this.params.tab}-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
     },
     loadEpg() {
-      const gridStart = this.epg.epgStartTime;
+      const epg = this.epg;
+      const gridStart = epg.epgStartTime;
       const gridEnd = gridStart + 24 * 3600 * 1000;
       const slotKey = this.getEpgKey(gridStart);
 
       // データソースの決定
       let dataMap = null;
-      if (gridStart >= this.epg.coreRange.start && gridEnd <= this.epg.coreRange.end) {
+      if (gridStart >= epg.coreRange.start && gridEnd <= epg.coreRange.end) {
         dataMap = this.allData.epg;
       } else {
-        dataMap = this.epg.extraData.get(slotKey);
+        dataMap = epg.extraData.get(slotKey);
         // キャッシュになければ取得
         if (!dataMap && this.isOnline) {
           this.fetchEpgForRange(gridStart);
@@ -1845,45 +1861,45 @@ document.addEventListener('alpine:init', () => {
 
       // 基準時間、ネットワークフィルタ、EPGデータ更新のいずれも変化がなければ処理をスキップ
       const isUnchanged = (
-        this.epg.lastLoadedStart === gridStart &&
-        this.epg.lastLoadedNetwork === this.epg.activeNetwork &&
-        this.epg.lastLoadedData === this.lastUpdated.epg &&
-        this.epg.lastLoadedMask === this.epg.networkMask &&
-        this.epg.lastLoadedSubCh === this.set.subCh &&
-        this.epg.lastLoadedReserve === this.lastUpdated.reserve &&
-        this.epg.lastLoadedKey === slotKey &&
-        this.epg.servicesToDisplay.length > 0
+        epg.lastLoadedStart === gridStart &&
+        epg.lastLoadedNetwork === epg.activeNetwork &&
+        epg.lastLoadedData === this.lastUpdated.epg &&
+        epg.lastLoadedMask === epg.networkMask &&
+        epg.lastLoadedSubCh === this.set.subCh &&
+        epg.lastLoadedReserve === this.lastUpdated.reserve &&
+        epg.lastLoadedKey === slotKey &&
+        epg.servicesToDisplay.length > 0
       );
 
-      const timeChanged = this.epg.lastLoadedStart !== gridStart;
-      const networkChanged = this.epg.lastLoadedNetwork !== this.epg.activeNetwork;
-      const maskChanged = this.epg.lastLoadedMask !== this.epg.networkMask;
-      const subChChanged = this.epg.lastLoadedSubCh !== this.set.subCh;
+      const timeChanged = epg.lastLoadedStart !== gridStart;
+      const networkChanged = epg.lastLoadedNetwork !== epg.activeNetwork;
+      const maskChanged = epg.lastLoadedMask !== epg.networkMask;
+      const subChChanged = epg.lastLoadedSubCh !== this.set.subCh;
 
       // 中断と新規 ID 発行
-      const currentLoadId = ++this.epg.loadId;
-      this.epg.lastLoadedStart = gridStart;
-      this.epg.lastLoadedNetwork = this.epg.activeNetwork;
-      this.epg.lastLoadedMask = this.epg.networkMask;
-      this.epg.lastLoadedSubCh = this.set.subCh;
-      this.epg.lastLoadedData = this.lastUpdated.epg;
-      this.epg.lastLoadedReserve = this.lastUpdated.reserve;
-      this.epg.lastLoadedKey = slotKey;
+      const currentLoadId = ++epg.loadId;
+      epg.lastLoadedStart = gridStart;
+      epg.lastLoadedNetwork = epg.activeNetwork;
+      epg.lastLoadedMask = epg.networkMask;
+      epg.lastLoadedSubCh = this.set.subCh;
+      epg.lastLoadedData = this.lastUpdated.epg;
+      epg.lastLoadedReserve = this.lastUpdated.reserve;
+      epg.lastLoadedKey = slotKey;
 
       // 1. サービスリストの準備
-      if (networkChanged || maskChanged || subChChanged || this.epg.servicesToDisplay.length === 0) {
+      if (networkChanged || maskChanged || subChChanged || epg.servicesToDisplay.length === 0) {
         let services = this.serviceList;
-        if (this.epg.activeNetwork > 0) {
-          services = services.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === this.epg.activeNetwork);
+        if (!this.isActiveNetwork(0)) {
+          services = services.filter(s => this.isActiveNetwork(this.getNetworkIndex(s.onid, s.partialReceptionFlag)));
         }
-        this.epg.servicesToDisplay = services.map(s => ({ ...s, displayEvents: [] }));
+        epg.servicesToDisplay = services.map(s => ({ ...s, displayEvents: [] }));
       } else if (timeChanged || isUnchanged) {
         // 時間が変わったか、ページ入り直しの場合は一旦クリアしてパラパラさせる
-        this.epg.servicesToDisplay.forEach(s => s.displayEvents = []);
+        epg.servicesToDisplay.forEach(s => s.displayEvents = []);
       }
 
       // 代入後にプロキシ化された参照を取得する（比較用）
-      const currentServices = this.epg.servicesToDisplay;
+      const currentServices = epg.servicesToDisplay;
 
       if (timeChanged || networkChanged || isUnchanged) this.$main.scrollTo(0, 0);
 
@@ -1892,7 +1908,7 @@ document.addEventListener('alpine:init', () => {
 
       const processNext = () => {
         // 別の loadEpg (フィルタ切り替え等) が開始されていたらこのループを中止
-        if (this.epg.loadId !== currentLoadId) return;
+        if (epg.loadId !== currentLoadId) return;
 
         const s = currentServices[index];
         const serviceId = this.getDataKey(s, 'service');
@@ -1922,7 +1938,7 @@ document.addEventListener('alpine:init', () => {
             }
             const minutes = endMin - startMin;
             if (minutes > 0) {
-              const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              const reserve = this.allData.reserve.get(this.getEventID(v));
               displayEvents.push({ ...v, isGap: false, minutes, reserve });
               lastPos = Math.max(lastPos, vEnd);
             }
@@ -2038,7 +2054,7 @@ document.addEventListener('alpine:init', () => {
             }
             const minutes = endMin - startMin;
             if (minutes > 0) {
-              const reserve = this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`);
+              const reserve = this.allData.reserve.get(this.getEventID(v));
               displayEvents.push({ ...v, isGap: false, minutes, reserve });
               lastPos = Math.max(lastPos, vEnd);
             }
@@ -2106,7 +2122,7 @@ document.addEventListener('alpine:init', () => {
     },
     // ネットワーク（タブ）を切り替え、履歴に追加する
     setNetwork(index) {
-      if (this.epg.activeNetwork === index) return;
+      if (this.isActiveNetwork(index)) return;
       const url = new URL(window.location.href);
       url.searchParams.set('tab', index);
       history.pushState(null, '', url.toString());
@@ -2118,6 +2134,9 @@ document.addEventListener('alpine:init', () => {
         this.epg.epgStartTime = d.getTime();
       }
       this.loadEpg();
+    },
+    isActiveNetwork(v) {
+      return this.epg.activeNetwork === v;
     },
     // 日付を前後にずらす (24時間単位)
     shiftDate(days) {
@@ -2240,7 +2259,7 @@ document.addEventListener('alpine:init', () => {
             history.back();
           } else {
             let targetId = null;
-            if (this.app.page === '#epgweek' && this.app.params.id) {
+            if (this.app.isPage('#epgweek') && this.app.params.id) {
               targetId = this.app.params.id.split('-').slice(0, 3).join('-');
             }
             this.app.updateQueryParam({ id: targetId }, false);
@@ -2256,7 +2275,7 @@ document.addEventListener('alpine:init', () => {
       },
       initSelectedServices(s) {
         this.selectedServices = s?.serviceList
-          ? s.serviceList.map(i => `${i.onid}-${i.tsid}-${i.sid}`)
+          ? s.serviceList.map(i => this.app.getServiceID(i))
           : this.app.getDefSearchService();
       },
       updateContentList() {
@@ -2273,7 +2292,7 @@ document.addEventListener('alpine:init', () => {
       addNetworkServices(networkIndex) {
         // 該当ネットワークの全サービスを取得
         const servicesInNetwork = Array.from(this.allData.service.values())
-          .filter(sv => this.app.getNetworkIndex(sv.onid, sv.partialReceptionFlag, true) === networkIndex);
+          .filter(sv => this.app.isNetwork(sv, networkIndex, true));
 
         // それらのデータキーを取得
         const keys = servicesInNetwork.map(sv => this.app.getDataKey(sv, 'service'));
@@ -2343,7 +2362,7 @@ document.addEventListener('alpine:init', () => {
             return;
           } else {
             let targetId = null;
-            if (this.app.page === '#epgweek' && this.app.params.id) {
+            if (this.app.isPage('#epgweek') && this.app.params.id) {
               targetId = this.app.params.id.split('-').slice(0, 3).join('-');
             }
             this.app.updateQueryParam({ id: targetId }, false);
@@ -2412,8 +2431,8 @@ document.addEventListener('alpine:init', () => {
     openNewEntry(e) {
       this.detail = { recSetting: this.allData.recpreset.get(0).recSetting };
       if (e) this.detail.searchInfo = { andKey: e.shortInfo.event_name, serviceList: [{ onid: e.onid, tsid: e.tsid, sid: e.sid }] };
-      else if (this.page == '#autoaddepg') this.detail.searchInfo = {};
-      else if (this.page == '#autoaddmanual') this.detail.dataID = 0;
+      else if (this.isPage('#autoaddepg')) this.detail.searchInfo = {};
+      else if (this.isPage('#autoaddmanual')) this.detail.dataID = 0;
       else this.detail.eid = 65535;
 
       if (this.detail.searchInfo) ui("#searchInfo");
@@ -2439,11 +2458,11 @@ document.addEventListener('alpine:init', () => {
       if (d.past && d.startTimeInt) {
         // 過去番組はeidが変化している可能性があるため開始時間（秒）を使う
         // EDCBはJST時刻をそのまま秒換算した値で管理するため、UTC ms/1000 に +9h(32400) を加算する
-        idVal = `${d.onid}-${d.tsid}-${d.sid}-${Math.floor(d.startTimeInt / 1000) + 9 * 3600}`;
-      } else if (d.reserveID && (this.page === '#reserve' || this.page === '#tunerreserve' || !d.eid || d.eid === 65535)) {
+        idVal = `${this.getServiceID(d)}-${Math.floor(d.startTimeInt / 1000) + 9 * 3600}`;
+      } else if (d.reserveID && (this.isPage('#reserve','#tunerreserve') || !d.eid || d.eid === 65535)) {
         idVal = d.reserveID;
       } else {
-        idVal = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
+        idVal = this.getEventID(d);
       }
       const push = !this.params.id;
       this.sidePanel.shouldGoBack = push;
@@ -2452,9 +2471,9 @@ document.addEventListener('alpine:init', () => {
       if (d.past || d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
 
       if (d.reserveID) {
-        this.detail = { ...d, ...await this.getEpgById(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`) || {} };
+        this.detail = { ...d, ...await this.getEpgById(this.getEventID(d)) || {} };
       } else {
-        const r = this.allData.reserve.get(`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`);
+        const r = this.allData.reserve.get(this.getEventID(d));
         if (r) {
           this.detail.reserveID = r.reserveID;
           this.detail.recSetting = r.recSetting;
@@ -2554,7 +2573,7 @@ document.addEventListener('alpine:init', () => {
 
       try {
         // 3. 検索結果ページへ遷移（URLを確定させる）
-        if (this.page !== '#search') {
+        if (!this.isPage('#search')) {
           this.openPage('#search', {}, true, false);
         }
         this.loading = true;
@@ -2565,7 +2584,7 @@ document.addEventListener('alpine:init', () => {
         this.allData.search.clear();
         (Array.isArray(list) ? list : []).forEach(v => {
           v.startTimeInt = new Date(v.startTime).getTime();
-          if (!v.past) v = { ...v, ...this.allData.reserve.get(`${v.onid}-${v.tsid}-${v.sid}-${v.eid}`) || {} };
+          if (!v.past) v = { ...v, ...this.allData.reserve.get(this.getEventID(v)) || {} };
           this.allData.search.set(this.getDataKey(v, 'search'), v);
         });
 
@@ -2607,8 +2626,7 @@ document.addEventListener('alpine:init', () => {
         fd.append('andKey', `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`);
         fd.append('regExpFlag', 1);
         fd.append('titleOnlyFlag', 1);
-        //fd.append('contentList', 2047);
-        this.serviceList.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === 1).forEach(v => fd.append('serviceList', `${v.onid}-${v.tsid}-${v.sid}`));
+        this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
         const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
         const list = await res.json();
 
@@ -2629,7 +2647,7 @@ document.addEventListener('alpine:init', () => {
         fd.append('ctok', document.getElementById('searchCtok')?.value || '');
         fd.append('contentList', 2047);
         fd.append('days', 1);
-        this.serviceList.filter(s => this.getNetworkIndex(s.onid, s.partialReceptionFlag) === 1).forEach(v => fd.append('serviceList', `${v.onid}-${v.tsid}-${v.sid}`));
+        this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
         const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
         const list = await res.json();
 
@@ -2844,7 +2862,7 @@ document.addEventListener('alpine:init', () => {
       },
       async toggle(d) {
         if (!this.enabled) return;
-        const id = `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`;
+        const id = `${this.app.getEventID(d)}`;
         const idx = this.list.findIndex(item => item.id === id);
         if (idx > -1) {
           this.list.splice(idx, 1);
@@ -2855,7 +2873,7 @@ document.addEventListener('alpine:init', () => {
         }
         this.save();
       },
-      isSet(d) { return this.list.some(item => item.id === `${d.onid}-${d.tsid}-${d.sid}-${d.eid}`); },
+      isSet(d) { return this.list.some(item => item.id === `${this.app.getEventID(d)}`); },
       remove(id) {
         this.list = this.list.filter(item => item.id !== id);
         this.save();
@@ -2949,7 +2967,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
     addReserve(e) {
-      const fd = new URLSearchParams({ id: `${e.onid}-${e.tsid}-${e.sid}-${e.eid}`, oneClick: 1 });
+      const fd = new URLSearchParams({ id: this.getEventID(e), oneClick: 1 });
       this.apiFetch(`${this.ROOT}api/SetReserve`, fd, 'GET');
     },
     toggleReserve(d) {
@@ -3034,7 +3052,14 @@ document.addEventListener('alpine:init', () => {
       showJikkyoSet: false,
       controlTimeout: null, // コントロール自動非表示用タイマー
       isSeeking: false, // シーク中フラグ
-      sideTab: 'service-list',
+      sideTab: 'service',
+
+      isSideTab(tab) {
+        return { active: this.sideTab === tab };
+      },
+      setSideTab(tab) {
+        this.sideTab = tab;
+      },
 
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
@@ -3325,7 +3350,7 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('enabledDetelecine', () => this.cinema = true);
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
-          this.sideTab = this.live ? 'service-list' : 'info';
+          this.sideTab = this.live ? 'service' : 'info';
           ts.setOption(this.set.quality);
           if (ts.cap && !this.set.cap) ts.cap.hide();
           if (ts.jikkyo) {
@@ -3683,6 +3708,20 @@ document.addEventListener('alpine:init', () => {
       r: null,
       recNamePlugin: null,
       writePlugin: null,
+
+      isTab(tab) {
+        return { active: this.tab === tab };
+      },
+      setTab(tab) {
+        this.tab = tab;
+      },
+      isPresetTab(tab) {
+        return { active: this.presetTab === tab };
+      },
+      setPresetTab(tab) {
+        this.presetTab = tab;
+      },
+
       moveList(list, index, offset) {
         const newIndex = index + offset;
         if (newIndex < 0 || newIndex >= this.data[list].length) {
