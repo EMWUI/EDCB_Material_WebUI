@@ -1054,6 +1054,28 @@ ct:Append([=[
         </div>
       </div>
     </template>
+    <template id="reserveTable-template" x-ref="reserveTable">
+      <td>
+        <template x-if="d.startTimeInt < now" >
+          <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTimeInt + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
+        </template>
+        <template x-if="d.startTimeInt > now">
+          <label class="checkbox icon" @click.stop>
+            <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
+            <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
+              <i>block</i>
+              <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
+            </span>
+          </label>
+        </template>
+      </td>
+      <td><span :class="opacity" x-text="getDateText(d)"></span></td>
+      <td><span :class="opacity" x-html="convert.title(d.title)"></span></td>
+      <td><span class="middle-align tiny-gap" :class="opacity"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span></td>
+      <td><span :class="opacity" x-text="d.comment"></span></td>
+      <td class="right-align"><span :class="opacity" x-text="d.size"></span></td>
+      <td class="right-align"><span :class="opacity" x-text="d.recSetting.priority"></span></td>
+    </template>
 
     <template x-if="isPage('#reserve')">
       <div class="absolute">
@@ -1065,72 +1087,203 @@ ct:Append([=[
             </div>
           </div>
         </template>
-        <section class="responsive">
-          <ul class="list medium-space vertical-margin">
-            <template x-for="d in displayList" :key="d.reserveID">
-              <li class="ripple" x-html="$refs.reserveList.innerHTML" @click="openProgramDetail(d)"></li>
-            </template>
-            <div x-intersect="loadMore()"></div>
-          </ul>
-        </section>
+        <template x-if="isList('reserve', totals.reserve)">
+          <section class="responsive vertical-margin">
+            <ul class="list medium-space">
+              <template x-for="d in displayList" :key="d.reserveID">
+                <li class="ripple" x-html="$refs.reserveList.innerHTML" @click="openProgramDetail(d)"></li>
+              </template>
+              <div x-intersect="loadMore()"></div>
+            </ul>
+          </section>
+        </template>
+        <template x-if="isTable('reserve', totals.reserve)">
+          <section class="no-margin padding">
+            <div class="scroll background">
+              <table class="table border medium-space">
+                <thead class="fixed front small-text">
+                  <tr>
+                    <th>録画</th>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th>コメント</th>
+                    <th class="right-align">予想サイズ</th>
+                    <th class="right-align">優先度</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="d in displayList" :key="d.reserveID">
+                    <tr class="ripple" x-html="$refs.reserveTable.innerHTML" @click="openProgramDetail(d)" x-data="{ opacity: !d.recSetting?.recEnabled ? 'medium-opacity' : ''}"></tr>
+                  </template>
+                  <tr x-intersect="loadMore()"></tr>
+                </tbody>
+                <tfoot class="fixed small-text">
+                  <tr>
+                    <th>録画</th>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th>コメント</th>
+                    <th class="right-align">予想サイズ</th>
+                    <th class="right-align">優先度</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
     <template x-if="isPage('#tunerreserve')">
       <div class="absolute">
-        <section class="responsive">
-          <div>
-            <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
-              <div class="page" :class="activeTunerId === tuner.tunerID ? 'active': ''" x-data="{ d: tunerDisplayData[tuner.tunerID] }" x-init="$watch('tunerDisplayData',() => d = tunerDisplayData[tuner.tunerID])">
-                <template x-if="d">
-                  <ul class="list medium-space vertical-margin">
-                    <template x-for="d in d.displayList" :key="d.reserveID">
+        <div>
+          <template x-for="tuner in Array.from(allData.tunerreserve.values())" :key="'page-' + tuner.tunerID">
+            <div class="page" :class="{ active: activeTunerId === tuner.tunerID }" x-data="{ displayList: tunerDisplayData[tuner.tunerID]?.displayList||[] }" x-init="$watch('tunerDisplayData',() => displayList = tunerDisplayData[tuner.tunerID].displayList)">
+              <template x-if="tuner.reserveList.length === 0">
+                <div class="center-align middle-align small-height">
+                  <div>
+                    <i class="extra secondary-text">event_busy</i>
+                    <p class="secondary-text">割り当てられた予約はありません</p>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="isList('reserve', tuner.reserveList.length)">
+                <section class="responsive vertical-margin">
+                  <ul class="list medium-space">
+                    <template x-for="d in displayList" :key="d.reserveID">
                       <li class="ripple" x-html="$refs.reserveList.innerHTML" @click="openProgramDetail(d)"></li>
                     </template>
                     <div x-intersect="loadMoreTuner(tuner.tunerID)"></div>
                   </ul>
-                </template>
-
-                <template x-if="tuner.reserveList.length === 0">
-                  <div class="center-align padding">
-                    <i class="extra secondary-text">event_busy</i>
-                    <p class="secondary-text">割り当てられた予約はありません</p>
+                </section>
+              </template>
+              <template x-if="isTable('reserve', tuner.reserveList.length)">
+                <section class="no-margin padding">
+                  <div class="scroll background">
+                    <table class="table border medium-space">
+                      <thead class="fixed front small-text">
+                        <tr>
+                          <th>録画</th>
+                          <th>日付</th>
+                          <th>番組名</th>
+                          <th>サービス</th>
+                          <th>コメント</th>
+                          <th class="right-align">予想サイズ</th>
+                          <th class="right-align">優先度</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-for="d in displayList" :key="d.reserveID">
+                          <tr class="ripple" x-html="$refs.reserveTable.innerHTML" @click="openProgramDetail(d)" x-data="{ opacity: !d.recSetting?.recEnabled ? 'medium-opacity' : ''}"></tr>
+                        </template>
+                        <tr x-intersect="loadMore()"></tr>
+                      </tbody>
+                      <tfoot class="fixed small-text">
+                        <tr>
+                          <th>録画</th>
+                          <th>日付</th>
+                          <th>番組名</th>
+                          <th>サービス</th>
+                          <th>コメント</th>
+                          <th class="right-align">予想サイズ</th>
+                          <th class="right-align">優先度</th>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
-                </template>
-              </div>
-            </template>
-          </div>
-        </section>
+                </section>
+              </template>
+
+            </div>
+          </template>
+        </div>
       </div>
     </template>
 
     <template x-if="isPage('#autoaddepg')">
       <div class="absolute">
-        <section class="responsive">
-          <ul class="list medium-space vertical-margin">
-            <template x-for="d in displayList" :key="d.dataID">
-              <li class="ripple" @click="openAutoaddDetail(d)">
-                <div class="row no-margin no-wrap">
-                  <div>
-                    <i class="primary-text" x-text="d.searchInfo.disableFlag ? 'block' : 'auto_awesome'"></i>
-                  </div>
-                  <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
-                    <div class="title bold large-text" x-text="d.searchInfo?.andKey || '(全取得)'"></div>
-                    <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
-                      <span class="middle-align"><i class="tiny">block</i><span x-text="d.searchInfo.notKey"></span></span>
-                      <span class="middle-align"><i class="tiny">note</i><span x-text="d.searchInfo.note"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.searchInfo?.serviceList?.length > 0 ? d.searchInfo.serviceList.length : ''"></span></span>
-                      <span class="middle-align"><i class="tiny">category</i><span x-text="d.searchInfo?.contentList?.length > 0 ? d.searchInfo.contentList.length : '全'"></span></span>
-                      <span class="middle-align"><i class="tiny">search</i><span x-text="d.addCount"></span></span>
-                      <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span></span>
+        <template x-if="totals.autoaddepg === 0">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">info</i>
+              <p class="secondary-text">EPG自動予約はありません</p>
+            </div>
+          </div>
+        </template>
+        <template x-if="isList('autoaddepg', totals.autoaddepg)">
+          <section class="responsive vertical-margin">
+            <ul class="list medium-space">
+              <template x-for="d in displayList" :key="d.dataID">
+                <li class="ripple" @click="openAutoaddDetail(d)">
+                  <div class="row no-margin no-wrap">
+                    <div>
+                      <i class="primary-text" x-text="d.searchInfo.disableFlag ? 'block' : 'auto_awesome'"></i>
+                    </div>
+                    <div class="max" :class="d.searchInfo.disableFlag ? 'medium-opacity' : ''">
+                      <div class="title bold large-text" x-text="d.searchInfo.andKey"></div>
+                      <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
+                        <span class="middle-align"><i class="primary-text tiny">block</i><span x-text="d.searchInfo.notKey"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">note</i><span x-text="d.searchInfo.note"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">cell_tower</i><span class="middle-align tiny-gap" x-html="getServiceListText(d)"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">category</i><i class="tiny" x-show="d.searchInfo.notContetFlag">block</i><span x-html="getGenreListText(d)"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">search</i><span x-text="d.addCount"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span></span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            </template>
-          </ul>
-          <div x-intersect="loadMore()"></div>
-        </section>
+                </li>
+              </template>
+              <div x-intersect="loadMore()"></div>
+            </ul>
+          </section>
+        </template>
+        <template x-if="isTable('autoaddepg', totals.autoaddepg)">
+          <section class="no-margin padding">
+            <div class="scroll background">
+              <table class="table border medium-space">
+                <thead class="fixed front small-text">
+                  <tr>
+                    <th>キーワード</th>
+                    <th>NOTキーワード</th>
+                    <th>メモ</th>
+                    <th class="right-align">登録数</th>
+                    <th>サービス</th>
+                    <th>ジャンル</th>
+                    <th>録画モード</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="d in displayList" :key="d.dataID">
+                    <tr class="ripple" @click="openAutoaddDetail(d)">
+                      <td><span x-text="d.searchInfo.andKey"></span></td>
+                      <td><span x-text="d.searchInfo.notKey"></span></td>
+                      <td><span x-text="d.searchInfo.note"></span></td>
+                      <td class="right-align"><span x-text="d.addCount"></span></td>
+                      <td><span class="middle-align tiny-gap" x-html="getServiceListText(d)"></span></td>
+                      <td><i class="tiny" x-show="d.searchInfo.notContetFlag">block</i><span x-html="getGenreListText(d)"></span></td>
+                      <td><span x-text="recModeText[d.recSetting?.recMode]"></span></td>
+                    </tr>
+                  </template>
+                  <tr x-intersect="loadMore()"></tr>
+                </tbody>
+                <tfoot class="fixed small-text">
+                  <tr>
+                    <th>キーワード</th>
+                    <th>NOTキーワード</th>
+                    <th>メモ</th>
+                    <th class="right-align">登録数</th>
+                    <th>サービス</th>
+                    <th>ジャンル</th>
+                    <th>録画モード</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
@@ -1144,32 +1297,72 @@ ct:Append([=[
             </div>
           </div>
         </template>
-        <section class="responsive">
-          <ul class="list medium-space vertical-margin">
-            <template x-for="d in displayList" :key="d.dataID">
-              <li class="ripple" @click="openAutoaddDetail(d)">
-                <div class="row no-margin no-wrap" :class="d.recSetting?.recMode === 5 ? 'is-disabled' : ''">
-                  <div>
-                    <i class="secondary-text" x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
-                  </div>
-                  <div class="max">
-                    <div class="title bold large-text">
-                      <img class="space" :src="getLogoPath(d)">
-                      <span x-html="d.title"></span>
+        <template x-if="isList('autoaddmanual', totals.autoaddmanual)">
+          <section class="responsive vertical-margin">
+            <ul class="list medium-space">
+              <template x-for="d in displayList" :key="d.dataID">
+                <li class="ripple" @click="openAutoaddDetail(d)">
+                  <div class="row no-margin no-wrap" :class="{ 'is-disabled': d.recSetting?.recMode === 5 }">
+                    <div>
+                      <i class="secondary-text" x-text="d.recSetting?.recMode === 5 ? 'block' : 'schedule_send'"></i>
                     </div>
-                    <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
-                      <span class="middle-align"><i class="tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
-                      <span class="middle-align"><i class="tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
-                      <span class="middle-align"><i class="tiny">cell_tower</i><span x-text="d.stationName"></span></span>
-                      <span class="middle-align"><i class="tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
+                    <div class="max">
+                      <div class="title middle-align bold large-text">
+                        <img class="space" :src="getLogoPath(d)">
+                        <span x-html="d.title"></span>
+                      </div>
+                      <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
+                        <span class="middle-align"><i class="primary-text tiny">date_range</i><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">schedule</i><span x-html="`${convert.time(d.startTime)} ～ ${convert.time(d.startTime + d.durationSecond)}`"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">cell_tower</i><span x-text="d.stationName"></span></span>
+                        <span class="middle-align"><i class="primary-text tiny">radio_button_checked</i><span x-text="recModeText[d.recSetting?.recMode]"></span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            </template>
-            <div x-intersect="loadMore()"></div>
-          </ul>
-        </section>
+                </li>
+              </template>
+              <div x-intersect="loadMore()"></div>
+            </ul>
+          </section>
+        </template>
+        <template x-if="isTable('autoaddmanual', totals.autoaddmanual)">
+          <section class="no-margin padding">
+            <div class="scroll background">
+              <table class="table border medium-space">
+                <thead class="fixed front small-text">
+                  <tr>
+                    <th>番組名</th>
+                    <th>曜日</th>
+                    <th>時間</th>
+                    <th>録画モード</th>
+                    <th class="right-align">優先度</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="d in displayList" :key="d.dataID">
+                    <tr class="ripple" @click="openAutoaddDetail(d)">
+                      <td><span x-html="d.title"></span></td>
+                      <td><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></td>
+                      <td><span x-text="getDateText(d)"></span></td>
+                      <td><span x-text="d.stationName"></span></td>
+                      <td class="right-align"><span x-text="recModeText[d.recSetting?.recMode]"></span></td>
+                    </tr>
+                  </template>
+                  <tr x-intersect="loadMore()"></tr>
+                </tbody>
+                <tfoot class="fixed small-text">
+                  <tr>
+                    <th>番組名</th>
+                    <th>曜日</th>
+                    <th>時間</th>
+                    <th>録画モード</th>
+                    <th class="right-align">優先度</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
@@ -1278,35 +1471,78 @@ ct:Append([=[
             </div>
           </div>
         </template>
-        <section class="responsive">
-          <ul class="list medium-space vertical-margin">
-            <template x-for="d in displayList" :key="d.id">
-              <li class="ripple" @click="openRecinfoDetail(d)">
-                <div class="max row no-margin no-wrap">
-                  <div class="center-align">
-                    <i :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : 'primary-text'" x-text="(d.drops > 0 || d.scrambles > 0) ? 'report' : 'check_circle'"></i>
+        <template x-if="isList('recinfo', totals.recinfo)">
+          <section class="responsive vertical-margin">
+            <ul class="list medium-space">
+              <template x-for="d in displayList" :key="d.id">
+                <li class="ripple" @click="openRecinfoDetail(d)">
+                  <div class="max row no-margin no-wrap">
+                    <div class="center-align primary-text">
+                      <i :class="{ 'error-text': d.recStatus %10 !== 1 || d.drops > 0 || d.scrambles > 0 }" x-text="d.drops > 0 || d.scrambles > 0 ? 'report' : d.recStatus %10 !== 1 ? 'error' : 'check_circle'"></i>
+                    </div>
+                    <div class="max">
+                      <div class="row no-margin no-wrap secondary-text">
+                        <span class="max" x-html="getDateHtml(d, true)"></span>
+                        <span x-text="d.serviceName"></span>
+                      </div>
+                      <div class="title middle-align bold large-text" :class="{ 'error-text': d.recStatus %10 !== 1 || d.drops > 0 || d.scrambles > 0 }">
+                        <img class="space" :src="getLogoPath(d)">
+                        <span x-html="convert.title(d.title)"></span>
+                      </div>
+                      <div class="row wrap tiny-space no-margin secondary-text no-line">
+                        <span class="max middle-align"><i class="primary-text tiny">description</i><span x-text="d.comment" :class="{ 'error-text': d.recStatus %10 !== 1 }"></span></span>
+                        <span class="middle-align" :class="{ 'error-text': d.drops > 0 }"><i class="primary-text tiny">water_drop</i><span x-text="d.drops"></span></span>
+                        <span class="middle-align" :class="{ 'error-text': d.scrambles > 0 }"><i class="primary-text tiny">encrypted</i><span x-text="d.scrambles"></span></span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="max">
-                    <div class="row no-margin no-wrap secondary-text">
-                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(new Date(d.startTime).getTime() + d.durationSecond*1000, true)}`"></span>
-                      <span x-text="d.serviceName"></span>
-                    </div>
-                    <div class="title middle-align bold large-text" :class="(d.drops > 0 || d.scrambles > 0) ? 'error-text' : ''">
-                      <img class="space" :src="getLogoPath(d)">
-                      <span x-html="convert.title(d.title)"></span>
-                    </div>
-                    <div class="row wrap tiny-space no-margin secondary-text no-line">
-                      <span class="middle-align"><i class="tiny">description</i><span x-text="d.comment"></span></span>
-                      <span class="middle-align error-text" x-show="d.drops > 0"><i class="tiny">water_drop</i><span x-text="d.drops"></span></span>
-                      <span class="middle-align error-text" x-show="d.scrambles > 0"><i class="tiny">encrypted</i><span x-text="d.scrambles"></span></span>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            </template>
-            <div x-intersect="loadMore()"></div>
-          </ul>
-        </section>
+                </li>
+              </template>
+              <div x-intersect="loadMore()"></div>
+            </ul>
+          </section>
+        </template>
+        <template x-if="isTable('recinfo', totals.recinfo)">
+          <section class="no-margin padding">
+            <div class="scroll background">
+              <table class="table border medium-space">
+                <thead class="fixed front small-text">
+                  <tr>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th>結果</th>
+                    <th class="right-align">D</th>
+                    <th class="right-align">S</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="d in displayList" :key="d.id">
+                    <tr class="ripple" :class="{ 'error-container': d.recStatus %10 !== 1, 'error-text': d.drops > 0 || d.scrambles > 0 }" @click="openRecinfoDetail(d)">
+                      <td><span x-text="getDateText(d)"></span></td>
+                      <td><span x-html="convert.title(d.title)"></span></td>
+                      <td><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span></td>
+                      <td><span x-text="d.comment"></span></td>
+                      <td class="right-align"><span x-text="d.drops"></span></td>
+                      <td class="right-align"><span x-text="d.scrambles"></span></td>
+                    </tr>
+                  </template>
+                  <tr x-intersect="loadMore()"></tr>
+                </tbody>
+                <tfoot class="fixed small-text">
+                  <tr>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th>結果</th>
+                    <th class="right-align">D</th>
+                    <th class="right-align">S</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
@@ -1320,41 +1556,96 @@ ct:Append([=[
             </div>
           </div>
         </template>
-        <section class="responsive">
-          <ul class="list medium-space vertical-margin">
-            <template x-for="d in displayList" :key="`${d.onid}-${d.tsid}-${d.sid}-${d.eid}`">
-              <li class="ripple" @click="openProgramDetail(d)">
-                <div class="max row no-margin no-wrap">
-                  <div class="center-align">
-                    <template x-if="!d.reserveID">
-                      <i class="primary-text">event</i>
-                    </template>
-                    <template x-if="d.reserveID">
-                      <label class="checkbox icon" @click.stop>
-                        <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
-                        <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
-                          <i>block</i>
-                          <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
-                        </span>
-                      </label>
-                    </template>
-                  </div>
-                  <div class="max">
-                    <div class="row no-margin no-wrap secondary-text">
-                      <span class="max" x-html="`${convert.date(d.startTime,true,true)}～${convert.date(d.startTimeInt + d.durationSecond*1000, true)}`"></span>
-                      <span x-html="getServiceName(d)"></span>
+        <template x-if="isList('search', totals.search)">
+          <section class="responsive vertical-margin">
+            <ul class="list medium-space">
+              <template x-for="d in displayList" :key="getEventID(d)">
+                <li class="ripple" @click="openProgramDetail(d)">
+                  <div class="max row no-margin no-wrap">
+                    <div class="center-align">
+                      <template x-if="!d.reserveID">
+                        <i class="primary-text" x-text="d.archive ? 'archive' : 'event'">event</i>
+                      </template>
+                      <template x-if="d.reserveID">
+                        <label class="checkbox icon" @click.stop>
+                          <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
+                          <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
+                            <i>block</i>
+                            <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
+                          </span>
+                        </label>
+                      </template>
                     </div>
-                    <div class="title middle-align bold large-text">
-                      <img class="space" :src="getLogoPath(d)">
-                      <span x-html="convert.title(d.shortInfo?.event_name)"></span>
+                    <div class="max">
+                      <div class="row no-margin no-wrap secondary-text">
+                        <span class="max" x-html="getDateHtml(d, true)"></span>
+                        <span x-html="getServiceName(d)"></span>
+                      </div>
+                      <div class="title middle-align bold large-text">
+                        <img class="space" :src="getLogoPath(d)">
+                        <span x-html="convert.title(d.shortInfo?.event_name)"></span>
+                      </div>
+                      <div class="ellipsis">
+                        <span x-text="d.shortInfo?.text_char"></span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            </template>
-            <div x-intersect="loadMore()"></div>
-          </ul>
-        </section>
+                </li>
+              </template>
+              <div x-intersect="loadMore()"></div>
+            </ul>
+          </section>
+        </template>
+        <template x-if="isTable('search', totals.search)">
+          <section class="no-margin padding no-scroll">
+            <div class="scroll background">
+              <table class="table border medium-space">
+                <thead class="fixed front small-text">
+                  <tr>
+                    <th>録画</th>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th class="min">番組内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="d in displayList" :key="getEventID(d)">
+                    <tr class="ripple" @click="openProgramDetail(d)">
+                      <td class="min">
+                        <template x-if="!d.reserveID">
+                          <i class="primary-text" x-text="d.archive ? 'archive' : 'event'"></i>
+                        </template>
+                        <template x-if="d.reserveID">
+                          <label class="checkbox icon" @click.stop>
+                            <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
+                            <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
+                              <i>block</i>
+                              <i x-text="d.overlapMode > 0 ? 'warning' : 'radio_button_checked'"></i>
+                            </span>
+                          </label>
+                        </template>
+                      </td>
+                      <td style="max-width:20rem;"><span x-text="getDateText(d)"></span></td>
+                      <td><span x-html="convert.title(d.shortInfo?.event_name)"></span></td>
+                      <td style="max-width:20rem;"><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-html="getServiceName(d)"></span></span></td>
+                      <td class="ellipsis" style="max-width:30em;"><span x-text="d.shortInfo?.text_char"></span></td>
+                    </tr>
+                  </template>
+                <tfoot class="fixed small-text">
+                  <tr>
+                    <th>録画</th>
+                    <th>日付</th>
+                    <th>番組名</th>
+                    <th>サービス</th>
+                    <th>番組内容</th>
+                  </tr>
+                </tfoot>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </template>
       </div>
     </template>
 
@@ -1458,7 +1749,7 @@ ct:Append([=[
                             <th></th>
                             <th>BonDriver</th>
                             <th>チューナー数</th>
-                            <th>EPG取得に使用する数</th>
+                            <th class="wrap">EPG取得に使用する数</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1552,7 +1843,7 @@ ct:Append([=[
                           <tr>
                             <th>
                             <th>開始時間
-                            <th>種別(BS,CS1,CS2,CS3)
+                            <th class="wrap">種別(BS,CS1,CS2,CS3)
                             <th>
                           </tr>
                         </thead>
@@ -1560,7 +1851,7 @@ ct:Append([=[
                           <template x-for="(v,i) in data.epgTime" :key="i">
                             <tr>
                               <td class="min"><label class="switch"><input type="checkbox" :checked="v.enabled"><span></span></label></td>
-                              <td><span class="no-wrap" x-text="epgTimeText(v)"></span></td>
+                              <td><span x-text="epgTimeText(v)"></span></td>
                               <td><span x-text="epgTimeFlags(v)"></span></td>
                               <td class="min"><button class="tertiary small" @click="removeList('epgTime',i)"><i>delete</i></button></td>
                             </tr>
@@ -1599,12 +1890,11 @@ ct:Append([=[
                       <table>
                         <thead class="fixed front surface-variant">
                           <tr>
-                            <th class="min">有効
+                            <th>
                             <th>サービス名
                             <th>Network
-                            <th>ServiceID
-                            <th>Type
-                            <th></th>
+                            <th class="center-align">ServiceID
+                            <th class="center-align">Type
                           </tr>
                         </thead>
                         <tbody>
@@ -1618,8 +1908,8 @@ ct:Append([=[
                               </td>
                               <td x-text="s.serviceName" style="white-space: nowrap">
                               <td x-text="networkNames[getNetworkIndex(s.onid)]">
-                              <td x-text="s.sid">
-                              <td x-text="s.serviceType">
+                              <td class="center-align" x-text="s.sid">
+                              <td class="center-align" x-text="s.serviceType">
                             </tr>
                           </template>
                         </tbody>
@@ -4265,9 +4555,89 @@ ct:Append([=[
       </button>
     </div>
     <hr class="medium">
+
+    <template x-if="isPage('#reserve','#tunerreserve','#autoaddepg','#autoaddmanual','#recinfo','#search')" x-data="set.view">
+      <div class="field">
+        <nav>
+          <div class="max">
+            <h6 class="large-text">表示</h6>
+          </div>
+          <template x-if="isPage('#reserve','#tunerreserve')">
+            <div>
+              <button>
+                <i x-text="viewState('reserve').icon">table</i>
+                <span x-text="viewState('reserve').text">リスト</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isTable('reserve') }" @click="reserve = 'table'"><i>table</i><span>テーブル</span></li>
+                <li :class="{ active: isList('reserve') }" @click="reserve = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+
+          <template x-if="isPage('#autoaddepg')">
+            <div>
+              <button>
+                <i x-text="viewState('autoaddepg').icon">table</i>
+                <span x-text="viewState('autoaddepg').text">リスト</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isTable('autoaddepg') }" @click="autoaddepg = 'table'"><i>table</i><span>テーブル</span></li>
+                <li :class="{ active: isList('autoaddepg') }" @click="autoaddepg = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+
+          <template x-if="isPage('#autoaddmanual')">
+            <div>
+              <button>
+                <i x-text="viewState('autoaddmanual').icon">table</i>
+                <span x-text="viewState('autoaddmanual').text">リスト</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isTable('autoaddmanual') }" @click="autoaddmanual = 'table'"><i>table</i><span>テーブル</span></li>
+                <li :class="{ active: isList('autoaddmanual') }" @click="autoaddmanual = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+
+          <template x-if="isPage('#recinfo')">
+            <div>
+              <button>
+                <i x-text="viewState('recinfo').icon">table</i>
+                <span x-text="viewState('recinfo').text">リスト</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isTable('recinfo') }" @click="recinfo = 'table'"><i>table</i><span>テーブル</span></li>
+                <li :class="{ active: isList('recinfo') }" @click="recinfo = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+
+          <template x-if="isPage('#search')">
+            <div>
+              <button>
+                <i x-text="viewState('search').icon">table</i>
+                <span x-text="viewState('search').text">リスト</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isTable('search') }" @click="search = 'table'"><i>table</i><span>テーブル</span></li>
+                <li :class="{ active: isList('search') }" @click="search = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+        </nav>
+      </div>
+    </template>
+
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6><label class="large-text" for="set-subCh">サブチャンネルを表示</label></h6></div>
+        <div class="max"><h6><label class="large-text" for="set-subCh">サブチャンネル</label></h6></div>
         <label class="switch">
           <input type="checkbox" id="set-subCh" x-model="set.subCh">
           <span></span>
@@ -4276,7 +4646,7 @@ ct:Append([=[
     </div>
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6><label class="large-text" for="set-oneseg">ワンセグを表示</label></h6></div>
+        <div class="max"><h6><label class="large-text" for="set-oneseg">ワンセグ</label></h6></div>
         <label class="switch">
           <input type="checkbox" id="set-oneseg" x-model="set.oneseg">
           <span></span>

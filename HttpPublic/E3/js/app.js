@@ -251,6 +251,13 @@ document.addEventListener('alpine:init', () => {
       genreMask: -1044262913,
       mode: 'auto',
       theme: '#6750A4',
+      view: {
+        reserve: 'list',
+        autoaddepg: 'list',
+        autoaddmanual: 'list',
+        recinfo: 'list',
+        search: 'list',
+      },
       epg: {
         minHeight: 4,
         hover: false,
@@ -437,6 +444,17 @@ document.addEventListener('alpine:init', () => {
         }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
         }&authuser=${authuser
         }&src=${src}`
+    },
+
+    isList(v, i = 1) {
+      return this.set.view[v] === 'list' && i > 0;
+    },
+    isTable(v, i = 1) {
+      return this.set.view[v] === 'table' && i > 0;
+    },
+    viewState(v) {
+      const table = this.isTable(v);
+      return { icon: table ? 'table' : 'lists', text: table ? 'テーブル' : 'リスト' };
     },
 
     async init() {
@@ -1561,6 +1579,9 @@ document.addEventListener('alpine:init', () => {
     getPageTitle() {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
     },
+    getDateText(d) {
+      return `${this.convert.date(d.startTime, true, true)}～${this.convert.date(d.startTimeInt + d.durationSecond*1000, true)}`
+    },
     getDateHtml(v, show_ymd) {
       if (!v.startTimeInt) return '未定';
       const start = this.convert.viewDate(v.startTimeInt);
@@ -1569,6 +1590,26 @@ document.addEventListener('alpine:init', () => {
     },
     getServiceName(d, id) {
       return this.allData.service.get(this.getServiceID(d))?.service_name || (id ? this.getServiceID(d) : '不明');
+    },
+    getServiceListText(d) {
+      let s = '';
+      if (d.searchInfo?.serviceList?.length > 0) {
+        const v = d.searchInfo?.serviceList[0];
+        s = `<img class="space" src="${this.getLogoPath(v)}"><span>${this.getServiceName(v)}</span>`;
+      }
+      if (d.searchInfo?.serviceList?.length > 1) {
+        s += `<small>+${d.searchInfo.serviceList.length-1}ch</small>`
+      }
+      return s
+    },
+    getGenreListText(d) {
+      if (d.searchInfo?.contentList?.length === 0) return '全ジャンル'
+      const v = d.searchInfo?.contentList?.[0];
+      let s = this.getGenre(v).name1;
+      if (d.searchInfo?.contentList?.length > 1) {
+        s += `<small>+${d.searchInfo.contentList.length-1}ジャンル</small>`
+      }
+      return s;
     },
     getGenreClass(g) {
       if (g.contentInfoList) g = g.contentInfoList[0];

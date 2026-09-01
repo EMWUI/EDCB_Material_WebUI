@@ -8,6 +8,9 @@
 main>.absolute{
   width: 100%;
 }
+:is(div, section):has(.table) {
+  height: 100%;
+}
 
 menu>li:nth-last-child(1 of li) { --_child: 1 }
 menu>li:nth-last-child(2 of li) { --_child: 2 }
@@ -29,10 +32,20 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .small-gap { gap: .5rem; }
 .around-align { justify-content: space-around; }
 
+tr.ripple { cursor: pointer; }
+th,td { white-space: nowrap; }
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 :is(button, .button).tiny {
   --_size: 1.5rem;
   --_padding: .5rem;
 }
+i.rotate { animation: to-rotate 1s linear infinite; }
+
 
 nav.group>:is(.button,button) { white-space: nowrap; }
 nav.tabbed.fixed {
@@ -116,7 +129,7 @@ label[for] { cursor: pointer; }
 #sidePanel { width: 600px; max-width: min(90vw, 600px); }
 fieldset, :is(nav,.row):not(.wrap)>.max { min-width: 0; }
 :is(nav,.row)>.chip { max-width: 100%; }
-:is(nav,.row)>.chip>span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+:is(nav,.row)>.chip>span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-radius: 0; }
 .no-row-space { row-gap: 0!important; }
 .wrap.tiny-space .middle-align { gap: .2rem; }
 .row:has(>article) { align-items: stretch; }
