@@ -80,6 +80,12 @@ elseif mg.get_var(mg.request_info.query_string,'storage') then --ストレージ
   end
 elseif mg.get_var(mg.request_info.query_string,'tuner') then
   a=edcb.GetTunerProcessStatusAll()
+elseif mg.get_var(mg.request_info.query_string,'ctok') then
+  a={}
+  ctok=Split(mg.get_var(mg.request_info.query_string,'ctok'),',')
+  for i,v in ipairs(ctok) do
+    if #v > 0 then a[v]=CsrfToken(v) end
+  end
 end
 
 if GetVarInt(mg.request_info.query_string,'json')==1 then

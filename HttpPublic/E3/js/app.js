@@ -177,6 +177,7 @@ document.addEventListener('alpine:init', () => {
     debug: true,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
     ROOT: config.root || '',
+    ctok: config.ctok || {},
     hasNosuspend: config.hasNosuspend || false,
     nosuspendActive: config.nosuspendActive || false,
     enableSuspend: config.enableSuspend || false,
@@ -308,6 +309,65 @@ document.addEventListener('alpine:init', () => {
         : timeoutSignal;
 
       return fetch(request, { ...options, signal });
+    },
+
+    // トークンキーの判定
+    getTokenKey(url) {
+      if (!url) return null;
+      if (url.includes('SetReserve')) return 'setreserve';
+      if (url.includes('SetRecInfo')) return 'setrecinfo';
+      if (url.includes('SetAutoAdd')) return 'setautoadd';
+      if (url.includes('SetManuAdd')) return 'setmanuadd';
+      if (url.includes('SearchEvent')) return 'searchevent';
+      if (url.includes('Common')) return 'common';
+      if (url.includes('Settings')) return 'settings';
+      return null;
+    },
+
+    // CSRFトークン付きフェッチ（エラー時に自動でトークンを再取得して1回だけ再試行）
+    async fetchWithToken(url, options = {}, tokenKey = null, timeoutMs = 5000, isRetry = false) {
+      const key = tokenKey || this.getTokenKey(url);
+
+      if (key) {
+        const tokenVal = this.ctok[key] || '';
+        if (options.body instanceof URLSearchParams) {
+          options.body.set('ctok', tokenVal);
+        } else if (typeof url === 'string' && (!options.method || options.method.toUpperCase() === 'GET')) {
+          const u = new URL(url, window.location.href);
+          u.searchParams.set('ctok', tokenVal);
+          url = u.pathname + u.search;
+        }
+      }
+
+      let res;
+      try {
+        res = await this.fetch(url, options, timeoutMs);
+      } catch (e) {
+        if (e.name === 'TimeoutError') {
+          this.snackbar.error('通信エラー');
+          e.handled = true;
+          throw e;
+        }
+        // トークン検証失敗(AssertCsrf)時の接続切断を想定して再取得＆リトライ
+        if (!isRetry && key) {
+          console.warn('通信失敗。トークンを再取得して再試行します:', url, e);
+          try {
+            await this.refreshCtok();
+          } catch (tokErr) {
+            this.snackbar.error('トークン認証エラー。トークンの再取得に失敗しました');
+            tokErr.handled = true;
+            throw tokErr;
+          }
+          return this.fetchWithToken(url, options, key, timeoutMs, true);
+        }
+        throw e;
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      return res;
     },
 
     // クエリパラメータを解析して params オブジェクトを更新
@@ -702,6 +762,9 @@ document.addEventListener('alpine:init', () => {
       }
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === 'visible') {
+          // 画面復帰時にトークンを更新
+          this.refreshCtok().catch(() => {});
+
           // 戻ってきたときに接続状態を確認
           if (!this.eventSource) return;
           if (this.eventSource.readyState === EventSource.CLOSED || this.eventSource.readyState === EventSource.CONNECTING) {
@@ -798,6 +861,15 @@ document.addEventListener('alpine:init', () => {
       };
     },
 
+    async refreshCtok() {
+      try {
+        const res = await this.fetch(`${this.ROOT}api/Common?json=1&ctok=common,settings,setreserve,setautoadd,setmanuadd,setrecinfo,searchevent,view,xcode,comment`);
+        this.ctok = await res.json();
+      } catch (e) {
+        console.error('トークンの取得に失敗しました:', e);
+        throw e;
+      }
+    },
     // 指定されたページのAPIを叩いてメモリ(allData)を更新する共通関数
     async refreshData(pageHash) {
       const config = this.pageMap[pageHash];
@@ -983,14 +1055,11 @@ document.addEventListener('alpine:init', () => {
     },
     async toggleNosuspend() {
       const targetState = this.nosuspendActive ? 'n' : 'y';
-      const fd = new URLSearchParams({
-        nosuspend: targetState,
-        ctok: document.getElementById('commonCtok')?.value || ''
-      });
+      const fd = new URLSearchParams({ nosuspend: targetState });
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd }, 'common');
         const data = await res.json();
 
         if (data.err) {
@@ -1007,11 +1076,7 @@ document.addEventListener('alpine:init', () => {
         }
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('処理に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -1025,14 +1090,11 @@ document.addEventListener('alpine:init', () => {
         text: `${modeText}に移行しますか？`,
         btn: '実行',
         btnFn: async () => {
-          const fd = new URLSearchParams({
-            ctok: document.getElementById('commonCtok')?.value || '',
-          });
-          fd.append(this.suspendMode, 'y');
+          const fd = new URLSearchParams({ suspendMode: 'y' });
 
           try {
             this.loading = true;
-            const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+            const res = await this.fetchWithToken(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd }, 'common');
             const data = await res.json();
 
             if (data.err) {
@@ -1042,11 +1104,7 @@ document.addEventListener('alpine:init', () => {
             }
           } catch (e) {
             console.error('通信失敗:', e);
-            if (e.name === 'TimeoutError') {
-              this.snackbar.error('通信エラー');
-            } else {
-              this.snackbar.tokenError();
-            }
+            if (!e.handled) this.snackbar.error(`${modeText}に失敗しました`);
           } finally {
             this.loading = false;
           }
@@ -1055,14 +1113,11 @@ document.addEventListener('alpine:init', () => {
       });
     },
     async epgCap() {
-      const fd = new URLSearchParams({
-        epgcap: 'y',
-        ctok: document.getElementById('commonCtok')?.value || ''
-      });
+      const fd = new URLSearchParams({ epgcap: 'y' });
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd }, 'common');
         const data = await res.json();
 
         if (data.err) {
@@ -1072,24 +1127,17 @@ document.addEventListener('alpine:init', () => {
         }
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('EPG取得の開始に失敗しました');
       } finally {
         this.loading = false;
       }
     },
     async epgReload() {
-      const fd = new URLSearchParams({
-        epgreload: 'y',
-        ctok: document.getElementById('commonCtok')?.value || ''
-      });
+      const fd = new URLSearchParams({ epgreload: 'y' });
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Common?json=1`, { method: 'POST', body: fd }, 'common');
         const data = await res.json();
 
         if (data.err) {
@@ -1099,11 +1147,7 @@ document.addEventListener('alpine:init', () => {
         }
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('EPG再読み込みの開始に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -2610,8 +2654,6 @@ document.addEventListener('alpine:init', () => {
         this.getFormData(document.getElementById('searchInfo'), fd);
       }
 
-      fd.set('ctok', document.getElementById('searchCtok')?.value || '');
-
       try {
         // 3. 検索結果ページへ遷移（URLを確定させる）
         if (!this.isPage('#search')) {
@@ -2619,7 +2661,7 @@ document.addEventListener('alpine:init', () => {
         }
         this.loading = true;
 
-        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 20000);
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', 20000);
         const list = await res.json();
 
         this.allData.search.clear();
@@ -2634,11 +2676,7 @@ document.addEventListener('alpine:init', () => {
         this.sidePanel.close();
       } catch (e) {
         console.error("Search failed", e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('検索に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -2662,13 +2700,13 @@ document.addEventListener('alpine:init', () => {
     async searchNew() {
       try {
         this.dashboardData.loadingNew = true;
-        const fd = new URLSearchParams();
-        fd.append('ctok', document.getElementById('searchCtok')?.value || '');
-        fd.append('andKey', `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`);
-        fd.append('regExpFlag', 1);
-        fd.append('titleOnlyFlag', 1);
+        const fd = new URLSearchParams({
+          andKey: `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`,
+          regExpFlag: 1,
+          titleOnlyFlag: 1
+        });
         this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent');
         const list = await res.json();
 
         this.dashboardData.newPrograms = (Array.isArray(list) ? list : []).map(v => {
@@ -2684,12 +2722,12 @@ document.addEventListener('alpine:init', () => {
     async searchAnime() {
       try {
         this.dashboardData.loadingAnime = true;
-        const fd = new URLSearchParams();
-        fd.append('ctok', document.getElementById('searchCtok')?.value || '');
-        fd.append('contentList', 2047);
-        fd.append('days', 1);
+        const fd = new URLSearchParams({
+          contentList: 2047,
+          days: 1
+        });
         this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent');
         const list = await res.json();
 
         this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {
@@ -2960,35 +2998,25 @@ document.addEventListener('alpine:init', () => {
       error(text) {
         this.add({ text, class: 'error' });
       },
-      tokenError() {
-        this.add({
-          text: 'トークン認証に失敗。リロードします',
-          class: 'error',
-          fn() { this.t = setTimeout(() => location.reload(), 3000) },
-          btnFn() { clearTimeout(this.t) },
-        });
-      },
     },
 
     // 通信用共通メソッド
     async apiFetch(url, params = new URLSearchParams(), method = 'POST') {
-      url += (url.includes('?') ? '&' : '?') + 'json=1';
-      // ctokをここで自動追加
-      if (!params.has('ctok')) params.append('ctok', document.querySelector('input[name="ctok"]')?.value || '');
+      const reqUrl = url + (url.includes('?') ? '&' : '?') + 'json=1';
+      const tokenKey = this.getTokenKey(url) || 'setreserve';
 
       const options = { method: method };
+      let finalUrl = reqUrl;
 
       if (method.toUpperCase() === 'GET') {
-        // GETの場合はURLにパラメータを付与
-        url += '&' + params.toString();
+        finalUrl += '&' + params.toString();
       } else {
-        // POSTの場合はbodyにパラメータをセット
         options.body = params;
       }
 
       try {
         this.loading = true;
-        const res = await this.fetch(url, options);
+        const res = await this.fetchWithToken(finalUrl, options, tokenKey);
         const data = await res.json();
 
         if (data.err) {
@@ -2998,11 +3026,7 @@ document.addEventListener('alpine:init', () => {
         }
       } catch(e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('処理に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -3051,11 +3075,10 @@ document.addEventListener('alpine:init', () => {
     delEntry() {
       const action = document.getElementById('api_action')?.value || '';
       const url = `${this.ROOT}api/${action}`;
-      this.apiFetch(url, new URLSearchParams({ del: 1, ctok: document.getElementById('ctok').value }));
+      this.apiFetch(url, new URLSearchParams({ del: 1 }));
     },
     chgRecFilePath(id, path) {
       const fd = new URLSearchParams({ ren: path });
-      fd.append('ctok', this.sidePanel.el.querySelector('input[name="ctok"]')?.value || '');
       this.apiFetch(`${this.ROOT}api/SetRecInfo?id=${id}`, fd);
     },
 
@@ -3105,7 +3128,7 @@ document.addEventListener('alpine:init', () => {
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
         if (!this.ts) return;
-        this.video.setAttribute('ctok', this.video.dataset.ctokView);
+        this.video.setAttribute('ctok', this.ctok.view);
         this.live = true;
         Alpine.raw(this.ts).reset();
         Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
@@ -3143,7 +3166,7 @@ document.addEventListener('alpine:init', () => {
 
         if (!fname && !d.recid && !d.rid) return;
 
-        this.video.setAttribute('ctok', this.video.dataset.ctokXcode);
+        this.video.setAttribute('ctok', this.ctok.xcode);
         const ts = Alpine.raw(this.ts);
         ts.reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
@@ -3573,21 +3596,16 @@ document.addEventListener('alpine:init', () => {
 
     async saveSetting(container) {
       const fd = this.getFormData(this.$refs[container]);
-      fd.append('ctok', document.getElementById('settingsCtok').value);
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
 
         this.settings.data = await res.json();
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('設定の保存に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -3611,14 +3629,14 @@ document.addEventListener('alpine:init', () => {
     },
     async removePreset() {
       if (this.settings.presetID == 0) return;
-      const fd = new URLSearchParams();
-      fd.append('ctok', document.getElementById('settingsCtok').value);
-      fd.append('presetID', this.settings.presetID);
-      fd.append('del', 1);
+      const fd = new URLSearchParams({
+        presetID: this.settings.presetID,
+        del: 1,
+      });
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
 
         this.allData.recpreset.clear();
@@ -3629,23 +3647,18 @@ document.addEventListener('alpine:init', () => {
         this.snackbar.add('削除しました');
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('プリセットの削除に失敗しました');
       } finally {
         this.loading = false;
       }
     },
     async savePreset(add) {
       const fd = this.getFormData(this.$refs.recPreset);
-      fd.append('ctok', document.getElementById('settingsCtok').value);
       if (add) fd.append('add', 1);
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Settings`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
 
         this.allData.recpreset.clear();
@@ -3656,11 +3669,7 @@ document.addEventListener('alpine:init', () => {
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('プリセットの保存に失敗しました');
       } finally {
         this.loading = false;
       }
@@ -3708,22 +3717,17 @@ document.addEventListener('alpine:init', () => {
       const container = mode == 1 ? 'recNamePlugin' : 'writePlugin';
       const name = this.settings[container].name;
       const fd = this.getFormData(this.$refs[container]);
-      fd.append('ctok', document.getElementById('settingsCtok').value);
 
       try {
         this.loading = true;
-        const res = await this.fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd });
+        const res = await this.fetchWithToken(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
 
         this.parsePlugin(data, mode, name);
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
-        if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-        } else {
-          this.snackbar.tokenError();
-        }
+        if (!e.handled) this.snackbar.error('プラグインの保存に失敗しました');
       } finally {
         this.loading = false;
       }

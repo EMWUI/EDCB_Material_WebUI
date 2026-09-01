@@ -1,4 +1,4 @@
-app='260825'
+app='260901'
 tsloader='260726'
 beer='5.0.3'
 mdc='1.1.4'
@@ -20,6 +20,11 @@ DIR_SEP=WIN32 and '\\' or '/'
 dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'util.lua')
 
 function GetAppConfig()
+  local ctok={}
+  for i,v in ipairs({'common','settings','setreserve','setautoadd','setmanuadd','setrecinfo','searchevent','view','xcode','comment'}) do
+    ctok[#ctok+1]=string.format('%s: \'%s\'',v,CsrfToken(v))
+  end
+
   local minTime, maxTime = nil, nil
   for i,v in ipairs(SelectChDataList(edcb.GetChDataList())) do
     local mmt=edcb.GetEventMinMaxTime(v.onid, v.tsid, v.sid)
@@ -51,6 +56,7 @@ function GetAppConfig()
 
   return '{root: \''..PathToRoot()
     ..'\', useSsePort: '..useSsePort
+    ..', ctok: {'..table.concat(ctok,', ')..'}'
     ..', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
     ..' rsdef: {'
     ..' serviceMode: '..(rsdef.serviceMode or 0)
@@ -184,8 +190,8 @@ function GetPlayerOption(tslive)
     ..(zip and '" data-absent-zip="'..zip or '')
     ..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
 
-    ..((USE_LIVEJK or JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" data-comment-ctok="'..CsrfToken('comment')..'" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
-    ..'" data-ctok-view="'..CsrfToken('view')..'" data-ctok-xcode="'..CsrfToken('xcode')..'"'
+    ..((USE_LIVEJK or JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
+    ..'" :data-ctok-view="ctok.view" :data-ctok-xcode="ctok.xcode"'
 end
 
 function GetVideoOption()

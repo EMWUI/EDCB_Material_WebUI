@@ -252,9 +252,6 @@ ct:Append([=[
   </header>
 
   <main class="background scroll no-padding" x-ref="main">
-    <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[">
-    <input id="searchCtok" type="hidden" value="]=]..CsrfToken('searchevent')..[=[">
-    <input id="commonCtok" type="hidden" value="]=]..CsrfToken('common')..[=[">
     <template x-if="isPage('#dashboard')" x-data="dashboardData">
       <div class="padding">
 
@@ -1658,7 +1655,6 @@ ct:Append([=[
         </nav>
         <template x-if="data">
           <section class="responsive padding">
-            <input type="hidden" value="]=]..CsrfToken('settings')..[=[" id="settingsCtok">
             <div class="page" :class="isTab('srv')" x-ref="srv">
               <input type="hidden" name="srv" value="1">
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
@@ -3582,7 +3578,6 @@ ct:Append([=[
             <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
             <template x-if="isInfo">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[" id="ctok">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID}`" id="api_action">
                 <input type="hidden" name="id" :value="getEventID(d)">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
@@ -3590,7 +3585,6 @@ ct:Append([=[
             </template>
             <template x-if="isRecinfo">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setrecinfo')..[=[" id="ctok">
                 <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
               </div>
             </template>
@@ -3802,7 +3796,6 @@ ct:Append([=[
             <template x-if="d.recSetting">
               <div class="s12 field middle-align">
                 <nav>
-                  <input type="hidden" name="ctok" value="]=]..CsrfToken('setautoadd')..[=[" id="ctok">
                   <input type="hidden" :value="`SetAutoAdd?id=${d.dataID || 0}`" id="api_action">
                   <input type="hidden" name="addchg">
                   <div class="max">
@@ -4063,7 +4056,6 @@ ct:Append([=[
           <div class="grid no-margin">
             <template x-if="isReserve">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setreserve')..[=[" id="ctok">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
 
@@ -4114,7 +4106,6 @@ ct:Append([=[
 
             <template x-if="isAutoaddmanual">
               <div class="contents">
-                <input type="hidden" name="ctok" value="]=]..CsrfToken('setmanuadd')..[=[" id="ctok">
                 <input type="hidden" :value="`SetManuAdd?id=${d.dataID}`" id="api_action">
                 <input type="hidden" name="addchg" value="1">
                 <fieldset class="s12 no-margin">
