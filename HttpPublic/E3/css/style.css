@@ -32,7 +32,7 @@ menu>li:nth-last-child(11 of li) { --_child: 11 }
 .small-gap { gap: .5rem; }
 .around-align { justify-content: space-around; }
 
-tr.ripple { cursor: pointer; }
+.ripple:is(article, tr) { cursor: pointer; }
 th,td { white-space: nowrap; }
 .ellipsis {
   overflow: hidden;
@@ -174,15 +174,17 @@ article.small-width+button { align-self: center; }
 [class*="cont-"] {
   --l-primary: 40%;
   --l-container: 95%;
+  --l-container-pale: 98.5%;
   --l-on-container: 10%;
   --m3-primary: oklch(var(--l-primary) var(--c) var(--h));
   --m3-container: oklch(var(--l-container) var(--c) var(--h));
+  --m3-container-pale: oklch(var(--l-container-pale) calc(var(--c) * 0.35) var(--h));
   --m3-on-container: oklch(var(--l-on-container) var(--c) var(--h));
   background-color: var(--m3-container) !important;
   color: var(--m3-on-container) !important;
 }
 
-[class*="cont-"]:not(.chip) { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--surface-container) 70%); } /* 左端から右へ消え込むグラデーション */
+[class*="cont-"]:not(.chip) { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px, var(--m3-container-pale) 70%, var(--m3-container-pale) 100%); } /* 左端から右へ消え込むグラデーション */
 .bar [class*="cont-"] { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--surface-container) 5px) !important; } /* 左端のアクセントだけ */
 .paint [class*="cont-"] { background-image: linear-gradient(to right, var(--m3-primary) 5px, var(--m3-container) 5px) !important; } /* 塗りつぶし */
 
@@ -212,6 +214,7 @@ article.small-width+button { align-self: center; }
 :is(body.dark, :root.dark) [class*="cont-"] {
   --l-primary: 80%;
   --l-container: 20%;
+  --l-container-pale: 14%;
   --l-on-container: 90%;
 }
 
@@ -233,7 +236,7 @@ article.small-width+button { align-self: center; }
 .epg-time-col.epg-service-header { line-height: 1.1; margin-right: -2.5rem; z-index: 10; }
 .epg-service-col { position: relative; flex-grow: 1; }
 .isSmallScreen .epg-service-col { inline-size: 8rem!important; }
-.epg-service-header { height: var(--header); position: sticky; top: 0; z-index: 9; }
+.epg-service-header { height: var(--header); position: sticky; top: 0; z-index: 9; cursor: pointer; }
 .epg-service-header img { inline-size: auto; }
 .epg-event { width: 100%; overflow: visible; cursor: pointer; height: calc( var(--h) * var(--min) * 1px); }
 .epg-event > div { padding: 0 0.3rem; height: 100%; }
