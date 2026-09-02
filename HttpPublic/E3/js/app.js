@@ -899,7 +899,7 @@ document.addEventListener('alpine:init', () => {
 
         // ダッシュボードや表示リストへの反映
         this.syncDashboardData();
-        if (this.isPage(pageHash)) this.updateDisplayList();
+        if (this.isPage(pageHash) || (this.isPage('#tunerreserve') && pageHash === '#reserve')) this.updateDisplayList();
 
         // キャッシュ保存
         this.saveCache();
@@ -1030,7 +1030,7 @@ document.addEventListener('alpine:init', () => {
     },
     async getData() {
       let pageHash = this.page;
-      if (!['#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual'].includes(pageHash)) pageHash = '#reserve';
+      if (!this.isPage('#reserve', '#tunerreserve', '#recinfo', '#autoaddepg', '#autoaddmanual')) pageHash = '#reserve';
       const pageName = this.pageMap[pageHash].title;
       this.loading = true;
       try {
@@ -1275,24 +1275,26 @@ document.addEventListener('alpine:init', () => {
 
       // チューナー別予約ページの場合
       if (this.isPage('#tunerreserve')) {
+        const newTunerDisplayData = {};
         this.allData.tunerreserve.forEach(tuner => {
           const tid = tuner.tunerID;
+          const prevData = this.tunerDisplayData[tid];
+          const idSet = new Set(tuner.reserveList || []);
+          // 並び順はマスター(allData.reserve)に従う
+          const allReserves = Array.from(this.allData.reserve.values());
+          const fullList = allReserves.filter(res => idSet.has(res.reserveID));
 
-          // まだこのチューナーの表示用データがない場合のみ作成
-          if (!this.tunerDisplayData[tid]) {
-            const idSet = new Set(tuner.reserveList);
-            // 並び順はマスター(allData.reserve)に従う
-            const allReserves = Array.from(this.allData.reserve.values());
-            const fullList = allReserves.filter(res => idSet.has(res.reserveID));
+          const currentCount = prevData?.cursor || this.perPage;
+          const cursor = Math.min(fullList.length, Math.max(currentCount, this.perPage));
 
-            this.tunerDisplayData[tid] = {
-              fullList: fullList,
-              displayList: fullList.slice(0, this.perPage),
-              cursor: Math.min(fullList.length, this.perPage),
-              total: fullList.length
-            };
-          }
+          newTunerDisplayData[tid] = {
+            fullList: fullList,
+            displayList: fullList.slice(0, cursor),
+            cursor: cursor,
+            total: fullList.length
+          };
         });
+        this.tunerDisplayData = newTunerDisplayData;
         return;
       }
 
@@ -1405,6 +1407,7 @@ document.addEventListener('alpine:init', () => {
         const next = d.fullList.slice(d.cursor, d.cursor + this.perPage);
         d.displayList = [...d.displayList, ...next];
         d.cursor += next.length;
+        this.tunerDisplayData = { ...this.tunerDisplayData };
         return;
       }
 
@@ -1413,7 +1416,7 @@ document.addEventListener('alpine:init', () => {
       if (d.total > d.fullList.length && reserveConfig) {
         this.loading = true;
         try {
-          const currentIndex = this.allData.reserve.length;
+          const currentIndex = this.allData.reserve.size;
           const res = await this.fetch(`${this.ROOT}api/${reserveConfig.api}?json=1&index=${currentIndex}`);
           const data = await res.json();
 
@@ -1431,7 +1434,7 @@ document.addEventListener('alpine:init', () => {
             this.allData.tunerreserve.forEach(t => {
               const targetD = this.tunerDisplayData[t.tunerID];
               if (targetD) {
-                const idSet = new Set(t.reserveList);
+                const idSet = new Set(t.reserveList || []);
                 targetD.fullList = fullReserves.filter(r => idSet.has(r.reserveID));
               }
             });
@@ -1440,6 +1443,7 @@ document.addEventListener('alpine:init', () => {
             const next = d.fullList.slice(d.cursor, d.cursor + this.perPage);
             d.displayList = [...d.displayList, ...next];
             d.cursor += next.length;
+            this.tunerDisplayData = { ...this.tunerDisplayData };
           }
         } catch (e) {
           console.error("loadMoreTuner fetch error:", e);
@@ -2452,6 +2456,8 @@ document.addEventListener('alpine:init', () => {
             }
             this.app.updateQueryParam({ id: targetId }, false);
           }
+        } else {
+          this.shouldGoBack = false;
         }
         this.el.close();
         this.el.previousElementSibling.classList.remove('active');
