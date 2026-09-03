@@ -5,6 +5,24 @@ SHOW_NOTIFY_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,INI
 --デバッグ出力の表示を許可するかどうか
 SHOW_DEBUG_LOG=tonumber(edcb.GetPrivateProfile('SET','SHOW_DEBUG_LOG',false,INI))~=0
 
+--設定の変更を許可するかどうか
+ALLOW_SETTING=tonumber(edcb.GetPrivateProfile('SET','ALLOW_SETTING',true,INI))~=0
+
+--※true/falseの設定は例えばリモートアドレスと比較して接続元の限定も可能
+--ALLOW_SETTING=mg.request_info.remote_addr=='127.0.0.1' or mg.request_info.remote_addr=='::1'
+if ALLOW_SETTING then
+  local allowList=edcb.GetPrivateProfile('SET','ALLOW_SETTING_LIST','127.0.0.1,::1',INI)
+  if #allowList>0 then
+    ALLOW_SETTING=false
+    for v in allowList:gmatch('[^,]+') do
+      if mg.request_info.remote_addr==v then
+        ALLOW_SETTING=true
+        break
+      end
+    end
+  end
+end
+
 --メニューに「システムスタンバイ」ボタンを表示するかどうか(Windows専用)
 INDEX_ENABLE_SUSPEND=tonumber(edcb.GetPrivateProfile('SET','SUSPEND',false,INI))~=0
 --メニューの「システムスタンバイ」ボタンを「システム休止」にするかどうか

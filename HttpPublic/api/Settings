@@ -977,45 +977,52 @@ function SaveAppNetwork(tcp)
   end
 end
 
+message=nil
 if post then
-  if GetVarInt(post,'srv')==1 then
-    network=nil
-    if GetVarInt(post,'saveBasic')==1 then
-      SaveBasic()
-      SaveRecFolder()
-      SaveBon()
+  if not ALLOW_SETTING then
+    message='設定変更は許可されていません'
+  else
+    if GetVarInt(post,'srv')==1 then
+      network=nil
+      if GetVarInt(post,'saveBasic')==1 then
+        SaveBasic()
+        SaveRecFolder()
+        SaveBon()
+      end
+      if GetVarInt(post,'saveEpg')==1 then
+        SaveEpg()
+        SaveEpgService()
+        SaveEpgTime()
+      end
+      if GetVarInt(post,'saveRec')==1 then
+        SaveRec()
+        SaveNoSuspend()
+      end
+      if GetVarInt(post,'saveReserve')==1 then
+        SaveReserve()
+        SaveDelChk()
+        SaveDelExt()
+      end
+      if GetVarInt(post,'saveOther')==1 then
+        network=SaveOther()
+        SaveViewBon()
+      end
+      edcb.ReloadSetting(network)
     end
-    if GetVarInt(post,'saveEpg')==1 then
-      SaveEpg()
-      SaveEpgService()
-      SaveEpgTime()
-    end
-    if GetVarInt(post,'saveRec')==1 then
-      SaveRec()
-      SaveNoSuspend()
-    end
-    if GetVarInt(post,'saveReserve')==1 then
-      SaveReserve()
-      SaveDelChk()
-      SaveDelExt()
-    end
-    if GetVarInt(post,'saveOther')==1 then
-      network=SaveOther()
-      SaveViewBon()
-    end
-    edcb.ReloadSetting(network)
-  end
 
-  if GetVarInt(post,'presetID') then SavePreset() end
-  if GetVarInt(post,'savePlugin')==1 then SavePlugin() end
-  if GetVarInt(post,'saveApp')==1 then
-    SaveApp()
-    SaveAppNetwork(false)
-    SaveAppNetwork(true)
+    if GetVarInt(post,'presetID') then SavePreset() end
+    if GetVarInt(post,'savePlugin')==1 then SavePlugin() end
+    if GetVarInt(post,'saveApp')==1 then
+      SaveApp()
+      SaveAppNetwork(false)
+      SaveAppNetwork(true)
+    end
   end
 end
 
-if mg.get_var(mg.request_info.query_string,'plugin')=='1' then
+if message then
+  a={err=message}
+elseif mg.get_var(mg.request_info.query_string,'plugin')=='1' then
   a=GetPlugin(mg.request_info.query_string)
 elseif GetVarInt(post,'presetID') then 
   a=edcb.EnumRecPresetInfo()

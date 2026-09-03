@@ -3606,8 +3606,14 @@ document.addEventListener('alpine:init', () => {
       try {
         this.loading = true;
         const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
+        const data = await res.json();
 
-        this.settings.data = await res.json();
+        if (data.err) {
+          this.snackbar.error(data.err);
+          return;
+        }
+
+        this.settings.data = data;
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
@@ -3645,6 +3651,11 @@ document.addEventListener('alpine:init', () => {
         const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
 
+        if (data.err) {
+          this.snackbar.error(data.err);
+          return;
+        }
+
         this.allData.recpreset.clear();
         data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.recpreset = Date.now();
@@ -3666,6 +3677,11 @@ document.addEventListener('alpine:init', () => {
         this.loading = true;
         const res = await this.fetchWithToken(`${this.ROOT}api/Settings`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
+          return;
+        }
 
         this.allData.recpreset.clear();
         data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
@@ -3728,6 +3744,11 @@ document.addEventListener('alpine:init', () => {
         this.loading = true;
         const res = await this.fetchWithToken(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`, { method: 'POST', body: fd }, 'settings');
         const data = await res.json();
+
+        if (data.err) {
+          this.snackbar.error(data.err);
+          return;
+        }
 
         this.parsePlugin(data, mode, name);
         this.snackbar.add('保存しました');
