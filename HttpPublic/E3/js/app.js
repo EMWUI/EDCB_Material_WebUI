@@ -3134,7 +3134,7 @@ document.addEventListener('alpine:init', () => {
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
         if (!this.ts) return;
-        this.video.setAttribute('ctok', this.ctok.view);
+        this.video.setAttribute('ctok', this.app.ctok.view);
         this.live = true;
         Alpine.raw(this.ts).reset();
         Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
@@ -3172,7 +3172,7 @@ document.addEventListener('alpine:init', () => {
 
         if (!fname && !d.recid && !d.rid) return;
 
-        this.video.setAttribute('ctok', this.ctok.xcode);
+        this.video.setAttribute('ctok', this.app.ctok.xcode);
         const ts = Alpine.raw(this.ts);
         ts.reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
