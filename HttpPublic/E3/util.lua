@@ -67,6 +67,7 @@ function GetAppConfig()
     ..' nosuspendActive: '..(nosuspendActive and 'true' or 'false')..','
     ..' enableSuspend: '..(INDEX_ENABLE_SUSPEND and 'true' or 'false')..','
     ..' suspendMode: \''..(INDEX_SUSPEND_USE_HIBERNATE and 'hibernate' or 'suspend')..'\','
+    ..' jk: { hight: '..JK_COMMENT_HEIGHT..', duration: '..JK_COMMENT_DURATION..'}'
     ..'}'
 end
 
@@ -190,7 +191,7 @@ function GetPlayerOption(tslive)
     ..(zip and '" data-absent-zip="'..zip or '')
     ..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
 
-    ..((USE_LIVEJK or JKRDLOG_PATH) and '" data-comment-height="'..JK_COMMENT_HEIGHT..'" data-comment-duration="'..JK_COMMENT_DURATION..'" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
+    ..((USE_LIVEJK or JKRDLOG_PATH) and '" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
     ..'" :data-ctok-view="ctok.view" :data-ctok-xcode="ctok.xcode"'
 end
 

@@ -275,7 +275,8 @@ document.addEventListener('alpine:init', () => {
         jikkyoConfig: {
           load: false,
           opacity: 1,
-          height: 32,
+          height: config.jk.height,
+          duration: config.jk.duration,
         }
       },
     },
@@ -3427,6 +3428,7 @@ document.addEventListener('alpine:init', () => {
             ts.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
             ts.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
             ts.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
+            ts.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
           }
 
           ts.toggleDatacast(this.set.datacast);

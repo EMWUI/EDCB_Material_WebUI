@@ -4748,10 +4748,18 @@ ct:Append([=[
           <nav>
             <i>format_size</i>
             <div class="slider">
-              <input type="range" value="25" min="24" max="100" x-model.number="jikkyoConfig.height" @change="Alpine.raw(player.ts).jikkyo.danmaku.options.height = jikkyoConfig.height">
+              <input type="range" min="24" max="100" x-model.number="jikkyoConfig.height" @change="Alpine.raw(player.ts).jikkyo.danmaku.options.height = jikkyoConfig.height">
               <span></span>
             </div>
             <h6 x-text="jikkyoConfig.height"></h6>
+          </nav>
+          <nav>
+            <i>speed</i>
+            <div class="slider">
+              <input type="range" min="1" max="10" step="0.5" x-model.number="jikkyoConfig.duration" @change="Alpine.raw(player.ts).jikkyo.danmaku.options.duration = jikkyoConfig.duration">
+              <span></span>
+            </div>
+            <h6 x-text="jikkyoConfig.duration"></h6>
           </nav>
         </fieldset>
       </div>
