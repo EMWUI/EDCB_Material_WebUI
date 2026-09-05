@@ -966,7 +966,7 @@ ct:Append([=[
               <div id="jikkyo-comm" class="vertical jikkyo-comments">
                 <div id="jikkyo-config" class="padding" :class="{ show: showJikkyoSet }">
                   <div class="grid">
-                    <nav class="s11 group primary-container middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
+                    <nav class="s11 group primary middle-align" x-data="{ list: [-15,-1,1,15] }" x-show="!live">
                       <template x-for="(v, i) in list">
                         <button class="jikkyo-shift border" :class="{'left-round': i == 0, 'right-round': i == list.length - 1}" x-text="v > 0 ? '+'+v : v" :data-sec="v"></button>
                       </template>
@@ -1658,14 +1658,14 @@ ct:Append([=[
             <div class="page" :class="isTab('srv')" x-ref="srv">
               <input type="hidden" name="srv" value="1">
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                <summary class="fixed round secondary-container">
                   <nav class="padding">
                     <i>settings</i>
                     <h6 class="max">基本設定</h6>
                     <i x-text="open ? 'expand_less' : 'expand_more'"></i>
                   </nav>
                 </summary>
-                <div class="grid vertical-margin">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="saveBasic" value="1">
                   <div class="s12 field label border large">
                     <input type="text" name="dataSavePath" x-model="data.basic.dataSavePath">
@@ -1721,13 +1721,13 @@ ct:Append([=[
                             <button class="secondary small left-round" @click="moveList('recFolder',i,-1)"><i>arrow_upward</i></button>
                             <button class="secondary small right-round" @click="moveList('recFolder',i,1)"><i>arrow_downward</i></button>
                           </nav>
-                          <span class="large-text max" x-text="v"></span>
+                          <span class="large-text max scroll" x-text="v"></span>
                           <button class="tertiary small" @click="removeList('recFolder',i)"><i>delete</i></button>
                           <input type="hidden" name="recFolder" :value="v">
                         </li>
                       </template>
                     </ul>
-                    <p class="small-text secondary-text">
+                    <p class="small-text no-line secondary-text">
                       ※空き容量が少ない場合、上から順に録画対象のフォルダとします<br>
                       ※フォルダは事前に作成してください
                     </p>
@@ -1768,7 +1768,7 @@ ct:Append([=[
                         </tbody>
                       </table>
                     </div>
-                    <p class="small-text secondary-text">
+                    <p class="small-text no-line secondary-text">
                       ※上にあるBonDriverから優先的に使用します。<br>
                       ※チャンネルスキャンを完了したものが表示されます。<br>
                       ※設定は次回起動時に適用されます。
@@ -1777,15 +1777,17 @@ ct:Append([=[
                 </div>
               </details>
 
+              <hr class="transparent">
+
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                <summary class="fixed round secondary-container">
                   <nav class="padding">
                     <i>event_list</i>
                     <h6 class="max">EPG取得</h6>
                     <i x-text="open ? 'expand_less' : 'expand_more'"></i>
                   </nav>
                 </summary>
-                <div class="grid vertical-margin">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="saveEpg" value="1">
                   <fieldset class="s12 l4">
                     <legend>基本情報のみ取得するネットワーク</legend>
@@ -1872,7 +1874,7 @@ ct:Append([=[
                           <input type="time" value="00:00" x-ref="addTime">
                         </div>
                       </nav>
-                      <nav class="group tiny-space">
+                      <nav class="group connected fill">
                         <button class="left-round" :class="{ active: bs }" @click="bs = !bs">BS</button>
                         <button :class="{ active: cs1 }" @click="cs1 = !cs1">CS1</button>
                         <button :class="{ active: cs2 }" @click="cs2 = !cs2">CS2</button>
@@ -1917,15 +1919,17 @@ ct:Append([=[
                 </div>
               </details>
 
+              <hr class="transparent">
+
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                <summary class="fixed round secondary-container">
                   <nav class="padding">
                     <i>settings_applications</i>
                     <h6 class="max">録画動作</h6>
                     <i x-text="open ? 'expand_less' : 'expand_more'"></i>
                   </nav>
                 </summary>
-                <div class="grid vertical-margin">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="saveRec" value="1">
                   <fieldset class="s12 m6">
                     <legend>録画、EPG取得終了後のデフォルト動作</legend>
@@ -1958,6 +1962,7 @@ ct:Append([=[
                       <nav>
                         <div class="max">
                           <h6 class="large-text">録画開始</h6>
+                          <span class="small-text tiny-line">再起動ありの場合は+5分</span>
                         </div>
                         <div class="row tiny-space wrap">
                           <div class="field small min">
@@ -1966,7 +1971,6 @@ ct:Append([=[
                           <span>分前</span>
                         </div>
                       </nav>
-                      <output>再起動ありの場合は+5分</output>
                     </div>
                   </fieldset>
                   <fieldset class="s12">
@@ -2040,7 +2044,7 @@ ct:Append([=[
                         <nav>
                           <div class="max">
                             <h6><label class="large-text" for="s-sharefile">共有フォルダのTSファイルにアクセスがある場合</label></h6>
-                            <div>※管理者権限が必要です</div>
+                            <span class="small-text tiny-line">※管理者権限が必要です</span>
                           </div>
                           <label class="switch icon">
                             <input id="s-sharefile" type="checkbox" name="noShareFile" x-model="data.rec.noShareFile">
@@ -2220,15 +2224,17 @@ ct:Append([=[
                 </div>
               </details>
 
+              <hr class="transparent">
+
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                <summary class="fixed round secondary-container">
                   <nav class="padding">
                     <i>event_upcoming</i>
                     <h6 class="max">予約情報管理</h6>
                     <i x-text="open ? 'expand_less' : 'expand_more'"></i>
                   </nav>
                 </summary>
-                <div class="grid vertical-margin">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="saveReserve" value="1">
                   <div class="s12 l6 field middle-align">
                     <nav>
@@ -2427,21 +2433,23 @@ ct:Append([=[
                 </div>
               </details>
 
+              <hr class="transparent">
+
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">
-                <summary class="fixed round" :class="{ 'primary-container' : open }">
+                <summary class="fixed round secondary-container">
                   <nav class="padding">
                     <i>build</i>
                     <h6 class="max">その他</h6>
                     <i x-text="open ? 'expand_less' : 'expand_more'"></i>
                   </nav>
                 </summary>
-                <div class="grid">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="saveOther" value="1">
                   <div class="s12 l6 field middle-align">
                     <nav>
                       <div class="max">
                         <h6><label class="large-text" for="s-enabletcpsrv">ネットワーク接続を許可する</label></h6>
-                        <span>※設定変更後にHTTPサーバーも再起動します。</span>
+                        <span class="small-text tiny-line">※設定変更後にHTTPサーバーも再起動します。</span>
                       </div>
                       <label class="switch icon">
                         <input id="s-enabletcpsrv" type="checkbox" name="enableTCPSrv" x-model="data.other.enableTCPSrv">
@@ -2558,7 +2566,7 @@ ct:Append([=[
                     <nav>
                       <div class="max">
                         <h6><label class="large-text" for="s-timesync">EPG取得時に放送波時間でPC時計を同期する</label></h6>
-                        <span>※]=]..(WIN32 and 'システム時刻の変更特権が必要です' or '`/bin/date -s 20[0-9][0-9]-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z`をsudoで実行します')..[=[</span>
+                        <span class="small-text tiny-line">※]=]..(WIN32 and 'システム時刻の変更特権が必要です' or '`/bin/date -s 20[0-9][0-9]-[01][0-9]-[0-3][0-9]T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z`をsudoで実行します')..[=[</span>
                       </div>
                       <label class="switch icon">
                         <input id="s-timesync" type="checkbox" name="timeSync" x-model="data.other.timeSync">
@@ -2728,8 +2736,7 @@ ct:Append([=[
                   <button class="right-round large" @click="removePreset()" :disabled="presetID==0"><i>delete</i><span>削除</span></button>
                 </nav>
                 <div class="middle-align"><i class="small">save</i><span x-text="convert.date(lastUpdated.recpreset,false,true)"></span></div>
-                <hr class="large">
-                <div class="grid">
+                <div class="grid padding large-padding border round">
                   <input type="hidden" name="presetID" :value="presetID">
                   <input type="hidden" name="addchg" value="1">
                   <div class="s12 l6 field middle-align">
@@ -3068,7 +3075,7 @@ ct:Append([=[
                   <span x-text="v.label"></span>
                 </template>
                 <template x-if="v.children.length > 0">
-                  <div class="s12 grid left-margin large-margin">
+                  <div class="s12">
                     <template x-for="w in v.children" :key="w.index">
                       <div class="contents">
                         <template x-if="w.section">
@@ -3183,9 +3190,9 @@ ct:Append([=[
             </div>
 
             <div class="page" :class="isTab('epgdatacap')" x-ref="epgdatacap">
-              <div class="grid">
+              <div>*の項目はEpgTimerSrvの予約以外で起動したとき用</div>
+              <div class="grid padding large-padding border round">
                 <input type="hidden" name="saveApp" value="1">
-                <div class="s12">*の項目はEpgTimerSrvの予約以外で起動したとき用</div>
                 <div class="s12 l6 field middle-align">
                   <nav>
                     <div class="max">
@@ -3284,7 +3291,7 @@ ct:Append([=[
                         <div class="s12 l6 row">
                           <div class="max">
                             <h6 class="large-text">スクランブル数</h6>
-                            <output><span class="bold">-1</span>で常に出力しない</output>
+                            <span class="small-text tiny-line"><span class="bold">-1</span>で常に出力しない</span>
                           </div>
                           <div class="row tiny-space">
                             <div class="field small min">
@@ -3347,7 +3354,7 @@ ct:Append([=[
                   <div class="row">
                     <div class="max">
                       <h6 class="large-text">入力バッファ上限</h6>
-                      <output>47KiB単位</output>
+                      <span class="small-text tiny-line">47KiB単位</span>
                     </div>
                     <div class="field min">
                       <input type="number" name="tsBuffMaxCount" x-model.number="data.app.tsBuffMaxCount">
@@ -3358,7 +3365,7 @@ ct:Append([=[
                   <div class="row">
                     <div class="max">
                       <h6 class="large-text">ファイル出力バッファ上限</h6>
-                      <output>47KiB単位、0で無制限</output>
+                      <span class="small-text tiny-line">47KiB単位、0で無制限</span>
                     </div>
                     <div class="field min">
                       <input type="number" name="writeBuffMaxCount" x-model.number="data.app.writeBuffMaxCount">
@@ -3482,7 +3489,7 @@ ct:Append([=[
                           </li>
                         </template> 
                       </ul>
-                      <p class="small-text secondary-text">
+                      <p class="small-text no-line secondary-text">
                         ※複数の起動があった場合、自動的にPortが+1されます。<br>
                         ※ブロードキャストとして送信する場合は、ブロードキャストアドレスを指定してください。<br>
                         ※仕様によりドロップすることがあるので、とくに理由がなければTCP送信の利用をお勧めします。<br>
@@ -3509,7 +3516,7 @@ ct:Append([=[
                           </li>
                         </template> 
                       </ul>
-                      <p class="small-text secondary-text">※複数の起動があった場合、自動的にPortが+1されます。</p>
+                      <p class="small-text no-line secondary-text">※複数の起動があった場合、自動的にPortが+1されます。</p>
                       <nav class="wrap tiny-space right-align" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
                         <div class="field small">
                           <input type="text" x-model="ip">
@@ -3865,7 +3872,7 @@ ct:Append([=[
                     </div>
                   </div>
                 </template>
-                <nav class="s12 group tiny-space center-align">
+                <nav class="s12 group connected fill center-align">
                   <button class="small left-round" :class="{ active: s.regExpFlag }" @click="s.regExpFlag = !s.regExpFlag">
                     <input type="checkbox" name="regExpFlag" x-model="s.regExpFlag">
                     <i>regular_expression</i>
@@ -4140,7 +4147,7 @@ ct:Append([=[
                 <fieldset class="s12 no-margin">
                   <legend>日時</legend>
                   <div class="grid">
-                    <nav class="s12 group tiny-space center-align">
+                    <nav class="s12 group connected fill center-align">
                       <input type="hidden" name="dayOfWeekFlag" x-model="d.dayOfWeekFlag">
                       <template x-for="(v, i) in dayText">
                         <button :class="{ 'small': isSmallScreen, 'left-round': i == 0, 'right-round': i == dayText.length - 1, 'active': !!(d.dayOfWeekFlag & (1 << i)) }" @click="d.dayOfWeekFlag ^= (1 << i)">
@@ -4688,10 +4695,10 @@ ct:Append([=[
         <fieldset>
           <legend>背景</legend>
           <div class="field">
-            <nav class="group primary scroll">
-              <button class="left-round" :class="{ fill: set.epg.bg !== 'bar' }" @click="set.epg.bg = 'bar'">シンプル</button>
-              <button :class="{ fill: set.epg.bg !== '' }" @click="set.epg.bg = ''">モダン</button>
-              <button class="right-round" :class="{ fill: set.epg.bg !== 'paint' }" @click="set.epg.bg = 'paint'">クラシック</button>
+            <nav class="group connected fill scroll">
+              <button class="left-round" :class="{ active: set.epg.bg === 'bar' }" @click="set.epg.bg = 'bar'"><i x-show="set.epg.bg === 'bar'">check</i></i><span>シンプル</span></button>
+              <button :class="{ active: set.epg.bg === '' }" @click="set.epg.bg = ''"><i x-show="set.epg.bg === ''">check</i><span>モダン</span></button>
+              <button class="right-round" :class="{ active: set.epg.bg === 'paint' }" @click="set.epg.bg = 'paint'"><i x-show="set.epg.bg === 'paint'">check</i></i><span>クラシック</span></button>
             </nav>
           </div>
         </fieldset>

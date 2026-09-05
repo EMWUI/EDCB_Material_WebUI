@@ -48,6 +48,15 @@ i.rotate { animation: to-rotate 1s linear infinite; }
 
 
 nav.group>:is(.button,button) { white-space: nowrap; }
+nav.group.connected.fill>:is(.button,button):not(.border) {
+  background-color: var(--secondary-container);
+  color: var(--on-secondary-container);
+}
+nav.group.connected.fill>:is(.button,button).active {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
 nav.tabbed.fixed {
   position: sticky;
   top: 0;
@@ -63,6 +72,8 @@ nav.tabbed.scroll a {
   flex: none;
   flex-grow: 1;
 }
+
+summary+div { margin: 1rem 0.25rem; }
 
 li>.max, .row.wrap>.middle-align { max-width: 100%; }
 
