@@ -450,6 +450,7 @@ function GetNoSuspend()
 end
 
 function SaveNoSuspend()
+  if not WIN32 then return end
   local itemList={}
   for i=0,10000 do
     local v=mg.get_var(post, 'noSuspend', i)
@@ -643,7 +644,9 @@ function SavePreset()
     --削除または追加または変更
     if preset then
       --追加または変更
-      preset.recSetting=GetRecSetting(post)
+      local rs=GetRecSetting(post)
+      if not rs then return end
+      preset.recSetting=rs
     end
     local saveID=''
     for i,v in ipairs(itemList) do
@@ -655,7 +658,7 @@ function SavePreset()
         saveID=saveID..v.id..','
       end
       edcb.WritePrivateProfile(defName,'SetName',v.id>0 and v.name or 'デフォルト',srvIni)
-      rs=v.recSetting
+      local rs=v.recSetting
       edcb.WritePrivateProfile(defName,'RecMode',rs.recMode,srvIni)
       edcb.WritePrivateProfile(defName,'NoRecMode',rs.noRecMode,srvIni)
       edcb.WritePrivateProfile(defName,'Priority',rs.priority,srvIni)
@@ -769,7 +772,7 @@ function GetPlugin()
   local mode=GetVarInt(mg.request_info.query_string,'mode',1,2) or 1
   local item=mg.get_var(mg.request_info.query_string,'item') or ''
   local itemList=EnumPlugInFileName(mode==1 and 'RecName' or 'Write')
-  local setting=nil
+  local setting={name=item}
   for i,v in ipairs(itemList) do
     if v==item then
       local f=edcb.io.open(PathAppend(EdcbLibPath() or PathAppend(EdcbModulePath(),mode==1 and 'RecName' or 'Write'),v),'rb')
@@ -778,9 +781,13 @@ function GetPlugin()
         local buf=(' '):rep(65536)
         while #buf==65536 do
           buf=buf..(f:read(65536) or '')
-          setting=buf:match('%[(%["setting%-59c4d329%-ba81%-4054%-9f4d%-d1900653338a",.-)%[""%]%]')
-          if setting then
-            setting=ParseSettingArrays(setting:gsub('%c',''))
+          local t=buf:match('%[(%["setting%-59c4d329%-ba81%-4054%-9f4d%-d1900653338a",.-)%[""%]%]')
+          if t then
+            t=ParseSettingArrays(t:gsub('%c',''))
+            if t then
+              setting.head=t.head
+              setting.body=t.body
+            end
             break
           end
           buf=buf:sub(65537)
@@ -790,7 +797,7 @@ function GetPlugin()
       break
     end
   end
-  if setting then
+  if setting.body then
     for i,v in ipairs(setting.body) do
       if v.section then
         v.val=edcb.GetPrivateProfile(v.section,v.key,v.def,(mode==1 and 'RecName\\' or 'Write\\')..item..'.ini')

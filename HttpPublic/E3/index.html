@@ -1176,7 +1176,7 @@ ct:Append([=[
                         <template x-for="d in displayList" :key="d.reserveID">
                           <tr class="ripple" x-html="$refs.reserveTable.innerHTML" @click="openProgramDetail(d)" x-data="{ opacity: !d.recSetting?.recEnabled ? 'medium-opacity' : ''}"></tr>
                         </template>
-                        <tr x-intersect="loadMore()"></tr>
+                        <tr x-intersect="loadMoreTuner(tuner.tunerID)"></tr>
                       </tbody>
                       <tfoot class="fixed small-text">
                         <tr>
@@ -1676,35 +1676,37 @@ ct:Append([=[
                     <label>録画用アプリのパス</label>
                     ]=]..(WIN32 and '' or '<output>※未指定時はEpgTimerSrvと同じ場所のEpgDataCap_Bonを使います。</output>')..[=[
                   </div>
-                  <fieldset class="s12]=]..(WIN32 and '' or 'medium-opactiy')..[=[">
+                  ]=]..(WIN32 and [=[
+                  <fieldset class="s12">
                     <legend>コマンドライン引数</legend>
                     <div class="grid">
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptBon" x-model="data.basic.cmdOpt.bon"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptBon" x-model="data.basic.cmdOpt.bon">
                         <label>{BonDriver}</label>
                       </div>
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptMin" x-model="data.basic.cmdOpt.min"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptMin" x-model="data.basic.cmdOpt.min">
                         <label>最小化</label>
                       </div>
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptViewOff" x-model="data.basic.cmdOpt.viewOff"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptViewOff" x-model="data.basic.cmdOpt.viewOff">
                         <label>非視聴時</label>
                       </div>
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptONID" x-model="data.basic.cmdOpt.onid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptONID" x-model="data.basic.cmdOpt.onid">
                         <label>{ONID}</label>
                       </div>
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptTSID" x-model="data.basic.cmdOpt.tsid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptTSID" x-model="data.basic.cmdOpt.tsid">
                         <label>{TSID}</label>
                       </div>
                       <div class="s6 m4 field label border">
-                        <input type="text" name="cmdOptSID" x-model="data.basic.cmdOpt.sid"]=]..(WIN32 and '' or ' disabled')..[=[>
+                        <input type="text" name="cmdOptSID" x-model="data.basic.cmdOpt.sid">
                         <label>{SID}</label>
                       </div>
                     </div>
-                  </fieldset>            
+                  </fieldset>
+                  ]=] or '')..[=[
                   <div class="s12 field label border large">
                     <input type="text" name="recInfoFolder" x-model="data.basic.recInfoFolder">
                     <label>録画情報保存フォルダ</label>
@@ -1970,6 +1972,7 @@ ct:Append([=[
                   <fieldset class="s12">
                     <legend>録画後動作の抑制条件</legend>
                     <div class="grid">
+                      ]=]..(WIN32 and [=[
                       <fieldset class="s12">
                         <legend>指定プロセスが起動している場合 (前方一致)</legend>
                         <nav class="scroll">
@@ -1988,6 +1991,7 @@ ct:Append([=[
                           <button class="secondary right-round" @click="addList('noSuspend')"><i>add</i><span>追加</span></button>
                         </nav>
                       </fieldset>
+                      ]=] or '')..[=[
                       <div class="s12 l6 field">
                         <div class="row wrap">
                           <div class="max">
@@ -1995,12 +1999,13 @@ ct:Append([=[
                           </div>
                           <div class="row tiny-space">
                             <div class="field small min">
-                              <input type="number" x-model.number="data.rec.noStandbyTime">
+                              <input type="number" name="noStandbyTime" x-model.number="data.rec.noStandbyTime">
                             </div>
                             <span>分以内</span>
                           </div>
                         </div>
                       </div>
+                      ]=]..(WIN32 and [=[
                       <div class="s12 l6 field">
                         <nav class="wrap">
                           <div class="max">
@@ -2012,23 +2017,25 @@ ct:Append([=[
                           <div class="max row tiny-space right-align">
                             <div class="max"></div>
                             <div class="field small min">
-                              <input type="number" x-model.number="data.rec.noStandbyTime">
+                              <input type="number" name="noUsePCTime" x-model.number="data.rec.noUsePCTime">
                             </div>
                             <span>分以内</span>
                           </div>
                         </nav>
                       </div>
+                      ]=] or '')..[=[
                       <div class="s12 l6 field middle-align">
                         <nav>
                           <div class="max">
                             <h6><label class="large-text" for="s-networktv">NetworkTVモードで追っかけ再生、ストリーミング再生を行っている場合</label></h6>
                           </div>
                           <label class="switch icon">
-                            <input id="s-networktv" type="checkbox" name="noFileStreaming" x-model="data.rec.noFileStreaming"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <input id="s-networktv" type="checkbox" name="noFileStreaming" x-model="data.rec.noFileStreaming">
                             <span><i>brightness_1</i><i>block</i></span>
                           </label>
                         </nav>
                       </div>
+                      ]=]..(WIN32 and [=[
                       <div class="s12 l6 field middle-align">
                         <nav>
                           <div class="max">
@@ -2036,12 +2043,13 @@ ct:Append([=[
                             <div>※管理者権限が必要です</div>
                           </div>
                           <label class="switch icon">
-                            <input id="s-sharefile" type="checkbox" name="noShareFile" x-model="data.rec.noShareFile"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <input id="s-sharefile" type="checkbox" name="noShareFile" x-model="data.rec.noShareFile">
                             <span><i>brightness_1</i><i>block</i></span>
                           </label>
                         </nav>
                       </div>
                     </div>
+                    ]=] or '')..[=[
                   </fieldset>
                   <fieldset class="s12 l6">
                     <legend>録画マージンのデフォルト</legend>
@@ -2093,6 +2101,8 @@ ct:Append([=[
                           </div>
                         </div>
                       </div>
+                      
+                      ]=]..(WIN32 and [=[
                       <div class="s12 l6 field label suffix border">
                         <select name="processPriority" name="processPriority" x-model="data.rec.processPriority">
                           <option value="0">リアルタイム
@@ -2105,6 +2115,7 @@ ct:Append([=[
                         <label>プロセス優先度</label>
                         <i>arrow_drop_down</i>
                       </div>
+                      ]=] or '')..[=[
                       <div class="s12 l6 field middle-align">
                         <nav>
                           <div class="max">
@@ -2160,7 +2171,7 @@ ct:Append([=[
                           </label>
                         </nav>
                       </div>
-                      <div class="l"></div>
+                      ]=]..(WIN32 and [=[<div class="l"></div>]=] or '')..[=[
                       <div class="s12 l6 field middle-align">
                         <nav>
                           <div class="max">
@@ -2172,17 +2183,19 @@ ct:Append([=[
                           </label>
                         </nav>
                       </div>
+                      ]=]..(WIN32 and [=[
                       <div class="s12 l6 field middle-align">
                         <nav>
                           <div class="max">
-                            <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.rec.pgInfoLog }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-pginfologutf8">UTF-8で出力する</label></h6>
+                            <h6 :class="{ 'medium-opacity': !data.rec.pgInfoLog }"><label class="large-text" for="s-pginfologutf8">UTF-8で出力する</label></h6>
                           </div>
                           <label class="switch icon">
-                            <input id="s-pginfologutf8" type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8" ]=]..(WIN32 and ':disabled="!data.rec.pgInfoLog"' or 'disabled')..[=[>
+                            <input id="s-pginfologutf8" type="checkbox" name="pgInfoLogAsUtf8" x-model="data.rec.pgInfoLogAsUtf8" :disabled="!data.rec.pgInfoLog">
                             <span><i>format_underlined</i></span>
                           </label>
                         </nav>
                       </div>
+                      ]=] or '')..[=[
                     </div>
                     <fieldset>
                       <legend>Viewを起動する</legend>
@@ -2403,10 +2416,10 @@ ct:Append([=[
                     </nav>
                   </div>
                   <div class="s12 l6 field label suffix border">
-                    <select name="delReserveMode">
-                      <option value="0" :selected="data.reserve.delReserveMode==0">削除のみ
-                      <option value="1" :selected="data.reserve.delReserveMode==1">録画済みに追加
-                      <option value="2" :selected="data.reserve.delReserveMode==2">キャンセルとして録画済みに追加
+                    <select name="delReserveMode" x-model.number="data.reserve.delReserveMode">
+                      <option value="0">削除のみ
+                      <option value="1">録画済みに追加
+                      <option value="2">キャンセルとして録画済みに追加
                     </select>
                     <label>録画中の予約削除を</label>
                     <i>arrow_drop_down</i>
@@ -2528,9 +2541,9 @@ ct:Append([=[
                         </div>
                         <div class="row tiny-space">
                           <div class="field suffix">
-                            <select name="epgArchivePeriod">
+                            <select name="epgArchivePeriod" x-model.number="data.other.epgArchivePeriod">
                               <template x-for="v in 15">
-                                <option x-text="v-1">
+                                <option x-text="v-1" :selected="`${v-1}` === data.other.epgArchivePeriod"></option>
                               </template>
                               <option value="20000">∞
                             </select>
@@ -2553,6 +2566,7 @@ ct:Append([=[
                       </label>
                     </nav>
                   </div>
+                  ]=]..(WIN32 and [=[
                   <fieldset class="s12">
                     <legend>EpgTimerSrv</legend>
                     <div class="grid">
@@ -2562,7 +2576,7 @@ ct:Append([=[
                             <h6><label class="large-text" for="s-residentmode">常駐させる</label></h6>
                           </div>
                           <label class="switch icon">
-                            <input id="s-residentmode" type="checkbox" name="residentMode" value="1" x-model="data.other.residentMode"]=]..(WIN32 and '' or ' disabled')..[=[>
+                            <input id="s-residentmode" type="checkbox" name="residentMode" value="1" x-model="data.other.residentMode">
                             <span><i>keep_off</i><i>keep</i></span>
                           </label>
                         </nav>
@@ -2574,10 +2588,10 @@ ct:Append([=[
                           <div class="s12 field middle-align">
                             <nav>
                               <div class="max">
-                                <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.other.residentMode }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-showtray">表示する</label></h6>
+                                <h6 :class="{ 'medium-opacity': !data.other.residentMode }"><label class="large-text" for="s-showtray">表示する</label></h6>
                               </div>
                               <label class="switch icon">
-                                <input id="s-showtray" type="checkbox" name="showTray" value="1" x-model="data.other.showTray" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                                <input id="s-showtray" type="checkbox" name="showTray" value="1" x-model="data.other.showTray" :disabled="!data.other.residentMode">
                                 <span><i>apps</i></span>
                               </label>
                             </nav>
@@ -2585,10 +2599,10 @@ ct:Append([=[
                           <div class="s12 field left-margin">
                             <nav>
                               <div class="max">
-                                <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.other.residentMode || !data.other.showTray }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-notifyTipStyle">ツールチップに次の予約を表示する</label></h6>
+                                <h6 :class="{ 'medium-opacity': !data.other.residentMode || !data.other.showTray }"><label class="large-text" for="s-notifyTipStyle">ツールチップに次の予約を表示する</label></h6>
                               </div>
                               <label class="switch icon">
-                                <input id="s-notifyTipStyle" type="checkbox" name="notifyTipStyle" value="1" x-model="data.other.notifyTipStyle" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                                <input id="s-notifyTipStyle" type="checkbox" name="notifyTipStyle" value="1" x-model="data.other.notifyTipStyle" :disabled="!data.other.residentMode || !data.other.showTray">
                                 <span><i>skip_next</i></span>
                               </label>
                             </nav>
@@ -2596,10 +2610,10 @@ ct:Append([=[
                           <div class="s12 field left-margin">
                             <nav>
                               <div class="max">
-                                <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.other.residentMode || !data.other.showTray }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-blinkPreRec">開始準備で点滅させる</label></h6>
+                                <h6 :class="{ 'medium-opacity': !data.other.residentMode || !data.other.showTray }"><label class="large-text" for="s-blinkPreRec">開始準備で点滅させる</label></h6>
                               </div>
                               <label class="switch icon">
-                                <input id="s-blinkPreRec" type="checkbox" name="blinkPreRec" value="1" x-model="data.other.blinkPreRec" ]=]..(WIN32 and ':disabled="!data.other.residentMode || !data.other.showTray"' or 'disabled')..[=[>
+                                <input id="s-blinkPreRec" type="checkbox" name="blinkPreRec" value="1" x-model="data.other.blinkPreRec" :disabled="!data.other.residentMode || !data.other.showTray">
                                 <span><i>backlight_high_off</i><i>backlight_high</i></span>
                               </label>
                             </nav>
@@ -2612,10 +2626,10 @@ ct:Append([=[
                           <div class="s12 field middle-align">
                             <nav>
                               <div class="max">
-                                <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.other.residentMode }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-noballontip">動作通知を抑制する</label></h6>
+                                <h6 :class="{ 'medium-opacity': !data.other.residentMode }"><label class="large-text" for="s-noballontip">動作通知を抑制する</label></h6>
                               </div>
                               <label class="switch icon">
-                                <input id="s-noballontip" type="checkbox" name="noBalloonTip" value="1" x-model="data.other.noBalloonTip" ]=]..(WIN32 and ':disabled="!data.other.residentMode"' or 'disabled')..[=[>
+                                <input id="s-noballontip" type="checkbox" name="noBalloonTip" value="1" x-model="data.other.noBalloonTip" :disabled="!data.other.residentMode">
                                 <span><i>notifications</i><i>notifications_off</i></span>
                               </label>
                             </nav>
@@ -2623,10 +2637,10 @@ ct:Append([=[
                           <div class="s12 field left-margin">
                             <nav>
                               <div class="max">
-                                <h6 ]=]..(WIN32 and [=[:class="{ 'medium-opacity': !data.other.residentMode || data.other.noBalloonTip }"]=] or 'class="medium-opacity"')..[=[><label class="large-text" for="s-noballoontiprealtime">リアルタイムで表示できなかった通知を捨てる</label></h6>
+                                <h6 :class="{ 'medium-opacity': !data.other.residentMode || data.other.noBalloonTip }"><label class="large-text" for="s-noballoontiprealtime">リアルタイムで表示できなかった通知を捨てる</label></h6>
                               </div>
                               <label class="switch icon">
-                                <input id="s-noballoontiprealtime" type="checkbox" name="noBalloonTipRealtime" value="1" x-model="data.other.noBalloonTipRealtime" ]=]..(WIN32 and ':disabled="!data.other.residentMode || data.other.noBalloonTip"' or 'disabled')..[=[>
+                                <input id="s-noballoontiprealtime" type="checkbox" name="noBalloonTipRealtime" value="1" x-model="data.other.noBalloonTipRealtime" :disabled="!data.other.residentMode || data.other.noBalloonTip">
                                 <span><i>notifications</i><i>notifications_off</i></span>
                               </label>
                             </nav>
@@ -2635,6 +2649,7 @@ ct:Append([=[
                       </fieldset>
                     </div>
                   </fieldset>
+                  ]=] or '<div class="l l6"></div>')..[=[
                   <div class="s12 m6 l4 field middle-align">
                     <nav>
                       <div class="max">
@@ -2952,7 +2967,7 @@ ct:Append([=[
                       <select name="tunerID" x-model.number="r.tunerID">
                         <option value="0">自動</option>
                         <template x-for="v in getTunerList()">
-                          <option :value="v.tunerID" x-text="getTunerID(v)"></option>
+                          <option :value="v.tunerID" x-text="getTunerID(v)" :selected="r.tunerID === v.tunerID"></option>
                         </template>
                       </select>
                       <label>使用チューナー強制指定</label>
@@ -3106,22 +3121,27 @@ ct:Append([=[
                 </div>
                 <input type="hidden" name="savePlugin" value="1">
                 <template x-if="recNamePlugin">
-                  <div>
-                    <hr class="large">
-                    <h6 x-text="recNamePlugin.head.desc"></h6>
-                    <template x-for="(v,i) in recNamePlugin.body">
-                      <div x-html="$refs.plugin.innerHTML"></div>
-                    </template>
+                  <section>
                     <template x-if="!recNamePlugin.body">
                       <h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6>
                     </template>
-                    <footer>
-                      <nav>
-                        <div class="max"></div>
-                        <button @click="savePlugIn(1)"><i>save</i><span>保存</span></button>
-                      </nav>
-                    </footer>
-                  </div>
+                    <template x-if="recNamePlugin.body">
+                      <div>
+                        <div class="padding large-padding border round">
+                          <h6 x-text="recNamePlugin.head?.desc"></h6>
+                          <template x-for="(v,i) in recNamePlugin.body">
+                            <div x-html="$refs.plugin.innerHTML"></div>
+                          </template>
+                        </div>
+                        <footer>
+                          <nav>
+                            <div class="max"></div>
+                            <button @click="savePlugIn(1)"><i>save</i><span>保存</span></button>
+                          </nav>
+                        </footer>
+                      </div>
+                    </template>
+                  </section>
                 </template>
               </div>
 
@@ -3137,22 +3157,27 @@ ct:Append([=[
                 </div>
                 <input type="hidden" name="savePlugin" value="1">
                 <template x-if="writePlugin">
-                  <div>
-                    <hr class="large">
-                    <h6 x-text="writePlugin.head.desc"></h6>
-                    <template x-for="(v, i) in writePlugin.body">
-                      <div x-html="$refs.plugin.innerHTML"></div>
-                    </template>
+                  <section>
                     <template x-if="!writePlugin.body">
                       <h6 class="padding">設定項目がないかメタ情報のないPlugInです。</h6>
                     </template>
-                    <footer>
-                      <nav>
-                        <div class="max"></div>
-                        <button @click="savePlugIn(2)"><i>save</i><span>保存</span></button>
-                      </nav>
-                    </footer>
-                  </div>
+                    <template x-if="writePlugin.body">
+                      <div>
+                        <div class="padding large-padding border round">
+                          <h6 x-text="writePlugin.head?.desc"></h6>
+                          <template x-for="(v, i) in writePlugin.body">
+                            <div x-html="$refs.plugin.innerHTML"></div>
+                          </template>
+                        </div>
+                        <footer>
+                          <nav>
+                            <div class="max"></div>
+                            <button @click="savePlugIn(2)"><i>save</i><span>保存</span></button>
+                          </nav>
+                        </footer>
+                      </div>
+                    </template>
+                  </section>
                 </template>
               </div>
             </div>
@@ -3227,6 +3252,7 @@ ct:Append([=[
                     </label>
                   </nav>
                 </div>
+                ]=]..(WIN32 and [=[
                 <div class="s12 l6 field middle-align">
                   <nav>
                     <div class="max">
@@ -3237,6 +3263,7 @@ ct:Append([=[
                     </label>
                   </nav>
                 </div>
+                ]=] or '')..[=[
                 <fieldset class="s12">
                   <legend>ドロップログ</legend>
                   <div class="grid">
@@ -3279,6 +3306,7 @@ ct:Append([=[
                         </label>
                       </nav>
                     </div>
+                    ]=]..(WIN32 and [=[
                     <div class="s12 l6 field middle-align">
                       <nav>
                         <div class="max">
@@ -3290,6 +3318,7 @@ ct:Append([=[
                         </label>
                       </nav>
                     </div>
+                    ]=] or '')..[=[
                   </div>
                 </fieldset>
                 <div class="s12 l6 field middle-align">
@@ -4383,7 +4412,7 @@ ct:Append([=[
               <select name="tunerID" x-model.number="r.tunerID">
                 <option value="0">自動</option>
                 <template x-for="v in getTunerList()">
-                  <option :value="v.tunerID" x-text="getTunerID(v)"></option>
+                  <option :value="v.tunerID" x-text="getTunerID(v)" :selected="r.tunerID === v.tunerID"></option>
                 </template>
               </select>
               <label>使用チューナー強制指定</label>
@@ -4506,7 +4535,7 @@ ct:Append([=[
     </nav>
     <hr class="medium">
     <div class="grid">
-      <button class="s6 l3 vertical small" @click="suspendSystem()">
+      <button class="s6 l3 vertical small" @click="suspendSystem()" :disabled="!enableSuspend">
         <i class="responsive">bedtime</i>
         <span x-text="suspendMode === 'hibernate' ? '休止' : 'スタンバイ'">スタンバイ</span>
       </button>

@@ -3696,9 +3696,7 @@ document.addEventListener('alpine:init', () => {
         this.loading = false;
       }
     },
-    parsePlugin(data, mode, name) {
-      data.name = name;
-
+    parsePlugin(data, mode) {
       if (data.body) {
         const parsedItems = [];
         let currentParent = null;
@@ -3750,7 +3748,7 @@ document.addEventListener('alpine:init', () => {
           return;
         }
 
-        this.parsePlugin(data, mode, name);
+        this.parsePlugin(data, mode);
         this.snackbar.add('保存しました');
       } catch (e) {
         console.error('通信失敗:', e);
@@ -3765,7 +3763,7 @@ document.addEventListener('alpine:init', () => {
         const res = await this.fetch(`${this.ROOT}api/Settings?plugin=1&mode=${mode}&item=${name}`);
         const data = await res.json();
 
-        this.parsePlugin(data, mode, name);
+        this.parsePlugin(data, mode);
       } catch (e) {
         console.error(e);
         this.snackbar.error('設定の取得ができませんでした');
