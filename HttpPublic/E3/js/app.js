@@ -58,6 +58,20 @@ document.addEventListener('alpine:init', () => {
     0x0240:['', '視覚障害者用音声解説'], 0x0241:['', '聴覚障害者用音声']
   };
 
+  const NVRAM_REGION = [
+    {region: '0', name: '未設定'},
+    {region: '16b', zip: '0850835', name: '東北海道'},{region: '16b',zip: '0600003', name: '西北海道'},{region: '467', zip: '0300861', name: '青森県'},{region: '5d4', zip: '0200023', name: '岩手県'},{region: '758', zip: '9800014', name: '宮城県'},
+    {region: 'ac6', zip: '0100951', name: '秋田県'},{region: 'e4c', zip: '9900023', name: '山形県'},{region: '1ae', zip: '9608065', name: '福島県'},{region: 'c69', zip: '3100852', name: '茨城県'},{region: 'e38', zip: '3200027', name: '栃木県'},
+    {region: '98b', zip: '3710026', name: '群馬県'},{region: '64b', zip: '3300063', name: '埼玉県'},{region: '1c7', zip: '2600855', name: '千葉県'},{region: 'aac', zip: '1600023', name: '東京都(島部を除く)'},{region: '56c', zip: '2310021', name: '神奈川県'},
+    {region: '4ce', zip: '9500965', name: '新潟県'},{region: '539', zip: '9300006', name: '富山県'},{region: '6a6', zip: '9208203', name: '石川県'},{region: '92d', zip: '9100005', name: '福井県'},{region: 'd4a', zip: '4000031', name: '山梨県'},
+    {region: '9d2', zip: '3800837', name: '長野県'},{region: 'a65', zip: '5008384', name: '岐阜県'},{region: 'a5a', zip: '4200853', name: '静岡県'},{region: '966', zip: '4600001', name: '愛知県'},{region: '2dc', zip: '5140006', name: '三重県'},
+    {region: 'ce4', zip: '5200044', name: '滋賀県'},{region: '59a', zip: '6028041', name: '京都府'},{region: 'cb2', zip: '5400008', name: '大阪府'},{region: '674', zip: '6500011', name: '兵庫県'},{region: 'a93', zip: '6308213', name: '奈良県'},
+    {region: '396', zip: '6408269', name: '和歌山県'},{region: 'd23', zip: '6800011', name: '鳥取県'},{region: '31b', zip: '6900887', name: '島根県'},{region: '2b5', zip: '7000824', name: '岡山県'},{region: 'b31', zip: '7300011', name: '広島県'},
+    {region: 'b98', zip: '7530071', name: '山口県'},{region: 'e62', zip: '7700941', name: '徳島県'},{region: '9b4', zip: '7600017', name: '香川県'},{region: '19d', zip: '7900001', name: '愛媛県'},{region: '2e3', zip: '7800850', name: '高知県'},
+    {region: '62d', zip: '8120045', name: '福岡県'},{region: '959', zip: '8400041', name: '佐賀県'},{region: 'a2b', zip: '8500058', name: '長崎県'},{region: '8a7', zip: '8620950', name: '熊本県'},{region: 'c8d', zip: '8700022', name: '大分県'},
+    {region: 'd1c', zip: '8800805', name: '宮崎県'},{region: 'd45', zip: '8900064', name: '鹿児島県(南西諸島を除く)'},{region: '372', zip: '9000021', name: '沖縄県'},{region: 'aac', zip: '1000101', name: '東京都島部(伊豆・小笠原諸島)'},{region: 'd45', zip: '8913101', name: '鹿児島県島部(南西諸島の鹿児島県域)'}
+  ]
+
   const RECNAME_MACRO = [
     { title: '開始時間',
       items: [
@@ -528,6 +542,8 @@ document.addEventListener('alpine:init', () => {
       this.epg.set = this.set.epg;
       this.player.set = this.set.player;
       this.reminder.app = this;
+      this.nvram.init();
+
       setInterval(() => {
         this.now = Date.now();
         // 放送中の番組が終了したかチェック
@@ -3455,6 +3471,59 @@ document.addEventListener('alpine:init', () => {
         this.chap = chap;
         chap.setSeek = val => this.seek(val);
       }
+    },
+
+    nvram: {
+      init() {
+        let v = localStorage.getItem(this.prefix+"zipcode");
+        if (v) {
+          try {
+            v = atob(v);
+            if (/^[0-9]{7}$/.test(v)) this.zip = v;
+          } catch(e) {}
+        } else {
+          this.zip = config.nvram.zip;
+        }
+        v = localStorage.getItem(this.prefix+"prefecture");
+        if (v) {
+          try {
+            v = atob(v);
+            this.prefecture = v.charCodeAt(0);
+          } catch(e) {}
+        } else {
+          this.prefecture = config.nvram.prefecture;
+        }
+        v = localStorage.getItem(this.prefix+"regioncode");
+        if (v) {
+          try {
+            v = atob(v);
+            this.region = v.charCodeAt(0)<<8|v.charCodeAt(1);
+          } catch(e) {}
+        } else {
+          this.region = parseInt(this.regionList[this.prefecture].region, 16);
+        }
+        Datacast.setNvramDef(this.zip, this.prefecture, this.region);
+      },
+      prefix: Datacast.prefix,
+      regionList: NVRAM_REGION,
+      zip: '',
+      region: 0,
+      prefecture: 0,
+      regionToZip() {
+        this.zip = this.regionList[this.prefecture]?.zip || '';
+      },
+    },
+    setNvram() {
+      Datacast.setNvramZip(this.nvram.zip);
+      Datacast.setNvramPrefecture(this.nvram.prefecture);
+      Datacast.setNvramRegioncode(this.nvram.region);
+      this.snackbar.add('設定しました');
+    },
+    delNvram() {
+      Datacast.setNvramZip(1);
+      Datacast.setNvramPrefecture('0');
+      Datacast.setNvramRegioncode('0');
+      this.snackbar.add('消去しました');
     },
 
     library: {

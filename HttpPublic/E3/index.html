@@ -4762,6 +4762,36 @@ ct:Append([=[
             <h6 x-text="jikkyoConfig.duration"></h6>
           </nav>
         </fieldset>
+
+        <fieldset>
+          <legend>データ放送</legend>
+          <div class="grid">
+            <div class="s12 l7 field label suffix border">
+              <select x-model="nvram.prefecture" @change="nvram.region = parseInt(nvram.regionList[$el.value].region, 16)">
+                <template x-for="v,i in nvram.regionList">
+                  <option :value="i" x-text="`${i}. ${v.name}`" :selected="i==nvram.prefecture"></option>
+                </template>
+              </select>
+              <label>県域コード</label>
+              <i>arrow_drop_down</i>
+            </div>
+            <nav class="group split s12 l5">
+              <button class="left-round large" @click="nvram.regionToZip()">
+                <i>output</i>
+                <span class="tooltip">県域コードから郵便番号</span>
+              </button>
+              <div class="max field label border">
+                <input type="text" x-model="nvram.zip">
+                <label>郵便番号(7桁)</label>
+              </div>
+            </nav>
+          </div>
+          <nav>
+            <button @click="delNvram()"><i>delete</i><span>消去</span></button>
+            <div class="max"></div>
+            <button @click="setNvram()"><i>save</i><span>設定</span></button>
+          </nav>
+        </fieldset>
       </div>
     </template>
   </dialog>

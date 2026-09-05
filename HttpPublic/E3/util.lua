@@ -54,6 +54,9 @@ function GetAppConfig()
     nosuspendActive=(onstat and stat=='exit' and code==0)
   end
 
+  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
+  local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
+
   return '{root: \''..PathToRoot()
     ..'\', useSsePort: '..useSsePort
     ..', ctok: {'..table.concat(ctok,', ')..'}'
@@ -67,6 +70,7 @@ function GetAppConfig()
     ..' nosuspendActive: '..(nosuspendActive and 'true' or 'false')..','
     ..' enableSuspend: '..(INDEX_ENABLE_SUSPEND and 'true' or 'false')..','
     ..' suspendMode: \''..(INDEX_SUSPEND_USE_HIBERNATE and 'hibernate' or 'suspend')..'\','
+    ..' nvram: { zip: \''..zip.. '\', prefecture: '..prefecture.. '},'
     ..' jk: { hight: '..JK_COMMENT_HEIGHT..', duration: '..JK_COMMENT_DURATION..'}'
     ..'}'
 end
@@ -182,14 +186,9 @@ function GetbatFileTagList()
 end
 
 function GetPlayerOption(tslive)
-  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
-  local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
   return (tslive and (autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '')
     or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or '')
       ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
-
-    ..(zip and '" data-absent-zip="'..zip or '')
-    ..(prefecture~=0 and '" data-absent-prefecture="'..prefecture or '')..(prefecture~=0 and '" data-absent-region="'..GetEwsRegionCode(prefecture) or '')
 
     ..((USE_LIVEJK or JKRDLOG_PATH) and '" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
     ..'" :data-ctok-view="ctok.view" :data-ctok-xcode="ctok.xcode"'
