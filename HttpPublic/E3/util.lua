@@ -1,4 +1,4 @@
-app='260901'
+app='260906'
 tsloader='260726'
 beer='5.0.3'
 mdc='1.1.4'
@@ -162,7 +162,8 @@ end
 
 function GetBatFilePathOption()
   local CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
-  local batDir=edcb.GetPrivateProfile('SET','batPath',PathAppend(CurrentDir,'bat'),INI)
+  local batDir=edcb.GetPrivateProfile('SET','batPath','',INI)
+  batDir=#batDir>0 and batDir or PathAppend(CurrentDir,'bat')
   local s=''
   for i,v in ipairs(edcb.FindFile(PathAppend(batDir,'*'), 0) or {}) do
     if not v.isdir and (v.name:find('%.[Bb][Aa][Tt]$') or v.name:find('%.[Pp][Ss]1$') or v.name:find('%.[Ll][Uu][Aa]$')) or v.name:find('%.[Ss][Hh]$') then
@@ -190,7 +191,7 @@ function GetPlayerOption(tslive)
     or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or '')
       ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
 
-    ..((USE_LIVEJK or JKRDLOG_PATH) and '" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}') or '')
+    ..'" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}')
     ..'" :data-ctok-view="ctok.view" :data-ctok-xcode="ctok.xcode"'
 end
 

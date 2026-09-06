@@ -3844,11 +3844,12 @@ document.addEventListener('alpine:init', () => {
     },
     settings: {
       data: null,
-      tab: 'srv',
+      tab: 'webui',
       presetTab: 0,
       r: null,
       recNamePlugin: null,
       writePlugin: null,
+      nvramRegion: NVRAM_REGION,
 
       isTab(tab) {
         return { active: this.tab === tab };
@@ -3863,6 +3864,9 @@ document.addEventListener('alpine:init', () => {
         this.presetTab = tab;
       },
 
+      regionToZip() {
+        this.data.webui.nvram.zip = this.nvramRegion[this.data.webui.nvram.region]?.zip || '';
+      },
       moveList(list, index, offset) {
         const newIndex = index + offset;
         if (newIndex < 0 || newIndex >= this.data[list].length) {

@@ -1649,12 +1649,373 @@ ct:Append([=[
     <template x-if="isPage('#setting')" x-data="settings">
       <div class="absolute">
         <nav class="tabbed scroll top-margin fixed">
+          <a :class="isTab('webui')" @click="setTab('webui')"><i>web</i>WebUI</a>
           <a :class="isTab('srv')" @click="setTab('srv')"><i>settings</i>Srv設定</a>
           <a :class="isTab('preset')" @click="setTab('preset')"><i>rule</i><span>プリセット</span></a>
           <a :class="isTab('epgdatacap')" @click="setTab('epgdatacap')"><i>videocam</i><span>EpgDataCap_Bon</span></a>
         </nav>
         <template x-if="data">
           <section class="responsive padding">
+            <div class="page" :class="isTab('webui')" x-ref="webui">
+              <div class="round secondary-container">
+                <nav class="padding">
+                  <i>settings</i>
+                  <h6 class="max">全般</h6>
+                </nav>
+              </div>
+              <div class="grid vertical-margin padding large-padding border round">
+                <input type="hidden" name="webUI" value="1">
+                <div class="s12 l4 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-allowSetting">設定変更を許可する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-allowSetting" type="checkbox" name="allowSetting" x-model="data.webui.allowSetting">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l8 field label border">
+                  <input type="text" name="allowSettingList" x-model="data.webui.allowSettingList">
+                  <label>設定変更を許可するIPアドレス（カンマ区切り）</label>
+                  <output>※未設定の場合、すべてのIPアドレスからの変更を許可します。</output>
+                </div>
+                <div class="s12 l4 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-useSsePort">SSE専用ポートを使用する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-useSsePort" type="checkbox" name="useSsePort" x-model="data.webui.useSsePort">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l4 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-showNotifyLog">情報通知ログの表示を許可</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-showNotifyLog" type="checkbox" name="showNotifyLog" x-model="data.webui.showNotifyLog">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l4 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-showDebugLog">デバッグ出力の表示を許可</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-showDebugLog" type="checkbox" name="showDebugLog" x-model="data.webui.showDebugLog">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-enableSuspend">「システムスタンバイ」ボタンを有効</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-enableSuspend" type="checkbox" name="enableSuspend" x-model="data.webui.enableSuspend">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6 :class="{ 'medium-opacity': !data.webui.enableSuspend }"><label class="large-text" for="s-useHibernate">「システムスタンバイ」ボタンを「システム休止」にする</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-useHibernate" type="checkbox" name="useHibernate" x-model="data.webui.useHibernate" :disabled="!data.webui.enableSuspend">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field label border large">
+                  <input type="text" name="batPath" x-model="data.webui.batPath">
+                  <label>録画後実行batの一覧に表示するフォルダの絶対パス</label>
+                </div>
+                <div class="s12 l6 field label border large">
+                  <input type="text" name="batFileTag" x-model="data.webui.batFileTag">
+                  <label>録画タグの候補 (カンマ区切り)</label>
+                </div>
+                <div class="s12 l8 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-libraryPath">ライブラリに表示するフォルダを録画保存フォルダから変更する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-libraryPath" type="checkbox" name="libraryPath" x-model="data.webui.libraryPath">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <fieldset class="s12" :class="{ 'medium-opacity': !data.webui.libraryPath }">
+                  <legend>ライブラリフォルダ</legend>
+                  <ul class="list border">
+                    <template x-for="(v,i) in data.libraryFolder" :key="v">
+                      <li>
+                        <nav class="group connected no-margin">
+                          <button class="secondary small left-round" @click="moveList('libraryFolder',i,-1)"><i>arrow_upward</i></button>
+                          <button class="secondary small right-round" @click="moveList('libraryFolder',i,1)"><i>arrow_downward</i></button>
+                        </nav>
+                        <span class="large-text max scroll" x-text="v"></span>
+                        <button class="tertiary small" @click="removeList('libraryFolder',i)"><i>delete</i></button>
+                        <input type="hidden" name="libraryFolder" :value="v">
+                      </li>
+                    </template>
+                  </ul>
+                  <nav class="no-space right-align">
+                    <div class="field small" :class="{ max: isSmallScreen }">
+                      <input type="text" x-ref="libraryFolder">
+                    </div>
+                    <button class="secondary right-round" @click="addList('libraryFolder')" :disabled="!data.webui.libraryPath"><i>add</i><span>追加</span></button>
+                  </nav>
+                </fieldset>
+              </div>
+              <div class="round secondary-container">
+                <nav class="padding">
+                  <i>cast_connected</i>
+                  <h6 class="max">リモート視聴</h6>
+                </nav>
+              </div>
+              <div class="grid vertical-margin padding large-padding border round">
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-xcodeSingle">トランスコードするプロセスを1つだけに制限する</label></h6>
+                      <span class="small-text tiny-line">並列処理できる余裕がシステムにない場合など</span>
+                    </div>
+                    <label class="switch">
+                      <input id="s-xcodeSingle" type="checkbox" name="xcodeSingle" x-model="data.xcode.single">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-xcodeLog">ログを<code>log</code>フォルダに保存する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-xcodeLog" type="checkbox" name="xcodeLog" x-model="data.xcode.log">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <hr class="s12">
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-allowHls">HLS(HTTP Live Streaming)を許可する</label></h6>
+                      <span class="small-text tiny-line"><code>tsmemseg.exe</code>を用意すること。</span>
+                    </div>
+                    <label class="switch">
+                      <input id="s-allowHls" type="checkbox" name="allowHls" x-model="data.hls.allowHls">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-alwaysUseHls">ネイティブHLS非対応環境でも<code>hls.js</code>を使ってHLS再生する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-alwaysUseHls" type="checkbox" name="alwaysUseHls" x-model="data.hls.alwaysUseHls">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6>
+                        <label class="large-text" for="s-useMp4Hls">トランスコーダーから受け取ったMPEG2-TSをMP4に変換する</label>
+                        <span class="tooltip">有効時はHEVCトランスコードに対応</span>
+                      </h6>
+                      <span class="small-text tiny-line">※Android版Firefoxでは不具合があるため無効扱い</span>
+                    </div>
+                    <label class="switch">
+                      <input id="s-useMp4Hls" type="checkbox" name="useMp4Hls" x-model="data.hls.useMp4Hls">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6>
+                        <label class="large-text" for="s-useMp4LlHls">LowLatencyHLSにする</label>
+                        <span class="tooltip">再生遅延が小さくなる。</span>
+                      </h6>
+                      <span class="small-text tiny-line">ネイティブHLS環境ではHTTP/2が要求されるため<code>hls.js</code>使用時のみ有用</span>
+                    </div>
+                    <label class="switch">
+                      <input id="s-useMp4LlHls" type="checkbox" name="useMp4LlHls" x-model="data.hls.useMp4LlHls">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-useSvg">字幕表示にSVGRendererを使う</label></h6>
+                      <span class="small-text tiny-line">描画品質が上がる(ただし一部ブラウザで背景に線が入る)。</span>
+                    </div>
+                    <label class="switch">
+                      <input id="s-useSvg" type="checkbox" name="useSvg" x-model="data.aribb24.useSvg">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <hr class="s12">
+                <fieldset class="s12 l8">
+                  <legend>データ放送の初期値</legend>
+                  <div class="grid">
+                    <div class="s12 l7 field label suffix border">
+                      <select name="nvramRegion" x-model.number="data.nvram.region">
+                        <template x-for="v,i in nvramRegion">
+                          <option :value="i" x-text="`${i}. ${v.name}`" :selected="i === data.nvram.region"></option>
+                        </template>
+                      </select>
+                      <label>県域コード</label>
+                      <i>arrow_drop_down</i>
+                    </div>
+                    <nav class="group split s12 l5">
+                      <button class="left-round large" @click="regionToZip()">
+                        <i>output</i>
+                        <span class="tooltip">県域コードから郵便番号</span>
+                      </button>
+                      <div class="max field label border">
+                        <input type="text" name="nvramZip" x-model="data.nvram.zip">
+                        <label>郵便番号(7桁)</label>
+                      </div>
+                    </nav>
+                  </div>
+                </fieldset>
+              </div>
+              <div class="round secondary-container">
+                <nav class="padding">
+                  <i>comment</i>
+                  <h6 class="max">実況</h6>
+                </nav>
+              </div>
+              <div class="grid vertical-margin padding large-padding border round">
+                <div class="s12 l6 field middle-align">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="s-anonymity">匿名(184)でコメント投稿する</label></h6>
+                    </div>
+                    <label class="switch">
+                      <input id="s-anonymity" type="checkbox" name="anonymity" x-model="data.jk.anonymity">
+                      <span></span>
+                    </label>
+                  </nav>
+                </div>
+                <fieldset class="s12 l6">
+                  <legend>実況コメントの初期値</legend>
+                  <div class="grid">
+                    <div class="s12 l6 field">
+                      <div class="row">
+                        <div class="max">
+                          <h6 class="large-text">文字の高さ</h6>
+                        </div>
+                        <div class="row tiny-space">
+                          <div class="field small min">
+                            <input type="number" name="commentHeight" x-model.number="data.jk.commentHeight">
+                          </div>
+                          <span>px</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="s12 l6 field">
+                      <div class="row">
+                        <div class="max">
+                          <h6 class="large-text">表示時間</h6>
+                        </div>
+                        <div class="row tiny-space">
+                          <div class="field small min">
+                            <input type="number" name="commentDuration" x-model.number="data.jk.commentDuration">
+                          </div>
+                          <span>秒</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </fieldset>
+                <div class="s12 l6 field label border large">
+                  <input type="text" name="jkcnslPath" x-model="data.jk.jkcnslPath" placeholder="]=]..(WIN32 and 'C:\\Path\\to\\jkcnsl.exe' or 'jkcnsl')..[=[">
+                  <label>jkcnsl]=]..(WIN32 and '.exeの絶対パス' or 'コマンド名')..[=[</label>
+                  <output>コメント投稿したい場合はあらかじめjkcnsl側でログインしておく</output>
+                </div>
+                ]=]..(WIN32 and '' or [=[
+                <div class="s12 l6 field label border large">
+                  <input type="text" name="jkcnslUnixBaseDir" x-model="data.jk.jkcnslUnixBaseDir">
+                  <label>jkcnslの設定ファイルなどが置かれている場所</label>
+                  <output>通常、変更不要</output>
+                </div>
+                ]=])..[=[
+                <fieldset class="s12">
+                  <legend>NX-Jikkyo・避難所</legend>
+                  <div class="grid">
+                    <div class="s12 l4 field middle-align">
+                      <nav>
+                        <div class="max">
+                          <h6><label class="large-text" for="s-enableRefuge">使用する</label></h6>
+                        </div>
+                        <label class="switch">
+                          <input id="s-enableRefuge" type="checkbox" name="enableRefuge" x-model="data.jk.enableRefuge">
+                          <span></span>
+                        </label>
+                      </nav>
+                    </div>
+                    <div class="s12 l8 field label border">
+                      <input type="text" name="refugeUri" x-model="data.jk.refugeUri" :disabled="!data.jk.enableRefuge">
+                      <label>NX-JikkyoのWebSocketのアドレス</label>
+                    </div>
+                    <div class="s12 l6 field middle-align">
+                      <nav>
+                        <div class="max">
+                          <h6 :class="{ 'medium-opacity': !data.jk.enableRefuge }"><label class="large-text" for="s-dropForwardedComment">ニコニコ実況から転送されたコメントを除去する</label></h6>
+                        </div>
+                        <label class="switch">
+                          <input id="s-dropForwardedComment" type="checkbox" name="dropForwardedComment" x-model="data.jk.dropForwardedComment" :disabled="!data.jk.enableRefuge">
+                          <span></span>
+                        </label>
+                      </nav>
+                    </div>
+                    <div class="s12 l6 field middle-align">
+                      <nav>
+                        <div class="max">
+                          <h6 :class="{ 'medium-opacity': !data.jk.enableRefuge }"><label class="large-text" for="s-refugeMixing">NX-Jikkyoとニコニコ実況の両方に接続する</label></h6>
+                        </div>
+                        <label class="switch">
+                          <input id="s-refugeMixing" type="checkbox" name="refugeMixing" x-model="data.jk.refugeMixing" :disabled="!data.jk.enableRefuge">
+                          <span></span>
+                        </label>
+                      </nav>
+                    </div>
+                  </div>
+                </fieldset>
+                <div class="s12 l6 field label border large">
+                  <input type="text" name="jkrdlogPath" x-model="data.jk.jkrdlogPath" placeholder="]=]..(WIN32 and 'C:\\Path\\to\\jkrdlog.exe' or 'jkrdlog')..[=[">
+                  <label>jkrdlog]=]..(WIN32 and '.exeの絶対パス' or 'コマンド名')..[=[</label>
+                </div>
+              </div>
+              <footer>
+                <nav>
+                  <div class="max"></div>
+                  <button class="extra" @click="saveSetting('webui')"><i>save</i><span>保存</span><span class="tooltip left">一部設定は再読み込み後に有効</span></button>
+                </nav>
+              </footer>
+            </div>
+
             <div class="page" :class="isTab('srv')" x-ref="srv">
               <input type="hidden" name="srv" value="1">
               <details x-data="{ open: $el.open }" @toggle="open = $el.open">

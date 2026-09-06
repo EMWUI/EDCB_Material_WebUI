@@ -984,6 +984,142 @@ function SaveAppNetwork(tcp)
   end
 end
 
+function GetWebUI()
+  local CurrentDir=edcb.GetPrivateProfile('SET','ModulePath','','Common.ini')
+  local batDir=edcb.GetPrivateProfile('SET','batPath','',INI)
+  return {
+    allowSetting=tonumber(edcb.GetPrivateProfile('SET','ALLOW_SETTING',true,INI))~=0,
+    allowSettingList=edcb.GetPrivateProfile('SET','ALLOW_SETTING_LIST','127.0.0.1,::1',INI),
+    useSsePort=tonumber(edcb.GetPrivateProfile('E3','useSsePort',false,INI))~=0,
+    showNotifyLog=tonumber(edcb.GetPrivateProfile('SET','SHOW_NOTIFY_LOG',true,INI))~=0,
+    showDebugLog=tonumber(edcb.GetPrivateProfile('SET','SHOW_DEBUG_LOG',false,INI))~=0,
+    enableSuspend=tonumber(edcb.GetPrivateProfile('SET','SUSPEND',false,INI))~=0,
+    useHibernate=tonumber(edcb.GetPrivateProfile('SET','HIBERNATE',false,INI))~=0,
+    batPath=#batDir>0 and batDir or PathAppend(CurrentDir,'bat'),
+    batFileTag=edcb.GetPrivateProfile('set','batFileTag','',INI),
+    libraryPath=tonumber(edcb.GetPrivateProfile('SET','LibraryPath',false,INI))~=0,
+  }
+end
+
+function GetNvram()
+  return {
+    zip=tonumber(edcb.GetPrivateProfile('NVRAM','ZIP','',INI)),
+    region=tonumber(edcb.GetPrivateProfile('NVRAM','REGION',0,INI)),
+  }
+end
+
+function GetHls()
+  return {
+    allowHls=tonumber(edcb.GetPrivateProfile('HLS','ALLOW_HLS',true,INI))~=0,
+    alwaysUseHls=tonumber(edcb.GetPrivateProfile('HLS','ALWAYS_USE_HLS',true,INI))~=0,
+    useMp4Hls=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_HLS',true,INI))~=0,
+    useMp4LlHls=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,INI))~=0,
+  }
+end
+
+function GetJk()
+  return {
+    commentHeight=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,INI)),
+    commentDuration=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,INI)),
+
+    jkcnslPath=edcb.GetPrivateProfile('JK','JKCNSL_PATH','',INI),
+    jkcnslUnixBaseDir=edcb.GetPrivateProfile('JK','UNIX_BASE_DIR','/var/local/jkcnsl',INI),
+
+    enableRefuge=tonumber(edcb.GetPrivateProfile('JK','ENABLE_REFUGE',false,INI))~=0,
+    refugeUri=edcb.GetPrivateProfile('JK','refugeUri','wss://nx-jikkyo.tsukumijima.net/api/v1/channels/{jkID}/ws/watch',INI),
+    dropForwardedComment=tonumber(edcb.GetPrivateProfile('JK','dropForwardedComment',false,INI))~=0,
+    refugeMixing=tonumber(edcb.GetPrivateProfile('JK','refugeMixing',false,INI))~=0,
+    anonymity=tonumber(edcb.GetPrivateProfile('JK','anonymity',true,INI))~=0,
+
+    jkrdlogPath=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',INI),
+    --jkCustomReplace=JK_CUSTOM_REPLACE_JSON,
+  }
+end
+
+function GetAribb24()
+  return {
+    useSvg=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,INI))~=0,
+    options=ARIBB24_OPTION_JSON,
+  }
+end
+
+function GetXcode()
+  return {
+    single=tonumber(edcb.GetPrivateProfile('XCODE','SINGLE',false,INI))~=0,
+    log=tonumber(edcb.GetPrivateProfile('XCODE','LOG',false,INI))~=0,
+    --options=XCODE_OPTIONS,
+  }
+end
+
+function SaveLibraryFolder()
+  if GetVarInt(post,'libraryPath')==0 then
+    --録画フォルダを使用するので記録しない
+    return
+  end
+  itemList={}
+  for i=0,10000 do
+    local v=mg.get_var(post, 'libraryFolder', i)
+    if not v then break end
+    if v:find('^[^%c'..(WIN32 and '*?"<>|' or '')..']+$') then
+      local ff=EdcbFindFilePlain(v)
+      if (ff and ff.isdir) or (WIN32 and v:find('^[A-Za-z]:\\$')) then
+        itemList[#itemList+1]=v
+      end
+    end
+  end
+  for i,v in ipairs(itemList) do
+    edcb.WritePrivateProfile('SET','RecFolderPath'..(i-1),v,INI)
+  end
+  edcb.WritePrivateProfile('SET','RecFolderNum',#itemList,INI)
+  for i=#itemList+1,999 do
+    --掃除
+    if edcb.GetPrivateProfile('SET','RecFolderPath'..(i-1),'',INI)=='' then break end
+    edcb.WritePrivateProfile('SET','RecFolderPath'..(i-1),nil,INI)
+  end
+end
+
+function SaveWebUI()
+  edcb.WritePrivateProfile('E3','useSsePort',GetVarInt(post,'useSsePort')==1,INI)
+  edcb.WritePrivateProfile('SET','ALLOW_SETTING',GetVarInt(post,'allowSetting')==1,INI)
+  edcb.WritePrivateProfile('SET','ALLOW_SETTING_LIST',mg.get_var(post,'allowSettingList') or '',INI)
+  edcb.WritePrivateProfile('SET','SHOW_NOTIFY_LOG',GetVarInt(post,'showNotifyLog')==1,INI)
+  edcb.WritePrivateProfile('SET','SHOW_DEBUG_LOG',GetVarInt(post,'showDebugLog')==1,INI)
+  edcb.WritePrivateProfile('SET','SUSPEND',GetVarInt(post,'enableSuspend')==1,INI)
+  edcb.WritePrivateProfile('SET','HIBERNATE',GetVarInt(post,'useHibernate')==1,INI)
+  edcb.WritePrivateProfile('SET','batPath',mg.get_var(post,'batPath') or '',INI)
+  edcb.WritePrivateProfile('SET','batFileTag',mg.get_var(post,'batFileTag') or '',INI)
+  edcb.WritePrivateProfile('SET','LibraryPath',GetVarInt(post,'libraryPath')==1,INI)
+  SaveLibraryFolder()
+
+  edcb.WritePrivateProfile('XCODE','SINGLE',GetVarInt(post,'xcodeSingle')==1,INI)
+  edcb.WritePrivateProfile('XCODE','LOG',GetVarInt(post,'xcodeLog')==1,INI)
+
+  edcb.WritePrivateProfile('HLS','ALLOW_HLS',GetVarInt(post,'allowHls')==1,INI)
+  edcb.WritePrivateProfile('HLS','ALWAYS_USE_HLS',GetVarInt(post,'alwaysUseHls')==1,INI)
+  edcb.WritePrivateProfile('HLS','USE_MP4_HLS',GetVarInt(post,'useMp4Hls')==1,INI)
+  edcb.WritePrivateProfile('HLS','USE_MP4_LLHLS',GetVarInt(post,'useMp4LlHls')==1,INI)
+  edcb.WritePrivateProfile('HLS','ARIBB24_USE_SVG',GetVarInt(post,'useSvg')==1,INI)
+
+  edcb.WritePrivateProfile('NVRAM','ZIP',mg.get_var(post,'nvramZip') or '',INI)
+  edcb.WritePrivateProfile('NVRAM','REGION',GetVarInt(post,'nvramRegion') or 0,INI)
+
+  edcb.WritePrivateProfile('JK','COMMENT_HEIGHT',mg.get_var(post,'commentHeight'),INI)
+  edcb.WritePrivateProfile('JK','COMMENT_DURATION',mg.get_var(post,'commentDuration'),INI)
+  edcb.WritePrivateProfile('JK','JKCNSL_PATH',mg.get_var(post,'jkcnslPath') or '',INI)
+
+  if not WIN32 then
+    edcb.WritePrivateProfile('JK','JKCNSL_UNIX_BASE_DIR',mg.get_var(post,'jkcnslUnixBaseDir') or '',INI)
+  end
+
+  edcb.WritePrivateProfile('JK','ENABLE_REFUGE',GetVarInt(post,'enableRefuge')==1,INI)
+  edcb.WritePrivateProfile('JK','refugeUri',mg.get_var(post,'refugeUri') or '',INI)
+  edcb.WritePrivateProfile('JK','dropForwardedComment',GetVarInt(post,'dropForwardedComment')==1,INI)
+  edcb.WritePrivateProfile('JK','refugeMixing',GetVarInt(post,'refugeMixing')==1,INI)
+  edcb.WritePrivateProfile('JK','anonymity',GetVarInt(post,'anonymity')==1,INI)
+
+  edcb.WritePrivateProfile('JK','JKRDLOG_PATH',mg.get_var(post,'jkrdlogPath') or '',INI)
+end
+
 message=nil
 if post then
   if not ALLOW_SETTING then
@@ -1017,6 +1153,7 @@ if post then
       edcb.ReloadSetting(network)
     end
 
+    if GetVarInt(post,'webUI')==1 then SaveWebUI() end
     if GetVarInt(post,'presetID') then SavePreset() end
     if GetVarInt(post,'savePlugin')==1 then SavePlugin() end
     if GetVarInt(post,'saveApp')==1 then
@@ -1031,10 +1168,17 @@ if message then
   a={err=message}
 elseif mg.get_var(mg.request_info.query_string,'plugin')=='1' then
   a=GetPlugin(mg.request_info.query_string)
-elseif GetVarInt(post,'presetID') then 
+elseif GetVarInt(post,'presetID') then
   a=edcb.EnumRecPresetInfo()
 else
   a={
+    webui=GetWebUI(),
+    libraryFolder=GetLibraryPathList(),
+    nvram=GetNvram(),
+    aribb24=GetAribb24(),
+    xcode=GetXcode(),
+    hls=GetHls(),
+    jk=GetJk(),
     basic=GetBasic(),
     recFolder=EdcbRecFolderPathList(),
     bon=GetBon(),

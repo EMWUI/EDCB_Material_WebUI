@@ -235,16 +235,16 @@ ARIBB24_OPTION_JSON=[=[
 --字幕表示にSVGRendererを使うかどうか。描画品質が上がる(ただし一部ブラウザで背景に線が入る)。IE非対応
 ARIBB24_USE_SVG=tonumber(edcb.GetPrivateProfile('HLS','ARIBB24_USE_SVG',false,INI))~=0
 
---データ放送表示機能を使うかどうか。トランスコード中に表示する場合はpsisiarc.exeを用意すること。IE非対応
+--データ放送表示機能を使うかどうか。(E3では未使用、常に有効) トランスコード中に表示する場合はpsisiarc.exeを用意すること。IE非対応
 USE_DATACAST=tonumber(edcb.GetPrivateProfile('SET','DATACAST',true,INI))~=0
 
 --データ放送の郵便番号(7桁)の初期値。例えば東京都西新宿は'1600023'。''のとき未設定
 NVRAM_ZIP=edcb.GetPrivateProfile('NVRAM','ZIP','',INI)
 
---データ放送の県域コード(1～50)の初期値。例えば東京都は14。0のとき未設定。県域とコードの対応はLegacy WebUI:メニュー→NVRAM設定→地域を参照
+--データ放送の県域コード(1～50)の初期値。例えば東京都は14。0のとき未設定。
 NVRAM_REGION=tonumber(edcb.GetPrivateProfile('NVRAM','REGION',0,INI))
 
---ライブ実況表示機能を使うかどうか
+--ライブ実況表示機能を使うかどうか (E3では未使用、常に有効)
 --利用にはJKCNSL_PATHを設定するか、実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
 USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
 
@@ -257,8 +257,10 @@ if JKCNSL_PATH=='' then JKCNSL_PATH=nil end
 JKCNSL_UNIX_BASE_DIR=edcb.GetPrivateProfile('JK','UNIX_BASE_DIR','/var/local/jkcnsl',INI)
 
 --以下、JKCNSL_で始まる定数はjkcnslを直接呼び出してライブ実況する場合のオプション。意味はNicoJKの対応する設定と同じ
-JKCNSL_REFUGE_URI=edcb.GetPrivateProfile('JK','refugeUri','',INI)
-if JKCNSL_REFUGE_URI=='' then JKCNSL_REFUGE_URI=nil end
+JKCNSL_REFUGE_URI=nil
+if (tonumber(edcb.GetPrivateProfile('JK','ENABLE_REFUGE',false,INI))~=0) then
+  JKCNSL_REFUGE_URI=edcb.GetPrivateProfile('JK','refugeUri','wss://nx-jikkyo.tsukumijima.net/api/v1/channels/{jkID}/ws/watch',INI)
+end
 JKCNSL_DROP_FORWARDED_COMMENT=edcb.GetPrivateProfile('JK','dropForwardedComment',false,INI)~=0
 JKCNSL_REFUGE_MIXING=edcb.GetPrivateProfile('JK','refugeMixing',false,INI)~=0
 JKCNSL_ANONYMITY=edcb.GetPrivateProfile('JK','anonymity',true,INI)~=0
@@ -313,8 +315,8 @@ JK_CUSTOM_REPLACE_JSON=[=[
 CHAPTER_EXTENSIONS='.chapter|.chapters.txt|.m4a|.mp4|@'
 
 --メディアファイルと同じ場所にこの名前のフォルダがあるときチャプターファイルをまずここから探す(''のときメディアファイルと同じ場所のみ)
-CHAPTERS_FOLDER_NAME=''
---CHAPTERS_FOLDER_NAME='chapters'
+--CHAPTERS_FOLDER_NAME=''
+CHAPTERS_FOLDER_NAME='chapters'
 
 --開始チャプターとみなすチャプター名のパターン(Luaの正規表現)
 CHAPTER_IN='^i'
