@@ -389,9 +389,11 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		this.#params = new URLSearchParams();
 		this.#e = video || this;
 		if (video){
-			this.#e.params = this.params;
-			this.#e.fast = this.fast;
-			this.#e.fixedCurrentTime = this.fixedCurrentTime
+			Object.defineProperties(this.#e, {
+				'params': {get: () => this.#params},
+				'fast': {get: () => this.#fast},
+				'fixedCurrentTime': {get: () => this.#currentTime()}
+			});
 		}
 		this.#initCap();
 		this.#hlsMp4Query = this.#e.hasAttribute('hls4') ? `&hls4=${this.#e.getAttribute('hls4')}` : '';
@@ -1940,7 +1942,8 @@ class chapterTvt{
 	#hasSeeked;
 	#lastTime = 0;
 	#container = document.getElementById('chapMaker-container');
-	#currentTime(){return this.#vid.fixedCurrentTime || this.#vid.currentTime}
+	get #currentTime(){return this.#vid.fixedCurrentTime || this.#vid.currentTime}
+
 	constructor(video){
 		this.#vid = video;
 		document.getElementById('nextChap').addEventListener('click', () => this.#navigate());
@@ -1948,7 +1951,7 @@ class chapterTvt{
 		video.addEventListener('timeupdate', () => {
 			if (this.#disabled || !this.#chapters) return;
 
-			const currentTime = this.#currentTime();
+			const currentTime = this.#currentTime;
 
 			// 判定内に手動シークした場合に移動されるのを防ぐ
 			if (this.#hasSeeked){
