@@ -62,7 +62,8 @@ XCODE_FAST_RATES={
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
 --editorOptionFastFunc:標準入出力ともにMPEG2-TSで倍速再生になるようにオプションを返す関数を指定する
 --autoCinema:TS-Live!方式専用。Cinema(逆テレシネ)モードを自動切り替え
---deinterlace:TS-Live!方式専用。デインタレース方式。'none'か'yadif'か'bwdif'
+--deinterlace:TS-Live!方式専用。デインタレース方式。'none'か'yadif[=1]'か'bwdif[=1]'
+--maxRateForDoubling:TS-Live!方式専用。再生速度がこれよりも大きいときは負荷軽減のためデインタレース方式から'=1'を除去する
 XCODE_OPTIONS={
   {
     --ffmpegの例。-b:vでおおよその最大ビットレートを決め、-qminで動きの少ないシーンのデータ量を節約する
@@ -216,6 +217,18 @@ XCODE_OPTIONS={
     tslive=true,
     autoCinema=true,
     deinterlace='bwdif',
+    xcoder='',
+    option='',
+    filter=':',
+    filterFastFunc=function() return ':' end,
+    output={'m2t',''},
+  },
+  {
+    name='TS-Live! 60fps',
+    tslive=true,
+    autoCinema=true,
+    deinterlace='bwdif=1',
+    maxRateForDoubling=1.0,
     xcoder='',
     option='',
     filter=':',

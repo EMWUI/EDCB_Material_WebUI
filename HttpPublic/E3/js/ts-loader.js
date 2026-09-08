@@ -26,6 +26,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#volume;
 	#detelecine;
 	#deinterlace;
+	#maxRateForDoubling;
 	#src;
 	#networkState;
 	#mod;
@@ -51,6 +52,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		this.#muted = this.#e.hasAttribute('muted');
 		this.#detelecine = this.#e.hasAttribute('autoCinema') ? 2 : 0;
 		this.#deinterlace = this.#e.getAttribute('deinterlace');
+		this.#maxRateForDoubling = this.#e.getAttribute('maxRateForDoubling') || 1;
 		this.#initialize();
 		if (this.#isUnsupported()) return;
 		this.#createWasmModule();
@@ -110,7 +112,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 				this.#mod = mod;
 				mod.setAudioGain(this.#muted?0:this.#volume);
 				mod.setDetelecineMode(this.#detelecine);
-				mod.setDeinterlace&&this.#deinterlace&&mod.setDeinterlace(this.#deinterlace);
+				this.#setDeinterlace();
 				mod.pause();
 				mod.setCaptionCallback((pts,ts,data) => this.#cap&&this.#cap.pushRawData(this.#statsTime+ts,data.slice()));
 				mod.setStatsCallback(stats => {
@@ -247,6 +249,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 	#setPlaybackRate(n){
 		if (isNaN(n)) return;
 		this.#playbackRate = Number(n);
+		this.#setDeinterlace();
 		this.#mod.setPlaybackRate(n);
 		this.#e.dispatchEvent(new Event('ratechange'));
 	}
@@ -255,6 +258,14 @@ const tsliveMixin = (Base = class {}) => class extends Base{
 		if (isNaN(n) || n === 'boolean') return;
 		this.#detelecine = Number(n);
 		this.#mod.setDetelecineMode(n);
+	}
+	#setDeinterlace(){
+		if (!this.#deinterlace || !this.#mod.setDeinterlace) return;
+		let deinterlace = this.#deinterlace;
+		if (this.#playbackRate > this.#maxRateForDoubling){
+			deinterlace = deinterlace.replace("=1,","=0,").replace(/=1$/,"");
+		}
+		this.#mod.setDeinterlace(deinterlace);
 	}
 	#setSeek(val){
 		if (0<val&&val<1) this.#setOffset(val*100);
