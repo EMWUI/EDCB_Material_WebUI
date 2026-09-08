@@ -245,11 +245,15 @@ NVRAM_ZIP=edcb.GetPrivateProfile('NVRAM','ZIP','',INI)
 NVRAM_REGION=tonumber(edcb.GetPrivateProfile('NVRAM','REGION',0,INI))
 
 --ライブ実況表示機能を使うかどうか (E3では未使用、常に有効)
---利用にはJKCNSL_PATHを設定するか、実況を扱うツール側の対応(NicoJKの場合はcommentShareMode)が必要
+--利用にはJKCNSL_PATHを設定するか、実況を扱うツール側の対応(Windows(NicoJK)ではcommentShareMode、Windows以外ではjktaskの起動)が必要
 USE_LIVEJK=tonumber(edcb.GetPrivateProfile('JK','LIVEJK',true,INI))~=0
+
+--jktaskの設定ファイルなどが置かれている場所(通常、変更不要)
+JKTASK_BASE_DIR=edcb.GetPrivateProfile('JK','JKTASK_BASE_DIR','/var/local/jktask',INI)
 
 --jkcnslを直接呼び出してライブ実況する場合、その絶対パス。Windows以外ではコマンド名
 --コメント投稿したい場合はあらかじめjkcnsl側でログインしておく(jkcnslのReadmeを参照)
+--実況を扱うツール(NicoJKやjktask)とコメント共有する場合は変更不要
 JKCNSL_PATH=edcb.GetPrivateProfile('JK','JKCNSL_PATH','',INI)
 if JKCNSL_PATH=='' then JKCNSL_PATH=nil end
 
@@ -1515,11 +1519,6 @@ function GetEwsRegionCode(prefecture)
   --地域符号(Hex3桁x50)
   local codes='16b16b4675d4758ac6e4c1aec69e3898b64b1c7aac56c4ce5396a692dd4a9d2a65a5a9662dcce459acb2674a93396d2331b2b5b31b98e629b419d2e362d959a2b8a7c8dd1cd45372aacd45'
   return tonumber(codes:sub(prefecture*3-2,prefecture*3),16)
-end
-
-if not WIN32 then
-  INDEX_ENABLE_SUSPEND=false
-  USE_LIVEJK=not not JKCNSL_PATH
 end
 
 ----------ここまでLegacy WebUIから----------

@@ -209,9 +209,13 @@ function OpenLiveJikkyo(pid,jkID,nid,sid)
       end
     end
   else
-    local f=WIN32 and edcb.io.open('\\\\.\\pipe\\chat_d7b64ac2_'..pid,'r')
+    local f=edcb.io.open(WIN32 and '\\\\.\\pipe\\chat_d7b64ac2_'..pid or PathAppend(JKTASK_BASE_DIR,'chat_'..pid..'.fifo'),'r')
     if not f then
       return 'No pipe found for reading comments.'
+    end
+    if not WIN32 and not edcb.io._flock_nb(f) then
+      f:close()
+      return 'Pipe for reading comments is already in use.'
     end
     return f,-1,function() f:close() end
   end
