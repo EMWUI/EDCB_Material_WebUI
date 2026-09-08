@@ -32,11 +32,11 @@ INDEX_SUSPEND_USE_HIBERNATE=tonumber(edcb.GetPrivateProfile('SET','HIBERNATE',fa
 ALLOW_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALLOW_HLS',true,INI))~=0
 --ネイティブHLS非対応環境でもhls.jsを使ってHLS再生するかどうか
 ALWAYS_USE_HLS=tonumber(edcb.GetPrivateProfile('HLS','ALWAYS_USE_HLS',true,INI))~=0
---HLS再生時にトランスコーダーから受け取ったMPEG2-TSをMP4に変換するかどうか。有効時はHEVCトランスコードに対応
---※Android版Firefoxでは不具合があるため無効扱いになる
-USE_MP4_HLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_HLS',true,INI))~=0
 --視聴機能(viewボタン)でLowLatencyHLSにするかどうか。再生遅延が小さくなる。ネイティブHLS環境ではHTTP/2が要求されるためhls.js使用時のみ有用
+--※Android版Firefoxでは不具合があるため無効扱いになる
 USE_MP4_LLHLS=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,INI))~=0
+--旧EMWUI用に残す
+USE_MP4_HLS=USE_MP4_LLHLS
 
 --倍速再生の倍率のリスト
 XCODE_FAST_RATES={

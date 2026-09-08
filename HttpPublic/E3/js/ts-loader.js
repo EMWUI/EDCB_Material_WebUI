@@ -438,7 +438,7 @@ const hlsMixin = (Base = class {}) => class extends Base{
 	#initHls(){
 		if (this.#alwaysUseHls){
 			if (Hls.isSupported()){
-				this.#hls = new Hls();
+				this.#hls = new Hls({workerPath:"js/hls.worker.js"});
 				this.#hls.attachMedia(this.#e);
 				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => {super.loadSubData?super.loadSubData():this.#e.dispatchEvent(new Event('streamStarted')); this.#cap&&this.#cap.attachMedia(this.#e);});
 				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#cap&&this.#cap.pushID3v2Data(d.pts, d.data)));

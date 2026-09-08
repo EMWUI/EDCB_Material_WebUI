@@ -3,7 +3,7 @@ tsloader='260726'
 beer='5.0.3'
 mdc='1.1.4'
 alpine='3.15.12'
-hls='v1.5.20'
+hls='v1.7.1'
 aribb24='v1.11.5'
 bml='288052c'
 danmaku='6c13364'
@@ -188,7 +188,7 @@ end
 
 function GetPlayerOption(tslive)
   return (tslive and (autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '')
-    or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_HLS and ' hls4="'..(USE_MP4_LLHLS and '2"' or '1"') or '')
+    or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_LLHLS and ' hls4="2"' or '')
       ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
 
     ..'" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}')

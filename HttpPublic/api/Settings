@@ -1012,7 +1012,6 @@ function GetHls()
   return {
     allowHls=tonumber(edcb.GetPrivateProfile('HLS','ALLOW_HLS',true,INI))~=0,
     alwaysUseHls=tonumber(edcb.GetPrivateProfile('HLS','ALWAYS_USE_HLS',true,INI))~=0,
-    useMp4Hls=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_HLS',true,INI))~=0,
     useMp4LlHls=tonumber(edcb.GetPrivateProfile('HLS','USE_MP4_LLHLS',true,INI))~=0,
   }
 end
@@ -1097,7 +1096,6 @@ function SaveWebUI()
 
   edcb.WritePrivateProfile('HLS','ALLOW_HLS',GetVarInt(post,'allowHls')==1,INI)
   edcb.WritePrivateProfile('HLS','ALWAYS_USE_HLS',GetVarInt(post,'alwaysUseHls')==1,INI)
-  edcb.WritePrivateProfile('HLS','USE_MP4_HLS',GetVarInt(post,'useMp4Hls')==1,INI)
   edcb.WritePrivateProfile('HLS','USE_MP4_LLHLS',GetVarInt(post,'useMp4LlHls')==1,INI)
   edcb.WritePrivateProfile('HLS','ARIBB24_USE_SVG',GetVarInt(post,'useSvg')==1,INI)
 
