@@ -5,7 +5,7 @@ mdc='1.1.4'
 alpine='3.15.12'
 hls='v1.7.1'
 aribb24='v1.11.5'
-bml='288052c'
+bml='08a7dae'
 danmaku='6c13364'
 
 --Windowsかどうか
