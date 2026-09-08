@@ -434,26 +434,27 @@ const hlsMixin = (Base = class {}) => class extends Base{
 
 	#hls;
 	#onload;
-	#onstart;
 	#initHls(){
 		if (this.#alwaysUseHls){
 			if (Hls.isSupported()){
 				this.#hls = new Hls({workerPath:"js/hls.worker.js"});
 				this.#hls.attachMedia(this.#e);
 				this.#hls.on(Hls.Events.MANIFEST_PARSED, () => {super.loadSubData?super.loadSubData():this.#e.dispatchEvent(new Event('streamStarted')); this.#cap&&this.#cap.attachMedia(this.#e);});
-				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => data.samples.forEach(d => this.#cap&&this.#cap.pushID3v2Data(d.pts, d.data)));
+				this.#hls.on(Hls.Events.FRAG_PARSING_METADATA, (each, data) => {if (this.#cap) for(const sample of data.samples) this.#cap.pushID3v2Data(sample.pts, sample.data);});
 
 				//Android版Firefoxは非キーフレームで切ったフラグメントMP4だとカクつくので避ける
-				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`);
-				this.#onstart = src => this.#hls.loadSource(src);
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${/Android.+Firefox/i.test(navigator.userAgent)?'':this.#hlsMp4Query}`)
+					.then(src => this.#hls.loadSource(src))
+					.catch(this.#onerror);
 			}else if (this.#e.canPlayType('application/vnd.apple.mpegurl')){
 				this.#onload = () => this.#e.src = this.#e.initSrc.href;
 			}
 		}else{
 			//AndroidはcanPlayTypeが空文字列を返さないことがあるが実装に個体差が大きいので避ける
 			if (!/Android/i.test(navigator.userAgent)&&this.#e.canPlayType('application/vnd.apple.mpegurl')){
-				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`);
-				this.#onstart = src => this.#e.src = src;
+				this.#onload = () => this.#waitForHlsStart(`${this.#e.initSrc}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`)
+					.then(src => this.#e.src = src)
+					.catch(this.#onerror);
 			}else{
 				this.#onload = () => this.#e.src = this.#e.initSrc.href;
 			}
@@ -607,10 +608,10 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		src = new URL(src, location.href);
 		src.searchParams.set('ctok', this.#ctok);
 		src.searchParams.set('load', this.#createRandom());
-		this.#waitForHlsStart(`${src}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`, onerror, onstart);
+		this.#waitForHlsStart(`${src}&${this.#params.toString()}&hls=${this.#createRandom()}${this.#hlsMp4Query}`)
+			.then(onstart).catch(onerror);
 	}
 
-	#method;
 	#src;
 	#interval = 200;
 	#delay = 500;
@@ -618,27 +619,29 @@ const hlsMixin = (Base = class {}) => class extends Base{
 		this.#error = {code: 0, message: 'HLS loading error'};
 		this.#e.dispatchEvent(new Event('error'));
 	}
-	#waitForHlsStart(src, onerror = this.#onerror, onstart = this.#onstart){
-		this.#method = 'POST';
+	#waitForHlsStart(src){
 		this.#src = src;
-		const poll = () => {
-			if (!this.#src) return;
 
-			const xhr = new XMLHttpRequest();
-			xhr.open(this.#method, this.#src);
-			if (this.#method == 'POST') xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-			this.#method = 'GET';
-			xhr.onloadend = () => {
-				if (xhr.status == 200 && xhr.response){
-					if (xhr.response.indexOf('#EXT-X-MEDIA-SEQUENCE:') < 0) setTimeout(() => poll(), this.#interval);
-					else setTimeout(() => {if(this.#src)onstart(this.#src);}, this.#delay);
-				}else{
-					onerror();
-				}
-			}
-			xhr.send(`ctok=${this.#ctok}&open=1`);
-		}
-		poll();
+		return new Promise((resolve,reject) => {
+			let options = {
+				method: "POST",
+				headers: {"Content-Type": "application/x-www-form-urlencoded"},
+				body: `ctok=${this.#ctok}&open=1`
+			};
+			const poll = () => {
+				if (!this.#src) return;
+
+				fetch(src, options).then(response => {
+					if (response.ok) return response.text();
+					reject();
+				}).then(text => {
+					if (text.indexOf("#EXT-X-MEDIA-SEQUENCE:") < 0) setTimeout(poll, this.#interval);
+					else setTimeout(() => { resolve(src); }, this.#delay);
+				}).catch(() => { reject(); });
+			};
+			poll();
+			options=null;
+		});
 	}
 }
 
@@ -1161,55 +1164,87 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		return ret;
 	}
 
-	#progressPsiDataChatMixedStream(readCount,response,ctx){
-		ctx=ctx||{};
-		if(!ctx.ctx){
-			ctx.ctx={};
-			ctx.atobRemain="";
-			ctx.psiData=new Uint8Array(0);
+	#base64ToUint8Array(a){
+		if (window.Uint8Array&&Uint8Array.fromBase64){
+			return Uint8Array.fromBase64(a)
+		} else {
+			var b=atob(a);
+			var u=new Uint8Array(b.length);
+			for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+			return u;
 		}
-		while(readCount<response.length){
-			let i=response.indexOf("<",readCount);
-			if(i==readCount){
-				i=response.indexOf("\n",readCount);
-				if(i<0)break;
-				const s=response.substring(readCount,i);
-				if(!this.#mHeader&&!!(this.#mHeader=s.match(/^<!-- J=([0-9]+)(?:;T=([0-9]+))?/))){
-					for(const opt of this.#elems.selectID.options){
-						if(opt.value==this.#mHeader[1]){
-							opt.selected=true;
-							break;
+	}
+
+	#progressPsiDataChatMixedStream(reader){
+		return new Promise((resolve,reject)=>{
+			let readCount=0;
+			let response="";
+			const ctx={};
+			let atobRemain="";
+			let psiData=new Uint8Array(0);
+			const decoder=new TextDecoder();
+			const readNext=()=>{
+				reader.read().then(r=>{
+					if(r.done){
+						if(readCount)resolve(readCount);
+						else reject("Error: Empty stream");
+						return;
+					}
+					response+=decoder.decode(r.value,{stream:true});
+					let offset=0;
+					while(offset<response.length){
+						let i=response.indexOf("<",offset);
+						if(i==offset){
+							i=response.indexOf("\n",offset);
+							if(i<0)break;
+							if(this.#ctrl&&this.#params.has('jikkyo')){
+								const s=response.substring(offset,i);
+								if(!this.#mHeader&&!!(this.#mHeader=s.match(/^<!-- J=([0-9]+)(?:;T=([0-9]+))?/))){
+									for(const opt of this.#elems.selectID.options){
+										if(opt.value==this.#mHeader[1]){
+											opt.selected=true;
+											break;
+										}
+									}
+									if(this.#mHeader[2]){
+										const tm=this.#mHeader[2]-Math.floor(this.fixedCurrentTime||this.#e.currentTime);
+										if(this.#elems.inputTM)this.#elems.inputTM.value==new Date(1000*tm+32400000).toISOString().substring(0,16);
+										if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[tm%60].selected=true;
+									}
+								}
+								this.#jkStream.stream(s);
+							}
+							offset=i+1;
+						}else{
+							i=i<0?response.length:i;
+							const n=Math.floor((i-offset+atobRemain.length)/4)*4;
+							if(n){
+								const addData=this.#base64ToUint8Array(atobRemain+response.substring(offset,offset+n-atobRemain.length));
+								atobRemain=response.substring(offset+n-atobRemain.length,i);
+								const concatData=new Uint8Array(psiData.length+addData.length);
+								concatData.set(psiData);
+								concatData.set(addData,psiData.length);
+								psiData=this.#readPsiData(concatData.buffer,(sec,dict,code,pid)=>{
+									if(this.#ctrl&&this.#params.has('psidata'))this.#dataStream.stream(pid,dict,code,Math.floor(sec*90000));
+									return true;
+								},0,ctx);
+								if(psiData)psiData=new Uint8Array(psiData);
+							}else{
+								atobRemain+=response.substring(offset,i);
+							}
+							offset=i;
 						}
 					}
-					if(this.#mHeader[2]){
-						const tm=this.#mHeader[2]-Math.floor(this.fixedCurrentTime||this.#e.currentTime);
-						if(this.#elems.inputTM)this.#elems.inputTM.value==new Date(1000*tm+32400000).toISOString().substring(0,16);
-						if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[tm%60].selected=true;
-					}
-				}
-				this.#jkStream.stream(s);
-				readCount=i+1;
-			}else{
-				i=i<0?response.length:i;
-				const n=Math.floor((i-readCount+ctx.atobRemain.length)/4)*4;
-				if(n){
-					const addData=atob(ctx.atobRemain+response.substring(readCount,readCount+n-ctx.atobRemain.length));
-					ctx.atobRemain=response.substring(readCount+n-ctx.atobRemain.length,i);
-					const concatData=new Uint8Array(ctx.psiData.length+addData.length);
-					for(let j=0;j<ctx.psiData.length;j++)concatData[j]=ctx.psiData[j];
-					for(let j=0;j<addData.length;j++)concatData[ctx.psiData.length+j]=addData.charCodeAt(j);
-					ctx.psiData=this.#readPsiData(concatData.buffer,(sec,dict,code,pid)=>{
-						this.#dataStream.stream(pid,dict,code,Math.floor(sec*90000));
-						return true;
-					},0,ctx.ctx);
-					if(ctx.psiData)ctx.psiData=new Uint8Array(ctx.psiData);
-				}else{
-					ctx.atobRemain+=response.substring(readCount,i);
-				}
-				readCount=i;
-			}
-		}
-		return readCount;
+					readCount+=offset;
+					response=response.substring(offset);
+					readNext();
+				}).catch(()=>{
+					if(readCount)resolve(readCount);
+					else reject("Error: Empty stream");
+				});
+			};
+			readNext();
+		});
 	}
 
 	static decodeB24CaptionFromCueText(text,work){
@@ -1486,8 +1521,8 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			if (open) this.#openSubStream();
 		},
-		error: (status, readCount) => {
-			this.#addMessage("Error! ("+status+"|"+readCount+"Bytes)");
+		error: text => {
+			this.#addMessage(text);
 		},
 		stream: tag => {
 			if(tag.startsWith("<chat ")){
@@ -1581,13 +1616,13 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		this.#addMessage("Offset "+this.#jklog.offsetSec+"sec");
 	}
 	#setJK(id, tm){
-		if (this.#jklog.xhr&&this.#jklog.xhr.readyState!=4) return;
+		if (this.#jklog.ctrl&&this.#logText==null) return;
 		if (id) this.#params.set('jkID', id);
 		if (tm) this.#params.set('jkTM', tm);
 		if (this.#e.initSrc&&!this.#shiftable) this.#openSubStream();
 		else{
 			this.#logText=null;
-			this.#jklog.xhr=null;
+			this.#jklog.ctrl=null;
 			this.#jklog.enable();
 		}
 	}
@@ -1663,9 +1698,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#psc.readTimer=0;
 			bmlBrowserSetInvisible(true);
 			if (this.#elems.indicator) this.#elems.indicator.innerText = '';
-			if(this.#psc.xhr){
-				this.#psc.xhr.abort();
-				this.#psc.xhr=null;
+			if(this.#psc.ctrl){
+				this.#psc.ctrl.abort();
+				this.#psc.ctrl=null;
 			}
 			this.#psiData=null;
 			this.#psc.videoLastSec=0;
@@ -1676,20 +1711,20 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#datacastState=this.#STATE.LOG;
 			this.#psc.startRead();
 			bmlBrowserSetInvisible(false);
-			if(this.#psc.xhr)return;
-			this.#psc.xhr=new XMLHttpRequest();
-			this.#psc.xhr.open("GET",this.#e.getAttribute("src").replace(/\.[0-9A-Za-z]+$/,"")+".psc");
-			this.#psc.xhr.responseType="arraybuffer";
-			this.#psc.xhr.overrideMimeType("application/octet-stream");
-			this.#psc.xhr.onloadend=()=>{
-				if(!this.#psiData&&this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+this.#psc.xhr.status+")";
-			};
-			this.#psc.xhr.onload=()=>{
-				if(this.#psc.xhr.status!=200||!this.#psc.xhr.response)return;
-				this.#psiData=this.#psc.xhr.response;
-			};
-			this.#psc.xhr.send();
-			if(this.#elems.indicator)this.#elems.indicator.innerText="接続中...";
+			if(this.#psc.ctrl)return;
+			this.#psc.ctrl=new AbortController();
+			fetch(this.#e.getAttribute("src").replace(/\.[0-9A-Za-z]+$/,"")+".psc",{
+				signal:this.#psc.ctrl.signal
+			}).then(response=>{
+				if(!response.ok)throw new Error(response.status+" "+response.statusText);
+				return response.arrayBuffer();
+			}).then(arrayBuffer=>{
+				this.#psiData=arrayBuffer;
+			}).catch(e=>{
+				if(this.#elems.indicator)this.#elems.indicator.innerText=""+e;
+			}).finally(() => {
+				this.#psc.ctrl=null;
+			});
 		},
 	}
 
@@ -1725,9 +1760,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
 		disable: () => {
 			clearTimeout(this.#jklog.readTimer);
 			this.#jklog.readTimer=0;
-			if(this.#jklog.xhr){
-				this.#jklog.xhr.abort();
-				this.#jklog.xhr=null;
+			if(this.#jklog.ctrl){
+				this.#jklog.ctrl.abort();
+				this.#jklog.ctrl=null;
 			}
 			this.#jklog.videoLastSec=0;
 			this.#logText=null;
@@ -1742,28 +1777,25 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			this.#jikkyoState=this.#STATE.LOG;
 			this.#chatsScroller();
 			this.#jklog.startRead();
-			if(this.#jklog.xhr)return;
-			this.#mHeader=null;
-			this.#jklog.xhr=new XMLHttpRequest();
-			this.#jklog.xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}`);
-			this.#jklog.xhr.onloadend=()=>{
-				if(!this.#logText){
-					this.#jkStream.error(this.#jklog.xhr.status,0);
-				}
-			};
-			this.#jklog.xhr.onload=()=>{
-				if(this.#jklog.xhr.status!=200||!this.#jklog.xhr.response)return;
-				this.#logText=this.#jklog.xhr.response;
-				const m=this.#logText.match(/^<!-- J=([0-9]+);T=([0-9]+)/);
+			if(this.#jklog.ctrl)return;
+			this.#jklog.ctrl=new AbortController();
+			fetch(`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}`,{
+				signal:this.#jklog.ctrl.signal
+			}).then(response=>{
+				if(!response.ok)throw new Error(response.status+" "+response.statusText);
+				return response.text();
+			}).then(text=>{
+				this.#logText=text;
+				const m=logText.match(/^<!-- J=([0-9]+);T=([0-9]+)/);
 				if(m){
-				for(const opt of this.#elems.selectID.options){
-					if(opt.value==m[1]){
-						opt.selected=true;
-						break;
+					for(const opt of this.#elems.selectID.options){
+						if(opt.value==m[1]){
+							opt.selected=true;
+							break;
+						}
 					}
-				}
-				if(this.#elems.inputTM)this.#elems.inputTM.value=new Date(1000*m[2]+32400000).toISOString().substring(0,16);
-				if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[m[2]%60].selected=true;
+					if(this.#elems.inputTM)this.#elems.inputTM.value=new Date(1000*m[2]+32400000).toISOString().substring(0,16);
+					if(this.#elems.inputTMSec)this.#elems.inputTMSec.options[m[2]%60].selected=true;
 				}
 				if(this.#stats&&this.#stats.canvas){
 					this.#elems.comm.removeChild(this.#stats.canvas);
@@ -1773,26 +1805,29 @@ const datacastMixin = (Base = class {}) => class extends Base{
 				if(this.#stats.canvas){
 					this.#elems.comm.insertBefore(this.#stats.canvas,this.#elems.comm.firstChild);
 				}
-			};
-			this.#jklog.xhr.send();
+			}).catch(e=>{
+				this.#jkStream.error(""+e);
+			}).finally(() => {
+				this.#jklog.ctrl=null;
+			});
 		},
 		kakolog: () => {
 			if(!this.#e.getAttribute("src")&&!this.#e.initSrc)return;
-			const text=this.#elems.kakolog.innerText;
+			const btnText=this.#elems.kakolog.innerText;
 			this.#elems.kakolog.innerText="取得中...";
 			this.#elems.kakolog.disabled=true;
-			const xhr=new XMLHttpRequest();
-			xhr.open("GET",`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}&kakolog=1`);
-			xhr.onloadend=()=>{
-				if(xhr.status==200||xhr.response){
-					this.#logText=null;
-					this.#jklog.xhr=null;
-					this.#jklog.enable();
-				}
-				this.#elems.kakolog.innerText=text;
+			fetch(`${this.#api.jklog}?${this.#fname()}&jkID=${this.#params.get('jkID')||0}&jkTM=${this.#params.get('jkTM')||0}&kakolog=1`).then(response=>{
+				if(!response.ok)throw new Error(response.status+" "+response.statusText);
+				return response.text();
+			}).then(text=>{
+				this.#logText=text;
+				this.#jklog.enable();
+			}).catch(e=>{
+				this.#jkStream.error(""+e);
+			}).finally(()=>{
+				this.#elems.kakolog.innerText=btnText;
 				this.#elems.kakolog.disabled=false;
-			}
-			xhr.send();
+			});
 		}
 	}
 
@@ -1806,38 +1841,37 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			}
 			return;
 		}
-		const xhr=new XMLHttpRequest();
-		xhr.open("POST", this.#api.comment);
-		xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-		xhr.onloadend=()=>{
-			if(xhr.status!=200){
-				this.#addMessage("Post error! ("+xhr.status+")");
-			}
-		};
 
 		const params = new URLSearchParams(this.#e.initSrc.search);
 		params.set('ctok',this.#ctok);
 		if (this.#elems.commInput.classList.contains("refuge")) params.set("refuge", 1);
 		params.set('comm', this.#elems.commInput.value);
 
-		xhr.send(params);
-
-		this.#elems.commInput.dispatchEvent(new Event('sentComment'));
-		this.#elems.commInput.value="";
+		fetch(this.#api.comment,{
+			method:"POST",
+			headers:{"Content-Type":"application/x-www-form-urlencoded"},
+			body:params.toString()
+		}).then(response=>{
+			if(!response.ok)throw new Error(response.status+" "+response.statusText);
+			this.#elems.commInput.dispatchEvent(new Event('sentComment'));
+			this.#elems.commInput.value="";
+		}).catch(e=>{
+			this.#addMessage("Post error! ("+e+")");
+		});
 	}
 
 	#reopen;
-	#xhr;
+	#ctrl;
 	#closeSubStream(){
-		if (!this.#xhr) return;
-		this.#xhr.abort();
-		this.#xhr=null;
+		if (!this.#ctrl) return;
+		this.#ctrl.abort();
+		this.#ctrl=null;
 	}
 	#openSubStream(){
 		if(this.#reopen)return;
-		if(this.#xhr){
-			this.#xhr.abort();
-			this.#xhr=null;
+		if(this.#ctrl){
+			this.#ctrl.abort();
+			this.#ctrl=null;
 			if(this.#params.has('psidata')||this.#params.has('jikkyo')){
 				this.#reopen=true;
 				setTimeout(()=>{this.#reopen=false;this.#openSubStream();},5000);
@@ -1845,30 +1879,37 @@ const datacastMixin = (Base = class {}) => class extends Base{
 			return;
 		}
 		if(!this.#e.initSrc||!this.#params.has('psidata')&&!this.#params.has('jikkyo'))return;
-		let readCount=0;
-		const ctx={};
+		let reconnectCount=0;
 		this.#mHeader=null;
-		this.#xhr=new XMLHttpRequest();
-		this.#xhr.open("GET",`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${Math.floor(this.fixedCurrentTime||this.#e.currentTime)}`);
-		this.#xhr.onloadend=()=>{
-			if(this.#xhr&&(readCount==0||this.#xhr.status!=0)){
-				if(this.#params.has('psidata'))this.#dataStream.error(this.#xhr.status,readCount);
-				if(this.#params.has('jikkyo'))this.#jkStream.error(this.#xhr.status,readCount);
+		this.#ctrl=new AbortController();
+		fetch(`${this.#e.initSrc}&${this.#params.toString()}&ofssec=${Math.floor(this.fixedCurrentTime||this.#e.currentTime)}`,{
+			signal:this.#ctrl.signal
+		}).then(response=>{
+			if(!response.ok)throw new Error(response.status+" "+response.statusText);
+			return this.#progressPsiDataChatMixedStream(response.body.getReader());
+		}).then(readCount=>{
+			if(this.#ctrl){
+				if(this.#params.has('psidata'))this.#dataStream.error("Done: "+readCount+" bytes");
+				if(this.#params.has('jikkyo')&&!this.#shiftable)this.#jkStream.error("Done: "+readCount+" bytes");
+				if(++reconnectCount>2)reconnectCount=0;
+				else this.#openSubStream();
+				this.#ctrl=null;
 			}
-			this.#xhr=null;
-		};
-		this.#xhr.onprogress=()=>{
-			if(this.#xhr&&this.#xhr.status==200&&this.#xhr.response){
-				readCount=this.#progressPsiDataChatMixedStream(readCount,this.#xhr.response,ctx);
+		}).catch(e=>{
+			if(this.#ctrl){
+				if(this.#params.has('psidata'))this.#dataStream.error(""+e);
+				if(this.#params.has('jikkyo')&&!this.#shiftable)this.#jkStream.error(""+e);
+				if(++reconnectCount>2)reconnectCount=0;
+				else this.#openSubStream();
+				this.#ctrl=null;
 			}
-		};
-		this.#xhr.send();
+		});
 	}
 
 	#loaded;
 	#dataStream = {
-		error: (status,readCount) => {
-			if(this.#elems.indicator)this.#elems.indicator.innerText="Error! ("+status+"|"+readCount+"Bytes)";
+		error: text => {
+			if(this.#elems.indicator)this.#elems.indicator.innerText=text;
 		},
 		stream: (pid,dict,code,pcr) => {
 			if(!this.#loaded)this.#loaded=this.#e.initSrc.href;
