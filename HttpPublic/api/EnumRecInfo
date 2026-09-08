@@ -10,7 +10,7 @@ if id then
   if a then a={a} end
 else
   a=edcb.GetRecFileInfoBasic()
-  table.sort(a, function(a,b) return os.time(a.startTime) > os.time(b.startTime) end)
+  table.sort(a,function(a,b) return CompareTime(b.startTime,a.startTime) end)
 end
 
 if json then

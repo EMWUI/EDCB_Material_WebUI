@@ -747,6 +747,56 @@ function CompareFields(...)
   return comp
 end
 
+--時間テーブルを比較する
+CompareTime=CompareFields('year',false,'month',false,'day',false,'hour',false,'min',false,'sec')
+
+-- 階層構造（startTime.yearなど）と親のフィールド（sidなど）を両方扱える高速版
+function CompareFieldsNested(...)
+  local args={...}
+  local num_args=#args
+
+  -- 文字列のキーを分解してテーブルにしておく（高速化のため事前処理）
+  local parsed_keys={}
+  for i=1,num_args,2 do
+    local k=args[i]
+    local path={}
+    for part in string.gmatch(k,'[^.]+') do
+      table.insert(path,part)
+    end
+    parsed_keys[i]=path
+  end
+
+  -- 値を階層から安全に取り出すヘルパー関数
+  local function get_value(obj,path)
+    for j=1,#path do
+      if obj==nil then return nil end
+      obj=obj[path[j]]
+    end
+    return obj
+  end
+
+  return function(a,b)
+    for i=1,num_args,2 do
+      local path=parsed_keys[i]
+      local desc=args[i+1]
+      local va=get_value(a,path)
+      local vb=get_value(b,path)
+
+      if va~=vb then
+        if desc then
+          return vb<va
+        else
+          return va<vb
+        end
+      end
+    end
+    return false
+  end
+end
+
+--time内の各フィールドを比較し、すべて同じなら親にある 'sid' で比較する
+CompareStartTimeWithSid=CompareFieldsNested('startTime.year',false,'startTime.month',false,'startTime.day',false,'startTime.hour',false,'startTime.min',false,'startTime.sec',false,'sid',false)
+
 --符号なし整数の時計算の差を計算する
 function UintCounterDiff(a,b)
   return (a+0x100000000-b)%0x100000000
@@ -1877,13 +1927,7 @@ function SearchEpg(key,range,archive)
     end
   end
 
-  table.sort(a, function(a,b)
-    if (a.startTime and os.time(a.startTime) or 0)==(b.startTime and os.time(b.startTime) or 0) then
-      return a.sid<b.sid
-    else
-      return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0)
-    end
-  end)
+  table.sort(a,function(a,b) return CompareStartTimeWithSid(a,b) end)
 
   return a
 end

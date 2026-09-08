@@ -35,7 +35,7 @@ if onair then
   b=edcb.EnumEventInfo(id,{startTime=os.date('!*t',utc9Now-24*3600), durationSecond=36*3600})
 
   if b and #b~=0 then
-    table.sort(b,function(a,b) return (a.startTime and os.time(a.startTime) or 0)<(b.startTime and os.time(b.startTime) or 0) end)
+    table.sort(b,function(a,b) return CompareTime(a.startTime,b.startTime) end)
     a={}
     for i,v in ipairs(b) do
       if v.startTime then
@@ -89,13 +89,7 @@ else
       a[#a+1]=v
     end
     if a and #a~=0 then
-      local function sortFunc(a, b)
-        local at = a.startTime and os.time(a.startTime) or 0
-        local bt = b.startTime and os.time(b.startTime) or 0
-        if at ~= bt then return at < bt end
-        return (a.sid or 0) < (b.sid or 0)
-      end
-      table.sort(a, sortFunc)
+      table.sort(a,function(a,b) return CompareStartTimeWithSid(a,b) end)
 
       -- 指定時刻跨ぎの番組を各サービスについて探す
       local range_t = os.time(range.startTime)
@@ -146,7 +140,7 @@ else
           v._t = nil
         end
         if added then
-          table.sort(a, sortFunc)
+          table.sort(a,function(a,b) return CompareStartTimeWithSid(a,b) end)
         end
       end
     end
