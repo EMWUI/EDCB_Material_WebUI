@@ -430,6 +430,8 @@ const hlsMixin = (Base = class {}) => class extends Base{
   //get load(){if (!super.load) return this.#load}
   get reload(){return this.#reload}
   get reset(){return this.#clear}
+  get destroy(){return this.#destroy}
+  get destroyHls(){return this.#destroyHls}
 
   get setSeek(){return this.#setSeek}
   get setFast(){return this.#setFast}
@@ -521,11 +523,21 @@ const hlsMixin = (Base = class {}) => class extends Base{
     ['reload','audio2'].forEach(e => this.#params.delete(e));
     super.clear&&super.clear();
   }
+  #destroy(){
+    this.#reset();
+    this.#destroyHls();
+    this.#cap = null;
+  }
+  #destroyHls(){
+    this.#hls&&this.#hls.destroy();
+    this.#hls = null;
+  }
   #loadSource(src){
     if (!src){
       this.#clear();
       return;
     }
+    if (!this.#hls) this.#initHls();
     this.#e.initSrc = new URL(src, location.href);
     this.#e.initSrc.searchParams.set('ctok', this.#ctok);
     this.#e.defaultPlaybackRate = 1;

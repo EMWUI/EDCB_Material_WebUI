@@ -3187,6 +3187,7 @@ document.addEventListener('alpine:init', () => {
         ts.reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
         if (canPlay) {
+          ts.destroyHls();
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
           this.video.src = fname;
           const meta = this.app.$refs.meta;
@@ -3222,6 +3223,7 @@ document.addEventListener('alpine:init', () => {
       },
       destroy() {
         this.reset();
+        Alpine.raw(this.ts).destroy();
         this.vid = null;
         this.ts = null;
         this.chap = null;
