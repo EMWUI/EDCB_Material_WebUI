@@ -172,7 +172,7 @@ else
     if dir then
       dirhash=mg.get_var(query,'d')
       if dirhash then
-        name=LIBRARY_LIST[index]
+        name=NativeToDocumentPath(LIBRARY_LIST[index]) or LIBRARY_LIST[index]
         path={}
         for j=0,10000 do
           local w=mg.get_var(query, 'p', j)
@@ -244,8 +244,10 @@ else
       for i,v in ipairs(ff) do
         local thumbHash
         if not v.isdir then
-          thumbHash=MakeThumbs(PathAppend(dir,v.name), true)
-        end 
+          ref=PathAppend(dir,v.name)
+          thumbHash=MakeThumbs(ref, true)
+          v.path=NativeToDocumentPath(ref) or ref
+        end
         v.hash=mg.md5(v.name)
         v.sizeText=not v.isdir and ConvertSize(v.size) or nil
         v.thumb=thumbHash

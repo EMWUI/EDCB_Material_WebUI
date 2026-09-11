@@ -272,6 +272,10 @@ document.addEventListener('alpine:init', () => {
         autoaddmanual: 'list',
         recinfo: 'list',
         search: 'list',
+        library: 'grid',
+      },
+      sort: {
+        library: { order: 'date', asc: true },
       },
       epg: {
         minHeight: 4,
@@ -529,9 +533,14 @@ document.addEventListener('alpine:init', () => {
     isTable(v, i = 1) {
       return this.set.view[v] === 'table' && i > 0;
     },
+    isGrid(v, i = 1) {
+      return this.set.view[v] === 'grid' && i > 0;
+    },
     viewState(v) {
-      const table = this.isTable(v);
-      return { icon: table ? 'table' : 'lists', text: table ? 'テーブル' : 'リスト' };
+      const mode = this.set.view[v];
+      if (mode === 'grid') return { icon: 'grid_view', text: 'グリッド' };
+      if (mode === 'table') return { icon: 'table', text: 'テーブル' };
+      return { icon: 'lists', text: 'リスト' };
     },
 
     async init() {
@@ -3553,6 +3562,10 @@ document.addEventListener('alpine:init', () => {
           this.data = await res.json();
           this.data.path = this.data.path || [];
           this.data.p_raw = p.p;
+          this.data.file.forEach(v => {
+            if (v.mtime) v.mtime = new Date(v.mtime).getTime();
+          });
+          this.sort();
           // 取得成功したら現在の状態を記憶（homeがあれば優先、なければi,d,p）
           if (!this.data.err) this.lastParams = this.app.params.home ? { home: 1 } : { i: this.app.params.i, d: this.app.params.d, p: this.app.params.p };
           if (this.data.err) this.app.snackbar.error(this.data.err);
@@ -3561,6 +3574,29 @@ document.addEventListener('alpine:init', () => {
           this.data = { dir: [], file: [], path: [], err: '取得できませんでした' };
         } finally {
           this.app.loading = false;
+        }
+      },
+      isOrder(order) {
+        return this.app.set.sort.library.order == order;
+      },
+      setOrder(order) {
+        this.app.set.sort.library.order = order;
+        this.sort();
+      },
+      get sortAsc() {
+        return this.app.set.sort.library.asc;
+      },
+      setAsc() {
+        this.app.set.sort.library.asc = !this.sortAsc;
+        this.sort();
+      },
+      sort() {
+        if (this.isOrder('date')) {
+          this.data.file.sort((a, b) => this.sortAsc ? a.mtime - b.mtime : b.mtime - a.mtime);
+        } else if (this.isOrder('name')) {
+          this.data.file.sort((a, b) => this.sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+        } else if (this.isOrder('size')) {
+          this.data.file.sort((a, b) => this.sortAsc ? a.size - b.size : b.size - a.size);
         }
       },
       openDir(item) {
@@ -3575,6 +3611,24 @@ document.addEventListener('alpine:init', () => {
       play(file) {
         this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
       },
+    },
+    thumb: 'createMiscWasmModule' in window && new TsThumb(`${config.root}api/grabber`),
+    getThumbUrl(file) {
+      return `${this.ROOT}video/thumbs/${file.thumb}.jpg`;
+    },
+    rollThumbEnter(e, canvas, file) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      Alpine.raw(this.thumb).roll(canvas, file.path);
+    },
+    rollThumbLeave(e) {
+      Alpine.raw(this.thumb).hide();
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    },
+    async setThumb(el, file) {
+      const canvas = document.createElement('canvas');
+      canvas.className = 'thumb';
+      const done = await Alpine.raw(this.thumb).setThumb(canvas, file.path, 0.1);
+      if (done) el.replaceWith(canvas);
     },
 
     log: {

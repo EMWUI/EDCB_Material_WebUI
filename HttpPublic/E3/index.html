@@ -207,6 +207,21 @@ ct:Append([=[
         </button>
       </template>
 
+      <template x-if="isPage('#library')">
+        <div>
+          <button class="circle transparent">
+            <i>sort</i>
+          </button>
+          <menu class="left no-wrap">
+            <li :class="{ active: library.isOrder('name') }" @click="library.setOrder('name')"><i>sort_by_alpha</i><span>名前</span></li>
+            <li :class="{ active: library.isOrder('date') }" @click="library.setOrder('date')"><i>access_time</i><span>日付</span></li>
+            <li :class="{ active: library.isOrder('size') }" @click="library.setOrder('size')"><i>storage</i><span>サイズ</span></li>
+            <li><hr></li>
+            <li @click="library.setAsc();"><i x-text="library.sortAsc ? 'arrow_upward' : 'arrow_downward'"></i><span x-text="library.sortAsc ? '昇順' : '降順'"></span></li>
+          </menu>
+        </div>
+      </template>
+
       <nav class="no-space">
         <template x-if="enabled" x-data="reminder">
           <div>
@@ -948,7 +963,7 @@ ct:Append([=[
                     <li class="ripple" @click="library.play(item)" :class="{ 'secondary-container': params.h === item.hash }">
                       <div class="max row no-margin no-wrap">
                         <template x-if="item.thumb">
-                          <img class="round border" :src="ROOT + 'video/thumbs/' + item.thumb + '.jpg'">
+                          <img class="round border" :src="getThumbUrl(item)">
                         </template>
                         <template x-if="!item.thumb">
                           <button class="square large border transparent"><i class="primary-text">movie</i></button>
@@ -1390,52 +1405,128 @@ ct:Append([=[
               </button>
             </template>
           </nav>
-          <ul class="list medium-space">
-            <!-- フォルダ一覧 -->
-            <template x-for="item in data.dir" :key="item.name">
-              <li class="ripple" @click="openDir(item)">
-                <div class="max row no-margin no-wrap">
-                  <div class="center-align">
-                    <i class="primary-text">folder</i>
-                  </div>
-                  <div class="max">
-                    <div class="title bold large-text" x-text="item.name"></div>
-                  </div>
-                  <i>chevron_right</i>
-                </div>
-              </li>
-            </template>
+        </section>
 
-            <!-- ファイル一覧 -->
-            <template x-for="item in data.file" :key="item.name">
-              <li class="ripple" @click="play(item)">
-                <div class="max row no-margin no-wrap">
-                  <template x-if="item.thumb">
-                    <img class="round border" :src="ROOT + 'video/thumbs/' + item.thumb + '.jpg'">
+        <!-- リスト表示 -->
+          <template x-if="isList('library')">
+            <div>
+              <section class="responsive">
+                <ul class="list medium-space">
+                  <!-- フォルダ一覧 -->
+                  <template x-for="item in data.dir" :key="item.name">
+                    <li class="ripple" @click="openDir(item)">
+                      <div class="max row no-margin no-wrap">
+                        <div class="center-align">
+                          <i class="primary-text">folder</i>
+                        </div>
+                        <div class="max">
+                          <div class="title bold large-text" x-text="item.name"></div>
+                        </div>
+                        <i>chevron_right</i>
+                      </div>
+                    </li>
                   </template>
-                  <template x-if="!item.thumb">
-                    <button class="square large border transparent"><i class="primary-text">movie</i></button>
+
+                  <!-- ファイル一覧 -->
+                  <template x-for="item in data.file" :key="item.name">
+                    <li class="ripple" @click="play(item)" x-data="{ el: null }" @pointerenter="rollThumbEnter($event, el, item)" @pointerleave="rollThumbLeave($event)">
+                      <div class="max row no-margin no-wrap">
+                        <div class="thumb-wrapper">
+                          <template x-if="item.thumb">
+                            <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
+                          </template>
+                          <template x-if="!item.thumb">
+                            <div class="no-thumb" x-init="setThumb($el, item)">
+                              <i class="primary-text">movie</i>
+                            </div>
+                          </template>
+                          <canvas class="thumb" x-init="el=$el"></canvas>
+                        </div>
+                        <div class="max">
+                          <h6 class="small title" x-text="item.name"></h6>
+                          <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
+                            <span class="middle-align">
+                              <i class="primary-text tiny">schedule</i>
+                              <span x-text="convert.date(item.mtime, true, true)"></span>
+                            </span>
+                            <span class="middle-align">
+                              <i class="primary-text tiny">storage</i>
+                              <span x-text="item.sizeText"></span>
+                            </span>
+                          </div>
+                        </div>
+                        <button class="circle transparent">
+                          <i>play_arrow</i>
+                        </button>
+                      </div>
+                    </li>
                   </template>
-                  <div class="max">
-                    <h6 class="small" x-text="item.name"></h6>
-                    <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
-                      <span class="middle-align">
-                        <i class="primary-text tiny">storage</i>
-                        <span x-text="item.sizeText"></span>
-                      </span>
-                      <span class="middle-align">
-                        <i class="primary-text tiny">schedule</i>
-                        <span x-html="convert.date(item.mtime, true, true)"></span>
-                      </span>
-                    </div>
+                </ul>
+              </section>
+            </div>
+          </template>
+
+          <!-- グリッド表示 -->
+          <template x-if="isGrid('library')">
+            <div>
+              <section class="responsive" :class="isSmallScreen ? 'horizontal-margin small-margin' : ''">
+                <!-- フォルダ一覧（グリッド上部） -->
+                <template x-if="data.dir?.length > 0">
+                  <div class="grid small-space bottom-margin">
+                    <template x-for="item in data.dir" :key="item.name">
+                      <article class="s12 m6 l4 round border ripple no-padding" @click="openDir(item)">
+                        <div class="row padding middle-align no-margin">
+                          <i class="primary-text large">folder</i>
+                          <div class="max bold large-text ellipsis" x-text="item.name"></div>
+                          <i>chevron_right</i>
+                        </div>
+                      </article>
+                    </template>
                   </div>
-                  <button class="circle transparent">
-                    <i>play_arrow</i>
-                  </button>
-                </div>
-              </li>
-            </template>
-          </ul>
+                </template>
+              </section>
+
+              <!-- ファイル一覧（カードグリッド） -->
+              <template x-if="data.file?.length > 0">
+                <section class="margin" :class="{ 'small-margin': isSmallScreen }">
+                  <div class="grid medium-space">
+                    <template x-for="item in data.file" :key="item.name">
+                      <article class="s12 m6 l2 library-grid-item round border ripple no-padding" x-data="{ el: null }" @click="play(item)" @pointerenter="rollThumbEnter($event, el, item)" @pointerleave="rollThumbLeave($event)">
+                        <div class="thumb-wrapper top-round">
+                          <template x-if="item.thumb">
+                            <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
+                          </template>
+                          <template x-if="!item.thumb">
+                            <div class="no-thumb" x-init="setThumb($el, item)">
+                              <i class="primary-text">movie</i>
+                            </div>
+                          </template>
+                          <canvas class="thumb" x-init="el=$el"></canvas>
+                          <button class="circle primary library-play-btn" @click.stop="play(item)">
+                            <i>play_arrow</i>
+                          </button>
+                        </div>
+                        <div class="padding">
+                          <div class="bold ellipsis" :title="item.name" x-text="item.name"></div>
+                          <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line small-text top-margin tiny-margin">
+                            <span class="middle-align">
+                              <i class="primary-text tiny">schedule</i>
+                              <span x-text="convert.date(item.mtime, true, true)"></span>
+                            </span>
+                            <span class="max"></span>
+                            <span class="middle-align">
+                              <i class="primary-text tiny">storage</i>
+                              <span x-text="item.sizeText"></span>
+                            </span>
+                          </div>
+                        </div>
+                      </article>
+                    </template>
+                  </div>
+                </section>
+              </template>
+            </div>
+          </template>
 
           <template x-if="!loading && data.err">
             <div class="center-align middle-align small-height">
@@ -4937,7 +5028,7 @@ ct:Append([=[
     </div>
     <hr class="medium">
 
-    <template x-if="isPage('#reserve','#tunerreserve','#autoaddepg','#autoaddmanual','#recinfo','#search')" x-data="set.view">
+    <template x-if="isPage('#reserve','#tunerreserve','#autoaddepg','#autoaddmanual','#recinfo','#search','#library')" x-data="set.view">
       <div class="field">
         <nav>
           <div class="max">
@@ -5009,6 +5100,20 @@ ct:Append([=[
               <menu>
                 <li :class="{ active: isTable('search') }" @click="search = 'table'"><i>table</i><span>テーブル</span></li>
                 <li :class="{ active: isList('search') }" @click="search = 'list'"><i>lists</i><span>リスト</span></li>
+              </menu>
+            </div>
+          </template>
+
+          <template x-if="isPage('#library')">
+            <div>
+              <button>
+                <i x-text="viewState('library').icon">grid_view</i>
+                <span x-text="viewState('library').text">グリッド</span>
+                <i>arrow_drop_down</i>
+              </button>
+              <menu>
+                <li :class="{ active: isGrid('library') }" @click="library = 'grid'"><i>grid_view</i><span>グリッド</span></li>
+                <li :class="{ active: isList('library') }" @click="library = 'list'"><i>lists</i><span>リスト</span></li>
               </menu>
             </div>
           </template>

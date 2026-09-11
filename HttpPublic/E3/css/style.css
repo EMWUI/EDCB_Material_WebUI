@@ -459,3 +459,56 @@ article.small-width+button { align-self: center; }
 #sideTab .page > div { width: 100%; }
 
 #macro { max-height: 80vh; }
+
+li:has(.thumb) { padding-left: 0; }
+.thumb-wrapper {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--surface-variant);
+  overflow: hidden;
+}
+li .thumb-wrapper {
+  block-size:64px;
+  inline-size: auto
+}
+.thumb {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+}
+img.thumb { object-fit: cover; }
+canvas.thumb { aspect-ratio: 16 / 9; }
+.no-thumb {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+article .no-thumb i { --_size: 4.5rem; }
+li .no-thumb i { --_size: 2rem; }
+
+.library-grid-item {
+  transition: transform var(--speed2), box-shadow var(--speed2);
+}
+.library-grid-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevate2);
+}
+.library-grid-item .library-play-btn {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  opacity: 0.85;
+  transition: opacity var(--speed1), transform var(--speed1);
+}
+.library-grid-item:hover .library-play-btn {
+  opacity: 1;
+  transform: scale(1.08);
+}
+@media only screen and (min-width: 993px) {
+  .grid:has(> .library-grid-item) {
+    grid-template-columns: repeat(10, 1fr);
+  }
+}
