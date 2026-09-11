@@ -87,7 +87,7 @@ self.addEventListener('fetch', (event) => {
           return cachedResponse; 
         }
 
-        const fetchPromise = fetch(event.request, { signal: AbortSignal.timeout(2000) }).then((response) => {
+        const fetchPromise = fetch(event.request, { signal: AbortSignal.timeout(3000) }).then((response) => {
           if (response && response.status === 200 && response.type === 'basic') {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {

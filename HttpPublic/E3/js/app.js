@@ -103,7 +103,7 @@ document.addEventListener('alpine:init', () => {
             ['秒 2桁','$STSS$']
           ]
         }
-      ] 
+      ]
     }, {
       title: '終了時間',
       items: [
@@ -136,7 +136,7 @@ document.addEventListener('alpine:init', () => {
           ]
         }
       ]
-    }, { 
+    }, {
       title: '番組総時間',
       items: [
         [
@@ -340,7 +340,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     // CSRFトークン付きフェッチ（エラー時に自動でトークンを再取得して1回だけ再試行）
-    async fetchWithToken(url, options = {}, tokenKey = null, timeoutMs = 5000, isRetry = false) {
+    async fetchWithToken(url, options = {}, tokenKey = null, silent = false, timeoutMs = 5000, isRetry = false) {
       const key = tokenKey || this.getTokenKey(url);
 
       if (key) {
@@ -359,8 +359,10 @@ document.addEventListener('alpine:init', () => {
         res = await this.fetch(url, options, timeoutMs);
       } catch (e) {
         if (e.name === 'TimeoutError') {
-          this.snackbar.error('通信エラー');
-          e.handled = true;
+          if (!silent) {
+            this.snackbar.error('通信エラー');
+            e.handled = true;
+          }
           throw e;
         }
         // トークン検証失敗(AssertCsrf)時の接続切断を想定して再取得＆リトライ
@@ -369,11 +371,11 @@ document.addEventListener('alpine:init', () => {
           try {
             await this.refreshCtok();
           } catch (tokErr) {
-            this.snackbar.error('トークン認証エラー。トークンの再取得に失敗しました');
+            if (!silent) this.snackbar.error('トークン認証エラー。トークンの再取得に失敗しました');
             tokErr.handled = true;
             throw tokErr;
           }
-          return this.fetchWithToken(url, options, key, timeoutMs, true);
+          return this.fetchWithToken(url, options, key, silent, timeoutMs, true);
         }
         throw e;
       }
@@ -600,7 +602,6 @@ document.addEventListener('alpine:init', () => {
         this.loadAll();
       });
       window.addEventListener('popstate', () => {
-        const oldPage = this.page;
         this.page = window.location.hash || '#dashboard';
         const newParams = Object.fromEntries(new URLSearchParams(window.location.search));
         let paramsChanged = false;
@@ -616,7 +617,7 @@ document.addEventListener('alpine:init', () => {
         }
 
         // idパラメータは #epgweek と #watch の場合のみ、サービスID部分（最初の3ブロック）の変化を監視
-        if (!paramsChanged && ['#epgweek', '#watch'].includes(this.page)) {
+        if (!paramsChanged && this.isPage('#epgweek', '#watch')) {
           const getServiceId = id => id ? id.split('-').slice(0, 3).join('-') : '';
           if (getServiceId(this.params.id) !== getServiceId(newParams.id)) {
             paramsChanged = true;
@@ -624,7 +625,7 @@ document.addEventListener('alpine:init', () => {
         }
 
         this.updateParams();
-        if (this.page !== oldPage || paramsChanged) {
+        if (paramsChanged) {
           this.loadAll();
         } else {
           this.restoreSidePanel();
@@ -690,7 +691,6 @@ document.addEventListener('alpine:init', () => {
 
         this.syncNowOnAir();
         this.syncDashboardData();
-        this.updateStorage();
       }
 
       // サービス一覧が空（初回またはクリア後）なら取得する
@@ -1175,14 +1175,13 @@ document.addEventListener('alpine:init', () => {
     },
     // ページ切り替え時に呼ばれる
     async loadAll() {
-      this.epg.toolbarActive = true;
       // 視聴ページ以外に移動した場合は再生を停止してインスタンスを破棄
       if (this.player.ts && !this.isPage('#watch')) {
         this.player.destroy();
       }
 
       this.totalCount = null;
-      if (!['#epg', '#epgweek'].includes(this.page)) this.$main.scrollTo(0, 0);
+      if (!this.isPage('#epg', '#epgweek')) this.$main.scrollTo(0, 0);
       this.sidePanel.close(false);
 
       if (this.isPage('#dashboard')) {
@@ -1190,10 +1189,10 @@ document.addEventListener('alpine:init', () => {
         if (!this.dataSaver) {
           try {
             await Promise.all([
-              this.updateStorage(),
-              this.searchOlympic(),
-              this.searchNew(),
-              this.searchAnime(),
+              this.updateStorage(true),
+              this.searchOlympic(true),
+              this.searchNew(true),
+              this.searchAnime(true),
             ]);
           } catch (e) {
             this.snackbar.error('更新できませんでした');
@@ -1202,10 +1201,11 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.isPage('#epg')) {
+        this.epg.toolbarActive = true;
         // タブ選択の同期
         const tab = parseInt(this.params.tab);
-        if (!isNaN(tab)) this.isActiveNetwork(tab);
-        else this.isActiveNetwork(1);
+        if (!isNaN(tab)) this.setNetwork(tab);
+        else this.setNetwork(1);
 
         // 放送日付の基準（4時を境界とする）
         let base = new Date(this.now);
@@ -1338,7 +1338,7 @@ document.addEventListener('alpine:init', () => {
       }
       return (gb / 1024).toFixed(2) + ' TB';
     },
-    async updateStorage() {
+    async updateStorage(silent) {
       try {
         this.dashboardData.loadingStorage = true;
         const res = await this.fetch(`${this.ROOT}api/Common?json=1&storage=1`);
@@ -1356,6 +1356,9 @@ document.addEventListener('alpine:init', () => {
         });
       } catch (e) {
         console.error(e);
+        if (e.name === 'TimeoutError') {
+          if (!silent) this.snackbar.error('通信エラー');
+        }
       } finally {
         this.dashboardData.loadingStorage = false;
       }
@@ -1597,16 +1600,16 @@ document.addEventListener('alpine:init', () => {
         if (typeof value !== 'object') value = new Date(value);
         return new Date(value.getTime() + 9 * 3600000);
       },
-      date(t, show_sec, show_ymd) {
+      date(t, show_sec, show_ymd, show_date) {
         if (!t) return '未定';
         t = this.viewDate(t);
-        return `${show_ymd ? `${this.ymd(t)} ` : ''}${this.time(t, show_sec)}`;
+        return `${show_ymd ? `${this.ymd(t)} ` : show_date ? `${t.getUTCDate()}日 ` : ''}${this.time(t, show_sec, false)}`;
       },
-      ymd(t, show_day) {
-        return `${t.getUTCFullYear()}/${this.zero(t.getUTCMonth()+1)}/${this.zero(t.getUTCDate())}${show_day ? `(${dayText[t.getUTCDay()]})` : ''}`
+      ymd(t, show_wday, responsive) {
+        return `${responsive ? '<span class="m l">' : ''}${t.getUTCFullYear()}/${responsive ? '</span>' : ''}${this.zero(t.getUTCMonth()+1)}/${this.zero(t.getUTCDate())}${show_wday ? `(${dayText[t.getUTCDay()]})` : ''}`
       },
-      time(t, show_sec = true) {
-        if (typeof t === 'object') return `${this.zero(t.getUTCHours())}:${this.zero(t.getUTCMinutes())}${show_sec && t.getUTCSeconds() != 0 ? `<small>:${this.zero(t.getUTCSeconds())}</small>` : ''}`
+      time(t, show_sec = true, small = true) {
+        if (typeof t === 'object') return `${this.zero(t.getUTCHours())}:${this.zero(t.getUTCMinutes())}${show_sec && (t.getUTCSeconds() != 0 && !small) ? `${small ? '<small>' : ''}:${this.zero(t.getUTCSeconds())}${small ? '</small>' : ''}` : ''}`
         return `${this.zero(Math.floor(t / 3600))}:${this.zero(Math.floor((t / 60) % 60))}${show_sec ? `:${this.zero(Math.floor(t % 60))}` : ''}`
       },
       ISO(t) {
@@ -1645,13 +1648,14 @@ document.addEventListener('alpine:init', () => {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
     },
     getDateText(d) {
-      return `${this.convert.date(d.startTime, true, true)}～${this.convert.date(d.startTimeInt + d.durationSecond*1000, true)}`
+      const isToday = d.startTimeInt - this.now  < 24 * 3600000;
+      return `${this.convert.date(d.startTimeInt, false, false, !isToday)}～${this.convert.date(d.startTimeInt + d.durationSecond*1000, false)}`
     },
-    getDateHtml(v, show_ymd) {
+    getDateHtml(v, show_ymd, responsive) {
       if (!v.startTimeInt) return '未定';
       const start = this.convert.viewDate(v.startTimeInt);
       const end = !v.durationSecond ? '未定' : this.convert.time(new Date(start.getTime() + v.durationSecond*1000));
-      return `<span class="row wrap" style="gap: 0 0.3rem;">${show_ymd ? `<span>${this.convert.ymd(start, true)}</span>` : ''}<span>${this.convert.time(start)}～${end}</span></span>`
+      return `${show_ymd ? `<span>${this.convert.ymd(start, true, responsive)} </span>` : ''}<span>${this.convert.time(start)}${responsive ? `<span class="m l">～${end}</span>` : `～${end}`}</span>`
     },
     getServiceName(d, id) {
       return this.allData.service.get(this.getServiceID(d))?.service_name || (id ? this.getServiceID(d) : '不明');
@@ -2437,23 +2441,9 @@ document.addEventListener('alpine:init', () => {
       get isNewEntry() {
         return !this.d.reserveID && !this.d.dataID && !this.d.id;
       },
-      get isInfo() {
-        return this.mode == 0;
-      },
-      get isReserve() {
-        return this.mode == 1;
-      },
-      get isAutoaddepg() {
-        return this.mode == 2;
-      },
-      get isAutoaddmanual() {
-        return this.mode == 3;
-      },
-      get isRecinfo() {
-        return this.mode == 4;
-      },
-      get isSearch() {
-        return this.mode == 5;
+      isMode(...v){
+        const mode = ['info','reserve','autoaddepg','autoaddmanual','recinfo','search'][this.mode];
+        return v.includes(mode);
       },
       show() {
         this.el.querySelector('main').scrollTo(0, 0);
@@ -2684,7 +2674,7 @@ document.addEventListener('alpine:init', () => {
         }
         this.loading = true;
 
-        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', 20000);
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', false, 20000);
         const list = await res.json();
 
         this.allData.search.clear();
@@ -2704,7 +2694,7 @@ document.addEventListener('alpine:init', () => {
         this.loading = false;
       }
     },
-    async searchOlympic() {
+    async searchOlympic(silent) {
       try {
         this.dashboardData.loadingOlympic = true;
         const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&Olympic=1`);
@@ -2716,11 +2706,14 @@ document.addEventListener('alpine:init', () => {
         });
       } catch (e) {
         console.error("Search failed", e);
+        if (e.name === 'TimeoutError') {
+          if (!silent) this.snackbar.error('通信エラー');
+        }
       } finally {
         this.dashboardData.loadingOlympic = false;
       }
     },
-    async searchNew() {
+    async searchNew(silent) {
       try {
         this.dashboardData.loadingNew = true;
         const fd = new URLSearchParams({
@@ -2729,7 +2722,7 @@ document.addEventListener('alpine:init', () => {
           titleOnlyFlag: 1
         });
         this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent');
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', silent);
         const list = await res.json();
 
         this.dashboardData.newPrograms = (Array.isArray(list) ? list : []).map(v => {
@@ -2742,7 +2735,7 @@ document.addEventListener('alpine:init', () => {
         this.dashboardData.loadingNew = false;
       }
     },
-    async searchAnime() {
+    async searchAnime(silent) {
       try {
         this.dashboardData.loadingAnime = true;
         const fd = new URLSearchParams({
@@ -2750,7 +2743,7 @@ document.addEventListener('alpine:init', () => {
           days: 1
         });
         this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent');
+        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', silent);
         const list = await res.json();
 
         this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {

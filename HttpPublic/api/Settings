@@ -325,7 +325,7 @@ function GetRec()
     recMinWake=edcb.GetPrivateProfile('SET','RecMinWake',1,srvIni)~='0',
     recView=tonumber(edcb.GetPrivateProfile('SET','RecView',1,srvIni)) or 1     ,
     recNW=edcb.GetPrivateProfile('SET','RecNW',0,srvIni)~='0',
-    pgInfoLog=edcb.GetPrivateProfile('SET','PgInfoLog',1,srvIni)~='0',  
+    pgInfoLog=edcb.GetPrivateProfile('SET','PgInfoLog',1,srvIni)~='0',
     pgInfoLogAsUtf8=not WIN32 or edcb.GetPrivateProfile('SET','PgInfoLogAsUtf8',0,srvIni)~='0',
     dropLog=edcb.GetPrivateProfile('SET','DropLog',1,srvIni)~='0',
     recOverWrite=edcb.GetPrivateProfile('SET','RecOverWrite',0,srvIni)~='0',

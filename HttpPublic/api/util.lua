@@ -56,7 +56,7 @@ XCODE_FAST_RATES={
 --xcoder:トランスコーダーのToolsフォルダからの相対パス。'|'で複数候補を指定可。見つからなければ最終候補にパスが通っているとみなす
 --       Windows以外では".exe"が除去されて最終候補のみ参照される
 --option:$OUTPUTは必須、再生時に適宜置換される。標準入力からMPEG2-TSを受け取るようにオプションを指定する
---poster:【※未使用】初期画像のサイズとメッセージ。省略時は'1280x720,Loading...' 
+--poster:【※未使用】初期画像のサイズとメッセージ。省略時は'1280x720,Loading...'
 --filter(Cinema):等速再生用、filterCinemaは未定義でもよい。特別に':'とするとトランスコードを省略してそのまま出力する
 --filter*FastFunc:倍速再生用、未定義でもよい。倍率に応じたオプションを返す関数を指定する
 --editorFast:単独で倍速再生にできないトランスコーダーの手前に置く編集コマンド。指定方法はxcoderと同様
@@ -1576,7 +1576,7 @@ function GetPredictionSize(v)
   return size
 end
 
---ファイルサイズを、単位を付けテキストに  
+--ファイルサイズを、単位を付けテキストに
 --第2引数は小数桁 (デフォルトは2)
 function ConvertSize(bytes,precision)
   local units={'B','KB','MB','GB','TB','PB'}
@@ -1748,7 +1748,7 @@ function GetRecSetting(post)
   return false
 end
 
---検索条件を取得  
+--検索条件を取得
 --文字列返却値(andKeyとnotKey)の実体参照変換はedcb.htmlEscapeに従う
 function GetSearchKey(post)
   local notKey=mg.get_var(post,'notKey') or ''
@@ -1814,7 +1814,7 @@ function GetSearchKey(post)
   return key
 end
 
---検索条件(キーワードのみ)を取得  
+--検索条件(キーワードのみ)を取得
 --文字列返却値(andKey)の実体参照変換はedcb.htmlEscapeに従う
 function GetSearchKeyKeyword(query)
   local key=GetSearchKey()
@@ -1832,7 +1832,7 @@ function GetSearchKeyKeyword(query)
   return key
 end
 
---検索条件(自動予約orプリセット)を取得  
+--検索条件(自動予約orプリセット)を取得
 function GetSearchKeyPreset(query)
   local key=nil
   local dataID=GetVarInt(query, 'id') or 0
@@ -1918,8 +1918,8 @@ function GetSearchKeyPreset(query)
   end
 end
 
---検索条件にマッチしたイベントを取得 ※時間ソート済み  
---期間を指定していない場合は放送済みを除外  
+--検索条件にマッチしたイベントを取得 ※時間ソート済み
+--期間を指定していない場合は放送済みを除外
 function SearchEpg(key,range,archive)
   local a=nil
   if archive then
@@ -2061,7 +2061,7 @@ function Check_iOS()
   end
 end
 
---テーブルをXMLに変換  
+--テーブルをXMLに変換
 --日付はISO 8601形式に
 function ConvertXml(val, key)
   key=key or 'entry'
@@ -2113,7 +2113,7 @@ function ResponseXml(a)
   mg.write(ct:Pop(Response(200,'text/xml','utf-8',ct.len)..'\r\n'))
 end
 
---テーブルをJSONに変換  
+--テーブルをJSONに変換
 --一部補完、日付はISO 8601形式に
 function ConvertJson(val)
   local t=type(val)
@@ -2121,7 +2121,7 @@ function ConvertJson(val)
   if t=='table' then
     --日付テーブルはISO 8601形式に
     if val.year and val.month and val.day and val.hour then
-      return string.format('"%04d-%02d-%02dT%02d:%02d:%02d+09:00"', 
+      return string.format('"%04d-%02d-%02dT%02d:%02d:%02d+09:00"',
           val.year, val.month, val.day, val.hour, val.min, val.sec)
     end
     --予約にサイズ予想を追加

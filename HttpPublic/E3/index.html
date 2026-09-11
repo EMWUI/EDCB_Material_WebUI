@@ -221,7 +221,7 @@ ct:Append([=[
                     <div x-html="convert.title(item.title)"></div>
                     <label>
                       <span x-text="item.stationName"></span>
-                      <span x-html="convert.date(item.startTimeInt, true, true)"></span>
+                      <span x-text="convert.date(item.startTimeInt, false, true)"></span>
                     </label>
                   </div>
                   <button class="circle transparent small" @click="remove(item.id)">
@@ -300,7 +300,7 @@ ct:Append([=[
                       <img class="round tiny border" :src="getLogoPath(d)">
                       <div class="max small-text secondary-text">
                         <div x-text="d.service_name"></div>
-                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                        <div class="secondary-text" x-text="getDateText(d)"></div>
                       </div>
                     </div>
                     <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
@@ -327,7 +327,7 @@ ct:Append([=[
                       <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
                       <div class="max small-text secondary-text">
                         <div x-text="getServiceName(d)"></div>
-                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                        <div class="secondary-text" x-text="getDateText(d)"></div>
                       </div>
                     </div>
                     <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
@@ -354,7 +354,7 @@ ct:Append([=[
                       <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
                       <div class="max small-text secondary-text">
                         <div x-text="getServiceName(d)"></div>
-                        <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                        <div class="secondary-text" x-text="getDateText(d)"></div>
                       </div>
                     </div>
                     <div class="title large-text bold max" x-html="convert.title(d.shortInfo?.event_name)"></div>
@@ -372,7 +372,7 @@ ct:Append([=[
             </div>
           </article>
         </template>
-         
+
         <h6 class="row padding">
           <span class="max">
             <span>放送中の番組</span>
@@ -394,7 +394,7 @@ ct:Append([=[
                       <div class="max small-text secondary-text">
                         <div x-text="s.service_name"></div>
                         <template x-if="entry">
-                          <div x-html="getDateHtml(entry.current)"></div>
+                          <div x-text="getDateText(entry.current)"></div>
                         </template>
                       </div>
                     </div>
@@ -433,7 +433,7 @@ ct:Append([=[
                   <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
                   <div class="max small-text secondary-text">
                     <div x-text="d.stationName"></div>
-                    <div class="secondary-text" x-html="getDateHtml(d)"></div>
+                    <div class="secondary-text" x-text="getDateText(d)"></div>
                   </div>
                 </div>
                 <div class="title large-text bold max" x-html="convert.title(d.title)"></div>
@@ -452,7 +452,7 @@ ct:Append([=[
         </h6>
         <div class="row scroll">
           <template x-for="(d, i) in recs" :key="d.id">
-            <article class="small-width border ripple tiny-line" :class="{ 'error-border': d.recStatus > 1, 'error-container': d.recStatus % 10 !== 1 }" @click="openRecinfoDetail(d)">
+            <article class="small-width border ripple tiny-line" :class="{ 'error-border': d.recStatus > 1, 'error-container': d.recStatus % 10 !== 1 && d.recStatus !== 6 }" @click="openRecinfoDetail(d)">
               <div class="vertical small-gap no-round">
                 <div class="row">
                   <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
@@ -495,7 +495,7 @@ ct:Append([=[
                           <span x-text="drive.freeText"></span> / <span x-text="drive.totalText"></span>
                         </div>
                       </div>
-                      <progress class="no-margin" :value="drive.usedPercent" max="100" 
+                      <progress class="no-margin" :value="drive.usedPercent" max="100"
                                 :class="{ 'error-text': !loadingStorage&&drive.usedPercent > 90 , 'indeterminate': loadingStorage }"></progress>
                     </div>
                   </div>
@@ -509,9 +509,9 @@ ct:Append([=[
 
     <template x-ref="tools">
       <nav class="no-space">
-        <button class="transparent circle small" 
+        <button class="transparent circle small"
                 :class="{ 'primary-text': reminder.isSet(d) }"
-                :disabled="d.startTimeInt < now" 
+                :disabled="d.startTimeInt < now"
                 @click="reminder.toggle(d)"
                 x-show="reminder.enabled">
           <i x-text="reminder.isSet(d) ? 'notifications_active' : 'notifications'"></i>
@@ -664,7 +664,7 @@ ct:Append([=[
                           <div class="row no-margin padding-top middle-align">
                             <i class="small secondary-text">skip_next</i>
                             <div class="max secondary-text small-text truncate">
-                              <span class="bold" x-text="convert.date(entry.next.startTimeInt)"></span>
+                              <span class="bold" x-text="convert.date(entry.next.startTimeInt, false)"></span>
                               <span x-html="convert.title(entry.next.shortInfo?.event_name)"></span>
                             </div>
                           </div>
@@ -1035,7 +1035,7 @@ ct:Append([=[
         </div>
         <div class="max" :class="!d.recSetting?.recEnabled ? 'medium-opacity' : ''">
           <div class="row no-margin no-wrap secondary-text">
-            <span class="max" x-html="getDateHtml(d, true)"></span>
+            <span class="max" x-html="getDateHtml(d, true, true)"></span>
             <span x-text="d.stationName"></span>
           </div>
           <div class="title middle-align bold large-text">
@@ -1066,7 +1066,7 @@ ct:Append([=[
           </label>
         </template>
       </td>
-      <td><span :class="opacity" x-text="getDateText(d)"></span></td>
+      <td><span :class="opacity" x-html="getDateHtml(d, true)"></span></td>
       <td><span :class="opacity" x-html="convert.title(d.title)"></span></td>
       <td><span class="middle-align tiny-gap" :class="opacity"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span></td>
       <td><span :class="opacity" x-text="d.comment"></span></td>
@@ -1340,7 +1340,7 @@ ct:Append([=[
                     <tr class="ripple" @click="openAutoaddDetail(d)">
                       <td><span x-html="d.title"></span></td>
                       <td><span x-text="dayText.filter((e, i) => (d.dayOfWeekFlag & 2 ** i))"></span></td>
-                      <td><span x-text="getDateText(d)"></span></td>
+                      <td><span x-html="getDateHtml(d, true)"></span></td>
                       <td><span x-text="d.stationName"></span></td>
                       <td class="right-align"><span x-text="recModeText[d.recSetting?.recMode]"></span></td>
                     </tr>
@@ -1479,10 +1479,10 @@ ct:Append([=[
                     </div>
                     <div class="max">
                       <div class="row no-margin no-wrap secondary-text">
-                        <span class="max" x-html="getDateHtml(d, true)"></span>
+                        <span class="max" x-html="getDateHtml(d, true, true)"></span>
                         <span x-text="d.serviceName"></span>
                       </div>
-                      <div class="title middle-align bold large-text" :class="{ 'error-text': d.recStatus %10 !== 1 || d.drops > 0 || d.scrambles > 0 }">
+                      <div class="title middle-align bold large-text" :class="{ 'error-text': d.recStatus %10 !== 1 && d.recStatus !== 6 || d.drops > 0 || d.scrambles > 0 }">
                         <img class="space" :src="getLogoPath(d)">
                         <span x-html="convert.title(d.title)"></span>
                       </div>
@@ -1515,11 +1515,11 @@ ct:Append([=[
                 </thead>
                 <tbody>
                   <template x-for="d in displayList" :key="d.id">
-                    <tr class="ripple" :class="{ 'error-container': d.recStatus %10 !== 1, 'error-text': d.drops > 0 || d.scrambles > 0 }" @click="openRecinfoDetail(d)">
-                      <td><span x-text="getDateText(d)"></span></td>
+                    <tr class="ripple" :class="{ 'error-container': d.recStatus %10 !== 1 && d.recStatus !== 6, 'error-text': d.drops > 0 || d.scrambles > 0 }" @click="openRecinfoDetail(d)">
+                      <td><span x-html="getDateHtml(d, true)"></span></td>
                       <td><span x-html="convert.title(d.title)"></span></td>
                       <td><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span></td>
-                      <td><span x-text="d.comment"></span></td>
+                      <td><span x-text="d.comment" :class="{ 'error-text': d.recStatus === 6 }"></span></td>
                       <td class="right-align"><span x-text="d.drops"></span></td>
                       <td class="right-align"><span x-text="d.scrambles"></span></td>
                     </tr>
@@ -1575,7 +1575,7 @@ ct:Append([=[
                     </div>
                     <div class="max">
                       <div class="row no-margin no-wrap secondary-text">
-                        <span class="max" x-html="getDateHtml(d, true)"></span>
+                        <span class="max" x-html="getDateHtml(d, true, true)"></span>
                         <span x-html="getServiceName(d)"></span>
                       </div>
                       <div class="title middle-align bold large-text">
@@ -1623,7 +1623,7 @@ ct:Append([=[
                           </label>
                         </template>
                       </td>
-                      <td style="max-width:20rem;"><span x-text="getDateText(d)"></span></td>
+                      <td style="max-width:20rem;"><span x-html="getDateHtml(d, true)"></span></td>
                       <td><span x-html="convert.title(d.shortInfo?.event_name)"></span></td>
                       <td style="max-width:20rem;"><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-html="getServiceName(d)"></span></span></td>
                       <td class="ellipsis" style="max-width:30em;"><span x-text="d.shortInfo?.text_char"></span></td>
@@ -2456,7 +2456,7 @@ ct:Append([=[
                           </div>
                         </div>
                       </div>
-                      
+
                       ]=]..(WIN32 and [=[
                       <div class="s12 l6 field label suffix border">
                         <select name="processPriority" name="processPriority" x-model="data.rec.processPriority">
@@ -2819,7 +2819,7 @@ ct:Append([=[
                       </label>
                     </nav>
                   </div>
-                
+
                   <div class="s6 l3">
                     <div class="field label border">
                       <input type="number" name="tcpPort" x-model="data.other.tcpPort" :disabled="!data.other.enableTCPSrv">
@@ -2862,7 +2862,7 @@ ct:Append([=[
                         </nav>
                       </div>
                     </div>
-                  </fieldset>                
+                  </fieldset>
                   <fieldset class="s12 m6 l4">
                     <legend>正常に録画した番組情報</legend>
                     <div class="grid">
@@ -3036,7 +3036,7 @@ ct:Append([=[
                     <label>TSファイルの拡張子</label>
                   </div>
                   <div class="s12" x-show="data.other.compatFlags%4096==4095">現在のEpgTimerSrvの応答はtkntrec版互換です。</div>
-                  
+
                   <fieldset class="s12">
                     <legend>視聴に使用するBonDriver</legend>
                     <ul class="list border no-space">
@@ -3203,7 +3203,7 @@ ct:Append([=[
                             <h6><label class="large-text" for="p-serviceMode">デフォルト設定で使用</label></h6>
                           </div>
                           <label class="switch">
-                            <input id="p-serviceMode" type="checkbox" name="serviceMode" 
+                            <input id="p-serviceMode" type="checkbox" name="serviceMode"
                               :checked="isServiceModeDef(r)"
                               @change="toggleServiceModeDef($el.checked, r)">
                             <span></span>
@@ -3407,7 +3407,7 @@ ct:Append([=[
                     <template x-if="!v.check">
                       <input type="hidden" :name="'c-' + v.index" value="1">
                     </template>
-                    
+
                     <template x-if="v.defType === 'number'">
                       <div class="s12 field" :class="{ 'left-margin':v.check, 'large-margin':v.check, label: !v.check }">
                         <input type="number" :name="'v-' + v.index" x-model.number="v.val" :disabled="!v.checked">
@@ -3440,10 +3440,10 @@ ct:Append([=[
                                 </label>
                               </div>
                             </template>
-                            <template x-if="!w.check">  
+                            <template x-if="!w.check">
                               <input type="hidden" :name="'c-' + w.index" value="1">
                             </template>
-                            
+
                             <template x-if="w.defType === 'number'">
                               <div class="s12 m6 field label">
                                 <input type="number" :name="'v-' + w.index" x-model.number="w.val" :disabled="!v.checked">
@@ -3838,7 +3838,7 @@ ct:Append([=[
                             <span class="max" x-text="textUDP(v)"></span>
                             <button class="tertiary small" @click="removeUDP(i)"><i>delete</i></button>
                           </li>
-                        </template> 
+                        </template>
                       </ul>
                       <p class="small-text no-line secondary-text">
                         ※複数の起動があった場合、自動的にPortが+1されます。<br>
@@ -3865,7 +3865,7 @@ ct:Append([=[
                             <span class="max" x-text="textTCP(v)"></span>
                             <button class="tertiary small" @click="removeTCP(i)"><i>delete</i></button>
                           </li>
-                        </template> 
+                        </template>
                       </ul>
                       <p class="small-text no-line secondary-text">※複数の起動があった場合、自動的にPortが+1されます。</p>
                       <nav class="wrap tiny-space right-align" x-data="{ ip: '127.0.0.1', port: 2230, specip: 0 }">
@@ -3931,6 +3931,9 @@ ct:Append([=[
         <div class="max">
           <h6 x-text="title()"></h6>
         </div>
+        <button class="circle transparent" @click="searchEvent()" x-show="isMode('autoaddepg')">
+          <i>search</i>
+        </button>
         <button class="circle transparent" data-ui="#sidePanelSetting" x-show="detail.searchInfo || isPage('#recinfo')">
           <i>settings</i>
         </button>
@@ -3940,7 +3943,7 @@ ct:Append([=[
     <main class="background responsive scroll" :class="{ 'no-padding': isSmallScreen }" x-init="$watch('detail', v => d = clone(v))">
       <template x-if="!isSmallScreen">
         <nav class="m l tabbed fixed small">
-          <a data-ui="#info" x-show="isInfo || isRecinfo">
+          <a data-ui="#info" x-show="isMode('info','recinfo')">
             <i>info</i>
             <span>番組詳細</span>
           </a>
@@ -3952,7 +3955,7 @@ ct:Append([=[
             <i>settings_applications</i>
             <span>録画設定</span>
           </a>
-          <a data-ui="#erroLog" x-show="isRecinfo">
+          <a data-ui="#erroLog" x-show="isMode('recinfo')">
             <i>report</i>
             <span>エラーログ</span>
           </a>
@@ -3960,17 +3963,17 @@ ct:Append([=[
       </template>
 
       <div id="info" class="page left padding">
-        <template x-if="d.onid && (isInfo || isRecinfo)">
+        <template x-if="d.onid && isMode('info','recinfo')">
           <div>
             <h6 class="medium-line" x-html="convert.title(d.shortInfo?.event_name || d.title)"></h6>
-            <template x-if="isInfo">
+            <template x-if="isMode('info')">
               <div class="contents">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID}`" id="api_action">
                 <input type="hidden" name="id" :value="getEventID(d)">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
               </div>
             </template>
-            <template x-if="isRecinfo">
+            <template x-if="isMode('recinfo')">
               <div class="contents">
                 <input type="hidden" :value="`SetRecInfo?id=${d.id}`" id="api_action">
               </div>
@@ -3994,7 +3997,7 @@ ct:Append([=[
             <p class="secondary-text" x-html="convert.text(d.extInfo?.text_char)"></p>
             <div class="space small-space"></div>
             <div>
-              <template x-if="isRecinfo">
+              <template x-if="isMode('recinfo')">
                 <div>
                   <div class="row top-margin small-margin">
                     <i>movie</i>
@@ -4249,7 +4252,7 @@ ct:Append([=[
             </fieldset>
 
             <fieldset class="s12" x-init="$watch('s', s => initSelectedGenres(s)); $nextTick(() => initSelectedGenres(s))">
-              <legend x-text="isSearch ? '対象ジャンル' : 'ジャンル絞り込み'"></legend>
+              <legend x-text="isMode('search') ? '対象ジャンル' : 'ジャンル絞り込み'"></legend>
               <div class="grid">
                 <div class="s12 field border">
                   <select name="contentList" multiple size="7" x-model="selectedGenres" @change="updateContentList()">
@@ -4279,7 +4282,7 @@ ct:Append([=[
                         @change="updateServiceList()"
                         x-html="$refs.serviceList.innerHTML">
                 </select>
-                <label x-text="isSearch ? '対象サービス' : 'サービス絞り込み'"></label>
+                <label x-text="isMode('search') ? '対象サービス' : 'サービス絞り込み'"></label>
               </div>
               <nav class="scroll">
                 <button class="s chip" @click="selectedServices = []; updateServiceList()">
@@ -4441,7 +4444,7 @@ ct:Append([=[
       <div id="recSetting" class="page right padding">
         <template x-if="d.recSetting">
           <div class="grid no-margin">
-            <template x-if="isReserve">
+            <template x-if="isMode('reserve')">
               <div class="contents">
                 <input type="hidden" :value="`SetReserve?id=${d.reserveID || 0}`" id="api_action">
                 <input type="hidden" :name="d.reserveID ? 'change' : 'add'">
@@ -4491,7 +4494,7 @@ ct:Append([=[
               </div>
             </template>
 
-            <template x-if="isAutoaddmanual">
+            <template x-if="isMode('addmanual')">
               <div class="contents">
                 <input type="hidden" :value="`SetManuAdd?id=${d.dataID}`" id="api_action">
                 <input type="hidden" name="addchg" value="1">
@@ -4659,7 +4662,7 @@ ct:Append([=[
                     <h6><label class="large-text" for="serviceMode">デフォルト設定で使用</label></h6>
                   </div>
                   <label class="switch">
-                    <input id="serviceMode" type="checkbox" name="serviceMode" 
+                    <input id="serviceMode" type="checkbox" name="serviceMode"
                       :checked="isServiceModeDef()"
                       @change="toggleServiceModeDef($el.checked)">
                     <span></span>
@@ -4824,7 +4827,7 @@ ct:Append([=[
       </div>
 
       <div id="erroLog" class="page right padding">
-        <template x-if="isRecinfo">
+        <template x-if="isMode('recinfo')">
           <pre class="scroll" x-text="d.errInfo"></pre>
         </template>
       </div>
@@ -4832,7 +4835,7 @@ ct:Append([=[
 
     <template x-if="isSmallScreen">
       <nav class="bottom tools max s">
-        <a data-ui="#info" x-show="isInfo || isRecinfo">
+        <a data-ui="#info" x-show="isMode('info','recinfo')">
           <i>info</i>
           <span>番組詳細</span>
         </a>
@@ -4844,19 +4847,19 @@ ct:Append([=[
           <i>settings_applications</i>
           <span>録画設定</span>
         </a>
-        <a data-ui="#erroLog" x-show="isRecinfo">
+        <a data-ui="#erroLog" x-show="isMode('recinfo')">
           <i>report</i>
           <span>エラーログ</span>
         </a>
       </nav>
     </template>
-    <footer class="horizontal-padding light-align" x-show="detail.recSetting || isRecinfo || isSearch">
+    <footer class="horizontal-padding light-align" x-show="detail.recSetting || isMode('recinfo','search')">
       <nav>
-        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isRecinfo" :disabled="!detail.meta">再生</button>
-        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-show="!isRecinfo&&!isSearch"><i x-text="isNewEntry ? 'add' : 'save'">save</i><span x-text="isNewEntry ? '追加' : '変更'">変更</span></button>
-        <button type="button" class="primary" @click="searchEvent()" x-show="d.searchInfo"><i>search</i><span>検索</span></button>
+        <button type="button" class="primary" @click="openPage('#watch', { recid: detail.id })" x-show="isMode('recinfo')" :disabled="!detail.meta">再生</button>
+        <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-show="!isMode('recinfo','search')"><i x-text="isNewEntry ? 'add' : 'save'">save</i><span x-text="isNewEntry ? '追加' : '変更'">変更</span></button>
+        <button type="button" class="primary" @click="searchEvent()" x-show="isMode('search')"><i>search</i><span>検索</span></button>
         <div class="max"></div>
-        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isRecinfo || set.RecinfoDel"><i>delete</i><span>削除</span></button>
+        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isMode('recinfo') || set.RecinfoDel"><i>delete</i><span>削除</span></button>
      </nav>
     </footer>
   </dialog>
@@ -5294,7 +5297,7 @@ ct:Append([=[
     <div class="max" x-text="active?.text"></div>
     <template x-if="active?.btnFn != null">
       <a class="inverse-primary-text"
-         x-text="active?.btn || 'キャンセル'" 
+         x-text="active?.btn || 'キャンセル'"
          @click="active.btnFn()"></a>
     </template>
   </div>
