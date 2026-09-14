@@ -723,6 +723,8 @@ document.addEventListener('alpine:init', () => {
           }
         };
         deepMerge(this.set, settings);
+        const xc = config.xcode.find(v => v.id === this.set.player.quality);
+        if (xc) this.player.tslive = xc.tslive;
       }
 
       // 設定の変更を監視して自動保存
@@ -2833,6 +2835,7 @@ document.addEventListener('alpine:init', () => {
       // --- データの組み立て ---
       const res = {
         startTime: starttime,
+        startTimeInt: new Date(starttime).getTime(),
         durationSecond: durationSecond,
         shortInfo: {
           text_char: text,
@@ -3116,8 +3119,8 @@ document.addEventListener('alpine:init', () => {
         if (this.live) return this.nowOnAir[this.params?.id]?.current;
         if (this.params.recid) return this.app.allData.recinfo.get(Number(this.params.recid));
         if (this.videoInfo) {
-          const info = this.app.parseProgramInfo(this.videoInfo.programInfo);
-          return { ...info, title: this.videoInfo.name, durationSecond: this.videoInfo.meta?.duration || 0, isDummy: true };
+          if (this.videoInfo.programInfo) return this.app.parseProgramInfo(this.videoInfo.programInfo);
+          return { title: this.videoInfo.name, durationSecond: this.videoInfo?.meta?.duration || 0, isDummy: true };
         }
         return null;
       },
@@ -3125,11 +3128,14 @@ document.addEventListener('alpine:init', () => {
       ts: null,
       thumb: null,
       chap: null,
+      xcode: config.xcode,
       tslive: false,
+      canPlay: false,
       live: true,
       isPlaying: false,
       currentTime: 0,
       get duration() { return this.epg?.meta?.duration || this.epg?.durationSecond || 0 },
+      isPiP: false,
       isFullscreen: false,
       playbackRate: 1,
       track: 0,
@@ -3196,6 +3202,13 @@ document.addEventListener('alpine:init', () => {
         ts.reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
         if (canPlay) {
+          if (this.tslive) {
+            this.vid = null;
+            this.ts = null;
+            this.tslive = false;
+            this.canPlay = true;
+            return;
+          }
           ts.destroyHls();
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
           this.video.src = fname;
@@ -3213,6 +3226,13 @@ document.addEventListener('alpine:init', () => {
           ts.createCap(); // aribb24のイベントリスナーを再登録
           ts.loadSubData();
         } else {
+          if (this.canPlay){
+            this.vid = null;
+            this.ts = null;
+            this.tslive = true;
+            this.canPlay = false;
+            return;
+          }
           ts.loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
         }
         this.isLoading = true;
@@ -3229,6 +3249,7 @@ document.addEventListener('alpine:init', () => {
         this.currentTime = 0;
         this.isLoading = false;
         this.isSeeking = false;
+        this.canPlay = false;
       },
       destroy() {
         this.reset();
@@ -3282,6 +3303,61 @@ document.addEventListener('alpine:init', () => {
       toggleJikkyo() {
         this.set.jikkyo = Alpine.raw(this.ts).toggleJikkyo();
       },
+      prevChap(){
+        Alpine.raw(this.chap).navigate(false);
+      },
+      nextChap(){
+        Alpine.raw(this.chap).navigate(true);
+      },
+      async togglePiP(){
+        if (!document.pictureInPictureEnabled) return;
+        this.video.requestPictureInPicture();
+
+        // ドキュメントPIPを使用すると別ウィンドウに移動した際、Alpineでx-ifで生成したDOMや登録されたイベントリスナーが消去されてしまう。
+        // 対応するには自前でDOMの生成やイベントリスナーの登録を行い、プレイヤーの脱Alpineが必要。
+        /*
+        if (!('documentPictureInPicture' in window)){
+          this.video.requestPictureInPicture();
+          return
+        }
+
+        if (!this.isPiP) {
+          const pipWindow = await documentPictureInPicture.requestWindow();
+
+          // Copy style sheets over from the initial document
+          // so that the player looks the same.
+          [...document.styleSheets].forEach((styleSheet) => {
+            try {
+              const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+              const style = document.createElement('style');
+
+              style.textContent = cssRules;
+              pipWindow.document.head.appendChild(style);
+            } catch (e) {
+              const link = document.createElement('link');
+
+              link.rel = 'stylesheet';
+
+              link.type = styleSheet.type;
+              link.media = styleSheet.media;
+              link.href = styleSheet.href;
+              pipWindow.document.head.appendChild(link);
+            }
+          });
+          const player = this.$refs.player;
+          pipWindow.document.body.classList.add('dark');
+          pipWindow.document.body.append(this.$refs.player);
+          pipWindow.addEventListener('resize', () => this.setbmlBrowserSize());
+          pipWindow.addEventListener("pagehide", () => {
+            this.$refs.playerWrapper.prepend(player);
+            this.isPiP = false;
+          });
+          this.isPiP = true;
+        } else {
+          documentPictureInPicture.window.close();
+        }
+        //*/
+      },
       toggleFullscreen() {
         const player = document.getElementById('player');
         if (!document.fullscreenElement) {
@@ -3327,10 +3403,10 @@ document.addEventListener('alpine:init', () => {
         this.playbackRate = rate;
         Alpine.raw(this.ts).setFast(rate, i, () => this.isLoading = true);
       },
-      setQuality(quality, tslive) {
-        this.set.quality = quality;
-        this.tslive = tslive;
-        Alpine.raw(this.ts).setOption(quality, tslive, () => { }, () => this.isLoading = true);
+      setQuality(v) {
+        this.set.quality = v.id;
+        this.tslive = v.tslive;
+        Alpine.raw(this.ts).setOption(v.id, v.tslive, () => { }, () => this.isLoading = true);
       },
       setDetelecine() {
         this.cinema = !this.cinema;
@@ -3381,7 +3457,7 @@ document.addEventListener('alpine:init', () => {
         const content = this.$refs.remocon;
         const target = isPortrait && !this.isFullscreen ? this.$refs.remoteMobile : this.$refs.remoteDesktop;
         if (content && target && content.parentElement !== target) {
-          target.appendChild(content);
+          target.prepend(content);
         }
       },
 
@@ -3397,9 +3473,9 @@ document.addEventListener('alpine:init', () => {
       },
 
       // 初期化 (例: ビデオ要素へのイベントリスナーのアタッチ)
-      videoInit() {
+      videoInit(video) {
         this.$nextTick(() => {
-          const video = this.video = this.$refs.video;
+          this.video = video;
           const vid = this.tslive ? new TsLiveDatacast(video) : video;
           const ts = this.tslive ? vid : new HlsDatacast(video);
           this.vid = vid;
@@ -3436,6 +3512,7 @@ document.addEventListener('alpine:init', () => {
 
             if (!this.live && this.videoInfo && !this.videoInfo.meta) {
               this.videoInfo.meta = { duration: video.duration };
+              document.getElementById('chapMaker-container').style = `--dur:${video.duration};`
             }
           });
           video.addEventListener('enabledDetelecine', () => this.cinema = true);
@@ -3464,7 +3541,7 @@ document.addEventListener('alpine:init', () => {
           setTimeout(() => this.thumbInit(), 100);
           return;
         }
-        this.thumb = new TsThumb(`${this.app.ROOT}api/grabber`, this.$refs.thumb, video);
+        this.thumb = new TsThumb(`${this.app.ROOT}api/grabber`, this.$refs.thumb, this.$refs.video);
       },
       chapterInit() {
         if (!this.$refs.video) {

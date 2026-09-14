@@ -54,6 +54,13 @@ function GetAppConfig()
     nosuspendActive=(onstat and stat=='exit' and code==0)
   end
 
+  local xcode={}
+  for i, v in ipairs(XCODE_OPTIONS) do
+    if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
+      local s=v.tslive and string.format(',tslive:true,autoCinema:%s,deinterlace:\'%s\'', v.autoCinema and 'true' or 'false', v.deinterlace) or ''
+      table.insert(xcode, string.format('{id:%d,name:\'%s\'%s}', i, v.name, s))
+    end
+  end
   local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
   local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
 
@@ -70,6 +77,7 @@ function GetAppConfig()
     ..' nosuspendActive: '..(nosuspendActive and 'true' or 'false')..','
     ..' enableSuspend: '..(INDEX_ENABLE_SUSPEND and 'true' or 'false')..','
     ..' suspendMode: \''..(INDEX_SUSPEND_USE_HIBERNATE and 'hibernate' or 'suspend')..'\','
+    ..' xcode: ['..table.concat(xcode,', ')..'],'
     ..' nvram: { zip: \''..zip.. '\', prefecture: '..prefecture.. '},'
     ..' jk: { hight: '..JK_COMMENT_HEIGHT..', duration: '..JK_COMMENT_DURATION..'}'
     ..'}'
@@ -187,27 +195,13 @@ function GetbatFileTagList()
 end
 
 function GetPlayerOption(tslive)
-  return (tslive and (autoCinema and ' autoCinema' or '')..(deinterlace and ' deinterlace="'..deinterlace..'"' or '')
-    or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_LLHLS and ' hls4="2"' or '')
-      ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
+  return (tslive and '' or (ALWAYS_USE_HLS and ' alwaysUseHls' or '')..(USE_MP4_LLHLS and ' hls4="2"' or '')
+    ..(ARIBB24_USE_SVG and ' data-aribb24-use-svg="1"' or '')..' data-aribb24-option-json="'..mg.url_encode(ARIBB24_OPTION_JSON))
 
     ..'" :data-comment-ctok="ctok.comment" data-custom-replace-json="'..mg.url_encode(JK_CUSTOM_REPLACE_JSON)..'" data-comment-api="{'..mg.url_encode('"jklog":"'..PathToRoot()..'api/jklog","comment":"'..PathToRoot()..'api/comment"}')
     ..'" :data-ctok-view="ctok.view" :data-ctok-xcode="ctok.xcode"'
 end
 
-function GetVideoOption()
-  local s=''
-  for i,v in ipairs(XCODE_OPTIONS) do
-    if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
-      if v.tslive then
-        autoCinema=v.autoCinema
-        deinterlace=v.deinterlace
-      end
-      s=s..'<li :class="{ active: set.quality === '..i..' }" @click=setQuality('..i..','..(v.tslive and 'true) x-show="window.isSecureContext && navigator.gpu"' or 'false)')..'>'..EdcbHtmlEscape(v.name)..'</li>\n'
-    end
-  end
-  return s
-end
 function GetVideoRate()
   local has1=false
   local s=''

@@ -705,7 +705,7 @@ ct:Append([=[
 
     <template x-if="isPage('#watch')" x-data="player">
       <div id="player-wrapper" class="absolute">
-        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'">
+        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'" x-ref="playerWrapper">
           <div id="player" class="dark" x-ref="player"
                @pointermove="showControls(); resetControlTimeout()"
                @touchstart="showControls(); resetControlTimeout()"
@@ -718,8 +718,8 @@ ct:Append([=[
               <div class="data-broadcasting-browser-content"></div>
             </div>
             <div id="danmaku-container"></div>
-            <div id="player-UI" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
-              <div class="player-overlay-top row">
+            <div id="player-UI" class="visible" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
+              <div class="player-overlay-top row m l">
                 <h6 class="title text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)" x-show="isFullscreen"></h6>
                 <div class="max"></div>
                 <button class="circle transparent" @click="toggleSidePanel()" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg && !params.h">
@@ -727,47 +727,59 @@ ct:Append([=[
                 </button>
               </div>
 
-              <div class="player-control-bar">
-                <div x-ref="remoteDesktop">
-                  <div x-show="set.datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
-                    <nav class="vertical tiny-space" x-data="{ active: false }">
-                      <nav class="center-align">
-                        <button id="key21" class="blue10 circle"></button>
-                        <button id="key22" class="red10 circle"></button>
-                        <button id="key23" class="green10 circle"></button>
-                        <button id="key24" class="yellow10 circle"></button>
+              <div class="player-overlay s">
+                <nav>
+                  <button class="circle" @click="prevChap()" x-show="!live">
+                    <i class="fill">arrow_left</i>
+                  </button>
+                  <button class="circle extra" @click="togglePlay()">
+                    <i class="fill" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
+                  </button>
+                  <button class="circle" @click="nextChap()" x-show="!live">
+                    <i class="fill">arrow_right</i>
+                  </button>
+                </nav>
+              </div>
+
+              <div class="player-control-bar" x-ref="remoteDesktop">
+                <div x-show="set.datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
+                  <nav class="vertical tiny-space" x-data="{ active: false }">
+                    <nav class="center-align">
+                      <button id="key21" class="blue10 circle"></button>
+                      <button id="key22" class="red10 circle"></button>
+                      <button id="key23" class="green10 circle"></button>
+                      <button id="key24" class="yellow10 circle"></button>
+                    </nav>
+                    <nav class="center-align tiny-space">
+                      <button id="key1" class="secondary circle"><i>north</i></button>
+                      <button id="key3" class="secondary circle"><i>west</i></button>
+                      <button id="key18" class="primary circle extra"><i class="fill">circle</i></button>
+                      <button id="key4" class="secondary circle"><i>east</i></button>
+                      <button id="key2" class="secondary circle"><i>south</i></button>
+                      <button id="key20" class="secondary circle"><i>d</i></button>
+                      <button id="key19" class="secondary circle"><i>subdirectory_arrow_left</i></button>
+                      <i class="toggleNum" @click="active = !active">123</i>
+                    </nav>
+                    <nav class="wrap center-align tiny-space" x-show="active">
+                      <nav class="center-align tiny-space">
+                        <button id="key6" class="secondary circle">1</button>
+                        <button id="key7" class="secondary circle">2</button>
+                        <button id="key8" class="secondary circle">3</button>
+                        <button id="key9" class="secondary circle">4</button>
+                        <button id="key10" class="secondary circle">5</button>
+                        <button id="key11" class="secondary circle">6</button>
                       </nav>
                       <nav class="center-align tiny-space">
-                        <button id="key1" class="secondary circle"><i>north</i></button>
-                        <button id="key3" class="secondary circle"><i>west</i></button>
-                        <button id="key18" class="primary circle extra"><i class="fill">circle</i></button>
-                        <button id="key4" class="secondary circle"><i>east</i></button>
-                        <button id="key2" class="secondary circle"><i>south</i></button>
-                        <button id="key20" class="secondary circle"><i>d</i></button>
-                        <button id="key19" class="secondary circle"><i>subdirectory_arrow_left</i></button>
-                        <i class="toggleNum" @click="active = !active">123</i>
-                      </nav>
-                      <nav class="wrap center-align tiny-space" x-show="active">
-                        <nav class="center-align tiny-space">
-                          <button id="key6" class="secondary circle">1</button>
-                          <button id="key7" class="secondary circle">2</button>
-                          <button id="key8" class="secondary circle">3</button>
-                          <button id="key9" class="secondary circle">4</button>
-                          <button id="key10" class="secondary circle">5</button>
-                          <button id="key11" class="secondary circle">6</button>
-                        </nav>
-                        <nav class="center-align tiny-space">
-                          <button id="key12" class="secondary circle">7</button>
-                          <button id="key13" class="secondary circle">8</button>
-                          <button id="key14" class="secondary circle">9</button>
-                          <button id="key15" class="secondary circle">10</button>
-                          <button id="key16" class="secondary circle">11</button>
-                          <button id="key17" class="secondary circle">12</button>
-                          <button id="key5" class="secondary circle">0</button>
-                        </nav>
+                        <button id="key12" class="secondary circle">7</button>
+                        <button id="key13" class="secondary circle">8</button>
+                        <button id="key14" class="secondary circle">9</button>
+                        <button id="key15" class="secondary circle">10</button>
+                        <button id="key16" class="secondary circle">11</button>
+                        <button id="key17" class="secondary circle">12</button>
+                        <button id="key5" class="secondary circle">0</button>
                       </nav>
                     </nav>
-                  </div>
+                  </nav>
                 </div>
 
                 <div class="field middle-align prefix suffix">
@@ -797,13 +809,13 @@ ct:Append([=[
                   <button class="circle transparent" @click="reset()">
                     <i class="fill extra">stop</i>
                   </button>
-                  <button id="prevChap" class="circle transparent tiny" x-show="!live">
+                  <button id="prevChap" class="circle transparent tiny m l" x-show="!live">
                     <i class="fill">arrow_left</i>
                   </button>
-                  <button class="circle transparent" @click="togglePlay()">
+                  <button class="circle transparent m l" @click="togglePlay()">
                     <i class="fill extra" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
                   </button>
-                  <button id="nextChap" class="circle transparent tiny" x-show="!live">
+                  <button id="nextChap" class="circle transparent tiny m l" x-show="!live">
                     <i class="fill">arrow_right</i>
                   </button>
 
@@ -849,7 +861,9 @@ ct:Append([=[
                         <menu class="top left">
                           <li :class="{ active: cinema }" @click="setDetelecine()">逆テレシネ</li>
                           <li><hr></li>
-                          ]=]..GetVideoOption()..[=[
+                          <template x-for="(v, i) in xcode">
+                            <li :class="{ active: set.quality === v.id }" @click="setQuality(v)" x-text="v.name"></li>
+                          </template>
                         </menu>
                       </li>
                       <li>
@@ -862,6 +876,9 @@ ct:Append([=[
                     </menu>
                   </div>
 
+                  <button class="circle transparent" @click="togglePiP()" x-show="document.pictureInPictureEnabled">
+                    <i class="large" x-text="isPiP ? 'pip_exit' : 'picture_in_picture'"></i>
+                  </button>
                   <button class="circle transparent" @click="toggleFullscreen()">
                     <i class="large" x-text="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"></i>
                   </button>
@@ -873,40 +890,46 @@ ct:Append([=[
               <progress class="circle large"></progress>
             </div>
             <template x-if="!tslive">
-              <div class="arib-video-invisible-container contents" x-init="videoInit()">
+              <div class="arib-video-invisible-container contents">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video">
+                  <video id="video"]=]..GetPlayerOption()..[=[ x-init="videoInit($el)" x-ref="video">
                     <track id="vid-meta" x-ref="meta" kind="metadata" type="text/vtt">
                   </video>
                 </div>
               </div>
             </template>
             <template x-if="tslive">
-              <div class="arib-video-invisible-container contents" x-init="videoInit()">
+              <div class="arib-video-invisible-container contents">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video"></canvas>
+                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-init="videoInit($el)" x-ref="video"></canvas>
                 </div>
               </div>
             </template>
           </div>
           <div id="sideTab" class="surface-container-high vertical" x-show="isPortrait || showSidePanel">
-            <div x-ref="remoteMobile"></div>
             <div class="tabs min" :class="isPortrait ? 'bottom': 'top'">
               <a :class="isSideTab('info')" @click="setSideTab('info')"><i>info</i><span>詳細</span></a>
               <a :class="isSideTab('service')" @click="setSideTab('service')"><i>cell_tower</i><span>選局</span></a>
               <a :class="isSideTab('library')" @click="setSideTab('library')" x-show="library.data.file.length > 0"><i>video_library</i><span>ビデオ</span></a>
               <a :class="isSideTab('jikkyo')" @click="setSideTab('jikkyo')"><i>mic</i><span>実況</span></a>
             </div>
-            <div class="page scroll" :class="isSideTab('info')">
+            <div class="page scroll vertical" :class="isSideTab('info')" x-ref="remoteMobile">
               <template x-if="epg">
                 <div class="padding">
                   <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || epg.title || '番組情報なし')"></h6>
-                  <div class="row">
-                    <span class="chip primary small" x-show="!epg.isDummy">
-                      <i>event</i>
-                      <span x-html="getDateHtml(epg, true)"></span>
-                    </span>
-                  </div>
+                  <nav class="row small-round" x-show="!epg.isDummy">
+                    <img class="border" :src="getLogoPath(epg)">
+                    <div class="max">
+                      <span class="chip primary">
+                        <i>event</i>
+                        <span x-html="getDateHtml(epg, true)"></span>
+                      </span>
+                      <span class="chip secondary">
+                        <i>cell_tower</i>
+                        <span x-text="epg.stationName||getServiceName(epg)"></span>
+                      </span>
+                    </div>
+                  </nav>
                   <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
                 </div>
               </template>

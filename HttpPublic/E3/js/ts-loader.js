@@ -73,6 +73,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
   get play(){return this.#play}
   get pause(){return this.#pause}
   get reset(){return this.#reset}
+  get destroy(){return this.#destroy}
 
   get setSeek(){return this.#setSeek}
   get setFast(){return this.#setFast}
@@ -210,6 +211,11 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#ctrl.abort();
     //Androidでリセットすると再描画されないためとりあえず除外、モバイルでtsliveに対応してるのはAndroidのChromeだけなはずなのでisMobileで対応、他がwebgpu対応したら見直す
     if (navigator.userAgentData ? !navigator.userAgentData.mobile : !navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/)) this.#e.getContext("webgpu").configure({device: this.#mod.preinitializedWebGPUDevice,format: navigator.gpu.getPreferredCanvasFormat(),alphaMode: "premultiplied",});
+  }
+  #destroy(){
+    this.#reset();
+    this.#mod = null;
+    this.#cap = null;
   }
 
   #setSrc(src){

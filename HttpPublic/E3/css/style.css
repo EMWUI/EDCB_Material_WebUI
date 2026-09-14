@@ -363,6 +363,22 @@ article.small-width+button { align-self: center; }
   min-height: 3rem;
 }
 
+.player-overlay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.player-overlay nav { justify-content: center; }
+.player-overlay button { 
+  --_size: 3.5rem;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: white;
+}
+.player-overlay .extra { --_size: 5rem; }
+.player-overlay button i { --_size: 3.5rem; }
+.player-overlay .extra i { --_size: 5.5rem; }
+
 .player-loading-indicator {
   position: absolute;
   top: 50%;
