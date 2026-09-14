@@ -48,6 +48,24 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#currentReader = null;
     this.#params = new URLSearchParams();
     this.#e = video || this;
+    if (video) {
+      Object.defineProperties(this.#e, {
+        play:  { value: this.#play.bind(this),  writable: false },
+        pause: { value: this.#pause.bind(this), writable: false },
+        paused: { get: () => this.#paused, enumerable: true },
+        muted: { get: () => this.#muted, set: (b) => this.#setMuted(b), enumerable: true },
+        volume: { get: () => this.#volume, set: (n) => this.#setVolume(n), enumerable: true },
+        playbackRate: { get: () => this.#playbackRate, set: (n) => this.#setPlaybackRate(n), enumerable: true },
+        currentTime: { get: () => this.#currentTime, set: (n) => this.#setCurrentTime(n), enumerable: true },
+        defaultPlaybackRate: { get: () => this.#playbackRate, set: (n) => this.#setPlaybackRate(n), enumerable: true },
+        networkState: { get: () => this.#networkState, enumerable: true },
+        error: { get: () => this.#error },
+        canPlayType: { get: () => this.#canPlayType, enumerable: true },
+        src: { get: () => this.#src.href??'', set: (src) => this.#setSrc(src), enumerable: true },
+        params: { get: () => this.#params },
+        fixedCurrentTime: { get: () => this.#currentTime, enumerable: true }
+      });
+    }
     this.#initCap();
     this.#muted = this.#e.hasAttribute('muted');
     this.#detelecine = this.#e.hasAttribute('autoCinema') ? 2 : 0;
@@ -113,7 +131,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
         this.#mod = mod;
         mod.setAudioGain(this.#muted?0:this.#volume);
         mod.setDetelecineMode(this.#detelecine);
-        this.#setDeinterlace();
+        this.#updateDeinterlace();
         mod.pause();
         mod.setCaptionCallback((pts,ts,data) => this.#cap&&this.#cap.pushRawData(this.#statsTime+ts,data.slice()));
         mod.setStatsCallback(stats => {
@@ -125,11 +143,12 @@ const tsliveMixin = (Base = class {}) => class extends Base{
             this.#sameStatsCount=0;
             //statsの中身がすべて同じ状態が続くとき、最後まで再生したとみなす
           }else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
-            if(++this.#sameStatsCount>=5){
+            if(this.#done&&++this.#sameStatsCount>=5){
               this.#sameStatsCount=0;
               this.#pause();
               this.#e.dispatchEvent(new Event('ended'));
             }
+            return;
           }else{
             this.#sameStatsCount=0;
           }
@@ -186,9 +205,18 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#setSrc(`${this.#e.initSrc}&${this.params.toString()}`);
   }
   #play(){
-    this.#paused = false;
-    this.#mod.resume();
-    this.#e.dispatchEvent(new Event('play'));
+    return new Promise((resolve,reject) => {
+      try {
+        //自動再生ポリシー対策。   にならなかった。。。エラーではないため。
+        this.#mod.resume();
+        this.#paused = false;
+        this.#e.dispatchEvent(new Event('play'));
+        this.#e.dispatchEvent(new Event('playing'));
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
   #pause(){
     this.#paused = true;
@@ -233,7 +261,13 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#paused = false;
   }
   #setOption(val, isTslive, onFallback = ()=>{}){
-    if (isTslive) this.#params.set('option', val);
+    if (typeof val === 'object'){
+      if (val.deinterlace) {
+        this.#setDeinterlace(val.deinterlace, val.maxRateForDoubling);
+      }
+      val = val.id;
+    }
+    if (isTslive === undefined || isTslive) this.#params.set('option', val);
     else onFallback();
     return isTslive;
   }
@@ -255,7 +289,7 @@ const tsliveMixin = (Base = class {}) => class extends Base{
   #setPlaybackRate(n){
     if (isNaN(n)) return;
     this.#playbackRate = Number(n);
-    this.#setDeinterlace();
+    this.#updateDeinterlace();
     this.#mod.setPlaybackRate(n);
     this.#e.dispatchEvent(new Event('ratechange'));
   }
@@ -265,8 +299,13 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#detelecine = Number(n);
     this.#mod.setDetelecineMode(n);
   }
-  #setDeinterlace(){
-    if (!this.#deinterlace || !this.#mod.setDeinterlace) return;
+  #setDeinterlace(deinterlace, maxRateForDoubling){
+    this.#deinterlace = deinterlace;
+    this.#maxRateForDoubling = maxRateForDoubling || 1;
+    this.#updateDeinterlace();
+  }
+  #updateDeinterlace(){
+    if (!this.#deinterlace || !this.#mod||!this.#mod.setDeinterlace) return;
     let deinterlace = this.#deinterlace;
     if (this.#playbackRate > this.#maxRateForDoubling){
       deinterlace = deinterlace.replace("=1,","=0,").replace(/=1$/,"");
@@ -407,9 +446,9 @@ const hlsMixin = (Base = class {}) => class extends Base{
     this.#e = video || this;
     if (video){
       Object.defineProperties(this.#e, {
-        'params': {get: () => this.#params},
-        'fast': {get: () => this.#fast},
-        'fixedCurrentTime': {get: () => this.#currentTime()}
+        params: { get: () => this.#params },
+        fast: { get: () => this.#fast, enumerable: true },
+        fixedCurrentTime: { get: () => this.#currentTime(), enumerable: true }
       });
     }
     this.#initCap();
@@ -581,9 +620,10 @@ const hlsMixin = (Base = class {}) => class extends Base{
     this.#reload(onload, val);
   }
   #setOption(val, isTslive, onFallback = ()=>{}, onload){
+    if (typeof val === 'object') val = val.id;
     this.#params.set('option', val);
-    if (isTslive) onFallback();
-    else this.#reload(onload);
+    if (isTslive === undefined || !isTslive) this.#reload(onload);
+    else onFallback();
   }
   #setAudioTrack(n, onload){
     if (isNaN(n)) return;

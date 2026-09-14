@@ -1187,7 +1187,7 @@ document.addEventListener('alpine:init', () => {
     // ページ切り替え時に呼ばれる
     async loadAll() {
       // 視聴ページ以外に移動した場合は再生を停止してインスタンスを破棄
-      if (this.player.ts && !this.isPage('#watch')) {
+      if (this.player.vid && !this.isPage('#watch')) {
         this.player.destroy();
       }
 
@@ -1272,7 +1272,7 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.isPage('#watch')) {
-        if (this.player.ts) {
+        if (this.player.vid) {
           if (this.params.id) this.player.loadLive(this.params.id);
           else if (this.params.recid || this.params.rid || this.params.h) this.player.loadVideo(this.params);
         }
@@ -3125,7 +3125,6 @@ document.addEventListener('alpine:init', () => {
         return null;
       },
       vid: null,
-      ts: null,
       thumb: null,
       chap: null,
       xcode: config.xcode,
@@ -3158,15 +3157,15 @@ document.addEventListener('alpine:init', () => {
 
       // ビデオ要素と対話するためのメソッド
       loadLive(id) {
-        if (!this.ts) return;
+        if (!this.vid) return;
         this.video.setAttribute('ctok', this.app.ctok.view);
         this.live = true;
-        Alpine.raw(this.ts).reset();
-        Alpine.raw(this.ts).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
+        Alpine.raw(this.vid).reset();
+        Alpine.raw(this.vid).loadSource(`${this.app.ROOT}api/view?n=${this.set.nwtv}&id=${id}`);
         this.isLoading = true;
       },
       async loadVideo(d) {
-        if (!this.ts) return;
+        if (!this.vid) return;
         this.live = false;
         this.videoInfo = null;
 
@@ -3198,18 +3197,17 @@ document.addEventListener('alpine:init', () => {
         if (!fname && !d.recid && !d.rid) return;
 
         this.video.setAttribute('ctok', this.app.ctok.xcode);
-        const ts = Alpine.raw(this.ts);
-        ts.reset();
+        const vid = Alpine.raw(this.vid);
+        vid.reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
         if (canPlay) {
           if (this.tslive) {
             this.vid = null;
-            this.ts = null;
             this.tslive = false;
             this.canPlay = true;
             return;
           }
-          ts.destroyHls();
+          vid.destroyHls();
           fname = `${this.app.ROOT}${!this.videoInfo.public ? `api/Movie?fname=${encodeURIComponent(fname)}` : encodeURIComponent(fname).replace('%2F', '/')}`;
           this.video.src = fname;
           const meta = this.app.$refs.meta;
@@ -3223,22 +3221,21 @@ document.addEventListener('alpine:init', () => {
             this.app.$refs.meta = newMeta;
             newMeta.track.mode = 'hidden';
           }
-          ts.createCap(); // aribb24のイベントリスナーを再登録
-          ts.loadSubData();
+          vid.createCap(); // aribb24のイベントリスナーを再登録
+          vid.loadSubData();
         } else {
           if (this.canPlay){
             this.vid = null;
-            this.ts = null;
             this.tslive = true;
             this.canPlay = false;
             return;
           }
-          ts.loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
+          vid.loadSource(`${this.app.ROOT}api/xcode?${fname ? `fname=${encodeURIComponent(fname)}` : d.recid ? `recid=${d.recid}` : d.rid ? `rid=${d.rid}` : ''}&shiftable=1`);
         }
         this.isLoading = true;
       },
       reset() {
-        Alpine.raw(this.ts).reset();
+        Alpine.raw(this.vid).reset();
         if (this.chap) Alpine.raw(this.chap).reset();
         if (this.thumb) Alpine.raw(this.thumb).reset();
         if (window.location.search) history.replaceState(null, '', window.location.pathname + window.location.hash);
@@ -3253,18 +3250,17 @@ document.addEventListener('alpine:init', () => {
       },
       destroy() {
         this.reset();
-        Alpine.raw(this.ts).destroy();
+        Alpine.raw(this.vid).destroy();
         this.vid = null;
-        this.ts = null;
         this.chap = null;
         this.thumb = null;
       },
       togglePlay() {
-        if (Alpine.raw(this.vid).paused) Alpine.raw(this.vid).play();
-        else Alpine.raw(this.vid).pause();
+        if (this.video.paused) this.video.play();
+        else this.video.pause();
       },
       seek(value) {
-        Alpine.raw(this.ts).setSeek(value, () => this.isLoading = true);
+        Alpine.raw(this.vid).setSeek(value, () => this.isLoading = true);
       },
       onSeekHover(e) {
         if (!this.thumb || this.live || Object.keys(this.params).length === 0) return;
@@ -3287,21 +3283,21 @@ document.addEventListener('alpine:init', () => {
         this.$refs.thumbWrapper.classList.add('hidden');
       },
       setVolume(value) {
-        Alpine.raw(this.vid).volume = parseFloat(value);
-        Alpine.raw(this.vid).muted = this.set.volume === 0;
+        this.video.volume = parseFloat(value);
+        this.video.muted = this.set.volume === 0;
       },
       toggleMute() {
-        Alpine.raw(this.vid).muted = !this.set.isMuted;
+        this.video.muted = !this.set.isMuted;
       },
       toggleDatacast() {
-        this.set.datacast = Alpine.raw(this.ts).toggleDatacast();
+        this.set.datacast = Alpine.raw(this.vid).toggleDatacast();
       },
       toggleCap() {
         this.set.cap = !this.set.cap;
-        this.set.cap ? Alpine.raw(this.ts).cap.show() : Alpine.raw(this.ts).cap.hide();
+        this.set.cap ? Alpine.raw(this.vid).cap.show() : Alpine.raw(this.vid).cap.hide();
       },
       toggleJikkyo() {
-        this.set.jikkyo = Alpine.raw(this.ts).toggleJikkyo();
+        this.set.jikkyo = Alpine.raw(this.vid).toggleJikkyo();
       },
       prevChap(){
         Alpine.raw(this.chap).navigate(false);
@@ -3373,7 +3369,7 @@ document.addEventListener('alpine:init', () => {
       },
       setAudioTrack(track) {
         this.track = track;
-        Alpine.raw(this.ts).setAudioTrack(track, () => this.isLoading = true);
+        Alpine.raw(this.vid).setAudioTrack(track, () => this.isLoading = true);
       },
       get audioTrackLabels() {
         const audioList = this.epg?.audioInfoList;
@@ -3401,16 +3397,16 @@ document.addEventListener('alpine:init', () => {
       },
       setPlaybackRate(rate, i) {
         this.playbackRate = rate;
-        Alpine.raw(this.ts).setFast(rate, i, () => this.isLoading = true);
+        Alpine.raw(this.vid).setFast(rate, i, () => this.isLoading = true);
       },
       setQuality(v) {
         this.set.quality = v.id;
         this.tslive = v.tslive;
-        Alpine.raw(this.ts).setOption(v.id, v.tslive, () => { }, () => this.isLoading = true);
+        Alpine.raw(this.vid).setOption(v, v.tslive, () => { }, () => this.isLoading = true);
       },
       setDetelecine() {
         this.cinema = !this.cinema;
-        Alpine.raw(this.ts).setDetelecine(this.cinema, () => this.isLoading = true);
+        Alpine.raw(this.vid).setDetelecine(this.cinema, () => this.isLoading = true);
       },
       toggleSidePanel() {
         this.showSidePanel = !this.showSidePanel;
@@ -3476,10 +3472,7 @@ document.addEventListener('alpine:init', () => {
       videoInit(video) {
         this.$nextTick(() => {
           this.video = video;
-          const vid = this.tslive ? new TsLiveDatacast(video) : video;
-          const ts = this.tslive ? vid : new HlsDatacast(video);
-          this.vid = vid;
-          this.ts = ts;
+          const vid = this.vid = this.tslive ? new TsLiveDatacast(video) : new HlsDatacast(video);
 
           video.volume = this.set.volume;
           video.muted = this.set.isMuted;
@@ -3490,7 +3483,7 @@ document.addEventListener('alpine:init', () => {
             if (this.live) {
               this.currentTime = this.app.getElapsedTime(this.epg);
             } else {
-              this.currentTime = ts.fixedCurrentTime || vid.currentTime;
+              this.currentTime = video.fixedCurrentTime || video.currentTime;
             }
           });
           video.addEventListener('volumechange', () => { this.set.volume = video.volume; this.set.isMuted = video.muted; });
@@ -3519,16 +3512,16 @@ document.addEventListener('alpine:init', () => {
           video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
           this.sideTab = this.live ? 'service' : 'info';
-          ts.setOption(this.set.quality);
-          if (ts.cap && !this.set.cap) ts.cap.hide();
-          if (ts.jikkyo) {
-            ts.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
-            ts.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
-            ts.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
-            ts.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
+          vid.setOption(this.xcode.find(v => v.id === this.set.quality) || this.set.quality);
+          if (vid.cap && !this.set.cap) vid.cap.hide();
+          if (vid.jikkyo) {
+            vid.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
+            vid.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
+            vid.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
+            vid.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
           }
 
-          ts.toggleDatacast(this.set.datacast);
+          vid.toggleDatacast(this.set.datacast);
 
           if (this.params.id) this.loadLive(this.params.id);
           else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);

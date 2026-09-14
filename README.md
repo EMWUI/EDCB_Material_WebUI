@@ -79,21 +79,31 @@ EDCBの基本的な操作に加え、リモート視聴などの機能を提供�
    * `HttpAccessControlList=+127.0.0.1,+192.168.0.0/16`
    * `HttpPort=5510,5520,5511s,5521s`
    * `HttpNumThreads=50`
+
 > [!TIP]
 > SSEの仕様により、表示ごとにCivetWebのスレッドを1つ常に消費します。  
 > `HttpNumThreads`がデフォルトの`5`の場合、複数のタブで開いた場合などで応答なしとなる事があります。  
 > デバイスの性能や同時アクセス数に合わせて`HttpNumThreads`を適切な値に調整してください。  
+
 ### 5. http://localhost:5510/ や https://localhost:5511/ にアクセスし、サーバー機能とHTTPSが有効か確認  
 > [!TIP]
 > うまく行かない場合はEDCBの設定を見直してください
-### 6. `HttpPublic.ini`での設定
-   * `useSsePort=1`に変更しSSE専用ポートの使用を有効にし、 https://localhost:5521/ でのアクセスが可能か確認
-   * その他必要に応じて設定
+
+### 6. SSE専用ポートの使用を有効に
+   * [ポート:5521](https://localhost:5521/) でのアクセスが可能か確認し、問題なければ[設定ページ](https://localhost:5511/E3/index.html#setting)の`SSE専用ポートを使用する`を有効に
+   * 他の項目は必要に応じて設定
+
+> [!NOTE]
+> 初期設定では、設定ページでの変更は、ローカルホストでのアクセス時のみ有効になります。  
+> 他のデバイスからの場合は、`HttpPublic.ini`を直接編集して設定してください。  
+> また、`ALLOW_SETTING_LIST`にアクセス元のIPアドレスを追加することで設定ページからの変更が可能になります。
+
 > [!TIP]
 > SSEの仕様により、ブラウザの同一オリジンに対する同時接続数制限(通常6～8接続)の1つを消費します。  
 > レスポンスに影響が出る場合があるため、回避策としてSSE接続を専用ポートで実施します。     
 > 設定が有効の場合、SSE接続はメインのポートに設定されたポート番号に`+10`したポート番号で確立されます。  
 > 例: メインポートが`5510`の場合、SSEは`5520`で接続を試みます  
+
 ### 7. リモート視聴する場合
    * EpgDataCap_Bonなどのネットワーク設定でTCP送信先にSrvPipeを追加
    * `XCODE_OPTIONS.lua`でトランスコード用プリセットを設定
@@ -140,14 +150,6 @@ EDCBの基本的な操作に加え、リモート視聴などの機能を提供�
 > **Firefox**と**Safari**では回線による切り替えができません。  
 > 判定に必要な`navigator.connection`が利用できないため、有効時は回線に関係なく自動更新がOFFになります。
 
-## 不具合、改善点
-
-> [!IMPORTANT]
-> TS-Live!の対応について  
-> 動的に生成されるcanvas要素をTS-Live!が認識できない問題があります。  
-> web-bmlのように再読み込みによる力業で実装できると期待していましたがそれも難しいようです。  
-> もし、これらを回避して実装できる方法や、TS-Live!の修正などができる方がいましたら力を貸してください。
-
 ## 使用フレームワーク及びライセンス
 
 本プロジェクトでは以下のオープンソースライブラリを利用しています。
@@ -160,7 +162,7 @@ EDCBの基本的な操作に加え、リモート視聴などの機能を提供�
 *   [aribb24.js](https://github.com/monyone/aribb24.js) - MIT License
 *   [danmaku.js](https://github.com/DIYgod/DPlayer) - MIT License
 *   [web-bml](https://github.com/otya128/web-bml) - MIT License
-*   [TS-Live!](https://github.com/ts-live/ts-live) - MIT License
+*   [TS-Live!](https://github.com/xtne6f/ts-live) - MIT License
 
 ## SpecialThanks
 

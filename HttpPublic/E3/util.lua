@@ -1,5 +1,5 @@
-app='260911'
-tsloader='260911'
+app='260914'
+tsloader='260914'
 beer='5.0.3'
 mdc='1.1.4'
 alpine='3.15.12'
@@ -57,7 +57,7 @@ function GetAppConfig()
   local xcode={}
   for i, v in ipairs(XCODE_OPTIONS) do
     if v.tslive or not ALLOW_HLS or not ALWAYS_USE_HLS or v.outputHls then
-      local s=v.tslive and string.format(',tslive:true,autoCinema:%s,deinterlace:\'%s\'', v.autoCinema and 'true' or 'false', v.deinterlace) or ''
+      local s=v.tslive and string.format(',tslive:true,autoCinema:%s,deinterlace:\'%s\'%s', v.autoCinema and 'true' or 'false', v.deinterlace, v.maxRateForDoubling and ',maxRateForDoubling:'..v.maxRateForDoubling or '') or ''
       table.insert(xcode, string.format('{id:%d,name:\'%s\'%s}', i, v.name, s))
     end
   end
