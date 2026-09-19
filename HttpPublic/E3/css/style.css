@@ -148,6 +148,45 @@ fieldset, :is(nav,.row):not(.wrap)>.max { min-width: 0; }
 article.small-width { inline-size: 15rem!important; overflow: hidden; }
 article.small-width+button { align-self: center; }
 
+.scroll-button {
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  anchor-name: --my-carousel;
+  position: relative;
+}
+.scroll-button::scroll-button(*) {
+  border: 0;
+  width: 3rem;
+  height: anchor-size(height);
+  font-family: var(--font-icon);
+  font-size: 2rem;
+  background: var(--surface-container-highest);
+  color: var(--primary);
+  border-radius: 2rem;
+  opacity: 0;
+  cursor: pointer;
+  position: absolute;
+  position-anchor: --my-carousel;
+  align-self: anchor-center;
+  transition: transform var(--speed1);
+}
+.scroll-button:is(:hover, :focus-visible)::scroll-button(*) { opacity: 0.8; }
+.scroll-button::scroll-button(*):is(:hover, :focus-visible) { opacity: 0.9; }
+.scroll-button::scroll-button(*):active { transform: scale(1.1); }
+.scroll-button::scroll-button(*):disabled {
+  opacity: 0;
+  visibility: hidden;
+}
+.scroll-button::scroll-button(left) {
+  content: "chevron_left";
+  right: calc(anchor(left) - 3.5rem);
+}
+.scroll-button::scroll-button(right) {
+  content: "chevron_right";
+  left: calc(anchor(right) - 3.5rem);
+}
 
 /* ジャンルごとの Hue(色相) と Chroma(彩度) の定義 */
 /* 旧 */

@@ -1,5 +1,5 @@
-app='260914'
-tsloader='260914'
+app='260918'
+tsloader='260918'
 beer='5.0.3'
 mdc='1.1.4'
 alpine='3.15.12'
@@ -22,7 +22,7 @@ dofile(mg.document_root:gsub('['..DIR_SEPS..']*$',DIR_SEP)..'api'..DIR_SEP..'uti
 function GetAppConfig()
   local ctok={}
   for i,v in ipairs({'common','settings','setreserve','setautoadd','setmanuadd','setrecinfo','searchevent','view','xcode','comment'}) do
-    ctok[#ctok+1]=string.format('%s: \'%s\'',v,CsrfToken(v))
+    table.insert(ctok, string.format('%s: \'%s\'',v,CsrfToken(v)))
   end
 
   local minTime, maxTime = nil, nil

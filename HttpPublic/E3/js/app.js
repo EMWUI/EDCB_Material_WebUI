@@ -2730,7 +2730,9 @@ document.addEventListener('alpine:init', () => {
         const fd = new URLSearchParams({
           andKey: `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`,
           regExpFlag: 1,
-          titleOnlyFlag: 1
+          titleOnlyFlag: 1,
+          contentList: 519,
+          notContetFlag: 1
         });
         this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
         const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', silent);
