@@ -109,7 +109,7 @@ for i, v in ipairs(navList) do
   -- PC用サイドバー
   link=link..(v.space and '    <div class="max"></div>\n' or string.format([[
     <a href='%s' :class="page === '%s' ? 'active' : ''">
-      <i>%s</i><span x-show="!set.sidebar">%s</span><span x-show="set.sidebar">%s</span>
+      <i>%s</i><span x-show="!sets.sidebar">%s</span><span x-show="sets.sidebar">%s</span>
     </a>
 ]], v.hash, v.hash, v.icon, v.title, v.full or v.title))
 
@@ -133,8 +133,8 @@ for i, v in ipairs(navList) do
 end
 
 function GetCredit(sidebar)
-  return [=[    <hr class="medium"]=]..(sidebar and ' x-show="set.sidebar"' or '') .. [=[>
-    <div class="horizontal-padding"]=]..(sidebar and ' x-show="set.sidebar"' or '') .. [=[>
+  return [=[    <hr class="medium"]=]..(sidebar and ' x-show="sets.sidebar"' or '') .. [=[>
+    <div class="horizontal-padding"]=]..(sidebar and ' x-show="sets.sidebar"' or '') .. [=[>
       <nav class="no-space">
         <span class="right-margin small-margin"><i class="small right-margin tiny-margin">copyright</i><span>EMWUI</span></span>
         <a class="button transparent circle tiny" href="https://github.com/EMWUI/EDCB_Material_WebUI" target="_blank" rel="noreferrer"><i class="link tiny">feedback</i></a>
@@ -152,7 +152,7 @@ function GetServiceOption()
   local s=''
   for i,v in ipairs(SortServiceListInplace(SelectChDataList(edcb.GetChDataList()))) do
     s=s..string.format([[
-      <option value="%d-%d-%d"%s x-show="%s || set.oneseg">(%s)%s
+      <option value="%d-%d-%d"%s x-show="%s || sets.oneseg">(%s)%s
 ]],v.onid, v.tsid, v.sid, (v.searchFlag and ' class="def"' or ''), not v.partialFlag, NetworkType()[NetworkIndex(v.onid, v.partialFlag, true)], v.serviceName)
   end
   return s

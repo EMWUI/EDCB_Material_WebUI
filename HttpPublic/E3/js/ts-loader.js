@@ -48,7 +48,9 @@ const tsliveMixin = (Base = class {}) => class extends Base{
     this.#currentReader = null;
     this.#params = new URLSearchParams();
     this.#e = video || this;
+    // canvasのHTMLMediaElement化、is属性によるカスタム要素は不要に
     if (video) {
+      // 主要なプロパティの実装 ※イベントの実装はまだまだ足りない
       Object.defineProperties(this.#e, {
         play:  { value: this.#play.bind(this),  writable: false },
         pause: { value: this.#pause.bind(this), writable: false },
@@ -145,8 +147,9 @@ const tsliveMixin = (Base = class {}) => class extends Base{
           }else if(stats.slice(1).every(e=>Object.keys(e).every(key=>stats[0][key]==e[key]))){
             if(this.#done&&++this.#sameStatsCount>=5){
               this.#sameStatsCount=0;
-              this.#pause();
-              this.#e.dispatchEvent(new Event('ended'));
+              //ts-live.jsのアップデートで開始時などにも呼び出されるようになったので無効化
+              //this.#pause();
+              //this.#e.dispatchEvent(new Event('ended'));
             }
             return;
           }else{
@@ -1767,7 +1770,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
       this.#psc.readTimer=0;
       bmlBrowserSetInvisible(true);
       if (this.#elems.indicator) this.#elems.indicator.innerText = '';
-      if(this.#psc.ctrl){
+      if (this.#psc.ctrl){
         this.#psc.ctrl.abort();
         this.#psc.ctrl=null;
       }

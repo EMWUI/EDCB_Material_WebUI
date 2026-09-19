@@ -37,7 +37,7 @@ th,td { white-space: nowrap; }
 .ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: nowrap !important;
 }
 
 :is(button, .button).tiny {
@@ -125,6 +125,7 @@ label[for] { cursor: pointer; }
   border-radius: 3px;
   vertical-align: top;
 }
+h6 .mark { vertical-align: text-top; }
 .mark.enabled {
   background: var(--error);
   color: var(--error-container);
@@ -323,19 +324,18 @@ article.small-width+button { align-self: center; }
 #player-wrapper > div { height: 100%; }
 #player {
   position: relative;
-  width: 100%;
+  width: 0;
   height: 100%;
   background-color: black;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-shrink: 1;
+  flex: 1;
   cursor: none;
 }
 .isPortrait #player {
-  height: auto;
+  width: 100%;
   aspect-ratio: 16/9;
-  flex-shrink: 0;
 }
 
 #player-UI {
@@ -367,17 +367,17 @@ article.small-width+button { align-self: center; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
 }
-.player-overlay nav { justify-content: center; }
-.player-overlay button { 
-  --_size: 3.5rem;
+.controls { 
+  justify-content: center;
+  flex: 1;
+}
+.controls button { 
   background-color: rgba(0, 0, 0, 0.35);
   color: white;
 }
-.player-overlay .extra { --_size: 5rem; }
-.player-overlay button i { --_size: 3.5rem; }
-.player-overlay .extra i { --_size: 5.5rem; }
+.controls button i { --_size: 3.5rem; }
 
 .player-loading-indicator {
   position: absolute;

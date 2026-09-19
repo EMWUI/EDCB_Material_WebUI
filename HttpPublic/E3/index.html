@@ -32,10 +32,10 @@ ct:Append([=[
 </head>
 
 <body class="dark" x-data="edcbApp(]=]..GetAppConfig()..[=[)" :class="{ isSmallScreen: isSmallScreen, isPortrait: isPortrait }">
-  <nav class="m l surface-container left scroll" :class="{ 'max': set.sidebar }">
+  <nav class="m l surface-container left scroll" :class="{ 'max': sets.sidebar }">
     <header>
-      <button class="extra circle transparent" @click="set.sidebar = !set.sidebar">
-        <i x-text="set.sidebar ? 'menu_open' : 'menu'"></i>
+      <button class="extra circle transparent" @click="sets.sidebar = !sets.sidebar">
+        <i x-text="sets.sidebar ? 'menu_open' : 'menu'"></i>
       </button>
     </header>
 ]=]..link
@@ -497,7 +497,7 @@ ct:Append([=[
             </button>
           </h6>
 
-          <div class="grid">
+          <div class="grid margin">
             <template x-for="drive in storage" :key="drive.name">
               <div class="s12 m6">
                 <div class="card round border padding no-shadow">
@@ -705,10 +705,10 @@ ct:Append([=[
 
     <template x-if="isPage('#watch')" x-data="player">
       <div id="player-wrapper" class="absolute">
-        <div :class="isPortrait ? 'vertical no-space' : 'row no-wrap'" x-ref="playerWrapper">
+        <div :class="isPortrait ? 'vertical no-space' : `row no-wrap${isFullscreen ? ' no-space' : ''}`" x-ref="playerWrapper">
           <div id="player" class="dark" x-ref="player"
-               @pointermove="showControls(); resetControlTimeout()"
-               @touchstart="showControls(); resetControlTimeout()"
+               @pointermove="resetControlTimeout()"
+               @pointerdown="resetControlTimeout()"
                @mouseleave="hideControls()">
             <div class="remote-control-status-container contents">
               <div class="remote-control-status remote-control-receiving-status" style="display: none;">データ取得中...</div>
@@ -719,69 +719,31 @@ ct:Append([=[
             </div>
             <div id="danmaku-container"></div>
             <div id="player-UI" class="visible" :class="{ 'visible': !isPlaying || controlsVisible || showSettingsMenu }">
-              <div class="player-overlay-top row m l">
-                <h6 class="title text-overflow" x-html="convert.title(epg?.shortInfo?.event_name)" x-show="isFullscreen"></h6>
-                <div class="max"></div>
-                <button class="circle transparent" @click="toggleSidePanel()" x-show="!isPortrait && !isFullscreen" x-init="showSidePanel = !epg && !params.h">
+              <div class="player-overlay-top row">
+                <h6 class="max ellipsis medium-line" x-html="convert.title(epg?.shortInfo?.event_name)" x-show="isFullscreen"></h6>
+                <div class="max" x-show="!isFullscreen"></div>
+                <button class="circle transparent" @click="toggleSidePanel()" x-init="showSidePanel = isPortrait || !epg && !params.h">
                   <i x-text="showSidePanel ? 'view_sidebar' : 'side_navigation'">view_sidebar</i>
                 </button>
               </div>
 
-              <div class="player-overlay s">
-                <nav>
-                  <button class="circle" @click="prevChap()" x-show="!live">
+              <div class="player-overlay">
+                <nav class="controls" x-show="isMobile" @pointerdown.stop="hideControls()" @pointermove.stop>
+                  <button class="circle" @pointerdown.stop="prevChap()" x-show="!live">
                     <i class="fill">arrow_left</i>
                   </button>
-                  <button class="circle extra" @click="togglePlay()">
+                  <button class="circle extra" @pointerdown.stop="togglePlay()">
                     <i class="fill" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
                   </button>
-                  <button class="circle" @click="nextChap()" x-show="!live">
+                  <button class="circle" @pointerdown.stop="nextChap()" x-show="!live">
                     <i class="fill">arrow_right</i>
                   </button>
                 </nav>
+                <div class="controls" @click="togglePlay()" x-show="!isMobile"></div>
+                <div class="absolute right bottom horizontal-margin large-opacity" x-ref="remoconInPlayer"></div>
               </div>
 
-              <div class="player-control-bar" x-ref="remoteDesktop">
-                <div x-show="set.datacast" x-ref="remocon" x-init="remoconInit()" class="remote-control padding small-padding middle-align center-align" :class="{ 'large-opacity': !isPortrait }">
-                  <nav class="vertical tiny-space" x-data="{ active: false }">
-                    <nav class="center-align">
-                      <button id="key21" class="blue10 circle"></button>
-                      <button id="key22" class="red10 circle"></button>
-                      <button id="key23" class="green10 circle"></button>
-                      <button id="key24" class="yellow10 circle"></button>
-                    </nav>
-                    <nav class="center-align tiny-space">
-                      <button id="key1" class="secondary circle"><i>north</i></button>
-                      <button id="key3" class="secondary circle"><i>west</i></button>
-                      <button id="key18" class="primary circle extra"><i class="fill">circle</i></button>
-                      <button id="key4" class="secondary circle"><i>east</i></button>
-                      <button id="key2" class="secondary circle"><i>south</i></button>
-                      <button id="key20" class="secondary circle"><i>d</i></button>
-                      <button id="key19" class="secondary circle"><i>subdirectory_arrow_left</i></button>
-                      <i class="toggleNum" @click="active = !active">123</i>
-                    </nav>
-                    <nav class="wrap center-align tiny-space" x-show="active">
-                      <nav class="center-align tiny-space">
-                        <button id="key6" class="secondary circle">1</button>
-                        <button id="key7" class="secondary circle">2</button>
-                        <button id="key8" class="secondary circle">3</button>
-                        <button id="key9" class="secondary circle">4</button>
-                        <button id="key10" class="secondary circle">5</button>
-                        <button id="key11" class="secondary circle">6</button>
-                      </nav>
-                      <nav class="center-align tiny-space">
-                        <button id="key12" class="secondary circle">7</button>
-                        <button id="key13" class="secondary circle">8</button>
-                        <button id="key14" class="secondary circle">9</button>
-                        <button id="key15" class="secondary circle">10</button>
-                        <button id="key16" class="secondary circle">11</button>
-                        <button id="key17" class="secondary circle">12</button>
-                        <button id="key5" class="secondary circle">0</button>
-                      </nav>
-                    </nav>
-                  </nav>
-                </div>
-
+              <div class="player-control-bar">
                 <div class="field middle-align prefix suffix">
                   <nav>
                     <span class="tiny-text" x-text="formatTime(currentTime)"></span>
@@ -809,13 +771,13 @@ ct:Append([=[
                   <button class="circle transparent" @click="reset()">
                     <i class="fill extra">stop</i>
                   </button>
-                  <button id="prevChap" class="circle transparent tiny m l" x-show="!live">
+                  <button id="prevChap" class="circle transparent tiny" x-show="!live && !isMobile">
                     <i class="fill">arrow_left</i>
                   </button>
-                  <button class="circle transparent m l" @click="togglePlay()">
+                  <button class="circle transparent" @click="togglePlay()">
                     <i class="fill extra" x-text="isPlaying ? 'pause' : 'play_arrow'"></i>
                   </button>
-                  <button id="nextChap" class="circle transparent tiny m l" x-show="!live">
+                  <button id="nextChap" class="circle transparent tiny" x-show="!live && !isMobile">
                     <i class="fill">arrow_right</i>
                   </button>
 
@@ -845,7 +807,7 @@ ct:Append([=[
                     <button class="circle transparent">
                       <i class="large">settings</i>
                     </button>
-                    <menu class="top left" :class="{ top: !isPortrait || isFullscreen }">
+                    <menu class="top left" :class="{ top: !isPortrait || !showSidePanel }">
                       <li>
                         <i>music_note</i>
                         <span>音声</span>
@@ -876,7 +838,7 @@ ct:Append([=[
                     </menu>
                   </div>
 
-                  <button class="circle transparent" @click="togglePiP()" x-show="document.pictureInPictureEnabled" :disabled="tslive">
+                  <button class="circle transparent" @click="togglePiP()" x-show="document.pictureInPictureEnabled && !tslive || 'documentPictureInPicture' in window">
                     <i class="large" x-text="isPiP ? 'pip_exit' : 'picture_in_picture'"></i>
                   </button>
                   <button class="circle transparent" @click="toggleFullscreen()">
@@ -884,39 +846,38 @@ ct:Append([=[
                   </button>
                 </nav>
               </div>
-
             </div>
             <div class="player-loading-indicator" x-show="isLoading">
               <progress class="circle large"></progress>
             </div>
             <template x-if="!tslive">
-              <div class="arib-video-invisible-container contents">
+              <div class="arib-video-invisible-container contents" x-init="videoInit()">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <video id="video"]=]..GetPlayerOption()..[=[ x-init="videoInit($el)" x-ref="video">
+                  <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video">
                     <track id="vid-meta" x-ref="meta" kind="metadata" type="text/vtt">
                   </video>
                 </div>
               </div>
             </template>
             <template x-if="tslive">
-              <div class="arib-video-invisible-container contents">
+              <div class="arib-video-invisible-container contents" x-init="videoInit()">
                 <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
-                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-init="videoInit($el)" x-ref="video"></canvas>
+                  <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video"></canvas>
                 </div>
               </div>
             </template>
           </div>
-          <div id="sideTab" class="surface-container-high vertical" x-show="isPortrait || showSidePanel">
+          <div id="sideTab" class="surface-container-high vertical" x-show="showSidePanel">
             <div class="tabs min" :class="isPortrait ? 'bottom': 'top'">
               <a :class="isSideTab('info')" @click="setSideTab('info')"><i>info</i><span>詳細</span></a>
               <a :class="isSideTab('service')" @click="setSideTab('service')"><i>cell_tower</i><span>選局</span></a>
               <a :class="isSideTab('library')" @click="setSideTab('library')" x-show="library.data.file.length > 0"><i>video_library</i><span>ビデオ</span></a>
               <a :class="isSideTab('jikkyo')" @click="setSideTab('jikkyo')"><i>mic</i><span>実況</span></a>
             </div>
-            <div class="page scroll vertical" :class="isSideTab('info')" x-ref="remoteMobile">
+            <div class="page scroll vertical" :class="isSideTab('info')" x-ref="remoconInSidePanel">
               <template x-if="epg">
                 <div class="padding">
-                  <h6 class="bold" x-html="convert.title(epg.shortInfo?.event_name || epg.title || '番組情報なし')"></h6>
+                  <h6 class="bold medium-line" x-html="convert.title(epg.shortInfo?.event_name || epg.title || '番組情報なし')"></h6>
                   <nav class="row small-round" x-show="!epg.isDummy">
                     <img class="border" :src="getLogoPath(epg)">
                     <div class="max">
@@ -933,6 +894,51 @@ ct:Append([=[
                   <p class="bold tiny-line" x-html="convert.text(epg.shortInfo?.text_char || '')"></p>
                 </div>
               </template>
+              <div class="max"></div>
+              <div x-show="set.datacast"class="remote-control padding small-padding middle-align center-align" x-ref="remocon" x-init="remoconInit()" >
+                <nav class="vertical tiny-space" x-data="{ active: false }">
+                  <nav class="center-align">
+                    <button id="key21" class="blue8 circle"></button>
+                    <button id="key22" class="red8 circle"></button>
+                    <button id="key23" class="green8 circle"></button>
+                    <button id="key24" class="yellow8 circle"></button>
+                  </nav>
+                  <nav class="center-align tiny-space" :class="{ vertical: !showSidePanel }">
+                    <nav class="center-align tiny-space">
+                      <button id="key1" class="secondary circle"><i>keyboard_arrow_up</i></button>
+                      <button id="key3" class="secondary circle"><i>keyboard_arrow_left</i></button>
+                      <button id="key18" class="primary circle extra"><i class="fill">circle</i></button>
+                      <button id="key4" class="secondary circle"><i>keyboard_arrow_right</i></button>
+                      <button id="key2" class="secondary circle"><i>keyboard_arrow_down</i></button>
+                    </nav>
+                    <nav class="center-align tiny-space">
+                      <button id="key20" class="secondary circle" :class="{ circle: showSidePanel }"><i>d</i></button>
+                      <button id="key19" class="secondary circle" :class="{ circle: showSidePanel }"><i>keyboard_return</i></button>
+                      <i class="toggleNum" @click="active = !active" x-show="showSidePanel">123</i>
+                    </nav>
+                  </nav>
+                  <nav class="wrap center-align tiny-space" :class="{ vertical: !showSidePanel }" x-show="active">
+                    <nav class="center-align tiny-space">
+                      <button id="key6" class="secondary circle">1</button>
+                      <button id="key7" class="secondary circle">2</button>
+                      <button id="key8" class="secondary circle">3</button>
+                      <button id="key9" class="secondary circle">4</button>
+                      <button id="key10" class="secondary circle">5</button>
+                      <button id="key11" class="secondary circle">6</button>
+                    </nav>
+                    <nav class="center-align tiny-space">
+                      <button id="key12" class="secondary circle">7</button>
+                      <button id="key13" class="secondary circle">8</button>
+                      <button id="key14" class="secondary circle">9</button>
+                      <button id="key15" class="secondary circle">10</button>
+                      <button id="key16" class="secondary circle">11</button>
+                      <button id="key17" class="secondary circle">12</button>
+                      <button id="key5" class="secondary circle">0</button>
+                    </nav>
+                  </nav>
+                  <div class="remote-control-indicator" x-show="showSidePanel"></div>
+                </nav>
+              </div>
             </div>
             <div class="page scroll" :class="isSideTab('service')" x-data="{ sideNetwork: 1 }">
               <div class="scroll">
@@ -4374,7 +4380,7 @@ ct:Append([=[
                       <template x-if="getGenre({ content_nibble: (i << 8) | 0xFF }).name1">
                         <template x-for="j in [255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]" :key="j">
                           <template x-if="j === 255 || getGenre({ content_nibble: (i << 8) | j }).name2">
-                            <option :value="(i << 8) | j" x-show="(j === 255) ? (set.genreMask & (1 << idx)) : (set.subGenre && (set.genreMask & (1 << idx)))" x-text="(j === 255) ? getGenre({ content_nibble: (i << 8) | j }).name1 : '　' + getGenre({ content_nibble: (i << 8) | j }).name2"></option>
+                            <option :value="(i << 8) | j" x-show="(j === 255) ? (sets.genreMask & (1 << idx)) : (sets.subGenre && (sets.genreMask & (1 << idx)))" x-text="(j === 255) ? getGenre({ content_nibble: (i << 8) | j }).name1 : '　' + getGenre({ content_nibble: (i << 8) | j }).name2"></option>
                           </template>
                         </template>
                       </template>
@@ -4973,7 +4979,7 @@ ct:Append([=[
         <button type="button" class="primary" @click="saveEntry();if(isNewEntry)close();" x-show="!isMode('recinfo','search')"><i x-text="isNewEntry ? 'add' : 'save'">save</i><span x-text="isNewEntry ? '追加' : '変更'">変更</span></button>
         <button type="button" class="primary" @click="searchEvent()" x-show="isMode('search')"><i>search</i><span>検索</span></button>
         <div class="max"></div>
-        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isMode('recinfo') || set.RecinfoDel"><i>delete</i><span>削除</span></button>
+        <button type="button" class="border" @click="delEntry();close();" x-show="!isNewEntry && !isMode('recinfo') || sets.RecinfoDel"><i>delete</i><span>削除</span></button>
      </nav>
     </footer>
   </dialog>
@@ -4998,14 +5004,14 @@ ct:Append([=[
         <button class="circle">
           <i>palette</i>
         </button>
-        <input type="color" :value="set.theme"
+        <input type="color" :value="sets.theme"
                @change="setThemeColor($el.value)" @click="handleThemeClick($event)"
                @pointerdown="startThemeResetTimer()" @pointerup="clearThemeResetTimer()"
                @pointerleave="clearThemeResetTimer()" @pointercancel="clearThemeResetTimer()">
         <span class="tooltip bottom">長押しで初期化</span>
       </span>
       <button class="circle border" @click="toggleDarkMode()">
-        <i x-text="set.mode === 'auto' ? 'brightness_auto' : (set.mode === 'light' ? 'light_mode' : 'dark_mode')"></i>
+        <i x-text="sets.mode === 'auto' ? 'brightness_auto' : (sets.mode === 'light' ? 'light_mode' : 'dark_mode')"></i>
       </button>
     </nav>
     <hr class="medium">
@@ -5030,8 +5036,8 @@ ct:Append([=[
     </div>
     <hr class="medium">
     <div class="grid">
-      <button class="s6 l3 vertical small" :class="{ 'fill': !set.dataSaver }" @click="set.dataSaver = !set.dataSaver">
-        <i class="responsive" x-text="set.dataSaver ? 'data_saver_on' : 'data_usage'">data_usage</i>
+      <button class="s6 l3 vertical small" :class="{ 'fill': !sets.dataSaver }" @click="sets.dataSaver = !sets.dataSaver">
+        <i class="responsive" x-text="sets.dataSaver ? 'data_saver_on' : 'data_usage'">data_usage</i>
         <span>データセーバー</span>
       </button>
       <button class="s6 l3 vertical small" @click="getData()">
@@ -5051,7 +5057,7 @@ ct:Append([=[
     </div>
     <hr class="medium">
 
-    <template x-if="isPage('#reserve','#tunerreserve','#autoaddepg','#autoaddmanual','#recinfo','#search','#library')" x-data="set.view">
+    <template x-if="isPage('#reserve','#tunerreserve','#autoaddepg','#autoaddmanual','#recinfo','#search','#library')" x-data="sets.view">
       <div class="field">
         <nav>
           <div class="max">
@@ -5148,7 +5154,7 @@ ct:Append([=[
       <nav>
         <div class="max"><h6><label class="large-text" for="set-subCh">サブチャンネル</label></h6></div>
         <label class="switch">
-          <input type="checkbox" id="set-subCh" x-model="set.subCh">
+          <input type="checkbox" id="set-subCh" x-model="sets.subCh">
           <span></span>
         </label>
       </nav>
@@ -5157,7 +5163,7 @@ ct:Append([=[
       <nav>
         <div class="max"><h6><label class="large-text" for="set-oneseg">ワンセグ</label></h6></div>
         <label class="switch">
-          <input type="checkbox" id="set-oneseg" x-model="set.oneseg">
+          <input type="checkbox" id="set-oneseg" x-model="sets.oneseg">
           <span></span>
         </label>
       </nav>
@@ -5169,7 +5175,7 @@ ct:Append([=[
           <nav>
             <div class="max"><h6><label class="large-text" for="set-epg-hover">ホバーでポップアップ</label></h6></div>
             <label class="switch">
-              <input type="checkbox" id="set-epg-hover" x-model="set.epg.hover">
+              <input type="checkbox" id="set-epg-hover" x-model="sets.epg.hover">
               <span></span>
             </label>
           </nav>
@@ -5178,9 +5184,9 @@ ct:Append([=[
           <legend>背景</legend>
           <div class="field">
             <nav class="group connected fill scroll">
-              <button class="left-round" :class="{ active: set.epg.bg === 'bar' }" @click="set.epg.bg = 'bar'"><i x-show="set.epg.bg === 'bar'">check</i></i><span>シンプル</span></button>
-              <button :class="{ active: set.epg.bg === '' }" @click="set.epg.bg = ''"><i x-show="set.epg.bg === ''">check</i><span>モダン</span></button>
-              <button class="right-round" :class="{ active: set.epg.bg === 'paint' }" @click="set.epg.bg = 'paint'"><i x-show="set.epg.bg === 'paint'">check</i></i><span>クラシック</span></button>
+              <button class="left-round" :class="{ active: sets.epg.bg === 'bar' }" @click="sets.epg.bg = 'bar'"><i x-show="sets.epg.bg === 'bar'">check</i></i><span>シンプル</span></button>
+              <button :class="{ active: sets.epg.bg === '' }" @click="sets.epg.bg = ''"><i x-show="sets.epg.bg === ''">check</i><span>モダン</span></button>
+              <button class="right-round" :class="{ active: sets.epg.bg === 'paint' }" @click="sets.epg.bg = 'paint'"><i x-show="sets.epg.bg === 'paint'">check</i></i><span>クラシック</span></button>
             </nav>
           </div>
         </fieldset>
@@ -5189,10 +5195,10 @@ ct:Append([=[
           <div class="field middle-align suffix">
             <nav>
               <div class="slider">
-                <input type="range" min="1" max="10" step="0.1" x-model.number="set.epg.minHeight">
+                <input type="range" min="1" max="10" step="0.1" x-model.number="sets.epg.minHeight">
                 <span></span>
               </div>
-              <h6 x-text="set.epg.minHeight" style="min-width: 2em; text-align: right;"></h6>
+              <h6 x-text="sets.epg.minHeight" style="min-width: 2em; text-align: right;"></h6>
             </nav>
           </div>
         </fieldset>
@@ -5285,7 +5291,7 @@ ct:Append([=[
           <nav>
             <div class="max"><h6><label class="large-text" for="set-subGenre">サブジャンルを表示</label></h6></div>
             <label class="switch">
-              <input type="checkbox" id="set-subGenre" x-model="set.subGenre">
+              <input type="checkbox" id="set-subGenre" x-model="sets.subGenre">
               <span></span>
             </label>
           </nav>
@@ -5295,7 +5301,7 @@ ct:Append([=[
           <nav class="group wrap">
             <template x-for="(i, idx) in genreList" :key="idx">
               <template x-if="getGenre({ content_nibble: (i << 8) | 0xFF }).name1">
-                <button type="button" class="chip" :class="(set.genreMask & (1 << idx)) ? 'active' : ''" @click="set.genreMask ^= (1 << idx)" x-text="getGenre({ content_nibble: (i << 8) | 0xFF }).name1"></button>
+                <button type="button" class="chip" :class="(sets.genreMask & (1 << idx)) ? 'active' : ''" @click="sets.genreMask ^= (1 << idx)" x-text="getGenre({ content_nibble: (i << 8) | 0xFF }).name1"></button>
               </template>
             </template>
           </nav>
@@ -5309,7 +5315,7 @@ ct:Append([=[
           <nav>
             <div class="max"><h6><label class="large-text" for="set-recinfoDel">削除ボタンを表示</label></h6></div>
             <label class="switch">
-              <input type="checkbox" id="set-recinfoDel" x-model="set.RecinfoDel">
+              <input type="checkbox" id="set-recinfoDel" x-model="sets.RecinfoDel">
               <span></span>
             </label>
           </nav>

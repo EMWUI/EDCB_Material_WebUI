@@ -257,7 +257,7 @@ document.addEventListener('alpine:init', () => {
       recpreset: 0,
     },
 
-    set: {
+    sets: {
       sidebar: false,
       dataSaver: true,
       oneseg: false,
@@ -528,16 +528,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     isList(v, i = 1) {
-      return this.set.view[v] === 'list' && i > 0;
+      return this.sets.view[v] === 'list' && i > 0;
     },
     isTable(v, i = 1) {
-      return this.set.view[v] === 'table' && i > 0;
+      return this.sets.view[v] === 'table' && i > 0;
     },
     isGrid(v, i = 1) {
-      return this.set.view[v] === 'grid' && i > 0;
+      return this.sets.view[v] === 'grid' && i > 0;
     },
     viewState(v) {
-      const mode = this.set.view[v];
+      const mode = this.sets.view[v];
       if (mode === 'grid') return { icon: 'grid_view', text: 'グリッド' };
       if (mode === 'table') return { icon: 'table', text: 'テーブル' };
       return { icon: 'lists', text: 'リスト' };
@@ -550,8 +550,8 @@ document.addEventListener('alpine:init', () => {
       this.player.app = this;
       this.library.app = this;
       this.log.app = this;
-      this.epg.set = this.set.epg;
-      this.player.set = this.set.player;
+      this.epg.set = this.sets.epg;
+      this.player.set = this.sets.player;
       this.reminder.app = this;
       this.nvram.init();
 
@@ -580,14 +580,14 @@ document.addEventListener('alpine:init', () => {
       mqlPortrait.addEventListener('change', updateMedia);
       updateMedia();
 
-      this.$watch('set.oneseg', () => {
+      this.$watch('sets.oneseg', () => {
         this.updateNetworkMask();
-        if (!this.set.oneseg && this.isActiveNetwork(2)) this.setNetwork(0);
+        if (!this.sets.oneseg && this.isActiveNetwork(2)) this.setNetwork(0);
         this.saveCache();
         this.syncNowOnAir();
       });
 
-      this.$watch('set.subCh', () => {
+      this.$watch('sets.subCh', () => {
         this.saveCache();
         if (this.isPage('#epg')) this.loadEpg();
         this.syncNowOnAir();
@@ -722,14 +722,14 @@ document.addEventListener('alpine:init', () => {
             }
           }
         };
-        deepMerge(this.set, settings);
-        const xc = config.xcode.find(v => v.id === this.set.player.quality);
+        deepMerge(this.sets, settings);
+        const xc = config.xcode.find(v => v.id === this.sets.player.quality);
         if (xc) this.player.tslive = xc.tslive;
       }
 
       // 設定の変更を監視して自動保存
-      this.$watch('set', () => {
-        localStorage.setItem('E3', JSON.stringify(this.set));
+      this.$watch('sets', () => {
+        localStorage.setItem('E3', JSON.stringify(this.sets));
       }, { deep: true });
 
       // テーマとライトダークモード
@@ -742,23 +742,23 @@ document.addEventListener('alpine:init', () => {
         }
       };
       const updateColor = async () => {
-        colors = await materialDynamicColors(this.set.theme);
+        colors = await materialDynamicColors(this.sets.theme);
         const style = document.createElement('style');
         style.textContent = `:root, body.light, .light {--primary: ${colors.light.primary};--on-primary: ${colors.light.onPrimary};--primary-container: ${colors.light.primaryContainer};--on-primary-container: ${colors.light.onPrimaryContainer};--secondary: ${colors.light.secondary};--on-secondary: ${colors.light.onSecondary};--secondary-container: ${colors.light.secondaryContainer};--on-secondary-container: ${colors.light.onSecondaryContainer};--tertiary: ${colors.light.tertiary};--on-tertiary: ${colors.light.onTertiary};--tertiary-container: ${colors.light.tertiaryContainer};--on-tertiary-container: ${colors.light.onTertiaryContainer};--error: ${colors.light.error};--on-error: ${colors.light.onError};--error-container: ${colors.light.errorContainer};--on-error-container: ${colors.light.onErrorContainer};--background: ${colors.light.background};--on-background: ${colors.light.onBackground};--surface: ${colors.light.surface};--on-surface: ${colors.light.onSurface};--surface-variant: ${colors.light.surfaceVariant};--on-surface-variant: ${colors.light.onSurfaceVariant};--outline: ${colors.light.outline};--outline-variant: ${colors.light.outlineVariant};--shadow: ${colors.light.shadow};--scrim: ${colors.light.scrim};--inverse-surface: ${colors.light.inverseSurface};--inverse-on-surface: ${colors.light.inverseOnSurface};--inverse-primary: ${colors.light.inversePrimary};--surface-dim: ${colors.light.surfaceDim};--surface-bright: ${colors.light.surfaceBright};--surface-container-lowest: ${colors.light.surfaceContainerLowest};--surface-container-low: ${colors.light.surfaceContainerLow};--surface-container: ${colors.light.surfaceContainer};--surface-container-high: ${colors.light.surfaceContainerHigh};--surface-container-highest: ${colors.light.surfaceContainerHighest};}`
                           + `body.dark, .dark {--primary: ${colors.dark.primary};--on-primary: ${colors.dark.onPrimary};--primary-container: ${colors.dark.primaryContainer};--on-primary-container: ${colors.dark.onPrimaryContainer};--secondary: ${colors.dark.secondary};--on-secondary: ${colors.dark.onSecondary};--secondary-container: ${colors.dark.secondaryContainer};--on-secondary-container: ${colors.dark.onSecondaryContainer};--tertiary: ${colors.dark.tertiary};--on-tertiary: ${colors.dark.onTertiary};--tertiary-container: ${colors.dark.tertiaryContainer};--on-tertiary-container: ${colors.dark.onTertiaryContainer};--error: ${colors.dark.error};--on-error: ${colors.dark.onError};--error-container: ${colors.dark.errorContainer};--on-error-container: ${colors.dark.onErrorContainer};--background: ${colors.dark.background};--on-background: ${colors.dark.onBackground};--surface: ${colors.dark.surface};--on-surface: ${colors.dark.onSurface};--surface-variant: ${colors.dark.surfaceVariant};--on-surface-variant: ${colors.dark.onSurfaceVariant};--outline: ${colors.dark.outline};--outline-variant: ${colors.dark.outlineVariant};--shadow: ${colors.dark.shadow};--scrim: ${colors.dark.scrim};--inverse-surface: ${colors.dark.inverseSurface};--inverse-on-surface: ${colors.dark.inverseOnSurface};--inverse-primary: ${colors.dark.inversePrimary};--surface-dim: ${colors.dark.surfaceDim};--surface-bright: ${colors.dark.surfaceBright};--surface-container-lowest: ${colors.dark.surfaceContainerLowest};--surface-container-low: ${colors.dark.surfaceContainerLow};--surface-container: ${colors.dark.surfaceContainer};--surface-container-high: ${colors.dark.surfaceContainerHigh};--surface-container-highest: ${colors.dark.surfaceContainerHighest};}`
         document.head.appendChild(style);
-        updateThemeColor(this.set.mode);
+        updateThemeColor(this.sets.mode);
       };
       // prefers-color-schemeの変更監視
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       mediaQuery.addEventListener('change', () => {
-        if (this.set.mode === 'auto') {
+        if (this.sets.mode === 'auto') {
           updateThemeColor('auto');
         }
       });
       await updateColor();
-      this.$watch('set.theme', v => updateColor(v));
-      this.$watch('set.mode', v => updateThemeColor(v));
+      this.$watch('sets.theme', v => updateColor(v));
+      this.$watch('sets.mode', v => updateThemeColor(v));
 
       const toggleSSE = () => {
         if (this.dataSaver) {
@@ -771,19 +771,19 @@ document.addEventListener('alpine:init', () => {
       if (connection) {
         const updateDataSaver = () => {
           this.isCellular = connection.type === 'cellular';
-          this.dataSaver = this.set.dataSaver && this.isCellular;
+          this.dataSaver = this.sets.dataSaver && this.isCellular;
           toggleSSE();
         }
         updateDataSaver();
-        this.$watch('set.dataSaver', () => updateDataSaver());
+        this.$watch('sets.dataSaver', () => updateDataSaver());
         connection.addEventListener('change', () => updateDataSaver());
       } else {
         // localStorage 未設定（初回・アップデート直後）の場合のみ false をデフォルトにする
         const hasSavedDataSaver = savedSettings && JSON.parse(savedSettings)?.dataSaver !== undefined;
-        if (!hasSavedDataSaver) this.set.dataSaver = false;
-        this.dataSaver = this.set.dataSaver;
+        if (!hasSavedDataSaver) this.sets.dataSaver = false;
+        this.dataSaver = this.sets.dataSaver;
         toggleSSE();
-        this.$watch('set.dataSaver', d => {
+        this.$watch('sets.dataSaver', d => {
           this.dataSaver = d;
           toggleSSE();
         });
@@ -1735,7 +1735,7 @@ document.addEventListener('alpine:init', () => {
 
       this.allData.epg.forEach((eventsMap, serviceId) => {
         const s = this.allData.service.get(serviceId);
-        if (!s || (!this.set.oneseg && s.partialReceptionFlag) || (!this.set.subCh && s.subCh)) return;
+        if (!s || (!this.sets.oneseg && s.partialReceptionFlag) || (!this.sets.subCh && s.subCh)) return;
 
         const events = Array.from(eventsMap.values()).sort((a, b) => a.startTimeInt - b.startTimeInt);
         let current = null;
@@ -1781,8 +1781,8 @@ document.addEventListener('alpine:init', () => {
     get serviceList() {
       const list = Array.from(this.allData.service.values());
       return list
-        .filter(s => this.set.oneseg || !s.partialReceptionFlag)
-        .filter(s => this.set.subCh || !s.subCh)
+        .filter(s => this.sets.oneseg || !s.partialReceptionFlag)
+        .filter(s => this.sets.subCh || !s.subCh)
         .filter(s => this.allData.epg.has(this.getServiceID(s)));
     },
     // 現在の表示対象ネットワーク（「すべて」を含み、EPGデータが存在し、かつ設定で有効なもの）
@@ -1823,7 +1823,7 @@ document.addEventListener('alpine:init', () => {
         const s = this.allData.service.get(serviceId);
         if (s) {
           const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
-          if (this.set.oneseg || ni !== 2) mask |= (1 << ni); // ワンセグ表示設定が有効な場合、またはワンセグでない場合
+          if (this.sets.oneseg || ni !== 2) mask |= (1 << ni); // ワンセグ表示設定が有効な場合、またはワンセグでない場合
         }
       });
       this.networkMask = mask;
@@ -1986,7 +1986,7 @@ document.addEventListener('alpine:init', () => {
         epg.lastLoadedNetwork === epg.activeNetwork &&
         epg.lastLoadedData === this.lastUpdated.epg &&
         epg.lastLoadedMask === epg.networkMask &&
-        epg.lastLoadedSubCh === this.set.subCh &&
+        epg.lastLoadedSubCh === this.sets.subCh &&
         epg.lastLoadedReserve === this.lastUpdated.reserve &&
         epg.lastLoadedKey === slotKey &&
         epg.servicesToDisplay.length > 0
@@ -1995,14 +1995,14 @@ document.addEventListener('alpine:init', () => {
       const timeChanged = epg.lastLoadedStart !== gridStart;
       const networkChanged = epg.lastLoadedNetwork !== epg.activeNetwork;
       const maskChanged = epg.lastLoadedMask !== epg.networkMask;
-      const subChChanged = epg.lastLoadedSubCh !== this.set.subCh;
+      const subChChanged = epg.lastLoadedSubCh !== this.sets.subCh;
 
       // 中断と新規 ID 発行
       const currentLoadId = ++epg.loadId;
       epg.lastLoadedStart = gridStart;
       epg.lastLoadedNetwork = epg.activeNetwork;
       epg.lastLoadedMask = epg.networkMask;
-      epg.lastLoadedSubCh = this.set.subCh;
+      epg.lastLoadedSubCh = this.sets.subCh;
       epg.lastLoadedData = this.lastUpdated.epg;
       epg.lastLoadedReserve = this.lastUpdated.reserve;
       epg.lastLoadedKey = slotKey;
@@ -3143,6 +3143,7 @@ document.addEventListener('alpine:init', () => {
       controlsVisible: true, // コントロールの表示状態
       showSettingsMenu: false, // 設定ドロップダウンの状態
       showSidePanel: false,
+      lastShowSidePanel: false,
       showJikkyoSet: false,
       controlTimeout: null, // コントロール自動非表示用タイマー
       isSeeking: false, // シーク中フラグ
@@ -3299,15 +3300,38 @@ document.addEventListener('alpine:init', () => {
       toggleJikkyo() {
         this.set.jikkyo = Alpine.raw(this.vid).toggleJikkyo();
       },
-      prevChap(){
+      prevChap() {
         Alpine.raw(this.chap).navigate(false);
       },
-      nextChap(){
+      nextChap() {
         Alpine.raw(this.chap).navigate(true);
       },
-      async togglePiP(){
+      async togglePiP() {
         if (!document.pictureInPictureEnabled) return;
-        this.video.requestPictureInPicture();
+
+        if (this.tslive) {
+          if (!('documentPictureInPicture' in window)) return
+          if (!this.isPiP) {
+            const pipWindow = await documentPictureInPicture.requestWindow();
+            const style = document.createElement('style');
+
+            style.textContent = 'body { background: black; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; width: 100vw; height: 100vh; }'
+                              +'canvas { width: 100%; height: 100%; object-fit: contain; }';
+            pipWindow.document.head.appendChild(style);
+            const video = this.video;
+            const container = this.video.parentNode;
+            pipWindow.document.body.append(video);
+            pipWindow.addEventListener("pagehide", () => {
+              container.prepend(video);
+              this.isPiP = false;
+            });
+            this.isPiP = true;
+          } else {
+            documentPictureInPicture.window.close();
+          }
+        } else {
+          this.video.requestPictureInPicture();
+        }
 
         // ドキュメントPIPを使用すると別ウィンドウに移動した際、Alpineでx-ifで生成したDOMや登録されたイベントリスナーが消去されてしまう。
         // 対応するには自前でDOMの生成やイベントリスナーの登録を行い、プレイヤーの脱Alpineが必要。
@@ -3357,15 +3381,18 @@ document.addEventListener('alpine:init', () => {
       toggleFullscreen() {
         const player = document.getElementById('player');
         if (!document.fullscreenElement) {
-          player.requestFullscreen().catch(err => console.error(err));
+          this.$refs.playerWrapper.requestFullscreen().catch(err => console.error(err));
           screen.orientation.lock('landscape');
+          this.lastShowSidePanel = this.showSidePanel;
+          this.showSidePanel = false;
           this.isFullscreen = true;
         } else {
           screen.orientation.unlock();
           document.exitFullscreen();
+          this.showSidePanel = this.lastShowSidePanel;
           this.isFullscreen = false;
         }
-        this.moveRemocon(this.isPortrait);
+        this.moveRemocon();
       },
       setAudioTrack(track) {
         this.track = track;
@@ -3410,7 +3437,8 @@ document.addEventListener('alpine:init', () => {
       },
       toggleSidePanel() {
         this.showSidePanel = !this.showSidePanel;
-        this.setbmlBrowserSize();
+        this.moveRemocon();
+        setTimeout(() => this.setbmlBrowserSize(), 100);
       },
       setbmlBrowserSize() {
         if (!this.$refs.player) return;
@@ -3449,11 +3477,12 @@ document.addEventListener('alpine:init', () => {
         }, 3000); // 3秒間操作がない場合に非表示
       },
 
-      moveRemocon(isPortrait) {
+      moveRemocon() {
         const content = this.$refs.remocon;
-        const target = isPortrait && !this.isFullscreen ? this.$refs.remoteMobile : this.$refs.remoteDesktop;
-        if (content && target && content.parentElement !== target) {
-          target.prepend(content);
+        const target = this.showSidePanel ?  this.$refs.remoconInSidePanel : this.$refs.remoconInPlayer;
+        if (content && target) {
+          if (this.isPortrait) target.prepend(content);
+          else target.append(content);
         }
       },
 
@@ -3464,70 +3493,73 @@ document.addEventListener('alpine:init', () => {
           s.src = 'js/web_bml_play_ts.js';
           s.id = 'webBml';
           this.$refs.remocon.appendChild(s);
-          this.moveRemocon(this.isPortrait);
+          this.moveRemocon();
         });
       },
 
       // 初期化 (例: ビデオ要素へのイベントリスナーのアタッチ)
-      videoInit(video) {
-        this.$nextTick(() => {
-          this.video = video;
-          const vid = this.vid = this.tslive ? new TsLiveDatacast(video) : new HlsDatacast(video);
+      videoInit() {
+        if (!this.$refs.video) {
+          setTimeout(() => this.videoInit(), 100);
+          return;
+        }
+        const video = this.$refs.video;
+        this.video = video;
+        const vid = this.vid = this.tslive ? new TsLiveDatacast(video) : new HlsDatacast(video);
 
-          video.volume = this.set.volume;
-          video.muted = this.set.isMuted;
-          video.addEventListener('play', () => this.isPlaying = true);
-          video.addEventListener('pause', () => this.isPlaying = false);
-          video.addEventListener('timeupdate', () => {
-            if (this.isSeeking) return;
-            if (this.live) {
-              this.currentTime = this.app.getElapsedTime(this.epg);
-            } else {
-              this.currentTime = video.fixedCurrentTime || video.currentTime;
-            }
-          });
-          video.addEventListener('volumechange', () => { this.set.volume = video.volume; this.set.isMuted = video.muted; });
-          video.addEventListener('waiting', () => this.isLoading = true);
-          video.addEventListener('playing', () => this.isLoading = false);
-          video.addEventListener('canplay', () => {
-            this.setbmlBrowserSize();
-            const promise = video.play();
-            //自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
-            if (promise !== undefined) {
-              promise.catch(error => {
-                video.muted = true;
-                video.play();
-                document.addEventListener('click', () => {
-                  video.muted = false;
-                }, { once: true });
-              });
-            }
-
-            if (!this.live && this.videoInfo && !this.videoInfo.meta) {
-              this.videoInfo.meta = { duration: video.duration };
-              document.getElementById('chapMaker-container').style = `--dur:${video.duration};`
-            }
-          });
-          video.addEventListener('enabledDetelecine', () => this.cinema = true);
-          video.addEventListener('disabledDetelecine', () => this.cinema = false);
-
-          this.sideTab = this.live ? 'service' : 'info';
-          vid.setOption(this.xcode.find(v => v.id === this.set.quality) || this.set.quality);
-          if (vid.cap && !this.set.cap) vid.cap.hide();
-          if (vid.jikkyo) {
-            vid.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
-            vid.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
-            vid.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
-            vid.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
+        video.volume = this.set.volume;
+        video.muted = this.set.isMuted;
+        video.addEventListener('play', () => this.isPlaying = true);
+        video.addEventListener('pause', () => this.isPlaying = false);
+        video.addEventListener('timeupdate', () => {
+          if (this.isSeeking) return;
+          if (this.live) {
+            this.currentTime = this.app.getElapsedTime(this.epg);
+          } else {
+            this.currentTime = video.fixedCurrentTime || video.currentTime;
+          }
+        });
+        video.addEventListener('volumechange', () => { this.set.volume = video.volume; this.set.isMuted = video.muted; });
+        video.addEventListener('waiting', () => this.isLoading = true);
+        video.addEventListener('playing', () => this.isLoading = false);
+        video.addEventListener('canplay', () => {
+          this.setbmlBrowserSize();
+          const promise = video.play();
+          //自動再生ポリシー対策 https://developer.chrome.com/blog/autoplay?hl=ja
+          if (promise !== undefined) {
+            promise.catch(error => {
+              video.muted = true;
+              video.play();
+              document.addEventListener('click', () => {
+                video.muted = false;
+              }, { once: true });
+            });
           }
 
-          vid.toggleDatacast(this.set.datacast);
-
-          if (this.params.id) this.loadLive(this.params.id);
-          else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
-
-          this.resetControlTimeout();
+          if (!this.live && this.videoInfo && !this.videoInfo.meta) {
+            this.videoInfo.meta = { duration: video.duration };
+            document.getElementById('chapMaker-container').style = `--dur:${video.duration};`
+          }
         });
+        video.addEventListener('enabledDetelecine', () => this.cinema = true);
+        video.addEventListener('disabledDetelecine', () => this.cinema = false);
+
+        this.sideTab = this.live ? 'service' : 'info';
+        vid.setOption(this.xcode.find(v => v.id === this.set.quality) || this.set.quality);
+        if (vid.cap && !this.set.cap) vid.cap.hide();
+        if (vid.jikkyo) {
+          vid.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
+          vid.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
+          vid.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
+          vid.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
+        }
+
+        vid.toggleDatacast(this.set.datacast);
+
+        if (this.params.id) this.loadLive(this.params.id);
+        else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
+
+        this.resetControlTimeout();
       },
       thumbInit() {
         if (!this.$refs.video) {
@@ -3647,17 +3679,17 @@ document.addEventListener('alpine:init', () => {
         }
       },
       isOrder(order) {
-        return this.app.set.sort.library.order == order;
+        return this.app.sets.sort.library.order == order;
       },
       setOrder(order) {
-        this.app.set.sort.library.order = order;
+        this.app.sets.sort.library.order = order;
         this.sort();
       },
       get sortAsc() {
-        return this.app.set.sort.library.asc;
+        return this.app.sets.sort.library.asc;
       },
       setAsc() {
-        this.app.set.sort.library.asc = !this.sortAsc;
+        this.app.sets.sort.library.asc = !this.sortAsc;
         this.sort();
       },
       sort() {
@@ -3762,7 +3794,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
     setThemeColor(color) {
-      this.set.theme = color;
+      this.sets.theme = color;
     },
     themeTimer: null,
     isThemeLongPress: false,
@@ -3787,7 +3819,7 @@ document.addEventListener('alpine:init', () => {
       }
     },
     toggleDarkMode() {
-      this.set.mode = this.set.mode === 'auto' ? 'light' : (this.set.mode === 'light' ? 'dark' : 'auto');
+      this.sets.mode = this.sets.mode === 'auto' ? 'light' : (this.sets.mode === 'light' ? 'dark' : 'auto');
     },
 
     async saveSetting(container) {
