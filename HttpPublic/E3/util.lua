@@ -61,7 +61,7 @@ function GetAppConfig()
       table.insert(xcode, string.format('{id:%d,name:\'%s\'%s}', i, v.name, s))
     end
   end
-  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$')
+  local zip = NVRAM_ZIP:match('^'..('[0-9]'):rep(7)..'$') or ''
   local prefecture=math.floor(math.max(NVRAM_REGION<=50 and NVRAM_REGION or 0,0))
 
   return '{root: \''..PathToRoot()
