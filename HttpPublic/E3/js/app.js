@@ -1118,7 +1118,7 @@ document.addEventListener('alpine:init', () => {
         text: `${modeText}に移行しますか？`,
         btn: '実行',
         btnFn: async () => {
-          const fd = new URLSearchParams({ suspendMode: 'y' });
+          const fd = new URLSearchParams({ [this.suspendMode]: 'y' });
 
           try {
             this.loading = true;
