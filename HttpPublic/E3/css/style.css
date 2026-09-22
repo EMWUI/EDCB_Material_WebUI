@@ -532,7 +532,7 @@ li .thumb-wrapper {
   inset: 0;
   inline-size: 100%;
 }
-img.thumb { object-fit: cover; }
+img.thumb { object-fit: cover; pointer-events: none; }
 canvas.thumb { aspect-ratio: 16 / 9; }
 .no-thumb {
   position: absolute;

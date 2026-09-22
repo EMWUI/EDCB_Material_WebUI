@@ -307,7 +307,7 @@ ct:Append([=[
                 <i :class="{ rotate: loadingOlympic }">refresh</i>
               </button>
             </h6>
-            <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+            <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
               <template x-for="(d, i) in olympic" :key="getEventID(d)">
                 <article class="small-width border ripple tiny-line" @click="openProgramDetail(d)">
                   <div class="vertical small-gap no-round">
@@ -334,7 +334,7 @@ ct:Append([=[
                 <i :class="{ rotate: loadingAnime }">refresh</i>
               </button>
             </h6>
-            <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+            <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
               <template x-for="(d, i) in anime" :key="getEventID(d)">
                 <article class="small-width border ripple tiny-line" :class="getGenreClass(d)" @click="openProgramDetail(d)">
                   <div class="vertical small-gap no-round">
@@ -361,7 +361,7 @@ ct:Append([=[
                 <i :class="{ rotate: loadingNew }">refresh</i>
               </button>
             </h6>
-            <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+            <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
               <template x-for="(d, i) in newPrograms" :key="getEventID(d)">
                 <article class="small-width border ripple tiny-line" :class="getGenreClass(d)" @click="openProgramDetail(d)">
                   <div class="vertical small-gap no-round">
@@ -398,7 +398,7 @@ ct:Append([=[
         <template x-for="n in selectableNetworks" :key="n.index">
           <div class="vertical-margin">
             <div class="horizontal-padding bold secondary-text" x-text="n.name"></div>
-            <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+            <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
               <template x-for="s in getNetworkServices(n.index)" :key="getServiceID(s)">
                 <article class="small-width padding border ripple tiny-line"  :class="getGenreClass(entry.current)"
                       x-data="{ get entry() { return nowOnAir[getServiceID(s)] } }"
@@ -442,7 +442,7 @@ ct:Append([=[
             </span>
             <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
           </h6>
-          <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+          <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
             <template x-for="(d, i) in reserves" :key="d.reserveID">
               <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTimeInt + d.durationSecond*1000 < now ? 'inverse-primary-border' : d.startTimeInt < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
                 <div class="vertical small-gap no-round">
@@ -469,7 +469,7 @@ ct:Append([=[
             </span>
             <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
           </h6>
-          <div class="row horizontal-padding scroll" :class="{ scroll-button : !isMobile }">
+          <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
             <template x-for="(d, i) in recs" :key="d.id">
               <article class="small-width border ripple tiny-line" :class="{ 'error-border': d.recStatus > 1, 'error-container': d.recStatus % 10 !== 1 && d.recStatus !== 6 }" @click="openRecinfoDetail(d)">
                 <div class="vertical small-gap no-round">
@@ -1463,7 +1463,7 @@ ct:Append([=[
 
                   <!-- ファイル一覧 -->
                   <template x-for="item in data.file" :key="item.name">
-                    <li class="ripple" @click="play(item)" x-data="{ el: null }" @pointerenter="rollThumbEnter($event, el, item)" @pointerleave="rollThumbLeave($event)">
+                    <li class="ripple" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
                       <div class="max row no-margin no-wrap">
                         <div class="thumb-wrapper">
                           <template x-if="item.thumb">
@@ -1474,7 +1474,7 @@ ct:Append([=[
                               <i class="primary-text">movie</i>
                             </div>
                           </template>
-                          <canvas class="thumb" x-init="el=$el"></canvas>
+                          <canvas class="thumb"></canvas>
                         </div>
                         <div class="max">
                           <h6 class="small title" x-text="item.name"></h6>
@@ -1525,7 +1525,7 @@ ct:Append([=[
                 <section class="margin" :class="{ 'small-margin': isSmallScreen }">
                   <div class="grid medium-space">
                     <template x-for="item in data.file" :key="item.name">
-                      <article class="s12 m6 l2 library-grid-item round border ripple no-padding" x-data="{ el: null }" @click="play(item)" @pointerenter="rollThumbEnter($event, el, item)" @pointerleave="rollThumbLeave($event)">
+                      <article class="s12 m6 l2 library-grid-item round border ripple no-padding" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
                         <div class="thumb-wrapper top-round">
                           <template x-if="item.thumb">
                             <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
@@ -1535,7 +1535,7 @@ ct:Append([=[
                               <i class="primary-text">movie</i>
                             </div>
                           </template>
-                          <canvas class="thumb" x-init="el=$el"></canvas>
+                          <canvas class="thumb"></canvas>
                           <button class="circle primary library-play-btn" @click.stop="play(item)">
                             <i>play_arrow</i>
                           </button>

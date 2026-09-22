@@ -1190,6 +1190,7 @@ document.addEventListener('alpine:init', () => {
       if (this.player.vid && !this.isPage('#watch')) {
         this.player.destroy();
       }
+      this.rollThumbLeave();
 
       this.totalCount = null;
       if (!this.isPage('#epg', '#epgweek')) this.$main.scrollTo(0, 0);
@@ -3638,6 +3639,8 @@ document.addEventListener('alpine:init', () => {
       data: { dir: [], file: [], path: [] },
       lastParams: { home: 1 },
       async load() {
+        this.app.rollThumbLeave();
+
         const p = this.app.params;
 
         // パラメータが完全に空（サイドバー等からの遷移）なら、
@@ -3720,13 +3723,20 @@ document.addEventListener('alpine:init', () => {
     getThumbUrl(file) {
       return `${this.ROOT}video/thumbs/${file.thumb}.jpg`;
     },
-    rollThumbEnter(e, canvas, file) {
-      e.currentTarget.setPointerCapture(e.pointerId);
-      Alpine.raw(this.thumb).roll(canvas, file.path);
+    pointerId: null,
+    rollThumbEnter(e, file) {
+      if (this.pointerId !== null) {
+        this.rollThumbLeave();
+      }
+
+      this.pointerId = e.pointerId;
+      Alpine.raw(this.thumb).roll(e.currentTarget.querySelector('canvas'), file.path);
     },
-    rollThumbLeave(e) {
-      Alpine.raw(this.thumb).hide();
-      e.currentTarget.releasePointerCapture(e.pointerId);
+    rollThumbLeave() {
+      if (this.pointerId !== null) {
+        Alpine.raw(this.thumb).hide();
+        this.pointerId = null;
+      }
     },
     async setThumb(el, file) {
       const canvas = document.createElement('canvas');
