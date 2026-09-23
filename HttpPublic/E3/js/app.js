@@ -285,6 +285,7 @@ document.addEventListener('alpine:init', () => {
       player: {
         volume: 1,
         quality: 1,
+        mobileQuality: 1,
         isMuted: false,
         nwtv: 0,
         cap: false,
@@ -773,6 +774,7 @@ document.addEventListener('alpine:init', () => {
           this.isCellular = connection.type === 'cellular';
           this.dataSaver = this.sets.dataSaver && this.isCellular;
           toggleSSE();
+          this.player.toggleQuality();
         }
         updateDataSaver();
         this.$watch('sets.dataSaver', () => updateDataSaver());
@@ -3429,10 +3431,24 @@ document.addEventListener('alpine:init', () => {
         this.playbackRate = rate;
         Alpine.raw(this.vid).setFast(rate, i, () => this.isLoading = true);
       },
+      get quality() {
+        return this.app.dataSaver ? this.set.mobileQuality : this.set.quality;
+      },
+      set quality(id) {
+        if (this.app.dataSaver) {
+          this.set.mobileQuality = id;
+        } else {
+          this.set.quality = id;
+        }
+      },
       setQuality(v) {
-        this.set.quality = v.id;
-        this.tslive = v.tslive;
-        Alpine.raw(this.vid).setOption(v, v.tslive, () => { }, () => this.isLoading = true);
+        this.quality = v.id;
+        Alpine.raw(this.vid).setOption(v, !!v.tslive, () => { this.tslive = !this.tslive }, () => this.isLoading = true);
+      },
+      toggleQuality() {
+        if (!this.vid) return;
+        const xc = this.xcode.find(v => v.id === this.quality) || this.xcode[0];
+        Alpine.raw(this.vid).setOption(xc, !!xc.tslive, () => { this.tslive = !this.tslive }, () => this.isLoading = true);
       },
       setDetelecine() {
         this.cinema = !this.cinema;
@@ -3548,7 +3564,7 @@ document.addEventListener('alpine:init', () => {
         video.addEventListener('disabledDetelecine', () => this.cinema = false);
 
         this.sideTab = this.live ? 'service' : 'info';
-        vid.setOption(this.xcode.find(v => v.id === this.set.quality) || this.set.quality);
+        vid.setOption(this.xcode.find(v => v.id === this.quality) || this.quality);
         if (vid.cap && !this.set.cap) vid.cap.hide();
         if (vid.jikkyo) {
           vid.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
@@ -3725,12 +3741,13 @@ document.addEventListener('alpine:init', () => {
     },
     pointerId: null,
     rollThumbEnter(e, file) {
+      if (this.dataSaver) return;
       if (this.pointerId !== null) {
         this.rollThumbLeave();
       }
 
       this.pointerId = e.pointerId;
-      Alpine.raw(this.thumb).roll(e.currentTarget.querySelector('canvas'), file.path);
+      Alpine.raw(this.thumb).roll(e.currentTarget.querySelector('.rollThumb'), file.path);
     },
     rollThumbLeave() {
       if (this.pointerId !== null) {

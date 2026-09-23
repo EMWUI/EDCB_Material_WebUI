@@ -829,7 +829,7 @@ ct:Append([=[
                           <li :class="{ active: cinema }" @click="setDetelecine()">逆テレシネ</li>
                           <li><hr></li>
                           <template x-for="(v, i) in xcode">
-                            <li :class="{ active: set.quality === v.id }" @click="setQuality(v)" x-text="v.name"></li>
+                            <li :class="{ active: quality === v.id }" @click="setQuality(v)" x-text="v.name"></li>
                           </template>
                         </menu>
                       </li>
@@ -1535,7 +1535,7 @@ ct:Append([=[
                               <i class="primary-text">movie</i>
                             </div>
                           </template>
-                          <canvas class="thumb"></canvas>
+                          <canvas class="thumb rollThumb"></canvas>
                           <button class="circle primary library-play-btn" @click.stop="play(item)">
                             <i>play_arrow</i>
                           </button>
