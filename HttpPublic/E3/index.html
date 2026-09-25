@@ -64,16 +64,80 @@ ct:Append([=[
               <button class="circle transparent">
                 <i>today</i>
               </button>
-              <menu class="top no-wrap">
-                <template x-for="dateObj in getEpgDateList()" :key="dateObj.getTime()">
-                  <li :class="{ active: isDateActive(dateObj) }" @click="setDate(dateObj)" x-text="getDateLabel(dateObj)"></li>
-                </template>
-              </menu>
+              <input type="date" @change="setDate($el.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
             </div>
             <button class="circle transparent" @click="shiftDate(1)" :disabled="!canShift(1)">
               <i>chevron_forward</i>
             </button>
           </nav>
+          <div>
+            <button class="circle transparent">
+              <i>schedule</i>
+            </button>
+            <menu class="top no-wrap">
+              <template x-for="h in 24" :key="h">
+                <li :class="`hour-${ getHours(h) % 24 }`" x-text="String((getHours(h) + 20) % 24 + 4).padStart(2, '0') + '時'" @click="scrollToTime(h)"></li>
+              </template>
+            </menu>
+          </div>
+        </nav>
+        <button class="extra round circle error" @click="scrollToNow(3)" title="現在時刻へ移動">
+          <i>my_location</i>
+        </button>
+      </nav>
+    </div>
+  </template>
+
+  <template x-if="isPage('#epgweek')">
+    <div id="epg-toolbar" class="s fixed center bottom" :class="{ active: epg.toolbarActive }">
+      <nav class="center-align tiny-space">
+        <nav class="toolbar large-elevate">
+          <div>
+            <button class="circle transparent">
+              <i>cell_tower</i>
+              <span class="m l" x-text="allData.service.get(params.id)?.service_name || '局選択'"></span>
+            </button>
+            <menu class="top right no-wrap" style="min-inline-size: auto">
+              <template x-for="n in selectableNetworks" :key="n.index">
+                <li>
+                  <span x-text="n.name"></span>
+                  <menu class="top right no-wrap">
+                    <template x-for="s in getNetworkServices(n.index)" :key="getDataKey(s, 'service')">
+                      <li :class="{ active: params.id === getDataKey(s, 'service') }"
+                          @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })">
+                        <img class="round tiny" :src="getLogoPath(s)">
+                        <span x-text="s.service_name"></span>
+                      </li>
+                    </template>
+                  </menu>
+                </li>
+              </template>
+            </menu>
+          </div>
+          <nav class="no-margin no-space">
+            <button class="circle transparent" @click="shiftDate(-7)" :disabled="!canShift(-7)">
+              <i>chevron_backward</i>
+            </button>
+            <div>
+              <button class="circle transparent">
+                <i>today</i>
+              </button>
+              <input type="date" @change="setDate($el.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
+            </div>
+            <button class="circle transparent" @click="shiftDate(7)" :disabled="!canShift(7)">
+              <i>chevron_forward</i>
+            </button>
+          </nav>
+          <div>
+            <button class="circle transparent">
+              <i>schedule</i>
+            </button>
+            <menu class="top no-wrap">
+              <template x-for="h in 24" :key="h">
+                <li :class="`hour-${ getHours(h) % 24 }`" x-text="String((getHours(h) + 20) % 24 + 4).padStart(2, '0') + '時'" @click="scrollToTime(h)"></li>
+              </template>
+            </menu>
+          </div>
         </nav>
         <button class="extra round circle error" @click="scrollToNow()" title="現在時刻へ移動">
           <i>my_location</i>
@@ -103,7 +167,7 @@ ct:Append([=[
 
       <template x-if="isPage('#epg')">
         <div class="contents">
-          <button class="m l circle transparent" @click="scrollToNow()" title="現在時刻へ移動">
+          <button class="m l circle transparent" @click="scrollToNow(3)" title="現在時刻へ移動">
             <i>my_location</i>
           </button>
           <div>
@@ -111,7 +175,7 @@ ct:Append([=[
               <span x-text="networkNames[epg.activeNetwork]"></span>
               <i>arrow_drop_down</i>
             </button>
-            <menu class="left">
+            <menu>
               <template x-for="n in displayableNetworks" :key="n.index">
                 <li :class="{ active: isActiveNetwork(n.index) }" @click="setNetwork(n.index)" x-text="n.name"></li>
               </template>
@@ -144,38 +208,61 @@ ct:Append([=[
               <i>chevron_forward</i>
             </button>
           </nav>
+          <div class="m l">
+            <button class="circle border transparent">
+              <i>schedule</i>
+            </button>
+            <menu class="left no-wrap">
+              <template x-for="h in 24" :key="h">
+                <li :class="`hour-${ getHours(h) % 24 }`" x-text="String((getHours(h) + 20) % 24 + 4).padStart(2, '0') + '時'" @click="scrollToTime(h)"></li>
+              </template>
+            </menu>
+          </div>
           <div class="s">
             <button class="circle border transparent">
               <i>today</i>
-              <span x-text="getEpgDateText()"></span>
             </button>
-            <input type="date" @change="setDate($el.value)" :value="new Date(epg.epgStartTime).toLocaleDateString('sv')" :min="epg.minDate" :max="epg.maxDate">
+            <menu class="left no-wrap">
+              <template x-for="dateObj in getEpgDateList()" :key="dateObj.getTime()">
+                <li :class="{ active: isDateActive(dateObj) }" @click="setDate(dateObj)" x-text="getDateLabel(dateObj)"></li>
+              </template>
+            </menu>
           </div>
         </div>
       </template>
 
       <template x-if="isPage('#epgweek')">
         <div class="contents">
-          <div>
-            <button class="border transparent">
-              <i>cell_tower</i>
-              <span class="m l" x-text="allData.service.get(params.id)?.service_name || '局選択'"></span>
-              <i>arrow_drop_down</i>
-            </button>
-            <menu>
-              <template x-for="n in selectableNetworks" :key="n.index">
-                <li>
-                  <span x-text="n.name"></span>
-                  <menu class="left">
-                    <template x-for="s in getNetworkServices(n.index)" :key="getDataKey(s, 'service')">
-                      <li :class="{ active: params.id === getDataKey(s, 'service') }"
-                          @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })"
-                          x-text="s.service_name"></li>
-                    </template>
-                  </menu>
-                </li>
-              </template>
-            </menu>
+          <button class="m l circle transparent" @click="scrollToNow()" title="現在時刻へ移動">
+            <i>my_location</i>
+          </button>
+          <div x-data="{ get s() { return allData.service.get(params.id) } }">
+            <nav class="group split">
+              <span class="button left-round border transparent">
+                <i>cell_tower</i>
+                <img class="logo" :src="getLogoPath(s)">
+                <span class="l" x-text="s.service_name||'局選択'"></span>
+              </span>
+              <button class="right-round square border transparent">
+                <i>arrow_drop_down</i>
+              </button>
+              <menu class="left">
+                <template x-for="n in selectableNetworks" :key="n.index">
+                  <li>
+                    <span x-text="n.name"></span>
+                    <menu class="left no-wrap">
+                      <template x-for="s in getNetworkServices(n.index, true)" :key="getDataKey(s, 'service')">
+                        <li :class="{ active: params.id === getDataKey(s, 'service') }"
+                            @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })">
+                          <img class="round tiny" :src="getLogoPath(s)">
+                          <span x-text="s.service_name"></span>
+                        </li>
+                      </template>
+                    </menu>
+                  </li>
+                </template>
+              </menu>
+            </nav>
           </div>
           <nav class="m l no-margin no-space">
             <button class="circle transparent" @click="shiftDate(-7)" :disabled="!canShift(-7)">
@@ -192,6 +279,16 @@ ct:Append([=[
               <i>chevron_forward</i>
             </button>
           </nav>
+          <div class="m l">
+            <button class="circle border transparent">
+              <i>schedule</i>
+            </button>
+            <menu class="left no-wrap">
+              <template x-for="h in 24" :key="h">
+                <li :class="`hour-${ getHours(h) % 24 }`" x-text="String((getHours(h) + 20) % 24 + 4).padStart(2, '0') + '時'" @click="scrollToTime(h)"></li>
+              </template>
+            </menu>
+          </div>
         </div>
       </template>
 
@@ -556,7 +653,7 @@ ct:Append([=[
         <div class="epg-time-col">
           <div class="epg-service-header surface-container small-round border"></div> <!-- ヘッダー分 -->
           <template x-for="h in 24" :key="h">
-            <div class="center-align small-round border" :class="`hour-${ (new Date(epgStartTime).getHours() + h -1) % 24 }`" x-text="((new Date(epgStartTime).getHours() + h - 1 + 20) % 24 + 4)"></div>
+            <div class="center-align small-round border" :class="`hour-${ getHours(h) % 24 }`" x-text="(getHours(h) + 20) % 24 + 4"></div>
           </template>
         </div>
         <!-- 現在時刻の線 -->
@@ -1088,7 +1185,7 @@ ct:Append([=[
             <span x-text="d.stationName"></span>
           </div>
           <div class="title middle-align bold large-text">
-            <img class="space" :src="getLogoPath(d)">
+            <img class="logo space" :src="getLogoPath(d)">
             <span x-html="convert.title(d.title)"></span>
           </div>
           <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
@@ -1117,7 +1214,7 @@ ct:Append([=[
       </td>
       <td><span :class="opacity" x-html="getDateHtml(d, true)"></span></td>
       <td><span :class="opacity" x-html="convert.title(d.title)"></span></td>
-      <td><span class="middle-align tiny-gap" :class="opacity"><img class="space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span></td>
+      <td><span class="middle-align tiny-gap" :class="opacity"><img class="logo space" :src="getLogoPath(d)"><span x-text="d.stationName"></span></span></td>
       <td><span :class="opacity" x-text="d.comment"></span></td>
       <td class="right-align"><span :class="opacity" x-text="d.size"></span></td>
       <td class="right-align"><span :class="opacity" x-text="d.recSetting.priority"></span></td>
@@ -1354,7 +1451,7 @@ ct:Append([=[
                     </div>
                     <div class="max">
                       <div class="title middle-align bold large-text">
-                        <img class="space" :src="getLogoPath(d)">
+                        <img class="logo space" :src="getLogoPath(d)">
                         <span x-html="d.title"></span>
                       </div>
                       <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
@@ -1608,7 +1705,7 @@ ct:Append([=[
                         <span x-text="d.serviceName"></span>
                       </div>
                       <div class="title middle-align bold large-text" :class="{ 'error-text': d.recStatus %10 !== 1 && d.recStatus !== 6 || d.drops > 0 || d.scrambles > 0 }">
-                        <img class="space" :src="getLogoPath(d)">
+                        <img class="logo space" :src="getLogoPath(d)">
                         <span x-html="convert.title(d.title)"></span>
                       </div>
                       <div class="row wrap tiny-space no-margin secondary-text no-line">
@@ -1643,7 +1740,7 @@ ct:Append([=[
                     <tr class="ripple" :class="{ 'error-container': d.recStatus %10 !== 1 && d.recStatus !== 6, 'error-text': d.drops > 0 || d.scrambles > 0 }" @click="openRecinfoDetail(d)">
                       <td><span x-html="getDateHtml(d, true)"></span></td>
                       <td><span x-html="convert.title(d.title)"></span></td>
-                      <td><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span></td>
+                      <td><span class="middle-align tiny-gap"><img class="logo space" :src="getLogoPath(d)"><span x-text="d.serviceName"></span></span></td>
                       <td><span x-text="d.comment" :class="{ 'error-text': d.recStatus === 6 }"></span></td>
                       <td class="right-align"><span x-text="d.drops"></span></td>
                       <td class="right-align"><span x-text="d.scrambles"></span></td>
@@ -1704,7 +1801,7 @@ ct:Append([=[
                         <span x-html="getServiceName(d)"></span>
                       </div>
                       <div class="title middle-align bold large-text">
-                        <img class="space" :src="getLogoPath(d)">
+                        <img class="logo space" :src="getLogoPath(d)">
                         <span x-html="convert.title(d.shortInfo?.event_name)"></span>
                       </div>
                       <div class="ellipsis">
@@ -1750,7 +1847,7 @@ ct:Append([=[
                       </td>
                       <td style="max-width:20rem;"><span x-html="getDateHtml(d, true)"></span></td>
                       <td><span x-html="convert.title(d.shortInfo?.event_name)"></span></td>
-                      <td style="max-width:20rem;"><span class="middle-align tiny-gap"><img class="space" :src="getLogoPath(d)"><span x-html="getServiceName(d)"></span></span></td>
+                      <td style="max-width:20rem;"><span class="middle-align tiny-gap"><img class="logo space" :src="getLogoPath(d)"><span x-html="getServiceName(d)"></span></span></td>
                       <td class="ellipsis" style="max-width:30em;"><span x-text="d.shortInfo?.text_char"></span></td>
                     </tr>
                   </template>

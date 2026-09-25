@@ -12,6 +12,7 @@ main>.absolute{
   height: 100%;
 }
 
+menu.left:has(menu) { min-inline-size: auto; }
 menu>li:nth-last-child(1 of li) { --_child: 1 }
 menu>li:nth-last-child(2 of li) { --_child: 2 }
 menu>li:nth-last-child(3 of li) { --_child: 3 }
@@ -23,6 +24,10 @@ menu>li:nth-last-child(8 of li) { --_child: 8 }
 menu>li:nth-last-child(9 of li) { --_child: 9 }
 menu>li:nth-last-child(10 of li) { --_child: 10 }
 menu>li:nth-last-child(11 of li) { --_child: 11 }
+menu>li:first-of-type {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit
+}
 
 .hidden { display: none !important; }
 .show { display: block !important; }
@@ -135,6 +140,11 @@ h6 .mark { vertical-align: text-top; }
   background: var(--on-surface);
   color: var(--surface-variant);
   border-color: var(--surface);
+}
+.logo { 
+  max-inline-size: none!important;
+  inline-size: auto!important;
+  border-radius: 0.2rem;
 }
 
 
@@ -333,6 +343,7 @@ article.small-width+button { align-self: center; }
   transform: translate(-50%, 4em);
   transition: all var(--speed3), 0s background-color;
 }
+#epg-toolbar:not(.active) * { visibility: hidden; }
 #epg-toolbar.active {
   opacity: 1;
   visibility: visible;

@@ -647,7 +647,7 @@ document.addEventListener('alpine:init', () => {
 
       let lastScrollTop = 0;
       this.$main.addEventListener('scroll', () => {
-        if (!this.isPage('#epg')) return;
+        if (!this.isPage('#epg','#epgweek')) return;
         const scrollTop = this.$main.scrollTop;
         if (scrollTop <= 10) {
           this.epg.toolbarActive = true;
@@ -1263,6 +1263,7 @@ document.addEventListener('alpine:init', () => {
         return;
       }
       if (this.isPage('#epgweek')) {
+        this.epg.toolbarActive = true;
         if (!this.params.id) {
           const first = this.serviceList[0];
           if (first) this.openPage('#epgweek', { id: this.getDataKey(first, 'service') }, true);
@@ -2093,11 +2094,13 @@ document.addEventListener('alpine:init', () => {
       const service = this.allData.service.get(serviceId);
       if (!service) return;
 
+      const dateParam = this.params.date;
+
       // 4時基準の開始時間を決定
       let d = new Date(this.now);
       let dateSpecified = false;
-      if (this.params.date) {
-        const parsed = new Date(this.params.date);
+      if (dateParam && isNaN(dateParam)) {
+        const parsed = new Date(dateParam);
         if (!isNaN(parsed.getTime())) {
           d = parsed;
           dateSpecified = true;
@@ -2347,6 +2350,9 @@ document.addEventListener('alpine:init', () => {
 
       return target.getTime() === currentShowDay.getTime();
     },
+    getHours(h) {
+      return new Date(this.epg.epgStartTime).getHours() + h - 1;
+    },
     // 現在時刻の線の位置（px）を取得。範囲外なら -1
     getNowLinePos(hours = 24) {
       const start = this.epg.epgStartTime;
@@ -2355,8 +2361,8 @@ document.addEventListener('alpine:init', () => {
       return Math.floor((this.now - start) / 60000) * this.epg.set.minHeight;
     },
     // 現在時刻の位置までスクロールする
-    scrollToNow() {
-      const pos = this.getNowLinePos(3);
+    scrollToNow(hours = 24) {
+      const pos = this.getNowLinePos(hours);
       if (pos < 0) {
         // 表示範囲外なら「今日」へ移動（loadAllが走り、現在時刻開始のグリッドになる）
         this.setDate(0);
@@ -2364,6 +2370,9 @@ document.addEventListener('alpine:init', () => {
         // 表示範囲内ならスクロール。ヘッダー（90px）を考慮して少し余裕を持たせる
         this.$main.scrollTo({ top: pos - this.epg.set.minHeight * 15, behavior: 'smooth' });
       }
+    },
+    scrollToTime(h) {
+      this.$main.scrollTo({ top: this.epg.set.minHeight * ((h - 1) * 60 - 15) , behavior: 'smooth' });
     },
 
     detail: {},
