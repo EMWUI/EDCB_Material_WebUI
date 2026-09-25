@@ -261,7 +261,6 @@ document.addEventListener('alpine:init', () => {
       sidebar: false,
       dataSaver: true,
       oneseg: false,
-      subCh: false,
       subGenre: true,
       genreMask: -1044262913,
       mode: 'auto',
@@ -585,11 +584,6 @@ document.addEventListener('alpine:init', () => {
         this.updateNetworkMask();
         if (!this.sets.oneseg && this.isActiveNetwork(2)) this.setNetwork(0);
         this.saveCache();
-        this.syncNowOnAir();
-      });
-
-      this.$watch('sets.subCh', () => {
-        this.saveCache();
         if (this.isPage('#epg')) this.loadEpg();
         this.syncNowOnAir();
       });
@@ -664,7 +658,7 @@ document.addEventListener('alpine:init', () => {
       if (saved) {
         const cache = JSON.parse(saved);
         if (cache.lastUpdated) this.lastUpdated = { ...this.lastUpdated, ...cache.lastUpdated };
-        if (cache.networkMask) this.epg.networkMask = cache.networkMask | 1;
+        if (cache.networkMask) this.networkMask = cache.networkMask | 1;
         if (cache.totals) this.totals = { ...this.totals, ...cache.totals };
         if (cache.allData) {
           Object.entries(cache.allData).forEach(([key, list]) => {
@@ -693,9 +687,9 @@ document.addEventListener('alpine:init', () => {
           }
         }
         // 「すべて」(bit 0)を保証
-        if ((this.epg.networkMask & 1) === 0) this.epg.networkMask |= 1;
+        if ((this.networkMask & 1) === 0) this.networkMask |= 1;
         // キャッシュに他ネットワークの情報がない場合、データから再計算
-        if (this.epg.networkMask === 1 && this.allData.epg.size > 0) {
+        if (this.networkMask === 1 && this.allData.epg.size > 0) {
           this.updateNetworkMask();
         }
 
@@ -1494,7 +1488,7 @@ document.addEventListener('alpine:init', () => {
     },
     saveCache() {
       const totalsForCache = { ...this.totals, search: 0 };
-      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.epg.networkMask, coreRange: this.epg.coreRange, allData: {} };
+      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.networkMask, coreRange: this.epg.coreRange, allData: {} };
       Object.entries(this.allData).forEach(([key, map]) => {
         if (key === 'search') return; // 検索結果は永続キャッシュしない
         if (key === 'epg') {
@@ -1720,9 +1714,8 @@ document.addEventListener('alpine:init', () => {
     getTunerID(v) {
       return `ID:${this.convert.zero(v.tunerID.toString(16).toUpperCase(),8)} (${v.tunerName})`
     },
-    get nowOnAirList() {
-      // サービス一覧の並び順に従って、放送中・次の番組ペアの配列を返す
-      return this.serviceList.map(s => this.dashboardData.nowOnAir[this.getServiceID(s)]).filter(v => v);
+    nowOnAirList(i) {
+      return this.getNetworkServices(i).map(s => ({ ...s, ...this.dashboardData.nowOnAir[this.getServiceID(s)] })).filter(e => !e.subCh || !this.isGroupSub(e.current) && !e.current.isDummy);
     },
     syncNowOnAir() {
       const now = this.now;
@@ -1739,7 +1732,7 @@ document.addEventListener('alpine:init', () => {
 
       this.allData.epg.forEach((eventsMap, serviceId) => {
         const s = this.allData.service.get(serviceId);
-        if (!s || (!this.sets.oneseg && s.partialReceptionFlag) || (!this.sets.subCh && s.subCh)) return;
+        if (!s || (!this.sets.oneseg && s.partialReceptionFlag)) return;
 
         const events = Array.from(eventsMap.values()).sort((a, b) => a.startTimeInt - b.startTimeInt);
         let current = null;
@@ -1786,7 +1779,6 @@ document.addEventListener('alpine:init', () => {
       const list = Array.from(this.allData.service.values());
       return list
         .filter(s => this.sets.oneseg || !s.partialReceptionFlag)
-        .filter(s => this.sets.subCh || !s.subCh)
         .filter(s => this.allData.epg.has(this.getServiceID(s)));
     },
     // 現在の表示対象ネットワーク（「すべて」を含み、EPGデータが存在し、かつ設定で有効なもの）
@@ -1818,8 +1810,8 @@ document.addEventListener('alpine:init', () => {
     isNetwork(s, i, divCS = false) {
       return this.getNetworkIndex(s.onid, s.partialReceptionFlag, divCS) === i;
     },
-    getNetworkServices(i, divCS = false) {
-      return this.serviceList.filter(s => this.isNetwork(s, i, divCS));
+    getNetworkServices(i, hideSubCh) {
+      return this.serviceList.filter(s => this.isNetwork(s, i)).filter(s => !hideSubCh || !s.subCh);
     },
     updateNetworkMask() {
       let mask = 1;
@@ -1965,6 +1957,12 @@ document.addEventListener('alpine:init', () => {
       const d = new Date(time);
       return `${this.params.tab}-${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}`;
     },
+    isGroupSub(e) {
+      const list = e.eventGroupInfo?.eventDataList;
+      if (!list || list.length !== 1) return false;
+      const x = list[0];
+      return !(x.onid === e.onid && x.tsid === e.tsid && x.sid === e.sid && x.eid === e.eid);
+    },
     loadEpg() {
       const epg = this.epg;
       const gridStart = epg.epgStartTime;
@@ -1989,7 +1987,6 @@ document.addEventListener('alpine:init', () => {
         epg.lastLoadedStart === gridStart &&
         epg.lastLoadedNetwork === epg.activeNetwork &&
         epg.lastLoadedData === this.lastUpdated.epg &&
-        epg.lastLoadedMask === epg.networkMask &&
         epg.lastLoadedSubCh === this.sets.subCh &&
         epg.lastLoadedReserve === this.lastUpdated.reserve &&
         epg.lastLoadedKey === slotKey &&
@@ -1998,26 +1995,23 @@ document.addEventListener('alpine:init', () => {
 
       const timeChanged = epg.lastLoadedStart !== gridStart;
       const networkChanged = epg.lastLoadedNetwork !== epg.activeNetwork;
-      const maskChanged = epg.lastLoadedMask !== epg.networkMask;
       const subChChanged = epg.lastLoadedSubCh !== this.sets.subCh;
 
       // 中断と新規 ID 発行
       const currentLoadId = ++epg.loadId;
       epg.lastLoadedStart = gridStart;
       epg.lastLoadedNetwork = epg.activeNetwork;
-      epg.lastLoadedMask = epg.networkMask;
       epg.lastLoadedSubCh = this.sets.subCh;
       epg.lastLoadedData = this.lastUpdated.epg;
       epg.lastLoadedReserve = this.lastUpdated.reserve;
       epg.lastLoadedKey = slotKey;
 
       // 1. サービスリストの準備
-      if (networkChanged || maskChanged || subChChanged || epg.servicesToDisplay.length === 0) {
-        let services = this.serviceList;
-        if (!this.isActiveNetwork(0)) {
-          services = services.filter(s => this.isActiveNetwork(this.getNetworkIndex(s.onid, s.partialReceptionFlag)));
-        }
-        epg.servicesToDisplay = services.map(s => ({ ...s, displayEvents: [] }));
+      if (networkChanged || subChChanged || epg.servicesToDisplay.length === 0) {
+        epg.servicesToDisplay = this.serviceList
+          .filter(s => this.isActiveNetwork(0) || this.isActiveNetwork(this.getNetworkIndex(s.onid, s.partialReceptionFlag)))
+          .filter(s => !s.subCh)
+          .map(s => ({ ...s, displayEvents: [] }));
       } else if (timeChanged || isUnchanged) {
         // 時間が変わったか、ページ入り直しの場合は一旦クリアしてパラパラさせる
         epg.servicesToDisplay.forEach(s => s.displayEvents = []);

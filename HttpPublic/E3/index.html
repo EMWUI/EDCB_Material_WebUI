@@ -102,7 +102,7 @@ ct:Append([=[
                 <li>
                   <span x-text="n.name"></span>
                   <menu class="top right no-wrap">
-                    <template x-for="s in getNetworkServices(n.index)" :key="getDataKey(s, 'service')">
+                    <template x-for="s in getNetworkServices(n.index, true)" :key="getDataKey(s, 'service')">
                       <li :class="{ active: params.id === getDataKey(s, 'service') }"
                           @click="openPage('#epgweek', { id: getDataKey(s, 'service'), date: params.date })">
                         <img class="round tiny" :src="getLogoPath(s)">
@@ -496,34 +496,32 @@ ct:Append([=[
           <div class="vertical-margin">
             <div class="horizontal-padding bold secondary-text" x-text="n.name"></div>
             <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
-              <template x-for="s in getNetworkServices(n.index)" :key="getServiceID(s)">
-                <article class="small-width padding border ripple tiny-line"  :class="getGenreClass(entry.current)"
-                      x-data="{ get entry() { return nowOnAir[getServiceID(s)] } }"
-                      @click="if (entry) openProgramDetail(entry.current)">
-                  <button class="small-margin circle transparent small absolute top right front" @click.stop="if (entry) openPage('#watch', { id: getServiceID(entry.current) })"><i>cast</i></button>
+              <template x-for="s in nowOnAirList(n.index)" :key="getServiceID(s)">
+                <article class="small-width padding border ripple tiny-line" :class="getGenreClass(s.current)" @click="if (s.current) openProgramDetail(s.current)">
+                  <button class="small-margin circle transparent small absolute top right front" @click.stop="if (s.current) openPage('#watch', { id: getServiceID(s.current) })"><i>cast</i></button>
                   <div class="vertical small-gap no-round">
                     <div class="row">
                       <img class="round tiny border left-margin small-margin" :src="getLogoPath(s)">
                       <div class="max small-text secondary-text">
                         <div x-text="s.service_name"></div>
-                        <template x-if="entry">
-                          <div x-text="getDateText(entry.current)"></div>
+                        <template x-if="s.current">
+                          <div x-text="getDateText(s.current)"></div>
                         </template>
                       </div>
                     </div>
                     <div>
-                      <template x-if="entry">
-                        <div class="title large-text bold" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
+                      <template x-if="s.current">
+                        <div class="title large-text bold" x-html="convert.title(s.current.shortInfo?.event_name)"></div>
                       </template>
-                      <template x-if="!entry">
+                      <template x-if="!s.current">
                         <div class="middle-align center-align">
                           <progress class="circle small"></progress>
                         </div>
                       </template>
                     </div>
                   </div>
-                  <template x-if="entry">
-                    <progress class="absolute bottom left right" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
+                  <template x-if="s.current">
+                    <progress class="absolute bottom left right" :value="getElapsedTime(s.current)" :max="s.current.durationSecond" value="0"></progress>
                   </template>
                 </article>
               </template>
@@ -758,49 +756,53 @@ ct:Append([=[
         </nav>
 
         <section class="responsive">
-          <ul class="list medium-space bottom-margin">
-            <template x-for="s in getNetworkServices(onairNetwork)" :key="getServiceID(s)">
-              <li class="ripple" x-data="{ get entry() { return dashboardData.nowOnAir[getServiceID(s)] } }" @click="if (entry) openProgramDetail(entry.current)">
-                <div class="max row no-margin no-wrap">
-                  <div class="center-align">
-                    <img class="round border tiny" :src="getLogoPath(s)">
-                  </div>
-                  <div class="max">
-                    <div class="row no-margin no-wrap secondary-text small-text">
-                      <template x-if="entry">
-                        <div class="max" x-html="getDateHtml(entry.current)"></div>
-                      </template>
-                      <div class="title bold" x-text="s.service_name"></div>
-                    </div>
-                    <template x-if="entry">
-                      <div>
-                        <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
-                        <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
+          <template x-for="n in selectableNetworks" :key="n.index">
+            <div class="page no-padding" :class="{ active: onairNetwork === n.index }">
+              <ul class="list medium-space bottom-margin">
+                <template x-for="s in nowOnAirList(n.index)" :key="getServiceID(s)">
+                  <li class="ripple" @click="if (s.current) openProgramDetail(s.current)">
+                    <div class="max row no-margin no-wrap">
+                      <div class="center-align">
+                        <img class="round border tiny" :src="getLogoPath(s)">
+                      </div>
+                      <div class="max">
+                        <div class="row no-margin no-wrap secondary-text small-text">
+                          <template x-if="s.current">
+                            <div class="max" x-html="getDateHtml(s.current)"></div>
+                          </template>
+                          <div class="title bold" x-text="s.service_name"></div>
+                        </div>
+                        <template x-if="s.current">
+                          <div>
+                            <div class="title bold large-text" x-html="convert.title(s.current.shortInfo?.event_name)"></div>
+                            <progress class="no-margin" :value="getElapsedTime(s.current)" :max="s.current.durationSecond" value="0"></progress>
 
-                        <template x-if="entry.next">
-                          <div class="row no-margin padding-top middle-align">
-                            <i class="small secondary-text">skip_next</i>
-                            <div class="max secondary-text small-text truncate">
-                              <span class="bold" x-text="convert.date(entry.next.startTimeInt, false)"></span>
-                              <span x-html="convert.title(entry.next.shortInfo?.event_name)"></span>
-                            </div>
+                            <template x-if="s.next">
+                              <div class="row no-margin padding-top middle-align">
+                                <i class="small secondary-text">skip_next</i>
+                                <div class="max secondary-text small-text truncate">
+                                  <span class="bold" x-text="convert.date(s.next.startTimeInt, false)"></span>
+                                  <span x-html="convert.title(s.next.shortInfo?.event_name)"></span>
+                                </div>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                        <template x-if="!s.current">
+                          <div class="middle-align center-align padding">
+                            <progress class="circle small"></progress>
                           </div>
                         </template>
                       </div>
-                    </template>
-                    <template x-if="!entry">
-                      <div class="middle-align center-align padding">
-                        <progress class="circle small"></progress>
-                      </div>
-                    </template>
-                  </div>
-                  <button class="circle front" @click.stop="openPage('#watch', { id: getServiceID(s) })">
-                    <i>cast</i>
-                  </button>
-                </div>
-              </li>
-            </template>
-          </ul>
+                      <button class="circle front" @click.stop="openPage('#watch', { id: getServiceID(s) })">
+                        <i>cast</i>
+                      </button>
+                    </div>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </template>
         </section>
       </div>
     </template>
@@ -1052,28 +1054,28 @@ ct:Append([=[
                   </template>
                 </nav>
                 <template x-for="n in selectableNetworks" :key="n.index">
-                  <div class="page no-padding" :class="{ active: sideNetwork === n.index }" x-show="sideNetwork === n.index">
+                  <div class="page no-padding" :class="{ active: sideNetwork === n.index }">
                     <ul class="list small-space vertical-margin small-margin">
-                      <template x-for="s in getNetworkServices(n.index)" :key="getServiceID(s)">
-                        <li class="ripple" @click="openPage('#watch', { id: getServiceID(s)} );" :class="{ 'secondary-container': params.id === getServiceID(s) }" x-data="{ get entry() { return dashboardData.nowOnAir[getServiceID(s)] } }">
+                      <template x-for="s in nowOnAirList(n.index)" :key="getServiceID(s)">
+                        <li class="ripple" @click="openPage('#watch', { id: getServiceID(s)} );" :class="{ 'secondary-container': params.id === getServiceID(s) }">
                           <div class="max row no-margin no-wrap">
                             <div class="center-align">
                               <img class="round border tiny" :src="getLogoPath(s)">
                             </div>
                             <div class="max">
                               <div class="row no-margin no-wrap">
-                                <template x-if="entry">
-                                  <div class="max secondary-text small-text" x-html="getDateHtml(entry.current)"></div>
+                                <template x-if="s.current">
+                                  <div class="max secondary-text small-text" x-html="getDateHtml(s.current)"></div>
                                 </template>
                                 <div class="title bold secondary-text small-text" x-text="s.service_name"></div>
                               </div>
-                              <template x-if="entry">
+                              <template x-if="s.current">
                                 <div>
-                                  <div class="title bold large-text" x-html="convert.title(entry.current.shortInfo?.event_name)"></div>
-                                  <progress class="no-margin" :value="getElapsedTime(entry.current)" :max="entry.current.durationSecond" value="0"></progress>
+                                  <div class="title bold large-text" x-html="convert.title(s.current.shortInfo?.event_name)"></div>
+                                  <progress class="no-margin" :value="getElapsedTime(s.current)" :max="s.current.durationSecond" value="0"></progress>
                                 </div>
                               </template>
-                              <template x-if="!entry">
+                              <template x-if="!s.current">
                                 <div class="middle-align center-align padding">
                                   <progress class="circle small"></progress>
                                 </div>
@@ -5254,15 +5256,6 @@ ct:Append([=[
 
     <div class="field middle-align">
       <nav>
-        <div class="max"><h6><label class="large-text" for="set-subCh">サブチャンネル</label></h6></div>
-        <label class="switch">
-          <input type="checkbox" id="set-subCh" x-model="sets.subCh">
-          <span></span>
-        </label>
-      </nav>
-    </div>
-    <div class="field middle-align">
-      <nav>
         <div class="max"><h6><label class="large-text" for="set-oneseg">ワンセグ</label></h6></div>
         <label class="switch">
           <input type="checkbox" id="set-oneseg" x-model="sets.oneseg">
@@ -5309,6 +5302,7 @@ ct:Append([=[
 
     <template x-if="isPage('#watch')" x-data="player.set">
       <div>
+        <hr class="medium">
         <fieldset>
           <legend>NetworkTVID</legend>
           <nav class="group primary center-align">
