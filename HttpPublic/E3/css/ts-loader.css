@@ -171,6 +171,11 @@
   will-change: visibility;
 }
 
+.ts-thumb {
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+.ts-thumb.active { opacity: 1; }
 #chapMaker-container {
   width: 100%;
   position: absolute;

@@ -844,13 +844,15 @@ class TsThumb{
     e.width = frame.width;
     e.height = frame.height;
     e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(frame.buffer),frame.width,frame.height),0,0);
-    e.style.display = null;
+    if (this.#e.classList.contains('ts-thumb'))  e.classList.add('active');
+    else e.style.display = null;
   }
   #hide(){
     if (!this.#e) return;
     clearTimeout(this.#timerID);
     this.#id++;
-    this.#e.style.display = "none";
+    if (this.#e.classList.contains('ts-thumb')) this.#e.classList.remove('active');
+    else this.#e.style.display = "none";
     this.#value = null;
   }
 }

@@ -3307,11 +3307,42 @@ document.addEventListener('alpine:init', () => {
         this.thumb = null;
       },
       togglePlay() {
+        if (!(this.params.id || this.params.recid || this.params.rid || this.params.h)) return false;
         if (this.video.paused) this.video.play();
         else this.video.pause();
+        return true;
+      },
+      clickTimeout: null,
+      clickControl(el) {
+        clearTimeout(this.clickTimeout);
+        this.clickTimeout = setTimeout(() => {
+          if (this.togglePlay()) {
+            el.classList.remove('active');
+            void el.offsetWidth;
+            el.classList.add('active');
+          }
+        }, 250);
+      },
+      dblClickControl() {
+        clearTimeout(this.clickTimeout);
+        this.toggleFullscreen();
       },
       seek(value) {
         Alpine.raw(this.vid).setSeek(value, () => this.isLoading = true);
+      },
+      onPointerHover(e) {
+        const el = e.target;
+        if (!el.classList.contains('chapMaker')) return;
+        const input = e.currentTarget.parentElement.querySelector('input');
+        const thumb = this.$refs.thumbWrapper;
+        const seekTime = el.style.getPropertyValue('--sec');
+        const dur = e.currentTarget.style.getPropertyValue('--dur');
+        thumb.classList.add('active');
+        thumb.style.setProperty('--width', input.clientWidth + 'px');
+        thumb.style.setProperty('--offsetX', (seekTime / dur) * 100);
+        thumb.style.setProperty('--offsetY', '-2.5rem');
+        this.$refs.thumbTime.textContent = this.formatTime(seekTime) + ' ' + el.children[1].textContent;
+        Alpine.raw(this.thumb).seek(seekTime);
       },
       onSeekHover(e) {
         if (!this.thumb || this.live || Object.keys(this.params).length === 0) return;
@@ -3321,9 +3352,10 @@ document.addEventListener('alpine:init', () => {
         const clientWidth = input.clientWidth;
 
         const thumb = this.$refs.thumbWrapper;
-        thumb.classList.remove('hidden');
+        thumb.classList.add('active');
         thumb.style.setProperty('--width', clientWidth + 'px');
-        thumb.style.setProperty('--offset', (offsetX / clientWidth) * 100);
+        thumb.style.setProperty('--offsetX', (offsetX / clientWidth) * 100);
+        thumb.style.setProperty('--offsetY', 0);
 
         const seekTime = Math.min(Math.max(0, max * offsetX / clientWidth), max);
         this.$refs.thumbTime.textContent = this.formatTime(seekTime);
@@ -3331,7 +3363,7 @@ document.addEventListener('alpine:init', () => {
       },
       onSeekLeave() {
         if (this.thumb) Alpine.raw(this.thumb).hide();
-        this.$refs.thumbWrapper.classList.add('hidden');
+        this.$refs.thumbWrapper.classList.remove('active');
       },
       setVolume(value) {
         this.video.volume = parseFloat(value);

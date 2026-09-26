@@ -843,7 +843,11 @@ ct:Append([=[
                     <i class="fill">arrow_right</i>
                   </button>
                 </nav>
-                <div class="controls" @click="togglePlay()" x-show="!isMobile"></div>
+                <div class="controls middle-align" @click="clickControl($el)" @dblclick="dblClickControl()" x-show="!isMobile">
+                  <button class="circle">
+                    <i class="fill" x-text="isPlaying ? 'play_arrow' : 'pause'"></i>
+                  </button>
+                </div>
                 <div class="absolute right bottom horizontal-margin large-opacity" x-ref="remoconInPlayer"></div>
               </div>
 
@@ -855,16 +859,16 @@ ct:Append([=[
                       <progress :max="duration" :value="currentTime" value="0"></progress>
                     </template>
                     <template x-if="!live">
-                      <div class="slider" @pointerleave="onSeekLeave()" @pointermove="onSeekHover($event)">
-                        <span id="seek-thumb" class="hidden" x-ref="thumbWrapper">
-                          <canvas style="display: none;" x-init="thumbInit()" x-ref="thumb"></canvas>
+                      <div class="slider">
+                        <span id="seek-thumb" x-ref="thumbWrapper">
+                          <canvas class="ts-thumb" x-init="thumbInit()" x-ref="thumb"></canvas>
                           <span class="time" x-ref="thumbTime"></span>
                         </span>
                         <input type="range" min="0" :max="duration" :value="currentTime" x-ref="seekbar"
-                              @input="currentTime = $el.value; isSeeking = true"
-                              @change="seek($el.value); isSeeking = false">
+                          @pointerleave="onSeekLeave()" @pointermove="onSeekHover($event)"
+                          @input="currentTime = $el.value; isSeeking = true" @change="seek($el.value); isSeeking = false">
                         <span></span>
-                        <div id="chapMaker-container" x-init="chapterInit()"></div>
+                        <div id="chapMaker-container" x-init="chapterInit()" @pointerleave="onSeekLeave()" @pointerover="onPointerHover($event)"></div>
                       </div>
                     </template>
                     <span class="tiny-text" x-text="formatTime(duration)"></span>
@@ -955,8 +959,8 @@ ct:Append([=[
               <progress class="circle large"></progress>
             </div>
             <template x-if="!tslive">
-              <div class="arib-video-invisible-container contents" x-init="videoInit()">
-                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
+              <div class="arib-video-invisible-container" x-init="videoInit()">
+                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer">
                   <video id="video"]=]..GetPlayerOption()..[=[ x-ref="video">
                     <track id="vid-meta" x-ref="meta" kind="metadata" type="text/vtt">
                   </video>
@@ -964,8 +968,8 @@ ct:Append([=[
               </div>
             </template>
             <template x-if="tslive">
-              <div class="arib-video-invisible-container contents" x-init="videoInit()">
-                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer contents">
+              <div class="arib-video-invisible-container" x-init="videoInit()">
+                <div id="vid-cont" class="arib-video-container arib-video-container-prepend arib-video-container-tunnel-pointer">
                   <canvas id="video" name="canvas"]=]..GetPlayerOption(true)..[=[ x-ref="video"></canvas>
                 </div>
               </div>
@@ -1634,7 +1638,7 @@ ct:Append([=[
                               <i class="primary-text">movie</i>
                             </div>
                           </template>
-                          <canvas class="thumb rollThumb"></canvas>
+                          <canvas class="thumb rollThumb ts-thumb"></canvas>
                           <button class="circle primary library-play-btn" @click.stop="play(item)">
                             <i>play_arrow</i>
                           </button>
