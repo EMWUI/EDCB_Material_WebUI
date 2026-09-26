@@ -296,13 +296,27 @@ article.small-width+button { align-self: center; }
 .epg-time-col>div:not(.epg-service-header) { height: calc(60 * var(--min) * 1px); }
 .epg-time-col.epg-service-header { line-height: 1.1; margin-right: -2.5rem; z-index: 10; }
 .epg-service-col { position: relative; flex-grow: 1; }
+.epg-service-col.wide { inline-size: 15rem!important; } 
 .isSmallScreen .epg-service-col { inline-size: 8rem!important; }
+.isSmallScreen .epg-service-col.wide { inline-size: 10rem!important; } 
 .epg-service-header { height: var(--header); position: sticky; top: 0; z-index: 9; cursor: pointer; }
 .epg-service-header img { inline-size: auto; }
-.epg-event { width: 100%; overflow: visible; cursor: pointer; height: calc( var(--h) * var(--min) * 1px); }
-.epg-event > div { padding: 0 0.3rem; height: 100%; }
-.epg-event > div.large-elevate { height: auto; min-height: 100%; z-index: 5; }
-.epg-event :is(nav,.row).vertical { width: fit-content; margin-inline: auto; align-items: stretch; }
+.epg-event {
+  position: absolute;
+  top: calc(var(--s) * var(--min) * 1px);
+  left: calc(var(--l) / var(--t) * 100%);
+  width: calc(var(--u) / var(--t) * 100%);
+  height: calc(var(--h) * var(--min) * 1px);
+  overflow: visible;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all var(--speed3);
+}
+.epg-event:has(.large-elevate) { left: 0; width: 100% }
+.epg-event [class*="cont-"] { padding: 0 0.3rem; height: 100%; }
+.epg-event [class*="cont-"].large-elevate { height: auto; min-height: 100%; z-index: 5; }
+.epg-event :is(nav,.row) { animation: var(--speed4) to-page ease; }
+.epg-event :is(nav,.row).vertical { width: fit-content; margin-inline: auto; align-items: stretch;}
 .epg-event nav.vertical button { justify-content: normal; }
 .epg-event nav.vertical button span { flex-grow: 1; }
 .epg-content {

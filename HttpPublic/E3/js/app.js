@@ -800,6 +800,7 @@ document.addEventListener('alpine:init', () => {
       // 初回表示の反映
       await this.loadAll();
       await this.restoreSidePanel();
+      if (!this.dataSaver) this.refreshStaticData();
     },
 
     // SSEの開始とメッセージ処理
@@ -1033,7 +1034,20 @@ document.addEventListener('alpine:init', () => {
         services.forEach((s, i) => {
           const ni = this.getNetworkIndex(s.onid, s.partialReceptionFlag);
           const prev = services[i - 1];
-          s.subCh = (ni === 1 || ni === 3) && prev && s.onid === prev.onid && s.tsid === prev.tsid;
+          const isMultiCh = ni === 1 || ni === 3;
+          s.subCh = isMultiCh && prev && s.onid === prev.onid && s.tsid === prev.tsid;
+          if (isMultiCh && !s.subCh) {
+            s.subSids = [];
+            for (let j = i + 1; j < services.length; j++) {
+              const next = services[j];
+              const nextNi = this.getNetworkIndex(next.onid, next.partialReceptionFlag);
+              if ((nextNi === 1 || nextNi === 3) && next.service_type < 10 && next.onid === s.onid && next.tsid === s.tsid) {
+                s.subSids.push(next.sid);
+              } else {
+                break;
+              }
+            }
+          }
           this.allData.service.set(this.getDataKey(s, 'service'), s);
         });
 
@@ -1851,6 +1865,11 @@ document.addEventListener('alpine:init', () => {
       weeklyLoadId: 0,
       toolbarActive: true,
 
+      wideServices: [
+        '32391-32391-23608',
+        '4-18130-231',
+      ],
+
       isDragging: false,
       hasMoved: false,
       velocityX: 0,
@@ -2030,44 +2049,67 @@ document.addEventListener('alpine:init', () => {
         if (epg.loadId !== currentLoadId) return;
 
         const s = currentServices[index];
-        const serviceId = this.getDataKey(s, 'service');
-        const eventMap = dataMap ? dataMap.get(serviceId) : null;
         const displayEvents = [];
-        let lastPos = gridStart;
 
-        if (eventMap) {
-          for (const v of eventMap.values()) {
-            const start = v.startTimeInt;
-            const end = start + (v.durationSecond * 1000);
-            if (end <= gridStart || start >= gridEnd) continue;
+        if (dataMap) {
+          // 全サービス（メイン + サブ）を取得
+          const allSvs = [s, ...(s.subSids || [])
+            .map(sid => this.allData.service.get(this.getDataKey({ ...s, sid }, 'service')))
+            .filter(s => this.allData.epg.has(this.getServiceID(s)))
+            .filter(Boolean)
+          ];
 
-            // サーバー側で時間順にソート済みのため、表示枠を超えたらこの局の計算は終了できる
-            if (start >= gridEnd) break;
-            if (end <= gridStart) continue;
+          const total = allSvs.length;
+          let left = 0;
+          allSvs.map(sv => {
+            if (sv.subCh) left++;
+            let shift = false;
+            const eventMap = dataMap.get(this.getDataKey(sv, 'service'));
+            let lastPos = gridStart;
 
-            const vStart = Math.max(start, gridStart);
-            const vEnd = Math.min(end, gridEnd);
-            const startMin = Math.floor((vStart - gridStart) / 60000);
-            const endMin = Math.floor((vEnd - gridStart) / 60000);
-            const lastMin = Math.floor((lastPos - gridStart) / 60000);
+            if (eventMap) {
+              for (const v of eventMap.values()) {
+                if (this.isGroupSub(v)) continue;
 
-            if (startMin < lastMin) continue;
-            if (startMin > lastMin) {
-              displayEvents.push({ isGap: true, minutes: startMin - lastMin });
+                const start = v.startTimeInt;
+                const end = start + (v.durationSecond * 1000);
+                if (end <= gridStart || start >= gridEnd) continue;
+
+                // サーバー側で時間順にソート済みのため、表示枠を超えたらこの局の計算は終了できる
+                if (start >= gridEnd) break;
+                if (end <= gridStart) continue;
+
+                const vStart = Math.max(start, gridStart);
+                const vEnd = Math.min(end, gridEnd);
+                const startMin = Math.floor((vStart - gridStart) / 60000);
+                const endMin = Math.floor((vEnd - gridStart) / 60000);
+                const lastMin = Math.floor((lastPos - gridStart) / 60000);
+
+                if (startMin < lastMin) continue;
+                if (startMin > lastMin && !sv.subCh) displayEvents.push({ isGap: true, startMin: lastMin, minutes: startMin - lastMin });
+                let units = 1;
+                v.eventGroupInfo?.eventDataList.forEach((x, i) => {
+                  if (i > 0) units++;
+                  if (v.sid + i !== x.sid) shift = true;
+                });
+                const minutes = endMin - startMin;
+                if (minutes > 0) {
+                  const reserve = this.allData.reserve.get(this.getEventID(v));
+                  displayEvents.push({ ...v, isGap: false, startMin, minutes, total, units, left, reserve });
+                  lastPos = Math.max(lastPos, vEnd);
+                }
+              }
             }
-            const minutes = endMin - startMin;
-            if (minutes > 0) {
-              const reserve = this.allData.reserve.get(this.getEventID(v));
-              displayEvents.push({ ...v, isGap: false, minutes, reserve });
-              lastPos = Math.max(lastPos, vEnd);
-            }
-          }
-        }
 
-        const finalMin = Math.floor((gridEnd - gridStart) / 60000);
-        const lastMin = Math.floor((lastPos - gridStart) / 60000);
-        if (finalMin > lastMin) {
-          displayEvents.push({ isGap: true, minutes: finalMin - lastMin });
+            if (!sv.subCh) {
+              const finalMin = Math.floor((gridEnd - gridStart) / 60000);
+              const lastMin = Math.floor((lastPos - gridStart) / 60000);
+              if (finalMin > lastMin) {
+                displayEvents.push({ isGap: true, startMin: lastMin, minutes: finalMin - lastMin });
+              }
+            }
+            if (shift) left++;
+          });
         }
 
         // リアクティブに個別の番組リストを更新
@@ -2171,12 +2213,12 @@ document.addEventListener('alpine:init', () => {
             const lastMin = Math.floor((lastPos - dayStart) / 60000);
 
             if (startMin > lastMin) {
-              displayEvents.push({ isGap: true, minutes: startMin - lastMin });
+              displayEvents.push({ isGap: true, startMin: lastMin, minutes: startMin - lastMin });
             }
             const minutes = endMin - startMin;
             if (minutes > 0) {
               const reserve = this.allData.reserve.get(this.getEventID(v));
-              displayEvents.push({ ...v, isGap: false, minutes, reserve });
+              displayEvents.push({ ...v, isGap: false, startMin, minutes, reserve });
               lastPos = Math.max(lastPos, vEnd);
             }
           }
@@ -2184,7 +2226,7 @@ document.addEventListener('alpine:init', () => {
           const finalMin = 1440;
           const lastMin = Math.floor((lastPos - dayStart) / 60000);
           if (finalMin > lastMin) {
-            displayEvents.push({ isGap: true, minutes: finalMin - lastMin });
+            displayEvents.push({ isGap: true, startMin: lastMin, minutes: finalMin - lastMin });
           }
 
           // 変更がある場合のみ個別の番組リストを更新（リアクティブ連鎖の抑制）

@@ -660,7 +660,7 @@ ct:Append([=[
         </template>
 
         <template x-ref="epgEvent">
-          <div class="epg-event" :style="`--h: ${d.minutes}`"
+          <div class="epg-event" :style="`--s: ${d.startMin}; --l: ${d.left||0};  --t: ${d.total||1}; --u: ${d.units||1}; --h: ${d.minutes}`"
               @click="onEventClick(d)" @dblclick="onEventDblClick(d)"
               @pointerenter="onPointerEnter(d)" @pointerleave="onPointerLeave()">
             <div class="small-round border" :class="getEventClass(d)">
@@ -709,7 +709,7 @@ ct:Append([=[
         <template x-if="isPage('#epg')">
           <!-- サービス列 -->
           <template x-for="s in servicesToDisplay" :key="getServiceID(s)">
-            <div class="epg-service-col small-width">
+            <div class="epg-service-col small-width" :class="{ wide: wideServices.includes(getServiceID(s)) }">
               <div class="epg-service-header secondary-container vertical-padding center-align small-round border ripple"
                    @click="openPage('#epgweek', { id: getDataKey(s, 'service') })">
                 <img :src="getLogoPath(s)" class="tiny">
