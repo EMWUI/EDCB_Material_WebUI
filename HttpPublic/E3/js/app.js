@@ -606,9 +606,10 @@ document.addEventListener('alpine:init', () => {
         this.loadAll();
       });
       window.addEventListener('popstate', () => {
-        this.page = window.location.hash || '#dashboard';
+        const newHash = window.location.hash || '#dashboard';
         const newParams = Object.fromEntries(new URLSearchParams(window.location.search));
-        let paramsChanged = false;
+        let paramsChanged = this.page !== newHash;
+        this.page = newHash;
 
         // id以外のすべてのパラメータの変化を自動チェック
         const allKeys = new Set([...Object.keys(this.params), ...Object.keys(newParams)]);
@@ -3595,6 +3596,7 @@ document.addEventListener('alpine:init', () => {
 
       // 初期化 (例: ビデオ要素へのイベントリスナーのアタッチ)
       videoInit() {
+        if (this.vid) Alpine.raw(this.vid).destroy();
         if (!this.$refs.video) {
           setTimeout(() => this.videoInit(), 100);
           return;
@@ -3655,17 +3657,21 @@ document.addEventListener('alpine:init', () => {
         if (this.params.id) this.loadLive(this.params.id);
         else if (this.params.recid || this.params.rid || this.params.h) this.loadVideo(this.params);
 
+        if (!this.live) {
+          this.thumbInit();
+          this.chapterInit();
+        }
         this.resetControlTimeout();
       },
       thumbInit() {
-        if (!this.$refs.video) {
+        if (!this.$refs.thumb) {
           setTimeout(() => this.thumbInit(), 100);
           return;
         }
         this.thumb = new TsThumb(`${this.app.ROOT}api/grabber`, this.$refs.thumb, this.$refs.video);
       },
       chapterInit() {
-        if (!this.$refs.video) {
+        if (!this.$refs.chap) {
           setTimeout(() => this.chapterInit(), 100);
           return;
         }

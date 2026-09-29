@@ -844,7 +844,7 @@ class TsThumb{
     e.width = frame.width;
     e.height = frame.height;
     e.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(frame.buffer),frame.width,frame.height),0,0);
-    if (this.#e.classList.contains('ts-thumb'))  e.classList.add('active');
+    if (e.classList.contains('ts-thumb'))  e.classList.add('active');
     else e.style.display = null;
   }
   #hide(){
@@ -1860,7 +1860,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
         return response.text();
       }).then(text=>{
         this.#logText=text;
-        const m=logText.match(/^<!-- J=([0-9]+);T=([0-9]+)/);
+        const m=this.#logText.match(/^<!-- J=([0-9]+);T=([0-9]+)/);
         if(m){
           for(const opt of this.#elems.selectID.options){
             if(opt.value==m[1]){

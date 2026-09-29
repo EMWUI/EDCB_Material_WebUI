@@ -861,14 +861,14 @@ ct:Append([=[
                     <template x-if="!live">
                       <div class="slider">
                         <span id="seek-thumb" x-ref="thumbWrapper">
-                          <canvas class="ts-thumb" x-init="thumbInit()" x-ref="thumb"></canvas>
+                          <canvas class="ts-thumb" x-ref="thumb"></canvas>
                           <span class="time" x-ref="thumbTime"></span>
                         </span>
                         <input type="range" min="0" :max="duration" :value="currentTime" x-ref="seekbar"
                           @pointerleave="onSeekLeave()" @pointermove="onSeekHover($event)"
                           @input="currentTime = $el.value; isSeeking = true" @change="seek($el.value); isSeeking = false">
                         <span></span>
-                        <div id="chapMaker-container" x-init="chapterInit()" @pointerleave="onSeekLeave()" @pointerover="onPointerHover($event)"></div>
+                        <div id="chapMaker-container" x-ref="chap" @pointerleave="onSeekLeave()" @pointerover="onPointerHover($event)"></div>
                       </div>
                     </template>
                     <span class="tiny-text" x-text="formatTime(duration)"></span>
@@ -1061,7 +1061,7 @@ ct:Append([=[
                   <div class="page no-padding" :class="{ active: sideNetwork === n.index }">
                     <ul class="list small-space vertical-margin small-margin">
                       <template x-for="s in nowOnAirList(n.index)" :key="getServiceID(s)">
-                        <li class="ripple" @click="openPage('#watch', { id: getServiceID(s)} );" :class="{ 'secondary-container': params.id === getServiceID(s) }">
+                        <li class="ripple" @click="openPage('#watch', { id: getServiceID(s)}, true );" :class="{ 'secondary-container': params.id === getServiceID(s) }">
                           <div class="max row no-margin no-wrap">
                             <div class="center-align">
                               <img class="round border tiny" :src="getLogoPath(s)">
@@ -1577,7 +1577,7 @@ ct:Append([=[
                               <i class="primary-text">movie</i>
                             </div>
                           </template>
-                          <canvas class="thumb"></canvas>
+                          <canvas class="thumb rollThumb ts-thumb"></canvas>
                         </div>
                         <div class="max">
                           <h6 class="small title" x-text="item.name"></h6>
