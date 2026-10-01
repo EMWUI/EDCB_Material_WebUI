@@ -110,20 +110,32 @@ class Danmaku {
                         tunnel = getTunnel(item, dan[i].type, itemWidth);
                         if (tunnel >= 0) {
                             item.style.width = itemWidth + 1 + 'px';
-                            item.style.top = (danPaddingTop + itemHeight * tunnel) + 'px';
+                            if (this.options.reverse) {
+                                item.style.bottom = (danPaddingBottom + itemHeight * tunnel) + 'px';
+                            } else {
+                                item.style.top = (danPaddingTop + itemHeight * tunnel) + 'px';
+                            }
                             item.style.transform = `translateX(-${danWidth}px)`;
                         }
                         break;
                     case 'top':
                         tunnel = getTunnel(item, dan[i].type);
                         if (tunnel >= 0) {
-                            item.style.top = (danPaddingTop + itemHeight * tunnel) + 'px';
+                            if (this.options.reverse) {
+                                item.style.bottom = (danPaddingBottom + itemHeight * tunnel) + 'px';
+                            } else {
+                                item.style.top = (danPaddingTop + itemHeight * tunnel) + 'px';
+                            }
                         }
                         break;
                     case 'bottom':
                         tunnel = getTunnel(item, dan[i].type);
                         if (tunnel >= 0) {
-                            item.style.bottom = (danPaddingBottom + itemHeight * tunnel) + 'px';
+                            if (this.options.reverse) {
+                                item.style.top = (danPaddingTop + itemHeight * tunnel) + 'px';
+                            } else {
+                                item.style.bottom = (danPaddingBottom + itemHeight * tunnel) + 'px';
+                            }
                         }
                         break;
                     default:

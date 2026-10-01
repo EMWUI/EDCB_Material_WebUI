@@ -293,6 +293,7 @@ document.addEventListener('alpine:init', () => {
         jikkyoConfig: {
           load: false,
           opacity: 1,
+          reverse: false,
           heightPercent: 6,
           duration: 4,
           ...config.jk,
