@@ -1,5 +1,5 @@
 app='260926'
-tsloader='260926'
+tsloader='260930'
 beer='5.0.3'
 mdc='1.1.4'
 alpine='3.15.12'
@@ -79,7 +79,7 @@ function GetAppConfig()
     ..' suspendMode: \''..(INDEX_SUSPEND_USE_HIBERNATE and 'hibernate' or 'suspend')..'\','
     ..' xcode: ['..table.concat(xcode,', ')..'],'
     ..' nvram: { zip: \''..zip.. '\', prefecture: '..prefecture.. '},'
-    ..' jk: { hight: '..JK_COMMENT_HEIGHT..', duration: '..JK_COMMENT_DURATION..'}'
+    ..' jk: { heightPercent: '..JK_COMMENT_HEIGHT_PERCENT..', duration: '..JK_COMMENT_DURATION..'}'
     ..'}'
 end
 

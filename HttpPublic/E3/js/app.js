@@ -293,8 +293,9 @@ document.addEventListener('alpine:init', () => {
         jikkyoConfig: {
           load: false,
           opacity: 1,
-          height: config.jk.height,
-          duration: config.jk.duration,
+          heightPercent: 6,
+          duration: 4,
+          ...config.jk,
         }
       },
     },
@@ -3539,6 +3540,7 @@ document.addEventListener('alpine:init', () => {
       },
       setbmlBrowserSize() {
         if (!this.$refs.player) return;
+        Alpine.raw(this.vid).jikkyo.danmaku.resize();
         if (typeof bmlBrowserSetVisibleSize === 'undefined') return;
         const width = this.$refs.player.clientWidth;
         const height = this.$refs.player.clientHeight;
@@ -3647,9 +3649,8 @@ document.addEventListener('alpine:init', () => {
         if (vid.cap && !this.set.cap) vid.cap.hide();
         if (vid.jikkyo) {
           vid.toggleJikkyo(this.set.jikkyo, this.set.jikkyoConfig.load);
-          vid.jikkyo.danmaku.opacity(this.set.jikkyoConfig.opacity);
-          vid.jikkyo.danmaku.options.height = this.set.jikkyoConfig.height;
-          vid.jikkyo.danmaku.options.duration = this.set.jikkyoConfig.duration;
+          vid.jikkyoOpacity = this.set.jikkyoConfig.opacity;
+          vid.jikkyo.danmaku.options = { ...vid.jikkyo.danmaku.options, ...this.set.jikkyoConfig }
         }
 
         vid.toggleDatacast(this.set.datacast);
@@ -3814,8 +3815,8 @@ document.addEventListener('alpine:init', () => {
         const d = idx < 0 ? undefined : this.data.path[idx].hash;
         this.app.openPage('#library', { i: this.data.index, p, d });
       },
-      play(file) {
-        this.app.openPage('#watch', { ...this.lastParams, h: file.hash });
+      play(file, replace) {
+        this.app.openPage('#watch', { ...this.lastParams, h: file.hash }, replace);
       },
     },
     thumb: 'createMiscWasmModule' in window && new TsThumb(`${config.root}api/grabber`),

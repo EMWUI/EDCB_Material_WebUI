@@ -1018,7 +1018,7 @@ end
 
 function GetJk()
   return {
-    commentHeight=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,INI)),
+    commentHeightPercent=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT_PERCENT',6,INI)),
     commentDuration=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,INI)),
 
     jktaskBaseDir=edcb.GetPrivateProfile('JK','JKTASK_BASE_DIR','/var/local/jktask',INI),
@@ -1102,7 +1102,7 @@ function SaveWebUI()
   edcb.WritePrivateProfile('NVRAM','ZIP',mg.get_var(post,'nvramZip') or '',INI)
   edcb.WritePrivateProfile('NVRAM','REGION',GetVarInt(post,'nvramRegion') or 0,INI)
 
-  edcb.WritePrivateProfile('JK','COMMENT_HEIGHT',mg.get_var(post,'commentHeight'),INI)
+  edcb.WritePrivateProfile('JK','COMMENT_HEIGHT_PERCENT',mg.get_var(post,'commentHeightPercent'),INI)
   edcb.WritePrivateProfile('JK','COMMENT_DURATION',mg.get_var(post,'commentDuration'),INI)
   edcb.WritePrivateProfile('JK','JKCNSL_PATH',mg.get_var(post,'jkcnslPath') or '',INI)
 

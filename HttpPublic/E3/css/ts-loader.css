@@ -129,9 +129,10 @@
   font-family: "Meiryo", "Kosugi Maru Bold", sans-serif;
   font-weight: bold;
   line-height: 1;
+  opacity: var(--dplayer-danmaku-item-opacity, 1);
   pointer-events: none;
-  -webkit-text-stroke: 1px #000;
-  text-stroke: 1px #000;
+  -webkit-text-stroke: var(--dplayer-danmaku-item-text-stroke, 0.03em) #000;
+  text-stroke: var(--dplayer-danmaku-item-text-stroke, 0.03em) #000;
   user-select: none;
   white-space: nowrap;
 }
@@ -169,6 +170,10 @@
   animation-name: danmaku-center;
   animation-timing-function: linear;
   will-change: visibility;
+}
+
+.dplayer-paused .dplayer-danmaku-move {
+  animation-play-state: paused;
 }
 
 .ts-thumb {

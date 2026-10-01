@@ -863,6 +863,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
   #fast;
   #elems = {
     vcont: document.getElementById("vid-cont"),
+    container: document.getElementById("danmaku-container")||document.getElementById("vid-cont"),
     comm: document.getElementById("jikkyo-comm"),
     chats: document.getElementById("jikkyo-chats"),
     commInput: document.getElementById("comm"),
@@ -905,6 +906,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
 
   set setRemoconEvent(fn){this.#setRemoconEvent(fn)}
   get shiftJikkyo(){return this.#shiftJikkyo}
+  set jikkyoOpacity(v){this.#setJikkyoOpacity(v)}
   set jkID(id){this.#setJK(id)}
   set jkTM(tm){this.#setJK(null,tm)}
 
@@ -952,17 +954,15 @@ const datacastMixin = (Base = class {}) => class extends Base{
       this.#customReplace = [];
     }
     this.#danmaku = new Danmaku({
-      container:document.getElementById("danmaku-container")||this.#elems.vcont,
-      opacity:1,
-      callback:function(){},
-      error:function(msg){},
-      apiBackend:{read:function(opt){opt.success([]);}},
-      height:+this.#e.dataset.commentHeight||32,
-      duration:+this.#e.dataset.commentDuration||5,
-      paddingTop:10,
-      paddingBottom:10,
+      container:this.#elems.container,
+      duration:+this.#e.dataset.commentDuration||4,
+      heightPercent:+this.#e.dataset.commentHeightPercent||6,
+      maxHeightPx:9999,
+      minHeightPx:30,
+      paddingBottomPercent:2,
+      paddingTopPercent:2,
+      textStroke:"0.03em",
       unlimited:false,
-      api:{id:"noid",address:"noad",token:"noto",user:"nous",speedRate:1}
     });
     this.#addJikkyoEvent();
   }
@@ -996,6 +996,7 @@ const datacastMixin = (Base = class {}) => class extends Base{
   }
   #clear(){
     if (!this.#noDanmaku){
+      this.#danmaku.clear();
       this.#jklog.disable();
       this.#jkStream.clear();
     }
@@ -1688,6 +1689,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
   #shiftJikkyo(sec){
     this.#jklog.offsetSec+=sec;
     this.#addMessage("Offset "+this.#jklog.offsetSec+"sec");
+  }
+  #setJikkyoOpacity(v){
+    this.#elems.container.style.setProperty("--dplayer-danmaku-item-opacity", `${v}`);
   }
   #setJK(id, tm){
     if (this.#jklog.ctrl&&this.#logText==null) return;

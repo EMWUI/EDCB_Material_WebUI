@@ -299,8 +299,10 @@ JKCNSL_CHAT_STREAMS={
 JKRDLOG_PATH=edcb.GetPrivateProfile('JK','JKRDLOG_PATH','',INI)
 if JKRDLOG_PATH=='' then JKRDLOG_PATH=nil end
 
---実況コメントの文字の高さ(px)
+--実況コメントの文字の高さ(px) EMWUI用に残す
 JK_COMMENT_HEIGHT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT',32,INI))
+--実況コメントの文字の大きさ(%)
+JK_COMMENT_HEIGHT_PERCENT=tonumber(edcb.GetPrivateProfile('JK','COMMENT_HEIGHT_PERCENT',6,INI))
 
 --実況コメントの表示時間(秒)
 JK_COMMENT_DURATION=tonumber(edcb.GetPrivateProfile('JK','COMMENT_DURATION',5,INI))
