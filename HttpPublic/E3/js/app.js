@@ -3186,7 +3186,8 @@ document.addEventListener('alpine:init', () => {
       live: true,
       isPlaying: false,
       currentTime: 0,
-      get duration() { return this.epg?.meta?.duration || this.epg?.durationSecond || 0 },
+      get duration() { return this.videoInfo?.meta?.duration || this.epg?.durationSecond || 0 },
+      skips: [],
       isPiP: false,
       isFullscreen: false,
       playbackRate: 1,
@@ -3240,7 +3241,8 @@ document.addEventListener('alpine:init', () => {
             fname = info.path;
             canPlay = document.createElement('video').canPlayType(`video/${fname.match(/[^\.]*$/)}`).length > 0;
             Alpine.raw(this.chap).reset();
-            Alpine.raw(this.chap).setChapters(info.chapters, info.meta?.duration);
+            const [chap, skips] = Alpine.raw(this.chap).setChapters(info.chapters, info.meta?.duration);
+            this.skips = skips;
           } catch (e) {
             console.error(e);
           } finally {
@@ -3298,6 +3300,7 @@ document.addEventListener('alpine:init', () => {
         this.videoInfo = null;
         this.isPlaying = false;
         this.currentTime = 0;
+        this.skips = [];
         this.isLoading = false;
         this.isSeeking = false;
         this.canPlay = false;
@@ -3343,7 +3346,7 @@ document.addEventListener('alpine:init', () => {
         thumb.classList.add('active');
         thumb.style.setProperty('--width', input.clientWidth + 'px');
         thumb.style.setProperty('--offsetX', (seekTime / dur) * 100);
-        thumb.style.setProperty('--offsetY', '-2.5rem');
+        thumb.style.setProperty('--offsetY', '-1rem');
         this.$refs.thumbTime.textContent = this.formatTime(seekTime) + ' ' + el.children[1].textContent;
         Alpine.raw(this.thumb).seek(seekTime);
       },

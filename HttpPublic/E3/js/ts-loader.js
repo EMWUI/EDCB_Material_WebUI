@@ -958,10 +958,9 @@ const datacastMixin = (Base = class {}) => class extends Base{
       duration:+this.#e.dataset.commentDuration||4,
       heightPercent:+this.#e.dataset.commentHeightPercent||6,
       maxHeightPx:9999,
-      minHeightPx:30,
+      minHeightPx:24,
       paddingBottomPercent:2,
       paddingTopPercent:2,
-      textStroke:"0.03em",
       unlimited:false,
     });
     this.#addJikkyoEvent();

@@ -868,6 +868,9 @@ ct:Append([=[
                           @pointerleave="onSeekLeave()" @pointermove="onSeekHover($event)"
                           @input="currentTime = $el.value; isSeeking = true" @change="seek($el.value); isSeeking = false">
                         <span></span>
+                        <template x-for="c in skips" :key="c.start">
+                          <span class="skips" :style="`--start: ${c.start / duration * 100}%; --end: ${(duration - c.end) / duration * 100}%; --s:${c.start};--e:${c.end};--d:${duration};`"></span>
+                        </template>
                         <div id="chapMaker-container" x-ref="chap" @pointerleave="onSeekLeave()" @pointerover="onPointerHover($event)"></div>
                       </div>
                     </template>
@@ -1097,7 +1100,7 @@ ct:Append([=[
               <div>
                 <ul class="list small-space vertical-margin small-margin">
                   <template x-for="item in library.data.file" :key="item.name">
-                    <li class="ripple" @click="library.play(item)" :class="{ 'secondary-container': params.h === item.hash }">
+                    <li class="ripple" @click="library.play(item, true)" :class="{ 'secondary-container': params.h === item.hash }">
                       <div class="max row no-margin no-wrap">
                         <template x-if="item.thumb">
                           <img class="round border" :src="getThumbUrl(item)">
