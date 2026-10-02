@@ -1,4 +1,4 @@
-app='260926'
+app='261002'
 tsloader='260930'
 beer='5.0.3'
 mdc='1.1.4'
@@ -23,6 +23,11 @@ function GetAppConfig()
   local ctok={}
   for i,v in ipairs({'common','settings','setreserve','setautoadd','setmanuadd','setrecinfo','searchevent','view','xcode','comment'}) do
     table.insert(ctok, string.format('%s: \'%s\'',v,CsrfToken(v)))
+  end
+
+  local searchPresetList={}
+  for i,v in ipairs(Split(edcb.GetPrivateProfile('search','list','',INI),',')) do
+    table.insert(searchPresetList, string.format('\'%s\'',v))
   end
 
   local minTime, maxTime = nil, nil
@@ -67,6 +72,7 @@ function GetAppConfig()
   return '{root: \''..PathToRoot()
     ..'\', useSsePort: '..useSsePort
     ..', ctok: {'..table.concat(ctok,', ')..'}'
+    ..', searchPresetList: ['..table.concat(searchPresetList,', ')..']'
     ..', epgTimeRange: { min: '..(minTime or 0)..', max: '..(maxTime or 0)..' },'
     ..' rsdef: {'
     ..' serviceMode: '..(rsdef.serviceMode or 0)

@@ -65,7 +65,7 @@ nav.group.connected.fill>:is(.button,button).active {
 nav.tabbed.fixed {
   position: sticky;
   top: 0;
-  z-index:20;
+  z-index:11;
 }
 summary.fixed {
   position: sticky;
@@ -357,7 +357,7 @@ article.small-width+button { align-self: center; }
   transform: translate(-50%, 4em);
   transition: all var(--speed3), 0s background-color;
 }
-#epg-toolbar:not(.active) * { visibility: hidden; }
+#epg-toolbar:not(.active) menu { visibility: hidden; }
 #epg-toolbar.active {
   opacity: 1;
   visibility: visible;

@@ -201,6 +201,8 @@ document.addEventListener('alpine:init', () => {
     page: window.location.hash || '#dashboard',
     params: {},
     search: { isDummy: true, searchInfo: {} },
+    searchPresetList: config.searchPresetList || [],
+    history: [],
     now: Date.now(),
     isOnline: false,
     isCellular: false,
@@ -1064,7 +1066,7 @@ document.addEventListener('alpine:init', () => {
         if (snackbar) this.snackbar.add('基礎データを更新しました');
       } catch (e) {
         console.error("Failed to refresh static data", e);
-        this.snackbar.error('基礎データの取得ができませんでした');
+        if (snackbar) this.snackbar.error('基礎データの取得ができませんでした');
       } finally {
         this.loading = false;
       }
@@ -1304,6 +1306,7 @@ document.addEventListener('alpine:init', () => {
           this.search = { isDummy: true, searchInfo: {} };
         }
         if (this.params.andKey) this.searchEvent(this.params.andKey);
+        else if (this.params.preset) this.searchPreset(this.params.preset);
         else this.openSearchDetail();
       }
       if (this.isPage('#setting')) {
@@ -1998,7 +2001,7 @@ document.addEventListener('alpine:init', () => {
       } else {
         dataMap = epg.extraData.get(slotKey);
         // キャッシュになければ取得
-        if (!dataMap && this.isOnline) {
+        if (!dataMap) {
           this.fetchEpgForRange(gridStart);
           return;
         }
@@ -2710,13 +2713,24 @@ document.addEventListener('alpine:init', () => {
       return !isNaN(start) && !isNaN(end) && start < end;
     },
 
+    searchByAndKey(andKey) {
+      andKey = andKey.trim();
+      if (!andKey) return;
+      this.openPage('#search', { andKey: andKey });
+    },
+    removeHistory(keyword) {
+      keyword = keyword.trim();
+      this.history = this.history.filter(v => v !== keyword);
+    },
     async searchEvent(andKey) {
       const fd = new URLSearchParams();
 
       if (andKey) {
-        this.search = { searchInfo: { andKey: andKey } };
+        this.search = { searchInfo: { andKey: andKey, hideGroupSub: true } };
         fd.append('andKey', andKey);
+        fd.append('hideGroupSub', 1);
         (this.getDefSearchService()).forEach(v => fd.append('serviceList', v));
+        this.history = [ ...new Set([andKey, ...this.history]) ].slice(0, 10);
       } else {
         const s = this.sidePanel.s;
         if (!this.isValidSearchRange(s)) {
@@ -2756,6 +2770,32 @@ document.addEventListener('alpine:init', () => {
         this.loading = false;
       }
     },
+    async searchPreset(i) {
+      try {
+        if (!this.isPage('#search')) {
+          this.openPage('#search', { preset: i }, true, false);
+        }
+
+        this.loading = true;
+
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&preset=${i}`);
+        const list = await res.json();
+        this.allData.search.clear();
+        (Array.isArray(list) ? list : []).forEach(v => {
+          v.startTimeInt = new Date(v.startTime).getTime();
+          if (!v.past) v = { ...v, ...this.allData.reserve.get(this.getEventID(v)) || {} };
+          this.allData.search.set(this.getDataKey(v, 'search'), v);
+        });
+
+        this.totals.search = this.allData.search.size;
+        this.updateDisplayList();
+      } catch (e) {
+        console.error("Search failed", e);
+        if (!e.handled) this.snackbar.error('検索に失敗しました');
+      } finally {
+        this.loading = false;
+      }
+    },
     async searchOlympic(silent) {
       try {
         this.dashboardData.loadingOlympic = true;
@@ -2778,15 +2818,7 @@ document.addEventListener('alpine:init', () => {
     async searchNew(silent) {
       try {
         this.dashboardData.loadingNew = true;
-        const fd = new URLSearchParams({
-          andKey: `[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)`,
-          regExpFlag: 1,
-          titleOnlyFlag: 1,
-          contentList: 519,
-          notContetFlag: 1
-        });
-        this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', silent);
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&new=1`);
         const list = await res.json();
 
         this.dashboardData.newPrograms = (Array.isArray(list) ? list : []).map(v => {
@@ -2795,6 +2827,9 @@ document.addEventListener('alpine:init', () => {
         });
       } catch (e) {
         console.error("Search failed", e);
+        if (e.name === 'TimeoutError') {
+          if (!silent) this.snackbar.error('通信エラー');
+        }
       } finally {
         this.dashboardData.loadingNew = false;
       }
@@ -2802,12 +2837,7 @@ document.addEventListener('alpine:init', () => {
     async searchAnime(silent) {
       try {
         this.dashboardData.loadingAnime = true;
-        const fd = new URLSearchParams({
-          contentList: 2047,
-          days: 1
-        });
-        this.getNetworkServices(1).forEach(v => fd.append('serviceList', this.getServiceID(v)));
-        const res = await this.fetchWithToken(`${this.ROOT}api/SearchEvent?json=1`, { method: 'POST', body: fd }, 'searchevent', silent);
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&genre=2047`);
         const list = await res.json();
 
         this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {
@@ -2816,6 +2846,9 @@ document.addEventListener('alpine:init', () => {
         });
       } catch (e) {
         console.error("Search failed", e);
+        if (e.name === 'TimeoutError') {
+          if (!silent) this.snackbar.error('通信エラー');
+        }
       } finally {
         this.dashboardData.loadingAnime = false;
       }

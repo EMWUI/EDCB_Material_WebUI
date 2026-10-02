@@ -298,12 +298,6 @@ ct:Append([=[
         </button>
       </template>
 
-      <template x-if="isPage('#search')">
-        <button class="circle transparent" @click="openSearchDetail()">
-          <i>search</i>
-        </button>
-      </template>
-
       <template x-if="isPage('#library')">
         <div>
           <button class="circle transparent">
@@ -320,6 +314,41 @@ ct:Append([=[
       </template>
 
       <nav class="no-space">
+        <template x-if="!isPage('#search')">
+          <div class="active">
+            <button class="circle transparent">
+              <i>search</i>
+            </button>
+            <menu :class="isSmallScreen? 'max' : 'no-wrap left min'">
+              <li class="transparent">
+                <div class="field large prefix suffix" x-data="{ andKey: '' }">
+                  <i class="front active">arrow_back</i>
+                  <input @keydown.enter="searchByAndKey(andKey)" x-model="andKey">
+                  <i class="front active" @click="searchByAndKey(andKey)">search</i>
+                </div>
+              </li>
+              <template x-for="v in history" :key="v">
+                <li @click="searchByAndKey(v)">
+                  <i>history</i>
+                  <div class="max" x-text="v"></div>
+                  <i class="tiny" @click.stop="removeHistory(v)">close</i>
+                </li>
+              </template>
+              <template x-for="(v, i) in searchPresetList" :key="i">
+                <li @click="openPage('#search', { preset: i+1 })">
+                  <i>rule</i>
+                  <div x-text="v"></div>
+                </li>
+              </template>
+            </menu>
+          </div>
+        </template>
+        <template x-if="isPage('#search')">
+          <button class="circle transparent" @click="openSearchDetail()">
+            <i>search</i>
+          </button>
+        </template>
+
         <template x-if="enabled" x-data="reminder">
           <div>
             <button class="circle transparent" :class="{ 'primary-text': list.length > 0 }" :disabled="list.length === 0">
@@ -631,7 +660,7 @@ ct:Append([=[
                 x-show="reminder.enabled">
           <i x-text="reminder.isSet(d) ? 'notifications_active' : 'notifications'"></i>
         </button>
-        <button class="transparent circle small" @click="openPage('#search', { andKey: convert.sanitizeTitle(d.shortInfo?.event_name) })">
+        <button class="transparent circle small" @click="searchByAndKey(convert.sanitizeTitle(d.shortInfo?.event_name))">
           <i>search</i>
         </button>
         <a class="button transparent circle small" target="_blank" rel="noreferrer" :href="google(d)">
@@ -4368,6 +4397,19 @@ ct:Append([=[
                       <input id="archive" type="checkbox" name="archive" x-model="s.archive">
                       <span>
                         <i>archive</i>
+                      </span>
+                    </label>
+                  </nav>
+                </div>
+                <div class="s12 field middle-align no-margin">
+                  <nav>
+                    <div class="max">
+                      <h6><label class="large-text" for="hideGroupSub">イベントグループのサブを除外</label></h6>
+                    </div>
+                    <label class="switch icon">
+                      <input id="hideGroupSub" type="checkbox" name="hideGroupSub" x-model="s.hideGroupSub">
+                      <span>
+                        <i>block</i>
                       </span>
                     </label>
                   </nav>

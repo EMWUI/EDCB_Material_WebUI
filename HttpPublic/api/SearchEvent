@@ -12,11 +12,6 @@ archive=GetVarInt(post, 'archive')==1
 a=SearchEpg(key,GetVarTimeRange(post),archive)
 
 if json then
-  if archive then
-    for i,v in ipairs(a) do
-      v.archive=true
-    end
-  end
   ResponseJson(a,mg.request_info.query_string)
 else
   ct=CreateContentBuilder()

@@ -1760,6 +1760,7 @@ function GetSearchKey(post)
   end
   local key={
     enabled=post and true or false,  --判別用
+    hideGroupSub=mg.get_var(post,'hideGroupSub')~=nil,
     autoAdd=GetVarInt(post, 'id'),
     andKey=(mg.get_var(post, 'disableFlag') and '^!{999}' or '')
       ..(mg.get_var(post, 'caseFlag') and 'C!{999}' or '')
@@ -1913,9 +1914,39 @@ function GetSearchKeyPreset(query)
   if mg.get_var(query, 'Olympic') then
     key=GetSearchKeyKeyword('andKey=(オ|パラ)リンピック|五輪|FIFAワールドカップ&regExpFlag=1&titleOnlyFlag=1')
     key.title='オリンピック・FIFAワールドカップ'
+    key.hideGroupSub=(tonumber(mg.get_var(query,'hideGroupSub')) or 1)~=0
     key.chkDurationMin=10
     key.contentList={{content_nibble=262}}
     key.days=3
+    return key
+  end
+  if mg.get_var(query, 'new') then
+    key=GetSearchKey()
+    key.hideGroupSub=(tonumber(mg.get_var(query,'hideGroupSub')) or 1)~=0
+    key.andKey='[【［\\[\\(<]新[>\\)\\]］】]|第0*[1一][話回]| 新$|#0*1(?!\\d)'
+    key.regExpFlag=true
+    key.titleOnlyFlag=true
+    key.contentList={{content_nibble=519}}
+    key.notContetFlag=true
+    key.days=3
+    for i,v in ipairs(edcb.GetChDataList()) do
+      if v.searchFlag and NetworkIndex(v.onid, v.partialReceptionFlag)==1 then
+        table.insert(key.serviceList, {onid=v.onid,tsid=v.tsid,sid=v.sid})
+      end
+    end
+    return key
+  end
+  if mg.get_var(query, 'genre') then
+    key=GetSearchKey()
+    key.hideGroupSub=(tonumber(mg.get_var(query,'hideGroupSub')) or 1)~=0
+    key.notKey=':genre:番組紹介'
+    key.contentList={{content_nibble=GetVarInt(query, 'genre')}}
+    key.days=1
+    for i,v in ipairs(edcb.GetChDataList()) do
+      if v.searchFlag and NetworkIndex(v.onid, v.partialReceptionFlag)==1 then
+        table.insert(key.serviceList, {onid=v.onid,tsid=v.tsid,sid=v.sid})
+      end
+    end
     return key
   end
 end
@@ -1923,18 +1954,46 @@ end
 --検索条件にマッチしたイベントを取得 ※時間ソート済み
 --期間を指定していない場合は放送済みを除外
 function SearchEpg(key,range,archive)
+  local function isGroupSub(v)
+    if not v.eventGroupInfo or #v.eventGroupInfo.eventDataList~=1 or
+        v.eventGroupInfo.eventDataList[1].onid==v.onid and
+        v.eventGroupInfo.eventDataList[1].tsid==v.tsid and
+        v.eventGroupInfo.eventDataList[1].sid==v.sid and
+        v.eventGroupInfo.eventDataList[1].eid==v.eid then
+      return false
+    end
+    return true
+  end
+
   local a=nil
   if archive then
     a=edcb.SearchEpgArchive(key,range)
+    local b={}
+    for i,v in ipairs(a) do
+      v.archive=true
+      if key.hideGroupSub and not isGroupSub(v) then
+        table.insert(b,v)
+      end
+    end
+    if key.hideGroupSub then a=b end
   elseif range then
     a=edcb.SearchEpg(key,range)
+    if key.hideGroupSub then
+      local b={}
+      for i,v in ipairs(a) do
+        if not isGroupSub(v) then
+          table.insert(b,v)
+        end
+      end
+      a=b
+    end
   else
     a={}
     for i,v in ipairs(edcb.SearchEpg(key)) do
       if v.startTime then
         local startTime=TimeWithZone(v.startTime)
         local endTime=v.durationSecond and startTime+v.durationSecond or startTime
-        if os.time()+9*3600<=endTime then
+        if os.time()+9*3600<=endTime and (not key.hideGroupSub or not isGroupSub(v)) then
           table.insert(a,v)
         end
       end
