@@ -524,7 +524,7 @@ function GetOther()
     tcpPort=tonumber(edcb.GetPrivateProfile('SET','TCPPort',4510,srvIni)),
     tcpAccessControlList=edcb.GetPrivateProfile('SET','TCPAccessControlList','+127.0.0.1,+192.168.0.0/16',srvIni),
     tcpResponseTimeoutSec=tonumber(edcb.GetPrivateProfile('SET','TCPResponseTimeoutSec',120,srvIni)),
-    epgArchivePeriodHour=tonumber(edcb.GetPrivateProfile('SET','EpgArchivePeriodHour',0,srvIni)) or 0,
+    epgArchivePeriod=math.floor(tonumber(edcb.GetPrivateProfile('SET','EpgArchivePeriodHour',0,srvIni))/24) or 0,
     residentMode=residentMode~=0,
     showTray=residentMode~=1,
     notifyTipStyle=edcb.GetPrivateProfile('SET','NotifyTipStyle',0,srvIni)~='0',
