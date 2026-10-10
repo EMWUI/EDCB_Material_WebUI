@@ -37,6 +37,7 @@ menu>li:first-of-type {
 .small-gap { gap: .5rem; }
 .around-align { justify-content: space-around; }
 
+.link,
 .ripple:is(article, tr) { cursor: pointer; }
 th,td { white-space: nowrap; }
 .ellipsis {
@@ -158,6 +159,10 @@ fieldset, :is(nav,.row):not(.wrap)>.max { min-width: 0; }
 article.small-width { inline-size: 15rem!important; overflow: hidden; }
 article.small-width+button { align-self: center; }
 
+h6.padding:has(~ div > .scroll-button),
+h6.padding:has(+ .scroll-button) { padding: var(--_padding) 4.5rem!important }
+.horizontal-padding:has( +.scroll-button),
+.scroll-button { --_padding: 4.5rem; }
 .scroll-button {
   overflow: auto;
   overscroll-behavior-x: contain;
@@ -166,36 +171,38 @@ article.small-width+button { align-self: center; }
   anchor-name: --my-carousel;
   position: relative;
 }
+.scroll-button::-webkit-scrollbar { display: none; }
 .scroll-button::scroll-button(*) {
   border: 0;
-  width: 3rem;
+  width: 4rem;
   height: anchor-size(height);
   font-family: var(--font-icon);
-  font-size: 2rem;
-  background: var(--surface-container-highest);
+  font-size: 3rem;
+  background: #0000;
   color: var(--primary);
-  border-radius: 2rem;
   opacity: 0;
   cursor: pointer;
   position: absolute;
   position-anchor: --my-carousel;
   align-self: anchor-center;
-  transition: transform var(--speed1);
+  transition: all var(--speed3), transform var(--speed1);
 }
-.scroll-button:is(:hover, :focus-visible)::scroll-button(*) { opacity: 0.8; }
-.scroll-button::scroll-button(*):is(:hover, :focus-visible) { opacity: 0.9; }
-.scroll-button::scroll-button(*):active { transform: scale(1.1); }
+.scroll-button::scroll-button(*):is(:hover, :focus-visible) { opacity: 1; transform: translateX(0); }
 .scroll-button::scroll-button(*):disabled {
   opacity: 0;
-  visibility: hidden;
+  pointer-events: none;
 }
 .scroll-button::scroll-button(left) {
   content: "chevron_left";
-  right: calc(anchor(left) - 3.5rem);
+  right: calc(anchor(left) - 4rem);
+  transform: translateX(-50%);
+  background-image: linear-gradient(90deg,#000,#0000)
 }
 .scroll-button::scroll-button(right) {
   content: "chevron_right";
-  left: calc(anchor(right) - 3.5rem);
+  left: calc(anchor(right) - 4rem);
+  transform: translateX(50%);
+  background-image: linear-gradient(270deg,#000,#0000)
 }
 
 /* ジャンルごとの Hue(色相) と Chroma(彩度) の定義 */

@@ -188,7 +188,7 @@ document.addEventListener('alpine:init', () => {
 
   const dayText = ['日', '月', '火', '水', '木', '金', '土'];
   Alpine.data('edcbApp', config => ({
-    debug: true,
+    inited: false,
     isMobile: navigator.userAgentData ? navigator.userAgentData.mobile : navigator.userAgent.match(/iPhone|iPad|Android.+Mobile/),
     ROOT: config.root || '',
     ctok: config.ctok || {},
@@ -226,7 +226,7 @@ document.addEventListener('alpine:init', () => {
       reserves: [], recs: [], storage: [], nowOnAir: {},
       reservesCount: 0, storageUpdated: 0,
       activeTuners: 0, isRecording: false, isEpgCap: false,
-      loadingAnime: false, loadingNew: false, loadingOlympic: false, loadingStorage: false,
+      loadingAnime: true, loadingNew: true, loadingOlympic: true, loadingStorage: false,
     },
 
     allData: {
@@ -806,6 +806,7 @@ document.addEventListener('alpine:init', () => {
       await this.loadAll();
       await this.restoreSidePanel();
       if (!this.dataSaver) this.refreshStaticData();
+      this.inited = true;
     },
 
     // SSEの開始とメッセージ処理
@@ -960,7 +961,6 @@ document.addEventListener('alpine:init', () => {
         if (list.err) throw new Error(list.err);
 
         const grouped = new Map();
-        const now = this.now;
         (Array.isArray(list) ? list : []).forEach(v => {
           // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
           v.startTimeInt = new Date(v.startTime).getTime();
@@ -1710,6 +1710,7 @@ document.addEventListener('alpine:init', () => {
       return s;
     },
     getGenreClass(g) {
+      if (!g) return ''
       if (g.contentInfoList) g = g.contentInfoList[0];
       return `cont-${this.getGenre(g).nibble1 + 1}`;
     },
@@ -1735,7 +1736,7 @@ document.addEventListener('alpine:init', () => {
       return `ID:${this.convert.zero(v.tunerID.toString(16).toUpperCase(),8)} (${v.tunerName})`
     },
     nowOnAirList(i) {
-      return this.getNetworkServices(i).map(s => ({ ...s, ...this.dashboardData.nowOnAir[this.getServiceID(s)] })).filter(e => !e.subCh || !this.isGroupSub(e.current) && !e.current.isDummy);
+      return this.getNetworkServices(i).map(s => ({ ...s, ...this.dashboardData.nowOnAir[this.getServiceID(s)] })).filter(e => !e.subCh || e.current && !this.isGroupSub(e.current) && !e.current.isDummy);
     },
     syncNowOnAir() {
       const now = this.now;
@@ -2492,7 +2493,7 @@ document.addEventListener('alpine:init', () => {
       },
 
       title() {
-        return ['番組', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索'][this.mode] + (this.isSearch ? '' : this.isInfo || this.isRecinfo ? '詳細' : this.isNewEntry ? ' 新規追加' : ' 条件変更');
+        return ['番組詳細', 'プログラム予約', 'EPG自動予約', 'プログラム自動予約', '録画結果', '検索条件'][this.mode];
       },
       get mode() {
         if (this.d.eid == 65535) return 1
@@ -2837,7 +2838,7 @@ document.addEventListener('alpine:init', () => {
     async searchAnime(silent) {
       try {
         this.dashboardData.loadingAnime = true;
-        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&genre=2047`);
+        const res = await this.fetch(`${this.ROOT}api/SearchEvent?json=1&genre=7`);
         const list = await res.json();
 
         this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {
@@ -3773,7 +3774,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     library: {
-      data: { dir: [], file: [], path: [] },
+      data: { dir: [], file: [], path: [], loading: true },
       lastParams: { home: 1 },
       async load() {
         this.app.rollThumbLeave();

@@ -1937,10 +1937,11 @@ function GetSearchKeyPreset(query)
     return key
   end
   if mg.get_var(query, 'genre') then
+    local genre=GetVarInt(query, 'genre')
     key=GetSearchKey()
     key.hideGroupSub=(tonumber(mg.get_var(query,'hideGroupSub')) or 1)~=0
-    key.notKey=':genre:番組紹介'
-    key.contentList={{content_nibble=GetVarInt(query, 'genre')}}
+    key.notKey=genre==10 and ':genre:番組紹介' or '::genre:教育|番組紹介'
+    key.contentList={{content_nibble=genre*256+255}}
     key.days=1
     for i,v in ipairs(edcb.GetChDataList()) do
       if v.searchFlag and NetworkIndex(v.onid, v.partialReceptionFlag)==1 then

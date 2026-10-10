@@ -435,12 +435,12 @@ ct:Append([=[
             </h6>
             <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
               <template x-for="(d, i) in olympic" :key="getEventID(d)">
-                <article class="small-width border ripple tiny-line" @click="openProgramDetail(d)">
+                <article class="small-width border ripple tiny-line" :class="getGenreClass(d)" @click="openProgramDetail(d)">
                   <div class="vertical small-gap no-round">
                     <div class="row">
                       <img class="round tiny border" :src="getLogoPath(d)">
                       <div class="max small-text secondary-text">
-                        <div x-text="d.service_name"></div>
+                        <div x-text="getServiceName(d)"></div>
                         <div class="secondary-text" x-text="getDateText(d)"></div>
                       </div>
                     </div>
@@ -506,18 +506,27 @@ ct:Append([=[
           </div>
         </template>
 
-        <template x-if="!loadingNew && olympic.length === 0 && anime.length === 0 && newPrograms.length === 0">
-          <article class="small-width border ripple tiny-line center-align">
-            <div class="padding">
-              <i class="extra secondary-text">globe_2_cancel</i>
+        <template x-if="olympic.length === 0 && anime.length === 0 && newPrograms.length === 0">
+          <div class="vertical-margin">
+            <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
+              <article class="small-width border ripple tiny-line center-align">
+                <div class="padding">
+                  <template x-if="!loadingOlympic && !loadingAnime && !loadingNew">
+                        <i class="extra secondary-text">globe_2_cancel</i>
+                  </template>
+                  <template x-if="loadingOlympic || loadingAnime || loadingNew">
+                    <progress class="circle"></progress>
+                  </template>
+                </div>
+              </article>
             </div>
-          </article>
+          </div>
         </template>
 
         <h6 class="row padding">
           <span class="max">
             <span>放送中の番組</span>
-            <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.epg,false,true)"></span></span>
+            <span class="small-text middle-align" x-show="lastUpdated.epg"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.epg,false,true)"></span></span>
           </span>
           <button class="transparent circle" @click="location.hash = '#epg'"><i>arrow_forward</i></button>
         </h6>
@@ -554,6 +563,13 @@ ct:Append([=[
                   </template>
                 </article>
               </template>
+              <template x-if="!inited && nowOnAirList(n.index).length === 0">
+                <article class="small-width border ripple tiny-line center-align">
+                  <div class="padding">
+                    <progress class="circle"></progress>
+                  </div>
+                </article>
+              </template>
             </div>
           </div>
         </template>
@@ -562,7 +578,7 @@ ct:Append([=[
           <h6 class="row padding">
             <span class="max">
               <span>直近の予約</span>
-              <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.reserve,false,true)"></span></span>
+              <span class="small-text middle-align" x-show="lastUpdated.reserve"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.reserve,false,true)"></span></span>
             </span>
             <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
           </h6>
@@ -581,15 +597,22 @@ ct:Append([=[
                 </div>
               </article>
             </template>
+            <template x-if="!inited && reserves.length === 0">
+              <article class="small-width border ripple tiny-line center-align">
+                <div class="padding">
+                  <progress class="circle"></progress>
+                </div>
+              </article>
+            </template>
             <button class="transparent circle" @click="location.hash = '#reserve'"><i>arrow_forward</i></button>
-          </div>          
+          </div>
         </div>
 
         <div>
           <h6 class="row padding">
             <span class="max">
               <span>最近の録画結果</span>
-              <span class="small-text middle-align"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.recinfo,false,true)"></span></span>
+              <span class="small-text middle-align" x-show="lastUpdated.recinfo"><i class="tiny">save</i><span x-text="convert.date(lastUpdated.recinfo,false,true)"></span></span>
             </span>
             <button class="transparent circle" @click="location.hash = '#recinfo'"><i>arrow_forward</i></button>
           </h6>
@@ -605,6 +628,13 @@ ct:Append([=[
                     </div>
                   </div>
                   <div class="title large-text bold max" x-html="convert.title(d.title)"></div>
+                </div>
+              </article>
+            </template>
+            <template x-if="!inited && recs.length === 0">
+              <article class="small-width border ripple tiny-line center-align">
+                <div class="padding">
+                  <progress class="circle"></progress>
                 </div>
               </article>
             </template>
@@ -934,7 +964,7 @@ ct:Append([=[
                   <div class="max"></div>
 
                   <button class="circle transparent" @click="toggleDatacast()">
-                    <i class="large" :class="{ fill: set.datacast }">settings_remote</i>
+                    <i class="large" :class="{ fill: set.datacast }">remote_gen</i>
                   </button>
                   <button class="circle transparent" @click="toggleCap()">
                     <i class="large" :class="{ fill: set.cap }">subtitles</i>
@@ -1260,7 +1290,12 @@ ct:Append([=[
 
     <template x-if="isPage('#reserve')">
       <div class="absolute">
-        <template x-if="totals.reserve === 0">
+        <template x-if="!inited && totals.reserve === 0">
+          <div class="center-align middle-align small-height">
+            <div class="shape loading-indicator extra rotate"></div>
+          </div>
+        </template>
+        <template x-if="inited && totals.reserve === 0">
           <div class="center-align middle-align small-height">
             <div>
               <i class="extra secondary-text">info</i>
@@ -1386,7 +1421,12 @@ ct:Append([=[
 
     <template x-if="isPage('#autoaddepg')">
       <div class="absolute">
-        <template x-if="totals.autoaddepg === 0">
+        <template x-if="!inited && totals.autoaddepg === 0">
+          <div class="center-align middle-align small-height">
+            <div class="shape loading-indicator extra rotate"></div>
+          </div>
+        </template>
+        <template x-if="inited && totals.autoaddepg === 0">
           <div class="center-align middle-align small-height">
             <div>
               <i class="extra secondary-text">info</i>
@@ -1470,7 +1510,12 @@ ct:Append([=[
 
     <template x-if="isPage('#autoaddmanual')">
       <div class="absolute">
-        <template x-if="totals.autoaddmanual === 0">
+        <template x-if="!inited && totals.autoaddmanual === 0">
+          <div class="center-align middle-align small-height">
+            <div class="shape loading-indicator extra rotate"></div>
+          </div>
+        </template>
+        <template x-if="inited && totals.autoaddmanual === 0">
           <div class="center-align middle-align small-height">
             <div>
               <i class="extra secondary-text">info</i>
@@ -1577,150 +1622,160 @@ ct:Append([=[
         </section>
 
         <!-- リスト表示 -->
-          <template x-if="isList('library')">
-            <div>
-              <section class="responsive">
-                <ul class="list medium-space">
-                  <!-- フォルダ一覧 -->
+        <template x-if="isList('library')">
+          <div>
+            <section class="responsive">
+              <ul class="list medium-space">
+                <!-- フォルダ一覧 -->
+                <template x-for="item in data.dir" :key="item.name">
+                  <li class="ripple" @click="openDir(item)">
+                    <div class="max row no-margin no-wrap">
+                      <div class="center-align">
+                        <i class="primary-text">folder</i>
+                      </div>
+                      <div class="max">
+                        <div class="title bold large-text" x-text="item.name"></div>
+                      </div>
+                      <i>chevron_right</i>
+                    </div>
+                  </li>
+                </template>
+
+                <!-- ファイル一覧 -->
+                <template x-for="item in data.file" :key="item.name">
+                  <li class="ripple" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
+                    <div class="max row no-margin no-wrap">
+                      <div class="thumb-wrapper">
+                        <template x-if="item.thumb">
+                          <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
+                        </template>
+                        <template x-if="!item.thumb">
+                          <div class="no-thumb" x-init="setThumb($el, item)">
+                            <i class="primary-text">movie</i>
+                          </div>
+                        </template>
+                        <canvas class="thumb rollThumb ts-thumb"></canvas>
+                      </div>
+                      <div class="max">
+                        <h6 class="small title" x-text="item.name"></h6>
+                        <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
+                          <span class="middle-align">
+                            <i class="primary-text tiny">schedule</i>
+                            <span x-text="convert.date(item.mtime, true, true)"></span>
+                          </span>
+                          <span class="middle-align">
+                            <i class="primary-text tiny">storage</i>
+                            <span x-text="item.sizeText"></span>
+                          </span>
+                        </div>
+                      </div>
+                      <button class="circle transparent">
+                        <i>play_arrow</i>
+                      </button>
+                    </div>
+                  </li>
+                </template>
+              </ul>
+            </section>
+          </div>
+        </template>
+
+        <!-- グリッド表示 -->
+        <template x-if="isGrid('library')">
+          <div>
+            <section class="responsive" :class="isSmallScreen ? 'horizontal-margin small-margin' : ''">
+              <!-- フォルダ一覧（グリッド上部） -->
+              <template x-if="data.dir?.length > 0">
+                <div class="grid small-space bottom-margin">
                   <template x-for="item in data.dir" :key="item.name">
-                    <li class="ripple" @click="openDir(item)">
-                      <div class="max row no-margin no-wrap">
-                        <div class="center-align">
-                          <i class="primary-text">folder</i>
-                        </div>
-                        <div class="max">
-                          <div class="title bold large-text" x-text="item.name"></div>
-                        </div>
+                    <article class="s12 m6 l4 round border ripple no-padding" @click="openDir(item)">
+                      <div class="row padding middle-align no-margin">
+                        <i class="primary-text large">folder</i>
+                        <div class="max bold large-text ellipsis" x-text="item.name"></div>
                         <i>chevron_right</i>
                       </div>
-                    </li>
+                    </article>
                   </template>
+                </div>
+              </template>
+            </section>
 
-                  <!-- ファイル一覧 -->
+            <!-- ファイル一覧（カードグリッド） -->
+            <template x-if="data.file?.length > 0">
+              <section class="margin" :class="{ 'small-margin': isSmallScreen }">
+                <div class="grid medium-space">
                   <template x-for="item in data.file" :key="item.name">
-                    <li class="ripple" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
-                      <div class="max row no-margin no-wrap">
-                        <div class="thumb-wrapper">
-                          <template x-if="item.thumb">
-                            <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
-                          </template>
-                          <template x-if="!item.thumb">
-                            <div class="no-thumb" x-init="setThumb($el, item)">
-                              <i class="primary-text">movie</i>
-                            </div>
-                          </template>
-                          <canvas class="thumb rollThumb ts-thumb"></canvas>
-                        </div>
-                        <div class="max">
-                          <h6 class="small title" x-text="item.name"></h6>
-                          <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line">
-                            <span class="middle-align">
-                              <i class="primary-text tiny">schedule</i>
-                              <span x-text="convert.date(item.mtime, true, true)"></span>
-                            </span>
-                            <span class="middle-align">
-                              <i class="primary-text tiny">storage</i>
-                              <span x-text="item.sizeText"></span>
-                            </span>
+                    <article class="s12 m6 l2 library-grid-item round border ripple no-padding" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
+                      <div class="thumb-wrapper top-round">
+                        <template x-if="item.thumb">
+                          <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
+                        </template>
+                        <template x-if="!item.thumb">
+                          <div class="no-thumb" x-init="setThumb($el, item)">
+                            <i class="primary-text">movie</i>
                           </div>
-                        </div>
-                        <button class="circle transparent">
+                        </template>
+                        <canvas class="thumb rollThumb ts-thumb"></canvas>
+                        <button class="circle primary library-play-btn" @click.stop="play(item)">
                           <i>play_arrow</i>
                         </button>
                       </div>
-                    </li>
+                      <div class="padding">
+                        <div class="bold ellipsis" :title="item.name" x-text="item.name"></div>
+                        <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line small-text top-margin tiny-margin">
+                          <span class="middle-align">
+                            <i class="primary-text tiny">schedule</i>
+                            <span x-text="convert.date(item.mtime, true, true)"></span>
+                          </span>
+                          <span class="max"></span>
+                          <span class="middle-align">
+                            <i class="primary-text tiny">storage</i>
+                            <span x-text="item.sizeText"></span>
+                          </span>
+                        </div>
+                      </div>
+                    </article>
                   </template>
-                </ul>
+                </div>
               </section>
-            </div>
-          </template>
+            </template>
+          </div>
+        </template>
 
-          <!-- グリッド表示 -->
-          <template x-if="isGrid('library')">
-            <div>
-              <section class="responsive" :class="isSmallScreen ? 'horizontal-margin small-margin' : ''">
-                <!-- フォルダ一覧（グリッド上部） -->
-                <template x-if="data.dir?.length > 0">
-                  <div class="grid small-space bottom-margin">
-                    <template x-for="item in data.dir" :key="item.name">
-                      <article class="s12 m6 l4 round border ripple no-padding" @click="openDir(item)">
-                        <div class="row padding middle-align no-margin">
-                          <i class="primary-text large">folder</i>
-                          <div class="max bold large-text ellipsis" x-text="item.name"></div>
-                          <i>chevron_right</i>
-                        </div>
-                      </article>
-                    </template>
-                  </div>
-                </template>
-              </section>
-
-              <!-- ファイル一覧（カードグリッド） -->
-              <template x-if="data.file?.length > 0">
-                <section class="margin" :class="{ 'small-margin': isSmallScreen }">
-                  <div class="grid medium-space">
-                    <template x-for="item in data.file" :key="item.name">
-                      <article class="s12 m6 l2 library-grid-item round border ripple no-padding" @click="play(item)" @pointerenter="rollThumbEnter($event, item)" @pointerleave="rollThumbLeave()">
-                        <div class="thumb-wrapper top-round">
-                          <template x-if="item.thumb">
-                            <img class="thumb" :src="getThumbUrl(item)" loading="lazy">
-                          </template>
-                          <template x-if="!item.thumb">
-                            <div class="no-thumb" x-init="setThumb($el, item)">
-                              <i class="primary-text">movie</i>
-                            </div>
-                          </template>
-                          <canvas class="thumb rollThumb ts-thumb"></canvas>
-                          <button class="circle primary library-play-btn" @click.stop="play(item)">
-                            <i>play_arrow</i>
-                          </button>
-                        </div>
-                        <div class="padding">
-                          <div class="bold ellipsis" :title="item.name" x-text="item.name"></div>
-                          <div class="row wrap tiny-space no-row-space no-margin secondary-text no-line small-text top-margin tiny-margin">
-                            <span class="middle-align">
-                              <i class="primary-text tiny">schedule</i>
-                              <span x-text="convert.date(item.mtime, true, true)"></span>
-                            </span>
-                            <span class="max"></span>
-                            <span class="middle-align">
-                              <i class="primary-text tiny">storage</i>
-                              <span x-text="item.sizeText"></span>
-                            </span>
-                          </div>
-                        </div>
-                      </article>
-                    </template>
-                  </div>
-                </section>
-              </template>
-            </div>
-          </template>
-
-          <template x-if="!loading && data.err">
-            <div class="center-align middle-align small-height">
-              <div>
-                <i class="extra error-text">report</i>
-                <p class="error-text" x-text="data.err"></p>
-              </div>
-            </div>
-          </template>
-
-          <template x-if="!loading && !data.err && !data.dir?.length && !data.file?.length && data.iname">
+        <template x-if="data.loading">
           <div class="center-align middle-align small-height">
-              <div>
-                <i class="extra secondary-text">folder_open</i>
-                <p class="secondary-text">このフォルダは空です</p>
-              </div>
+            <div class="shape loading-indicator extra rotate"></div>
+          </div>
+        </template>
+
+        <template x-if="!loading && data.err">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra error-text">report</i>
+              <p class="error-text" x-text="data.err"></p>
             </div>
-          </template>
-        </section>
+          </div>
+        </template>
+
+        <template x-if="!loading && !data.err && !data.dir?.length && !data.file?.length && data.iname">
+          <div class="center-align middle-align small-height">
+            <div>
+              <i class="extra secondary-text">folder_open</i>
+              <p class="secondary-text">このフォルダは空です</p>
+            </div>
+          </div>
+        </template>
       </div>
     </template>
 
     <template x-if="isPage('#recinfo')">
       <div class="absolute">
-        <template x-if="totals.recinfo === 0">
+        <template x-if="!inited && totals.recinfo === 0">
+          <div class="center-align middle-align small-height">
+            <div class="shape loading-indicator extra rotate"></div>
+          </div>
+        </template>
+        <template x-if="inited && totals.recinfo === 0">
           <div class="center-align middle-align small-height">
             <div>
               <i class="extra secondary-text">info</i>
