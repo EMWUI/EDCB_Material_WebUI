@@ -525,7 +525,7 @@ document.addEventListener('alpine:init', () => {
     calendar(d, details, authuser, src) {
       return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(this.convert.ZtoH(d.shortInfo?.event_name))
         }&location=${encodeURIComponent(this.convert.ZtoH(this.allData.service.get(this.getServiceID(d))?.ts_name||this.getServiceName(d)))
-        }&dates=${this.convert.ISO(d.startTime)}/${this.convert.ISO(d.startTimeInt + d.durationSecond * 1000)
+        }&dates=${this.convert.ISO(d.startTime)}/${this.convert.ISO(d.startTime + d.durationSecond * 1000)
         }&details=${encodeURIComponent(details.replace(/%text_char%/g, d.shortInfo?.text_char).replace(/%br%/g, '\n'))
         }&authuser=${authuser
         }&src=${src}`
@@ -566,7 +566,7 @@ document.addEventListener('alpine:init', () => {
         for (const id in this.dashboardData.nowOnAir) {
           const entry = this.dashboardData.nowOnAir[id];
           const p = entry.current;
-          if (p && this.now >= p.startTimeInt + p.durationSecond * 1000) {
+          if (p && this.now >= p.startTime + p.durationSecond * 1000) {
             needSync = true;
             break;
           }
@@ -922,7 +922,7 @@ document.addEventListener('alpine:init', () => {
         const map = this.allData[internalKey];
         map.clear();
         list.forEach(v => {
-          if (v.startTime) v.startTimeInt = new Date(v.startTime).getTime();
+          if (v.startTime) v.startTime = new Date(v.startTime).getTime();
           map.set(this.getDataKey(v, internalKey), v);
         });
         this.lastUpdated[internalKey] = Date.now();
@@ -963,7 +963,7 @@ document.addEventListener('alpine:init', () => {
         const grouped = new Map();
         (Array.isArray(list) ? list : []).forEach(v => {
           // 描画負荷軽減のため、あらかじめ数値タイムスタンプを持たせておく
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           const serviceId = this.getServiceID(v);
           if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
@@ -1007,7 +1007,7 @@ document.addEventListener('alpine:init', () => {
 
         const grouped = new Map();
         (Array.isArray(list) ? list : []).forEach(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           const serviceId = this.getServiceID(v);
           if (!grouped.has(serviceId)) grouped.set(serviceId, new Map());
           grouped.get(serviceId).set(v.eid, v);
@@ -1423,7 +1423,7 @@ document.addEventListener('alpine:init', () => {
 
           const key = config.key || 'items';
           const newList = Array.isArray(data[key]) ? data[key] : (Array.isArray(data) ? data : Object.values(data));
-          newList.forEach(v => v.startTimeInt = new Date(v.startTime).getTime());
+          newList.forEach(v => v.startTime = new Date(v.startTime).getTime());
 
           // 追加分をソート
           this.sortList(newList, config);
@@ -1564,7 +1564,7 @@ document.addEventListener('alpine:init', () => {
           this.loading = true;
           const fetched = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&id=${id}`).then(r => r.json());
           if (!fetched.err) {
-            if (fetched.startTime) fetched.startTimeInt = new Date(fetched.startTime).getTime();
+            if (fetched.startTime) fetched.startTime = new Date(fetched.startTime).getTime();
             epg = fetched;
           }
         } catch (e) {
@@ -1677,12 +1677,12 @@ document.addEventListener('alpine:init', () => {
       return this.pageMap[this.page]?.title || 'EMWUI 3';
     },
     getDateText(d) {
-      const isToday = d.startTimeInt - this.now  < 24 * 3600000;
-      return `${this.convert.date(d.startTimeInt, false, false, !isToday)}～${this.convert.date(d.startTimeInt + d.durationSecond*1000, false)}`
+      const isToday = d.startTime - this.now  < 24 * 3600000;
+      return `${this.convert.date(d.startTime, false, false, !isToday)}～${this.convert.date(d.startTime + d.durationSecond*1000, false)}`
     },
     getDateHtml(v, show_ymd, responsive) {
-      if (!v.startTimeInt) return '未定';
-      const start = this.convert.viewDate(v.startTimeInt);
+      if (!v.startTime) return '未定';
+      const start = this.convert.viewDate(v.startTime);
       const end = !v.durationSecond ? '未定' : this.convert.time(new Date(start.getTime() + v.durationSecond*1000));
       return `${show_ymd ? `<span>${this.convert.ymd(start, true, responsive)} </span>` : ''}<span>${this.convert.time(start)}${responsive ? `<span class="m l">～${end}</span>` : `～${end}`}</span>`
     },
@@ -1716,7 +1716,7 @@ document.addEventListener('alpine:init', () => {
     },
     getElapsedTime(p) {
       if (!p || !p.durationSecond) return 0;
-      return (this.now - p.startTimeInt) / 1000;
+      return (this.now - p.startTime) / 1000;
     },
     getSamplingRate(r) {
       return `${{1:'16',2:'22.05',3:'24',5:'32',6:'44.1',7:'48'}[r]}kHz`
@@ -1744,7 +1744,7 @@ document.addEventListener('alpine:init', () => {
 
       const createDummy = (s, start, duration) => ({
         onid: s.onid, tsid: s.tsid, sid: s.sid, eid: 65535,
-        startTimeInt: start,
+        startTime: start,
         durationSecond: Math.max(0, Math.floor(duration)),
         shortInfo: { event_name: '番組情報なし' },
         stationName: s.service_name,
@@ -1755,35 +1755,35 @@ document.addEventListener('alpine:init', () => {
         const s = this.allData.service.get(serviceId);
         if (!s || (!this.sets.oneseg && s.partialReceptionFlag)) return;
 
-        const events = Array.from(eventsMap.values()).sort((a, b) => a.startTimeInt - b.startTimeInt);
+        const events = Array.from(eventsMap.values()).sort((a, b) => a.startTime - b.startTime);
         let current = null;
         let next = null;
 
-        const currentIndex = events.findIndex(v => v.startTimeInt <= now && v.startTimeInt + v.durationSecond * 1000 > now);
+        const currentIndex = events.findIndex(v => v.startTime <= now && v.startTime + v.durationSecond * 1000 > now);
 
         if (currentIndex !== -1) {
           // 現在放送中の番組が見つかった場合
           current = { ...events[currentIndex], stationName: s.service_name };
-          const nextStart = current.startTimeInt + current.durationSecond * 1000;
+          const nextStart = current.startTime + current.durationSecond * 1000;
           const nextActual = events[currentIndex + 1];
 
-          if (nextActual && nextActual.startTimeInt === nextStart) {
+          if (nextActual && nextActual.startTime === nextStart) {
             // 次の番組が連続している場合
             next = { ...nextActual, stationName: s.service_name };
           } else {
             // 次の番組との間に隙間がある、または次の番組がない
-            const duration = nextActual ? (nextActual.startTimeInt - nextStart) / 1000 : 3600;
+            const duration = nextActual ? (nextActual.startTime - nextStart) / 1000 : 3600;
             next = createDummy(s, nextStart, duration);
           }
         } else {
           // 現在放送中の番組がない場合（隙間期間）
-          const nextIdx = events.findIndex(v => v.startTimeInt > now);
+          const nextIdx = events.findIndex(v => v.startTime > now);
           if (nextIdx !== -1) {
             // 次の番組は存在するので、前の番組の終了（または現在時刻）からその開始までをダミーに
             const nextActual = events[nextIdx];
             const prevActual = events[nextIdx - 1];
-            const gapStart = prevActual ? (prevActual.startTimeInt + prevActual.durationSecond * 1000) : now;
-            current = createDummy(s, gapStart, (nextActual.startTimeInt - gapStart) / 1000);
+            const gapStart = prevActual ? (prevActual.startTime + prevActual.durationSecond * 1000) : now;
+            current = createDummy(s, gapStart, (nextActual.startTime - gapStart) / 1000);
             next = { ...nextActual, stationName: s.service_name };
           } else {
             // 現在も将来も番組情報がない場合
@@ -2078,7 +2078,7 @@ document.addEventListener('alpine:init', () => {
               for (const v of eventMap.values()) {
                 if (this.isGroupSub(v)) continue;
 
-                const start = v.startTimeInt;
+                const start = v.startTime;
                 const end = start + (v.durationSecond * 1000);
                 if (end <= gridStart || start >= gridEnd) continue;
 
@@ -2209,11 +2209,11 @@ document.addEventListener('alpine:init', () => {
           let lastPos = dayStart;
 
           // その日の範囲に含まれる番組をフィルタリング
-          const dayEvents = events.filter(v => (v.startTimeInt + v.durationSecond * 1000) > dayStart && v.startTimeInt < dayEnd);
+          const dayEvents = events.filter(v => (v.startTime + v.durationSecond * 1000) > dayStart && v.startTime < dayEnd);
 
           for (const v of dayEvents) {
-            const vStart = Math.max(v.startTimeInt, dayStart);
-            const vEnd = Math.min(v.startTimeInt + (v.durationSecond * 1000), dayEnd);
+            const vStart = Math.max(v.startTime, dayStart);
+            const vEnd = Math.min(v.startTime + (v.durationSecond * 1000), dayEnd);
 
             const startMin = Math.floor((vStart - dayStart) / 60000);
             const endMin = Math.floor((vEnd - dayStart) / 60000);
@@ -2276,7 +2276,7 @@ document.addEventListener('alpine:init', () => {
         if (list.err) throw new Error(list.err);
 
         const events = (Array.isArray(list) ? list : []).map(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           return v;
         });
 
@@ -2619,10 +2619,10 @@ document.addEventListener('alpine:init', () => {
 
       // クエリパラメータを更新
       let idVal;
-      if (d.past && d.startTimeInt) {
+      if (d.past && d.startTime) {
         // 過去番組はeidが変化している可能性があるため開始時間（秒）を使う
         // EDCBはJST時刻をそのまま秒換算した値で管理するため、UTC ms/1000 に +9h(32400) を加算する
-        idVal = `${this.getServiceID(d)}-${Math.floor(d.startTimeInt / 1000) + 9 * 3600}`;
+        idVal = `${this.getServiceID(d)}-${Math.floor(d.startTime / 1000) + 9 * 3600}`;
       } else if (d.reserveID && (this.isPage('#reserve','#tunerreserve') || !d.eid || d.eid === 65535)) {
         idVal = d.reserveID;
       } else {
@@ -2632,7 +2632,7 @@ document.addEventListener('alpine:init', () => {
       this.sidePanel.shouldGoBack = push;
       this.updateQueryParam({ id: idVal }, push);
 
-      if (d.past || d.startTimeInt + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
+      if (d.past || d.startTime + d.durationSecond * 1000 < this.now || d.eid === 65535) return;
 
       if (d.reserveID) {
         this.detail = { ...d, ...await this.getEpgById(this.getEventID(d)) || {} };
@@ -2756,7 +2756,7 @@ document.addEventListener('alpine:init', () => {
 
         this.allData.search.clear();
         (Array.isArray(list) ? list : []).forEach(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           if (!v.past) v = { ...v, ...this.allData.reserve.get(this.getEventID(v)) || {} };
           this.allData.search.set(this.getDataKey(v, 'search'), v);
         });
@@ -2783,7 +2783,7 @@ document.addEventListener('alpine:init', () => {
         const list = await res.json();
         this.allData.search.clear();
         (Array.isArray(list) ? list : []).forEach(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           if (!v.past) v = { ...v, ...this.allData.reserve.get(this.getEventID(v)) || {} };
           this.allData.search.set(this.getDataKey(v, 'search'), v);
         });
@@ -2804,7 +2804,7 @@ document.addEventListener('alpine:init', () => {
         const list = await res.json();
 
         this.dashboardData.olympic = (Array.isArray(list) ? list : []).map(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           return v;
         });
       } catch (e) {
@@ -2823,7 +2823,7 @@ document.addEventListener('alpine:init', () => {
         const list = await res.json();
 
         this.dashboardData.newPrograms = (Array.isArray(list) ? list : []).map(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           return v;
         });
       } catch (e) {
@@ -2842,7 +2842,7 @@ document.addEventListener('alpine:init', () => {
         const list = await res.json();
 
         this.dashboardData.anime = (Array.isArray(list) ? list : []).map(v => {
-          v.startTimeInt = new Date(v.startTime).getTime();
+          v.startTime = new Date(v.startTime).getTime();
           return v;
         });
       } catch (e) {
@@ -2921,8 +2921,7 @@ document.addEventListener('alpine:init', () => {
 
       // --- データの組み立て ---
       const res = {
-        startTime: starttime,
-        startTimeInt: new Date(starttime).getTime(),
+        startTime: new Date(starttime).getTime(),
         durationSecond: durationSecond,
         shortInfo: {
           text_char: text,
@@ -3032,9 +3031,9 @@ document.addEventListener('alpine:init', () => {
           const nextList = [];
 
           this.list.forEach(item => {
-            if (item.startTimeInt - 30000 <= now) {
+            if (item.startTime - 30000 <= now) {
               // 通知タイミングに到達、または既に過ぎている場合
-              if (!item.notified && now < item.startTimeInt + 60000) {
+              if (!item.notified && now < item.startTime + 60000) {
                 this.notify(item);
               }
               // 通知した（あるいは通知ウィンドウを過ぎた）のでリストからは消去
@@ -3062,7 +3061,7 @@ document.addEventListener('alpine:init', () => {
           this.list.splice(idx, 1);
           this.app.snackbar.add('リマインダーを解除しました');
         } else {
-          this.list.push({ id, title: d.shortInfo?.event_name || d.title, startTimeInt: d.startTimeInt, stationName: this.app.getServiceName(d), text: d.shortInfo?.text_char, notified: false });
+          this.list.push({ id, title: d.shortInfo?.event_name || d.title, startTime: d.startTime, stationName: this.app.getServiceName(d), text: d.shortInfo?.text_char, notified: false });
           this.app.snackbar.add('リマインダーを追加しました');
         }
         this.save();
@@ -3075,7 +3074,7 @@ document.addEventListener('alpine:init', () => {
       },
       notify(item) {
         const n = new Notification(item.title, {
-          body: `${this.app.convert.date(item.startTimeInt)}～ ${item.stationName}\n${item.text}`,
+          body: `${this.app.convert.date(item.startTime)}～ ${item.stationName}\n${item.text}`,
           tag: item.id,
           icon: './img/apple-touch-icon.png'
         });

@@ -362,7 +362,7 @@ ct:Append([=[
                     <div x-html="convert.title(item.title)"></div>
                     <label>
                       <span x-text="item.stationName"></span>
-                      <span x-text="convert.date(item.startTimeInt, false, true)"></span>
+                      <span x-text="convert.date(item.startTime, false, true)"></span>
                     </label>
                   </div>
                   <button class="circle transparent small" @click="remove(item.id)">
@@ -584,7 +584,7 @@ ct:Append([=[
           </h6>
           <div class="row horizontal-padding scroll" :class="{ 'scroll-button' : !isMobile }">
             <template x-for="(d, i) in reserves" :key="d.reserveID">
-              <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTimeInt + d.durationSecond*1000 < now ? 'inverse-primary-border' : d.startTimeInt < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
+              <article class="small-width border ripple tiny-line" :class="!d.recSetting.recEnabled ? '' : d.startTime + d.durationSecond*1000 < now ? 'inverse-primary-border' : d.startTime < now ? 'red-border' : 'primary-border'" @click="openProgramDetail(d)">
                 <div class="vertical small-gap no-round">
                   <div class="row">
                     <img class="round tiny border left-margin small-margin" :src="getLogoPath(d)">
@@ -685,7 +685,7 @@ ct:Append([=[
       <nav class="no-space">
         <button class="transparent circle small"
                 :class="{ 'primary-text': reminder.isSet(d) }"
-                :disabled="d.startTimeInt < now"
+                :disabled="d.startTime < now"
                 @click="reminder.toggle(d)"
                 x-show="reminder.enabled">
           <i x-text="reminder.isSet(d) ? 'notifications_active' : 'notifications'"></i>
@@ -726,7 +726,7 @@ ct:Append([=[
               <template x-if="!d.isGap">
                 <div class="epg-content row tiny-line no-margin" x-show="!d.isGap">
                   <div>
-                    <div x-text="convert.zero(new Date(d.startTimeInt).getUTCMinutes())"></div>
+                    <div x-text="convert.zero(new Date(d.startTime).getUTCMinutes())"></div>
                     <div x-show="d.reserve">
                       <span class="mark"
                             :class="d.reserve?.recSetting.recEnabled ? 'enabled' : 'disabled'"
@@ -747,7 +747,7 @@ ct:Append([=[
                           </button>
                           <button class="border secondary-border secondary-text"
                                   @click.stop="d.reserve ? toggleReserve(d.reserve) : addReserve(d)"
-                                  x-show="d.startTimeInt + d.durationSecond * 1000 > now">
+                                  x-show="d.startTime + d.durationSecond * 1000 > now">
                             <i class="m l">event_upcoming</i>
                             <span x-text="!d.reserve ? '予約追加' : d.reserve?.recSetting.recEnabled ? '無効' : '有効'"></span>
                           </button>
@@ -840,7 +840,7 @@ ct:Append([=[
                               <div class="row no-margin padding-top middle-align">
                                 <i class="small secondary-text">skip_next</i>
                                 <div class="max secondary-text small-text truncate">
-                                  <span class="bold" x-text="convert.date(s.next.startTimeInt, false)"></span>
+                                  <span class="bold" x-text="convert.date(s.next.startTime, false)"></span>
                                   <span x-html="convert.title(s.next.shortInfo?.event_name)"></span>
                                 </div>
                               </div>
@@ -1234,10 +1234,10 @@ ct:Append([=[
     <template id="reserveList-template" x-ref="reserveList">
       <div class="max row no-margin no-wrap">
         <div>
-          <template x-if="d.startTimeInt < now" >
-            <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTimeInt + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
+          <template x-if="d.startTime < now" >
+            <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTime + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
           </template>
-          <template x-if="d.startTimeInt > now">
+          <template x-if="d.startTime > now">
             <label class="checkbox icon" @click.stop>
               <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
               <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
@@ -1267,10 +1267,10 @@ ct:Append([=[
     </template>
     <template id="reserveTable-template" x-ref="reserveTable">
       <td>
-        <template x-if="d.startTimeInt < now" >
-          <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTimeInt + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
+        <template x-if="d.startTime < now" >
+          <i :class="d.recSetting?.recEnabled ? 'red-text' : ''" x-text="d.overlapMode > 0 ? 'warning' : d.startTime + d.durationSecond*1000 < now ? 'check_circle' :'radio_button_unchecked'"></i>
         </template>
-        <template x-if="d.startTimeInt > now">
+        <template x-if="d.startTime > now">
           <label class="checkbox icon" @click.stop>
             <input type="checkbox" :checked="d.recSetting.recEnabled" @change="toggleReserve(d)">
             <span :class="!d.recSetting.recEnabled ? '' : d.overlapMode > 0 ? 'error-text' : 'primary-text'">
