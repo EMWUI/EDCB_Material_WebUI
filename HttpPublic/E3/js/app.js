@@ -211,7 +211,6 @@ document.addEventListener('alpine:init', () => {
     isPortrait: false,
     networkNames: ['すべて', '地デジ', 'ワンセグ', 'BS', 'BS4K', 'CS', 'CS1', 'CS2', 'CS3', 'その他'],
     genreList: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 15, 255],
-    networkMask: 1,
 
     loading: false,
     rawData: [],
@@ -263,6 +262,7 @@ document.addEventListener('alpine:init', () => {
       sidebar: false,
       dataSaver: true,
       oneseg: false,
+      networkMask: 1,
       subGenre: true,
       genreMask: -1044262913,
       mode: 'auto',
@@ -584,10 +584,44 @@ document.addEventListener('alpine:init', () => {
       mqlPortrait.addEventListener('change', updateMedia);
       updateMedia();
 
+      // 起動時に設定を復元
+      const savedSettings = localStorage.getItem('E3');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        const deepMerge = (target, source) => {
+          for (const key in source) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+              if (!target[key]) target[key] = {};
+              deepMerge(target[key], source[key]);
+            } else {
+              target[key] = source[key];
+            }
+          }
+        };
+        deepMerge(this.sets, settings);
+        const xc = config.xcode.find(v => v.id === this.sets.player.quality);
+        if (xc) this.player.tslive = xc.tslive;
+      }
+
+      // 起動時にIndexedDBキャッシュから復元
+      await this.loadCache();
+
+      // サービス一覧が空（初回またはクリア後）なら同期で取得する
+      if (this.allData.service.size === 0) {
+        console.log("First run or no cache: fetching static data...");
+        await this.refreshStaticData();
+      } else if (!this.dataSaver) {
+        this.refreshStaticData();
+      }
+
+      // 設定の変更を監視して自動保存
+      this.$watch('sets', () => {
+        localStorage.setItem('E3', JSON.stringify(this.sets));
+      }, { deep: true });
+
       this.$watch('sets.oneseg', () => {
         this.updateNetworkMask();
         if (!this.sets.oneseg && this.isActiveNetwork(2)) this.setNetwork(0);
-        this.saveCache();
         if (this.isPage('#epg')) this.loadEpg();
         this.syncNowOnAir();
       });
@@ -657,80 +691,6 @@ document.addEventListener('alpine:init', () => {
         }
         lastScrollTop = scrollTop;
       }, { passive: true });
-
-      // 起動時にキャッシュから復元
-      const saved = localStorage.getItem('edcb_full_cache');
-      if (saved) {
-        const cache = JSON.parse(saved);
-        if (cache.lastUpdated) this.lastUpdated = { ...this.lastUpdated, ...cache.lastUpdated };
-        if (cache.networkMask) this.networkMask = cache.networkMask | 1;
-        if (cache.totals) this.totals = { ...this.totals, ...cache.totals };
-        if (cache.allData) {
-          Object.entries(cache.allData).forEach(([key, list]) => {
-            if (this.allData[key] instanceof Map) {
-              list.forEach(val => {
-                if (key === 'epg' && Array.isArray(val) && val.length > 0) {
-                  // 局ごとのMapとして復元
-                  const serviceId = this.getServiceID(val[0]);
-                  this.allData.epg.set(serviceId, new Map(val.map(v => [v.eid, v])));
-                } else {
-                  this.allData[key].set(this.getDataKey(val, key), val);
-                }
-              });
-            }
-          });
-          // キャッシュから復元したデータの時間範囲を特定（コア範囲）
-          if (cache.coreRange) {
-            this.epg.coreRange = cache.coreRange;
-          } else {
-            let min = Infinity, max = 0;
-            this.allData.epg.forEach(m => m.forEach(v => {
-              min = Math.min(min, v.startTimeInt);
-              max = Math.max(max, v.startTimeInt + v.durationSecond * 1000);
-            }));
-            this.epg.coreRange = { start: min === Infinity ? 0 : min, end: max };
-          }
-        }
-        // 「すべて」(bit 0)を保証
-        if ((this.networkMask & 1) === 0) this.networkMask |= 1;
-        // キャッシュに他ネットワークの情報がない場合、データから再計算
-        if (this.networkMask === 1 && this.allData.epg.size > 0) {
-          this.updateNetworkMask();
-        }
-
-        this.syncNowOnAir();
-        this.syncDashboardData();
-      }
-
-      // サービス一覧が空（初回またはクリア後）なら取得する
-      if (this.allData.service.size === 0) {
-        console.log("First run or no cache: fetching static data...");
-        await this.refreshStaticData();
-      }
-
-      // 起動時に設定を復元
-      const savedSettings = localStorage.getItem('E3');
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings);
-        const deepMerge = (target, source) => {
-          for (const key in source) {
-            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
-              if (!target[key]) target[key] = {};
-              deepMerge(target[key], source[key]);
-            } else {
-              target[key] = source[key];
-            }
-          }
-        };
-        deepMerge(this.sets, settings);
-        const xc = config.xcode.find(v => v.id === this.sets.player.quality);
-        if (xc) this.player.tslive = xc.tslive;
-      }
-
-      // 設定の変更を監視して自動保存
-      this.$watch('sets', () => {
-        localStorage.setItem('E3', JSON.stringify(this.sets));
-      }, { deep: true });
 
       // テーマとライトダークモード
       let colors;
@@ -805,7 +765,6 @@ document.addEventListener('alpine:init', () => {
       // 初回表示の反映
       await this.loadAll();
       await this.restoreSidePanel();
-      if (!this.dataSaver) this.refreshStaticData();
       this.inited = true;
     },
 
@@ -933,7 +892,7 @@ document.addEventListener('alpine:init', () => {
         if (this.isPage(pageHash) || (this.isPage('#tunerreserve') && pageHash === '#reserve')) this.updateDisplayList();
 
         // キャッシュ保存
-        this.saveCache();
+        this.saveCache({ [internalKey]: list });
       } catch (e) {
         console.error(`Refresh failed for ${pageHash}`, e);
         throw e;
@@ -951,7 +910,7 @@ document.addEventListener('alpine:init', () => {
         }
         const dateStr = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 
-        const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=36`;
+        const rangeQuery = `&date=${dateStr}&hour=${hour}&interval=${2 + this.epg.cacheDays * 24}`;
 
         // tab=0でリクエストを1回だけ送り、全サービスの番組情報を取得する
         const res = await this.fetch(`${this.ROOT}api/EnumEventInfo?json=1&tab=0${rangeQuery}`);
@@ -972,13 +931,11 @@ document.addEventListener('alpine:init', () => {
         this.allData.epg = grouped;
 
         // リクエストした範囲をコアキャッシュの範囲に設定
-        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, 0, 0, 0).getTime();
-        const end = start + 36 * 3600 * 1000;
-        this.epg.coreRange = { start, end };
+        this.epg.cache = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hour, 0, 0, 0).getTime();
 
         this.lastUpdated.epg = Date.now();
         this.updateNetworkMask();
-        this.saveCache();
+        this.saveEpgCache(grouped);
 
         if (this.isPage('#epg')) this.loadEpg();
         if (this.isPage('#epgweek')) this.loadWeeklyEpg();
@@ -1062,7 +1019,7 @@ document.addEventListener('alpine:init', () => {
         this.lastUpdated.recpreset = Date.now();
 
         // キャッシュを更新
-        this.saveCache();
+        this.saveCache({ service: services, recpreset: presetRes || [] });
         if (snackbar) this.snackbar.add('基礎データを更新しました');
       } catch (e) {
         console.error("Failed to refresh static data", e);
@@ -1506,19 +1463,138 @@ document.addEventListener('alpine:init', () => {
     clone(obj) {
       return JSON.parse(JSON.stringify(obj));
     },
-    saveCache() {
-      const totalsForCache = { ...this.totals, search: 0 };
-      const cache = { totals: totalsForCache, lastUpdated: this.lastUpdated, networkMask: this.networkMask, coreRange: this.epg.coreRange, allData: {} };
-      Object.entries(this.allData).forEach(([key, map]) => {
-        if (key === 'search') return; // 検索結果は永続キャッシュしない
-        if (key === 'epg') {
-          // serviceId毎のMapを配列に戻して保存
-          cache.allData[key] = Array.from(map.values()).map(m => Array.from(m.values()));
-        } else {
-          cache.allData[key] = Array.from(map.values());
-        }
+    // IndexedDB を開く（スキーマ初期化付き）
+    openCacheDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('edcb_cache', 1);
+        req.onupgradeneeded = e => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('meta'))  db.createObjectStore('meta');
+          if (!db.objectStoreNames.contains('epg'))   db.createObjectStore('epg');   // key = serviceId
+          if (!db.objectStoreNames.contains('data'))  db.createObjectStore('data');  // key = storeKey
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror   = e => reject(e.target.error);
       });
-      localStorage.setItem('edcb_full_cache', JSON.stringify(cache));
+    },
+
+    // metaのスナップショットを作成
+    metaSnapshot() {
+      return {
+        lastUpdated: { ...this.lastUpdated },
+        totals:      { ...this.totals, search: 0 },
+        epgCache:    this.epg.cache,
+      };
+    },
+
+    // EPG専用：refreshEpg()から直接呼び出す。
+    async saveEpgCache(grouped) {
+      try {
+        const db = await this.openCacheDB();
+        // 削除すべき古いサービスを特定するため既存キーを先取得
+        const existing = await new Promise((res, rej) => {
+          const r = db.transaction('epg', 'readonly').objectStore('epg').getAllKeys();
+          r.onsuccess = () => res(r.result);
+          r.onerror   = e => rej(e.target.error);
+        });
+        const tx = db.transaction(['meta', 'epg'], 'readwrite');
+        tx.objectStore('meta').put(this.metaSnapshot(), 'main');
+        const epgStore = tx.objectStore('epg');
+        const current = new Set();
+        grouped.forEach((serviceMap, sid) => {
+          current.add(sid);
+          epgStore.put(Array.from(serviceMap.entries()), sid); // [[eid, event], ...]
+        });
+        existing.forEach(k => { if (!current.has(k)) epgStore.delete(k); });
+        await new Promise((res, rej) => {
+          tx.oncomplete = res;
+          tx.onerror    = e => rej(e.target.error);
+          tx.onabort    = e => rej(e.target.error);
+        });
+        db.close();
+      } catch (e) {
+        console.warn('_saveEpgCache failed:', e);
+      }
+    },
+
+    // 汎用キャッシュ保存。
+    // data: { key: values[] } 形式。例: { reserve: list, recpreset: presets }
+    async saveCache(data) {
+      try {
+        const db = await this.openCacheDB();
+        const tx = db.transaction(['meta', 'data'], 'readwrite');
+        tx.objectStore('meta').put(this.metaSnapshot(), 'main');
+        const dataStore = tx.objectStore('data');
+        Object.entries(data).forEach(([key, values]) => dataStore.put(values, key));
+        await new Promise((res, rej) => {
+          tx.oncomplete = res;
+          tx.onerror    = e => rej(e.target.error);
+          tx.onabort    = e => rej(e.target.error);
+        });
+        db.close();
+      } catch (e) {
+        console.warn('saveCache failed:', e);
+      }
+    },
+
+    // 起動時にキャッシュを復元する
+    async loadCache() {
+      // 旧 localStorage キャッシュがあれば削除のみ
+      const legacyRaw = localStorage.getItem('edcb_full_cache');
+      if (legacyRaw) { localStorage.removeItem('edcb_full_cache'); return; }
+
+      try {
+        const db = await this.openCacheDB();
+        const tx = db.transaction(['meta', 'epg', 'data'], 'readonly');
+        const toArr = store => new Promise((res, rej) => {
+          const r = store.getAll(); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error);
+        });
+        const toKeys = store => new Promise((res, rej) => {
+          const r = store.getAllKeys(); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error);
+        });
+        const getMeta = store => new Promise((res, rej) => {
+          const r = store.get('main'); r.onsuccess = () => res(r.result); r.onerror = e => rej(e.target.error);
+        });
+
+        const [meta, epgVals, epgKeys, dataVals, dataKeys] = await Promise.all([
+          getMeta(tx.objectStore('meta')),
+          toArr(tx.objectStore('epg')),
+          toKeys(tx.objectStore('epg')),
+          toArr(tx.objectStore('data')),
+          toKeys(tx.objectStore('data')),
+        ]);
+        await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = e => rej(e.target.error); });
+        db.close();
+
+        if (!meta) return;
+
+        // meta を適用
+        if (meta.lastUpdated) this.lastUpdated  = { ...this.lastUpdated, ...meta.lastUpdated };
+        if (meta.totals)      this.totals        = { ...this.totals, ...meta.totals };
+        if (meta.epgCache)    this.epg.cache     = meta.epgCache;
+
+        // 非 EPG データを復元（保存時は values[]、Map の key は getDataKey で再構築）
+        dataKeys.forEach((key, i) => {
+          const list = dataVals[i];
+          if (!Array.isArray(list)) return;
+          const m = new Map();
+          list.forEach(v => m.set(this.getDataKey(v, key), v));
+          this.allData[key] = m;
+        });
+
+        // EPG を復元（entries 形式 [[eid, event], ...]）
+        epgKeys.forEach((sid, i) => {
+          if (Array.isArray(epgVals[i])) this.allData.epg.set(sid, new Map(epgVals[i]));
+        });
+
+        if ((this.sets.networkMask & 1) === 0) this.sets.networkMask |= 1;
+        if (this.sets.networkMask === 1 && this.allData.epg.size > 0) this.updateNetworkMask();
+
+        this.syncNowOnAir();
+        this.syncDashboardData();
+      } catch (e) {
+        console.warn('loadCache failed:', e);
+      }
     },
 
     // ソート処理を共通関数化
@@ -1806,7 +1882,7 @@ document.addEventListener('alpine:init', () => {
     get displayableNetworks() {
       return this.networkNames
         .map((name, index) => ({ name, index }))
-        .filter(n => (this.networkMask & (1 << n.index)) !== 0);
+        .filter(n => (this.sets.networkMask & (1 << n.index)) !== 0);
     },
     // displayableNetworks から「すべて」を除外したリスト（局選択メニュー等で使用）
     get selectableNetworks() {
@@ -1843,7 +1919,7 @@ document.addEventListener('alpine:init', () => {
           if (this.sets.oneseg || ni !== 2) mask |= (1 << ni); // ワンセグ表示設定が有効な場合、またはワンセグでない場合
         }
       });
-      this.networkMask = mask;
+      this.sets.networkMask = mask;
     },
     getDefSearchService() {
       return [...document.getElementById('serviceList-template').content.querySelectorAll('.def')].map(e => e.value);
@@ -1857,7 +1933,8 @@ document.addEventListener('alpine:init', () => {
       weeklyToDisplay: [],
       activeNetwork: 1,
       lastLoadedNetwork: -1,
-      coreRange: { start: 0, end: 0 },
+      cacheDays: 3,
+      cache: 0,
       extraData: new Map(), // 追加取得したデータの保管庫
       lastLoadedData: 0,
       lastLoadedReserve: 0,
@@ -1997,7 +2074,7 @@ document.addEventListener('alpine:init', () => {
 
       // データソースの決定
       let dataMap = null;
-      if (gridStart >= epg.coreRange.start && gridEnd <= epg.coreRange.end) {
+      if (gridStart >= epg.cache && gridEnd <= epg.cache + (2 + epg.cacheDays * 24) * 3600 * 1000) {
         dataMap = this.allData.epg;
       } else {
         dataMap = epg.extraData.get(slotKey);
@@ -4031,7 +4108,7 @@ document.addEventListener('alpine:init', () => {
         this.allData.recpreset.clear();
         data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.recpreset = Date.now();
-        this.saveCache();
+        this.saveCache({ recpreset: data });
 
         this.snackbar.add('削除しました');
       } catch (e) {
@@ -4058,7 +4135,7 @@ document.addEventListener('alpine:init', () => {
         this.allData.recpreset.clear();
         data.forEach(p => this.allData.recpreset.set(this.getDataKey(p, 'recpreset'), p));
         this.lastUpdated.recpreset = Date.now();
-        this.saveCache();
+        this.saveCache({ recpreset: data });
 
         this.snackbar.add('保存しました');
       } catch (e) {
