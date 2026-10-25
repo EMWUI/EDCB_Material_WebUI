@@ -278,9 +278,9 @@ JKCNSL_REFUGE_URI=nil
 if (tonumber(edcb.GetPrivateProfile('JK','ENABLE_REFUGE',false,INI))~=0) then
   JKCNSL_REFUGE_URI=edcb.GetPrivateProfile('JK','refugeUri','wss://nx-jikkyo.tsukumijima.net/api/v1/channels/{jkID}/ws/watch',INI)
 end
-JKCNSL_DROP_FORWARDED_COMMENT=edcb.GetPrivateProfile('JK','dropForwardedComment',false,INI)~=0
-JKCNSL_REFUGE_MIXING=edcb.GetPrivateProfile('JK','refugeMixing',false,INI)~=0
-JKCNSL_ANONYMITY=edcb.GetPrivateProfile('JK','anonymity',true,INI)~=0
+JKCNSL_DROP_FORWARDED_COMMENT=tonumber(edcb.GetPrivateProfile('JK','dropForwardedComment',false,INI))~=0
+JKCNSL_REFUGE_MIXING=tonumber(edcb.GetPrivateProfile('JK','refugeMixing',false,INI))~=0
+JKCNSL_ANONYMITY=tonumber(edcb.GetPrivateProfile('JK','anonymity',true,INI))~=0
 
 --実況の番号(jk?)と、チャットのID(ch???やlv???など)
 --指定しない番号には"jkconst.lua"にある既定値が使われる
