@@ -1306,7 +1306,10 @@ document.addEventListener('alpine:init', () => {
       if (list) {
         this.rawData = list;
         this.totalCount = this.totals[internalKey];
-        this.displayList = this.rawData.slice(0, this.perPage);
+        // SSE更新などでデータが再取得された場合でも、ユーザーが追加読み込みで
+        // 表示していた件数を維持する。cursor が 0（初回）の場合のみ先頭に戻す。
+        const keepCursor = Math.min(Math.max(this.cursor, this.perPage), this.rawData.length);
+        this.displayList = this.rawData.slice(0, keepCursor);
         this.cursor = this.displayList.length;
       }
     },
